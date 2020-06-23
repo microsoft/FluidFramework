@@ -109,12 +109,12 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
                 "op",
                 () => {
                     this.context.getAbsoluteUrl(this.url)
-                        .then((url)=>{
+                        .then((url) => {
                             this._absoluteUrl = url;
                             this.emit("stateChanged");
                             return undefined;
                         })
-                        .catch(()=>{});
+                        .catch(() => { });
                 });
         }
     }

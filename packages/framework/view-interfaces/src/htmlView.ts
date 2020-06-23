@@ -38,8 +38,14 @@ export interface IComponentHTMLView extends IProvideComponentHTMLView {
     remove?(): void;
 }
 
+/**
+ * @deprecated - See IComponentHTMLVisual
+ */
 export const IComponentHTMLVisual: keyof IProvideComponentHTMLVisual = "IComponentHTMLVisual";
 
+/**
+ * @deprecated - See IComponentHTMLVisual
+ */
 export interface IProvideComponentHTMLVisual {
     readonly IComponentHTMLVisual: IComponentHTMLVisual;
 }
@@ -47,17 +53,18 @@ export interface IProvideComponentHTMLVisual {
 /**
  * An IComponentHTMLVisual is a view factory.  Typically (though not necessarily) it will be a model,
  * binding itself to the views it creates.
- * TODO: Consider renaming to IComponentHTMLViewFactory
+ * @deprecated - To support multiview scenarios, consider split view/model patterns like those demonstrated in
+ * the multiview sample.
  */
 export interface IComponentHTMLVisual extends IProvideComponentHTMLVisual {
     addView(scope?: IComponent): IComponentHTMLView;
 }
 
 declare module "@fluidframework/component-core-interfaces" {
-    /* eslint-disable @typescript-eslint/no-empty-interface, @typescript-eslint/indent */
+    /* eslint-disable @typescript-eslint/no-empty-interface */
     export interface IComponent extends
-    Readonly<Partial<
-        IProvideComponentHTMLView
-        & IProvideComponentHTMLVisual>> { }
-    /* eslint-enable @typescript-eslint/no-empty-interface, @typescript-eslint/indent */
+        Readonly<Partial<
+            IProvideComponentHTMLView
+            & IProvideComponentHTMLVisual>> { }
+    /* eslint-enable @typescript-eslint/no-empty-interface */
 }

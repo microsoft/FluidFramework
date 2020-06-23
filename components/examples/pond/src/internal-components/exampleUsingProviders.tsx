@@ -20,8 +20,7 @@ const pkg = require("../../package.json");
  */
 export class ExampleUsingProviders
     extends PrimedComponent<IComponentUserInformation>
-    implements IComponentHTMLView
-{
+    implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     private userInformation: IComponentUserInformation | undefined;
@@ -37,7 +36,7 @@ export class ExampleUsingProviders
     public render(div: HTMLElement) {
         let element: JSX.Element = <span></span>;
         if (this.userInformation) {
-            element = <ExampleUsingProvidersView userInfo={this.userInformation}/>;
+            element = <ExampleUsingProvidersView userInfo={this.userInformation} />;
         } else {
             console.log("No IComponentUserInformation Provided");
         }
@@ -90,11 +89,11 @@ class ExampleUsingProvidersView
 
     public render() {
         const users: JSX.Element[] = [];
-        this.state.users.forEach((user)=> {
+        this.state.users.forEach((user) => {
             users.push(<div>{user}</div>);
         });
         return (
-            <div style={{ border:"1px dotted green" }}>
+            <div style={{ border: "1px dotted green" }}>
                 <h3>Provider Information</h3>
                 <div><b>Count:</b></div>
                 <div>{this.state.count}</div>

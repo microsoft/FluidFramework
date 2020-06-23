@@ -130,7 +130,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
                 [SharedTextFactoryComponent.type, Promise.resolve(this)],
                 [
                     "verdaccio",
-                    Promise.resolve(new MyRegistry(context, "https://pragueauspkn-3873244262.azureedge.net")),
+                    Promise.resolve(new MyRegistry(context, "https://pragueauspkn.azureedge.net")),
                 ],
             ],
             [SharedTextFactoryComponent.containerRequestHandler]);

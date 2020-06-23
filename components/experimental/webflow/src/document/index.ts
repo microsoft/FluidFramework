@@ -122,7 +122,7 @@ const accumAsLeafAction = (
 //       the user deletes the entire sequence.  (The SlideOnRemove references end up pointing
 //       to undefined segments.)
 //
-//       See: https://github.com/microsoft/Prague/issues/2408
+//       See: https://github.com/microsoft/FluidFramework/issues/86
 const endOfTextSegment = undefined as unknown as SharedStringSegment;
 
 export interface IFlowDocumentEvents extends IEvent {
@@ -161,7 +161,6 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
 
     public create() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
-        // (See: https://github.com/Microsoft/Prague/pull/1118)
         Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
 
         this.maybeSharedString = SharedString.create(this.runtime, "text");
@@ -173,7 +172,6 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
 
     public async load() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
-        // (See: https://github.com/Microsoft/Prague/pull/1118)
         Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
 
         const handle = await this.root.wait<IComponentHandle<SharedString>>("text");

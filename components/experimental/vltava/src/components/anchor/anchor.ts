@@ -61,7 +61,7 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
                 .IComponentHTMLView;
 
         this.lastEditedComponent =
-                (await this.root.get<IComponentHandle>(this.lastEditedComponentId).get())
-                    .IComponentLastEditedTracker;
+            (await this.root.get<IComponentHandle>(this.lastEditedComponentId).get())
+                .IComponentLastEditedTracker;
     }
 }

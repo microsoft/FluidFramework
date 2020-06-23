@@ -79,6 +79,9 @@ module.exports = env => {
                 stats: "minimal",
                 before: (app, server) => fluidRoute.before(app, server, env),
                 after: (app, server) => fluidRoute.after(app, server, __dirname, env),
+                watchOptions: {
+                    ignored: "**/node_modules/**",
+                }
             },
             resolveLoader: {
                 alias: {

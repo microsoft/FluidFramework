@@ -4,16 +4,16 @@
  */
 
 import { parse } from "url";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import { extractDetails, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { Router } from "express";
-import * as safeStringify from "json-stringify-safe";
-import * as jwt from "jsonwebtoken";
+import safeStringify from "json-stringify-safe";
+import jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import { v4 } from "uuid";
-import * as winston from "winston";
+import winston from "winston";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
@@ -28,7 +28,7 @@ export function create(
     cache: IKeyValueWrapper): Router {
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
-    const webLoader = new WebCodeLoader(new WhiteList());
+    const codeResolver = new SemVerCdnCodeResolver();
 
     /**
      * Looks up the version of a chaincode in the cache.
@@ -86,7 +86,7 @@ export function create(
                 const pkgP = fullTreeP.then((fullTree) => {
                     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (fullTree && fullTree.code) {
-                        return webLoader.resolve(fullTree.code);
+                        return codeResolver.resolveCodeDetails(fullTree.code);
                     }
 
                     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -118,7 +118,7 @@ export function create(
                             },
                         };
                     } else {
-                        const details = extractDetails(chaincode);
+                        const details = extractPackageIdentifierDetails(chaincode);
                         codeDetails = {
                             config: {
                                 [`@${details.scope}:cdn`]: cdn,
@@ -127,7 +127,7 @@ export function create(
                         };
                     }
 
-                    return webLoader.resolve(codeDetails);
+                    return codeResolver.resolveCodeDetails(codeDetails);
                 });
 
                 const scriptsP = pkgP.then((pkg) => {
@@ -135,7 +135,7 @@ export function create(
                         return [];
                     }
 
-                    const umd = pkg.pkg.fluid?.browser?.umd;
+                    const umd = pkg.resolvedPackage.fluid?.browser?.umd;
                     if (umd === undefined) {
                         return [];
                     }
@@ -145,8 +145,8 @@ export function create(
                         scripts: umd.files.map(
                             (script, index) => {
                                 return {
-                                    id: `${pkg.parsed.name}-${index}`,
-                                    url: script.startsWith("http") ? script : `${pkg.packageUrl}/${script}`,
+                                    id: `${pkg.resolvedPackageCacheId}-${index}`,
+                                    url: script,
                                 };
                             }),
                     };

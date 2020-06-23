@@ -42,14 +42,14 @@ describe("LocalChannelStorageService", () => {
 
         assert.equal(await ss.contains("foo"), true);
         assert.deepStrictEqual(await ss.list(""), ["foo"]);
-        assert.equal(await ss.read("foo"),"bar");
+        assert.equal(await ss.read("foo"), "bar");
     });
 
     it("Nested Blob", async () => {
         const tree: ITree = {
             // eslint-disable-next-line no-null/no-null
             id: null,
-            entries:[
+            entries: [
                 {
                     mode: FileMode.File,
                     path: "nested",
@@ -57,7 +57,7 @@ describe("LocalChannelStorageService", () => {
                     value: {
                         // eslint-disable-next-line no-null/no-null
                         id: null,
-                        entries:[
+                        entries: [
                             {
                                 mode: FileMode.File,
                                 path: "foo",

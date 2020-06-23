@@ -3,29 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-import * as path from "path";
+import fs from "fs";
+import path from "path";
 // tslint:disable-next-line: ordered-imports
-import { getRandomName, IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import { ICache, MongoManager } from "@microsoft/fluid-server-services-core";
-import * as bodyParser from "body-parser";
-import * as compression from "compression";
-import * as connectRedis from "connect-redis";
-import * as cookieParser from "cookie-parser";
-import * as cors from "cors";
-import * as express from "express";
-import * as expressSession from "express-session";
-import * as morgan from "morgan";
+import { getRandomName, IAlfredTenant } from "@fluidframework/server-services-client";
+import { ICache, MongoManager } from "@fluidframework/server-services-core";
+import bodyParser from "body-parser";
+import compression from "compression";
+import connectRedis from "connect-redis";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import express from "express";
+import expressSession from "express-session";
+import morgan from "morgan";
 import { Provider } from "nconf";
-import * as passport from "passport";
-import * as passportJWT from "passport-jwt";
-import * as passportLocal from "passport-local";
-import * as passportOpenIdConnect from "passport-openidconnect";
-import * as redis from "redis";
-import * as favicon from "serve-favicon";
-import * as expiry from "static-expiry";
+import passport from "passport";
+import passportJWT from "passport-jwt";
+import passportLocal from "passport-local";
+import passportOpenIdConnect from "passport-openidconnect";
+import redis from "redis";
+import favicon from "serve-favicon";
+import expiry from "static-expiry";
 import { v4 } from "uuid";
-import * as winston from "winston";
+import winston from "winston";
 import { AccountManager } from "./accounts";
 import { saveSpoTokens } from "./gatewayOdspUtils";
 import { IAlfred } from "./interfaces";
@@ -327,15 +327,10 @@ export function create(
     });
 
     app.use(routes.api);
-    app.use("/templates", routes.templates);
     app.use("/loader", routes.loader);
     app.use("/loaderFramed", routes.loaderFramed);
-    app.use("/frontpage", routes.frontpage);
     app.use("/waterpark", routes.waterpark);
-    app.use("/fastloader", routes.fastLoader);
-    app.use("/democreator", routes.demoCreator);
     app.use("/versions", routes.versions);
-    app.use("/fork", routes.fork);
     app.use("/token", routes.token);
     app.use(routes.home);
 

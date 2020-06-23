@@ -5,8 +5,8 @@
 
 module.exports = {
   server: {
-    command: "npm run start -- --no-live-reload --port 8084",
-    port: 8084,
+    command: `npm run start -- --no-live-reload --port ${process.env["PORT"]}`,
+    port: process.env["PORT"],
     launchTimeout:10000,
     usedPortAction: 'error'
   },

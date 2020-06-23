@@ -14,7 +14,15 @@
         "outDir": "dist",
         "sourceMap": true,
         "inlineSources": true,
-        "jsx": "react"
+        "jsx": "react",
+        "types": [
+            "react",
+            "react-dom",
+            "jest",
+            "puppeteer",
+            "jest-environment-puppeteer",
+            "expect-puppeteer"
+        ]
     },
     "include": [
         "src/**/*"

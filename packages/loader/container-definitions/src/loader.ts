@@ -9,7 +9,6 @@ import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
@@ -49,7 +48,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
  * the code detail for loading from that cdn. This include resolving to the most recent
  * version of package that supports the provided code details.
  */
-export interface IFluidCodeResolver{
+export interface IFluidCodeResolver {
     /**
      * Resolves a fluid code details into a form that can be loaded
      * @param details - The fluid code details to resolve
@@ -62,21 +61,20 @@ export interface IFluidCodeResolver{
 }
 
 /**
- * Code WhiteListing Interface
+ * Code AllowListing Interface
  */
-export interface ICodeWhiteList {
+export interface ICodeAllowList {
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
 export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
     (event: "connected" | "contextChanged", listener: (clientId: string) => void);
-    (event: "disconnected" | "joining" | "containerBeingAttached" | "containerAttached", listener: () => void);
+    (event: "disconnected" | "joining", listener: () => void);
     (event: "closed", listener: (error?: CriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
     (event: "pong" | "processTime", listener: (latency: number) => void);
-    (event: MessageType.BlobUploaded, listener: (contents: any) => void);
 }
 
 export interface IContainer extends IEventProvider<IContainerEvents> {
@@ -129,7 +127,7 @@ export interface ILoader {
     resolve(request: IRequest): Promise<IContainer>;
 
     /**
-     * Creates a new contanier using the specified chaincode but in an unattached state. While unattached all
+     * Creates a new container using the specified chaincode but in an unattached state. While unattached all
      * updates will only be local until the user explicitly attaches the container to a service provider.
      */
     createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer>;

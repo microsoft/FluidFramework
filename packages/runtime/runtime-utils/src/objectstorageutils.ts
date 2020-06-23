@@ -25,7 +25,7 @@ export async function listBlobsAtTreePath(inputTree: ITree, path: string): Promi
     while (tree?.entries !== undefined && pathParts.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const part = pathParts.shift()!;
-        const index = tree.entries.findIndex((value)=>{
+        const index = tree.entries.findIndex((value) => {
             if (value.type === "Tree" && value.path === part) {
                 return true;
             } else {
@@ -42,5 +42,5 @@ export async function listBlobsAtTreePath(inputTree: ITree, path: string): Promi
     if (tree?.entries === undefined || pathParts.length !== 0) {
         throw new Error("path does not exist");
     }
-    return tree.entries.filter((e)=>e.type === "Blob").map((e)=>e.path);
+    return tree.entries.filter((e) => e.type === "Blob").map((e) => e.path);
 }

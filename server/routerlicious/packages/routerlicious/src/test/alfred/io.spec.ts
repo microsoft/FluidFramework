@@ -230,7 +230,7 @@ describe("Routerlicious", () => {
 
         let deliKafka: TestKafka;
         let testTenantManager: TestTenantManager;
-        let testStorage: services.DocumentStorage; 
+        let testStorage: services.DocumentStorage;
         beforeEach(() => {
             const collectionNames = "test";
             const testData: { [key: string]: any[] } = {};
@@ -253,7 +253,7 @@ describe("Routerlicious", () => {
         });
 
         it("create document with summary", async () => {
-            const summaryTree: ISummaryTree = {type: SummaryType.Tree, tree: {}};
+            const summaryTree: ISummaryTree = { type: SummaryType.Tree, tree: {} };
             const proposal: ICommittedProposal = {
                 key: "code",
                 value: "empty",

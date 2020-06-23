@@ -3,20 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { MultiDocumentServiceFactory } from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/driver-definitions";
+import { MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
 import {
     IFrameDocumentServiceProxyFactory,
-} from "@microsoft/fluid-iframe-driver";
-import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
-import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
-import { IGitCache } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/iframe-driver";
+import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
+import { IGitCache } from "@fluidframework/server-services-client";
 import Axios from "axios";
 
 import * as commits from "./commits";
@@ -38,10 +37,8 @@ export async function initialize(
     const documentServiceFactories: IDocumentServiceFactory[] = [];
     // TODO: need to be support refresh token
     documentServiceFactories.push(new OdspDocumentServiceFactory(
-        clientId,
         async (siteUrl: string) => Promise.resolve(resolved.tokens.storageToken),
-        async () => Promise.resolve(resolved.tokens.socketToken),
-        new BaseTelemetryNullLogger()));
+        async () => Promise.resolve(resolved.tokens.socketToken)));
 
     documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
         false,

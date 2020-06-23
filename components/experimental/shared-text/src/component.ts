@@ -19,7 +19,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime } from "@fluidframework/component-runtime";
+import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
 import { Ink } from "@fluidframework/ink";
 import {
     ISharedMap,
@@ -64,7 +64,12 @@ export class SharedTextRunner
         return runner;
     }
 
+    private readonly innerHandle: IComponentHandle<this>;
+
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get IComponentHandle() { return this.innerHandle; }
     public get IComponentLoadable() { return this; }
+
     public get IComponentHTMLView() { return this; }
     public get ISharedString() { return this.sharedString; }
 
@@ -78,6 +83,7 @@ export class SharedTextRunner
 
     private constructor(private readonly runtime: ComponentRuntime, private readonly context: IComponentContext) {
         super();
+        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
     }
 
     public render(element: HTMLElement) {

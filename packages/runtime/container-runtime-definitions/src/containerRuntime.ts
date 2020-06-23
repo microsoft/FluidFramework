@@ -20,7 +20,6 @@ import {
     IHelpMessage,
     IQuorum,
     ISequencedDocumentMessage,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
@@ -61,8 +60,6 @@ export interface IContainerRuntime extends
     readonly branch: string;
     readonly loader: ILoader;
     readonly flushMode: FlushMode;
-    readonly submitFn: (type: MessageType, contents: any, localOpMetadata: unknown) => number;
-    readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly scope: IComponent;
 
@@ -71,8 +68,8 @@ export interface IContainerRuntime extends
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
     on(
-        event: "dirtyDocument" | "disconnected" | "dispose" | "joining" | "savedDocument" | "leader" | "notleader"
-        | "containerBeingAttached", listener: () => void): this;
+        event: "dirtyDocument" | "disconnected" | "dispose" | "joining" | "savedDocument" | "leader" | "notleader",
+        listener: () => void): this;
     on(event: "connected", listener: (clientId: string) => void): this;
     on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
     on(

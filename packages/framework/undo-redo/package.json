@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/undo-redo",
-  "version": "0.19.7",
+  "version": "0.21.0",
   "description": "Undo Redo",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,7 +25,9 @@
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:mocha": "mocha --recursive dist/test --exit -r make-promises-safe",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "tsfmt": "tsfmt --verify",
+    "tsfmt:fix": "tsfmt --replace"
   },
   "nyc": {
     "all": true,
@@ -48,14 +50,14 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/map": "^0.19.7",
-    "@fluidframework/merge-tree": "^0.19.7",
-    "@fluidframework/sequence": "^0.19.7"
+    "@fluidframework/map": "^0.21.0",
+    "@fluidframework/merge-tree": "^0.21.0",
+    "@fluidframework/sequence": "^0.21.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.16.0",
-    "@fluidframework/eslint-config-fluid": "^0.17.0",
-    "@fluidframework/test-runtime-utils": "^0.19.7",
+    "@fluidframework/build-common": "^0.17.0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0",
+    "@fluidframework/test-runtime-utils": "^0.21.0",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
@@ -81,6 +83,7 @@
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
     "typescript": "~3.7.4",
+    "typescript-formatter": "7.1.0",
     "xmldoc": "^1.1.2"
   }
 }

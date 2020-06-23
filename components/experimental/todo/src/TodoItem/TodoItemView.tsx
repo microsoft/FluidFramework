@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CollaborativeInput } from "@fluidframework/aqueduct-react";
+import { CollaborativeInput } from "@fluidframework/react-inputs";
 import { SharedString } from "@fluidframework/sequence";
 import React from "react";
 import { TodoItem } from "./TodoItem";
@@ -74,11 +74,13 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
                             marginTop: 5,
                             outline: "none",
                             width: "inherit",
-                        }}/>
+                        }} />
                     <button
                         name="toggleInnerVisible"
                         style={this.buttonStyle}
-                        onClick={() => {this.setState({ innerComponentVisible: !this.state.innerComponentVisible }); }}>
+                        onClick={() => {
+                            this.setState({ innerComponentVisible: !this.state.innerComponentVisible });
+                        }}>
                         {this.state.innerComponentVisible ? "▲" : "▼"}
                     </button>
                     {

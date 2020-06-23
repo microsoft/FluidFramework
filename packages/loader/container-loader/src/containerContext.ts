@@ -4,7 +4,6 @@
  */
 
 import assert from "assert";
-import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
@@ -44,8 +43,7 @@ import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 import { NullRuntime } from "./nullRuntime";
 
-export class ContainerContext extends EventEmitter implements IContainerContext {
-    public readonly isExperimentalContainerContext = true;
+export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
         scope: IComponent,
@@ -161,7 +159,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     private runtime: IRuntime | undefined;
 
     private _disposed = false;
-    private containerBeingAttached: boolean = false;
+
     public get disposed() {
         return this._disposed;
     }
@@ -185,24 +183,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
     ) {
-        super();
         this.logger = container.subLogger;
-        this.attachListeners();
-    }
-
-    private attachListeners() {
-        // Only listen to these events if local.
-        if (this.isLocal()) {
-            this.container.on("containerBeingAttached", () => {
-                this.containerBeingAttached = true;
-                this.emit("containerBeingAttached");
-            });
-            this.container.on("containerAttached", () => {
-                // Toggle off the containerBeingAttached flag.
-                this.containerBeingAttached = false;
-                this.emit("containerAttached");
-            });
-        }
     }
 
     public dispose(error?: Error): void {
@@ -232,7 +213,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     public isLocal(): boolean {
-        return !this.containerBeingAttached && this.container.isLocal();
+        return this.container.isLocal();
     }
 
     public createSummary(): ISummaryTree {

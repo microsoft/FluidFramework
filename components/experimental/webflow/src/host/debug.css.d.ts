@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-declare const styles: { };
+declare const styles: {};
 
 export = styles;

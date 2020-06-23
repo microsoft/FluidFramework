@@ -1,4 +1,4 @@
-# Loader and Container
+# @fluidframework/container-loader
 
 - [Expectations from host implementers](#Expectations-from-host-implementers)
 - [Expectations from container runtime and components implementers](#Expectations-from-container-runtime-and-components-implementers)

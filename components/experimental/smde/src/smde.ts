@@ -13,7 +13,7 @@ import {
     IResponse,
     IComponentHandle,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime } from "@fluidframework/component-runtime";
+import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     MergeTreeDeltaType,
@@ -44,7 +44,12 @@ export class Smde extends EventEmitter implements
         return collection;
     }
 
+    private readonly innerHandle: IComponentHandle<this>;
+
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get IComponentHandle() { return this.innerHandle; }
     public get IComponentLoadable() { return this; }
+
     public get IComponentRouter() { return this; }
     public get IComponentHTMLView() { return this; }
 
@@ -62,6 +67,7 @@ export class Smde extends EventEmitter implements
         super();
 
         this.url = context.id;
+        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

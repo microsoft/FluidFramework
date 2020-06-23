@@ -47,9 +47,6 @@ class ReplayProcessArgs extends ReplayArgs {
                 case "--verbose":
                     this.verbose = true;
                     break;
-                case "--testreconnect":
-                    this.testReconnet = true;
-                    break;
                 default:
                     console.error(`ERROR: Invalid argument ${arg}`);
                     this.printUsage();

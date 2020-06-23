@@ -4,35 +4,36 @@
  */
 
 import {
+    IClient,
+    IConnect,
+    IConnected,
+    IContentMessage,
+    ISequencedDocumentMessage,
+    IServiceConfiguration,
+    ISignalMessage,
+} from "@fluidframework/protocol-definitions";
+import { configureWebSocketServices } from "@fluidframework/server-lambdas";
+import {
     DefaultMetricClient,
     IDatabaseManager,
     IDocumentStorage,
+    ILogger,
+    IWebSocket,
     IWebSocketServer,
     MongoDatabaseManager,
     MongoManager,
-    ILogger,
-    IWebSocket,
 } from "@fluidframework/server-services-core";
 import {
+    DebugLogger,
     ITestDbFactory,
+    TestClientManager,
     TestDbFactory,
     TestDocumentStorage,
-    TestTenantManager,
-    TestWebSocketServer,
-    TestClientManager,
-    DebugLogger,
     TestHistorian,
     TestTaskMessageSender,
+    TestTenantManager,
+    TestWebSocketServer,
 } from "@fluidframework/server-test-utils";
-import { configureWebSocketServices } from "@fluidframework/server-lambdas";
-import {
-    IClient,
-    IConnected,
-    IConnect,
-    ISequencedDocumentMessage,
-    IContentMessage,
-    ISignalMessage,
-} from "@fluidframework/protocol-definitions";
 import { MemoryOrdererManager } from "./memoryOrdererManager";
 
 /**
@@ -58,7 +59,10 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
     /**
      * Creates and returns a local delta connection server.
      */
-    public static create(testDbFactory: ITestDbFactory = new TestDbFactory({})): ILocalDeltaConnectionServer {
+    public static create(
+        testDbFactory: ITestDbFactory = new TestDbFactory({}),
+        serviceConfiguration?: Partial<IServiceConfiguration>,
+    ): ILocalDeltaConnectionServer {
         const nodesCollectionName = "nodes";
         const documentsCollectionName = "documents";
         const deltasCollectionName = "deltas";
@@ -89,7 +93,8 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             {},
             16 * 1024,
             async () => new TestHistorian(testDbFactory.testDatabase),
-            logger);
+            logger,
+            serviceConfiguration);
 
         configureWebSocketServices(
             webSocketServer,
@@ -142,7 +147,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             versions: protocolVersions,
         };
 
-        const connectedP =  new Promise<IConnected>((resolve, reject) => {
+        const connectedP = new Promise<IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
             const queuedContents: IContentMessage[] = [];

@@ -1,27 +1,15 @@
-import {
-    ContainerRuntimeFactoryWithDefaultComponent,
-} from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { DiceRoller } from "./component";
 
-import { } from "./main";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-const componentName = pkg.name as string;
+export { DiceRoller };
 
 /**
- * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultComponent also enables dynamic loading in the
- * EmbeddedComponentLoader.
- *
- * There are two important things here:
- * 1. Default Component name
- * 2. Map of string to factory for all components
- *
- * In this example, we are only registering a single component, but more complex examples will register multiple
- * components.
+ * fluidExport is the entry point of the fluid package. We define our component
+ * as a component that can be created in the container.
  */
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
-    componentName,
+    DiceRoller.ComponentName,
     new Map([
-        [componentName, Promise.resolve(ComponentInstantiationFactory)],
-    ]),
-);
+        [DiceRoller.ComponentName, Promise.resolve(DiceRoller.factory)],
+        // Add another component here to create it within the container
+    ]));

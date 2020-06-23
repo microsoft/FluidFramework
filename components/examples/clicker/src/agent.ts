@@ -4,11 +4,11 @@
  */
 
 import { IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
-import { Counter } from "@fluidframework/map";
+import { SharedCounter } from "@fluidframework/counter";
 
 // Sample agent to run.
 export class ClickerAgent implements IComponentRouter, IComponentRunnable {
-    constructor(private readonly counter: Counter) { }
+    constructor(private readonly counter: SharedCounter) { }
 
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }

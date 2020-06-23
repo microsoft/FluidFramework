@@ -4,7 +4,7 @@
  */
 
 import fs from "fs";
-import { DocumentStorage } from "@fluidframework/server-services";
+import { DocumentStorage } from "@fluidframework/server-services-shared";
 import { MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";

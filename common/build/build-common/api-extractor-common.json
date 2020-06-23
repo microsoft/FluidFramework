@@ -121,6 +121,9 @@
       },
       "ae-missing-release-tag": {
         "logLevel": "none"
+      },
+      "ae-unresolved-inheritdoc-reference": {
+        "logLevel": "error"
       }
     },
 

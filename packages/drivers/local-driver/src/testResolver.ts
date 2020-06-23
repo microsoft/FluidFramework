@@ -20,11 +20,10 @@ import { generateToken } from "@fluidframework/server-services-client";
  * related test classes.
  */
 export class TestResolver implements IUrlResolver {
-    public readonly isExperimentalUrlResolver = true;
     private readonly tenantId = "tenantId";
     private readonly tokenKey = "tokenKey";
 
-    constructor() {}
+    constructor() { }
 
     /**
      * Resolves URL requests by providing fake URLs with an actually generated

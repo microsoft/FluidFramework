@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IGraphUser, IMicrosoftGraph } from "@microsoft/fluid-host-service-interfaces";
+import { IGraphUser, IMicrosoftGraph } from "@fluidframework/host-service-interfaces";
 import Axios from "axios";
 
 export class MicrosoftGraph implements IMicrosoftGraph {

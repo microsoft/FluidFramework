@@ -94,7 +94,7 @@ export interface ISnapshotTree {
 /**
  * Represents a version of the snapshot of a component
  */
-export interface IVersion  {
+export interface IVersion {
     // Version ID
     id: string;
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { GitManager, Historian } from "@fluidframework/server-services-client";
+import { generateToken, GitManager, Historian, ICredentials } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import Axios from "axios";
 
@@ -36,11 +36,19 @@ export class TenantManager implements core.ITenantManager {
     }
 
     public async getTenant(tenantId: string): Promise<core.ITenant> {
-        const details = await Axios.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`);
+        const [details, key] = await Promise.all([
+            Axios.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`),
+            this.getKey(tenantId)]);
+
+        const credentials: ICredentials = {
+            password: generateToken(tenantId, null, key, null),
+            user: tenantId,
+        };
         const historian = new Historian(
             `${details.data.storage.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,
             true,
-            false);
+            false,
+            credentials);
         const gitManager = new GitManager(historian);
         const tenant = new Tenant(details.data, gitManager);
 

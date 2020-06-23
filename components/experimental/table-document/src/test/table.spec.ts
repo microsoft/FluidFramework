@@ -6,22 +6,21 @@
 /* eslint-disable no-shadow */
 
 import assert from "assert";
-import { TestHost } from "@fluidframework/local-test-utils";
+import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 import { TableDocument } from "../document";
 import { TableSlice } from "../slice";
-import { TableDocumentType } from "../componentTypes";
 import { TableDocumentItem } from "../table";
 
 describe("TableDocument", () => {
-    let host: TestHost;
-
-    before(() => {
-        host = new TestHost([
-            [TableDocumentType, Promise.resolve(TableDocument.getFactory())],
-        ]);
-    });
-
-    after(async () => { await host.close(); });
+    const id = "fluid-test://localhost/tableTest";
+    const codeDetails = {
+        package: "tableTestPkg",
+        config: {},
+    };
+    let table: TableDocument;
+    let containerDeltaEventManager: DocumentDeltaEventManager;
 
     function makeId(type: string) {
         const id = Math.random().toString(36).substr(2);
@@ -29,11 +28,19 @@ describe("TableDocument", () => {
         return id;
     }
 
-    const createTable = async () => host.createAndAttachComponent(makeId(TableDocumentType), TableDocumentType);
-
-    let table: TableDocument;
     beforeEach(async () => {
-        table = await createTable() as TableDocument;
+        const deltaConnectionServer = LocalDeltaConnectionServer.create();
+        const loader = createLocalLoader([[codeDetails, TableDocument.getFactory()]], deltaConnectionServer);
+        const container = await initializeLocalContainer(id, loader, codeDetails);
+
+        const response = await container.request({ url: "default" });
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            throw new Error(`Default component not found`);
+        }
+        table = response.value;
+
+        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+        containerDeltaEventManager.registerDocuments(container);
     });
 
     const extract = (table: TableDocument) => {
@@ -53,8 +60,7 @@ describe("TableDocument", () => {
         assert.deepStrictEqual(extract(table), expected);
 
         // Paranoid check that awaiting incoming messages does not change test results.
-        // (Typically, only catches bugs w/TestHost).
-        await TestHost.sync(host);
+        await containerDeltaEventManager.process();
         assert.strictEqual(table.numRows, expected.length);
         assert.deepStrictEqual(extract(table), expected);
     };

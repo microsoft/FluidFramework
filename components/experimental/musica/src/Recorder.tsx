@@ -13,7 +13,7 @@ export class Recorder {
     private isRecording = false;
     private lastNoteTime = new Date();
 
-    constructor(private readonly rootDir: ISharedDirectory) {}
+    constructor(private readonly rootDir: ISharedDirectory) { }
 
     // Save each new note into Fluid as they come in
     public postSaveNewNote(note: Note, currentTempo: number) {
@@ -77,7 +77,7 @@ export class Recorder {
 
     public stopRecording() {
         this.isRecording = false;
-    // Save recorded song to Fluid
+        // Save recorded song to Fluid
     }
 }
 

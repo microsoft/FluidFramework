@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as nconf from "nconf";
-import * as path from "path";
-import * as supertest from "supertest";
-import { ICache, MongoManager } from "@microsoft/fluid-server-services-core";
+import nconf from "nconf";
+import path from "path";
+import supertest from "supertest";
+import { ICache, MongoManager } from "@fluidframework/server-services-core";
 import { Alfred } from "../alfred";
 import * as app from "../app";
 
@@ -34,17 +34,6 @@ describe("Gateway", () => {
         });
 
         describe("Routes", () => {
-            describe("Templates", () => {
-                it("Should return page", () => {
-                    return testServer.get("/templates/list").expect(200);
-                });
-            });
-
-            describe("DemoCreator", () => {
-                it("Should return page", () => {
-                    return testServer.get("/democreator").expect(200);
-                });
-            });
 
             describe("Home", () => {
                 it("Should return page", () => {

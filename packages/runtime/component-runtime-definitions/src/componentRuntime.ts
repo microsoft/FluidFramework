@@ -32,8 +32,7 @@ export interface IComponentRuntime extends
     IComponentRouter,
     EventEmitter,
     IDisposable,
-    Partial<IProvideComponentRegistry>
-{
+    Partial<IProvideComponentRegistry> {
 
     readonly id: string;
 
@@ -65,7 +64,7 @@ export interface IComponentRuntime extends
     isAttached: boolean;
 
     on(
-        event: "disconnected" | "dispose" | "leader" | "notleader" | "containerBeingAttached",
+        event: "disconnected" | "dispose" | "leader" | "notleader" | "collaborating",
         listener: () => void,
     ): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
@@ -95,11 +94,6 @@ export interface IComponentRuntime extends
      * @param message - Message for the snapshot.
      */
     snapshot(message: string): Promise<void>;
-
-    /**
-     * Triggers a message to force a snapshot
-     */
-    save(message: string);
 
     // Blob related calls
     /**

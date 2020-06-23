@@ -9,17 +9,25 @@ import { View } from "../view";
 import * as style from "./index.css";
 
 const template = isBrowser && new Template(
-    { tag: "div", ref: "root", props: { className: style.root }, children: [
-        { tag: "div", ref: "observer", props: { className: style.observer }, children: [
-            { tag: "div", ref: "expand", props: { className: style.expand }, children: [
-                { tag: "div", ref: "expandChild", props: { className: style.expandChild } },
-            ] },
-            { tag: "div", ref: "shrink", props: { className: style.shrink }, children: [
-                { tag: "div", props: { className: style.shrinkChild } },
-            ] },
-        ] },
-        { tag: "span", ref: "slot" },
-    ] },
+    {
+        tag: "div", ref: "root", props: { className: style.root }, children: [
+            {
+                tag: "div", ref: "observer", props: { className: style.observer }, children: [
+                    {
+                        tag: "div", ref: "expand", props: { className: style.expand }, children: [
+                            { tag: "div", ref: "expandChild", props: { className: style.expandChild } },
+                        ],
+                    },
+                    {
+                        tag: "div", ref: "shrink", props: { className: style.shrink }, children: [
+                            { tag: "div", props: { className: style.shrinkChild } },
+                        ],
+                    },
+                ],
+            },
+            { tag: "span", ref: "slot" },
+        ],
+    },
 );
 
 interface IResizeObserverInit {

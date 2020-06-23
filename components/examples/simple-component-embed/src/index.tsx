@@ -37,8 +37,8 @@ export class SimpleComponentEmbed extends PrimedComponent implements IComponentH
     }
 
     public render(div: HTMLDivElement) {
-    // Create a div that we will use to embed the component
-    // and attach that div to the page
+        // Create a div that we will use to embed the component
+        // and attach that div to the page
         const componentDiv = document.createElement("div");
         componentDiv.id = "componentDiv";
         div.appendChild(componentDiv);

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-routerlicious",
-  "version": "0.1006.2",
+  "version": "0.1008.0",
   "description": "Server to assign sequence numbers and route deltas between connected clients",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -35,7 +35,9 @@
     "scriptorium:debug": "node --inspect=0.0.0.0:5858 dist/scriptorium/index.js",
     "test": "mocha --recursive dist/test -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "tsfmt": "tsfmt --verify",
+    "tsfmt:fix": "tsfmt --replace"
   },
   "nyc": {
     "all": true,
@@ -59,16 +61,16 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/gitresources": "^0.1006.2",
-    "@fluidframework/protocol-definitions": "^0.1006.2",
-    "@fluidframework/server-kafka-orderer": "^0.1006.2",
-    "@fluidframework/server-lambdas": "^0.1006.2",
-    "@fluidframework/server-lambdas-driver": "^0.1006.2",
-    "@fluidframework/server-memory-orderer": "^0.1006.2",
-    "@fluidframework/server-services": "^0.1006.2",
-    "@fluidframework/server-services-client": "^0.1006.2",
-    "@fluidframework/server-services-core": "^0.1006.2",
-    "@fluidframework/server-services-utils": "^0.1006.2",
+    "@fluidframework/gitresources": "^0.1008.0",
+    "@fluidframework/protocol-definitions": "^0.1008.0",
+    "@fluidframework/server-kafka-orderer": "^0.1008.0",
+    "@fluidframework/server-lambdas": "^0.1008.0",
+    "@fluidframework/server-lambdas-driver": "^0.1008.0",
+    "@fluidframework/server-memory-orderer": "^0.1008.0",
+    "@fluidframework/server-services": "^0.1008.0",
+    "@fluidframework/server-services-client": "^0.1008.0",
+    "@fluidframework/server-services-core": "^0.1008.0",
+    "@fluidframework/server-services-utils": "^0.1008.0",
     "body-parser": "^1.17.1",
     "bytes": "^3.0.0",
     "commander": "^2.17.1",
@@ -80,7 +82,6 @@
     "json-stringify-safe": "^5.0.1",
     "jsonwebtoken": "^8.4.0",
     "lodash": "^4.17.11",
-    "minio": "^7.0.2",
     "moniker": "^0.1.2",
     "morgan": "^1.8.1",
     "nconf": "^0.10.0",
@@ -89,14 +90,13 @@
     "rimraf": "^2.6.2",
     "split": "^1.0.0",
     "unzip-stream": "^0.3.0",
-    "webpack": "^4.43.0",
     "winston": "^3.1.0",
     "ws": "^6.1.2"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.16.0",
-    "@fluidframework/eslint-config-fluid": "^0.17.0",
-    "@fluidframework/server-test-utils": "^0.1006.2",
+    "@fluidframework/build-common": "^0.17.0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0",
+    "@fluidframework/server-test-utils": "^0.1008.0",
     "@types/bytes": "^3.0.0",
     "@types/compression": "0.0.33",
     "@types/cookie-parser": "^1.4.1",
@@ -145,6 +145,7 @@
     "thread-loader": "^1.2.0",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",
+    "typescript-formatter": "7.1.0",
     "url-loader": "^2.1.0"
   }
 }

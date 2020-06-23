@@ -21,7 +21,7 @@ function verifyClose(
         partition.on("error", (error, restart) => {
             // Clients can either send an explicit value for the error or a boolean indicating whether
             // or not there should have been an error
-            if (typeof(expectedError) === "boolean") {
+            if (typeof (expectedError) === "boolean") {
                 assert(expectedError ? error : !error);
             } else {
                 assert.equal(error, expectedError);

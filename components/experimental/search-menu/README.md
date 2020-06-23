@@ -1,3 +1,3 @@
-# Search Menu
+# @fluid-example/search-menu
 
 Search menu

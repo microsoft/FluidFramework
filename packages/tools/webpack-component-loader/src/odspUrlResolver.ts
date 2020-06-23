@@ -12,19 +12,18 @@ import {
 } from "@fluidframework/odsp-utils";
 
 export class OdspUrlResolver implements IUrlResolver {
-    public readonly isExperimentalUrlResolver = true;
     private readonly driverUrlResolver = new OdspDriverUrlResolver();
 
     constructor(
         private readonly server: string,
         private readonly authRequestInfo: IOdspAuthRequestInfo,
-    ) {}
+    ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         try {
             const resolvedUrl = await this.driverUrlResolver.resolve(request);
             return resolvedUrl;
-        } catch (error) {}
+        } catch (error) { }
 
         const url = new URL(request.url);
 

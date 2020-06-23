@@ -25,7 +25,7 @@ import { serviceRoutePathRoot } from "../containerServices";
 export interface ISharedComponentProps<P extends IComponent = object> {
     readonly runtime: IComponentRuntime,
     readonly context: IComponentContext,
-    readonly providers: AsyncComponentProvider<ComponentKey<P>,ComponentKey<object>>,
+    readonly providers: AsyncComponentProvider<ComponentKey<P>, ComponentKey<object>>,
 }
 
 /**
@@ -37,10 +37,9 @@ export interface ISharedComponentProps<P extends IComponent = object> {
  * S - the initial state type that the produced component may take during creation
  * E - represents events that will be available in the EventForwarder
  */
-export abstract class SharedComponent<P extends IComponent = object, S = undefined, E extends IEvent= IEvent>
+export abstract class SharedComponent<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
     extends EventForwarder<E>
-    implements IComponentLoadable, IComponentRouter, IProvideComponentHandle
-{
+    implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
     private initializeP: Promise<void> | undefined;
     private readonly innerHandle: IComponentHandle<this>;
     private _disposed = false;
@@ -61,7 +60,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      *
      * To define providers set IComponent interfaces in the generic O type for your Component
      */
-    protected readonly providers: AsyncComponentProvider<ComponentKey<P>,ComponentKey<object>>;
+    protected readonly providers: AsyncComponentProvider<ComponentKey<P>, ComponentKey<object>>;
 
     public get disposed() { return this._disposed; }
 
@@ -215,8 +214,6 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      * @deprecated
      * Gets the component of a given id. Will follow the pattern of the container for waiting.
      * @param id - component id
-     * This is maintained for testing, to allow us to fetch the _scheduler for testHost since it is set at initializing
-     * Removal is tracked by issue #1628
      */
     protected async getComponent_UNSAFE<T extends IComponent>(id: string, wait: boolean = true): Promise<T> {
         const request = {

@@ -111,8 +111,8 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 export class DeltaManager
     extends TypedEventEmitter<IDeltaManagerInternalEvents>
     implements
-        IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        IEventProvider<IDeltaManagerInternalEvents>
+    IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+    IEventProvider<IDeltaManagerInternalEvents>
 {
     public get disposed() { return this.isDisposed; }
 
@@ -1185,7 +1185,10 @@ export class DeltaManager
         this._lastSequenceNumber = message.sequenceNumber;
 
         // Back-compat for older server with no term
-        this.baseTerm = message.term === undefined ? 1 : message.term;
+        if (message.term === undefined) {
+            message.term = 1;
+        }
+        this.baseTerm = message.term;
 
         this.emit("beforeOpProcessing", message);
 

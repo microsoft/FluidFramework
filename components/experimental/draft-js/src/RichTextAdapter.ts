@@ -68,18 +68,18 @@ const sharedTextStylePropToDraft = (prop: {}): OrderedSet<string> => {
 };
 
 export const selectionToBlockRange = (selection: SelectionState): BlockTextRange => ({
-  startKey: selection.getStartKey(),
-  startOffset: selection.getStartOffset(),
-  endKey: selection.getEndKey(),
-  endOffset: selection.getEndOffset(),
+    startKey: selection.getStartKey(),
+    startOffset: selection.getStartOffset(),
+    endKey: selection.getEndKey(),
+    endOffset: selection.getEndOffset(),
 });
 
 export const blockRangeToSelection = (range: BlockTextRange, hasFocus: boolean): SelectionState => new SelectionState({
-  anchorKey: range.startKey,
-  anchorOffset: range.startOffset,
-  focusKey: range.endKey,
-  focusOffset: range.endOffset,
-  hasFocus,
+    anchorKey: range.startKey,
+    anchorOffset: range.startOffset,
+    focusKey: range.endKey,
+    focusOffset: range.endOffset,
+    hasFocus,
 });
 
 export const textRangeToBlockTextRangeFromBlocks = (absPos: TextRange, blocks: ContentBlock[]): BlockTextRange => {

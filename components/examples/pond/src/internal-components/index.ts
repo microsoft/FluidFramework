@@ -4,5 +4,4 @@
  */
 
 export * from "./clicker";
-export * from "./clickerWithInitialValue";
 export * from "./exampleUsingProviders";

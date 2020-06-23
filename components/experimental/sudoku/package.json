@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/sudoku",
-  "version": "0.19.7",
+  "version": "0.21.0",
   "description": "Fluid Sudoku",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -28,6 +28,8 @@
     "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
     "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
     "tsc": "tsc",
+    "tsfmt": "tsfmt --verify",
+    "tsfmt:fix": "tsfmt --replace",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },
@@ -35,18 +37,18 @@
     "*.spec.ts"
   ],
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.19.7",
-    "@fluidframework/component-core-interfaces": "^0.19.7",
-    "@fluidframework/map": "^0.19.7",
-    "@fluidframework/view-interfaces": "^0.19.7",
+    "@fluidframework/aqueduct": "^0.21.0",
+    "@fluidframework/component-core-interfaces": "^0.21.0",
+    "@fluidframework/map": "^0.21.0",
+    "@fluidframework/view-interfaces": "^0.21.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "sudokus": "^1.0.2"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.16.0",
-    "@fluidframework/eslint-config-fluid": "^0.17.0",
-    "@fluidframework/webpack-component-loader": "^0.19.7",
+    "@fluidframework/build-common": "^0.17.0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0",
+    "@fluidframework/webpack-component-loader": "^0.21.0",
     "@types/node": "^10.17.24",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",
@@ -71,6 +73,7 @@
     "style-loader": "^1.0.0",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",
+    "typescript-formatter": "7.1.0",
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.8.0",

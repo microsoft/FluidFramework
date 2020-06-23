@@ -369,17 +369,17 @@ export class DAW extends React.Component<DAWProps, DAWState> {
                         onChange={(data) => this.onSongSelectionChange(data.label, data.id)}
                     />
                     <button style={{ marginLeft: 10, height: 36 }} onClick={() => this.startPlaySong(false)}>
-            Play song!
+                        Play song!
                     </button>
                     <button style={{ marginLeft: 10, height: 36 }} onClick={() => this.startPlaySong(true)}>
-            Loop song!
+                        Loop song!
                     </button>
                     <button style={{ marginLeft: 10, height: 36 }} onClick={() => this.stopPlaySong()}>
-            Stop song!
+                        Stop song!
                     </button>
                     <hr />
                     <label>
-            Name of song:
+                        Name of song:
                         <input
                             type="text"
                             value={this.state.customSongName}
@@ -391,10 +391,10 @@ export class DAW extends React.Component<DAWProps, DAWState> {
                         style={{ marginLeft: 10, height: 36 }}
                         onClick={() => this.recorder.startRecording(this.state.customSongName)}
                     >
-            Start Recording!
+                        Start Recording!
                     </button>
                     <button style={{ marginLeft: 10, height: 36 }} onClick={() => this.recorder.stopRecording()}>
-            Stop Recording!
+                        Stop Recording!
                     </button>
                     <hr />
                     <div style={{ margin: 10 }}>
@@ -496,7 +496,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
 
                 <form onSubmit={(event) => this.postSaveInstrument(event)}>
                     <label>
-              Name:
+                        Name:
                         <input
                             type="text"
                             value={this.state.customInstrumentName}

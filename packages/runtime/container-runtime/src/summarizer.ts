@@ -14,11 +14,13 @@ import {
     IPromiseTimerResult,
 } from "@fluidframework/common-utils";
 import {
-    IComponentLoadable,
     IComponentRouter,
     IComponentRunnable,
     IRequest,
     IResponse,
+    IComponentHandleContext,
+    IComponentHandle,
+    IComponentLoadable,
 } from "@fluidframework/component-core-interfaces";
 import { IDeltaManager, ErrorType, ISummarizingWarning } from "@fluidframework/container-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
@@ -33,6 +35,7 @@ import {
 import { GenerateSummaryData, IPreviousState } from "./containerRuntime";
 import { IConnectableRuntime, RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
+import { SummarizerHandle } from "./summarizerHandle";
 
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
@@ -530,9 +533,9 @@ export class RunningSummarizer implements IDisposable {
  * It is the main entry point for summary work.
  */
 export class Summarizer extends EventEmitter implements ISummarizer {
+    public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
-    public get IComponentLoadable() { return this; }
     public get ISummarizer() { return this; }
 
     private readonly logger: ITelemetryLogger;
@@ -545,6 +548,11 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     public readonly summaryCollection: SummaryCollection;
     private stopped = false;
     private readonly stopDeferred = new Deferred<void>();
+    private _disposed: boolean = false;
+
+    private readonly innerHandle: IComponentHandle<this>;
+
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
 
     constructor(
         public readonly url: string,
@@ -553,6 +561,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         // eslint-disable-next-line max-len
         private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
         private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => Promise<void>,
+        handleContext: IComponentHandleContext,
         summaryCollection?: SummaryCollection,
     ) {
         super();
@@ -569,6 +578,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             (op) => this.summaryCollection.handleOp(op));
 
         this.runtime.previousState.nextSummarizerD?.resolve(this);
+        this.innerHandle = new SummarizerHandle(this, this.url, handleContext);
     }
 
     public async run(onBehalfOf: string): Promise<void> {
@@ -689,8 +699,11 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.runtime.deltaManager.lastSequenceNumber,
             initialAttempt,
             this.immediateSummary,
-            (description: string) =>
-                this.emit("summarizingError", createSummarizingWarning(`Summarizer: ${description}`, true)),
+            (description: string) => {
+                if (!this._disposed) {
+                    this.emit("summarizingError", createSummarizingWarning(`Summarizer: ${description}`, true));
+                }
+            },
         );
         this.runningSummarizer = runningSummarizer;
 
@@ -725,6 +738,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      * properties.
      */
     public dispose() {
+        this._disposed = true;
         if (this.runningSummarizer) {
             this.runningSummarizer.dispose();
             this.runningSummarizer = undefined;

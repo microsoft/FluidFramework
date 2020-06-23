@@ -27,7 +27,7 @@ import { debug } from "./debug";
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 export class TestDocumentDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection  {
+    implements IDocumentDeltaConnection {
     public static async create(
         tenantId: string,
         id: string,
@@ -197,7 +197,7 @@ export class TestDocumentDeltaConnection
                 });
         });
 
-        this.on("newListener",(event, listener)=>{
+        this.on("newListener", (event, listener) => {
             this.socket.on(
                 event,
                 (...args: any[]) => {
