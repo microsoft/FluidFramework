@@ -1,7 +1,7 @@
-# adminportal
+# admin
 
-[![Admin Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/17/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=17)
+Fluid admin portal, this allows you to create new tenants in the Fluid Framework reference implementation.
 
-Fluid admin portal.
+## What is a tenant within the Routerlicious framework?
 
-To begin you'll need to connect to the Fluid private npm repository. Instructions can be found [here](../routerlicious/README.md#authorizing-to-private-npm-feed)
+Coming soon...

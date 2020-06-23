@@ -3,29 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { TextSegment } from "@fluidframework/merge-tree";
-import { TestHost } from "@fluidframework/local-test-utils";
 import assert from "assert";
-import "mocha";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
+import { TextSegment } from "@fluidframework/merge-tree";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { FlowDocument } from "../src/document";
 import { SegmentSpan } from "../src/document/segmentspan";
 
-const flowDocumentFactory = FlowDocument.getFactory();
-
 describe("SegmentSpan", () => {
-    let host: TestHost;
+    const id = "fluid-test://localhost/segmentSpanTest";
+    const codeDetails = {
+        package: "segmentSpanTestPkg",
+        config: {},
+    };
+
     let doc: FlowDocument;
 
     before(async () => {
-        host = new TestHost([
-            [flowDocumentFactory.type, Promise.resolve(flowDocumentFactory)],
-        ]);
+        const deltaConnectionServer = LocalDeltaConnectionServer.create();
+        const loader = createLocalLoader([[codeDetails, FlowDocument.getFactory()]], deltaConnectionServer);
+        const container = await initializeLocalContainer(id, loader, codeDetails);
 
-        doc = await host.createAndAttachComponent("test-doc", flowDocumentFactory.type);
-    });
-
-    after(async () => {
-        await host.close();
+        const response = await container.request({ url: "default" });
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            throw new Error(`Default component not found`);
+        }
+        doc = response.value;
     });
 
     function setup(chunks: string[]) {

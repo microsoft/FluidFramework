@@ -4576,7 +4576,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.sharedString.insertMarker(markerPos, MergeTree.ReferenceType.Simple, props);
         const mathMarker = getContainingSegment(this, markerPos).segment as IMathViewMarker;
         mathMarker.instance = mathInstance;
-        mathInstance.registerSearchMenuHost(this);
+        if (mathInstance.ISearchMenuClient) {
+            mathInstance.registerSearchMenuHost(this);
+        }
         this.cursor.disable();
         this.componentCursor = mathMarker.instance;
         mathMarker.instance.enter(ComponentCursorDirection.Left);

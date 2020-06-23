@@ -1,0 +1,36 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# server-gateway pipeline
+
+name: $(Build.BuildId)
+
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - server/gateway
+    - tools/pipelines/server-gateway.yml
+    - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-generate-notice-steps.yml
+  
+pr:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - server/gateway
+    - tools/pipelines/server-gateway.yml
+    - tools/pipelines/templates/build-docker-service.yml
+  
+extends:
+  template: templates/build-docker-service.yml
+  parameters:
+    buildDirectory: server/gateway
+    containerName: gateway
+    test: true
+    lint: true
+    containerBaseDir: /usr/src/server

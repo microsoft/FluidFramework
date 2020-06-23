@@ -15,6 +15,7 @@ import {
     IValueChanged,
     IValueOpEmitter,
     IValueType,
+    IValueTypeCreator,
     IValueTypeOperationValue,
     ISharedMapEvents,
 } from "./interfaces";
@@ -137,7 +138,7 @@ export interface IMapDataObjectSerialized {
 /**
  * A SharedMap is a map-like distributed data structure.
  */
-export class MapKernel {
+export class MapKernel implements IValueTypeCreator {
     /**
      * The number of key/value pairs stored in the map.
      */
@@ -392,6 +393,7 @@ export class MapKernel {
             value: serializableValue,
         };
         this.submitMapKeyMessage(op);
+        return this;
     }
 
     /**

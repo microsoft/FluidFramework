@@ -42,7 +42,7 @@ import {
     IEnvelope,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
-import { strongAssert } from "@fluidframework/runtime-utils";
+import { strongAssert, unreachableCase } from "@fluidframework/runtime-utils";
 import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
@@ -62,10 +62,6 @@ export interface ISharedObjectRegistry {
     get(name: string): ISharedObjectFactory | undefined;
 }
 
-function assertNeverMessageType(messageType: never): never {
-    throw new Error(`Never: unknown message type: ${messageType}`);
-}
-
 /**
  * Base component class
  */
@@ -83,7 +79,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         sharedObjectRegistry: ISharedObjectRegistry,
         componentRegistry?: IComponentRegistry,
     ): ComponentRuntime {
-        const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { componentId: context.id });
+        const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { componentId: uuid() });
         const runtime = new ComponentRuntime(
             context,
             context.documentId,
@@ -509,6 +505,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             }
         }
 
+        // Fire this event telling dds that we are going live and they can do any
+        // custom processing based on that.
+        this.emit("collaborating");
+
         return entries;
     }
 
@@ -603,7 +603,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 this.submit(type, content, localOpMetadata);
                 break;
             default:
-                assertNeverMessageType(type);
+                unreachableCase(type);
         }
     }
 
@@ -630,6 +630,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     private attachListener() {
+        this.setMaxListeners(Number.MAX_SAFE_INTEGER);
         this.componentContext.on("leader", () => {
             this.emit("leader");
         });

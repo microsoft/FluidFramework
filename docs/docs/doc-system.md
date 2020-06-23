@@ -100,10 +100,10 @@ a single level of the folder hierarchy, or simply avoid relative links in reusab
 
 You can include files located anywhere in the repo using the same `!!!include()` syntax. The path to the file in the
 repo must be specified relative to `docs/.vuepress/includes`. For example, if you want to include the readme file at
-`packages/runtime/sequence/readme.md`, for example, you would specify the include path like so:
+`packages/dds/sequence/README.md`, for example, you would specify the include path like so:
 
 ```markdown
-!!!innclude(../../../packages/runtime/sequence/readme.md)!!!
+!!!innclude(../../../packages/dds/sequence/README.md)!!!
 ```
 
 You can create a simple wrapper page within the docs folder, then include a file from the repo within it. See

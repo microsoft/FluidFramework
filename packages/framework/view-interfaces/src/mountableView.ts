@@ -11,9 +11,19 @@ export interface IProvideComponentMountableView {
     readonly IComponentMountableView: IComponentMountableView;
 }
 
+/**
+ * IComponentMountableViewClass defines the statics on our class implementing IComponentMountableView.
+ */
 export interface IComponentMountableViewClass {
-    new(viewProvider: IComponent): IComponentMountableView;
-    canMount(viewProvider: IComponent): boolean;
+    /**
+     * @param view - The view to make mountable
+     */
+    new(view: IComponent): IComponentMountableView;
+    /**
+     * Test whether the given view can be successfully mounted by a MountableView.
+     * @param view - the view to test if it can be mounted.
+     */
+    canMount(view: IComponent): boolean;
 }
 
 /**
@@ -30,6 +40,7 @@ export interface IComponentMountableViewClass {
 export interface IComponentMountableView extends IProvideComponentMountableView {
     /**
      * Mounts the view at the given element.
+     * @param container - the DOM parent of the view we will mount
      */
     mount(container: HTMLElement): void;
 

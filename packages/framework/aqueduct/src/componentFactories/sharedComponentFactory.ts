@@ -26,6 +26,11 @@ import {
 } from "../components";
 
 /**
+ * SharedComponentFactory is a barebones IComponentFactory for use with SharedComponent.
+ * Consumers should typically use PrimedComponentFactory instead unless creating
+ * another base component factory.
+ *
+ * Generics:
  * P - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced component may take during creation
  */
@@ -56,6 +61,12 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
         return this.registry;
     }
 
+    /**
+     * Convenience helper to get the component's/factory's component registry entry.
+     * The return type hides the factory's generics, easing grouping of registry
+     * entries that differ only in this way into the same array.
+     * @returns The NamedComponentRegistryEntry
+     */
     public get registryEntry(): NamedComponentRegistryEntry {
         return [this.type, Promise.resolve(this)];
     }
@@ -69,6 +80,11 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
         this.instantiateComponentWithInitialState(context, undefined);
     }
 
+    /**
+     * Private method for component instantiation that exposes initial state
+     * @param context - Component context used to load a component runtime
+     * @param initialState  - The initial state to provide the created component
+     */
     private instantiateComponentWithInitialState(
         context: IComponentContext,
         initialState?: S): void {
@@ -117,6 +133,15 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
         return instance;
     }
 
+    /**
+     * Implementation of IComponentFactory's createComponent method that also exposes an initial
+     * state argument.  Only specific factory instances are intended to take initial state.
+     * @param context - The component context being used to create the component
+     * (the created component will have its own new context created as well)
+     * @param initialState - The initial state to provide to the created component.
+     * @returns A promise for a component that will have been initialized. Caller is responsible
+     * for attaching the component to the provided runtime's container such as by storing its handle
+     */
     public async createComponent(
         context: IComponentContext,
         initialState?: S,
