@@ -388,9 +388,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     let appCommit: string | undefined;
                     this.initTreesCache(trees);
                     for (const [key, treeVal] of this.treesCache.entries()) {
-                        if (appCommit) {
-                            break;
-                        }
+                        // Path for app entries in cache starts with .app, so look for appCommit first in the entries.
                         for (const entry of treeVal.entries) {
                             if (entry.type === "commit" && entry.path === ".app") {
                                 // This is the unacked handle of the latest summary generated.
@@ -398,7 +396,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 break;
                             }
                         }
-                        assert(appCommit); // .app commit should be first entry in first entry.
+
                         for (const entry of treeVal.entries) {
                             if (entry.type === "blob") {
                                 blobsIdToPathMap.set(idFromSpoEntry(entry), key === appCommit ? `/.app/${entry.path}` : `/${entry.path}`);
