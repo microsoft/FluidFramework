@@ -178,6 +178,8 @@ export class DeltaManager
     private deltaStorageDelay: number = 0;
     private deltaStreamDelay: number = 0;
 
+    private trackingCurrentConnectionFirstOp = false;
+
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
     }
@@ -870,6 +872,7 @@ export class DeltaManager
      */
     private setupNewSuccessfulConnection(connection: DeltaConnection, requestedMode: ConnectionMode) {
         this.connection = connection;
+        this.trackingCurrentConnectionFirstOp = true;
 
         // Does information in scopes & mode matches?
         // If we asked for "write" and got "read", then file is read-only
@@ -900,8 +903,10 @@ export class DeltaManager
 
         connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
             if (messages instanceof Array) {
+                this.webSocketOps(messages);
                 this.enqueueMessages(messages);
             } else {
+                this.webSocketOps([messages]);
                 this.enqueueMessages([messages]);
             }
         });
@@ -1086,6 +1091,7 @@ export class DeltaManager
         }
         if (messages.length > 0) {
             this.catchUp(messages, firstConnection ? "InitialOps" : "ReconnectOps");
+            this.webSocketOps(messages);
         }
         for (const signal of signals) {
             this._inboundSignal.push(signal);
@@ -1220,6 +1226,7 @@ export class DeltaManager
             this.catchUpCore(messages, telemetryEventSuffix);
         });
 
+        this.doneFetchingOps();
         this.fetching = false;
     }
 
@@ -1305,5 +1312,20 @@ export class DeltaManager
             clearTimeout(this.updateSequenceNumberTimer);
         }
         this.updateSequenceNumberTimer = undefined;
+    }
+
+    private webSocketOps(messages: ISequencedDocumentMessage[]) {
+        assert(this.connection);
+        if (this.trackingCurrentConnectionFirstOp && messages.length > 0) {
+            this.trackingCurrentConnectionFirstOp = false;
+            this.emit("currentSeqNumber", messages[messages.length - 1].sequenceNumber);
+        }
+    }
+
+    private doneFetchingOps() {
+        if (this.connection && this.trackingCurrentConnectionFirstOp) {
+            this.trackingCurrentConnectionFirstOp = false;
+            this.emit("currentSeqNumber", this.lastQueuedSequenceNumber);
+        }
     }
 }
