@@ -3,9 +3,4 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const perfNow = require("performance-now") as (() => number);
-
-export function performanceNow() {
-    return perfNow();
-}
+export { default as performanceNow } from "performance-now";

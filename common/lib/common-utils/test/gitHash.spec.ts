@@ -6,7 +6,7 @@
 import assert from "assert";
 import fs from "fs";
 import path from "path";
-import { gitHashFile, gitHashFileAsync } from "..";
+import { gitHashFile, gitHashFileAsync } from "../src";
 
 async function getFileContents(p: string): Promise<Buffer> {
     return new Promise<Buffer>((resolve, reject) => {
@@ -21,7 +21,7 @@ async function getFileContents(p: string): Promise<Buffer> {
     });
 }
 
-const dataDir = "../../src/test";
+const dataDir = ".";
 
 describe("Core-Utils", () => {
     // Expected hashes are from git hash-object file...
