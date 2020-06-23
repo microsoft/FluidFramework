@@ -11,15 +11,15 @@ interface ILayerInfo {
     deps?: string[];
     packages?: string[];
     dirs?: string[];
-    dev?: boolean;
-    dot?: boolean;
-    dotSameRank?: boolean;
+    dev?: true;
+    dot?: false;
+    dotSameRank?: true;
 };
 
 interface ILayerGroupInfo {
-    dot?: boolean;
-    dotSameRank?: boolean;
-    dotGroup?: boolean;
+    dot?: false;
+    dotSameRank?: true;
+    dotGroup?: false;
     layers: { [key: string]: ILayerInfo }
 }
 
@@ -36,11 +36,16 @@ class BaseNode {
 };
 
 class LayerNode extends BaseNode {
-    private packages = new Set<PackageNode>();
+    //* Ok to make public?
+    public packages = new Set<PackageNode>();
     private allowedDependentPackageNodes = new Set<PackageNode>();
     private allowedDependentLayerNodes: LayerNode[] = [];
 
-    constructor(name: string, public readonly layerInfo: ILayerInfo, private readonly groupNode: GroupNode) {
+    constructor(
+        name: string,
+        public readonly layerInfo: ILayerInfo,
+        private readonly groupNode: GroupNode
+    ) {
         super(name);
     }
 
@@ -51,22 +56,31 @@ class LayerNode extends BaseNode {
 
     private get dotSameRank() {
         // default to false
-        return this.layerInfo.dotSameRank === true;
+        return this.layerInfo.dotSameRank ?? false;
     }
 
     public get isDev() {
         // default to false
-        return this.layerInfo.dev === true;
+        return this.layerInfo.dev ?? false;
     }
 
+    /**
+     * Record that the given package is part of this layer
+     */
     public addPackage(packageNode: PackageNode) {
         this.packages.add(packageNode);
     }
 
+    /**
+     * Record that packages in this layer are allowed to depend on the given package
+     */
     public addAllowedDependentPackageNode(dep: PackageNode) {
         this.allowedDependentPackageNodes.add(dep);
     }
 
+    /**
+     * Record that packages in this layer are allowed to depend on packages in the given layer
+     */
     public addAllowedDependentLayerNode(dep: LayerNode) {
         this.allowedDependentLayerNodes.push(dep);
     }
@@ -85,6 +99,9 @@ class LayerNode extends BaseNode {
     }`;
     }
 
+    /**
+     * Verify that this layer is allowed to depend on the given PackageNode
+     */
     public verifyDependent(dep: PackageNode) {
         if (this.packages.has(dep)) {
             logVerbose(`Found: ${dep.name} in ${this.name}`);
@@ -115,17 +132,17 @@ class GroupNode extends BaseNode {
 
     public get doDot() {
         // default to true
-        return this.groupInfo.dot !== false;
+        return this.groupInfo.dot ?? true;
     }
     
     private get dotSameRank() {
         // default to false
-        return this.groupInfo.dotSameRank === true;
+        return this.groupInfo.dotSameRank ?? false;
     }
 
     private get dotGroup() {
         // default to true
-        return this.groupInfo.dotGroup !== false;
+        return this.groupInfo.dotGroup ?? true;
     }
 
     public createLayerNode(name: string, layerInfo: ILayerInfo) {
@@ -176,7 +193,7 @@ class PackageNode extends BaseNode {
     }
 
     public get dotName() {
-        return this.name.replace(/@microsoft\/fluid\-/, "");
+        return this.name.replace(/@fluidframework\//i, "");
     }
 
     public get pkg() {
@@ -246,6 +263,7 @@ export class LayerGraph {
         this.initializePackages(packages);
     }
 
+    //* Consider cleaning up initailizeLayers and initializePackages - handling of dirs is intermingled and hard to follow
     private initializeLayers(root: string, layerInfo: ILayerInfoFile) {
         // First pass get the layer nodes
         for (const groupName of Object.keys(layerInfo)) {
@@ -358,21 +376,41 @@ export class LayerGraph {
     }
 
     private generateDotEdges() {
-        const entries: string[] = [];
+    }
+    public generateDotGraph() {
+        const dotEdges: string[] = [];
         this.forEachDependencies((packageNode, depPackageNode) => {
             if (packageNode.doDot && !packageNode.indirectDependencies.has(depPackageNode)) {
                 const suffix = packageNode.indirectDependencies.has(depPackageNode) ? " [constraint=false color=lightgrey]" :
                     (packageNode.layerNode != depPackageNode.layerNode && packageNode.level - depPackageNode.level > 3) ? " [constraint=false]" : "";
-                entries.push(`"${packageNode.dotName}"->"${depPackageNode.dotName}"${suffix}`);
+                dotEdges.push(`"${packageNode.dotName}"->"${depPackageNode.dotName}"${suffix}`);
             }
             return true;
         });
-        return entries.join("\n  ");
-    }
-    public generateDotGraph() {
-        return `strict digraph G { graph [ newrank=true; ranksep=2; compound=true ]; ${this.groupNodes.map(group => group.generateDotSubgraph()).join("")}
-  ${this.generateDotEdges()}
+        const dotGraph =
+`strict digraph G { graph [ newrank=true; ranksep=2; compound=true ]; ${this.groupNodes.map(group => group.generateDotSubgraph()).join("")}
+  ${dotEdges.join("\n  ")}
 }`;
+        return dotGraph;
+    }
+
+    public generatePackagesLayerChart() {
+        const lines: string[] = [];
+
+        //* TODO: Sort these, and maybe group them further
+        for (const [layerName, layerNode] of this.layerNodeMap) {
+            lines.push(`- ${layerName}`);
+            for (const packageNode of layerNode.packages) {
+                lines.push(`  - ${packageNode.name}`);
+            }
+        }
+
+        const packagesMdContents: string =
+`# All Packages
+
+${lines.join("\n  ")}
+`;
+        return packagesMdContents;
     }
 
     public static load(root: string, packages: Packages) {

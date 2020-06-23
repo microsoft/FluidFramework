@@ -245,6 +245,9 @@ async function queueExec<TItem, TResult>(items: Iterable<TItem>, exec: (item: TI
 }
 
 export class Packages {
+    public constructor(public readonly packages: Package[]) {
+    }
+
     public static loadTree(root: string, monoRepo?: MonoRepo, ignoreDirs?: string[]) {
         const packages: Package[] = [];
         const files = fs.readdirSync(root, { withFileTypes: true });
@@ -265,8 +268,6 @@ export class Packages {
         }
 
         return packages;
-    }
-    public constructor(public readonly packages: Package[]) {
     }
 
     public async cleanNodeModules() {

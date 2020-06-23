@@ -42,6 +42,7 @@ export const writeFileSync = fs.writeFileSync;
 export const unlinkAsync = util.promisify(fs.unlink);
 export const existsSync = fs.existsSync;
 export const appendFileSync = fs.appendFileSync;
+export const appendFileAsync = util.promisify(fs.appendFile);
 export const renameSync = fs.renameSync;
 export const realpathAsync = util.promisify(fs.realpath.native);
 export const symlinkAsync = util.promisify(fs.symlink);

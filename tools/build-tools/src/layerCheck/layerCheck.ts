@@ -7,8 +7,9 @@ import { LayerGraph } from "./layerGraph";
 import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { writeFileAsync } from "../common/utils";
+import { writeFileAsync, appendFileAsync } from "../common/utils";
 import { FluidRepoBase } from "../common/fluidRepoBase";
+import path from "path";
 
 function printUsage() {
     console.log(
@@ -20,7 +21,9 @@ ${commonOptionString}
 `);
 }
 
-let dotGraph: string | undefined;
+const packagesMdFileName: string = "docs/PACKAGES.md";
+
+let dotGraphFilePath: string | undefined;
 
 function parseOptions(argv: string[]) {
     let error = false;
@@ -44,7 +47,7 @@ function parseOptions(argv: string[]) {
 
         if (arg === "--dot") {
             if (i !== process.argv.length - 1) {
-                dotGraph = process.argv[++i];
+                dotGraphFilePath = process.argv[++i];
                 continue;
             }
             console.error("ERROR: Missing argument for --dot");
@@ -77,8 +80,17 @@ async function main() {
     try {
         const layerGraph = LayerGraph.load(resolvedRoot, packages);
 
-        if (dotGraph !== undefined) {
-            await writeFileAsync(dotGraph, layerGraph.generateDotGraph());
+        //* TODO: Include all packages (i.e. the server ones excluded by new FluidRepoBase above)
+        //* TODO: Hide behind an option
+        // Write human-readable package list organized by layer
+        if (true) {
+            const packagesMdFilePath: string = path.join(resolvedRoot, packagesMdFileName);
+            await writeFileAsync(packagesMdFilePath, layerGraph.generatePackagesLayerChart());
+        }
+
+        // Write machine-readable dot file used to render a dependency graph
+        if (dotGraphFilePath !== undefined) {
+            await writeFileAsync(dotGraphFilePath, layerGraph.generateDotGraph());
         }
         const success = layerGraph.verify();
         timer.time("Layer check completed");
