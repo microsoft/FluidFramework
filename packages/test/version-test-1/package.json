@@ -39,7 +39,7 @@
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
-    "@fluidframework/common-utils": "^0.19.1",
+    "@fluidframework/common-utils": "^0.20.0-0",
     "@fluidframework/test-tools": "^0.1.0",
     "@fluidframework/webpack-component-loader": "^0.21.0",
     "@types/jest": "22.2.3",
