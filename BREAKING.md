@@ -4,6 +4,7 @@
 - [Removed `@fluidframework/local-test-utils`](#removed-`@fluidframework/local-test-utils`)
 - [IComponentHTMLVisual deprecated](#IComponentHTMLVisual-deprecated)
 - [createValueType removed from SharedMap and SharedDirectory](#createValueType-removed-from-SharedMap-and-SharedDirectory)
+- [Add Undefined to getAbsoluteUrl return type](#Add-Undefined-to-getAbsoluteUrl-return-type)
 
 ### Removed `@fluidframework/local-test-utils`
 Removed this package so classes like `TestHost` are no longer supported. Please contact us if there were dependencies on this or if any assistance in required to get rid of it.
@@ -25,13 +26,39 @@ The `Counter` value type and `createValueType()` method on `SharedMap` and `Shar
 
 aqueduct-react is actually just a react library and renamed it to reflect such.
 
+
+### Add Undefined to getAbsoluteUrl return type
+
+getAbsoluteUrl on the container runtime and component context now returns `string | undefined`. `undefined` will be returned if the container or component is not attached. You can determine if the a components url wil the below snippit
+```typescript
+protected async componentHasInitialized() {
+    if (!this.context.isLocal()) {
+        this._absoluteUrl = await this.context.getAbsoluteUrl(this.url);
+    }
+
+    if (this._absoluteUrl === undefined) {
+        this.runtime.on(
+            "collaborating",
+            () => {
+                this.context.getAbsoluteUrl(this.url)
+                    .then((url) => {
+                        this._absoluteUrl = url;
+                        this.emit("stateChanged");
+                        return undefined;
+                    })
+                    .catch(() => { });
+            });
+    }
+}
+```
+
 ## 0.19 Breaking Changes
 - [Container's "error" event](#Container-Error-Event)
 - [IUrlResolver change from requestUrl to getAbsoluteUrl](#IUrlResolver-change-from-requestUrl-to-getAbsoluteUrl)
 - [Package rename from `@microsoft/fluid-*` to `@fluidframework/*`](#package-rename)
 
 ### Package rename
-Package with the prefix "@microsoft/fluid-" is renamed to "@fluidframework/" to take advanage a separate namespace for fluid framework SDK packages. 
+Package with the prefix "@microsoft/fluid-" is renamed to "@fluidframework/" to take advanage a separate namespace for fluid framework SDK packages.
 
 ### Container Error Event
 "error" event is gone. All critical errors are raised on "closed" event via optiona error object.

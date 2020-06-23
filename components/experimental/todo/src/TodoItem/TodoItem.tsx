@@ -104,9 +104,11 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
 
         if (!this.context.isLocal()) {
             this._absoluteUrl = await this.context.getAbsoluteUrl(this.url);
-        } else {
-            this.runtime.once(
-                "op",
+        }
+
+        if (this._absoluteUrl === undefined) {
+            this.runtime.on(
+                "collaborating",
                 () => {
                     this.context.getAbsoluteUrl(this.url)
                         .then((url) => {
