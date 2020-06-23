@@ -10,8 +10,6 @@ import { getResolvedFluidRoot } from "../common/fluidUtils";
 import path from "path";
 import { Package, Packages } from "../common/npmPackage";
 import { writeFileAsync, readFileSync, writeFileSync, existsSync, appendFileSync, renameSync } from "../common/utils";
-import chalk from "chalk";
-import replace from "replace-in-file";
 
 function printUsage() {
     console.log(
@@ -63,20 +61,10 @@ function parseOptions(argv: string[]) {
 
 parseOptions(process.argv);
 
-type IReadmeInfo = {
-    exists: false;
-} | {
-    exists: true;
-    title: string;
-    stub: boolean;
-}
-
 interface IPackageInfo {
     fullName: string,
     scopedName?: string,
     dir: string;
-    folderName: string;
-    readmeInfo: IReadmeInfo;
     published: boolean,
 }
 
@@ -85,49 +73,15 @@ namespace IPackageInfo {
         `| [${info.fullName}](/${path.relative(repoRoot!, info.dir).replace(/\\/g, "/")}) | ${info.published ? "published" : "private"} |\n`;
 }
 
-const readmeTitleRegexp: RegExp = /^# (.+)$/;  // e.g. # @fluidframework/build-tools
-
-function getReadmeInfo(dir: string): IReadmeInfo {
-    const readmePath = path.join(dir, "README.md");
-    if (!existsSync(readmePath)) {
-        return { exists: false };
-    }
-
-    const findThreeNonemptyLines = (lines: string[]) => {
-        let nonemptyLineCount = 0;
-        for (const line of lines) {
-            if (line.trim() !== "") {
-                ++nonemptyLineCount;
-            }
-            if (nonemptyLineCount >= 3) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    const readme = readFileSync(readmePath, "utf8");
-    const lines = readme.split(/\r?\n/);
-    const titleMatches = readmeTitleRegexp.exec(lines[0]);
-    const title = titleMatches?.[1] ?? "";
-    return {
-        exists: true,
-        title,
-        stub: !findThreeNonemptyLines(lines),
-    };
-}
-
 function getPackageInfo(pkg: Package): IPackageInfo {
     assert(repoRoot);
 
     const fullName = pkg.name;
     const [, scopedName] = fullName.split("/") as [string, string];
     const dir = pkg.directory;
-    const folderName = path.basename(dir);
-    const readmeInfo = getReadmeInfo(dir);
     const published = pkg.isPublished;
 
-    return { fullName, scopedName, dir, folderName, readmeInfo, published };
+    return { fullName, scopedName, dir, published };
 }
 
 function appendInfoToFile(info: IPackageInfo) {
@@ -137,55 +91,11 @@ function appendInfoToFile(info: IPackageInfo) {
     appendFileSync(filePath, fileLine);
 }
 
-const renameCmds: string[] = [];
-
 function processPackageInfo(info: IPackageInfo) {
     if (info.fullName === "root") {
         return;
     }
-    
     appendInfoToFile(info);
-
-    console.log();
-
-    const expectedFolderName = info.scopedName ?? info.fullName;
-    const readmeFilePath = path.join(info.dir, "README.md");
-    const readmeTitle = `# ${info.fullName}`;
-    if (info.folderName !== expectedFolderName) {
-        console.log(chalk.yellowBright(`Folder name mismatch [${info.fullName}]`));
-        console.log(`  Package ${info.fullName} is in Folder "${info.folderName}"`);
-
-        if (fix) {
-            const renameRegexp = new RegExp(`\\\\${info.folderName}$`);
-            const newDir: string = info.dir.replace(renameRegexp, `\\${expectedFolderName}`);
-            renameCmds.push(`Rename-Item -Path ${info.dir} -NewName ${newDir}`);
-        }
-    }
-    if (!info.readmeInfo.exists) {
-        console.log(chalk.redBright(`Readme missing [${info.fullName}]`));
-        console.log(`  Package ${info.fullName} has no README.md`);
-        
-        if (fix) {
-            const readmeFilePath = path.join(info.dir, "README.md");
-            writeFileSync(readmeFilePath, `${readmeTitle}\n`);
-        }
-    }
-    else if (info.readmeInfo.title !== info.fullName) {
-        console.log(chalk.redBright(`Readme title mismatch [${info.fullName}]`));
-        console.log(`  Readme for Package ${info.fullName} begins with heading "${info.readmeInfo.title}" instead of heading "${info.fullName}"`);
-
-        if (fix) {
-            replace.sync({
-                files: readmeFilePath,
-                from: /^(.*)/,
-                to: readmeTitle,
-            });
-        }
-    }
-    else if (info.readmeInfo.stub) {
-        console.log(chalk.yellowBright(`Stub readme [${info.fullName}]`));
-        console.log(`  Readme for Package ${info.fullName} is just a stub and needs more content`);
-    }
 }
 
 let repoRoot: string | undefined;
@@ -210,20 +120,7 @@ async function main() {
             .sort((a, b) => a.dir < b.dir ? -1 : a.dir == b.dir ? 0 : 1) // sort in ABC order by directory
             .forEach(processPackageInfo);
 
-        console.log("\nRun these commands to rename mismatched folders:")
-        renameCmds.forEach((cmd) => console.log(cmd));
-
         process.exit(0);
-
-        //* TODO
-        /**
-         * 3. Misc
-         *      - Use relative links for Directory
-         * 4. Optional
-         *      - Incorporate Layer info?
-         *      - Merge IPackageInfo etc into npmPackage.ts model?
-         *      - Also compare package.json format/scripts/etc?
-         */
     } catch (e) {
         console.error(e.message);
         process.exit(-2);
