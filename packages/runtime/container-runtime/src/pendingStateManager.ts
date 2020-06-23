@@ -145,20 +145,29 @@ export class PendingStateManager {
             return;
         }
 
-        // If we are processing a batch, add this message to the pending batch queue.
-        if (this.isProcessingBatch) {
-            this.pendingBatchMessages.push(message);
-        }
-
-        // Remove the first message from the pending list since it has been acknowledged.
+        // Remove the first message from the pending list since it has been processed.
         this.pendingStates.shift();
+
+        if (this.isProcessingBatch) {
+            // If we are processing a batch, add this message to the pending batch queue.
+            this.pendingBatchMessages.push(message);
+
+            // This may be the last message in the batch. If so, we need to process the "flush" state for batch end as
+            // we have received the entire batch.
+            const nextPendingState = this.pendingStates.peekFront();
+            assert(nextPendingState, "We should at least have the pending flush state indicating end of batch");
+
+            if (nextPendingState.type === "flush") {
+                this.processFlushState(nextPendingState);
+                this.pendingStates.shift();
+            }
+        }
 
         return pendingState.localOpMetadata;
     }
 
     /**
      * Verifies that the batch metadata is received as the per the "flush" state.
-     * @param message - The message we are currently processing.
      * @param pendingState - The "flush" state to process.
      */
     private processFlushState(pendingState: IPendingState) {
@@ -166,8 +175,11 @@ export class PendingStateManager {
 
         const pendingFlushMode = pendingState.flushMode;
 
-        // If FlushMode was set to Manual prior to this message, this is the beginning of a batch.
+        // If FlushMode was set to Manual, this is the beginning of a batch.
         if (pendingFlushMode === FlushMode.Manual) {
+            // We should not already be processing a batch.
+            assert(!this.isProcessingBatch, "FlushMode should never be set to Manual in the middle of a batch");
+
             this.pendingBatchMessages = [];
             this.isProcessingBatch = true;
             return;
@@ -186,16 +198,15 @@ export class PendingStateManager {
             const batchBeginMetadata = this.pendingBatchMessages[0].metadata?.batch;
             const batchEndMetadata = this.pendingBatchMessages[batchCount - 1].metadata?.batch;
 
-            // If there is a single message in the batch, it should not have any batch metadata.
             if (batchCount === 1) {
+                // If there is a single message in the batch, it should not have any batch metadata.
                 assert(batchBeginMetadata === undefined,
                     "Batch with single message should not have batch metadata");
-                return;
+            } else {
+                // For multiple messages in the batch, assert that we got batch begin and end metadata.
+                assert(batchBeginMetadata === true, "Did not receive batch begin metadata");
+                assert(batchEndMetadata === false, "Did not receive batch end metadata");
             }
-
-            // Assert that we got batch begin and end metadata.
-            assert(batchBeginMetadata === true, "Did not receive batch begin metadata");
-            assert(batchEndMetadata === false, "Did not receive batch end metadata");
 
             this.pendingBatchMessages = [];
             this.isProcessingBatch = false;
