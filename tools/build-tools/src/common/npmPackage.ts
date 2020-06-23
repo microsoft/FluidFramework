@@ -32,6 +32,7 @@ interface IPerson {
 interface IPackage {
     name: string;
     version: string;
+    private: boolean;
     description: string;
     keywords: string[];
     homepage: string;
@@ -103,6 +104,10 @@ export class Package {
 
     public get version(): string {
         return this.packageJson.version;
+    }
+
+    public get isPublished(): boolean {
+        return !this.packageJson.private;
     }
 
     public get matched() {
@@ -240,23 +245,27 @@ async function queueExec<TItem, TResult>(items: Iterable<TItem>, exec: (item: TI
 }
 
 export class Packages {
-    public static loadDir(dir: string, monoRepo?: MonoRepo, ignoreDirs?: string[]) {
-        const packageJsonFileName = path.join(dir, "package.json");
-        if (existsSync(packageJsonFileName)) {
-            return [new Package(packageJsonFileName, monoRepo)];
-        }
-
+    public static loadTree(root: string, monoRepo?: MonoRepo, ignoreDirs?: string[]) {
         const packages: Package[] = [];
-        const files = fs.readdirSync(dir, { withFileTypes: true });
+        const files = fs.readdirSync(root, { withFileTypes: true });
         files.map((dirent) => {
             if (dirent.isDirectory() && dirent.name !== "node_modules"
                 && (ignoreDirs === undefined || !ignoreDirs.includes(dirent.name))) {
-                packages.push(...Packages.loadDir(path.join(dir, dirent.name), monoRepo));
+                packages.push(...Packages.loadDir(path.join(root, dirent.name), monoRepo, ignoreDirs));
             }
         });
         return packages;
     }
 
+    public static loadDir(dir: string, monoRepo?: MonoRepo, ignoreDirs?: string[]) {
+        const packages: Package[] = this.loadTree(dir, monoRepo, ignoreDirs);
+        const packageJsonFileName = path.join(dir, "package.json");
+        if (existsSync(packageJsonFileName)) {
+            packages.push(new Package(packageJsonFileName, monoRepo));
+        }
+
+        return packages;
+    }
     public constructor(public readonly packages: Package[]) {
     }
 
