@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
-    "@fluidframework/common-utils": "^0.19.1",
+    "@fluidframework/common-utils": "^0.20.0-0",
     "@fluidframework/driver-definitions": "^0.21.0",
     "@fluidframework/driver-utils": "^0.21.0",
     "@fluidframework/protocol-base": "^0.1008.0-0",
@@ -36,7 +36,7 @@
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.17.0",
+    "@fluidframework/build-common": "^0.18.0-0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/debug": "^4.1.5",
