@@ -1352,8 +1352,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             case MessageType.Operation:
             case MessageType.RemoteHelp:
             case MessageType.Summarize:
-            case "attach": // legacy, to be removed with ContainerRuntime's legacyFormat set to false
-            case "chunkedOp": // legacy, to be removed with ContainerRuntime's legacyFormat set to false
                 break;
             default:
                 this.close(CreateContainerError(`Runtime can't send arbitrary message type: ${type}`));

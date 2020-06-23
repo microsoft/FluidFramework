@@ -27,6 +27,9 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import { SharedCell } from "@fluidframework/cell";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
+import { MessageType } from "@fluidframework/protocol-definitions";
+import { ComponentMessageType } from "@fluidframework/component-runtime";
+import { ContainerMessageType } from "@fluidframework/container-runtime";
 
 describe("Detached Container", () => {
     const documentId = "detachedContainerTest";
@@ -211,9 +214,14 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.equal(type, MessageType.Operation);
+            assert.equal(contents.type, ContainerMessageType.ComponentOp);
+
+            assert.equal(contents.contents.contents.type, ComponentMessageType.ChannelOp);
+
+            assert.strictEqual(contents.contents.contents.content.address,
                 sharedStringId, "Address should be shared string");
-            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
                 JSON.stringify(ops), "Ops should be equal");
             defPromise.resolve();
             return 0;
@@ -241,9 +249,9 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.strictEqual(contents.contents.contents.content.address,
                 sharedMapId, "Address should be shared map");
-            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
                 JSON.stringify(ops), "Ops should be equal");
             defPromise.resolve();
             return 0;
@@ -271,11 +279,12 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.id,
+            assert.strictEqual(contents.contents.contents.content.id,
                 testChannelId, "Channel id should match");
-            assert.strictEqual(contents.contents.content.type,
+            assert.strictEqual(contents.contents.contents.content.type,
                 SharedMap.getFactory().type, "Channel type should match");
-            assert.strictEqual(contents.contents.type, "attach", "Op should be an attach op");
+            assert.strictEqual(contents.contents.contents.type, ComponentMessageType.Attach,
+                "Op should be an attach op");
             defPromise.resolve();
             return 0;
         };
@@ -301,11 +310,12 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.id,
+            assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
+            assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
+            assert.strictEqual(contents.contents.id,
                 peerComponentRuntimeChannel.id, "Component id should match");
-            assert.strictEqual(contents.type,
+            assert.strictEqual(contents.contents.type,
                 testComponentType, "Component type should match");
-            assert.strictEqual(type, "attach", "Op should be an attach op");
             defPromise.resolve();
             return 0;
         };
@@ -329,9 +339,9 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.strictEqual(contents.contents.contents.content.address,
                 crcId, "Address should be consensus register collection");
-            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
                 JSON.stringify(op), "Op should be same");
             defPromise.resolve();
             return 0;
@@ -364,9 +374,9 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.strictEqual(contents.contents.contents.content.address,
                 sharedDirectoryId, "Address should be shared directory");
-            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
                 JSON.stringify(op), "Op should be same");
             defPromise.resolve();
             return 0;
@@ -393,9 +403,9 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.strictEqual(contents.contents.contents.content.address,
                 sharedCellId, "Address should be shared directory");
-            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
                 JSON.stringify(op), "Op should be same");
             defPromise.resolve();
             return 0;
@@ -421,11 +431,11 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.strictEqual(contents.contents.contents.content.address,
                 sharedInkId, "Address should be ink");
-            assert.strictEqual(contents.contents.content.contents.type,
+            assert.strictEqual(contents.contents.contents.content.contents.type,
                 "createStroke", "Op type should be same");
-            assert.strictEqual(contents.contents.content.contents.pen.thickness,
+            assert.strictEqual(contents.contents.contents.content.contents.pen.thickness,
                 20, "Thickness should be same");
             defPromise.resolve();
             return 0;
@@ -455,9 +465,9 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.strictEqual(contents.contents.contents.content.address,
                 cocId, "Address should be consensus queue");
-            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
                 JSON.stringify(op), "Op should be same");
             defPromise.resolve();
             return 0;
@@ -486,13 +496,13 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.strictEqual(contents.contents.contents.content.address,
                 sparseMatrixId, "Address should be sparse matrix");
-            if (contents.contents.content.contents.ops[0].type === MergeTreeDeltaType.INSERT) {
-                assert.strictEqual(JSON.stringify(contents.contents.content.contents.ops[0].seg),
+            if (contents.contents.contents.content.contents.ops[0].type === MergeTreeDeltaType.INSERT) {
+                assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents.ops[0].seg),
                     JSON.stringify(seg), "Seg should be same");
             } else {
-                assert.strictEqual(JSON.stringify(contents.contents.content.contents.ops[1].seg),
+                assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents.ops[1].seg),
                     JSON.stringify(seg), "Seg should be same");
             }
             defPromise.resolve();
@@ -522,9 +532,9 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.strictEqual(contents.contents.contents.content.address,
                 sharedMatrixId, "Address should be shared matrix");
-            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
                 JSON.stringify(op), "Op should be same");
             defPromise.resolve();
             return 0;
