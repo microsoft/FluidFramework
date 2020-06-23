@@ -103,7 +103,7 @@ repo must be specified relative to `docs/.vuepress/includes`. For example, if yo
 `packages/dds/sequence/README.md`, for example, you would specify the include path like so:
 
 ```markdown
-!!!include(../../../packages/dds/sequence/README.md)!!!
+!!!innclude(../../../packages/dds/sequence/README.md)!!!
 ```
 
 You can create a simple wrapper page within the docs folder, then include a file from the repo within it. See
