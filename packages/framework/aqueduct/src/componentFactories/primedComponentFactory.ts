@@ -23,8 +23,8 @@ import { SharedComponentFactory } from "./sharedComponentFactory";
 
 /**
  * PrimedComponentFactory is the IComponentFactory for use with PrimedComponents.
- * It facilitates PrimedComponent's features (such as its shared map) by ensuring
- * relevant shared objects etc are available to the factory.
+ * It facilitates PrimedComponent's features (such as its shared directory) by
+ * ensuring relevant shared objects etc are available to the factory.
  *
  * Generics:
  * P - represents a type that will define optional providers that will be injected
