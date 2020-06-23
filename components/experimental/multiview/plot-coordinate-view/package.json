@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-example/multiview-triangle-view",
+  "name": "@fluid-example/multiview-plot-coordinate-view",
   "version": "0.21.0",
   "description": "View for multiview sample",
   "repository": "microsoft/FluidFramework",
@@ -39,7 +39,7 @@
     "react": "^16.10.2"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.17.0",
+    "@fluidframework/build-common": "^0.18.0-0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@fluidframework/test-tools": "^0.1.0",
     "@fluidframework/webpack-component-loader": "^0.21.0",

@@ -92,7 +92,8 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
     }
 
     /**
-     * Calls existing, and opened().  Caller is responsible for ensuring this is only invoked once.
+     * Initializes internal objects and calls initialization overrides.
+     * Caller is responsible for ensuring this is only invoked once.
      */
     protected async initializeInternal(props?: any): Promise<void> {
         // Initialize task manager.

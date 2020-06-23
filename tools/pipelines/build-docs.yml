@@ -41,9 +41,10 @@ resources:
 
 trigger:
   branches:
-  - release/*
-  - master
-  path:
+    include:
+    - release/*
+    - master
+  paths:
     exclude:
     - packages
     - server/routerlicious
