@@ -470,10 +470,10 @@ export class ReplayTool {
                     storage = new FluidFetchReaderFileSnapshotWriter(this.args.initalizeFromSnapshotsDir, node.name);
                 } else {
                     if (node.name.startsWith("snapshot_")) {
-                        storage = FileSnapshotReader.createFromPath(
-                            `${this.args.initalizeFromSnapshotsDir}/${node.name}`);
-                    }
-                    else {
+                        const content = fs.readFileSync(`${this.args.initalizeFromSnapshotsDir}/${node.name}`, "utf-8");
+                        const snapshot = JSON.parse(content) as IFileSnapshot;
+                        storage = new FileSnapshotReader(snapshot);
+                    } else {
                         continue;
                     }
                 }
