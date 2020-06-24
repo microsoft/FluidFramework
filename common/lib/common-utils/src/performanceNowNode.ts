@@ -3,4 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { default as performanceNow } from "performance-now";
+import performanceNow from "performance-now";
+export { performanceNow };
