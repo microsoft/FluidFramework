@@ -21,7 +21,7 @@ export interface IProvideComponentFactory {
 /**
  * The interface implemented by a component module.
  */
-export interface IComponentFactory extends IProvideComponentFactory {
+export interface IComponentFactory extends IProvideComponentFactory, Partial<IProvideCreateComponentWithAny> {
     /**
      * String that uniquely identifies the type of component created by this factory.
      */
@@ -41,4 +41,20 @@ export interface IComponentFactory extends IProvideComponentFactory {
      * @param context - Context for the component.
      */
     instantiateComponent(context: IComponentContext): void;
+}
+
+export const ICreateComponentWithAny: keyof IProvideCreateComponentWithAny = "ICreateComponentWithAny";
+
+export interface IProvideCreateComponentWithAny {
+    readonly ICreateComponentWithAny: ICreateComponentWithAny;
+}
+
+/**
+ * Interface that exposes a createComponent signature that allows any initial state for cases that need it,
+ * such as when loading and creating arbitrary components where the specific component factory is not known
+ * beforehand.  In all other cases, consumers should prefer using the initial state generics in the Component
+ * and ComponentFactory implementations provided in Aqueduct istead.
+ */
+export interface ICreateComponentWithAny extends IProvideCreateComponentWithAny {
+    createComponent(context: IComponentContext, initialState?: any): Promise<IComponent & IComponentLoadable>;
 }
