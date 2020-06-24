@@ -124,7 +124,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public get isAttached(): boolean {
-        return this._isAttached !== AttachState.Detached;
+        return this.attachState === AttachState.Attached;
     }
 
     public get path(): string {
@@ -147,7 +147,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
-    private _isAttached: AttachState;
+    private attachState: AttachState;
     private readonly deferredAttached = new Deferred<void>();
     private readonly attachChannelQueue = new Map<string, LocalChannelContext>();
     private boundhandles: Set<IComponentHandle> | undefined;
@@ -199,7 +199,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         }
 
         this.attachListener();
-        this._isAttached = existing ? AttachState.Attached : AttachState.Detached;
+        this.attachState = existing ? AttachState.Attached : AttachState.Detached;
 
         // If it's existing we know it has been attached.
         if (existing) {
@@ -322,10 +322,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      * 2. Attaching registered channels
      */
     public attach() {
-        if (this.isAttached) {
+        if (this.attachState !== AttachState.Detached) {
             return;
         }
-        this._isAttached = AttachState.Attaching;
+        this.attachState = AttachState.Attaching;
         if (this.boundhandles !== undefined) {
             this.boundhandles.forEach((handle) => {
                 handle.attach();
@@ -343,7 +343,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             channel.attach();
         });
 
-        this._isAttached = AttachState.Attached;
+        this.attachState = AttachState.Attached;
         this.deferredAttached.resolve();
         this.attachChannelQueue.clear();
     }

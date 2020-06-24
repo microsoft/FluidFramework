@@ -74,7 +74,7 @@ export abstract class ComponentContext extends EventEmitter implements
     IComponentContextLegacy,
     IDisposable {
     public isLocal(): boolean {
-        return this.containerRuntime.isLocal() || !this.isAttached;
+        return this.containerRuntime.isLocal() || this.attachState === AttachState.Detached;
     }
 
     public get documentId(): string {
@@ -153,7 +153,7 @@ export abstract class ComponentContext extends EventEmitter implements
     public get disposed() { return this._disposed; }
 
     public get isAttached(): boolean {
-        return this._isAttached !== AttachState.Detached;
+        return this.attachState === AttachState.Attached;
     }
 
     public readonly attach: (componentRuntime: IComponentRuntimeChannel) => void;
@@ -170,19 +170,23 @@ export abstract class ComponentContext extends EventEmitter implements
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
-        private _isAttached: AttachState,
+        private attachState: AttachState,
         attach: (componentRuntime: IComponentRuntimeChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
         this.attach = (componentRuntime: IComponentRuntimeChannel) => {
-            if (this.isAttached) {
+            // This needs to be there for back compat reasons because the old component runtime does not
+            // have attaching state and it does not stop attaching again while it is attaching.
+            // Previosuly that was prevented my container runtime.
+            // 0.20 back-compat Attaching
+            if (this.attachState !== AttachState.Detached) {
                 return;
             }
-            this._isAttached = AttachState.Attaching;
+            this.attachState = AttachState.Attaching;
             attach(componentRuntime);
-            this._isAttached = AttachState.Attached;
+            this.attachState = AttachState.Attached;
         };
     }
 
