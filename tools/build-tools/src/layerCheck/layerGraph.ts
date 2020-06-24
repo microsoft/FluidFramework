@@ -126,6 +126,7 @@ class LayerNode extends BaseNode {
     }
 };
 
+type LayerTreeNode = { node: LayerNode, children: LayerNode[] };
 
 class GroupNode extends BaseNode {
     public layerNodes: LayerNode[] = [];
@@ -171,11 +172,8 @@ class GroupNode extends BaseNode {
 
 class PackageNode extends BaseNode {
     private _pkg: Package | undefined;
-    /** Packages _pkg is directly dependent upon */
     private readonly _childDependencies: PackageNode[] = [];
-    /** Packages that are dependent upon _pkg */
     private readonly depParents: PackageNode[] = [];
-    /** Packages _pkg is indirectly dependent upon */
     private _indirectDependencies: Set<PackageNode> | undefined;
     private _level: number | undefined;
 
@@ -223,10 +221,12 @@ class PackageNode extends BaseNode {
         }
     }
 
+    /** Packages this package is directly dependent upon */
     public get childDependencies(): Readonly<PackageNode[]> {
         return this._childDependencies;
     }
 
+    /** Packages this package is indirectly dependent upon */
     public get indirectDependencies(): Set<PackageNode> {
         if (this._indirectDependencies === undefined) {
             // NOTE: recursive isn't great, but the graph should be small enough
@@ -409,32 +409,65 @@ export class LayerGraph {
         }
     }
 
-    public generatePackageLayerTable(repoRoot: string) {
-        const lines: string[] = [];
-        for (const groupNode of this.groupNodes.sort(BaseNode.comparator)) {
-            lines.push(`## ${groupNode.name} layers${newline}`);
+    private recursive(
+        layers: LayerTreeNode[],
+        root: LayerTreeNode,
+        ordered: LayerTreeNode[],
+    ) {
+        ordered.push(root);
+        const underLayers =
+            layers
+            .filter((l) => l.children.length !== 0)
+            .map((l) => ({
+                node: l.node,
+                children: l.children.filter((child) => child.name !== root.node.name),
+            }));
+        const underRoots = underLayers.filter((l) => l.children.length === 0);
+        underRoots.forEach((r) => this.recursive(underLayers, r, ordered));
+    }
+
+    private traverseLayers() {
+        const layers: LayerTreeNode[] = []
+        for (const groupNode of this.groupNodes) {
             for (const layerNode of groupNode.layerNodes.sort(BaseNode.comparator)) {
-                lines.push(`### ${layerNode.name}${newline}`);
-                const packagesInCell: string[] = [];
                 const childLayers: Set<LayerNode> = new Set();
                 for (const packageNode of [...layerNode.packages].sort(BaseNode.comparator)) {
-                    const dirRelativePath = "/" + path.relative(repoRoot, packageNode.pkg.directory).replace(/\\/g, "/");
-                    packagesInCell.push(`- [${packageNode.name}](${dirRelativePath})`);
                     packageNode.childDependencies.forEach((p) => childLayers.add(p.layerNode));
                 }
-
-                const layersInCell: string[] = [];
-                if (childLayers.size > 0) {
-                    for (const childLayer of [...childLayers].sort(BaseNode.comparator)) {
-                        layersInCell.push(`- [${childLayer.name}](#${childLayer.name})`);
-                    }
-                }
-
-                this.padArraysToSameLength(packagesInCell, layersInCell, "&nbsp;");
-                lines.push(`| Packages | Layers Depended Upon |`);
-                lines.push(`| --- | --- |`);
-                lines.push(`| ${packagesInCell.join("</br>")} | ${layersInCell.join("</br>")} |${newline}`);
+                layers.push({ node: layerNode, children: [...childLayers]});
             }
+        }
+
+        const roots = layers.filter((l) => l.children.length === 0);
+        const ordered: LayerTreeNode[] = [];
+        roots.forEach((r) => this.recursive(layers, r, ordered));
+
+        return ordered.map((l) => l.node);
+    }
+
+    public generatePackageLayerTable(repoRoot: string) {
+        const lines: string[] = [];
+        for (const layerNode of this.traverseLayers()) {
+            lines.push(`### ${layerNode.name}${newline}`);
+            const packagesInCell: string[] = [];
+            const childLayers: Set<LayerNode> = new Set();
+            for (const packageNode of [...layerNode.packages].sort(BaseNode.comparator)) {
+                const dirRelativePath = "/" + path.relative(repoRoot, packageNode.pkg.directory).replace(/\\/g, "/");
+                packagesInCell.push(`- [${packageNode.name}](${dirRelativePath})`);
+                packageNode.childDependencies.forEach((p) => childLayers.add(p.layerNode));
+            }
+
+            const layersInCell: string[] = [];
+            if (childLayers.size > 0) {
+                for (const childLayer of [...childLayers].sort(BaseNode.comparator)) {
+                    layersInCell.push(`- [${childLayer.name}](#${childLayer.name})`);
+                }
+            }
+
+            this.padArraysToSameLength(packagesInCell, layersInCell, "&nbsp;");
+            lines.push(`| Packages | Layers Depended Upon |`);
+            lines.push(`| --- | --- |`);
+            lines.push(`| ${packagesInCell.join("</br>")} | ${layersInCell.join("</br>")} |${newline}`);
         }
 
         const packagesMdContents: string =
