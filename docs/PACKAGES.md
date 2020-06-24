@@ -1,94 +1,9 @@
 # All Packages
 
-| Package Name | Published? |
-| --- | --- |
-- Base-Definitions
-    - @fluidframework/common-definitions
-    - @fluidframework/component-core-interfaces
-    - @fluidframework/gitresources
-  - Protocol-Definitions
-    - @fluidframework/protocol-definitions
-  - Driver-Definitions
-    - @fluidframework/driver-definitions
-  - Container-Definitions
-    - @fluidframework/container-definitions
-  - Base-Utils
-    - @fluidframework/common-utils
-  - Protocol-Utils
-    - @fluidframework/protocol-base
-  - Driver-Utils
-    - @fluidframework/driver-utils
-  - Framework-Utils
-    - @fluidframework/view-adapters
-    - @fluidframework/view-interfaces
-  - Other-Utils
-    - @fluidframework/odsp-utils
-  - Tool-Utils
-    - @fluidframework/tool-utils
-  - Server-Shared-Utils
-    - @fluidframework/server-services-client
-  - Server-Libs
-    - @fluidframework/server-kafka-orderer
-    - @fluidframework/server-lambdas
-    - @fluidframework/server-lambdas-driver
-    - @fluidframework/server-local-server
-    - @fluidframework/server-memory-orderer
-    - @fluidframework/server-services
-    - @fluidframework/server-services-core
-    - @fluidframework/server-services-shared
-    - @fluidframework/server-services-utils
-    - @fluidframework/server-test-utils
-  - Server-Tools
-    - tinylicious
-  - Driver
-    - @fluidframework/debugger
-    - @fluidframework/driver-base
-    - @fluid-internal/experimental-creation-driver
-    - @fluidframework/file-driver
-    - @fluidframework/fluidapp-odsp-urlresolver
-    - @fluidframework/iframe-driver
-    - @fluidframework/odsp-driver
-    - @fluidframework/odsp-urlresolver
-    - @fluidframework/replay-driver
-    - @fluidframework/routerlicious-host
-  - Loader
-    - @fluidframework/container-loader
-    - @fluidframework/execution-context-loader
-    - @fluid-internal/test-loader-utils
-    - @fluidframework/web-code-loader
-  - Hosts
-    - @fluidframework/base-host
-    - @fluidframework/host-service-interfaces
-  - Runtime
-    - @fluidframework/agent-scheduler
-    - @fluidframework/cell
-    - @fluidframework/counter
-    - @fluidframework/ink
-    - @fluidframework/map
-    - @fluidframework/matrix
-    - @fluidframework/merge-tree
-    - @fluidframework/ordered-collection
-    - @fluidframework/register-collection
-    - @fluidframework/sequence
-    - @fluidframework/shared-object-base
-    - @fluidframework/shared-summary-block
-    - @fluidframework/component-runtime
-    - @fluidframework/component-runtime-definitions
-    - @fluidframework/container-runtime
-    - @fluidframework/container-runtime-definitions
-    - @fluidframework/runtime-definitions
-    - @fluidframework/runtime-utils
-  - Framework
-    - @fluid-internal/client-api
-    - @fluidframework/aqueduct
-    - @fluidframework/component-base
-    - @fluidframework/dds-interceptions
-    - @fluidframework/framework-experimental
-    - @fluidframework/framework-interfaces
-    - @fluidframework/last-edited-experimental
-    - @fluidframework/react
-    - @fluidframework/synthesize
-    - @fluidframework/undo-redo
+- Client
+  - Build
+    - @fluidframework/build-common
+    - @fluidframework/eslint-config-fluid
   - Component
     - @fluid-example/badge
     - @fluid-example/clicker
@@ -138,15 +53,55 @@
     - @fluid-example/snapshotter-agent
     - @fluid-example/spellchecker-agent
     - @fluid-example/translator-agent
-  - Build
-    - @fluidframework/build-common
-    - @fluidframework/eslint-config-fluid
-  - Tools
-    - @fluid-internal/fetch-tool
-    - @fluid-internal/merge-tree-client-replay
-    - @fluid-internal/replay-tool
-    - dice-roller
-    - generator-fluid
+  - Driver
+    - @fluidframework/debugger
+    - @fluidframework/driver-base
+    - @fluid-internal/experimental-creation-driver
+    - @fluidframework/file-driver
+    - @fluidframework/fluidapp-odsp-urlresolver
+    - @fluidframework/iframe-driver
+    - @fluidframework/odsp-driver
+    - @fluidframework/odsp-urlresolver
+    - @fluidframework/replay-driver
+    - @fluidframework/routerlicious-host
+  - Framework
+    - @fluid-internal/client-api
+    - @fluidframework/aqueduct
+    - @fluidframework/component-base
+    - @fluidframework/dds-interceptions
+    - @fluidframework/framework-experimental
+    - @fluidframework/framework-interfaces
+    - @fluidframework/last-edited-experimental
+    - @fluidframework/react
+    - @fluidframework/synthesize
+    - @fluidframework/undo-redo
+  - Hosts
+    - @fluidframework/base-host
+    - @fluidframework/host-service-interfaces
+  - Loader
+    - @fluidframework/container-loader
+    - @fluidframework/execution-context-loader
+    - @fluid-internal/test-loader-utils
+    - @fluidframework/web-code-loader
+  - Runtime
+    - @fluidframework/agent-scheduler
+    - @fluidframework/cell
+    - @fluidframework/counter
+    - @fluidframework/ink
+    - @fluidframework/map
+    - @fluidframework/matrix
+    - @fluidframework/merge-tree
+    - @fluidframework/ordered-collection
+    - @fluidframework/register-collection
+    - @fluidframework/sequence
+    - @fluidframework/shared-object-base
+    - @fluidframework/shared-summary-block
+    - @fluidframework/component-runtime
+    - @fluidframework/component-runtime-definitions
+    - @fluidframework/container-runtime
+    - @fluidframework/container-runtime-definitions
+    - @fluidframework/runtime-definitions
+    - @fluidframework/runtime-utils
   - Test
     - @fluidframework/local-web-host
     - @fluidframework/local-driver
@@ -161,8 +116,56 @@
     - @fluidframework/test-utils
     - @fluid-internal/version-test-2
     - @fluid-internal/version-test-1
+  - Tools
+    - @fluid-internal/fetch-tool
+    - @fluid-internal/merge-tree-client-replay
+    - @fluid-internal/replay-tool
+    - dice-roller
+    - generator-fluid
+- Definitions
+  - Base-Definitions
+    - @fluidframework/common-definitions
+    - @fluidframework/component-core-interfaces
+    - @fluidframework/gitresources
+  - Container-Definitions
+    - @fluidframework/container-definitions
+  - Driver-Definitions
+    - @fluidframework/driver-definitions
+  - Protocol-Definitions
+    - @fluidframework/protocol-definitions
+- Routerlicious
   - Routerlicious-Driver
     - @fluidframework/routerlicious-driver
     - @fluidframework/routerlicious-urlresolver
   - Routerlicious-Server
     - @fluidframework/server-routerlicious
+- Server
+  - Server-Libs
+    - @fluidframework/server-kafka-orderer
+    - @fluidframework/server-lambdas
+    - @fluidframework/server-lambdas-driver
+    - @fluidframework/server-local-server
+    - @fluidframework/server-memory-orderer
+    - @fluidframework/server-services
+    - @fluidframework/server-services-core
+    - @fluidframework/server-services-shared
+    - @fluidframework/server-services-utils
+    - @fluidframework/server-test-utils
+  - Server-Shared-Utils
+    - @fluidframework/server-services-client
+  - Server-Tools
+    - tinylicious
+- Utils
+  - Base-Utils
+    - @fluidframework/common-utils
+  - Driver-Utils
+    - @fluidframework/driver-utils
+  - Framework-Utils
+    - @fluidframework/view-adapters
+    - @fluidframework/view-interfaces
+  - Other-Utils
+    - @fluidframework/odsp-utils
+  - Protocol-Utils
+    - @fluidframework/protocol-base
+  - Tool-Utils
+    - @fluidframework/tool-utils

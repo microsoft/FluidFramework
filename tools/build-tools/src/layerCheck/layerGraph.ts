@@ -33,6 +33,10 @@ class BaseNode {
     public get dotName() {
         return this.name.replace(/-/g, "_").toLowerCase();
     }
+
+    public static comparator(a: BaseNode, b: BaseNode) {
+        return a.name < b.name ? -1 : a.name == b.name ? 0 : 1
+    }
 };
 
 class LayerNode extends BaseNode {
@@ -398,10 +402,13 @@ export class LayerGraph {
         const lines: string[] = [];
 
         //* TODO: Sort these, and maybe group them further
-        for (const [layerName, layerNode] of this.layerNodeMap) {
-            lines.push(`- ${layerName}`);
-            for (const packageNode of layerNode.packages) {
-                lines.push(`  - ${packageNode.name}`);
+        for (const groupNode of this.groupNodes.sort(BaseNode.comparator)) {
+            lines.push(`- ${groupNode.name}`);
+            for (const layerNode of groupNode.layerNodes.sort(BaseNode.comparator)) {
+                lines.push(`  - ${layerNode.name}`);
+                for (const packageNode of layerNode.packages) {
+                    lines.push(`    - ${packageNode.name}`);
+                }
             }
         }
 
