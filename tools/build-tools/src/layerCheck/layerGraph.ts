@@ -41,7 +41,6 @@ class BaseNode {
 };
 
 class LayerNode extends BaseNode {
-    //* Ok to make public?
     public packages = new Set<PackageNode>();
     private allowedDependentPackageNodes = new Set<PackageNode>();
     private allowedDependentLayerNodes: LayerNode[] = [];
@@ -271,7 +270,6 @@ export class LayerGraph {
         this.initializePackages(packages);
     }
 
-    //* Consider cleaning up initailizeLayers and initializePackages - handling of dirs is intermingled and hard to follow
     private initializeLayers(root: string, layerInfo: ILayerInfoFile) {
         // First pass get the layer nodes
         for (const groupName of Object.keys(layerInfo)) {
