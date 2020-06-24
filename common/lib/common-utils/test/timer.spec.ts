@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { PromiseTimer, Timer, IPromiseTimerResult } from "../timer";
+import { PromiseTimer, Timer, IPromiseTimerResult } from "../src";
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 type PromiseTimerResultString = IPromiseTimerResult["timerResult"];
