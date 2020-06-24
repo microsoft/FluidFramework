@@ -59,13 +59,13 @@
             "type": "node",
             "request": "launch",
             "name": "Table Tests",
-            "cwd": "${workspaceFolder}/packages/components/table-test-lib",
-            "program": "${workspaceFolder}/packages/components/webflow/node_modules/mocha/bin/_mocha",
+            "cwd": "${workspaceFolder}/components/experimental/table-document",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "args": [
                 "-r",
-                "${workspaceFolder}/common/tools/node_modules/ts-node/register",
+                "ts-node/register",
                 "--no-timeouts",
-                "src/**/*.spec.ts",
+                "src/test/**/*.spec.ts",
                 // "src/**/table.spec.ts",
                 // "src/**/sparsematrix.spec.ts",
                 "--exit"
@@ -289,7 +289,10 @@
                 "TS_NODE_PROJECT": "${fileDirname}/../../tsconfig.json",
             },
             "args": ["--no-timeouts", "--exit", "--require", "ts-node/register","${file}", ],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "skipFiles": [
+                "<node_internals>/**/*.js"
+            ]
         }
 
     ]

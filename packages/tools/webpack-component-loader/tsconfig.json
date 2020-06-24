@@ -10,7 +10,8 @@
         "jsx": "react",
         "outDir": "./dist",
         "types": [
-            "mocha"
+            "mocha",
+            "node"
         ]
     },
     "include": [

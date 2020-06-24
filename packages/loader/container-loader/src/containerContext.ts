@@ -44,7 +44,6 @@ import { Container } from "./container";
 import { NullRuntime } from "./nullRuntime";
 
 export class ContainerContext implements IContainerContext {
-    public readonly isExperimentalContainerContext = true;
     public static async createOrLoad(
         container: Container,
         scope: IComponent,
@@ -160,6 +159,7 @@ export class ContainerContext implements IContainerContext {
     private runtime: IRuntime | undefined;
 
     private _disposed = false;
+
     public get disposed() {
         return this._disposed;
     }

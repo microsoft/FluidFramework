@@ -1,0 +1,34 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# server-headless-agent pipeline
+
+name: $(Build.BuildId)
+
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - server/headless-agent
+    - tools/pipelines/server-headless-agent.yml
+    - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-generate-notice-steps.yml
+  
+pr:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - server/headless-agent
+    - tools/pipelines/server-headless-agent.yml
+    - tools/pipelines/templates/build-docker-service.yml
+  
+extends:
+  template: templates/build-docker-service.yml
+  parameters:
+    buildDirectory: server/headless-agent
+    containerName: headless-agent
+    test: false

@@ -3,26 +3,25 @@
  * Licensed under the MIT License.
  */
 import { parse } from "url";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { BaseTelemetryNullLogger, Deferred } from "@microsoft/fluid-common-utils";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
+import { Deferred } from "@fluidframework/common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
-import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
-import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services";
-import { promiseTimeout } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/driver-definitions";
+import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
+import { NodeCodeLoader, NodeWhiteList } from "@fluidframework/server-services";
+import { promiseTimeout } from "@fluidframework/server-services-client";
 import Axios from "axios";
-import * as jwt from "jsonwebtoken";
-import * as winston from "winston";
+import jwt from "jsonwebtoken";
+import winston from "winston";
 
-const packageUrl = "https://packages.wu2.prague.office-int.com";
 const installLocation = "/tmp/chaincode";
 const waitTimeoutMS = 60000;
 
@@ -78,10 +77,8 @@ class KeyValueLoader {
         const documentServiceFactories: IDocumentServiceFactory[] = [];
         // TODO: figure out how to pass clientId and token here
         documentServiceFactories.push(new OdspDocumentServiceFactory(
-            "Fake app-id",
             async (siteUrl: string) => Promise.resolve("fake token"),
-            async () => Promise.resolve("fake token"),
-            new BaseTelemetryNullLogger()));
+            async () => Promise.resolve("fake token")));
 
         documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
             false,
@@ -100,7 +97,7 @@ class KeyValueLoader {
         const loader = new Loader(
             resolver,
             documentServiceFactories,
-            new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS, new NodeWhiteList()),
+            new NodeCodeLoader(installLocation, waitTimeoutMS, new NodeWhiteList()),
             config,
             {},
             new Map<string, IProxyLoaderFactory>(),

@@ -42,7 +42,7 @@ class SingletonContainerServiceFactory {
 
     public async getService(runtime: IContainerRuntime): Promise<IComponent> {
         if (!this.service) {
-            this.service =  this.serviceFn(runtime);
+            this.service = this.serviceFn(runtime);
         }
         return this.service;
     }

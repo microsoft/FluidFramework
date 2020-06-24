@@ -3,19 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { IServiceConfiguration } from "@fluidframework/protocol-definitions";
 import { LocalOrderer } from "@fluidframework/server-memory-orderer";
+import { GitManager, IHistorian } from "@fluidframework/server-services-client";
 import {
-    GitManager,
-    IHistorian,
-} from "@fluidframework/server-services-client";
-import {
-    IOrderer,
-    IOrdererManager,
     IDatabaseManager,
     IDocumentStorage,
+    ILogger,
+    IOrderer,
+    IOrdererManager,
     ITaskMessageSender,
     ITenantManager,
-    ILogger,
 } from "@fluidframework/server-services-core";
 
 export class MemoryOrdererManager implements IOrdererManager {
@@ -30,6 +28,7 @@ export class MemoryOrdererManager implements IOrdererManager {
         private readonly maxMessageSize: number,
         private readonly createHistorian: (tenant: string) => Promise<IHistorian>,
         private readonly logger: ILogger,
+        private readonly serviceConfiguration?: Partial<IServiceConfiguration>,
     ) {
     }
 
@@ -73,7 +72,16 @@ export class MemoryOrdererManager implements IOrdererManager {
             this.permission,
             this.maxMessageSize,
             this.logger,
-            gitManager);
+            gitManager,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            this.serviceConfiguration);
 
         const lambdas = [
             orderer.broadcasterLambda,
@@ -82,7 +90,7 @@ export class MemoryOrdererManager implements IOrdererManager {
             orderer.scribeLambda,
             orderer.scriptoriumLambda,
         ];
-        await Promise.all(lambdas.map(async (l)=>{
+        await Promise.all(lambdas.map(async (l) => {
             if (l.state === "created") {
                 return new Promise((resolve) => l.once("started", () => resolve()));
             }

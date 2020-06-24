@@ -123,8 +123,13 @@ export enum ConnectionState {
     Connected,
 }
 
+enum ContainerAttachState {
+    Detached = "Detached",
+    Attaching = "Attaching",
+    Attached = "Attached",
+}
+
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
-    public readonly isExperimentalContainer = true;
     public static version = "^0.1.0";
 
     /**
@@ -182,11 +187,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     perfEvent.end(props);
                     res(container);
                 },
-                (error) => {
-                    perfEvent.cancel(undefined, error);
-                    const err = CreateContainerError(error);
-                    onClosed(err);
-                });
+                    (error) => {
+                        perfEvent.cancel(undefined, error);
+                        const err = CreateContainerError(error);
+                        onClosed(err);
+                    });
         });
     }
 
@@ -220,7 +225,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private pendingClientId: string | undefined;
     private loaded = false;
-    private attached = false;
+    private attachState = ContainerAttachState.Detached;
     private blobManager: BlobManager | undefined;
 
     // Active chaincode and associated runtime
@@ -393,6 +398,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             },
             {
                 docId: () => this.id,
+                containerAttachState: () => this.attachState,
             });
 
         // Prefix all events in this file with container-loader
@@ -459,7 +465,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public isLocal(): boolean {
-        return !this.attached;
+        return this.attachState === ContainerAttachState.Detached;
     }
 
     public async attach(request: IRequest): Promise<void> {
@@ -469,6 +475,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Inbound queue for ops should be empty
         assert(!this.deltaManager.inbound.length);
+
+        // Set the state as attaching as we are starting the process of attaching container.
+        this.attachState = ContainerAttachState.Attaching;
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
         const appSummary: ISummaryTree = this.context.createSummary();
@@ -482,10 +491,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 [CreateNewHeader.createNew]: {},
             };
         }
-        const createNewResolvedUrl = await this.urlResolver.resolve(request);
-        ensureFluidResolvedUrl(createNewResolvedUrl);
 
         try {
+            const createNewResolvedUrl = await this.urlResolver.resolve(request);
+            ensureFluidResolvedUrl(createNewResolvedUrl);
             // Actually go and create the resolved document
             this.service = await this.serviceFactory.createContainer(
                 combineAppAndProtocolSummary(appSummary, protocolSummary),
@@ -510,8 +519,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // This we can probably just pass the storage service to the blob manager - although ideally
             // there just isn't a blob manager
             this.blobManager = await this.loadBlobManager(this.storageService, undefined);
-            this.attached = true;
-
+            this.attachState = ContainerAttachState.Attached;
             // We know this is create new flow.
             this._existing = false;
             this._parentBranch = this._id;
@@ -621,7 +629,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Ensure connection to web socket
         // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
-        this.connectToDeltaStream().catch(() => { });
+        this.connectToDeltaStream(args).catch(() => { });
     }
 
     public get storage(): IDocumentStorageService | null | undefined {
@@ -867,7 +875,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this.storageService = await this.getDocumentStorageService();
-        this.attached = true;
+        this.attachState = ContainerAttachState.Attached;
 
         // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
         const maybeSnapshotTree = specifiedVersion === null ? undefined
@@ -1336,6 +1344,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
+    private submitContainerMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
+        const outboundMessageType: string = type;
+        switch (outboundMessageType) {
+            case MessageType.Operation:
+            case MessageType.RemoteHelp:
+            case MessageType.Summarize:
+            case "attach": // legacy, to be removed with ContainerRuntime's legacyFormat set to false
+            case "chunkedOp": // legacy, to be removed with ContainerRuntime's legacyFormat set to false
+                break;
+            default:
+                this.close(CreateContainerError(`Runtime can't send arbitrary message type: ${type}`));
+                return -1;
+        }
+        return this.submitMessage(type, contents, batch, metadata);
+    }
+
     private submitMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
         if (this.connectionState !== ConnectionState.Connected) {
             this.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
@@ -1426,7 +1450,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
             (warning: ContainerWarning) => this.raiseContainerWarning(warning),
-            (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
+            (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
             (error?: CriticalContainerError) => this.close(error),
@@ -1464,7 +1488,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
             (warning: ContainerWarning) => this.raiseContainerWarning(warning),
-            (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
+            (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
             (error?: CriticalContainerError) => this.close(error),

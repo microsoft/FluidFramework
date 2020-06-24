@@ -1,4 +1,4 @@
-# Aqueduct
+# @fluidframework/aqueduct
 
 ![Aqueduct](https://publicdomainvectors.org/photos/johnny-automatic-Roman-aqueducts.png)
 
@@ -41,33 +41,35 @@ In the below example we have a simple Component Object that will render a value 
 
 ```jsx
 export class Clicker extends PrimedComponent implements IComponentHTMLView {
-
     public static get ComponentName() { return "clicker"; }
 
     public get IComponentHTMLView() { return this; }
 
+    private _counter: SharedCounter | undefined;
+
     protected async componentInitializingFirstTime() {
-        this.root.createValueType("clicks", CounterValueType.Name, 0);
+        const counter = SharedCounter.create(this.runtime);
+        this.root.set("clicks", counter.handle);
+    }
+
+    protected async componentHasInitialized() {
+        const counterHandle = this.root.get<IComponentHandle<SharedCounter>>("clicks");
+        this._counter = await counterHandle.get();
     }
 
     public render(div: HTMLElement) {
-        const counter = this.root.get("clicks");
-        const rerender = () => {
-            ReactDOM.render(
-                <div>
-                    <span>{counter.value}</span>
-                    <button onClick={() => { counter.increment(1); }}>+</button>
-                </div>,
-                div,
-            );
-        };
+        ReactDOM.render(
+            <CounterReactView counter={this.counter} />,
+            div,
+        );
+        return div;
+    }
 
-        counter.on("incremented", (incrementValue: number, currentValue: number) => {
-            rerender();
-
-        });
-
-        rerender();
+    private get counter() {
+        if (this._counter === undefined) {
+            throw new Error("SharedCounter not initialized");
+        }
+        return this._counter;
     }
 }
 ```
@@ -88,42 +90,15 @@ In the below example we build a Component Factory for the [`Clicker`](####Compon
 
 ```typescript
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
-    Clicker.ComponentName
+    Clicker.ComponentName,
     Clicker,
-    [], // Distributed Data Structures
+    [SharedCounter.getFactory()], // Distributed Data Structures
     {}, // Provider Symbols see below
 );
 ```
 This factory can then create Clickers when provided a creating component context.
 ```typescript
 const myClicker = ClickerInstantiationFactory.createComponent(this.context) as Clicker;
-```
-
-#### Component Object/Factory with Initial State Example
-
-If we want to be able to create a component and provide an initial state, we amend our component example as follows to define an initial state type and to define this type as a generic on PrimedComponentFactory. We then allow `componentInitializingFirstTime` to take an initial state object.
-```typescript
-export interface IClickerInitialState {
-    initialValue: number;
-}
-
-export class ClickerWithInitialValue extends PrimedComponent<{}, IClickerInitialState> implements IComponentHTMLView {
-    protected async componentInitializingFirstTime(initialState?: IClickerInitialState) {
-        let startingValue = 0;
-        if (initialState) {
-            startingValue = initialState.initialValue;
-        }
-
-        this.root.createValueType("clicks", CounterValueType.Name, startingValue);
-    }
-
-    ...
-
-}
-```
-No changes are needed to the factory definition.  The same generics are defined in the factory, but are inferred from constructor arguments.  When creating a component this way, initial state may be optionally provided in the creation call.
-```typescript
-const myClickerWithValue = ClickerWithInitialValueFactory.createComponent(this.context, { initialValue: 2020 })
 ```
 
 #### Providers in Components

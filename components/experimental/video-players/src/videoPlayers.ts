@@ -148,8 +148,7 @@ export class VideoPlayer implements
 }
 
 export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> implements
-    IComponentCollection
-{
+    IComponentCollection {
     private static readonly factory = new SharedComponentFactory<VideoPlayerCollection>(
         "@fluid-example/video-players",
         VideoPlayerCollection,

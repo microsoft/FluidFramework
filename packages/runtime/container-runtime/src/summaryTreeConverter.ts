@@ -27,7 +27,7 @@ export interface IConvertedSummaryResults {
 }
 
 export class SummaryTreeConverter {
-    constructor(public readonly useContext: boolean) {}
+    constructor(public readonly useContext: boolean) { }
 
     /**
      * Converts snapshot ITree to ISummaryTree format.

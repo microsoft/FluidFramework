@@ -4,29 +4,37 @@
  */
 
 import { parse } from "url";
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
+import { BaseTelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     IComponentRunnable,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IContainer, ILoader } from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
+} from "@fluidframework/component-core-interfaces";
+import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IUrlResolver,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
-import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
-import * as Comlink from "comlink";
+} from "@fluidframework/driver-definitions";
+import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { WebCodeLoader, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
+import Comlink from "comlink";
 
 // Container load requires a URL resolver although it does not make use of it.
 class NotUsedUrlResolver implements IUrlResolver {
+    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
+        throw new Error("Method not implemented.");
+    }
+
     public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
+        throw new Error("Method not implemented.");
+    }
+
+    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
         throw new Error("Method not implemented.");
     }
 }
@@ -59,15 +67,13 @@ class WorkerLoader implements ILoader, IComponentRunnable {
                 null);
         } else {
             factory = new OdspDocumentServiceFactory(
-                "", // figure this out
                 async (siteUrl: string) => Promise.resolve(this.resolved.tokens.storageToken),
-                async () => Promise.resolve(this.resolved.tokens.socketToken),
-                new BaseTelemetryNullLogger());
+                async () => Promise.resolve(this.resolved.tokens.socketToken));
         }
         const container = await Container.load(
             this.id,
             factory,
-            new WebCodeLoader(),
+            new WebCodeLoader(new SemVerCdnCodeResolver()),
             this.options,
             {},
             (this as unknown) as Loader,
@@ -78,7 +84,7 @@ class WorkerLoader implements ILoader, IComponentRunnable {
         this.container = container;
 
         // TODO: referenceSequenceNumber -> lastSequenceNumber (when latest loader is picked up)
-        if (this.container.deltaManager.referenceSequenceNumber <= this.fromSequenceNumber) {
+        if (this.container.deltaManager.lastSequenceNumber <= this.fromSequenceNumber) {
             await new Promise((resolve, reject) => {
                 const opHandler = (message: ISequencedDocumentMessage) => {
                     if (message.sequenceNumber > this.fromSequenceNumber) {
@@ -114,6 +120,10 @@ class WorkerLoader implements ILoader, IComponentRunnable {
         if (this.runnable !== undefined && this.runnable.stop !== undefined) {
             return this.runnable.stop(reason);
         }
+    }
+
+    public async createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer> {
+        throw new Error("Method not implemented.");
     }
 }
 

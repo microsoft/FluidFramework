@@ -80,7 +80,7 @@ export class MemberList extends React.Component<IProps, IState> {
                 .getMembers()
                 .entries(),
         )
-      .filter(([id, _]) => this.knownHumanMemberIds.has(id))
+            .filter(([id, _]) => this.knownHumanMemberIds.has(id))
             .map(([id, sc]) => {
                 let name: string = (sc.client.user as any).displayName || (sc.client.user as any).name;
                 let initials: string;

@@ -10,7 +10,6 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 import {
     IChannel,
@@ -42,7 +41,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly runtime: IComponentRuntime,
         private readonly componentContext: IComponentContext,
         storageService: IDocumentStorageService,
-        submitFn: (type: MessageType, content: any, localOpMetadata: unknown) => number,
+        submitFn: (content: any, localOpMetadata: unknown) => number,
         dirtyFn: (address: string) => void,
         private readonly id: string,
         baseSnapshot: Promise<ISnapshotTree> | ISnapshotTree,

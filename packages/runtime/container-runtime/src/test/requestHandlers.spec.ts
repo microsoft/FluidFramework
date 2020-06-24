@@ -14,7 +14,7 @@ describe("RequestParser", () => {
     describe("componentRuntimeRequestHandler", () => {
         it("Empty request", async () => {
             const requestParser = new RequestParser({ url: "/" });
-            const runtime: IContainerRuntime = { } as IContainerRuntime;
+            const runtime: IContainerRuntime = {} as IContainerRuntime;
             const response = await componentRuntimeRequestHandler(requestParser, runtime);
             assert.equal(response, undefined);
         });

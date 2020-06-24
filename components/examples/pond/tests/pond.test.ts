@@ -20,7 +20,6 @@ describe("pond", () => {
     it("There should be 3 buttons to be clicked", async () => {
         await expect(page).toClick("button", { text: "+1" });
         await expect(page).toClick("button", { text: "+10" });
-        await expect(page).toClick("button", { text: "+5" });
     });
 
     it("Clicking the buttons updates both users", async () => {
@@ -65,20 +64,5 @@ describe("pond", () => {
         expect(postValue_010).toEqual("10");
         const postValue2_010 = await getValue(1, "clicker-value-class-0+10");
         expect(postValue2_010).toEqual("10");
-
-        // Validate both users have 100 as their value
-        const preValue_1005 = await getValue(0, "clicker-value-class-100+5");
-        expect(preValue_1005).toEqual("100");
-        const preValue2_1005 = await getValue(1, "clicker-value-class-100+5");
-        expect(preValue2_1005).toEqual("100");
-
-        // Click the button
-        await expect(page).toClick("button", { text: "+5" });
-
-        // Validate both users have 105 as their value
-        const postValue_1005 = await getValue(0, "clicker-value-class-100+5");
-        expect(postValue_1005).toEqual("105");
-        const postValue2_1005 = await getValue(1, "clicker-value-class-100+5");
-        expect(postValue2_1005).toEqual("105");
     });
 });

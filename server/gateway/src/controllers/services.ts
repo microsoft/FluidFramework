@@ -7,15 +7,15 @@ import {
     IProvideDocumentFactory,
     IProvideMicrosoftGraph,
     IProvidePackageManager,
-} from "@microsoft/fluid-host-service-interfaces";
+} from "@fluidframework/host-service-interfaces";
 
 /**
  * Host services provides a collection of interfaces exposed by a gateway host
  */
-/* eslint-disable @typescript-eslint/no-empty-interface, @typescript-eslint/indent */
+/* eslint-disable @typescript-eslint/no-empty-interface */
 export interface IHostServices extends Partial<
     IProvideDocumentFactory
     & IProvideMicrosoftGraph
     & IProvidePackageManager> {
 }
-/* eslint-enable @typescript-eslint/no-empty-interface, @typescript-eslint/indent */
+/* eslint-enable @typescript-eslint/no-empty-interface */

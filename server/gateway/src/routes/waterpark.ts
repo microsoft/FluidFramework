@@ -3,26 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { IPackage } from "@microsoft/fluid-container-definitions";
-import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import { extractDetails, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { Router } from "express";
-import * as safeStringify from "json-stringify-safe";
-import * as jwt from "jsonwebtoken";
-import * as moniker from "moniker";
+import safeStringify from "json-stringify-safe";
+import jwt from "jsonwebtoken";
+import moniker from "moniker";
 import { Provider } from "nconf";
-import * as winston from "winston";
+import winston from "winston";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred } from "../interfaces";
 import { getConfig, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pkgJson = require("../../package.json") as IPackage;
 const defaultChaincode =
-    `@microsoft/fluid-external-component-loader@${pkgJson.version.endsWith(".0") ? "^" : ""}${pkgJson.version}`;
+    `@fluidframework/external-component-loader@^0.20.0-0`;
 
 export function create(
     config: Provider,
@@ -31,7 +28,7 @@ export function create(
     ensureLoggedIn: any): Router {
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
-    const webLoader = new WebCodeLoader(new WhiteList());
+    const codeResolver = new SemVerCdnCodeResolver();
 
     router.get("/", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response, next) => {
         let redirect = `${request.baseUrl}/${moniker.choose()}`;
@@ -73,13 +70,13 @@ export function create(
 
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (fullTree && fullTree.code) {
-                return webLoader.resolve(fullTree.code);
+                return codeResolver.resolveCodeDetails(fullTree.code);
             }
 
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             const cdn = request.query.cdn ? request.query.cdn : config.get("worker:npm");
 
-            const details = extractDetails(chaincode);
+            const details = extractPackageIdentifierDetails(chaincode);
             const codeDetails = {
                 config: {
                     [`@${details.scope}:cdn`]: cdn,
@@ -87,7 +84,7 @@ export function create(
                 package: chaincode,
             };
 
-            return webLoader.resolve(codeDetails);
+            return codeResolver.resolveCodeDetails(codeDetails);
         });
 
         const scriptsP = pkgP.then((pkg) => {
@@ -96,8 +93,7 @@ export function create(
                 return [];
             }
 
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-            const umd = pkg.pkg.fluid && pkg.pkg.fluid.browser && pkg.pkg.fluid.browser.umd;
+            const umd = pkg.resolvedPackage?.fluid?.browser?.umd;
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (!umd) {
                 return [];
@@ -108,8 +104,8 @@ export function create(
                 scripts: umd.files.map(
                     (script, index) => {
                         return {
-                            id: `${pkg.parsed.name}-${index}`,
-                            url: script.startsWith("http") ? script : `${pkg.packageUrl}/${script}`,
+                            id: `${pkg.resolvedPackageCacheId}-${index}`,
+                            url: script,
                         };
                     }),
             };

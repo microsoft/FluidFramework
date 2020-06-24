@@ -12,7 +12,7 @@ import { IProvideComponentRouter } from "./componentRouter";
 import { IProvideComponentHandle, IProvideComponentHandleContext } from "./handles";
 import { IProvideComponentSerializer } from "./serializer";
 
-/* eslint-disable @typescript-eslint/no-empty-interface, @typescript-eslint/indent */
+/* eslint-disable @typescript-eslint/no-empty-interface */
 export interface IComponent extends
     Readonly<Partial<
         IProvideComponentLoadable
@@ -23,4 +23,4 @@ export interface IComponent extends
         & IProvideComponentHandle
         & IProvideComponentSerializer>> {
 }
-/* eslint-enable @typescript-eslint/no-empty-interface, @typescript-eslint/indent */
+/* eslint-enable @typescript-eslint/no-empty-interface */

@@ -108,11 +108,11 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
                 "connect",
                 () => {
                     this.context.getAbsoluteUrl(this.url)
-                        .then((url)=>{
+                        .then((url) => {
                             this._absoluteUrl = url;
                             return undefined;
                         })
-                        .catch(()=>{});
+                        .catch(() => { });
                 });
         }
     }

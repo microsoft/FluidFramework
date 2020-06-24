@@ -9,12 +9,33 @@ var chalk = require("chalk");
 
 const none = "none";
 const react = "react";
+const scaffoldingBeginner = "beginner";
+const scaffoldingAdvanced = "advanced";
+
+/**
+ * Takes the user inputted component name, converts it to camelCase,
+ * and removes any non-word characters (equal to [^a-zA-Z0-9_])
+ */
+function processComponentNameInput(nameArray) {
+  const capitalize = (str) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+  return nameArray
+    .map((value, index) => {
+      return index === 0 ? value : capitalize(value);
+    })
+    .join()
+    .replace(/\W/g, "");
+}
 
 const questions = {
     componentName: {
         type: "input",
         name: "componentName",
         message: "What is the name of your new component?",
+        filter: (input) => {
+          return processComponentNameInput(input.split(" "));
+        },
     },
     viewFramework : {
         type: "list",
@@ -22,7 +43,14 @@ const questions = {
         message: "Which view framework would you like to start with?",
         default: react,
         choices: [react, none],
-      }
+    },
+    scaffolding: {
+      type: "list",
+      name: "scaffolding",
+      message: "Which type of scaffolding would you like?",
+      default: scaffoldingBeginner,
+      choices: [scaffoldingBeginner, scaffoldingAdvanced],
+    }
 };
 
 /**
@@ -45,17 +73,33 @@ module.exports = class extends Generator {
       "view-none",
       {
         description: "Sets None as Default View",
-        type: Boolean,
+      });
+
+    // Adding two options to specify the scaffolding inline
+    this.option(
+      scaffoldingBeginner,
+      {
+        description: `Sets ${scaffoldingBeginner} as scaffolding`,
+      });
+    this.option(
+      scaffoldingAdvanced,
+      {
+        description: `Sets ${scaffoldingAdvanced} as scaffolding`,
       });
 
     // Adding argument to specify the component name inline
     this.argument(
       "componentName",
       {
-        type: String,
+        type: Array,
         required: false,
         description: "Defines the Component Name"
       });
+
+    if (this.options["componentName"]) {
+      // if there is a componentName option we need to strip out non-word characters
+      this.options["componentName"] = processComponentNameInput(this.options["componentName"]);
+    }
   }
 
   async prompting() {
@@ -63,7 +107,7 @@ module.exports = class extends Generator {
     this.log("Let us help you get set up. Once we're done, you can start coding!");
     const questionsCollection = [];
     if (this.options.componentName) {
-      this.log(`${chalk.green("?")} ${questions.componentName.message} ${this._componentName()}`)
+      this.log(`${chalk.green("?")} ${questions.componentName.message} ${chalk.blue(this._componentName())}`)
     } else {
       questionsCollection.push(questions.componentName);
     }
@@ -80,6 +124,18 @@ module.exports = class extends Generator {
       questionsCollection.push(questions.viewFramework);
     }
 
+    if (this.options[scaffoldingBeginner] && this.options[scaffoldingAdvanced]) {
+      this.log(chalk.red(`Both --${scaffoldingBeginner} and --${scaffoldingAdvanced} options have been included. Prompting question.`));
+      delete this.options[scaffoldingBeginner];
+      delete this.options[scaffoldingAdvanced];
+    }
+
+    if (this.options[scaffoldingBeginner] || this.options[scaffoldingAdvanced]) {
+      this.log(`${chalk.green("?")} ${questions.scaffolding.message} ${chalk.blue(this._isBeginnerScaffolding ? scaffoldingBeginner : scaffoldingAdvanced)}`)
+    } else {
+      questionsCollection.push(questions.scaffolding);
+    }
+
     if (questionsCollection) {
       this.answers = await this.prompt(questionsCollection);
     }
@@ -89,28 +145,48 @@ module.exports = class extends Generator {
 
   moveAndModifyTemplateFiles() {
 
-    // Copy and Modify Files
-    this._copyAndModifyPackageJsonFile();
-    this._copyAndModifyComponentFile();
-    this._copyAndModifyIndexFile();
-    this._copyAndModifyInterfaceFile();
-    this._copyAndModifyViewFile();
+    if (this._isBeginnerScaffolding()) {
+      this._copyAndModifySimpleComponentFile();
+      this.fs.copyTpl(
+        this.templatePath("README-Simple.md"), // FROM
+        this.destinationPath("./README.md"), // TO Root Folder,
+        { extension: this._getFileExtension() },
+      );
+    } else {
+      // Copy and Modify Advanced Files
+      this._copyAndModifyComponentFile();
+      this._copyAndModifyInterfaceFile();
+      this._copyAndModifyViewFile();
+      this.fs.copyTpl(
+        this.templatePath("README.md"), // FROM
+        this.destinationPath("./README.md"), // TO Root Folder,
+        { extension: this._getFileExtension() },
+      );
+    }
 
-    // Copy Remaining Files
-    this.fs.copyTpl(
-      this.templatePath("README.md"), // FROM
-      this.destinationPath("./README.md"), // TO Root Folder,
-      { extension: this._getFileExtension() },
+    this._copyAndModifyPackageJsonFile();
+    this._copyAndModifyIndexFile();
+    this._copyAndModifyTsconfigFile();
+
+    this.fs.copy(
+      this.templatePath("tests/diceRoller.test.ts"), // FROM
+      this.destinationPath(`tests/${this._componentPkgName()}.test.ts`), // TO Root Folder
     );
 
+    // Copy Remaining Files
     this.fs.copy(
       this.templatePath("webpack.config.js"), // FROM
       this.destinationPath("./webpack.config.js"), // TO Root Folder
     );
 
     this.fs.copy(
-      this.templatePath("tsconfig.json"), // FROM
-      this.destinationPath("tsconfig.json"), // TO Root Folder
+      this.templatePath("jest-puppeteer.config.js"), // FROM
+      this.destinationPath("jest-puppeteer.config.js"), // TO Root Folder
+    );
+
+    this.fs.copy(
+      this.templatePath("jest.config.js"), // FROM
+      this.destinationPath("jest.config.js"), // TO Root Folder
     );
 
     // Copy files that start with . from the root
@@ -138,6 +214,26 @@ module.exports = class extends Generator {
       this.destinationPath("package.json"), // TO
       packageJson, // contents
     );
+  }
+
+  _copyAndModifySimpleComponentFile() {
+    const file = this._generateNewProjectFile(
+      `src/component-simple${this._getFileExtension()}`,
+      `src/component${this._getFileExtension()}`);
+    const classObj = file.getClass("DiceRoller");
+    // Rename the class name with the component name provided
+    classObj.rename(this._componentClassName());
+
+    // Replace ComponentName response with package name
+    const accessor = classObj.getGetAccessor("ComponentName");
+    accessor.setBodyText(`return "${this._componentPkgName()}";`);
+
+    if(this._isReact()) {
+      const viewClassObj = file.getClass("DiceRollerView");
+      viewClassObj.rename(`${this._componentClassName()}View`);
+    }
+
+    file.save();
   }
 
   _copyAndModifyComponentFile() {
@@ -177,8 +273,18 @@ module.exports = class extends Generator {
     // Update the usage of the component name
     const variableStatement = file.getVariableStatement("fluidExport");
     const varDec = variableStatement.getDeclarations()[0];
-    varDec.set({
-      initializer: `${this._componentClassName()}.factory`,
+    const initializer = `new ContainerRuntimeFactoryWithDefaultComponent(
+        ${this._componentClassName()}.ComponentName,
+        new Map([
+            [${this._componentClassName()}.ComponentName, Promise.resolve(${this._componentClassName()}.factory)],
+            // Add another component here to create it within the container
+        ]))`
+    varDec.set({initializer});
+
+    // Formatting is needed for this file because the above initializer set won't set the indent correctly
+    file.formatText({
+        ensureNewLineAtEndOfFile: true,
+        indentSize: 4,
     });
 
     file.save();
@@ -215,6 +321,21 @@ module.exports = class extends Generator {
     }
 
     file.save();
+  }
+
+  _copyAndModifyTsconfigFile() {
+    var tsconfigJson = this.fs.readJSON(this.templatePath("tsconfig.json"));
+
+    if (!this._isReact()) {
+      // REMOVE react-specific dependencies. This is preferred because it keeps all dependencies in one place
+      delete tsconfigJson.compilerOptions.jsx;
+      tsconfigJson.compilerOptions.types = tsconfigJson.compilerOptions.types.slice(2)
+    }
+
+    this.fs.writeJSON(
+      this.destinationPath("tsconfig.json"), // TO
+      tsconfigJson, // contents
+    );
   }
 
   _copyContainer() {
@@ -274,6 +395,10 @@ module.exports = class extends Generator {
    * Below here are helper functions.
    */
 
+  _isBeginnerScaffolding() {
+    return this.options[scaffoldingBeginner] || (this.answers && this.answers.scaffolding === scaffoldingBeginner);
+  }
+
   _isReact() {
     return this.options["view-react"] || (this.answers && this.answers.viewFramework === react);
   }
@@ -304,13 +429,14 @@ module.exports = class extends Generator {
     return `${this._componentClassName()}InstantiationFactory`;
   }
 
-  _generateNewProjectFile(currentFilePath) {
+  _generateNewProjectFile(currentFilePath, destinationPath) {
+    destinationPath = destinationPath ? destinationPath : currentFilePath;
     const fileString = this.fs.read(this.templatePath(currentFilePath));
 
     const project = new Project({});
 
     return project.createSourceFile(
-      this.destinationPath(currentFilePath),
+      this.destinationPath(destinationPath),
       fileString,
     );
   }

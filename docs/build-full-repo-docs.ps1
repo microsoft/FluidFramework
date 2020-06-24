@@ -1,20 +1,19 @@
 # Build docs for the whole repo
 # All generated files will be in _api-extractor-temp
 Push-Location ../
-npm run build:docs
-Pop-Location
+Write-Output "===================================npm install"
+npm install
 
-Push-Location ../server/routerlicious
-npm run build:docs
-robocopy _api-extractor-temp ../../_api-extractor-temp /E
-Pop-Location
+Write-Output "===================================npm build:fast --install"
+npm run build:fast -- --install
 
-Push-Location ../common/lib/common-definitions
-npm run build:docs
-robocopy _api-extractor-temp ../../../_api-extractor-temp /E
-Pop-Location
+Write-Output "===================================npm build:fast --symlik"
+npm run build:fast -- --symlink
 
-Push-Location ../common/lib/common-utils
-npm run build:docs
-robocopy _api-extractor-temp ../../../_api-extractor-temp /E
+Write-Output "===================================npm build:fast --all"
+npm run build:fast -- --nolint --all
+
+Write-Output "===================================npm build:fast --all -s build:docs"
+npm run build:fast -- --nolint --all -s build:docs
+
 Pop-Location

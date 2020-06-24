@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IClient } from "@microsoft/fluid-protocol-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 import { Request } from "express";
-import * as _ from "lodash";
+import _ from "lodash";
 
 export interface ICachedPackage {
     entrypoint: string;

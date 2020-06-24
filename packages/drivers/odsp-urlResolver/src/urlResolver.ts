@@ -23,7 +23,7 @@ export class OdspUrlResolver implements IUrlResolver {
             }
             const urlToBeResolved = createOdspUrl(contents.site, contents.drive, contents.item, "");
             const odspDriverUrlResolver: IUrlResolver = new OdspDriverUrlResolver();
-            return odspDriverUrlResolver.resolve({ url: urlToBeResolved });
+            return odspDriverUrlResolver.resolve({ url: urlToBeResolved, headers: request.headers });
         }
         return undefined;
     }

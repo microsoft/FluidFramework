@@ -136,9 +136,11 @@ export class TestHistorian implements IHistorian {
             return {
                 ref: val.value.ref,
                 url: "",
-                object: { sha: val.value.sha,
+                object: {
+                    sha: val.value.sha,
                     url: "",
-                    type: "" },
+                    type: "",
+                },
             };
         }
     }
@@ -195,7 +197,7 @@ export class TestHistorian implements IHistorian {
                 tree: [],
             };
             for (const entry of tree.value.tree) {
-                const entryPath: string = path  === "" ? entry.path : `${path}/${entry.path}`;
+                const entryPath: string = path === "" ? entry.path : `${path}/${entry.path}`;
                 const treeEntry: git.ITreeEntry = {
                     mode: entry.mode,
                     path: entryPath,

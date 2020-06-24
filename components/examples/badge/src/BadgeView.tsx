@@ -2,314 +2,168 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { ISharedCell } from "@fluidframework/cell";
-import { ISharedMap } from "@fluidframework/map";
-import { SharedObjectSequence } from "@fluidframework/sequence";
+import React, { useState, useMemo } from "react";
 import {
     ActivityItem,
     DefaultButton,
     PrimaryButton,
-    ContextualMenuItemType,
     DirectionalHint,
     Dialog,
     DialogFooter,
-    DialogType,
     HoverCard,
     HoverCardType,
     Icon,
     initializeIcons,
     ColorPicker,
-    getColorFromHSV,
     getColorFromString,
     IColor,
     Stack,
     TextField,
     IContextualMenuItem,
 } from "office-ui-fabric-react";
-// eslint-disable-next-line import/no-internal-modules
-import { MotionAnimations } from "@uifabric/fluent-theme/lib/fluent/FluentMotion";
-import React from "react";
-import { IBadgeType } from "./IBadgeType";
-import { IHistory } from "./IHistory";
+import { MotionAnimations } from "@uifabric/fluent-theme";
+import { IBadgeViewProps, IBadgeType } from "./Badge.types";
+import {
+    getItemsFromOptionsMap,
+    getRelativeDate,
+    getButtonStyles,
+} from "./helpers";
 
-export interface IBadgeViewProps {
-    currentCell: ISharedCell;
-    optionsMap: ISharedMap;
-    historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
-}
+// Initialize icon font used in Fluent UI
+initializeIcons();
 
-export interface IBadgeViewState {
-    isDialogVisible: boolean;
-    customText: string;
-    customColor: IColor;
-    current: IBadgeType;
-    items: any;
-}
+// The BadgeView is completely unaware of the Fluid data structures. It only renders what is currently in Client state
+// and uses Client provided functions to modify Fluid data, which is then fed back into state.
 
-export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState> {
-    private readonly defaultColor: string = "#fff";
-    private readonly animation: string = "all 0.15s ease-in";
-    private readonly cardPadding: string = "16px 24px";
+export const BadgeView: React.FC<IBadgeViewProps> = (props: IBadgeViewProps) => {
+    const {
+        options,
+        historyItems,
+        selectedOption,
+        addOption,
+        changeSelectedOption,
+    } = props;
 
-    constructor(props: IBadgeViewProps) {
-        super(props);
+    const currentOption = options.find((option) => option.key === selectedOption);
 
-        this.state = {
-            isDialogVisible: false,
-            current: props.currentCell.get(),
-            customColor: getColorFromString(this.defaultColor),
-            customText: "",
-            items: this._getItemsFromOptionsMap(props.optionsMap),
-        };
+    // Set up local state for our custom status creator
 
-        this._onClick = this._onClick.bind(this);
-        this._onSave = this._onSave.bind(this);
-        this._closeDialog = this._closeDialog.bind(this);
-        this._updateColor = this._updateColor.bind(this);
-        this._updateText = this._updateText.bind(this);
-        this._setCurrent = this._setCurrent.bind(this);
-        this._getCurrentTimestamp = this._getCurrentTimestamp.bind(this);
-        this._onRenderCard = this._onRenderCard.bind(this);
+    const [isCustomStatusVisible, setIsCustomStatusVisible] = useState<boolean>(false);
+    const [customStatusColor, setCustomStatusColor] = useState<IColor>(
+        getColorFromString("#fff"),
+    );
+    const [customStatusText, setCustomStatusText] = useState<string>("");
 
-        initializeIcons();
-    }
-
-    private _onClick(_, item: IContextualMenuItem): void {
-        if (item.key === "new") {
-            this.setState({ isDialogVisible: true });
+    // Set up event handlers
+    const onStatusClick = (_, item: IContextualMenuItem): void => {
+        switch (item.key) {
+            case "new":
+                setIsCustomStatusVisible(true);
+                break;
+            default:
+                changeSelectedOption(item as IBadgeType);
         }
-        else {
-            this._setCurrent(item as IBadgeType);
+    };
+
+    const closeCustomStatus = (): void => {
+        setIsCustomStatusVisible(false);
+    };
+
+    const onSaveCustomStatus = (): void => {
+        if (customStatusText !== "") {
+            addOption(customStatusText, customStatusColor);
+            setCustomStatusText("");
         }
-    }
+        closeCustomStatus();
+    };
 
-    private _onSave(): void {
-        if (this.state.customText !== "") {
-            const newItem: IBadgeType = {
-                key: this.state.customText,
-                text: this.state.customText,
-                iconProps: {
-                    iconName: "Contact",
-                    style: {
-                        color: this.state.customColor.str,
-                    },
-                },
-            };
+    // Handle change events. These could include data validation.
+    const updateCustomStatusColor = (_, colorObj: IColor) => {
+        setCustomStatusColor(colorObj);
+    };
 
-            // Add to the badge options
-            this.props.optionsMap.set(this.state.customText, newItem);
+    const updateCustomStatusText = (_, newValue: string) => {
+        setCustomStatusText(newValue);
+    };
 
-            this._setCurrent(newItem);
-
-            this.setState({ customText: "" });
-        }
-
-        this._closeDialog();
-    }
-
-    private _closeDialog(): void {
-        this.setState({ isDialogVisible: false });
-    }
-
-    private _setCurrent(newItem: IBadgeType): void {
-        if (newItem.key !== this.state.current.key) {
-            // Save current value into history
-            const len = this.props.historySequence.getItemCount();
-            this.props.historySequence.insert(len, [{
-                value: newItem,
-                timestamp: new Date(),
-            }]);
-
-            // Set new value
-            this.props.currentCell.set(newItem);
-        }
-    }
-
-    private _getCurrentTimestamp(): Date {
-        const len = this.props.historySequence.getItemCount();
-        return this.props.historySequence.getItems(len - 1)[0].timestamp;
-    }
-
-    private _updateColor(ev: React.SyntheticEvent<HTMLElement>, colorObj: IColor) {
-        this.setState({ customColor: colorObj });
-    }
-
-    private _updateText(ev: React.SyntheticEvent<HTMLElement>, newValue: string) {
-        this.setState({ customText: newValue });
-    }
-
-    private _getItemsFromOptionsMap(optionsMap: ISharedMap) {
-        const items = [];
-        optionsMap.forEach((v) => items.push(v));
-
-        items.push({
-            key: "divider_1",
-            itemType: ContextualMenuItemType.Divider,
-        });
-        items.push({
-            key: "new",
-            text: "Set custom...",
-            iconProps: {
-                iconName: "Add",
-            },
-        });
-
-        return items;
-    }
-
-    private _getTextColor(c: IColor) {
-        // https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
-        return (c.r * 0.299 + c.g * 0.587 + c.b * 0.114 > 186) ?
-            "#000000" : "#ffffff";
-    }
-
-    private _onRenderCard(): JSX.Element {
-        const history = [];
-
-        // Add items to history in reverse order
-        this.props.historySequence.getItems(0).forEach((x) => {
-            history.unshift(
+    // Create the content for the history card
+    const historyCardContent = (): JSX.Element => {
+        // eslint-disable-next-line react/prop-types
+        const history = historyItems.map((x, i) => {
+            return (
                 <ActivityItem
+                    key={i}
                     activityDescription={`Set to ${x.value.text}`}
-                    // eslint-disable-next-line @typescript-eslint/no-use-before-define
                     timeStamp={getRelativeDate(x.timestamp)}
-                    activityIcon={<Icon {...x.value.iconProps} />} />,
+                    activityIcon={<Icon {...x.value.iconProps} />}
+                />
             );
         });
 
-        return (
-            <div style={{
-                padding: this.cardPadding,
-            }}>
-                {history}
-            </div>
-        );
-    }
+        return <div style={{ padding: "16px 24px" }}>{history}</div>;
+    };
 
-    public async componentDidMount(): Promise<void> {
-        this.props.currentCell.on("valueChanged", () => {
-            this.setState({ current: this.props.currentCell.get() });
-        });
+    // Only recompute button styles when current option changes
+    const buttonStyles = useMemo(
+        () => getButtonStyles(currentOption.iconProps.style.color),
+        [currentOption],
+    );
 
-        this.props.optionsMap.on("valueChanged", () => {
-            this.setState({ items: this._getItemsFromOptionsMap(this.props.optionsMap) });
-        });
-    }
-
-    public render(): JSX.Element {
-        // Calculate colors
-        const color = getColorFromString(this.state.current.iconProps.style.color);
-        const colorHover = getColorFromHSV({
-            h: color.h,
-            s: color.s,
-            v: color.v + 5,
-        });
-        const colorPressed = getColorFromHSV({
-            h: color.h,
-            s: color.s,
-            v: color.v - 5,
-        });
-        const textColor = this._getTextColor(color);
-
-        return (
-            <div style={{ animation: MotionAnimations.scaleDownIn }}>
-                <HoverCard
-                    plainCardProps={{
-                        onRenderPlainCard: this._onRenderCard,
-                        directionalHint: DirectionalHint.rightTopEdge,
+    // Render our main view
+    return (
+        <div
+            style={{
+                animation: MotionAnimations.scaleDownIn,
+                display: "inline-block",
+            }}
+        >
+            <HoverCard
+                plainCardProps={{
+                    onRenderPlainCard: historyCardContent,
+                    directionalHint: DirectionalHint.rightTopEdge,
+                }}
+                type={HoverCardType.plain}
+            >
+                <DefaultButton
+                    text={currentOption.text}
+                    iconProps={{
+                        iconName: currentOption.iconProps.iconName,
                     }}
-                    type={HoverCardType.plain}
-                >
-                    <DefaultButton
-                        text={this.state.current.text}
-                        iconProps={{ iconName: this.state.current.iconProps.iconName }}
-                        menuProps={{
-                            isBeakVisible: false,
-                            shouldFocusOnMount: true,
-                            items: this.state.items,
-                            onItemClick: this._onClick,
-                        }}
-                        styles={{
-                            label: {
-                                color: textColor,
-                            },
-                            icon: {
-                                color: textColor,
-                            },
-                            menuIcon: {
-                                color: textColor,
-                            },
-                            root: {
-                                backgroundColor: color.str,
-                                transition: this.animation,
-                            },
-                            rootHovered: {
-                                backgroundColor: colorHover.str,
-                            },
-                            rootPressed: {
-                                backgroundColor: colorPressed.str,
-                            },
-                            rootExpanded: {
-                                backgroundColor: colorPressed.str,
-                            },
-                        }}
+                    menuProps={{
+                        isBeakVisible: false,
+                        shouldFocusOnMount: true,
+                        items: getItemsFromOptionsMap(options),
+                        onItemClick: onStatusClick,
+                    }}
+                    styles={buttonStyles}
+                />
+            </HoverCard>
+
+            <Dialog
+                hidden={!isCustomStatusVisible}
+                onDismiss={closeCustomStatus}
+                dialogContentProps={{ title: "Add a custom status" }}
+                modalProps={{
+                    isBlocking: false,
+                    styles: { main: { maxWidth: 450 } },
+                }}
+            >
+                <Stack>
+                    <TextField
+                        placeholder="Custom status name"
+                        onChange={updateCustomStatusText}
                     />
-                </HoverCard>
-
-                <Dialog
-                    hidden={!this.state.isDialogVisible}
-                    onDismiss={this._closeDialog}
-                    dialogContentProps={{
-                        type: DialogType.normal,
-                        title: "Add a custom status",
-                    }}
-                    modalProps={{
-                        isBlocking: false,
-                        styles: { main: { maxWidth: 450 } },
-                    }}
-                >
-                    <Stack>
-                        <TextField
-                            placeholder="Custom status name"
-                            onChange={this._updateText} />
-                        <ColorPicker
-                            color={this.state.customColor}
-                            onChange={this._updateColor}
-                            alphaSliderHidden={true}
-                        />
-                    </Stack>
-                    <DialogFooter>
-                        <PrimaryButton onClick={this._onSave} text="Save" />
-                        <DefaultButton onClick={this._closeDialog} text="Cancel" />
-                    </DialogFooter>
-                </Dialog>
-            </div>
-        );
-    }
-}
-
-function getRelativeDate(timestamp: Date): string {
-    // https://stackoverflow.com/questions/7641791/javascript-library-for-human-friendly-relative-date-formatting
-    const delta = Math.round(((new Date()).getTime() - new Date(timestamp).getTime()) / 1000);
-
-    const minute = 60;
-    const hour = minute * 60;
-    const day = hour * 24;
-
-    if (delta < 30) {
-        return "just now";
-    } else if (delta < 3 * minute) {
-        return "a few minutes ago";
-    } else if (delta < hour) {
-        return `${Math.floor(delta / minute)  } minutes ago`;
-    } else if (Math.floor(delta / hour) < 3) {
-        return "a few hours ago.";
-    } else if (delta < day) {
-        return `${Math.floor(delta / hour)  } hours ago`;
-    } else if (delta < day * 2) {
-        return "yesterday";
-    } else {
-        return timestamp.toUTCString();
-    }
-}
+                    <ColorPicker
+                        color={customStatusColor}
+                        onChange={updateCustomStatusColor}
+                        alphaSliderHidden={true}
+                    />
+                </Stack>
+                <DialogFooter>
+                    <PrimaryButton onClick={onSaveCustomStatus} text="Save" />
+                    <DefaultButton onClick={closeCustomStatus} text="Cancel" />
+                </DialogFooter>
+            </Dialog>
+        </div>
+    );
+};

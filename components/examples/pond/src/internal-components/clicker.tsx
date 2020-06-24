@@ -5,10 +5,15 @@
 
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { Counter, CounterValueType, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
+import { SharedCounter } from "@fluidframework/counter";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
+
+const storedMapKey = "storedMap";
+const counter1Key = "counter";
+const counter2Key = "counter2";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
@@ -19,8 +24,8 @@ const pkg = require("../../package.json");
 export class Clicker extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    private storedMap: ISharedMap | undefined;
-    private counter: Counter | undefined;
+    private counter1: SharedCounter | undefined;
+    private counter2: SharedCounter | undefined;
 
     public static readonly ComponentName = `${pkg.name as string}-clicker`;
 
@@ -28,34 +33,38 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      * Do setup work here
      */
     protected async componentInitializingFirstTime() {
-        this.root.createValueType("clicks", CounterValueType.Name, 0);
-
-        const clicks = this.root.get<Counter>("clicks");
-        clicks.increment(5);
+        const counter = SharedCounter.create(this.runtime);
+        this.root.set(counter1Key, counter.handle);
+        counter.increment(5);
 
         // Create a map on the root.
         const storedMap = SharedMap.create(this.runtime);
-        this.root.set("storedMap", storedMap.handle);
+        this.root.set(storedMapKey, storedMap.handle);
 
         // Add another clicker to the map
-        storedMap.createValueType("clicks2", CounterValueType.Name, 0);
+        const counter2 = SharedCounter.create(this.runtime);
+        storedMap.set(counter2Key, counter2.handle);
     }
 
     protected async componentHasInitialized() {
-        this.counter = this.root.get<Counter>("clicks");
-        this.storedMap = await this.root.get<IComponentHandle<ISharedMap>>("storedMap").get();
+        const counter1Handle = this.root.get<IComponentHandle<SharedCounter>>(counter1Key);
+        this.counter1 = await counter1Handle.get();
+
+        const storedMap = await this.root.get<IComponentHandle<ISharedMap>>(storedMapKey).get();
+        const counter2Handle = storedMap.get<IComponentHandle<SharedCounter>>(counter2Key);
+        this.counter2 = await counter2Handle.get();
     }
 
     // start IComponentHTMLView
 
     public render(div: HTMLElement) {
-        if (!this.storedMap || !this.counter) {
+        if (!this.counter1 || !this.counter2) {
             throw new Error("componentHasInitialized should be called prior to render");
         }
 
         // Get our counter object that we set in initialize and pass it in to the view.
         ReactDOM.render(
-            <CounterReactView directory={this.root} storedMap={this.storedMap} counter={this.counter} />,
+            <CounterReactView counter1={this.counter1} counter2={this.counter2} />,
             div,
         );
     }
@@ -69,20 +78,22 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     private static readonly factory = new PrimedComponentFactory(
         Clicker.ComponentName,
         Clicker,
-        [SharedMap.getFactory()],
+        [
+            SharedCounter.getFactory(),
+            SharedMap.getFactory(),
+        ],
         {});
 }
 
 // ----- REACT STUFF -----
 
 interface CounterProps {
-    directory: ISharedDirectory;
-    storedMap: ISharedMap;
-    counter: Counter;
+    counter1: SharedCounter;
+    counter2: SharedCounter;
 }
 
 interface CounterState {
-    value: number;
+    value1: number;
     value2: number;
 }
 
@@ -91,22 +102,18 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
         super(props);
 
         this.state = {
-            value: this.props.counter.value,
-            value2: this.props.storedMap.get<Counter>("clicks2").value,
+            value1: this.props.counter1.value,
+            value2: this.props.counter2.value,
         };
     }
 
-    componentDidMount() {
+    async componentDidMount() {
         // Set a listener so when the counter increments we will update our state
-        // counter is annoying because it only allows you to register one listener.
-        // this causes problems when we have multiple views off the same counter.
-        // so we are listening to the directory and map
-        this.props.directory.on("valueChanged", () => {
-            this.setState({ value: this.props.counter.value });
+        this.props.counter1.on("incremented", () => {
+            this.setState({ value1: this.props.counter1.value });
         });
-
-        this.props.storedMap.on("valueChanged", () => {
-            this.setState({ value2: this.props.storedMap.get<Counter>("clicks2").value });
+        this.props.counter2.on("incremented", () => {
+            this.setState({ value2: this.props.counter2.value });
         });
     }
 
@@ -116,13 +123,13 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
                 <h3>Clicker</h3>
                 <h5>Clicker on the root directory increments 1</h5>
                 <div>
-                    <span className="clicker-value-class-5+1">{this.state.value}</span>
-                    <button onClick={() => { this.props.counter.increment(1); }}>+1</button>
+                    <span className="clicker-value-class-5+1">{this.state.value1}</span>
+                    <button onClick={() => { this.props.counter1.increment(1); }}>+1</button>
                 </div>
                 <h5>Clicker on a map on the root directory increments 10</h5>
                 <div>
                     <span className="clicker-value-class-0+10">{this.state.value2}</span>
-                    <button onClick={() => { this.props.storedMap.get<Counter>("clicks2").increment(10); }}>+10</button>
+                    <button onClick={() => { this.props.counter2.increment(10); }}>+10</button>
                 </div>
             </div>
         );

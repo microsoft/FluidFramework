@@ -16,11 +16,13 @@ interactive experiences on the Web. It will change the way people work through t
 3. Enabling intelligent agents to work alongside humans in ways that will dramatically increase productivity and what
    people can accomplish
 
+If you'd like to learn more about the scenarios Fluid addresses and how the architecture is built, please continue reading below. If you'd like to start using the Fluid Framework yourself, please take a look at [Getting Started](./docs/getting-started.md)
+
 ## What problems does the Fluid Framework address?
 
 It is easiest to understand Fluid by examining the problems that it helps address. Namely, that it is challenging, with
 the tools available today, to build collaborative experiences on the Web. A canonical example is co-authoring a document
-or a presentation. A smaller example is the animated "typing..."  indicator that is common in real-time chat apps (e.g.
+or a presentation. A smaller example is the animated "typing..." indicator that is common in real-time chat apps (e.g.
 Facebook, Slack, Teams).
 
 Increasingly these collaborative experiences are "table stakes" for building Web-based experiences. However, despite
@@ -113,10 +115,3 @@ network calls yourself in order to use Fluid. The runtime takes care of that for
 On top of the runtime is a layered component model. A Fluid component can have a broad range of capabilities such as
 distributed data, rendering, experience integration, and much more. For many developers their primary interaction with
 Fluid will be writing components.
-
-<vue-markdown v-if="$themeConfig.DOCS_AUDIENCE === 'internal'">
-
-***
-
-_[source document](https://microsoft.sharepoint.com/:w:/t/Prague/ESoVbMxYtoJKp1CqUUsycjYBuURKe1x3Bwgp4_2yCzrH3A?e=KeWZQd)_
-</vue-markdown>

@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { CollaborativeTextArea } from "@fluidframework/aqueduct-react";
+import { CollaborativeTextArea } from "@fluidframework/react-inputs";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 
@@ -56,7 +56,7 @@ export class CollaborativeText extends PrimedComponent implements IComponentHTML
 
         ReactDOM.render(
             <div className="text-area">
-                <CollaborativeTextArea sharedString={this.text}/>
+                <CollaborativeTextArea sharedString={this.text} />
             </div>,
             div,
         );

@@ -24,7 +24,7 @@ import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-de
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
-import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import { EditorView } from "prosemirror-view";
 import { nodeTypeKey } from "./fluidBridge";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
@@ -63,7 +63,7 @@ class ProseMirrorView implements IComponentHTMLView {
     private textArea: HTMLDivElement;
     public get IComponentHTMLView() { return this; }
 
-    public constructor(private readonly collabManager: FluidCollabManager) {}
+    public constructor(private readonly collabManager: FluidCollabManager) { }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         // Create base textarea
@@ -99,7 +99,7 @@ class ProseMirrorView implements IComponentHTMLView {
  * done intentionally to serve as an example of exposing the URL and handle via IComponentLoadable.
  */
 export class ProseMirror extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual, IProvideRichTextEditor {
+    implements IComponentLoadable, IComponentRouter, IComponentHTMLView, IProvideRichTextEditor {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProseMirror(runtime, context);
         await collection.initialize();
@@ -111,7 +111,7 @@ export class ProseMirror extends EventEmitter
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IRichTextEditor() { return this.collabManager; }
 
     public url: string;
@@ -162,11 +162,11 @@ export class ProseMirror extends EventEmitter
         window["easyComponent"] = this;
     }
 
-    public addView(): IComponentHTMLView {
+    public render(elm: HTMLElement): void {
         if (!this.view) {
             this.view = new ProseMirrorView(this.collabManager);
         }
-        return this.view;
+        this.view.render(elm);
     }
 }
 

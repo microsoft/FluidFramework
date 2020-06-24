@@ -25,7 +25,6 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
-    MessageType,
     ConnectionState,
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -37,11 +36,11 @@ import {
     IComponentContextLegacy,
     IComponentFactory,
     IComponentRegistry,
-    IEnvelope,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker, strongAssert } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
+import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in component attributes.
 const currentSnapshotFormatVersion = "0.1";
@@ -61,16 +60,18 @@ interface ISnapshotDetails {
     snapshot?: ISnapshotTree;
 }
 
+interface ComponentMessage {
+    content: any;
+    type: string;
+}
+
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
 export abstract class ComponentContext extends EventEmitter implements
     IComponentContext,
     IComponentContextLegacy,
-    IDisposable
-{
-    public readonly isExperimentalComponentContext = true;
-
+    IDisposable {
     public isLocal(): boolean {
         return this.containerRuntime.isLocal() || !this.isAttached;
     }
@@ -119,14 +120,6 @@ export abstract class ComponentContext extends EventEmitter implements
         return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
-    public get submitFn(): (type: MessageType, contents: any, localOpMetadata: unknown) => void {
-        return this._containerRuntime.submitFn;
-    }
-
-    public get submitSignalFn(): (contents: any) => void {
-        return this._containerRuntime.submitSignalFn;
-    }
-
     public get snapshotFn(): (message: string) => Promise<void> {
         return this._containerRuntime.snapshotFn;
     }
@@ -170,7 +163,7 @@ export abstract class ComponentContext extends EventEmitter implements
     private _baseSnapshot: ISnapshotTree | undefined;
 
     constructor(
-        private readonly _containerRuntime: IContainerRuntime,
+        private readonly _containerRuntime: ContainerRuntime,
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
@@ -334,8 +327,15 @@ export abstract class ComponentContext extends EventEmitter implements
         }
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
+    public process(messageArg: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         this.verifyNotClosed();
+
+        const innerContents = messageArg.contents as ComponentMessage;
+        const message = {
+            ...messageArg,
+            type: innerContents.type,
+            contents: innerContents.content,
+        };
 
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
@@ -409,10 +409,17 @@ export abstract class ComponentContext extends EventEmitter implements
         return runtime.request(request);
     }
 
-    public submitMessage(type: MessageType, content: any, localOpMetadata: unknown): number {
+    public submitMessage(type: string, content: any, localOpMetadata: unknown): number {
         this.verifyNotClosed();
         assert(this.componentRuntime);
-        return this.submitOp(type, content, localOpMetadata);
+        const componentContent: ComponentMessage = {
+            content,
+            type,
+        };
+        return this._containerRuntime.submitComponentOp(
+            this.id,
+            componentContent,
+            localOpMetadata);
     }
 
     /**
@@ -442,14 +449,7 @@ export abstract class ComponentContext extends EventEmitter implements
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
         assert(this.componentRuntime);
-        const envelope: IEnvelope = {
-            address: this.id,
-            contents: {
-                content,
-                type,
-            },
-        };
-        return this._containerRuntime.submitSignalFn(envelope);
+        return this._containerRuntime.submitComponentSignal(this.id, type, content);
     }
 
     public raiseContainerWarning(warning: ContainerWarning): void {
@@ -551,24 +551,14 @@ export abstract class ComponentContext extends EventEmitter implements
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
-    private submitOp(type: MessageType, content: any, localOpMetadata: unknown): number {
-        this.verifyNotClosed();
-        const envelope: IEnvelope = {
-            address: this.id,
-            contents: {
-                content,
-                type,
-            },
-        };
-        return this._containerRuntime.submitFn(MessageType.Operation, envelope, localOpMetadata);
-    }
-
-    public reSubmit(type: MessageType, content: any, localOpMetadata: unknown) {
+    public reSubmit(contents: any, localOpMetadata: unknown) {
         strongAssert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
+
+        const innerContents = contents as ComponentMessage;
 
         // back-compat: 0.18 components
         if (this.componentRuntime.reSubmit) {
-            this.componentRuntime.reSubmit(type, content, localOpMetadata);
+            this.componentRuntime.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
         }
     }
 
@@ -585,7 +575,7 @@ export class RemotedComponentContext extends ComponentContext {
     constructor(
         id: string,
         private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
-        runtime: IContainerRuntime,
+        runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
@@ -662,7 +652,7 @@ export class LocalComponentContext extends ComponentContext {
     constructor(
         id: string,
         pkg: string[],
-        runtime: IContainerRuntime,
+        runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
@@ -683,6 +673,7 @@ export class LocalComponentContext extends ComponentContext {
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const entries = this.componentRuntime!.getAttachSnapshot();
+
         const snapshot: ITree = { entries, id: null };
 
         snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));

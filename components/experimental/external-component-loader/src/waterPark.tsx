@@ -135,9 +135,9 @@ export const WaterParkView: React.FC<IWaterParkViewProps> = (props: React.PropsW
     return (
         <>
             <WaterParkToolbar
-                componentUrls={ componentUrls }
-                onSelectOption={ props.onSelectOption }
-                toggleEditable={ () => setEditable(!editable) }
+                componentUrls={componentUrls}
+                onSelectOption={props.onSelectOption}
+                toggleEditable={() => setEditable(!editable)}
             />
             <SpacesStorageView storage={props.storage} editable={editable} />
         </>

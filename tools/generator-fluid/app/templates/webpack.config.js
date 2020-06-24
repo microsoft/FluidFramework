@@ -1,4 +1,4 @@
-const fluidRoute = require("@microsoft/fluid-webpack-component-loader");
+const fluidRoute = require("@fluidframework/webpack-component-loader");
 const path = require("path");
 
 const pkg = require("./package.json");
@@ -30,9 +30,11 @@ module.exports = env => {
         devServer: {
             publicPath: '/dist',
             stats: "minimal",
-            open: true, // Opens the browser after running `start`
             before: (app, server) => fluidRoute.before(app, server),
             after: (app, server) => fluidRoute.after(app, server, __dirname, env),
+            watchOptions: {
+                ignored: "**/node_modules/**",
+            }
         },
         mode: "development",
         devtool: "source-map"

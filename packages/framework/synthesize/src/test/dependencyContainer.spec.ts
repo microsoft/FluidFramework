@@ -8,13 +8,33 @@ import assert from "assert";
 import {
     IComponentConfiguration,
     IComponentLoadable,
+    IComponentHandleContext,
 } from "@fluidframework/component-core-interfaces";
+import { ComponentHandle } from "@fluidframework/component-runtime";
 
 import { DependencyContainer } from "..";
+
+const mockHandleContext: IComponentHandleContext = {
+    path: "",
+    isAttached: false,
+    IComponentRouter: undefined as any,
+    IComponentHandleContext: undefined as any,
+
+    attach: () => {
+        throw new Error("Method not implemented.");
+    },
+    bind: () => {
+        throw new Error("Method not implemented.");
+    },
+    request: () => {
+        throw new Error("Method not implemented.");
+    },
+};
 
 class MockLoadable implements IComponentLoadable {
     public get IComponentLoadable() { return this; }
     public get url() { return "url123"; }
+    public get handle() { return new ComponentHandle(this, "", mockHandleContext); }
 }
 
 class MockComponentConfiguration implements IComponentConfiguration {

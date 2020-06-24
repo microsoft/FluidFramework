@@ -16,6 +16,7 @@ export class ReplayArgs {
     public verbose = true;
     public overlappingContainers = 4;
     public validateStorageSnapshots = false;
+    public initalizeFromSnapshotsDir: string | undefined;
     public windiff = false;
     public incremental = false;
     public compare = false;

@@ -1,8 +1,37 @@
 # Breaking changes
 
+## 0.21 Breaking Changes
+- [Removed `@fluidframework/local-test-utils`](#removed-`@fluidframework/local-test-utils`)
+- [IComponentHTMLVisual deprecated](#IComponentHTMLVisual-deprecated)
+- [createValueType removed from SharedMap and SharedDirectory](#createValueType-removed-from-SharedMap-and-SharedDirectory)
+
+### Removed `@fluidframework/local-test-utils`
+Removed this package so classes like `TestHost` are no longer supported. Please contact us if there were dependencies on this or if any assistance in required to get rid of it.
+
+### IComponentHTMLVisual deprecated
+The `IComponentHTMLVisual` interface is deprecated and will be removed in an upcoming release.  For multiview scenarios, instead use a pattern like the one demonstrated in the sample in /components/experimental/multiview.  This sample demonstrates how to create multiple views for a component.
+
+### createValueType removed from SharedMap and SharedDirectory
+The `createValueType()` method on `SharedMap` and `SharedDirectory` was deprecated in 0.20, and is now removed in 0.21.  If `Counter` functionality is required, the `@fluidframework/counter` DDS can be used for counter functionality.
+
+## 0.20 Breaking Changes
+- [Value types deprecated on SharedMap and SharedDirectory](#Value-types-deprecated-on-sharedmap-and-shareddirectory)
+- [rename @fluidframework/aqueduct-react to @fluidframework/react-inputs](#rename-@fluidframework/aqueduct-react-to-@fluidframework/react-inputs)
+
+### Value types deprecated on SharedMap and SharedDirectory
+The `Counter` value type and `createValueType()` method on `SharedMap` and `SharedDirectory` are now deprecated and will be removed in an upcoming release.  Instead, the `@fluidframework/counter` DDS can be used for counter functionality.
+
+### rename @fluidframework/aqueduct-react to @fluidframework/react-inputs
+
+aqueduct-react is actually just a react library and renamed it to reflect such.
+
 ## 0.19 Breaking Changes
 - [Container's "error" event](#Container-Error-Event)
 - [IUrlResolver change from requestUrl to getAbsoluteUrl](#IUrlResolver-change-from-requestUrl-to-getAbsoluteUrl)
+- [Package rename from `@microsoft/fluid-*` to `@fluidframework/*`](#package-rename)
+
+### Package rename
+Package with the prefix "@microsoft/fluid-" is renamed to "@fluidframework/" to take advanage a separate namespace for fluid framework SDK packages. 
 
 ### Container Error Event
 "error" event is gone. All critical errors are raised on "closed" event via optiona error object.

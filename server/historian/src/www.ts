@@ -60,10 +60,6 @@ winston.configure({
     args[0] = `${name  } ${  args[0]}`;
 };
 
-// Create services
-const riddlerEndpoint = provider.get("riddler");
-const riddler = new services.RiddlerService(riddlerEndpoint);
-
 const redisConfig = provider.get("redis");
 const redisOptions: redis.ClientOpts = { password: redisConfig.pass };
 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -74,10 +70,15 @@ if (redisConfig.tls) {
 }
 
 const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
-const cache = new services.RedisCache(redisClient);
+const gitCache = new services.RedisCache(redisClient);
+const tenantCache = new services.RedisTenantCache(redisClient);
+
+// Create services
+const riddlerEndpoint = provider.get("riddler");
+const riddler = new services.RiddlerService(riddlerEndpoint, tenantCache);
 
 // Create the historian app
-const historian = app.create(provider, riddler, cache);
+const historian = app.create(provider, riddler, gitCache);
 
 /**
  * Get port from environment and store in Express.

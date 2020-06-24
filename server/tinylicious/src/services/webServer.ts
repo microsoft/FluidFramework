@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { HttpServer } from "@fluidframework/server-services";
+import { HttpServer } from "@fluidframework/server-services-shared";
 import { IWebServer, IWebSocketServer } from "@fluidframework/server-services-core";
 
 export class WebServer implements IWebServer {

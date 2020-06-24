@@ -13,11 +13,13 @@ import {
 } from "@fluidframework/common-utils";
 import { ChildLogger, CustomErrorWithProps, PerformanceEvent } from "@fluidframework/telemetry";
 import {
-    IComponentLoadable,
     IComponentRouter,
     IComponentRunnable,
     IRequest,
     IResponse,
+    IComponentHandleContext,
+    IComponentHandle,
+    IComponentLoadable,
 } from "@fluidframework/component-core-interfaces";
 import { IDeltaManager, ErrorType, ISummarizingWarning } from "@fluidframework/container-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
@@ -32,6 +34,7 @@ import {
 import { GenerateSummaryData, IPreviousState } from "./containerRuntime";
 import { IConnectableRuntime, RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
+import { SummarizerHandle } from "./summarizerHandle";
 
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
@@ -96,12 +99,12 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
  */
 export interface ISummaryAttempt {
     /**
-     * Reference sequence number when summary was generated
+     * Reference sequence number when summary was generated or attempted
      */
     readonly refSequenceNumber: number;
 
     /**
-     * Time of summary attempt after it was sent
+     * Time of summary attempt after it was sent or attempted
      */
     readonly summaryTime: number;
 
@@ -122,11 +125,15 @@ const checkNotTimeout = <T>(something: T | IPromiseTimerResult | undefined): som
  * This class contains the heuristics for when to summarize.
  */
 class SummarizerHeuristics {
+    private _lastAttempted: ISummaryAttempt;
+    private _lastAcked: ISummaryAttempt;
+
     /**
      * Last sent summary attempt
      */
-    public lastSent: ISummaryAttempt;
-    private _lastAcked: ISummaryAttempt;
+    public get lastAttempted(): ISummaryAttempt {
+        return this._lastAttempted;
+    }
 
     /**
      * Last acked summary attempt
@@ -146,7 +153,7 @@ class SummarizerHeuristics {
         public lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
     ) {
-        this.lastSent = firstAck;
+        this._lastAttempted = firstAck;
         this._lastAcked = firstAck;
         this.idleTimer = new Timer(
             this.configuration.idleTime,
@@ -154,10 +161,32 @@ class SummarizerHeuristics {
     }
 
     /**
+     * Sets the last attempted summary and last acked summary.
+     * @param lastSummary - last acked summary
+     */
+    public initialize(lastSummary: ISummaryAttempt) {
+        this._lastAttempted = lastSummary;
+        this._lastAcked = lastSummary;
+    }
+
+    /**
+     * Records a summary attempt. If the attempt was successfully sent,
+     * provide the reference sequence number, otherwise it will be set
+     * to the last seen op sequence number.
+     * @param refSequenceNumber - reference sequence number of sent summary
+     */
+    public recordAttempt(refSequenceNumber?: number) {
+        this._lastAttempted = {
+            refSequenceNumber: refSequenceNumber ?? this.lastOpSeqNumber,
+            summaryTime: Date.now(),
+        };
+    }
+
+    /**
      * Mark the last sent summary attempt as acked.
      */
     public ackLastSent() {
-        this._lastAcked = this.lastSent;
+        this._lastAcked = this.lastAttempted;
     }
 
     /**
@@ -266,9 +295,9 @@ export class RunningSummarizer implements IDisposable {
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
                     maxAckWaitTime: this.configuration.maxAckWaitTime,
-                    refSequenceNumber: this.heuristics.lastSent.refSequenceNumber,
-                    summarySequenceNumber: this.heuristics.lastSent.summarySequenceNumber,
-                    timePending: Date.now() - this.heuristics.lastSent.summaryTime,
+                    refSequenceNumber: this.heuristics.lastAttempted.refSequenceNumber,
+                    summarySequenceNumber: this.heuristics.lastAttempted.summarySequenceNumber,
+                    timePending: Date.now() - this.heuristics.lastAttempted.summaryTime,
                 });
             });
     }
@@ -341,12 +370,11 @@ export class RunningSummarizer implements IDisposable {
         this.pendingAckTimer.clear();
 
         if (checkNotTimeout(maybeLastAck)) {
-            this.heuristics.lastSent = {
+            this.heuristics.initialize({
                 refSequenceNumber: maybeLastAck.summaryOp.referenceSequenceNumber,
                 summaryTime: maybeLastAck.summaryOp.timestamp,
                 summarySequenceNumber: maybeLastAck.summaryOp.sequenceNumber,
-            };
-            this.heuristics.ackLastSent();
+            });
         }
     }
 
@@ -406,16 +434,12 @@ export class RunningSummarizer implements IDisposable {
     ): Promise<boolean | undefined> {
         // Wait to generate and send summary
         const summaryData = await this.generateSummaryWithLogging(reason, safe);
+        this.heuristics.recordAttempt(summaryData?.referenceSequenceNumber);
         if (!summaryData || !summaryData.submitted) {
             // Did not send the summary op
             this.raiseSummarizingError("Error while generating or submitting summary");
             return undefined;
         }
-
-        this.heuristics.lastSent = {
-            refSequenceNumber: summaryData.referenceSequenceNumber,
-            summaryTime: Date.now(),
-        };
 
         const pendingTimeoutP = this.pendingAckTimer.start().catch(() => undefined);
         const summary = this.summaryWatcher.watchSummary(summaryData.clientSequenceNumber);
@@ -426,10 +450,10 @@ export class RunningSummarizer implements IDisposable {
         if (!checkNotTimeout(summaryOp)) {
             return undefined;
         }
-        this.heuristics.lastSent.summarySequenceNumber = summaryOp.sequenceNumber;
+        this.heuristics.lastAttempted.summarySequenceNumber = summaryOp.sequenceNumber;
         this.logger.sendTelemetryEvent({
             eventName: "SummaryOp",
-            timeWaiting: Date.now() - this.heuristics.lastSent.summaryTime,
+            timeWaiting: Date.now() - this.heuristics.lastAttempted.summaryTime,
             refSequenceNumber: summaryOp.referenceSequenceNumber,
             summarySequenceNumber: summaryOp.sequenceNumber,
             handle: summaryOp.contents.handle,
@@ -443,7 +467,7 @@ export class RunningSummarizer implements IDisposable {
         this.logger.sendTelemetryEvent({
             eventName: ackNack.type === MessageType.SummaryAck ? "SummaryAck" : "SummaryNack",
             category: ackNack.type === MessageType.SummaryAck ? "generic" : "error",
-            timeWaiting: Date.now() - this.heuristics.lastSent.summaryTime,
+            timeWaiting: Date.now() - this.heuristics.lastAttempted.summaryTime,
             summarySequenceNumber: ackNack.contents.summaryProposal.summarySequenceNumber,
             error: ackNack.type === MessageType.SummaryNack ? ackNack.contents.errorMessage : undefined,
             handle: ackNack.type === MessageType.SummaryAck ? ackNack.contents.handle : undefined,
@@ -470,7 +494,7 @@ export class RunningSummarizer implements IDisposable {
             eventName: "Summarizing",
             message,
             summarizeCount: ++this.summarizeCount,
-            timeSinceLastAttempt: Date.now() - this.heuristics.lastSent.summaryTime,
+            timeSinceLastAttempt: Date.now() - this.heuristics.lastAttempted.summaryTime,
             timeSinceLastSummary: Date.now() - this.heuristics.lastAcked.summaryTime,
             safe: safe || undefined,
         });
@@ -495,7 +519,7 @@ export class RunningSummarizer implements IDisposable {
             ...summaryData,
             ...summaryData.summaryStats,
             refSequenceNumber: summaryData.referenceSequenceNumber,
-            opsSinceLastAttempt: summaryData.referenceSequenceNumber - this.heuristics.lastSent.refSequenceNumber,
+            opsSinceLastAttempt: summaryData.referenceSequenceNumber - this.heuristics.lastAttempted.refSequenceNumber,
             opsSinceLastSummary: summaryData.referenceSequenceNumber - this.heuristics.lastAcked.refSequenceNumber,
         };
         telemetryProps.summaryStats = undefined;
@@ -529,9 +553,9 @@ export class RunningSummarizer implements IDisposable {
  * It is the main entry point for summary work.
  */
 export class Summarizer extends EventEmitter implements ISummarizer {
+    public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
-    public get IComponentLoadable() { return this; }
     public get ISummarizer() { return this; }
 
     private readonly logger: ITelemetryLogger;
@@ -544,6 +568,11 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     public readonly summaryCollection: SummaryCollection;
     private stopped = false;
     private readonly stopDeferred = new Deferred<void>();
+    private _disposed: boolean = false;
+
+    private readonly innerHandle: IComponentHandle<this>;
+
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
 
     constructor(
         public readonly url: string,
@@ -552,6 +581,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         // eslint-disable-next-line max-len
         private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
         private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => Promise<void>,
+        handleContext: IComponentHandleContext,
         summaryCollection?: SummaryCollection,
     ) {
         super();
@@ -568,6 +598,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             (op) => this.summaryCollection.handleOp(op));
 
         this.runtime.previousState.nextSummarizerD?.resolve(this);
+        this.innerHandle = new SummarizerHandle(this, this.url, handleContext);
     }
 
     public async run(onBehalfOf: string): Promise<void> {
@@ -688,8 +719,11 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.runtime.deltaManager.lastSequenceNumber,
             initialAttempt,
             this.immediateSummary,
-            (description: string) =>
-                this.emit("summarizingError", createSummarizingWarning(`Summarizer: ${description}`, true)),
+            (description: string) => {
+                if (!this._disposed) {
+                    this.emit("summarizingError", createSummarizingWarning(`Summarizer: ${description}`, true));
+                }
+            },
         );
         this.runningSummarizer = runningSummarizer;
 
@@ -724,6 +758,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      * properties.
      */
     public dispose() {
+        this._disposed = true;
         if (this.runningSummarizer) {
             this.runningSummarizer.dispose();
             this.runningSummarizer = undefined;

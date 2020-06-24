@@ -4,9 +4,8 @@
  */
 
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
-import { IDocumentAttributes, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IDocumentAttributes, ISequencedDocumentMessage, IProtocolState } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
-import { IScribe } from "@fluidframework/server-services-core";
 import { IDeliCheckpoint } from "../deli";
 
 export interface ILatestSummaryState {
@@ -60,16 +59,18 @@ export async function fetchLatestSummaryState(
     }
 }
 
-export const initializeProtocol = (documentId: string, scribe: IScribe, term: number): ProtocolOpHandler => {
-    return new ProtocolOpHandler(
-        documentId,
-        scribe.protocolState.minimumSequenceNumber,
-        scribe.protocolState.sequenceNumber,
-        term,
-        scribe.protocolState.members,
-        scribe.protocolState.proposals,
-        scribe.protocolState.values,
-        () => -1,
-        () => { return; },
-    );
-};
+export const initializeProtocol = (
+    documentId: string,
+    protocolState: IProtocolState,
+    term: number,
+): ProtocolOpHandler => new ProtocolOpHandler(
+    documentId,
+    protocolState.minimumSequenceNumber,
+    protocolState.sequenceNumber,
+    term,
+    protocolState.members,
+    protocolState.proposals,
+    protocolState.values,
+    () => -1,
+    () => { return; },
+);

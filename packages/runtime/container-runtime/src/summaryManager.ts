@@ -14,7 +14,12 @@ import {
 } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry";
 import { IComponent, IRequest } from "@fluidframework/component-core-interfaces";
-import { IContainerContext, LoaderHeader, ISummarizingWarning } from "@fluidframework/container-definitions";
+import {
+    IContainerContext,
+    LoaderHeader,
+    ISummarizingWarning,
+    summarizerClientType,
+} from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { ISummarizer, Summarizer, createSummarizingWarning } from "./summarizer";
 
@@ -43,7 +48,7 @@ class QuorumHeap {
 
     public addClient(clientId: string, client: ISequencedClient) {
         // Have to undefined-check client.details for backwards compatibility
-        const isSummarizer = client.client.details?.type === "summarizer";
+        const isSummarizer = client.client.details?.type === summarizerClientType;
         const heapNode = this.heap.add({ clientId, sequenceNumber: client.sequenceNumber, isSummarizer });
         this.heapMembers.set(clientId, heapNode);
         if (isSummarizer) {
@@ -320,7 +325,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             this.state = SummaryManagerState.Disabled;
             return;
         }
-        if (this.context.clientDetails.type === "summarizer") {
+        if (this.context.clientDetails.type === summarizerClientType) {
             // Make sure that the summarizer client does not load another summarizer.
             this.state = SummaryManagerState.Disabled;
             return;
@@ -428,7 +433,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 [LoaderHeader.cache]: false,
                 [LoaderHeader.clientDetails]: {
                     capabilities: { interactive: false },
-                    type: "summarizer",
+                    type: summarizerClientType,
                 },
                 [LoaderHeader.reconnect]: false,
                 [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,

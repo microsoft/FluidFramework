@@ -3,20 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IComponent,
-    IComponentHandle,
-} from "@fluidframework/component-core-interfaces";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
 import { SharedComponentFactory, SharedComponent } from "@fluidframework/component-base";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import { FlowDocument } from "../document";
 import { hostType } from "../package";
 import { WebflowView } from "./host";
 import { importDoc } from "./import";
 
-export class WebFlow extends SharedComponent<ISharedDirectory> implements IComponentHTMLVisual {
+export class WebFlow extends SharedComponent<ISharedDirectory> implements IComponentHTMLView {
     private static readonly factory = new SharedComponentFactory<WebFlow>(
         hostType,
         WebFlow,
@@ -44,15 +41,16 @@ export class WebFlow extends SharedComponent<ISharedDirectory> implements ICompo
 
     public async load() { }
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
-    // #region IComponentHTMLVisual
+    // #region IComponentHTMLView
 
-    public addView(scope?: IComponent): IComponentHTMLView {
-        return new WebflowView(this.root.get<IComponentHandle<FlowDocument>>("doc").get());
+    public render(elm: HTMLElement): void {
+        const view = new WebflowView(this.root.get<IComponentHandle<FlowDocument>>("doc").get());
+        view.render(elm);
     }
 
-    // #endregion IComponentHTMLVisual
+    // #endregion IComponentHTMLView
 
     protected async componentInitializingFirstTime() { this.create(); }
 }
