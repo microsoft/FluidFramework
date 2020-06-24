@@ -223,46 +223,49 @@ describe("Batching", () => {
     });
 
     describe("Document Dirty State", () => {
+        // Verifies that the document dirty state for the given document is as expected.
+        function verifyDocumentDirtyState(component: ITestFluidComponent, expectedState: boolean) {
+            const dirty = (component.context.containerRuntime as IContainerRuntime).isDocumentDirty();
+            assert.equal(dirty, expectedState, "The document dirty state is not as expected");
+        }
+
         it("should clean document dirty state after a batch is sent", async () => {
             // Send a batch with a single message.
             component1.context.containerRuntime.orderSequentially(() => {
                 component1map1.set("key1", "value1");
             });
 
-            // Check that the document is correctly set to dirty.
-            let dirty = (component1.context.containerRuntime as IContainerRuntime).isDocumentDirty();
-            assert.equal(dirty, true, "The document should be dirty on submitting an op");
+            // Verify that the document is correctly set to dirty.
+            verifyDocumentDirtyState(component1, true);
 
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            // Check that the document dirty state is cleaned after the ops are processed.
-            dirty = (component1.context.containerRuntime as IContainerRuntime).isDocumentDirty();
-            assert.equal(dirty, false, "The document dirty state should have been cleaned");
+            // Verify that the document dirty state is cleaned after the ops are processed.
+            verifyDocumentDirtyState(component1, false);
         });
 
         it("should clean document dirty state after consecutive batches are sent", async () => {
             // Send a couple of batches consecutively.
             component1.context.containerRuntime.orderSequentially(() => {
                 component1map1.set("key1", "value1");
-                component1map2.set("key2", "value2");
             });
 
             component1.context.containerRuntime.orderSequentially(() => {
+                component1map2.set("key2", "value2");
                 component1map1.set("key3", "value3");
                 component1map2.set("key4", "value4");
             });
 
-            // Check that the document is correctly set to dirty.
-            let dirty = (component1.context.containerRuntime as IContainerRuntime).isDocumentDirty();
-            assert.equal(dirty, true, "The document should be dirty on submitting an op");
+            // Verify that the document is correctly set to dirty.
+            verifyDocumentDirtyState(component1, true);
 
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
             // Check that the document dirty state is cleaned after the ops are processed.
-            dirty = (component1.context.containerRuntime as IContainerRuntime).isDocumentDirty();
-            assert.equal(dirty, false, "The document dirty state should have been cleaned");
+            // Verify that the document dirty state is cleaned after the ops are processed.
+            verifyDocumentDirtyState(component1, false);
         });
 
         it("should clean document dirty state after batch and not-batch messages are sent", async () => {
@@ -273,26 +276,24 @@ describe("Batching", () => {
             component1.context.containerRuntime.orderSequentially(() => {
                 component1map2.set("key2", "value2");
                 component1map1.set("key3", "value3");
+                component1map2.set("key4", "value4");
             });
 
             component1.context.containerRuntime.orderSequentially(() => {
-                component1map2.set("key4", "value4");
                 component1map1.set("key5", "value5");
             });
 
             // Send another non-batch message.
             component1map1.set("key5", "value5");
 
-            // Check that the document is correctly set to dirty.
-            let dirty = (component1.context.containerRuntime as IContainerRuntime).isDocumentDirty();
-            assert.equal(dirty, true, "The document should be dirty on submitting an op");
+            // Verify that the document is correctly set to dirty.
+            verifyDocumentDirtyState(component1, true);
 
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            // Check that the document dirty state is cleaned after the ops are processed.
-            dirty = (component1.context.containerRuntime as IContainerRuntime).isDocumentDirty();
-            assert.equal(dirty, false, "The document dirty state should have been cleaned");
+            // Verify that the document dirty state is cleaned after the ops are processed.
+            verifyDocumentDirtyState(component1, false);
         });
     });
 
