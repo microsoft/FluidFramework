@@ -415,6 +415,8 @@ export class LayerGraph {
         const packagesMdContents: string =
 `# All Packages
 
+[//]: <> (This file is generated, please don't edit it manually!)
+
 ${lines.join("\n  ")}
 `;
         return packagesMdContents;

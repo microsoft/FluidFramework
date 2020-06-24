@@ -92,7 +92,7 @@ function appendInfoToFile(info: IPackageInfo) {
 }
 
 function processPackageInfo(info: IPackageInfo) {
-    if (info.fullName === "root") {
+    if (info.fullName === "root" || info.fullName === "dice-roller") {
         return;
     }
     appendInfoToFile(info);

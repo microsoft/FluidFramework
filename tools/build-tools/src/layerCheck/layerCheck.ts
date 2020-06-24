@@ -21,7 +21,7 @@ ${commonOptionString}
 `);
 }
 
-const packagesMdFileName: string = "docs/PACKAGES.md";
+const packagesMdFileName: string = "PACKAGES.md";
 
 let dotGraphFilePath: string | undefined;
 
@@ -84,7 +84,7 @@ async function main() {
         //* TODO: Hide behind an option
         // Write human-readable package list organized by layer
         if (true) {
-            const packagesMdFilePath: string = path.join(resolvedRoot, packagesMdFileName);
+            const packagesMdFilePath: string = path.join(resolvedRoot, "docs", packagesMdFileName);
             await writeFileAsync(packagesMdFilePath, layerGraph.generatePackagesLayerChart());
         }
 
