@@ -400,13 +400,23 @@ export class LayerGraph {
         return dotGraph;
     }
 
+    private padArraysToSameLength(a: string[], b: string[], val: string) {
+        while (a.length !== b.length) {
+            if (a.length < b.length) {
+                a.push(val);
+            }
+            else {
+                b.push(val);
+            }
+        }
+    }
+
     public generatePackageLayerTable(repoRoot: string) {
         const lines: string[] = [];
         for (const groupNode of this.groupNodes.sort(BaseNode.comparator)) {
-            lines.push(`| ${groupNode.name.toUpperCase()} |`);
+            lines.push(`## ${groupNode.name} layers${newline}`);
             for (const layerNode of groupNode.layerNodes.sort(BaseNode.comparator)) {
-                const cells: string[] = []
-                cells.push(`### ${layerNode.name}`);
+                lines.push(`### ${layerNode.name}${newline}`);
                 const packagesInCell: string[] = [];
                 const childLayers: Set<LayerNode> = new Set();
                 for (const packageNode of [...layerNode.packages].sort(BaseNode.comparator)) {
@@ -414,16 +424,18 @@ export class LayerGraph {
                     packagesInCell.push(`- [${packageNode.name}](${dirRelativePath})`);
                     packageNode.childDependencies.forEach((p) => childLayers.add(p.layerNode));
                 }
-                cells.push(packagesInCell.join("</br>"));
 
+                const layersInCell: string[] = [];
                 if (childLayers.size > 0) {
-                    const layersInCell: string[] = [];
                     for (const childLayer of [...childLayers].sort(BaseNode.comparator)) {
                         layersInCell.push(`- [${childLayer.name}](#${childLayer.name})`);
                     }
-                    cells.push(layersInCell.join("</br>"));
                 }
-               lines.push(`| ${cells.join(" | ")} |`);
+
+                this.padArraysToSameLength(packagesInCell, layersInCell, "&nbsp;");
+                lines.push(`| Packages | Layers Depended Upon |`);
+                lines.push(`| --- | --- |`);
+                lines.push(`| ${packagesInCell.join("</br>")} | ${layersInCell.join("</br>")} |${newline}`);
             }
         }
 
@@ -432,8 +444,6 @@ export class LayerGraph {
 
 [//]: <> (This file is generated, please don't edit it manually!)
 
-| Layer | Packages | Layers Depended Upon |
-| ----- | -------- | -------------------- |
 ${lines.join(newline)}
 `;
         return packagesMdContents;
