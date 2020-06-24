@@ -5,6 +5,7 @@
 
 import { Package, Packages } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
+import { EOL as newline } from "os";
 import * as path from "path";
 
 interface ILayerInfo {
@@ -401,22 +402,24 @@ export class LayerGraph {
 
     public generatePackagesLayerChart() {
         const lines: string[] = [];
-        let packageCount = 0;
         for (const groupNode of this.groupNodes.sort(BaseNode.comparator)) {
-            lines.push(`## ${groupNode.name}`);
+            lines.push(`## ${groupNode.name}${newline}`);
             for (const layerNode of groupNode.layerNodes.sort(BaseNode.comparator)) {
-                lines.push(`### ${layerNode.name}`);
-                lines.push(`#### Packages`);
+                lines.push(`### ${layerNode.name}${newline}`);
+                lines.push(`#### Packages${newline}`);
                 const childLayers: Set<LayerNode> = new Set();
                 for (const packageNode of [...layerNode.packages].sort(BaseNode.comparator)) {
-                    packageCount++;
                     lines.push(`- ${packageNode.name}`);
                     packageNode.childDependencies.forEach((p) => childLayers.add(p.layerNode));
                 }
+                lines.push(``);
 
-                lines.push(`#### Layers Depended Upon`);
-                for (const childLayer of [...childLayers].sort(BaseNode.comparator)) {
-                    lines.push(`- ${childLayer.name}`);
+                if (childLayers.size > 0) {
+                    lines.push(`#### Layers Depended Upon${newline}`);
+                    for (const childLayer of [...childLayers].sort(BaseNode.comparator)) {
+                        lines.push(`- ${childLayer.name}`);
+                    }
+                    lines.push(``);
                 }
             }
         }
@@ -426,7 +429,7 @@ export class LayerGraph {
 
 [//]: <> (This file is generated, please don't edit it manually!)
 
-${lines.join("\n")}
+${lines.join(newline)}
 `;
         return packagesMdContents;
     }
