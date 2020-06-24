@@ -403,25 +403,27 @@ export class LayerGraph {
     public generatePackageLayerTable(repoRoot: string) {
         const lines: string[] = [];
         for (const groupNode of this.groupNodes.sort(BaseNode.comparator)) {
-            lines.push(`## ${groupNode.name}${newline}`);
+            lines.push(`| ${groupNode.name.toUpperCase()} |`);
             for (const layerNode of groupNode.layerNodes.sort(BaseNode.comparator)) {
-                lines.push(`### ${layerNode.name}${newline}`);
-                lines.push(`Packages:${newline}`);
+                const cells: string[] = []
+                cells.push(`### ${layerNode.name}`);
+                const packagesInCell: string[] = [];
                 const childLayers: Set<LayerNode> = new Set();
                 for (const packageNode of [...layerNode.packages].sort(BaseNode.comparator)) {
                     const dirRelativePath = "/" + path.relative(repoRoot, packageNode.pkg.directory).replace(/\\/g, "/");
-                    lines.push(`- [${packageNode.name}](${dirRelativePath})`);
+                    packagesInCell.push(`- [${packageNode.name}](${dirRelativePath})`);
                     packageNode.childDependencies.forEach((p) => childLayers.add(p.layerNode));
                 }
-                lines.push(``);
+                cells.push(packagesInCell.join("</br>"));
 
                 if (childLayers.size > 0) {
-                    lines.push(`Layers Depended Upon:${newline}`);
+                    const layersInCell: string[] = [];
                     for (const childLayer of [...childLayers].sort(BaseNode.comparator)) {
-                        lines.push(`- [${childLayer.name}](#${childLayer.name})`);
+                        layersInCell.push(`- [${childLayer.name}](#${childLayer.name})`);
                     }
-                    lines.push(``);
+                    cells.push(layersInCell.join("</br>"));
                 }
+               lines.push(`| ${cells.join(" | ")} |`);
             }
         }
 
@@ -430,6 +432,8 @@ export class LayerGraph {
 
 [//]: <> (This file is generated, please don't edit it manually!)
 
+| Layer | Packages | Layers Depended Upon |
+| ----- | -------- | -------------------- |
 ${lines.join(newline)}
 `;
         return packagesMdContents;
