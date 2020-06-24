@@ -73,9 +73,10 @@ function getNackReconnectInfo(nackContent: INackContent) {
 }
 
 function createReconnectError(prefix: string, err: any) {
-    const error = CreateContainerError(err, true);
+    const error = CreateContainerError(err);
     const error2 = Object.create(error);
     error2.message = `${prefix}: ${error.message}`;
+    error2.canRetry = true;
     return error2;
 }
 
@@ -703,7 +704,7 @@ export class DeltaManager
                 from = lastFetch;
             } catch (origError) {
                 canRetry = canRetry && canRetryOnError(origError);
-                const error = CreateContainerError(origError, canRetry);
+                const error = CreateContainerError(origError);
 
                 logNetworkFailure(
                     this.logger,

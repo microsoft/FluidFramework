@@ -22,7 +22,6 @@ class GenericError extends CustomErrorWithProps implements IGenericError {
 
     constructor(
         errorMessage: string,
-        readonly canRetry: boolean,
         readonly error: any,
     ) {
         super(errorMessage);
@@ -33,26 +32,14 @@ class GenericError extends CustomErrorWithProps implements IGenericError {
  * Convert the error into one of the error types.
  * @param error - Error to be converted.
  */
-export function CreateContainerError(error: any, canRetryArg?: boolean): IGenericError {
+export function CreateContainerError(error: any): IGenericError {
     assert(error !== undefined);
-
-    // default is false
-    const canRetry = canRetryArg === true;
 
     // eslint-disable-next-line no-null/no-null
     if (typeof error === "object" && error !== null) {
         const err = error;
         if (error.errorType !== undefined && error instanceof CustomErrorWithProps) {
-            if (canRetryArg === undefined || err.canRetry === canRetryArg) {
-                return err;
-            }
-
-            // we trust it to not have any PI!!
-            // Only overwrite canRetry if specified
-            return Object.assign(
-                Object.create(error),
-                { canRetry: canRetryArg },
-            );
+            return err;
         }
 
         // Only get properties we know about.
@@ -60,14 +47,13 @@ export function CreateContainerError(error: any, canRetryArg?: boolean): IGeneri
         return new CustomErrorWithProps(
             messageFromError(error),
             {
-                errorType: error.errorType ?? ContainerErrorType.genericError,
-                canRetry: canRetryArg ?? (error.canRetry ?? false),
+                errorType: ContainerErrorType.genericError,
                 stack: error.stack,
             },
         ) as any as IGenericError;
     } else if (typeof error === "string") {
-        return new GenericError(error, canRetry, new Error(error));
+        return new GenericError(error, new Error(error));
     } else {
-        return new GenericError(messageFromError(error), canRetry, error);
+        return new GenericError(messageFromError(error), error);
     }
 }
