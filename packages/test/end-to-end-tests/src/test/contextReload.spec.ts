@@ -18,6 +18,8 @@ import * as old from "./oldVersion";
 const V1 = "0.1.0";
 const V2 = "0.2.0";
 
+// A simple component with runtime/root exposed for testing purposes. Two
+// different versions (defined below) are used to test context reload.
 abstract class TestComponent extends PrimedComponent {
     public static readonly type = "@fluid-example/test-component";
     public readonly version: string;
@@ -39,6 +41,9 @@ class TestComponentV2 extends TestComponent {
     }
 }
 
+// A simple old-version component with runtime/root exposed for testing
+// purposes. Used to test compatibility of context reload between
+// different runtime versions.
 abstract class OldTestComponent extends old.PrimedComponent {
     public static readonly type = "@fluid-example/test-component";
     public readonly version: string;
