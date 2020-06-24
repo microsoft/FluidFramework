@@ -14,6 +14,7 @@ import {
     IGenericBlob,
     ContainerWarning,
     ILoader,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { Deferred } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -152,7 +153,7 @@ export abstract class ComponentContext extends EventEmitter implements
     public get disposed() { return this._disposed; }
 
     public get isAttached(): boolean {
-        return this._isAttached;
+        return this._isAttached !== AttachState.Detached;
     }
 
     public readonly attach: (componentRuntime: IComponentRuntimeChannel) => void;
@@ -169,15 +170,19 @@ export abstract class ComponentContext extends EventEmitter implements
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
-        private _isAttached: boolean,
+        private _isAttached: AttachState,
         attach: (componentRuntime: IComponentRuntimeChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
         this.attach = (componentRuntime: IComponentRuntimeChannel) => {
+            if (this.isAttached) {
+                return;
+            }
+            this._isAttached = AttachState.Attaching;
             attach(componentRuntime);
-            this._isAttached = true;
+            this._isAttached = AttachState.Attached;
         };
     }
 
@@ -588,7 +593,7 @@ export class RemotedComponentContext extends ComponentContext {
             storage,
             scope,
             summaryTracker,
-            true,
+            AttachState.Attached,
             () => {
                 throw new Error("Already attached");
             },
@@ -662,7 +667,7 @@ export class LocalComponentContext extends ComponentContext {
          */
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);
+        super(runtime, id, false, storage, scope, summaryTracker, AttachState.Detached, attachCb, pkg);
     }
 
     public generateAttachMessage(): IAttachMessage {
