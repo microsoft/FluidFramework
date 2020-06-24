@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { PromiseCache } from "../promiseCache";
+import { PromiseCache } from "../src";
 
 describe("PromiseCache", () => {
     describe("Basic Cache Mechanism", () => {
