@@ -102,7 +102,7 @@ function CounterReactFunctionalReducer(
 }
 
 /**
- * Basic ClickerWithHooks example using new interfaces and stock component classes.
+ * ClickerReducer example using the useReducerFluid hook
  */
 export class ClickerReducer extends PrimedComponent
     implements IComponentHTMLView {
