@@ -85,7 +85,7 @@ async function main() {
         // Write human-readable package list organized by layer
         if (true) {
             const packagesMdFilePath: string = path.join(resolvedRoot, "docs", packagesMdFileName);
-            await writeFileAsync(packagesMdFilePath, layerGraph.generatePackagesLayerChart());
+            await writeFileAsync(packagesMdFilePath, layerGraph.generatePackageLayerTable(resolvedRoot));
         }
 
         // Write machine-readable dot file used to render a dependency graph

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Package, Packages } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
+import { Package, Packages } from "../common/npmPackage";
 import { EOL as newline } from "os";
 import * as path from "path";
 
@@ -400,24 +400,25 @@ export class LayerGraph {
         return dotGraph;
     }
 
-    public generatePackagesLayerChart() {
+    public generatePackageLayerTable(repoRoot: string) {
         const lines: string[] = [];
         for (const groupNode of this.groupNodes.sort(BaseNode.comparator)) {
             lines.push(`## ${groupNode.name}${newline}`);
             for (const layerNode of groupNode.layerNodes.sort(BaseNode.comparator)) {
                 lines.push(`### ${layerNode.name}${newline}`);
-                lines.push(`#### Packages${newline}`);
+                lines.push(`Packages:${newline}`);
                 const childLayers: Set<LayerNode> = new Set();
                 for (const packageNode of [...layerNode.packages].sort(BaseNode.comparator)) {
-                    lines.push(`- ${packageNode.name}`);
+                    const dirRelativePath = "/" + path.relative(repoRoot, packageNode.pkg.directory).replace(/\\/g, "/");
+                    lines.push(`- [${packageNode.name}](${dirRelativePath})`);
                     packageNode.childDependencies.forEach((p) => childLayers.add(p.layerNode));
                 }
                 lines.push(``);
 
                 if (childLayers.size > 0) {
-                    lines.push(`#### Layers Depended Upon${newline}`);
+                    lines.push(`Layers Depended Upon:${newline}`);
                     for (const childLayer of [...childLayers].sort(BaseNode.comparator)) {
-                        lines.push(`- ${childLayer.name}`);
+                        lines.push(`- [${childLayer.name}](#${childLayer.name})`);
                     }
                     lines.push(``);
                 }
