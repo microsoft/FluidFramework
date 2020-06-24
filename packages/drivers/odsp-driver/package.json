@@ -50,7 +50,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/telemetry": "^0.21.0",
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.20.0-0",
     "@fluidframework/component-core-interfaces": "^0.21.0",
@@ -61,6 +60,7 @@
     "@fluidframework/gitresources": "^0.1008.0-0",
     "@fluidframework/protocol-base": "^0.1008.0-0",
     "@fluidframework/protocol-definitions": "^0.1008.0-0",
+    "@fluidframework/telemetry": "^0.21.0",
     "debug": "^4.1.1",
     "lodash": "^4.17.11",
     "node-fetch": "^2.2.1",

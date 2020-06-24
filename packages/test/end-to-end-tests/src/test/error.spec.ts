@@ -14,6 +14,7 @@ import { Container, Loader } from "@fluidframework/container-loader";
 import {
     IFluidResolvedUrl,
     IDocumentServiceFactory,
+    DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import { createWriteError } from "@fluidframework/driver-utils";
 import { CustomErrorWithProps } from "@fluidframework/telemetry";
@@ -229,7 +230,7 @@ describe("Errors Types", () => {
     it("WriteError Test", async () => {
         const writeError = createWriteError("Test Error");
         assertCustomPropertySupport(writeError);
-        assert.equal(writeError.errorType, ErrorType.writeError, "Error should be a writeError");
+        assert.equal(writeError.errorType, DriverErrorType.writeError, "Error should be a writeError");
         assert.equal(writeError.canRetry, false, "Error should be critical");
     });
 

@@ -4,7 +4,7 @@
  */
 // tslint:disable: no-unsafe-any
 import assert from "assert";
-import { ErrorType, IGenericError } from "@fluidframework/container-definitions";
+import { ContainerErrorType, IGenericError } from "@fluidframework/container-definitions";
 import { CustomErrorWithProps } from "@fluidframework/telemetry";
 
 function messageFromError(error: any) {
@@ -18,7 +18,7 @@ function messageFromError(error: any) {
  * Generic error
  */
 class GenericError extends CustomErrorWithProps implements IGenericError {
-    readonly errorType = ErrorType.genericError;
+    readonly errorType = ContainerErrorType.genericError;
 
     constructor(
         errorMessage: string,
@@ -60,7 +60,7 @@ export function CreateContainerError(error: any, canRetryArg?: boolean): IGeneri
         return new CustomErrorWithProps(
             messageFromError(error),
             {
-                errorType: error.errorType ?? ErrorType.genericError,
+                errorType: error.errorType ?? ContainerErrorType.genericError,
                 canRetry: canRetryArg ?? (error.canRetry ?? false),
                 stack: error.stack,
             },

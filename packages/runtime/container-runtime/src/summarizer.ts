@@ -21,7 +21,7 @@ import {
     IComponentHandle,
     IComponentLoadable,
 } from "@fluidframework/component-core-interfaces";
-import { IDeltaManager, ErrorType, ISummarizingWarning } from "@fluidframework/container-definitions";
+import { IDeltaManager, RuntimeErrorType, ISummarizingWarning } from "@fluidframework/container-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import {
@@ -54,7 +54,7 @@ export interface IProvideSummarizer {
 }
 
 export class SummarizingWarning extends CustomErrorWithProps implements ISummarizingWarning {
-    readonly errorType = ErrorType.summarizingError;
+    readonly errorType = RuntimeErrorType.summarizingError;
     readonly canRetry = true;
 
     constructor(errorMessage: string, readonly logged: boolean = false) {
@@ -608,7 +608,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             const err2: ISummarizingWarning = {
                 logged: false,
                 ...CreateContainerError(error),
-                errorType: ErrorType.summarizingError,
+                errorType: RuntimeErrorType.summarizingError,
             };
             this.emit("summarizingError", err2);
             throw error;

@@ -13,7 +13,7 @@ import {
     IDeltaQueue,
     CriticalContainerError,
     IThrottlingWarning,
-    ErrorType,
+    ContainerErrorType,
 } from "@fluidframework/container-definitions";
 import { performanceNow, TypedEventEmitter } from "@fluidframework/common-utils";
 import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry";
@@ -66,7 +66,7 @@ const DefaultContentBufferSize = 10;
 const canRetryOnError = (error: any): boolean => error?.canRetry !== false;
 const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds || undefined;
 
-function getNackReconnectInfo(nackContent: INackContent): CriticalContainerError {
+function getNackReconnectInfo(nackContent: INackContent) {
     const reason = `Nack: ${nackContent.message}`;
     const canRetry = ![403, 429].includes(nackContent.code);
     return createGenericNetworkError(reason, canRetry, nackContent.retryAfter);
@@ -845,20 +845,19 @@ export class DeltaManager
         }
     }
 
-    private emitDelayInfo(retryEndpoint: number, delay: number, error: CriticalContainerError) {
+    private emitDelayInfo(retryEndpoint: number, delaySeconds: number, error: CriticalContainerError) {
         if (retryEndpoint === RetryFor.DeltaStorage) {
-            this.deltaStorageDelay = delay;
+            this.deltaStorageDelay = delaySeconds;
         } else if (retryEndpoint === RetryFor.DeltaStream) {
-            this.deltaStreamDelay = delay;
+            this.deltaStreamDelay = delaySeconds;
         }
 
         const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
         if (delayTime > 0) {
             const throttlingError: IThrottlingWarning = {
-                errorType: ErrorType.throttlingError,
-                canRetry: true,
+                errorType: ContainerErrorType.throttlingError,
                 message: `Service busy/throttled: ${error.message}`,
-                retryAfterSeconds: delayTime / 1000,
+                retryAfterSeconds: delayTime,
             };
             this.emit("throttled", throttlingError);
         }

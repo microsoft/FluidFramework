@@ -48,7 +48,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/telemetry": "^0.21.0",
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.20.0-0",
     "@fluidframework/component-core-interfaces": "^0.21.0",
@@ -57,6 +56,7 @@
     "@fluidframework/protocol-definitions": "^0.1008.0-0",
     "@fluidframework/runtime-utils": "^0.21.0",
     "@fluidframework/shared-object-base": "^0.21.0",
+    "@fluidframework/telemetry": "^0.21.0",
     "@tiny-calc/nano": "0.0.0-alpha.0",
     "debug": "^4.1.1",
     "tslib": "^1.10.0"

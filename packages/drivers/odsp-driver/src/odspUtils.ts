@@ -11,7 +11,11 @@ import {
     createGenericNetworkError,
     OnlineStatus,
 } from "@fluidframework/driver-utils";
-import { CriticalContainerError, ErrorType } from "@fluidframework/container-definitions";
+import {
+    OdspError,
+    OdspErrorType,
+    DriverErrorType,
+} from "@fluidframework/driver-definitions";
 import {
     default as fetch,
     RequestInfo as FetchRequestInfo,
@@ -33,8 +37,8 @@ export function createOdspNetworkError(
     errorMessage: string,
     statusCode?: number,
     retryAfterSeconds?: number,
-): CriticalContainerError {
-    let error: CriticalContainerError;
+): OdspError {
+    let error: OdspError;
 
     switch (statusCode) {
         case 400:
@@ -42,32 +46,32 @@ export function createOdspNetworkError(
             break;
         case 401:
         case 403:
-            error = new NetworkErrorBasic(errorMessage, ErrorType.authorizationError, false);
+            error = new NetworkErrorBasic(errorMessage, DriverErrorType.authorizationError, false);
             break;
         case 404:
-            error = new NetworkErrorBasic(errorMessage, ErrorType.fileNotFoundOrAccessDeniedError, false);
+            error = new NetworkErrorBasic(errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, false);
             break;
         case 406:
-            error = new NetworkErrorBasic(errorMessage, ErrorType.unsupportedClientProtocolVersion, false);
+            error = new NetworkErrorBasic(errorMessage, DriverErrorType.unsupportedClientProtocolVersion, false);
             break;
         case 413:
-            error = new NonRetryableError(errorMessage, ErrorType.snapshotTooBig, false);
+            error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig);
             break;
         case 414:
         case invalidFileNameStatusCode:
-            error = new NonRetryableError(errorMessage, ErrorType.invalidFileNameError, false);
+            error = new NonRetryableError(errorMessage, OdspErrorType.invalidFileNameError);
             break;
         case 500:
             error = new GenericNetworkError(errorMessage, true);
             break;
         case 501:
-            error = new NonRetryableError(errorMessage, ErrorType.fluidNotEnabled, false);
+            error = new NonRetryableError(errorMessage, OdspErrorType.fluidNotEnabled);
             break;
         case 507:
-            error = new NonRetryableError(errorMessage, ErrorType.outOfStorageError, false);
+            error = new NonRetryableError(errorMessage, OdspErrorType.outOfStorageError);
             break;
         case offlineFetchFailureStatusCode:
-            error = new NetworkErrorBasic(errorMessage, ErrorType.offlineError, true);
+            error = new NetworkErrorBasic(errorMessage, DriverErrorType.offlineError, true);
             break;
         case fetchFailureStatusCode:
         default:
@@ -133,7 +137,7 @@ export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => 
     return get(false).catch(async (e) => {
         // If the error is 401 or 403 refresh the token and try once more.
         // fetchIncorrectResponse indicates some error on the wire, retry once.
-        if (e.errorType === ErrorType.authorizationError || e.statusCode === fetchIncorrectResponse) {
+        if (e.errorType === DriverErrorType.authorizationError || e.statusCode === fetchIncorrectResponse) {
             return get(true);
         }
 

@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { CriticalContainerError, ErrorType } from "@fluidframework/container-definitions";
+import { OdspError, DriverErrorType } from "@fluidframework/driver-definitions";
 import { IOdspSocketError } from "../contracts";
 import {
     createOdspNetworkError,
@@ -35,16 +35,16 @@ describe("Odsp Error", () => {
             );
             assert.fail("Not reached - throwOdspNetworkError should have thrown");
         } catch (error) {
-            return error as CriticalContainerError;
+            return error as OdspError;
         }
     }
 
     it("throwOdspNetworkError first-class properties", async () => {
-        const networkError: CriticalContainerError = createOdspNetworkErrorWithResponse(
+        const networkError = createOdspNetworkErrorWithResponse(
             "TestMessage",
             400,
         );
-        if (networkError.errorType !== ErrorType.genericNetworkError) {
+        if (networkError.errorType !== DriverErrorType.genericNetworkError) {
             assert.fail("networkError should be a genericNetworkError");
         }
         else {
@@ -76,7 +76,7 @@ describe("Odsp Error", () => {
             code: 400,
         };
         const networkError = errorObjectFromSocketError(socketError);
-        if (networkError.errorType !== ErrorType.genericNetworkError) {
+        if (networkError.errorType !== DriverErrorType.genericNetworkError) {
             assert.fail("networkError should be a genericNetworkError");
         }
         else {
@@ -92,7 +92,7 @@ describe("Odsp Error", () => {
             code: 400,
         };
         const networkError = errorObjectFromSocketError(socketError);
-        if (networkError.errorType !== ErrorType.genericNetworkError) {
+        if (networkError.errorType !== DriverErrorType.genericNetworkError) {
             assert.fail("networkError should be a genericNetworkError");
         }
         else {
@@ -109,7 +109,7 @@ describe("Odsp Error", () => {
             retryAfter: 10,
         };
         const networkError = errorObjectFromSocketError(socketError);
-        if (networkError.errorType !== ErrorType.throttlingError) {
+        if (networkError.errorType !== DriverErrorType.throttlingError) {
             assert.fail("networkError should be a throttlingError");
         }
         else {

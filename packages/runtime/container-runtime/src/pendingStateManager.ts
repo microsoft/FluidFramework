@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ErrorType, IDataCorruptionError } from "@fluidframework/container-definitions";
+import { RuntimeErrorType, IDataCorruptionError } from "@fluidframework/container-definitions";
 import { CustomErrorWithProps } from "@fluidframework/telemetry";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 
@@ -16,7 +16,7 @@ import Deque from "double-ended-queue";
 import { ContainerRuntime, ContainerMessageType } from "./containerRuntime";
 
 export class DataCorruptionError extends CustomErrorWithProps implements IDataCorruptionError {
-    readonly errorType = ErrorType.dataCorruptionError;
+    readonly errorType = RuntimeErrorType.dataCorruptionError;
     readonly canRetry = false;
 
     constructor(
