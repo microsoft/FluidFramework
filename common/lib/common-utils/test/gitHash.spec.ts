@@ -23,7 +23,7 @@ async function getFileContents(p: string): Promise<Buffer> {
 
 const dataDir = ".";
 
-describe("Core-Utils", () => {
+describe("Common-Utils", () => {
     // Expected hashes are from git hash-object file...
     // Make sure the hash is of the file and not of an LFS stub
     describe("#gitHashFileAsync", () => {
