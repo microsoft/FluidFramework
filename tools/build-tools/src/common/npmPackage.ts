@@ -128,7 +128,7 @@ export class Package {
     }
 
     public get dependencies() {
-        return this.packageJson.dependencies ? Object.keys(this.packageJson.dependencies) : [];
+        return Object.keys(this.packageJson.dependencies ?? {});
     }
 
     public get combinedDependencies() {

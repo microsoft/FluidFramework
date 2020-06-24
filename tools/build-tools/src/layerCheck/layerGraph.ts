@@ -171,8 +171,11 @@ class GroupNode extends BaseNode {
 
 class PackageNode extends BaseNode {
     private _pkg: Package | undefined;
+    /** Packages _pkg is directly dependent upon */
     private readonly _childDependencies: PackageNode[] = [];
+    /** Packages that are dependent upon _pkg */
     private readonly depParents: PackageNode[] = [];
+    /** Packages _pkg is indirectly dependent upon */
     private _indirectDependencies: Set<PackageNode> | undefined;
     private _level: number | undefined;
 
@@ -379,8 +382,6 @@ export class LayerGraph {
         });
     }
 
-    private generateDotEdges() {
-    }
     public generateDotGraph() {
         const dotEdges: string[] = [];
         this.forEachDependencies((packageNode, depPackageNode) => {
@@ -400,24 +401,32 @@ export class LayerGraph {
 
     public generatePackagesLayerChart() {
         const lines: string[] = [];
-
-        //* TODO: Sort these, and maybe group them further
+        let packageCount = 0;
         for (const groupNode of this.groupNodes.sort(BaseNode.comparator)) {
-            lines.push(`- ${groupNode.name}`);
+            lines.push(`## ${groupNode.name}`);
             for (const layerNode of groupNode.layerNodes.sort(BaseNode.comparator)) {
-                lines.push(`  - ${layerNode.name}`);
-                for (const packageNode of layerNode.packages) {
-                    lines.push(`    - ${packageNode.name}`);
+                lines.push(`### ${layerNode.name}`);
+                lines.push(`#### Packages`);
+                const childLayers: Set<LayerNode> = new Set();
+                for (const packageNode of [...layerNode.packages].sort(BaseNode.comparator)) {
+                    packageCount++;
+                    lines.push(`- ${packageNode.name}`);
+                    packageNode.childDependencies.forEach((p) => childLayers.add(p.layerNode));
+                }
+
+                lines.push(`#### Layers Depended Upon`);
+                for (const childLayer of [...childLayers].sort(BaseNode.comparator)) {
+                    lines.push(`- ${childLayer.name}`);
                 }
             }
         }
 
         const packagesMdContents: string =
-`# All Packages
+`# Package Layers
 
 [//]: <> (This file is generated, please don't edit it manually!)
 
-${lines.join("\n  ")}
+${lines.join("\n")}
 `;
         return packagesMdContents;
     }
