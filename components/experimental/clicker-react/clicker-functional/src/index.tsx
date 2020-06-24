@@ -15,7 +15,6 @@ import {
     ViewToFluidMap,
     FluidToViewMap,
 } from "@fluidframework/react";
-import { SharedCounter } from "@fluidframework/counter";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -133,7 +132,7 @@ export class ClickerFunctional extends PrimedComponent
 export const ClickerFunctionalInstantiationFactory = new PrimedComponentFactory(
     ClickerFunctionalName,
     ClickerFunctional,
-    [SharedCounter.getFactory()],
+    [],
     {},
 );
 export const fluidExport = ClickerFunctionalInstantiationFactory;
