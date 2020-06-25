@@ -2095,7 +2095,7 @@ export class MergeTree {
             // Find the nearest 0 length seg we can insert over, as all other inserts
             // go near to far
             if (backLen === 0) {
-                if (this.breakTie(0, backSeg, UnassignedSequenceNumber)) {
+                if (this.breakTie(0, 0, backSeg, this.collabWindow.currentSeq, clientId)) {
                     startSeg = backSeg;
                 }
                 return true;
@@ -2283,13 +2283,29 @@ export class MergeTree {
 
     // Assume called only when pos == len
     private breakTie(
-        pos: number, node: IMergeNode, seq: number) {
+        pos: number, len: number, node: IMergeNode, refSeq: number,
+        clientId: number, candidateSegment?: ISegment) {
         if (node.isLeaf()) {
             if (pos === 0) {
-                const curSegSeg = node.seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER - 1 : node.seq ?? 0;
-                const newSegSeg = seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER  : seq;
+                const segment = node;
+                const branchId = this.getBranchId(clientId);
+                const segmentBranchId = this.getBranchId(segment.clientId);
+                const removalInfo = this.getRemovalInfo(branchId, segmentBranchId, segment);
+                if (removalInfo.removedSeq
+                    && removalInfo.removedSeq <= refSeq
+                    && removalInfo.removedSeq !== UnassignedSequenceNumber) {
+                    return false;
+                }
 
-                return newSegSeg > curSegSeg;
+                // Local change see everything
+                if (clientId === this.collabWindow.clientId) {
+                    return true;
+                }
+
+                if (node.seq !== UnassignedSequenceNumber) {
+                    // Ensure we merge right. newer segments should come before older segments
+                    return true;
+                }
             }
             return false;
         } else {
@@ -2389,7 +2405,7 @@ export class MergeTree {
                 console.log(`@tcli: ${glc(this, this.collabWindow.clientId)} len: ${len} pos: ${pos} ${segInfo}`);
             }
 
-            if ((pos < len) || ((pos === len) && this.breakTie(pos, child, seq))) {
+            if ((pos < len) || ((pos === len) && this.breakTie(pos, len, child, refSeq, clientId, context.candidateSegment))) {
                 // Found entry containing pos
                 found = true;
                 if (!child.isLeaf()) {
