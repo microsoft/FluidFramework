@@ -55,6 +55,8 @@ export class ComponentHandle implements IComponentHandle {
     }
 
     public bind(handle: IComponentHandle) {
+        // If the dds is already attached or its graph is already in attaching or attached state,
+        // then attach the incoming handle too.
         if (this.isAttached || this.graphAttachState !== AttachState.Detached) {
             handle.attachGraph();
             return;

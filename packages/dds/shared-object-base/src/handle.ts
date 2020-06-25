@@ -85,6 +85,8 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      * @param handle - The handle to bind
      */
     public bind(handle: IComponentHandle): void {
+        // If the dds is already attached or its graph is already in attaching or attached state,
+        // then attach the incoming handle too.
         if (this.isAttached || this.graphAttachState !== AttachState.Detached) {
             handle.attachGraph();
             return;
