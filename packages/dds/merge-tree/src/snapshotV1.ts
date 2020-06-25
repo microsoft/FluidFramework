@@ -52,7 +52,7 @@ export class SnapshotV1 {
         public filename?: string,
         public onCompletion?: () => void) {
         this.logger = ChildLogger.create(logger, "Snapshot");
-        this.chunkSize = mergeTree.options.mergeTreeSnapshotChunckSize ?? SnapshotV1.sizeOfChunks;
+        this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunckSize ?? SnapshotV1.sizeOfChunks;
     }
 
     getSeqLengthSegs(

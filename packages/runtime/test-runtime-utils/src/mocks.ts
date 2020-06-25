@@ -377,7 +377,7 @@ export class MockComponentRuntime extends EventEmitter
     public readonly path = "";
     public readonly connected = true;
     public readonly leader: boolean;
-    public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> = new MockDeltaManager();
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockComponentRuntime");
     private readonly activeDeferred = new Deferred<void>();

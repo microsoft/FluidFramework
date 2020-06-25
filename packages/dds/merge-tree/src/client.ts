@@ -892,20 +892,16 @@ export class Client {
     //       (See https://github.com/microsoft/FluidFramework/issues/84)
     public snapshot(runtime: IComponentRuntime, handle: IComponentHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
         const deltaManager = runtime.deltaManager;
-        const minSeq = deltaManager
-            ? deltaManager.minimumSequenceNumber
-            : 0;
+        const minSeq = deltaManager.minimumSequenceNumber;
 
         // Catch up to latest MSN, if we have not had a chance to do it.
         // Required for case where ComponentRuntime.attachChannel() generates snapshot right after loading component.
-        // Note that we mock runtime in tests and mock does not have deltamanager implementation.
-        if (deltaManager) {
-            this.updateSeqNumbers(minSeq, deltaManager.lastSequenceNumber);
 
-            // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
-            // Not sure why - need to catch it sooner
-            assert.equal(this.getCollabWindow().minSeq, minSeq);
-        }
+        this.updateSeqNumbers(minSeq, deltaManager.lastSequenceNumber);
+
+        // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
+        // Not sure why - need to catch it sooner
+        assert.equal(this.getCollabWindow().minSeq, minSeq);
 
         // TODO: Remove options flag once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
