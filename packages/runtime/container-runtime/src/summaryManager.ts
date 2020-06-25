@@ -13,14 +13,15 @@ import {
     IPromiseTimerResult,
 } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry";
-import { IComponent, IRequest } from "@fluidframework/component-core-interfaces";
+import { IComponent, IRequest, DriverHeader } from "@fluidframework/component-core-interfaces";
 import {
     IContainerContext,
     LoaderHeader,
-    summarizerClientType,
 } from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { ISummarizer, Summarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
+
+const summarizerClientType = "summarizer";
 
 interface ITrackedClient {
     clientId: string;
@@ -434,6 +435,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                     capabilities: { interactive: false },
                     type: summarizerClientType,
                 },
+                [DriverHeader.summarizingClient]: true,
                 [LoaderHeader.reconnect]: false,
                 [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,
                 [LoaderHeader.executionContext]: this.enableWorker ? "worker" : undefined,
