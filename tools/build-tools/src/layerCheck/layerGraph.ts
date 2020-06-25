@@ -472,7 +472,7 @@ export class LayerGraph {
             }
 
             this.padArraysToSameLength(packagesInCell, layersInCell, "&nbsp;");
-            lines.push(`| Packages | Layers Depended Upon |`);
+            lines.push(`| Packages | Layer Dependencies |`);
             lines.push(`| --- | --- |`);
             lines.push(`| ${packagesInCell.join("</br>")} | ${layersInCell.join("</br>")} |${newline}`);
         }
