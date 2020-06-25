@@ -90,7 +90,7 @@ export class Smde extends EventEmitter implements
                 { [reservedTileLabelsKey]: ["pg"] });
 
             this.root.set("text", text.handle);
-            this.root.register();
+            this.root.bindToComponent();
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;

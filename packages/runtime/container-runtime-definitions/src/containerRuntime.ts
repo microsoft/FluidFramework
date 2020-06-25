@@ -128,9 +128,9 @@ export interface IContainerRuntime extends
 
     /**
      * Flag indicating if the given container has been attached to a host service.
-     * False if the container is attached to storage.
+     * True if the container is attached to storage.
      */
-    isLocal(): boolean;
+    isAttached(): boolean;
 
     /**
      * Get an absolute url for a provided container-relative request.

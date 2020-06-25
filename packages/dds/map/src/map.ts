@@ -145,7 +145,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             runtime,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-            () => this.isLocal(),
+            () => this.isAttached(),
             valueTypes,
             this,
         );
@@ -369,7 +369,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     protected registerCore() {
         for (const value of this.values()) {
             if (SharedObject.is(value)) {
-                value.register();
+                value.bindToComponent();
             }
         }
     }

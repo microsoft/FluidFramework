@@ -70,7 +70,7 @@ export class Chaincode implements IComponentFactory {
         let root: map.ISharedMap;
         if (!runtime.existing) {
             root = map.SharedMap.create(runtime, rootMapId);
-            root.register();
+            root.bindToComponent();
 
             const insights = map.SharedMap.create(runtime, insightsMapId);
             root.set(insightsMapId, insights.handle);
@@ -135,7 +135,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
         if (!runtime.existing) {
             runtime.createComponent(rootMapId, "@fluid-internal/client-api")
                 .then((componentRuntime) => {
-                    componentRuntime.attach();
+                    componentRuntime.bindToContainer();
                 })
                 .catch((error: any) => {
                     context.closeFn(CreateContainerError(error));

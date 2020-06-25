@@ -59,6 +59,11 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
         // We need to request the component before attaching to ensure it
         // runs through its entire instantiation flow.
         await componentRuntime.request({ url: "/" });
-        componentRuntime.attach();
+        // 0.20 back-compat attach
+        if (componentRuntime.bindToContainer !== undefined) {
+            componentRuntime.bindToContainer();
+        } else {
+            (componentRuntime as any).attach();
+        }
     }
 }

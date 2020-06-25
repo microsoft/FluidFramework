@@ -59,9 +59,9 @@ export interface IComponentRuntime extends
     readonly logger: ITelemetryLogger;
 
     /**
-     * Returns if the runtime is attached.
+     * Returns if the runtime is bound to container.
      */
-    isAttached: boolean;
+    isBoundToContainer: boolean;
 
     on(
         event: "disconnected" | "dispose" | "leader" | "notleader" | "collaborating",
@@ -84,10 +84,10 @@ export interface IComponentRuntime extends
     createChannel(id: string | undefined, type: string): IChannel;
 
     /**
-     * Registers the channel with the component runtime. If the runtime
-     * is collaborative then we attach the channel to make it collaborative.
+     * Bind the channel with the component runtime. If the runtime
+     * is attached then we attach the channel to make it live.
      */
-    registerChannel(channel: IChannel): void;
+    bindChannel(channel: IChannel): void;
 
     /**
      * Api for generating the snapshot of the component.
@@ -140,8 +140,6 @@ export interface IComponentRuntime extends
      */
     raiseContainerWarning(warning: ContainerWarning): void;
 
-    /**
-     * It is false if the container is attached to storage and the component is attached to container.
-     */
-    isLocal(): boolean;
+    // Returns if the runtime is attached to storage
+    isAttached: boolean;
 }

@@ -183,7 +183,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
 
         // If the SharedMatrix is local, it will by synchronized via a Snapshot when initially connected.
         // Do not queue a message or track the pending op, as there will never be an ACK, etc.
-        if (!this.isLocal()) {
+        if (this.isAttached()) {
             const localSeq = this.nextLocalSeq();
 
             const op: ISetOp<T> = {
@@ -222,7 +222,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
 
         // If the SharedMatrix is local, it will by synchronized via a Snapshot when initially connected.
         // Do not queue a message or track the pending op, as there will never be an ACK, etc.
-        if (!this.isLocal()) {
+        if (this.isAttached()) {
             // Record whether this `op` targets rows or cols.  (See dispatch in `processCore()`)
             (message).target = dimension;
 
@@ -302,7 +302,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
     protected submitLocalMessage(message: any, localOpMetadata?: any) {
         // TODO: Recommend moving this assertion into SharedObject
         //       (See https://github.com/microsoft/FluidFramework/issues/2559)
-        assert.equal(this.isLocal(), false);
+        assert.equal(this.isAttached(), true);
 
         const cliSeq = super.submitLocalMessage(
             makeHandlesSerializable(
@@ -326,9 +326,9 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     protected didAttach() {
-        // if we are not local, and we've attached we need to start generating and sending ops
+        // We've attached we need to start generating and sending ops.
         // so start collaboration and provide a default client id incase we are not connected
-        if (!this.isLocal()) {
+        if (this.isAttached()) {
             this.rows.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
             this.cols.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
         }

@@ -16,7 +16,7 @@ const mockHandleContext: IComponentHandleContext = {
     IComponentRouter: undefined as any,
     IComponentHandleContext: undefined as any,
 
-    attach: () => {
+    attachGraph: () => {
         throw new Error("Method not implemented.");
     },
     bind: () => {

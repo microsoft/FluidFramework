@@ -117,7 +117,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
             runtime,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-            () => this.isLocal(),
+            () => this.isAttached(),
             [new IntervalCollectionValueType()],
         );
     }
@@ -190,7 +190,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     protected registerCore() {
         for (const value of this.intervalMapKernel.values()) {
             if (SharedObject.is(value)) {
-                value.register();
+                value.bindToComponent();
             }
         }
     }

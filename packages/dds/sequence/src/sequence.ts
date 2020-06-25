@@ -165,7 +165,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.runtime,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-            () => this.isLocal(),
+            () => this.isAttached(),
             [new SequenceIntervalCollectionValueType()]);
     }
 
@@ -310,7 +310,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     public submitSequenceMessage(message: MergeTree.IMergeTreeOp) {
-        if (this.isLocal()) {
+        if (!this.isAttached()) {
             return;
         }
         const translated = makeHandlesSerializable(
@@ -504,7 +504,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     protected registerCore() {
         for (const value of this.intervalMapKernel.values()) {
             if (SharedObject.is(value)) {
-                value.register();
+                value.bindToComponent();
             }
         }
 
@@ -512,9 +512,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     protected didAttach() {
-        // if we are not local, and we've attached we need to start generating and sending ops
+        // If we are not local, and we've attached we need to start generating and sending ops
         // so start collaboration and provide a default client id incase we are not connected
-        if (!this.isLocal()) {
+        if (this.isAttached()) {
             this.client.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
         }
     }

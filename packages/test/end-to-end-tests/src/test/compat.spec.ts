@@ -77,7 +77,11 @@ describe("loader/runtime compatibility", () => {
                 if (!runtime.existing) {
                     const componentRuntime = await runtime.createComponent("default", type);
                     await componentRuntime.request({ url: "/" });
-                    componentRuntime.attach();
+                    if (componentRuntime.bindToContainer !== undefined) {
+                        componentRuntime.bindToContainer();
+                    } else {
+                        (componentRuntime as any).attach();
+                    }
                 }
                 return runtime;
             },

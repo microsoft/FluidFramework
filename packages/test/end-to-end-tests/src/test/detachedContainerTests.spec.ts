@@ -55,7 +55,7 @@ describe("Detached Container", () => {
         type: string,
     ) => {
         const doc = await componentContext.createComponent(componentId, type);
-        doc.attach();
+        doc.bindToContainer();
     });
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
@@ -90,7 +90,7 @@ describe("Detached Container", () => {
 
     it("Create detached container", async () => {
         const container = await loader.createDetachedContainer(pkg);
-        assert.strictEqual(container.isLocal(), true, "Container should be detached");
+        assert.strictEqual(container.isAttached(), false, "Container should be detached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
         assert.strictEqual(container.getQuorum().getMembers().size, 0, "Quorum should not contain any memebers");
@@ -106,7 +106,7 @@ describe("Detached Container", () => {
     it("Attach detached container", async () => {
         const container = await loader.createDetachedContainer(pkg);
         await container.attach(request);
-        assert.strictEqual(container.isLocal(), false, "Container should be attached");
+        assert.strictEqual(container.isAttached(), true, "Container should be attached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
         assert.strictEqual(container.id, documentId, "Doc id is not matching!!");
@@ -130,13 +130,13 @@ describe("Detached Container", () => {
         }
         const subComponent = subResponse.value as ITestFluidComponent;
         assert.strictEqual(subComponent.context.storage, undefined, "No storage should be there!!");
-        assert.strictEqual(subComponent.runtime.isAttached, true, "Component should be attached!!");
+        assert.strictEqual(subComponent.runtime.isBoundToContainer, true, "Component should be attached!!");
 
         // Get the sub component's root channel and verify that it is attached.
         const testChannel = await subComponent.runtime.getChannel("root");
-        assert.strictEqual(testChannel.isRegistered(), true, "Channel should be registered!!");
-        assert.strictEqual(testChannel.isLocal(), true, "Channel should be local!!");
-        assert.strictEqual(subComponent.context.isLocal(), true, "Component should be local!!");
+        assert.strictEqual(testChannel.isBoundToComponent(), true, "Channel should be registered!!");
+        assert.strictEqual(testChannel.isAttached(), false, "Channel should be detached!!");
+        assert.strictEqual(subComponent.context.isAttached, false, "Component should be detached!!");
     });
 
     it("Components in attached container", async () => {
@@ -162,10 +162,10 @@ describe("Detached Container", () => {
 
         // Get the sub component's "root" channel and verify that it is attached.
         const testChannel = await testComponent.runtime.getChannel("root");
-        assert.strictEqual(testChannel.isRegistered(), true, "Channel should be registered!!");
-        assert.strictEqual(testChannel.isLocal(), false, "Channel should not be local!!");
+        assert.strictEqual(testChannel.isBoundToComponent(), true, "Channel should be registered!!");
+        assert.strictEqual(testChannel.isAttached(), true, "Channel should be attached!!");
 
-        assert.strictEqual(testComponent.context.isLocal(), false, "Component should not be local!!");
+        assert.strictEqual(testComponent.context.isAttached, true, "Component should be attached!!");
     });
 
     it("Load attached container and check for components", async () => {
@@ -198,11 +198,12 @@ describe("Detached Container", () => {
         // Verify the attributes of the root channel of both sub components.
         const testChannel1 = await subComponent1.runtime.getChannel("root");
         const testChannel2 = await subComponent2.runtime.getChannel("root");
-        assert.strictEqual(testChannel2.isRegistered(), true, "Channel should be registered!!");
-        assert.strictEqual(testChannel2.isLocal(), false, "Channel should be registered!!");
-        assert.strictEqual(testChannel2.isRegistered(), testChannel1.isRegistered(),
+        assert.strictEqual(testChannel2.isBoundToComponent(), true, "Channel should be bound to component!!");
+        assert.strictEqual(testChannel2.isAttached(), true, "Channel should be attached!!");
+        assert.strictEqual(testChannel2.isBoundToComponent(), testChannel1.isBoundToComponent(),
             "Value for registration should be same!!");
-        assert.strictEqual(testChannel2.isLocal(), testChannel1.isLocal(), "Value for isLocal should persist!!");
+        assert.strictEqual(testChannel2.isAttached(), testChannel1.isAttached(),
+            "Value for isAttached should persist!!");
     });
 
     it("Fire ops during container attach for shared string", async () => {
@@ -288,7 +289,7 @@ describe("Detached Container", () => {
 
         // Fire attach op
         const testChannel = component.runtime.createChannel(testChannelId, SharedMap.getFactory().type);
-        testChannel.handle.attach();
+        testChannel.handle.attachGraph();
         await containerP;
         await defPromise.promise;
     });
@@ -318,7 +319,7 @@ describe("Detached Container", () => {
         peerComponentRuntimeChannel = await (component.context.containerRuntime as IContainerRuntime)
             .createComponentWithRealizationFn([testComponentType]);
         // Fire attach op
-        peerComponentRuntimeChannel.attach();
+        peerComponentRuntimeChannel.bindToContainer();
         await containerP;
         await defPromise.promise;
     });

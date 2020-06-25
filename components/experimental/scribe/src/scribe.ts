@@ -443,7 +443,7 @@ export class Scribe
     private async initialize() {
         if (!this.runtime.existing) {
             this.root = SharedMap.create(this.runtime, "root");
-            this.root.register();
+            this.root.bindToComponent();
         } else {
             this.root = await this.runtime.getChannel("root") as ISharedMap;
         }
@@ -488,7 +488,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         if (!runtime.existing) {
             await Promise.all([
                 runtime.createComponent(defaultComponentId, ScribeFactory.type).then((componentRuntime) => {
-                    componentRuntime.attach();
+                    componentRuntime.bindToContainer();
                 }),
             ]);
         }

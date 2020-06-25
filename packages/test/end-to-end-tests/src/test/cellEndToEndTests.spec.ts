@@ -215,10 +215,10 @@ describe("Cell", () => {
         const cellValue = "cell cell cell cell";
         detachedCell2.set(cellValue);
         detachedCell1.set(detachedCell2.handle);
-        assert(!detachedCell2.isRegistered(), "The new cell should not be registered");
+        assert(!detachedCell2.isBoundToComponent(), "The new cell should not be registered");
 
         sharedCell1.set(detachedCell1.handle);
-        assert(detachedCell2.isRegistered(), "The new cell should now be registered");
+        assert(detachedCell2.isBoundToComponent(), "The new cell should now be registered");
 
         await containerDeltaEventManager.process();
 

@@ -59,7 +59,7 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 
         sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
-        sharedString.register();
+        sharedString.bindToComponent();
         sharedString.connect(services);
 
         undoRedoStack = new UndoRedoStackManager();

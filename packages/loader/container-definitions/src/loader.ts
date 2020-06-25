@@ -91,9 +91,8 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 
     /**
      * Flag indicating if the given container has been attached to a host service.
-     * False if the container is attached to storage.
      */
-    isLocal(): boolean;
+    isAttached(): boolean;
 
     /**
      * Attaches the container to the provided host.

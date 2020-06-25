@@ -41,6 +41,13 @@ export enum AttachState {
     Attached = "Attached",
 }
 
+// Represents the bind state of the entity.
+export enum BindState {
+    Unbounded = "Unbounded",
+    Binding = "Binding",
+    Binded = "Binded",
+}
+
 /**
  * Person definition in a npm script
  */
@@ -237,9 +244,9 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
 
     /**
      * Flag indicating if the given container has been attached to a host service.
-     * False if the container is attached to storage.
+     * True if the container is attached to storage.
      */
-    isLocal(): boolean;
+    isAttached(): boolean;
 
     getLoadedFromVersion(): IVersion | undefined;
 

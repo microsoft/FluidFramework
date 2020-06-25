@@ -42,16 +42,12 @@ export class ComponentHandle implements IComponentHandle {
         return this.componentP;
     }
 
-    public attach(): void {
+    public attachGraph(): void {
         return;
     }
 
     public bind(handle: IComponentHandle): void {
-        if (this.isAttached) {
-            handle.attach();
-            return;
-        }
-        throw new Error("Cannot bind to an attached handle");
+        return;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
