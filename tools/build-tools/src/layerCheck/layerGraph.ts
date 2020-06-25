@@ -409,21 +409,28 @@ export class LayerGraph {
         }
     }
 
-    private recursive(
+    private traverseSubtree(
         layers: LayerTreeNode[],
         root: LayerTreeNode,
         ordered: LayerTreeNode[],
     ) {
+        if (ordered.find((l) => l.node.name === root.node.name)) {
+            return;
+        }
+
         ordered.push(root);
+
+        // Filter out already visited nodes from the list,
+        // And remove this from children to narrow down dependencies for ordering
         const underLayers =
             layers
-            .filter((l) => l.children.length !== 0)
+            .filter((l) => !ordered.find((o) => o.node.name === l.node.name))
             .map((l) => ({
                 node: l.node,
                 children: l.children.filter((child) => child.name !== root.node.name),
             }));
         const underRoots = underLayers.filter((l) => l.children.length === 0);
-        underRoots.forEach((r) => this.recursive(underLayers, r, ordered));
+        underRoots.forEach((r) => this.traverseSubtree(underLayers, r, ordered));
     }
 
     private traverseLayers() {
@@ -434,13 +441,13 @@ export class LayerGraph {
                 for (const packageNode of [...layerNode.packages].sort(BaseNode.comparator)) {
                     packageNode.childDependencies.forEach((p) => childLayers.add(p.layerNode));
                 }
-                layers.push({ node: layerNode, children: [...childLayers]});
+                layers.push({ node: layerNode, children: [...childLayers].filter((l) => l.name !== layerNode.name)});
             }
         }
 
         const roots = layers.filter((l) => l.children.length === 0);
         const ordered: LayerTreeNode[] = [];
-        roots.forEach((r) => this.recursive(layers, r, ordered));
+        roots.forEach((r) => this.traverseSubtree(layers, r, ordered));
 
         return ordered.map((l) => l.node);
     }
