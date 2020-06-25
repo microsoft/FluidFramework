@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+import { Buffer } from "buffer";
 import { gitHashFileAsync } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import {

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Buffer } from "buffer";
 import { IEventProvider, IErrorEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     ConnectionMode,
