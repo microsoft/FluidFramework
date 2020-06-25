@@ -578,25 +578,29 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
         const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
         let stashMessage = message;
-        if (needsTransformation) {
-            stashMessage = cloneDeep(message);
-            stashMessage.referenceSequenceNumber = message.sequenceNumber - 1;
-            this.on("sequenceDelta", transfromOps);
+        if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
+            if (needsTransformation) {
+                stashMessage = cloneDeep(message);
+                stashMessage.referenceSequenceNumber = message.sequenceNumber - 1;
+                this.on("sequenceDelta", transfromOps);
+            }
         }
 
         this.client.applyMsg(message);
 
-        if (needsTransformation) {
-            this.removeListener("sequenceDelta", transfromOps);
-            stashMessage.contents = ops.length !== 1 ? MergeTree.createGroupOp(...ops) : ops[0];
-        }
+        if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
+            if (needsTransformation) {
+                this.removeListener("sequenceDelta", transfromOps);
+                stashMessage.contents = ops.length !== 1 ? MergeTree.createGroupOp(...ops) : ops[0];
+            }
 
-        this.messagesSinceMSNChange.push(stashMessage);
+            this.messagesSinceMSNChange.push(stashMessage);
 
-        // Do GC every once in a while...
-        if (this.messagesSinceMSNChange.length > 20
-            && this.messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber) {
-            this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
+            // Do GC every once in a while...
+            if (this.messagesSinceMSNChange.length > 20
+                && this.messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber) {
+                this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
+            }
         }
     }
 

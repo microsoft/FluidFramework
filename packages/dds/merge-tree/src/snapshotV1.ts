@@ -13,7 +13,6 @@ import {
 import { ChildLogger, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
-    ISequencedDocumentMessage,
     ITree,
     TreeEntry,
     ITreeEntry,
@@ -45,6 +44,7 @@ export class SnapshotV1 {
     private segments: JsonSegmentSpecs[];
     private segmentLengths: number[];
     private readonly logger: ITelemetryLogger;
+    private readonly chunkSize: number;
 
     constructor(
         public mergeTree: MergeTree.MergeTree,
@@ -52,6 +52,7 @@ export class SnapshotV1 {
         public filename?: string,
         public onCompletion?: () => void) {
         this.logger = ChildLogger.create(logger, "Snapshot");
+        this.chunkSize = mergeTree.options.mergeTreeSnapshotChunckSize ?? SnapshotV1.sizeOfChunks;
     }
 
     getSeqLengthSegs(
@@ -85,13 +86,10 @@ export class SnapshotV1 {
     emit(
         // TODO: Remove unused 'catchUpMsgs' argument once new snapshot format is the default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
-        catchUpMsgs: ISequencedDocumentMessage[],
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
         bind?: IComponentHandle,
     ): ITree {
-        assert.equal(catchUpMsgs.length, 0);
-
         const chunks: MergeTreeChunkV1[] = [];
         this.header.totalSegmentCount = 0;
         this.header.totalLength = 0;
@@ -99,7 +97,8 @@ export class SnapshotV1 {
             const chunk = this.getSeqLengthSegs(
                 this.segments,
                 this.segmentLengths,
-                SnapshotV1.sizeOfChunks, this.header.totalSegmentCount);
+                this.chunkSize,
+                this.header.totalSegmentCount);
             chunks.push(chunk);
             this.header.totalSegmentCount += chunk.segmentCount;
             this.header.totalLength += chunk.length;

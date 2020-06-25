@@ -78,7 +78,7 @@ class TestString {
     public getSnapshot() {
         const snapshot = new SnapshotV1(this.client.mergeTree, this.client.logger);
         snapshot.extractSync();
-        return snapshot.emit([]);
+        return snapshot.emit();
     }
 
     public getText() { return this.client.getText(); }

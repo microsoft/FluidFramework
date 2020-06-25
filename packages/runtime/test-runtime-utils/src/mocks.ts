@@ -109,8 +109,7 @@ export interface IMockContainerRuntimePendingMessage {
 export class MockContainerRuntime {
     public clientId: string;
     protected clientSequenceNumber: number = 0;
-    protected referenceSequenceNumber = 0;
-    private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    private readonly deltaManager: MockDeltaManager;
     protected readonly deltaConnections: MockDeltaConnection[] = [];
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
 
@@ -140,7 +139,7 @@ export class MockContainerRuntime {
             clientId: this.clientId,
             clientSequenceNumber,
             contents: messageContent,
-            referenceSequenceNumber: this.referenceSequenceNumber,
+            referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
             type: MessageType.Operation,
 
         };
@@ -154,7 +153,8 @@ export class MockContainerRuntime {
     public dirty(): void { }
 
     public process(message: ISequencedDocumentMessage) {
-        this.referenceSequenceNumber = message.sequenceNumber;
+        this.deltaManager.lastSequenceNumber = message.sequenceNumber;
+        this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
         const [local, localOpMetadata] = this.processInternal(message);
         this.deltaConnections.forEach((dc) => {
             dc.process(message, local, localOpMetadata);
@@ -195,6 +195,10 @@ export class MockContainerRuntimeFactory {
     protected messages: ISequencedDocumentMessage[] = [];
     protected readonly runtimes: MockContainerRuntime[] = [];
 
+    public get outstandingMessageCount() {
+        return this.messages.length;
+    }
+
     public getMinSeq(): number {
         let minSeq: number;
         for (const [, clientSeq] of this.minSeq) {
@@ -208,7 +212,8 @@ export class MockContainerRuntimeFactory {
     }
 
     public createContainerRuntime(componentRuntime: MockComponentRuntime): MockContainerRuntime {
-        const containerRuntime = new MockContainerRuntime(componentRuntime, this);
+        const containerRuntime =
+            new MockContainerRuntime(componentRuntime, this);
         this.runtimes.push(containerRuntime);
         return containerRuntime;
     }
@@ -366,7 +371,7 @@ export class MockComponentRuntime extends EventEmitter
     public readonly documentId: string;
     public readonly id: string;
     public readonly existing: boolean;
-    public readonly options: any = {};
+    public options: any = {};
     public clientId: string | undefined = uuid();
     public readonly parentBranch: string;
     public readonly path = "";
@@ -679,7 +684,6 @@ export class MockObjectStorageService implements IObjectStorageService {
         const pathPartsLength = getNormalizedObjectStoragePathParts(path).length;
         return Object.keys(this.contents)
             .filter((key) => key.startsWith(path)
-                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                 && key.split("/").length === pathPartsLength + 1);
     }
 }
