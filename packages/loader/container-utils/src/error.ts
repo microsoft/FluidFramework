@@ -47,7 +47,7 @@ export function CreateContainerError(error: any): ICriticalContainerError {
         return new CustomErrorWithProps(
             messageFromError(error),
             {
-                errorType: ContainerErrorType.genericError,
+                errorType: error.errorType ?? ContainerErrorType.genericError,
                 stack: error.stack,
             },
         ) as any as IGenericError;
