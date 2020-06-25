@@ -38,12 +38,7 @@ export class Clicker extends SyncedComponent {
                     [
                         "counter", {
                             type: SharedCounter.name,
-                            viewKey: "value",
-                            viewConverter: (viewState, fluidState, fluidComponentMap) => {
-                                return {
-                                    value: fluidState.counter?.value,
-                                };
-                            },
+                            viewKey: "counter",
                             sharedObjectCreate: SharedCounter.create,
                             listenedEvents: ["incremented"],
                         },
@@ -66,8 +61,6 @@ export class Clicker extends SyncedComponent {
         );
         return element;
     }
-
-    // #endregion IComponentHTMLView
 }
 
 // ----- REACT STUFF -----
