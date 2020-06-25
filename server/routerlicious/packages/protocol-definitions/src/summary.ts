@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { Buffer } from "buffer";
+
 export type SummaryObject = ISummaryCommit | ISummaryTree | ISummaryBlob | ISummaryHandle;
 
 export type SummaryTree = ISummaryTree | ISummaryHandle;

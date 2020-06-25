@@ -30,6 +30,13 @@ import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { ICodeLoader, ILoader } from "./loader";
 
+// Represents the attachment state of the entity.
+export enum AttachState {
+    Detached = "Detached",
+    Attaching = "Attaching",
+    Attached = "Attached",
+}
+
 /**
  * Person definition in a npm script
  */

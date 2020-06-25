@@ -12,4 +12,4 @@ i.e. in React, reading the counter value would be done by state.value and increm
 Similarly, the SharedCounter's value can be read using state.counter.value and incremented by state.counter.increment(). At this point, state.counter.value automatically holds the new value with no event-listening necessary.
 
 
-The **clicker-with-hooks** example expands on this with the same example demonstrated using three different hooks, useFluidState, useReducerFluid, and createContextFluid.
+The **clicker-functional**,**clicker-reducer**, and **clicker-context** examples respectively show how to create the same Clicker using the three available different hooks, useFluidState, useReducerFluid, and createContextFluid.
