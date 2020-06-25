@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import { logVerbose } from "../common/logging";
 import { Package, Packages } from "../common/npmPackage";
 import { EOL as newline } from "os";
 import * as path from "path";
+import { AssertionError } from "assert";
 
 interface ILayerInfo {
     deps?: string[];
@@ -33,10 +35,6 @@ class BaseNode {
 
     public get dotName() {
         return this.name.replace(/-/g, "_").toLowerCase();
-    }
-
-    public static comparator(a: BaseNode, b: BaseNode) {
-        return a.name < b.name ? -1 : a.name == b.name ? 0 : 1
     }
 };
 
@@ -126,7 +124,8 @@ class LayerNode extends BaseNode {
     }
 };
 
-type LayerTreeNode = { node: LayerNode, children: LayerNode[] };
+/** Used for traversinig the layer dependency graph */
+type LayerDependencyNode = { node: LayerNode, childrenToVisit: (LayerNode | undefined)[], orderedChildren: LayerNode[] };
 
 class GroupNode extends BaseNode {
     public layerNodes: LayerNode[] = [];
@@ -409,66 +408,93 @@ export class LayerGraph {
         }
     }
 
-    private traverseSubtree(
-        layers: LayerTreeNode[],
-        root: LayerTreeNode,
-        ordered: LayerTreeNode[],
+    /**
+     * The root is a layer with no unvisited child dependencies.
+     * We'll add it to orderedLayers, and remove it from all other layers'
+     * childrenToVisit, to uncover new roots and recurse.
+     * Nothing is returned, but orderedLayers grows with each recursive call.
+     */
+    private traverseSubgraph(
+        root: LayerDependencyNode,
+        allLayers: LayerDependencyNode[],
+        orderedLayers: LayerDependencyNode[],
     ) {
-        if (ordered.find((l) => l.node.name === root.node.name)) {
+        // Prevent re-entrancy
+        if (orderedLayers.find((l) => l.node.name === root.node.name)) {
             return;
         }
 
-        ordered.push(root);
+        orderedLayers.push(root);
 
-        // Filter out already visited nodes from the list,
-        // And remove this from children to narrow down dependencies for ordering
-        const underLayers =
-            layers
-            .filter((l) => !ordered.find((o) => o.node.name === l.node.name))
-            .map((l) => ({
-                node: l.node,
-                children: l.children.filter((child) => child.name !== root.node.name),
-            }));
-        const underRoots = underLayers.filter((l) => l.children.length === 0);
-        underRoots.forEach((r) => this.traverseSubtree(underLayers, r, ordered));
+        // Move this root from childrenToVisit to orderedChildren if present
+        // This will create at least one new root (i.e. it has no unvisited dependencies)
+        allLayers
+        .forEach((l) => {
+            const foundIdx = l.childrenToVisit.findIndex((child) => child?.name === root.node.name);
+            if (foundIdx >= 0) {
+                l.orderedChildren.push(l.childrenToVisit[foundIdx]!);
+                l.childrenToVisit[foundIdx] = undefined;
+            }
+        });
+
+        // Recurse for every layer with no more unvisited dependencies itself (i.e. now a root itself)
+        allLayers
+        .filter((l) => l.childrenToVisit.every((c) => !c)) // Also accepts empty childrenToVisit
+        .forEach((newRoot) => this.traverseSubgraph(newRoot, allLayers, orderedLayers));
     }
 
-    private traverseLayers() {
-        const layers: LayerTreeNode[] = []
+    /**
+     * Returns the list of all layers, ordered such that
+     * all dependencies for a given layer appear earlier in the list.
+     */
+    private traverseLayerDependencyGraph() {
+        const layers: LayerDependencyNode[] = []
         for (const groupNode of this.groupNodes) {
-            for (const layerNode of groupNode.layerNodes.sort(BaseNode.comparator)) {
+            for (const layerNode of groupNode.layerNodes) {
                 const childLayers: Set<LayerNode> = new Set();
-                for (const packageNode of [...layerNode.packages].sort(BaseNode.comparator)) {
+                for (const packageNode of [...layerNode.packages]) {
                     packageNode.childDependencies.forEach((p) => childLayers.add(p.layerNode));
                 }
-                layers.push({ node: layerNode, children: [...childLayers].filter((l) => l.name !== layerNode.name)});
+                layers.push({
+                    node: layerNode,
+                    childrenToVisit: [...childLayers].filter((l) => l.name !== layerNode.name),
+                    orderedChildren: [],
+                });
             }
         }
 
-        const roots = layers.filter((l) => l.children.length === 0);
-        const ordered: LayerTreeNode[] = [];
-        roots.forEach((r) => this.traverseSubtree(layers, r, ordered));
+        // We'll traverse in order of least dependencies so orderedLayers will reflect that ordering
+        const orderedLayers: LayerDependencyNode[] = [];
 
-        return ordered.map((l) => l.node);
+        // Take any "roots" (layers with no child dependencies) and traverse those subgraphs,
+        // building up orderedLayers as we go
+        layers
+        .filter((l) => l.childrenToVisit.length === 0)
+        .forEach((root) => this.traverseSubgraph(root, layers, orderedLayers));
+
+        return orderedLayers;
     }
 
-    public generatePackageLayerTable(repoRoot: string) {
+    /**
+     * Generate a markdown-formated list of layers listing their packages and dependencies
+     */
+    public generatePackageLayersMarkdown(repoRoot: string) {
         const lines: string[] = [];
-        for (const layerNode of this.traverseLayers()) {
+        let packageCount: number = 0;
+        for (const layerDepNode of this.traverseLayerDependencyGraph()) {
+            const layerNode = layerDepNode.node;
             lines.push(`### ${layerNode.name}${newline}`);
             const packagesInCell: string[] = [];
-            const childLayers: Set<LayerNode> = new Set();
-            for (const packageNode of [...layerNode.packages].sort(BaseNode.comparator)) {
+            for (const packageNode of [...layerNode.packages]) {
+                ++packageCount;
                 const dirRelativePath = "/" + path.relative(repoRoot, packageNode.pkg.directory).replace(/\\/g, "/");
-                packagesInCell.push(`- [${packageNode.name}](${dirRelativePath})`);
-                packageNode.childDependencies.forEach((p) => childLayers.add(p.layerNode));
+                const ifPrivate = packageNode.pkg.isPublished ? "" : " (private)";
+                packagesInCell.push(`- [${packageNode.name}](${dirRelativePath})${ifPrivate}`);
             }
 
             const layersInCell: string[] = [];
-            if (childLayers.size > 0) {
-                for (const childLayer of [...childLayers].sort(BaseNode.comparator)) {
-                    layersInCell.push(`- [${childLayer.name}](#${childLayer.name})`);
-                }
+            for (const childLayer of layerDepNode.orderedChildren) {
+                layersInCell.push(`- [${childLayer.name}](#${childLayer.name})`);
             }
 
             this.padArraysToSameLength(packagesInCell, layersInCell, "&nbsp;");
@@ -477,10 +503,15 @@ export class LayerGraph {
             lines.push(`| ${packagesInCell.join("</br>")} | ${layersInCell.join("</br>")} |${newline}`);
         }
 
+        assert(packageCount === this.packageNodeMap.size, "ERROR: Did not find all packages while traversing layers");
+
         const packagesMdContents: string =
 `# Package Layers
 
 [//]: <> (This file is generated, please don't edit it manually!)
+
+_These are the logical layers into which our packages are grouped.
+The dependencies between layers are enforced by the layer-check command._
 
 ${lines.join(newline)}
 `;

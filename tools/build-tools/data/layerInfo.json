@@ -93,35 +93,6 @@
             }
         }
     },
-    "Server": {
-        "layers": {
-            "Server-Shared-Utils": {
-                "packages": [
-                    "@fluidframework/server-services-client"
-                ],
-                "deps": [
-                    "Protocol-Utils"
-                ]
-            },
-            "Server-Libs": {
-                "dirs": [
-                    "server/routerlicious/packages/"
-                ],
-                "deps": [
-                    "Protocol-Utils",
-                    "Server-Shared-Utils"
-                ]
-            },
-            "Server-Tools": {
-                "packages": [
-                    "tinylicious"
-                ],
-                "deps": [
-                    "Server-Libs"
-                ]
-            }
-        }
-    },
     "Client": {
         "dotGroup": false,
         "layers": {
@@ -222,6 +193,35 @@
                 "dirs": [
                     "packages/test/",
                     "examples/hosts/"
+                ]
+            }
+        }
+    },
+    "Server": {
+        "layers": {
+            "Server-Shared-Utils": {
+                "packages": [
+                    "@fluidframework/server-services-client"
+                ],
+                "deps": [
+                    "Protocol-Utils"
+                ]
+            },
+            "Server-Libs": {
+                "dirs": [
+                    "server/routerlicious/packages/"
+                ],
+                "deps": [
+                    "Protocol-Utils",
+                    "Server-Shared-Utils"
+                ]
+            },
+            "Server-Tools": {
+                "packages": [
+                    "tinylicious"
+                ],
+                "deps": [
+                    "Server-Libs"
                 ]
             }
         }
