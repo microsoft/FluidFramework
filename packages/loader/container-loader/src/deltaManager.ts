@@ -141,7 +141,7 @@ export class DeltaManager
 
     private inQuorum = false;
 
-    private updateSequenceNumberTimer: NodeJS.Timeout | undefined;
+    private updateSequenceNumberTimer: number | undefined;
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;

@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-internal-modules
+import cloneDeep from "lodash/cloneDeep";
+
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performanceNow, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
@@ -37,10 +40,6 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
-
-// eslint-disable-next-line max-len
-// eslint-disable-next-line import/no-internal-modules, @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-const cloneDeep = require("lodash/cloneDeep");
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";

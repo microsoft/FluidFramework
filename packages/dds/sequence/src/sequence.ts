@@ -4,6 +4,10 @@
  */
 
 import assert from "assert";
+
+// eslint-disable-next-line import/no-internal-modules
+import cloneDeep from "lodash/cloneDeep";
+
 import { Deferred, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry";
 import { IValueChanged, MapKernel } from "@fluidframework/map";
@@ -36,9 +40,6 @@ import {
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
-// eslint-disable-next-line max-len
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
-const cloneDeep = require("lodash/cloneDeep");
 
 const snapshotFileName = "header";
 const contentPath = "content";

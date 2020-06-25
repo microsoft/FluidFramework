@@ -17,7 +17,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
 } from "@fluidframework/component-runtime-definitions";
-import { strongAssert, unreachableCase } from "@fluidframework/runtime-utils";
+import { unreachableCase } from "@fluidframework/runtime-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { debug } from "./debug";
@@ -255,7 +255,7 @@ export class ConsensusRegisterCollection<T>
                         message.sequenceNumber,
                         local);
                     if (local) {
-                        strongAssert(localOpMetadata, "localOpMetadata is missing from the client's write operation");
+                        assert(localOpMetadata, "localOpMetadata is missing from the client's write operation");
                         // Resolve the pending promise for this operation now that we have received an ack for it.
                         const resolve = localOpMetadata as PendingResolve;
                         resolve(winner);
@@ -307,7 +307,7 @@ export class ConsensusRegisterCollection<T>
             }
         }
         else {
-            strongAssert(data);
+            assert(data);
         }
 
         // Remove versions that were known to the remote client at the time of write
