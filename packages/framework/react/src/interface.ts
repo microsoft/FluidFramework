@@ -118,8 +118,9 @@ export interface IFluidProps<
     syncedComponent: SyncedComponent;
     /**
      * Data props containing the fluid component map and the runtime
-     * TODO: Move data props out as it can be fetched from synced component but
-     * still needs to be extensible for reducers
+     * Optional as the above two will be passed by default. This only need to be defined
+     * if there are additional values from the component lifecycle that need to be made
+     * available to the reducers
      */
     dataProps?: IFluidDataProps;
 }
@@ -580,7 +581,7 @@ export interface ISyncedStateConfig<SV, SF> {
     fluidToView: FluidToViewMap<SV, SF>;
     /**
      * A map of the view state values that need conversion to their Fluid state counterparts and the
-     * respective converters
+     * respective converters. Optional as it does not need to be passed in when the view and Fluid states match
      */
     viewToFluid?: ViewToFluidMap<SV, SF>;
 }
