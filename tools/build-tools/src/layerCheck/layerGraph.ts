@@ -8,7 +8,6 @@ import { logVerbose } from "../common/logging";
 import { Package, Packages } from "../common/npmPackage";
 import { EOL as newline } from "os";
 import * as path from "path";
-import { AssertionError } from "assert";
 
 interface ILayerInfo {
     deps?: string[];
@@ -124,7 +123,7 @@ class LayerNode extends BaseNode {
     }
 };
 
-/** Used for traversinig the layer dependency graph */
+/** Used for traversing the layer dependency graph */
 type LayerDependencyNode = { node: LayerNode, childrenToVisit: (LayerNode | undefined)[], orderedChildren: LayerNode[] };
 
 class GroupNode extends BaseNode {
@@ -197,7 +196,7 @@ class PackageNode extends BaseNode {
     }
 
     public get dotName() {
-        return this.name.replace(/@fluidframework\//i, "");
+        return this.name.replace(/@fluidframework\//i, "").replace(/@fluid-internal\//i, "");
     }
 
     public get pkg() {

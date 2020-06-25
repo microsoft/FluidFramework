@@ -12,7 +12,6 @@
     "fluid-bump-version": "bin/fluid-bump-version",
     "fluid-doc-stats": "bin/fluid-doc-stats",
     "fluid-layer-check": "bin/fluid-layer-check",
-    "fluid-package-audit": "bin/fluid-package-audit",
     "fluid-repo-policy-check": "bin/fluid-repo-policy-check"
   },
   "scripts": {
@@ -20,11 +19,9 @@
     "debug:layer-check": "node --inspect-brk dist/layerCheck/layerCheck.js --root ../..",
     "layer-check": "node dist/layerCheck/layerCheck.js --root ../..",
     "list-repo-files": "cd ../.. && git ls-files -co --exclude-standard",
-    "package-audit": "node dist/packageAudit/packageAudit.js --root ../..",
     "policy-check": "cd ../.. && git ls-files -co --exclude-standard --full-name | node tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -s",
     "policy-check:fix": "npm run policy-check -- -r",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "debug:package-audit": "node --inspect-brk dist/packageAudit/packageAudit.js --root ../.."
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "async": "^2.6.2",

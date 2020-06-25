@@ -248,25 +248,20 @@ export class Packages {
     public constructor(public readonly packages: Package[]) {
     }
 
-    public static loadTree(root: string, monoRepo?: MonoRepo, ignoreDirs?: string[]) {
+    public static loadDir(dir: string, monoRepo?: MonoRepo, ignoreDirs?: string[]) {
+        const packageJsonFileName = path.join(dir, "package.json");
+        if (existsSync(packageJsonFileName)) {
+            return [new Package(packageJsonFileName, monoRepo)];
+        }
+
         const packages: Package[] = [];
-        const files = fs.readdirSync(root, { withFileTypes: true });
+        const files = fs.readdirSync(dir, { withFileTypes: true });
         files.map((dirent) => {
             if (dirent.isDirectory() && dirent.name !== "node_modules"
                 && (ignoreDirs === undefined || !ignoreDirs.includes(dirent.name))) {
-                packages.push(...Packages.loadDir(path.join(root, dirent.name), monoRepo, ignoreDirs));
+                packages.push(...Packages.loadDir(path.join(dir, dirent.name), monoRepo));
             }
         });
-        return packages;
-    }
-
-    public static loadDir(dir: string, monoRepo?: MonoRepo, ignoreDirs?: string[]) {
-        const packages: Package[] = this.loadTree(dir, monoRepo, ignoreDirs);
-        const packageJsonFileName = path.join(dir, "package.json");
-        if (existsSync(packageJsonFileName)) {
-            packages.push(new Package(packageJsonFileName, monoRepo));
-        }
-
         return packages;
     }
 
