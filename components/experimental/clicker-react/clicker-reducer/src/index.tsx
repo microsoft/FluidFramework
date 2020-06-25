@@ -4,7 +4,6 @@
  */
 
 import {
-    PrimedComponent,
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import {
@@ -15,11 +14,9 @@ import {
     IFluidDataProps,
     IFluidFunctionalComponentFluidState,
     IFluidReducer,
-    FluidToViewMap,
-    ViewToFluidMap,
+    SyncedComponent,
 } from "@fluidframework/react";
 import { SharedCounter } from "@fluidframework/counter";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -51,14 +48,15 @@ interface IActionReducer
     >;
 }
 
-const ActionReducer: IActionReducer = {
+export const ActionReducer: IActionReducer = {
     increment: {
         function: (state, step: number) => {
-            state.fluidState?.counter.increment(step);
-            state.viewState.value =
-                state.fluidState !== undefined
-                    ? state.fluidState.counter.value
-                    : state.viewState.value;
+            if (state === undefined || state.fluidState?.counter === undefined) {
+                throw Error("State was not initialized prior to dispatch call");
+            }
+            const counter = state.fluidState?.counter;
+            counter.increment(step);
+            state.viewState.value = counter.value;
             return { state };
         },
     },
@@ -104,56 +102,53 @@ function CounterReactFunctionalReducer(
 /**
  * ClickerReducer example using the useReducerFluid hook
  */
-export class ClickerReducer extends PrimedComponent
-    implements IComponentHTMLView {
-    public get IComponentHTMLView() {
-        return this;
+export class ClickerReducer extends SyncedComponent {
+    constructor(props) {
+        super(props);
+
+        this.syncedStateConfig.set(
+            "counter-reducer",
+            {
+                syncedStateId: "counter-reducer",
+                fluidToView:  new Map([
+                    [
+                        "counter", {
+                            type: SharedCounter.name,
+                            viewKey: "value",
+                            viewConverter: (viewState, fluidState, fluidComponentMap) => {
+                                return {
+                                    value: fluidState.counter?.value,
+                                };
+                            },
+                            sharedObjectCreate: SharedCounter.create,
+                            listenedEvents: ["incremented"],
+                        },
+                    ],
+                ]),
+                viewToFluid: new Map([
+                    [
+                        "value", {
+                            type: "number",
+                            fluidKey: "counter",
+                            fluidConverter: (viewState, fluidState) => {
+                                return fluidState.counter?.value;
+                            },
+                        },
+                    ],
+                ]),
+                defaultViewState: { value: 0 },
+            },
+        );
     }
-
-    // #region IComponentHTMLView
-
     /**
-     * Will return a new ClickerWithHooks view
+     * Will return a new ClickerReducer view
      */
     public render(div: HTMLElement) {
-        const reducerFluidToViewMap: FluidToViewMap<
-        ICounterReducerViewState,
-        ICounterReducerFluidState
-        > = new Map();
-        reducerFluidToViewMap.set("counter", {
-            stateKey: "value",
-            viewConverter: (
-                syncedState: Partial<ICounterReducerFluidState>,
-            ) => {
-                return {
-                    value: syncedState.counter?.value,
-                };
-            },
-            sharedObjectCreate: SharedCounter.create,
-            listenedEvents: ["incremented"],
-        });
-        const reducerViewToFluidMap: ViewToFluidMap<
-        ICounterReducerViewState,
-        ICounterReducerFluidState
-        > = new Map();
-        reducerViewToFluidMap.set("value", {
-            fluidKey: "counter",
-            fluidConverter: () => {
-                return {};
-            },
-        });
-
         ReactDOM.render(
             <div>
                 <CounterReactFunctionalReducer
                     syncedStateId={"counter-reducer"}
-                    root={this.root}
-                    dataProps={{
-                        fluidComponentMap: new Map(),
-                        runtime: this.runtime,
-                    }}
-                    fluidToView={reducerFluidToViewMap}
-                    viewToFluid={reducerViewToFluidMap}
+                    syncedComponent={this}
                     reducer={ActionReducer}
                     selector={{}}
                 />

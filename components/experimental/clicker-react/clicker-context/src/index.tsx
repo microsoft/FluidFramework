@@ -4,7 +4,6 @@
  */
 
 import {
-    PrimedComponent,
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import {
@@ -12,11 +11,9 @@ import {
     createContextFluid,
     IFluidDataProps,
     IFluidFunctionalComponentFluidState,
-    FluidToViewMap,
-    ViewToFluidMap,
     IFluidContextProps,
+    SyncedComponent,
 } from "@fluidframework/react";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -49,7 +46,7 @@ function CounterReactFunctionalContext(
     return (
         <div>
             <Provider
-                value={{ state, setState, reactContext: props.reactContext }}
+                value={{ state, setState, reactContext: {} }}
             >
                 <div>
                     <Consumer>
@@ -83,54 +80,43 @@ function CounterReactFunctionalContext(
 /**
  * Basic ClickerContext example using createContextFluid hook.
  */
-export class ClickerContext extends PrimedComponent
-    implements IComponentHTMLView {
-    public get IComponentHTMLView() {
-        return this;
+export class ClickerContext extends SyncedComponent {
+    constructor(props) {
+        super(props);
+
+        this.syncedStateConfig.set(
+            "counter-context",
+            {
+                syncedStateId: "counter-context",
+                fluidToView:  new Map([
+                    [
+                        "value", {
+                            type: "number",
+                            viewKey: "value",
+                        },
+                    ],
+                ]),
+                viewToFluid: new Map([
+                    [
+                        "value", {
+                            type: "number",
+                            fluidKey: "value",
+                        },
+                    ],
+                ]),
+                defaultViewState: { value: 0 },
+            },
+        );
     }
-
-    // #region IComponentHTMLView
-
     /**
-     * Will return a new ClickerWithHooks view
+     * Will return a new ClickerContext view
      */
     public render(div: HTMLElement) {
-        const functionalFluidToView: FluidToViewMap<
-        ICounterFunctionalViewState,
-        ICounterFunctionalFluidState
-        > = new Map();
-        functionalFluidToView.set("value", {
-            viewConverter: (
-                syncedState: Partial<ICounterFunctionalFluidState>,
-            ) => {
-                return {
-                    value: syncedState.value,
-                };
-            },
-        });
-        const functionalViewToFluid: ViewToFluidMap<
-        ICounterFunctionalViewState,
-        ICounterFunctionalFluidState
-        > = new Map();
-        functionalViewToFluid.set("value", {
-            fluidKey: "value",
-            fluidConverter: (
-                state: Partial<IFluidFunctionalComponentViewState>,
-            ) => state,
-        });
-
         ReactDOM.render(
             <div>
                 <CounterReactFunctionalContext
                     syncedStateId={"counter-context"}
-                    root={this.root}
-                    dataProps={{
-                        fluidComponentMap: new Map(),
-                        runtime: this.runtime,
-                    }}
-                    reactContext={{}}
-                    fluidToView={functionalFluidToView}
-                    viewToFluid={functionalViewToFluid}
+                    syncedComponent={this}
                 />
             </div>,
             div,

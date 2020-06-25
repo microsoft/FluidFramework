@@ -4,17 +4,15 @@
  */
 
 import {
-    PrimedComponent,
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import {
     FluidReactComponent,
     IFluidFunctionalComponentFluidState,
     IFluidFunctionalComponentViewState,
-    FluidToViewMap,
+    SyncedComponent,
 } from "@fluidframework/react";
 import { SharedCounter } from "@fluidframework/counter";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -25,34 +23,44 @@ export const ClickerName = pkg.name as string;
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
-
-    // #region IComponentHTMLView
-
-    /**
-     * Will return a new Clicker view
-     */
-    public render(element: HTMLElement) {
+export class Clicker extends SyncedComponent {
+    constructor(props) {
+        super(props);
         // Mark the counter value in the state as a SharedCounter type and pass in its create function
         // so that it will be created on the first run and be available on our React state
         // We also mark the "incremented" event as we want to update the React state when the counter
         // is incremented to display the new value
-        const fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map();
-        fluidToView.set("counter", {
-            sharedObjectCreate: SharedCounter.create,
-            listenedEvents: ["incremented"],
-        });
-
+        this.syncedStateConfig.set(
+            "clicker",
+            {
+                syncedStateId: "clicker",
+                fluidToView:  new Map([
+                    [
+                        "counter", {
+                            type: SharedCounter.name,
+                            viewKey: "value",
+                            viewConverter: (viewState, fluidState, fluidComponentMap) => {
+                                return {
+                                    value: fluidState.counter?.value,
+                                };
+                            },
+                            sharedObjectCreate: SharedCounter.create,
+                            listenedEvents: ["incremented"],
+                        },
+                    ],
+                ]),
+                defaultViewState: {},
+            },
+        );
+    }
+    /**
+     * Will return a new Clicker view
+     */
+    public render(element: HTMLElement) {
         ReactDOM.render(
             <CounterReactView
                 syncedStateId={"clicker"}
-                root={this.root}
-                dataProps={{
-                    fluidComponentMap: new Map(),
-                    runtime: this.runtime,
-                }}
-                fluidToView={fluidToView}
+                syncedComponent={this}
             />,
             element,
         );

@@ -4,7 +4,6 @@
  */
 
 import {
-    PrimedComponent,
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import {
@@ -12,10 +11,8 @@ import {
     IFluidFunctionalComponentViewState,
     useStateFluid,
     IFluidFunctionalComponentFluidState,
-    ViewToFluidMap,
-    FluidToViewMap,
+    SyncedComponent,
 } from "@fluidframework/react";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -71,53 +68,43 @@ function CounterReactFunctional(
 /**
  * Basic ClickerFunctional example showing Clicker as a React Functional component
  */
-export class ClickerFunctional extends PrimedComponent
-    implements IComponentHTMLView {
-    public get IComponentHTMLView() {
-        return this;
+export class ClickerFunctional extends SyncedComponent {
+    constructor(props) {
+        super(props);
+
+        this.syncedStateConfig.set(
+            "counter-context",
+            {
+                syncedStateId: "counter-context",
+                fluidToView:  new Map([
+                    [
+                        "value", {
+                            type: "number",
+                            viewKey: "value",
+                        },
+                    ],
+                ]),
+                viewToFluid: new Map([
+                    [
+                        "value", {
+                            type: "number",
+                            fluidKey: "value",
+                        },
+                    ],
+                ]),
+                defaultViewState: { value: 0 },
+            },
+        );
     }
-
-    // #region IComponentHTMLView
-
     /**
-     * Will return a new ClickerWithHooks view
+     * Will return a new ClickerFunctional view
      */
     public render(div: HTMLElement) {
-        const functionalFluidToView: FluidToViewMap<
-        ICounterFunctionalViewState,
-        ICounterFunctionalFluidState
-        > = new Map();
-        functionalFluidToView.set("value", {
-            viewConverter: (
-                syncedState: Partial<ICounterFunctionalFluidState>,
-            ) => {
-                return {
-                    value: syncedState.value,
-                };
-            },
-        });
-        const functionalViewToFluid: ViewToFluidMap<
-        ICounterFunctionalViewState,
-        ICounterFunctionalFluidState
-        > = new Map();
-        functionalViewToFluid.set("value", {
-            fluidKey: "value",
-            fluidConverter: (
-                state: Partial<IFluidFunctionalComponentViewState>,
-            ) => state,
-        });
-
         ReactDOM.render(
             <div>
                 <CounterReactFunctional
-                    syncedStateId={"counter-functional"}
-                    root={this.root}
-                    dataProps={{
-                        fluidComponentMap: new Map(),
-                        runtime: this.runtime,
-                    }}
-                    fluidToView={functionalFluidToView}
-                    viewToFluid={functionalViewToFluid}
+                    syncedStateId={"counter-context"}
+                    syncedComponent={this}
                 />
             </div>,
             div,
