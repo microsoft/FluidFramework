@@ -14,7 +14,7 @@ describe("SharedNumberSequence", () => {
         const componentRuntime = new MockComponentRuntime();
         sharedNumberSequence =
             new SharedNumberSequence(componentRuntime, documentId, SharedNumberSequenceFactory.Attributes);
-        componentRuntime.attach();
+        componentRuntime.bindToContainer();
     });
 
     describe("getItems", () => {
