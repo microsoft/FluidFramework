@@ -4,6 +4,8 @@
  */
 
 import assert from "assert";
+// eslint-disable-next-line import/no-internal-modules
+import merge from "lodash/merge";
 import uuid from "uuid";
 import {
     ITelemetryBaseLogger,
@@ -95,10 +97,6 @@ import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService
 import { parseUrl } from "./utils";
 
 export { ErrorWithProps, CreateContainerError } from "@fluidframework/driver-utils";
-
-// eslint-disable-next-line max-len
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
-const merge = require("lodash/merge");
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 

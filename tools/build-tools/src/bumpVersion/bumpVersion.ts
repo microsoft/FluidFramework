@@ -284,6 +284,8 @@ class ReferenceVersionBag extends VersionBag {
             this.nonDevDep.add(entryName);
         } else if (existing) {
             console.log(`      Ignored mismatched dev dependency ${pkg.name}@${version} vs ${existing}`);
+            // Don't replace the existing reference if it is an ignored dev dependency
+            return;
         }
         if (newReference) {
             this.referenceData.set(entryName, { reference: newReference, published });

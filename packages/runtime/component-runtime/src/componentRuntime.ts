@@ -44,7 +44,7 @@ import {
     IEnvelope,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
-import { strongAssert, unreachableCase } from "@fluidframework/runtime-utils";
+import { unreachableCase } from "@fluidframework/runtime-utils";
 import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
@@ -153,6 +153,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
     private bindState: BindState;
+    // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
     private graphAttachState: AttachState = AttachState.Detached;
     private readonly deferredAttached = new Deferred<void>();
     private readonly localChannelContextQueue = new Map<string, LocalChannelContext>();
@@ -298,7 +299,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     /**
-     * Registers a channel with the runtime. If the runtime is attached we will attach the channel right away.
+     * Binds a channel with the runtime. If the runtime is attached we will attach the channel right away.
      * If the runtime is not attached we will defer the attach until the runtime attaches.
      * @param channel - channel to be registered.
      */
@@ -643,7 +644,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                     // For Operations, find the right channel and trigger resubmission on it.
                     const envelope = content as IEnvelope;
                     const channelContext = this.contexts.get(envelope.address);
-                    strongAssert(channelContext, "There should be a channel context for the op");
+                    assert(channelContext, "There should be a channel context for the op");
                     channelContext.reSubmit(envelope.contents, localOpMetadata);
                     break;
                 }

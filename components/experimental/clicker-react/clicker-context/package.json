@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-example/clicker-with-hooks",
+  "name": "@fluid-example/clicker-context",
   "version": "0.21.0",
   "description": "Minimal Fluid component sample to implement a collaborative counter using Fluid React hooks",
   "repository": "microsoft/FluidFramework",
@@ -37,7 +37,6 @@
     "@fluidframework/aqueduct": "^0.21.0",
     "@fluidframework/component-core-interfaces": "^0.21.0",
     "@fluidframework/component-runtime-definitions": "^0.21.0",
-    "@fluidframework/counter": "^0.21.0",
     "@fluidframework/react": "^0.21.0",
     "@fluidframework/runtime-definitions": "^0.21.0",
     "@fluidframework/view-interfaces": "^0.21.0",

@@ -98,7 +98,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.1.31482",
+    "@fluidframework/build-tools": "^0.1.32501",
     "@fluidframework/test-tools": "^0.1.0",
     "@microsoft/api-documenter": "^7.4.6",
     "@microsoft/api-extractor": "^7.7.2",

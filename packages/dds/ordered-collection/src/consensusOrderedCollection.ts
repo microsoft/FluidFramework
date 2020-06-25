@@ -17,7 +17,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
 } from "@fluidframework/component-runtime-definitions";
-import { strongAssert, unreachableCase } from "@fluidframework/runtime-utils";
+import { unreachableCase } from "@fluidframework/runtime-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import {
@@ -327,7 +327,7 @@ export class ConsensusOrderedCollection<T = any>
                 default: unreachableCase(op);
             }
             if (local) {
-                strongAssert(
+                assert(
                     localOpMetadata, `localOpMetadata is missing from the local client's ${op.opName} operation`);
                 // Resolve the pending promise for this operation now that we have received an ack for it.
                 const resolve = localOpMetadata as PendingResolve<T>;
