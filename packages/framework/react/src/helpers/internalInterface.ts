@@ -12,4 +12,5 @@ import { ISharedMap } from "@fluidframework/map";
 export interface IFluidSchemaHandles {
     viewMatchingMapHandle: IComponentHandle<ISharedMap>;
     fluidMatchingMapHandle: IComponentHandle<ISharedMap>;
+    storedHandleMapHandle: IComponentHandle<ISharedMap>;
 }

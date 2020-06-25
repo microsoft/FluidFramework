@@ -107,6 +107,8 @@ export abstract class SyncedComponent<
                     componentSchema.fluidMatchingMap.handle as IComponentHandle<SharedMap>,
                 viewMatchingMapHandle:
                     componentSchema.viewMatchingMap.handle as IComponentHandle<SharedMap>,
+                storedHandleMapHandle:
+                    componentSchema.storedHandleMap.handle as IComponentHandle<SharedMap>,
             };
             this.fluidComponentMap.set(
                 componentSchema.fluidMatchingMap.handle.path,
@@ -122,6 +124,14 @@ export abstract class SyncedComponent<
                     isRuntimeMap: true,
                 },
             );
+            this.fluidComponentMap.set(
+                componentSchema.storedHandleMap.handle.path,
+                {
+                    component: componentSchema.storedHandleMap,
+                    isRuntimeMap: true,
+                },
+            );
+
             setComponentSchema(
                 syncedStateId,
                 this.syncedState,
@@ -192,6 +202,10 @@ export abstract class SyncedComponent<
             });
             this.fluidComponentMap.set(componentSchemaHandles.viewMatchingMapHandle.path, {
                 component: await componentSchemaHandles.viewMatchingMapHandle.get(),
+                isRuntimeMap: true,
+            });
+            this.fluidComponentMap.set(componentSchemaHandles.storedHandleMapHandle.path, {
+                component: await componentSchemaHandles.storedHandleMapHandle.get(),
                 isRuntimeMap: true,
             });
         }

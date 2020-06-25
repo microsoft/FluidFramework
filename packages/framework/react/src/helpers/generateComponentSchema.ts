@@ -34,7 +34,7 @@ export function generateComponentSchema<
     // true if needs converter or is component, false if not
     const viewMatchingMap = SharedMap.create(runtime);
     const fluidMatchingMap = SharedMap.create(runtime);
-
+    const storedHandleMap = SharedMap.create(runtime);
     for (const fluidStateKey of fluidToView.keys()) {
         const value = fluidToView.get(fluidStateKey);
         if (!value) {
@@ -87,5 +87,5 @@ export function generateComponentSchema<
         }
     }
 
-    return { viewMatchingMap, fluidMatchingMap };
+    return { viewMatchingMap, fluidMatchingMap, storedHandleMap };
 }

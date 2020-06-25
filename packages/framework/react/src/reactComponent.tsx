@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { ISharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map";
 import {
     IFluidProps,
     IFluidFunctionalComponentFluidState,
@@ -21,7 +21,7 @@ import { syncState, initializeState } from "./helpers";
 export abstract class FluidReactComponent<SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState> extends React.Component<IFluidProps<SV, SF>, SV> {
     private readonly _syncedStateId: string;
-    private readonly _syncedState: ISharedMap;
+    private readonly _syncedState: SharedMap;
     private readonly _dataProps: IFluidDataProps;
     private readonly _viewToFluid: Map<keyof SV, IFluidConverter<SV, SF>>;
     private readonly _fluidToView: Map<keyof SF, IViewConverter<SV, SF>>;

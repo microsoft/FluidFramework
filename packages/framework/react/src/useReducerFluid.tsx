@@ -5,6 +5,7 @@
 
 import * as React from "react";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { SharedMap } from "@fluidframework/map";
 import {
     IFluidFunctionalComponentViewState,
     IFluidReducerProps,
@@ -28,6 +29,7 @@ import {
     syncedStateCallbackListener,
     getFluidState,
     syncState,
+    getComponentSchema,
 } from "./helpers";
 
 export function useReducerFluid<
@@ -59,6 +61,20 @@ export function useReducerFluid<
     }, initialViewState);
     const syncedState = syncedComponent.syncedState;
     const { fluidToView, viewToFluid } = config as ISyncedStateConfig<SV, SF>;
+
+    const componentSchemaHandles = getComponentSchema(
+        syncedStateId,
+        syncedState,
+    );
+    if (componentSchemaHandles?.storedHandleMapHandle.path === undefined) {
+        throw Error(`Component schema not initialized prior to render for ${syncedStateId}`);
+    }
+    const storedHandleMap = dataProps.fluidComponentMap.get(
+        componentSchemaHandles?.storedHandleMapHandle.path,
+    )?.component as SharedMap;
+    if (storedHandleMap === undefined) {
+        throw Error(`Stored handle map not initialized prior to render for ${syncedStateId}`);
+    }
 
     // Dispatch is an in-memory object that will load the reducer actions provided by the user
     // and add updates to the view and Fluid state based off of the type of function and
@@ -111,6 +127,7 @@ export function useReducerFluid<
                     // Fetch any new components and add a listener to their synced state. Then update the view state.
                     const callback = syncedStateCallbackListener(
                         combinedDispatchDataProps.fluidComponentMap,
+                        storedHandleMap,
                         syncedStateId,
                         syncedState,
                         combinedDispatchDataProps.runtime,
@@ -123,6 +140,7 @@ export function useReducerFluid<
                     updateStateAndComponentMap(
                         result.newComponentHandles,
                         combinedDispatchDataProps.fluidComponentMap,
+                        storedHandleMap,
                         false,
                         syncedStateId,
                         syncedState,
@@ -159,6 +177,7 @@ export function useReducerFluid<
                 ).then((result: IStateUpdateResult<SV, SF, C>) => {
                     const callback = syncedStateCallbackListener(
                         combinedDispatchDataProps.fluidComponentMap,
+                        storedHandleMap,
                         syncedStateId,
                         syncedState,
                         combinedDispatchDataProps.runtime,
@@ -172,6 +191,7 @@ export function useReducerFluid<
                         updateStateAndComponentMap(
                             result.newComponentHandles,
                             combinedDispatchDataProps.fluidComponentMap,
+                            storedHandleMap,
                             false,
                             syncedStateId,
                             syncedState,
@@ -336,6 +356,7 @@ export function useReducerFluid<
                 if (newHandles.length > 0) {
                     const callback = syncedStateCallbackListener(
                         combinedFetchDataProps.fluidComponentMap,
+                        storedHandleMap,
                         syncedStateId,
                         syncedState,
                         combinedFetchDataProps.runtime,
@@ -348,6 +369,7 @@ export function useReducerFluid<
                     updateStateAndComponentMap(
                         newHandles,
                         combinedFetchDataProps.fluidComponentMap,
+                        storedHandleMap,
                         true,
                         syncedStateId,
                         syncedState,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDirectoryValueChanged, ISharedMap } from "@fluidframework/map";
+import { IDirectoryValueChanged, SharedMap } from "@fluidframework/map";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import {
@@ -40,9 +40,10 @@ export const updateStateAndComponentMap = async <
 >(
     newHandleList: IComponentHandle[],
     fluidComponentMap: FluidComponentMap,
+    storedHandleMap: SharedMap,
     isSyncedStateUpdate: boolean,
     syncedStateId: string,
-    syncedState: ISharedMap,
+    syncedState: SharedMap,
     runtime: IComponentRuntime,
     viewState: SV,
     setState: (newState: SV, isSyncedStateUpdate?: boolean) => void,
@@ -67,6 +68,7 @@ export const updateStateAndComponentMap = async <
                 fluidToView,
                 viewToFluid,
             ),
+        storedHandleMap,
     ).then(() =>
         syncState(
             isSyncedStateUpdate,

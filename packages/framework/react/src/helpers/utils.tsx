@@ -12,6 +12,7 @@ import {
     IFluidFunctionalComponentViewState,
     IFluidConverter,
 } from "../interface";
+import { IFluidComponent } from "..";
 
 export function getByFluidKey<
     SV extends IFluidFunctionalComponentViewState,
@@ -30,16 +31,18 @@ export async function asyncForEach(
         handle: IComponentHandle,
         fluidComponentMap: FluidComponentMap,
         syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
-        refreshView: () => void
+        refreshView: () => void,
+        storedHandleMap: SharedMap,
     ) => Promise<void>,
     fluidComponentMap: FluidComponentMap,
     syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
     refreshView: () => void,
+    storedHandleMap: SharedMap,
 ): Promise<void> {
     const promises: Promise<void>[] = [];
     for (const value of array) {
         promises.push(
-            callback(value, fluidComponentMap, syncedStateCallback, refreshView),
+            callback(value, fluidComponentMap, syncedStateCallback, refreshView, storedHandleMap),
         );
     }
     await Promise.all(promises);
@@ -53,15 +56,26 @@ export const addComponent = async <
     fluidComponentMap: FluidComponentMap,
     syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
     refreshView: () => void,
+    storedHandleMap: SharedMap,
 ): Promise<void> => {
-    const value = fluidComponentMap.get(handle.path);
-    if (!value) {
-        throw Error(
-            "Tried fetch a component that wasn't present on the fluid component map",
+    const maybeValue: IFluidComponent | undefined = fluidComponentMap.get(handle.path);
+    let value: IFluidComponent = {
+        isListened: false,
+        isRuntimeMap: false,
+    };
+    if (maybeValue === undefined) {
+        fluidComponentMap.set(
+            handle.path,
+            value,
         );
+    } else {
+        value = maybeValue;
     }
     value.isListened = false;
     fluidComponentMap.set(handle.path, value);
+    if (!storedHandleMap.has(handle.path)) {
+        storedHandleMap.set(handle.path, handle);
+    }
     return handle.get().then((component) => {
         if (value.isRuntimeMap) {
             (component as SharedMap).on("valueChanged", syncedStateCallback);

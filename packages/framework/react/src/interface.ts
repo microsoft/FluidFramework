@@ -9,7 +9,6 @@ import {
     IComponentLoadable,
     IComponent,
 } from "@fluidframework/component-core-interfaces";
-import { SharedObject } from "@fluidframework/shared-object-base";
 import { SyncedComponent } from "./fluidComponent";
 
 /**
@@ -50,6 +49,10 @@ export interface IFluidSchema {
      * (k,v) = (fluidKeys, needsViewConverter)
      */
     fluidMatchingMap: ISharedMap;
+    /**
+     * (k,v) = (path, handle)
+     */
+    storedHandleMap: ISharedMap;
 }
 
 /**
@@ -118,7 +121,7 @@ export interface IFluidProps<
     syncedComponent: SyncedComponent;
     /**
      * Data props containing the fluid component map and the runtime
-     * Optional as the above two will be passed by default. This only need to be defined
+      Optional as the above two will be passed by default. This only need to be defined
      * if there are additional values from the component lifecycle that need to be made
      * available to the reducers
      */
@@ -154,7 +157,7 @@ export interface IViewConverter<
      * If this is a fluid DDS SharedObject type (i.e. SharedCounter, SharedMap), supply its create function
      * here and add any events that it will fire to the listenedEvents param below to trigger state updates
      */
-    sharedObjectCreate?: (runtime: IComponentRuntime) => SharedObject;
+    sharedObjectCreate?: (runtime: IComponentRuntime) => any;
     /**
      * List of events fired on this component that will trigger a state update
      */
@@ -581,7 +584,7 @@ export interface ISyncedStateConfig<SV, SF> {
     fluidToView: FluidToViewMap<SV, SF>;
     /**
      * A map of the view state values that need conversion to their Fluid state counterparts and the
-     * respective converters. Optional as it does not need to be passed in when the view and Fluid states match
+     * respective converters
      */
     viewToFluid?: ViewToFluidMap<SV, SF>;
 }

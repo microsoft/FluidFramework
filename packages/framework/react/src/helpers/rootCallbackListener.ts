@@ -36,6 +36,7 @@ export const syncedStateCallbackListener = <
     SF extends IFluidFunctionalComponentFluidState
 >(
     fluidComponentMap: FluidComponentMap,
+    storedHandleMap: ISharedMap,
     syncedStateId,
     syncedState: ISharedMap,
     runtime: IComponentRuntime,
