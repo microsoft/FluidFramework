@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse, CreateContainerError } from "@fluidframework/driver-utils";
 import {
@@ -19,7 +20,6 @@ import {
     IComponentContext,
     ISummaryTracker,
 } from "@fluidframework/runtime-definitions";
-import { strongAssert } from "@fluidframework/runtime-utils";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -89,14 +89,14 @@ export class RemoteChannelContext implements IChannelContext {
         if (this.isLoaded) {
             this.services.deltaConnection.process(message, local, localOpMetadata);
         } else {
-            strongAssert(!local, "Remote channel must not be local when processing op");
+            assert(!local, "Remote channel must not be local when processing op");
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.pending!.push(message);
         }
     }
 
     public reSubmit(content: any, localOpMetadata: unknown) {
-        strongAssert(this.isLoaded, "Remote channel must be loaded when resubmitting op");
+        assert(this.isLoaded, "Remote channel must be loaded when resubmitting op");
 
         this.services.deltaConnection.reSubmit(content, localOpMetadata);
     }
@@ -114,7 +114,7 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     private async loadChannel(): Promise<IChannel> {
-        strongAssert(!this.isLoaded, "Remote channel must not already be loaded when loading");
+        assert(!this.isLoaded, "Remote channel must not already be loaded when loading");
 
         let attributes: IChannelAttributes | undefined;
         if (await this.services.objectStorage.contains(".attributes")) {

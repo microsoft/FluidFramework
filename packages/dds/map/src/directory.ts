@@ -18,7 +18,6 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@fluidframework/component-runtime-definitions";
-import { strongAssert } from "@fluidframework/runtime-utils";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { debug } from "./debug";
 import {
@@ -1266,7 +1265,7 @@ class SubDirectory implements IDirectory {
         localOpMetadata: unknown,
     ): void {
         if (local) {
-            strongAssert(localOpMetadata !== undefined,
+            assert(localOpMetadata !== undefined,
                 `pendingMessageId is missing from the local client's ${op.type} operation`);
             const pendingMessageId = localOpMetadata as number;
             if (this.pendingClearMessageId === pendingMessageId) {
@@ -1470,7 +1469,7 @@ class SubDirectory implements IDirectory {
     ): boolean {
         if (this.pendingClearMessageId !== -1) {
             if (local) {
-                strongAssert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
+                assert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
                     "Received out of order storage op when there is an unackd clear message");
             }
             // If I have a NACK clear, we can ignore all ops.
@@ -1481,7 +1480,7 @@ class SubDirectory implements IDirectory {
             // Found an NACK op, clear it from the directory if the latest sequence number in the directory
             // match the message's and don't process the op.
             if (local) {
-                strongAssert(localOpMetadata !== undefined,
+                assert(localOpMetadata !== undefined,
                     `pendingMessageId is missing from the local client's ${op.type} operation`);
                 const pendingMessageId = localOpMetadata as number;
                 const pendingKeyMessageId = this.pendingKeys.get(op.key);
@@ -1514,7 +1513,7 @@ class SubDirectory implements IDirectory {
     ): boolean {
         if (this.pendingSubDirectories.has(op.subdirName)) {
             if (local) {
-                strongAssert(localOpMetadata !== undefined,
+                assert(localOpMetadata !== undefined,
                     `pendingMessageId is missing from the local client's ${op.type} operation`);
                 const pendingMessageId = localOpMetadata as number;
                 const pendingSubDirectoryMessageId = this.pendingSubDirectories.get(op.subdirName);

@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import { ErrorType, IDataCorruptionError } from "@fluidframework/container-definitions";
 import { ErrorWithProps } from "@fluidframework/driver-utils";
 import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { strongAssert } from "@fluidframework/runtime-utils";
 import Deque from "double-ended-queue";
 import { ContainerRuntime, ContainerMessageType } from "./containerRuntime";
 
@@ -65,7 +65,7 @@ export class PendingStateManager {
     }
 
     public setConnectionState(connected: boolean) {
-        strongAssert(this.connected === connected, "The connection state is not consistent with the runtime");
+        assert(this.connected === connected, "The connection state is not consistent with the runtime");
 
         if (connected) {
             this.replayPendingStates();
@@ -117,7 +117,7 @@ export class PendingStateManager {
 
     public processPendingLocalMessage(message: ISequencedDocumentMessage): unknown {
         let pendingState = this.pendingStates.peekFront();
-        strongAssert(pendingState, "No pending message found for this remote message");
+        assert(pendingState, "No pending message found for this remote message");
 
         // Process "flush" type messages first, if any.
         while (pendingState.type !== "message") {
@@ -127,7 +127,7 @@ export class PendingStateManager {
             // Get the next message from the pending queue.
             this.pendingStates.shift();
             pendingState = this.pendingStates.peekFront();
-            strongAssert(pendingState, "No pending message found for this remote message");
+            assert(pendingState, "No pending message found for this remote message");
         }
 
         // The clientSequenceNumber of the incoming message must match that of the pending message.
@@ -161,7 +161,7 @@ export class PendingStateManager {
      * @param pendingState - The "flush" state to process.
      */
     private processFlushState(pendingState: IPendingState) {
-        strongAssert(pendingState.type === "flush", "Invalid pending state type");
+        assert(pendingState.type === "flush", "Invalid pending state type");
 
         const pendingFlushMode = pendingState.flushMode;
 
@@ -176,25 +176,25 @@ export class PendingStateManager {
         // for this batch.
         if (pendingFlushMode === FlushMode.Automatic) {
             // We should have been processing a batch.
-            strongAssert(this.isProcessingBatch, "Did not receive batch messages as expected");
+            assert(this.isProcessingBatch, "Did not receive batch messages as expected");
 
             const batchCount = this.pendingBatchMessages.length;
             // There should be at least one batch message.
-            strongAssert(batchCount > 0, "Did not receive any batch message in the batch");
+            assert(batchCount > 0, "Did not receive any batch message in the batch");
 
             const batchBeginMetadata = this.pendingBatchMessages[0].metadata?.batch;
             const batchEndMetadata = this.pendingBatchMessages[batchCount - 1].metadata?.batch;
 
             // If there is a single message in the batch, it should not have any batch metadata.
             if (batchCount === 1) {
-                strongAssert(batchBeginMetadata === undefined,
+                assert(batchBeginMetadata === undefined,
                     "Batch with single message should not have batch metadata");
                 return;
             }
 
             // Assert that we got batch begin and end metadata.
-            strongAssert(batchBeginMetadata === true, "Did not receive batch begin metadata");
-            strongAssert(batchEndMetadata === false, "Did not receive batch end metadata");
+            assert(batchBeginMetadata === true, "Did not receive batch begin metadata");
+            assert(batchEndMetadata === false, "Did not receive batch end metadata");
 
             this.pendingBatchMessages = [];
             this.isProcessingBatch = false;

@@ -15,6 +15,7 @@ import {
     SnapshotTreeValue,
     SnapshotTreeEntry,
     SnapshotType,
+    ICreateFileResponse,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { INonPersistentCache } from "./odspCache";
@@ -123,7 +124,7 @@ async function createNewOdspFile(
                     headers["Content-Type"] = "application/json";
 
                     const postBody = JSON.stringify(containerSnapshot);
-                    fetchResponse = await fetchHelper(
+                    fetchResponse = await fetchHelper<ICreateFileResponse>(
                         url,
                         {
                             body: postBody,
@@ -131,7 +132,7 @@ async function createNewOdspFile(
                             method: "POST",
                         });
 
-                    const content = await fetchResponse.content;
+                    const content = fetchResponse.content;
                     if (!content || !content.itemId) {
                         throwOdspNetworkError("Could not parse item from Vroom response", fetchIncorrectResponse);
                     }
@@ -145,14 +146,14 @@ async function createNewOdspFile(
                     // eslint-disable-next-line max-len
                     const initialUrl = `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
                     const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
-                    fetchResponse = await fetchHelper(
+                    fetchResponse = await fetchHelper<ICreateFileResponse>(
                         url,
                         {
                             method: "PUT",
                             headers,
                         });
 
-                    const content = await fetchResponse.content;
+                    const content = fetchResponse.content;
                     if (!content || !content.id) {
                         throwOdspNetworkError("Could not parse drive item from Vroom response", fetchIncorrectResponse);
                     }
@@ -255,7 +256,6 @@ export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree):
         }
 
         const entry: SnapshotTreeEntry = {
-            mode: "100644",
             path: encodeURIComponent(key),
             type: getGitType(summaryObject),
             value,
