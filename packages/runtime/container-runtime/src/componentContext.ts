@@ -39,7 +39,7 @@ import {
     IComponentRegistry,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker, strongAssert } from "@fluidframework/runtime-utils";
+import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerRuntime } from "./containerRuntime";
 
@@ -561,7 +561,7 @@ export abstract class ComponentContext extends EventEmitter implements
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
-        strongAssert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
+        assert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
 
         const innerContents = contents as ComponentMessage;
 

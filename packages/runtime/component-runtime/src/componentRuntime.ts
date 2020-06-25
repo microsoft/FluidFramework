@@ -43,7 +43,7 @@ import {
     IEnvelope,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
-import { strongAssert, unreachableCase } from "@fluidframework/runtime-utils";
+import { unreachableCase } from "@fluidframework/runtime-utils";
 import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
@@ -595,7 +595,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                     // For Operations, find the right channel and trigger resubmission on it.
                     const envelope = content as IEnvelope;
                     const channelContext = this.contexts.get(envelope.address);
-                    strongAssert(channelContext, "There should be a channel context for the op");
+                    assert(channelContext, "There should be a channel context for the op");
                     channelContext.reSubmit(envelope.contents, localOpMetadata);
                     break;
                 }
