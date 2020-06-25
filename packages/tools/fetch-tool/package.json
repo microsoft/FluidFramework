@@ -3,6 +3,7 @@
   "version": "0.21.0",
   "private": true,
   "description": "",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/fluidFetch.js",
@@ -24,7 +25,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.19.1",
+    "@fluidframework/common-utils": "^0.20.0-0",
     "@fluidframework/component-runtime": "^0.21.0",
     "@fluidframework/container-runtime": "^0.21.0",
     "@fluidframework/driver-definitions": "^0.21.0",
@@ -33,14 +34,14 @@
     "@fluidframework/odsp-driver": "^0.21.0",
     "@fluidframework/odsp-urlresolver": "^0.21.0",
     "@fluidframework/odsp-utils": "^0.21.0",
-    "@fluidframework/protocol-definitions": "^0.1007.1",
+    "@fluidframework/protocol-definitions": "^0.1008.0-0",
     "@fluidframework/routerlicious-driver": "^0.21.0",
     "@fluidframework/routerlicious-urlresolver": "^0.21.0",
     "@fluidframework/runtime-definitions": "^0.21.0",
     "@fluidframework/tool-utils": "^0.21.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.17.0",
+    "@fluidframework/build-common": "^0.18.0-0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

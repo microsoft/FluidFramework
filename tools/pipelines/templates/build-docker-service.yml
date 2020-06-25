@@ -52,7 +52,6 @@ jobs:
     # Setup
     - checkout: self
       clean: true
-      fetchDepth: 1
       lfs: false
       submodules: false
 
