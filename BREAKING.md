@@ -29,7 +29,7 @@ aqueduct-react is actually just a react library and renamed it to reflect such.
 
 ### Add Undefined to getAbsoluteUrl return type
 
-getAbsoluteUrl on the container runtime and component context now returns `string | undefined`. `undefined` will be returned if the container or component is not attached. You can determine if the a components url wil the below snippit
+getAbsoluteUrl on the container runtime and component context now returns `string | undefined`. `undefined` will be returned if the container or component is not attached. You can determine if  a component is attached and get its url with the below snippit:
 ```typescript
 protected async componentHasInitialized() {
     if (!this.context.isLocal()) {
