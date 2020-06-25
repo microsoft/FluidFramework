@@ -32,9 +32,9 @@ import { SharedComponent } from "./sharedComponent";
 export abstract class PrimedComponent<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
     extends SharedComponent<P, S, E>
 {
-    protected internalRoot: ISharedDirectory | undefined;
-    protected internalTaskManager: ITaskManager | undefined;
-    protected readonly rootDirectoryId = "root";
+    private internalRoot: ISharedDirectory | undefined;
+    private internalTaskManager: ITaskManager | undefined;
+    private readonly rootDirectoryId = "root";
     private readonly bigBlobs = "bigBlobs/";
 
     public async request(request: IRequest): Promise<IResponse> {

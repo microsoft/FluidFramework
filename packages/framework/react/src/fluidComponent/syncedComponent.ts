@@ -5,13 +5,7 @@
 import { PrimedComponent } from "@fluidframework/aqueduct";
 import { IComponent, IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
-import {
-    SharedDirectory,
-    SharedMap,
-    MapFactory,
-    ISharedDirectory,
-} from "@fluidframework/map";
-import { ITaskManager } from "@fluidframework/runtime-definitions";
+import { SharedMap } from "@fluidframework/map";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 import { FluidComponentMap, SyncedStateConfig } from "../interface";
@@ -29,53 +23,17 @@ export abstract class SyncedComponent<
     public get IComponentSynced() { return this; }
     public get IComponentHTMLView() { return this; }
 
-    protected async initializeInternal(props?: any): Promise<void> {
-        // Initialize task manager.
-        const request = {
-            headers: [[true]],
-            url: `/_scheduler`,
-        };
+    protected async componentInitializingFirstTime(props?: any): Promise<void> {
+        await super.componentInitializingFirstTime(props);
+        // Initialize our synced state map for the first time using our
+        // syncedStateConfig values
+        await this.initializeStateFirstTime();
+    }
 
-        this.internalTaskManager = await this.asComponent<ITaskManager>(
-            this.context.containerRuntime.request(request),
-        );
-
-        if (!this.runtime.existing) {
-            // Create a root directory and register it before calling componentInitializingFirstTime
-            this.internalRoot = SharedDirectory.create(
-                this.runtime,
-                this.rootDirectoryId,
-            );
-            this.internalRoot.register();
-            // Initialize our synced state map for the first time using our
-            // syncedStateConfig values
-            await this.initializeStateFirstTime();
-            await this.componentInitializingFirstTime(props);
-        } else {
-            // Component has a root directory so we just need to set it before calling componentInitializingFromExisting
-            this.internalRoot = (await this.runtime.getChannel(
-                this.rootDirectoryId,
-            )) as ISharedDirectory;
-            // Fetch our syncedState that contains all the individual React components states
-            this.internalSyncedState = await this.root.get("syncedState").get();
-            // This will actually be an ISharedMap if the channel was previously created by the older version of
-            // PrimedComponent which used a SharedMap.  Since SharedMap and SharedDirectory are compatible unless
-            // SharedDirectory-only commands are used on SharedMap, this will mostly just work for compatibility.
-            if (this.root.attributes.type === MapFactory.Type) {
-                this.runtime.logger.send({
-                    category: "generic",
-                    eventName: "MapPrimedComponent",
-                    message:
-                        "Legacy document, SharedMap is masquerading as SharedDirectory in PrimedComponent",
-                });
-            }
-            // Load our existing state values to be ready for the render lifecycle
-            await this.initializeStateFromExisting();
-            await this.componentInitializingFromExisting();
-        }
-
-        // This always gets called at the end of initialize on FirstTime or from existing.
-        await this.componentHasInitialized();
+    protected async componentInitializingFromExisting(): Promise<void> {
+        await super.componentInitializingFromExisting();
+        // Load our existing state values to be ready for the render lifecycle
+        await this.initializeStateFromExisting();
     }
 
     public get syncedState() {
