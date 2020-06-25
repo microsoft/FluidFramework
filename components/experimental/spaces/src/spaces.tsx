@@ -36,7 +36,14 @@ const SpacesStorageKey = "spaces-storage";
  * owns the typenames, but the individual types own their own serializable object format.
  */
 export interface ISpacesItem {
+    /**
+     * The unknown blob of data that backs the instance of the item.  Probably contains handles, etc.
+     */
     serializableObject: AsSerializable<any>;
+    /**
+     * A key matching an entry in the spacesItemMap, which we'll use to pair the unknown blob with an entry that
+     * knows how to deal with it.
+     */
     itemType: string;
 }
 
