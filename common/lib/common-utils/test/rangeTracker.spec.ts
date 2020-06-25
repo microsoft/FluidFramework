@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { RangeTracker } from "..";
+import { RangeTracker } from "../src";
 
 describe("Routerlicious", () => {
     describe("Shared", () => {

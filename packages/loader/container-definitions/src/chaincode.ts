@@ -34,6 +34,13 @@ import { ICodeLoader, ILoader } from "./loader";
 // TODO: remove, replace all usage with version from protocol-definitions
 export const summarizerClientType = "summarizer";
 
+// Represents the attachment state of the entity.
+export enum AttachState {
+    Detached = "Detached",
+    Attaching = "Attaching",
+    Attached = "Attached",
+}
+
 /**
  * Person definition in a npm script
  */
