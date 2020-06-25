@@ -1344,8 +1344,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // Iterate over each component and ask it to snapshot
         Array.from(this.contexts)
             .filter(([key, value]) =>
-                // Take summary of registered components and whose summary is not taken already.
-                value.isBoundToContainer && !summaryTree.tree[key],
+                // Take summary of bounded components.
+                value.isBoundToContainer,
             )
             .map(async ([key, value]) => {
                 const snapshot = value.generateAttachMessage().snapshot;
