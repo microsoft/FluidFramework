@@ -7,7 +7,6 @@ import {
     IThrottlingWarning,
     IDriverErrorBase,
     DriverErrorType,
-    OdspError,
 } from "@fluidframework/driver-definitions";
 import { CustomErrorWithProps } from "@fluidframework/telemetry";
 
@@ -79,7 +78,7 @@ class ThrottlingError extends CustomErrorWithProps implements IThrottlingWarning
 }
 
 export const createWriteError = (errorMessage: string) =>
-    new NonRetryableError(errorMessage, DriverErrorType.writeError) as OdspError;
+    new NonRetryableError(errorMessage, DriverErrorType.writeError);
 
 export function createGenericNetworkError(
     errorMessage: string,

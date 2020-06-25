@@ -48,7 +48,8 @@ import {
     IFileEntry,
     snapshotExpirySummarizerOps,
 } from "./odspCache";
-import { getWithRetryForTokenRefresh, fetchHelper, throwOdspNetworkError } from "./odspUtils";
+import { getWithRetryForTokenRefresh, fetchHelper } from "./odspUtils";
+import { throwOdspNetworkError } from "./odspError";
 
 /* eslint-disable max-len */
 

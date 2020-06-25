@@ -17,11 +17,10 @@ import { IComponent, IRequest } from "@fluidframework/component-core-interfaces"
 import {
     IContainerContext,
     LoaderHeader,
-    ISummarizingWarning,
     summarizerClientType,
 } from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
-import { ISummarizer, Summarizer, createSummarizingWarning } from "./summarizer";
+import { ISummarizer, Summarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
 
 interface ITrackedClient {
     clientId: string;

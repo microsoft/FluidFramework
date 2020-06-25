@@ -4,7 +4,7 @@
  */
 // tslint:disable: no-unsafe-any
 import assert from "assert";
-import { ContainerErrorType, IGenericError } from "@fluidframework/container-definitions";
+import { ContainerErrorType, IGenericError, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { CustomErrorWithProps } from "@fluidframework/telemetry";
 
 function messageFromError(error: any) {
@@ -32,7 +32,7 @@ class GenericError extends CustomErrorWithProps implements IGenericError {
  * Convert the error into one of the error types.
  * @param error - Error to be converted.
  */
-export function CreateContainerError(error: any): IGenericError {
+export function CreateContainerError(error: any): ICriticalContainerError {
     assert(error !== undefined);
 
     // eslint-disable-next-line no-null/no-null

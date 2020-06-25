@@ -22,7 +22,7 @@ import {
     IRuntimeFactory,
     LoaderHeader,
     IRuntimeState,
-    CriticalContainerError,
+    ICriticalContainerError,
     ContainerWarning,
     IThrottlingWarning,
 } from "@fluidframework/container-definitions";
@@ -169,7 +169,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             const perfEvent = PerformanceEvent.start(container.logger, { eventName: "Load" });
 
-            const onClosed = (err?: CriticalContainerError) => {
+            const onClosed = (err?: ICriticalContainerError) => {
                 // Depending where error happens, we can be attempting to connect to web socket
                 // and continuously retrying (consider offline mode)
                 // Host has no container to close, so it's prudent to do it here
@@ -427,7 +427,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.protocolHandler!.quorum;
     }
 
-    public close(error?: CriticalContainerError) {
+    public close(error?: ICriticalContainerError) {
         if (this._closed) {
             return;
         }
@@ -1225,7 +1225,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
-        this._deltaManager.on("closed", (error?: CriticalContainerError) => {
+        this._deltaManager.on("closed", (error?: ICriticalContainerError) => {
             this.close(error);
         });
 
@@ -1453,7 +1453,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
-            (error?: CriticalContainerError) => this.close(error),
+            (error?: ICriticalContainerError) => this.close(error),
             Container.version,
             previousRuntimeState,
         );
@@ -1491,7 +1491,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
-            (error?: CriticalContainerError) => this.close(error),
+            (error?: ICriticalContainerError) => this.close(error),
             Container.version,
             {},
         );

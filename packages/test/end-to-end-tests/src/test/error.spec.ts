@@ -14,7 +14,6 @@ import {
     IFluidResolvedUrl,
     IDocumentServiceFactory,
     DriverErrorType,
-    OdspErrorType,
     IThrottlingWarning,
 } from "@fluidframework/driver-definitions";
 import { createWriteError } from "@fluidframework/driver-utils";
@@ -23,6 +22,7 @@ import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     createOdspNetworkError,
     invalidFileNameStatusCode,
+    OdspErrorType,
 } from "@fluidframework/odsp-driver";
 import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";

@@ -11,7 +11,7 @@ import {
     IDeltaManager,
     IDeltaManagerEvents,
     IDeltaQueue,
-    CriticalContainerError,
+    ICriticalContainerError,
     IThrottlingWarning,
     ContainerErrorType,
 } from "@fluidframework/container-definitions";
@@ -103,7 +103,7 @@ export enum ReconnectMode {
  */
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "throttled", listener: (error: IThrottlingWarning) => void);
-    (event: "closed", listener: (error?: CriticalContainerError) => void);
+    (event: "closed", listener: (error?: ICriticalContainerError) => void);
 }
 
 /**
@@ -784,7 +784,7 @@ export class DeltaManager
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
-    public close(error?: CriticalContainerError): void {
+    public close(error?: ICriticalContainerError): void {
         if (this.closed) {
             return;
         }
@@ -846,7 +846,7 @@ export class DeltaManager
         }
     }
 
-    private emitDelayInfo(retryEndpoint: number, delaySeconds: number, error: CriticalContainerError) {
+    private emitDelayInfo(retryEndpoint: number, delaySeconds: number, error: ICriticalContainerError) {
         if (retryEndpoint === RetryFor.DeltaStorage) {
             this.deltaStorageDelay = delaySeconds;
         } else if (retryEndpoint === RetryFor.DeltaStream) {
@@ -1035,7 +1035,7 @@ export class DeltaManager
     private async reconnectOnError(
         connection: DeltaConnection,
         requestedMode: ConnectionMode,
-        error: CriticalContainerError,
+        error: ICriticalContainerError,
     ) {
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.

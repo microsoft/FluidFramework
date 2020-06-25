@@ -8,12 +8,14 @@ import { PerformanceEvent } from "@fluidframework/telemetry";
 import { ISocketStorageDiscovery } from "./contracts";
 import {
     fetchHelper,
-    fetchIncorrectResponse,
     getWithRetryForTokenRefresh,
-    throwOdspNetworkError,
     getOrigin,
 } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
+import {
+    fetchIncorrectResponse,
+    throwOdspNetworkError,
+} from "./odspError";
 
 /**
  * Makes join session call on SPO to get information about the web socket for a document

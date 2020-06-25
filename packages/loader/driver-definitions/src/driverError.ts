@@ -70,7 +70,11 @@ export interface IGenericNetworkError extends IDriverErrorBase {
     readonly statusCode?: number;
 }
 
-export interface IDriverAllOthers extends IDriverErrorBase {
+/**
+ * Having this uber interface without types that have their own interfaces
+ * allows compiler to differentiate interfaces based on error type
+ */
+export interface IDriverBasicError extends IDriverErrorBase {
     readonly errorType:
         DriverErrorType.genericError
         | DriverErrorType.authorizationError
@@ -84,42 +88,4 @@ export interface IDriverAllOthers extends IDriverErrorBase {
 export type DriverError =
     | IThrottlingWarning
     | IGenericNetworkError
-    | IDriverAllOthers;
-
-export enum OdspErrorType {
-    /**
-     * Storage is out of space
-     */
-    outOfStorageError = "outOfStorageError",
-
-    /**
-     * Invalid file name (at creation of the file)
-     */
-    invalidFileNameError = "invalidFileNameError",
-
-    /**
-     * Snapshot is too big. Host application specified limit for snapshot size, and snapshot was bigger
-     * that that limit, thus request failed. Hosting application is expected to have fall-back behavior for
-     * such case.
-     */
-    snapshotTooBig = "snapshotTooBig",
-
-    /*
-        * SPO admin toggle: fluid service is not enabled.
-        */
-    fluidNotEnabled = "fluidNotEnabled",
-}
-
-/**
- * Base interface for all errors and warnings
- */
-export interface IOdspError {
-    readonly errorType: OdspErrorType;
-    readonly message: string;
-    canRetry: boolean;
-    online?: string;
-}
-
-export type OdspError =
-    | DriverError
-    | IOdspError;
+    | IDriverBasicError;
