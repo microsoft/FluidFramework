@@ -77,6 +77,7 @@ describe("loader/runtime compatibility", () => {
                 if (!runtime.existing) {
                     const componentRuntime = await runtime.createComponent("default", type);
                     await componentRuntime.request({ url: "/" });
+                    // 0.20 back-compat attach
                     if (componentRuntime.bindToContainer !== undefined) {
                         componentRuntime.bindToContainer();
                     } else {

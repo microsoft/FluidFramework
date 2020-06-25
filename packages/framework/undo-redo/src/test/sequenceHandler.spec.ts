@@ -48,7 +48,7 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 
     beforeEach(() => {
         const componentRuntime = new MockComponentRuntime();
-        componentRuntime.attach();
+        componentRuntime.bindToContainer();
 
         containerRuntimeFactory = new MockContainerRuntimeFactory();
         const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
