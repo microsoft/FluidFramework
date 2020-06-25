@@ -419,10 +419,6 @@ export class MockComponentRuntime extends EventEmitter
         return;
     }
 
-    public attach(): void {
-        return;
-    }
-
     public attachGraph(): void {
         return;
     }

@@ -356,7 +356,7 @@ export interface IComponentContext extends EventEmitter {
     setChannelDirty(address: string): void;
 
     /**
-     * It is true if the component is attached to storage.
+     * It is true if the component is attached or attaching to storage.
      */
     isAttached: boolean;
 

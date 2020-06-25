@@ -140,6 +140,6 @@ export interface IComponentRuntime extends
      */
     raiseContainerWarning(warning: ContainerWarning): void;
 
-    // Returns if the runtime is attached to storage
+    // Returns if the runtime is attached or attaching to storage
     isAttached: boolean;
 }
