@@ -610,14 +610,14 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.intervalMapKernel.eventEmitter.on("valueChanged", (ev: IValueChanged) => {
             const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(ev.key);
             if (!intervalCollection.attached) {
-                intervalCollection.attach(this.client, ev.key);
+                intervalCollection.attachGraph(this.client, ev.key);
             }
         });
 
         // Initialize existing SharedIntervalCollections
         for (const key of this.intervalMapKernel.keys()) {
             const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(key);
-            intervalCollection.attach(this.client, key);
+            intervalCollection.attachGraph(this.client, key);
         }
     }
 }
