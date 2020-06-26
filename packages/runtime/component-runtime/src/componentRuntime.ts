@@ -42,6 +42,7 @@ import {
     IComponentRuntimeChannel,
     IEnvelope,
     IInboundSignalMessage,
+    SchedulerType,
 } from "@fluidframework/runtime-definitions";
 import { unreachableCase } from "@fluidframework/runtime-utils";
 import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
@@ -218,7 +219,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     public async request(request: IRequest): Promise<IResponse> {
         // System routes
-        if (request.url === "/_scheduler") {
+        if (request.url === `/${SchedulerType}`) {
             return this.componentContext.containerRuntime.request(request);
         }
 

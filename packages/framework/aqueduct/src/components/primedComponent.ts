@@ -10,7 +10,7 @@ import {
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
-import { ITaskManager } from "@fluidframework/runtime-definitions";
+import { ITaskManager, SchedulerType } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IEvent } from "@fluidframework/common-definitions";
 import { BlobHandle } from "./blobHandle";
@@ -99,7 +99,7 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
         // Initialize task manager.
         const request = {
             headers: [[true]],
-            url: `/_scheduler`,
+            url: `/${SchedulerType}`,
         };
 
         this.internalTaskManager = await this.asComponent<ITaskManager>(this.context.containerRuntime.request(request));

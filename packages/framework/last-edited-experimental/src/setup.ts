@@ -5,22 +5,20 @@
 
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ISequencedDocumentMessage, IQuorum } from "@fluidframework/protocol-definitions";
-import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions";
+import { IAttachMessage, IEnvelope, SchedulerType } from "@fluidframework/runtime-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
-
-const schedulerId = "_schdeuler";
 
 // Returns if an "Attach" or "Operation" type message is from the scheduler.
 function isSchedulerMessage(message: ISequencedDocumentMessage) {
     if (message.type === ContainerMessageType.Attach) {
         const attachMessage = message.contents as IAttachMessage;
-        if (attachMessage.id === schedulerId) {
+        if (attachMessage.id === SchedulerType) {
             return true;
         }
     } else if (message.type === ContainerMessageType.ComponentOp) {
         const envelope = message.contents as IEnvelope;
-        if (envelope.address === schedulerId) {
+        if (envelope.address === SchedulerType) {
             return true;
         }
     }
