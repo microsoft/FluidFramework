@@ -412,7 +412,7 @@ export class MockComponentRuntime extends EventEmitter
     }
 
     public get isAttached(): boolean {
-        return false;
+        return !this.local;
     }
 
     public bindChannel(channel: IChannel): void {
