@@ -58,7 +58,7 @@
     "@fluidframework/runtime-definitions": "^0.21.0",
     "@fluidframework/runtime-utils": "^0.21.0",
     "@fluidframework/server-services-client": "^0.1008.0-0",
-    "@fluidframework/telemetry": "^0.21.0",
+    "@fluidframework/telemetry-utils": "^0.21.0",
     "axios": "^0.18.0",
     "jsonwebtoken": "^8.4.0",
     "uuid": "^3.3.2"

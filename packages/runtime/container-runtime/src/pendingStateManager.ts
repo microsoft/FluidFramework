@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IErrorBase } from "@fluidframework/container-definitions";
-import { CustomErrorWithProps } from "@fluidframework/telemetry";
+import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import {
     ISequencedDocumentMessage,

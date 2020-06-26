@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { DebugLogger } from "@fluidframework/telemetry";
+import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     IClient,
     ISequencedDocumentMessage,

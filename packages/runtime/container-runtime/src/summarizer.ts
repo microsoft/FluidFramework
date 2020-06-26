@@ -11,7 +11,7 @@ import {
     Timer,
     IPromiseTimerResult,
 } from "@fluidframework/common-utils";
-import { ChildLogger, CustomErrorWithProps, PerformanceEvent } from "@fluidframework/telemetry";
+import { ChildLogger, CustomErrorWithProps, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IComponentRouter,
     IComponentRunnable,

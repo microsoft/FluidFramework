@@ -27,7 +27,7 @@ import {
 import {
     ChildLogger,
     raiseConnectedEvent,
-} from "@fluidframework/telemetry";
+} from "@fluidframework/telemetry-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import {

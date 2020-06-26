@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import {
     fetchHelper,

@@ -58,7 +58,7 @@
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@fluidframework/protocol-definitions": "^0.1008.0-0",
     "@fluidframework/sequence": "^0.21.0",
-    "@fluidframework/telemetry": "^0.21.0",
+    "@fluidframework/telemetry-utils": "^0.21.0",
     "@types/mocha": "^5.2.5",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",

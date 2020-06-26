@@ -23,7 +23,7 @@ import {
     Deferred,
     fromUtf8ToBase64,
 } from "@fluidframework/common-utils";
-import { DebugLogger } from "@fluidframework/telemetry";
+import { DebugLogger } from "@fluidframework/telemetry-utils";
 import * as git from "@fluidframework/gitresources";
 import {
     IBlob,

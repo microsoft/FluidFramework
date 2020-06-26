@@ -17,7 +17,7 @@ import {
     IThrottlingWarning,
 } from "@fluidframework/driver-definitions";
 import { createWriteError } from "@fluidframework/driver-utils";
-import { CustomErrorWithProps } from "@fluidframework/telemetry";
+import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import {

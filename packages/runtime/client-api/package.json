@@ -63,7 +63,7 @@
     "@fluidframework/runtime-definitions": "^0.21.0",
     "@fluidframework/sequence": "^0.21.0",
     "@fluidframework/shared-object-base": "^0.21.0",
-    "@fluidframework/telemetry": "^0.21.0",
+    "@fluidframework/telemetry-utils": "^0.21.0",
     "@types/node": "^10.17.24",
     "debug": "^4.1.1",
     "jwt-decode": "^2.2.0"

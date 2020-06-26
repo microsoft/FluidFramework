@@ -8,7 +8,7 @@ import {
     IDriverErrorBase,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { CustomErrorWithProps } from "@fluidframework/telemetry";
+import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
 
 export enum OnlineStatus {
     Offline,

@@ -16,7 +16,7 @@ import {
     ContainerErrorType,
 } from "@fluidframework/container-definitions";
 import { performanceNow, TypedEventEmitter } from "@fluidframework/common-utils";
-import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry";
+import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,

@@ -85,7 +85,7 @@
     "@fluidframework/sequence": "^0.21.0",
     "@fluidframework/server-local-server": "^0.1008.0-0",
     "@fluidframework/shared-object-base": "^0.21.0",
-    "@fluidframework/telemetry": "^0.21.0",
+    "@fluidframework/telemetry-utils": "^0.21.0",
     "@fluidframework/test-utils": "^0.21.0",
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",

@@ -1,5 +1,5 @@
 {
-  "name": "@fluidframework/telemetry",
+  "name": "@fluidframework/telemetry-utils",
   "version": "0.21.0",
   "description": "Collection of telemetry relates utilities for Fluid",
   "repository": "microsoft/FluidFramework",

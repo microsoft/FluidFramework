@@ -12,7 +12,7 @@ import {
     PromiseTimer,
     IPromiseTimerResult,
 } from "@fluidframework/common-utils";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry";
+import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IComponent, IRequest, DriverHeader } from "@fluidframework/component-core-interfaces";
 import {
     IContainerContext,

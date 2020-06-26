@@ -9,7 +9,7 @@ import assert from "assert";
 import cloneDeep from "lodash/cloneDeep";
 
 import { Deferred, fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { ChildLogger } from "@fluidframework/telemetry";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { IValueChanged, MapKernel } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import {

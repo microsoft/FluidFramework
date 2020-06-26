@@ -36,7 +36,7 @@ import {
     PerformanceEvent,
     raiseConnectedEvent,
     TelemetryLogger,
-} from "@fluidframework/telemetry";
+} from "@fluidframework/telemetry-utils";
 import {
     IDocumentService,
     IDocumentStorageService,

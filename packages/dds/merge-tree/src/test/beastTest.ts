@@ -8,7 +8,7 @@
 import assert from "assert";
 import fs from "fs";
 import path from "path";
-import { DebugLogger } from "@fluidframework/telemetry";
+import { DebugLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import JsDiff from "diff";

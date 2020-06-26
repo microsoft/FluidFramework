@@ -11,7 +11,7 @@ import {
     IComponentSerializer,
 } from "@fluidframework/component-core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { ChildLogger } from "@fluidframework/telemetry";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,

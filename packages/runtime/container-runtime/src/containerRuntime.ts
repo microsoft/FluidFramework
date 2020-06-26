@@ -36,7 +36,7 @@ import {
 import {
     ChildLogger,
     raiseConnectedEvent,
-} from "@fluidframework/telemetry";
+} from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
     BlobCacheStorageService,
