@@ -62,7 +62,7 @@ describe("Batching", () => {
         component.context.containerRuntime.on("op", (message: ISequencedDocumentMessage) => {
             if (message.type === ContainerMessageType.ComponentOp) {
                 const envelope = message.contents as IEnvelope;
-                if (envelope.address !== `/${SchedulerType}`) {
+                if (envelope.address !== `${SchedulerType}`) {
                     receivedMessages.push(message);
                 }
             }

@@ -46,7 +46,7 @@ describe("AgentScheduler", () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
 
             const container = await createContainer();
-            scheduler = await getComponent(`/${SchedulerType}`, container)
+            scheduler = await getComponent(`${SchedulerType}`, container)
                 .then((taskManager) => taskManager.IAgentScheduler);
 
             // Make sure all initial ops (around leadership) are processed.
@@ -133,11 +133,11 @@ describe("AgentScheduler", () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
 
             container1 = await createContainer();
-            scheduler1 = await getComponent(`/${SchedulerType}`, container1)
+            scheduler1 = await getComponent(`${SchedulerType}`, container1)
                 .then((taskManager) => taskManager.IAgentScheduler);
 
             container2 = await createContainer();
-            scheduler2 = await getComponent(`/${SchedulerType}`, container2)
+            scheduler2 = await getComponent(`${SchedulerType}`, container2)
                 .then((taskManager) => taskManager.IAgentScheduler);
 
             // Make sure all initial ops (around leadership) are processed.

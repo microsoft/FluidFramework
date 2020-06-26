@@ -107,7 +107,7 @@ describe("Ops on Reconnect", () => {
             const message = unpackRuntimeMessage(containerMessage);
             if (message.type === ContainerMessageType.ComponentOp) {
                 const envelope = message.contents as IEnvelope;
-                if (envelope.address !== `/${SchedulerType}`) {
+                if (envelope.address !== `${SchedulerType}`) {
                     // The client ID of firstContainer should have changed on disconnect.
                     assert.notEqual(
                         message.clientId, firstContainerClientId, "The clientId did not change after disconnect");
