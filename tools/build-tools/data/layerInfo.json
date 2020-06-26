@@ -93,7 +93,6 @@
                 ]
             },
             "Telemetry-Utils": {
-                "dot": false,
                 "packages": [
                     "@fluidframework/telemetry-utils"
                 ],
@@ -103,7 +102,6 @@
                 ]
             },
             "Container-Utils": {
-                "dot": false,
                 "packages": [
                     "@fluidframework/container-utils"
                 ],
