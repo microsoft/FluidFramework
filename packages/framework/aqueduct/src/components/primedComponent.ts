@@ -32,7 +32,7 @@ import { SharedComponent } from "./sharedComponent";
 export abstract class PrimedComponent<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
     extends SharedComponent<P, S, E>
 {
-    private internalRoot: ISharedDirectory | undefined;
+    protected internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;
     private readonly rootDirectoryId = "root";
     private readonly bigBlobs = "bigBlobs/";
