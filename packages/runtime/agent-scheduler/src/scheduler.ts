@@ -17,15 +17,14 @@ import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-run
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import {
-    IComponentRuntime,
-} from "@fluidframework/component-runtime-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import {
     IAgentScheduler,
     IComponentContext,
     IComponentFactory,
     ITask,
     ITaskManager,
+    SchedulerType,
 } from "@fluidframework/runtime-definitions";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import debug from "debug";
@@ -475,7 +474,7 @@ export class TaskManager implements ITaskManager {
 }
 
 export class AgentSchedulerFactory implements IComponentFactory {
-    public static readonly type = "_scheduler";
+    public static readonly type = SchedulerType;
     public readonly type = AgentSchedulerFactory.type;
 
     public get IComponentFactory() { return this; }

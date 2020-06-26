@@ -9,7 +9,7 @@ import { Container } from "@fluidframework/container-loader";
 import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IEnvelope } from "@fluidframework/runtime-definitions";
+import { IEnvelope, SchedulerType } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
@@ -62,7 +62,7 @@ describe("Batching", () => {
         component.context.containerRuntime.on("op", (message: ISequencedDocumentMessage) => {
             if (message.type === ContainerMessageType.ComponentOp) {
                 const envelope = message.contents as IEnvelope;
-                if (envelope.address !== "_scheduler") {
+                if (envelope.address !== `/${SchedulerType}`) {
                     receivedMessages.push(message);
                 }
             }
