@@ -29,12 +29,10 @@ export class Canvas extends PrimedComponent implements IComponentHTMLView {
 
     private ink: IInk;
     private inkCanvas: InkCanvas;
-    private inkComponentRoot: HTMLDivElement;
     private inkColorPicker: HTMLDivElement;
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        this.inkComponentRoot = this.createCanvasDom();
-        elm.appendChild(this.inkComponentRoot);
+        elm.appendChild(this.createCanvasDom());
         this.sizeCanvas();
 
         window.addEventListener("resize", this.sizeCanvas.bind(this));
@@ -59,7 +57,6 @@ export class Canvas extends PrimedComponent implements IComponentHTMLView {
 
         const canvasElement = document.createElement("canvas");
         canvasElement.classList.add("ink-canvas");
-        // TODO size canvas backing store
 
         this.inkCanvas = new InkCanvas(canvasElement, this.ink);
 
@@ -128,7 +125,6 @@ export class Canvas extends PrimedComponent implements IComponentHTMLView {
     }
 
     private sizeCanvas() {
-        const rootRect = this.inkComponentRoot.getBoundingClientRect();
-        this.inkCanvas.setSize(Math.floor(rootRect.width), Math.floor(rootRect.height) - 50);
+        this.inkCanvas.sizeCanvasBackingStore();
     }
 }
