@@ -217,16 +217,15 @@ export class SharedMatrix<T extends Serializable = Serializable>
         const localSeq = currentVector.getCollabWindow().localSeq;
         const oppositeWindow = oppositeVector.getCollabWindow();
 
-        // Normally, creating the message will have bumped the current vector's localSeq, making it exactly
-        // 1 greater than the opposite vector's localSeq.  However, in the case that the op was regenerated for
-        // resubmission, the localSeq of the vectors will already be equal.
-
-        assert(((localSeq - oppositeWindow.localSeq) >>> 0) <= 1);  // Coercion to unsigned vets delta is exactly 0 or 1
+        // Note that the comparison is '>=' because, in the case the MergeTree is regenerating ops for reconnection,
+        // the MergeTree submits the op with the original 'localSeq'.
+        assert(localSeq >= oppositeWindow.localSeq,
+            "The 'localSeq' of the vector submitting an op must >= the 'localSeq' of the other vector.");
 
         oppositeWindow.localSeq = localSeq;
 
-        // If the SharedMatrix is local, it's initial state will be submitted via a Snapshot when initially
-        // connected.  Do not queue a message or track the pending op, as there will never be an ACK, etc.
+        // If the SharedMatrix is local, it's state will be submitted via a Snapshot when initially connected.
+        // Do not queue a message or track the pending op, as there will never be an ACK, etc.
         if (!this.isLocal()) {
             // Record whether this `op` targets rows or cols.  (See dispatch in `processCore()`)
             (message).target = dimension;
@@ -351,7 +350,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                     localOpMetadata as SegmentGroup | SegmentGroup[]));
                 break;
             default: {
-                assert(content.type === MatrixOp.set);
+                assert(content.type === MatrixOp.set, "Unknown SharedMatrix 'op' type.");
 
                 const setOp = content as ISetOp<T>;
                 const { rowHandle, colHandle, localSeq } = localOpMetadata as ISetOpMetadata;
@@ -505,16 +504,17 @@ export class SharedMatrix<T extends Serializable = Serializable>
      */
     private isLatestPendingWrite(rowHandle: Handle, colHandle: Handle, localSeq: number) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const actualLocalSeq = this.pending.getCell(rowHandle, colHandle)!;
+        const pendingLocalSeq = this.pending.getCell(rowHandle, colHandle)!;
 
-        // Note while we're awaiting the local set, it's possible for the row/col to be locally
-        // removed and the row/col handles recycled.  If this happens, the actualCliSeq will be
-        // 'undefined' or > 'cliSeq'.
-        assert(!(actualLocalSeq < localSeq));
+        // Note while we're awaiting the ACK for a local set, it's possible for the row/col to be
+        // locally removed and the row/col handles recycled.  If this happens, the pendingLocalSeq will
+        // be 'undefined' or > 'localSeq'.
+        assert(!(pendingLocalSeq < localSeq),
+            "The 'localSeq' of pending write (if any) must be <= the localSeq of the currently processed op.");
 
         // If this is the most recent write to the cell by the local client, the stored localSeq
         // will be an exact match for the given 'localSeq'.
-        return actualLocalSeq === localSeq;
+        return pendingLocalSeq === localSeq;
     }
 
     public toString() {

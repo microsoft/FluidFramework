@@ -747,7 +747,7 @@ describe("Matrix", () => {
             ]);
         });
 
-        it("resubmission includes not-yet-locally deleted row/cols", async () => {
+        it("omits not-yet-locally deleted row/cols during resubmission", async () => {
             matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 2);
             matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 4);
             matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [

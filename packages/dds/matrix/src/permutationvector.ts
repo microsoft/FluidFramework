@@ -139,7 +139,8 @@ export class PermutationVector extends Client {
     }
 
     public getPositionForResubmit(handle: Handle, localSeq: number) {
-        assert(localSeq <= this.mergeTree.collabWindow.localSeq);
+        assert(localSeq <= this.mergeTree.collabWindow.localSeq,
+            "'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op.");
 
         // TODO: In theory, the MergeTree should be able to map the (position, refSeq, localSeq) from
         //       the original operation to the current position for resubmitting.  This is probably the
@@ -157,7 +158,8 @@ export class PermutationVector extends Client {
         // SharedMatrix must verify that 'localSeq' used to originally submit this op is still the
         // most recently pending write to the row/col handle before calling 'getPositionForResubmit'
         // to ensure the handle has not been removed or recycled (See comments in `resubmitCore()`).
-        assert(currentPosition >= 0);
+        assert(currentPosition >= 0,
+            "Caller must ensure 'handle' has not been removed/recycled.");
 
         // Once we know the current position of the handle, we can use the MergeTree to get the segment
         // containing this position and use 'findReconnectionPosition' to adjust for the local ops that
