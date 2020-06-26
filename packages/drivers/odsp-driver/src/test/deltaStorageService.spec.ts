@@ -4,8 +4,8 @@
  */
 
 import assert from "assert";
-import { FetchWrapper, IFetchWrapper } from "../fetchWrapper";
 import { OdspDeltaStorageService } from "../odspDeltaStorageService";
+import { mockFetch } from "./mockFetch";
 
 describe("DeltaStorageService", () => {
     /*
@@ -19,7 +19,7 @@ describe("DeltaStorageService", () => {
 
     it("Should build the correct sharepoint delta url with auth", async () => {
         const deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
-            new FetchWrapper(), undefined, async (refresh) => "?access_token=123");
+            undefined, async (refresh) => "?access_token=123");
         const actualDeltaUrl = await deltaStorageService.buildUrl(2, 8);
         // eslint-disable-next-line max-len
         const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
@@ -64,32 +64,21 @@ describe("DeltaStorageService", () => {
 
         let deltaStorageService: OdspDeltaStorageService;
         before(() => {
-            const fetchWrapperMock: IFetchWrapper = {
-                get: async (url: string, _: string, headers: HeadersInit) => new Promise(
-                    (resolve, reject) => {
-                        resolve({
-                            content: expectedDeltaFeedResponse,
-                            headers: new Map(),
-                        });
-                    }),
-                post: async (url: string, postBody: string, headers: HeadersInit) => new Promise(
-                    (resolve, reject) => {
-                        reject("not implemented");
-                    }),
-            };
             deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
-                fetchWrapperMock, undefined, async (refresh) => "");
+                undefined, async (refresh) => "");
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
-            const actualDeltaFeedResponse = await deltaStorageService.get(2, 8);
+            const actualDeltaFeedResponse = await mockFetch(expectedDeltaFeedResponse, async () => {
+                return deltaStorageService.get(2, 8);
+            });
             assert.equal(actualDeltaFeedResponse.length, 2, "Deserialized feed response is not of expected length");
-            assert.equal(actualDeltaFeedResponse[0].sequenceNumber, 1,
-                "First element of feed response has invalid sequence number");
-            assert.equal(actualDeltaFeedResponse[1].sequenceNumber, 2,
-                "Second element of feed response has invalid sequence number");
-            assert.equal(actualDeltaFeedResponse[1].type, "noop",
-                "Second element of feed response has invalid op type");
+                assert.equal(actualDeltaFeedResponse[0].sequenceNumber, 1,
+                    "First element of feed response has invalid sequence number");
+                assert.equal(actualDeltaFeedResponse[1].sequenceNumber, 2,
+                    "Second element of feed response has invalid sequence number");
+                assert.equal(actualDeltaFeedResponse[1].type, "noop",
+                    "Second element of feed response has invalid op type");
         });
     });
 
@@ -125,25 +114,14 @@ describe("DeltaStorageService", () => {
 
         let deltaStorageService: OdspDeltaStorageService;
         before(() => {
-            const fetchWrapperMock: IFetchWrapper = {
-                get: async (url: string, _: string, headers: HeadersInit) => new Promise(
-                    (resolve, reject) => {
-                        resolve({
-                            content: expectedDeltaFeedResponse,
-                            headers: new Map(),
-                        });
-                    }),
-                post: async (url: string, postBody: string, headers: HeadersInit) => new Promise(
-                    (resolve, reject) => {
-                        reject("not implemented");
-                    }),
-            };
             deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
-                fetchWrapperMock, undefined, async (refresh) => "");
+                undefined, async (refresh) => "");
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
-            const actualDeltaFeedResponse = await deltaStorageService.get(2, 8);
+            const actualDeltaFeedResponse = await mockFetch(expectedDeltaFeedResponse, async () => {
+                return deltaStorageService.get(2, 8);
+            });
             assert.equal(actualDeltaFeedResponse.length, 2, "Deserialized feed response is not of expected length");
             assert.equal(actualDeltaFeedResponse[0].sequenceNumber, 1,
                 "First element of feed response has invalid sequence number");

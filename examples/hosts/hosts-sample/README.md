@@ -232,15 +232,14 @@ and provide it a div for it to render.
 ```typescript
 switch (response.mimeType) {
     case "fluid/component":
-        // Check if the component is viewable
+        // Check if the component is a view
         const component = response.value as IComponent;
-        const viewable = component.IComponentHTMLVisual;
-        if (!viewable) {
+        const view = component.IComponentHTMLView;
+        if (!view) {
             return;
         }
 
-        const renderable = viewable.addView ? viewable.addView() : viewable;
-        renderable.render(div, { display: "block" });
+        view.render(div, { display: "block" });
         break;
 }
 ```
@@ -252,7 +251,7 @@ a feature detection pattern can be used to determine what capabilities are expos
 interface serves as a Fluid-specific form of “any” that clients can cast objects to in order to probe for implemented
 component interfaces. For example, if you need to determine the capabilities that a component exposes, you first
 cast the object as an `IComponent`, and then access the property on the `IComponent` that matches the interface you
-are testing for.  The above checks if the component implements `IComponentHTMLVisual`, and uses it to get the instance
+are testing for.  The above checks if the component implements `IComponentHTMLView`, and uses it to get the instance
 that implements the rendering capability.
 
 ### Quoruming on a code package

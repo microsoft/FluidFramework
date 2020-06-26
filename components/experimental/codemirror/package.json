@@ -26,6 +26,7 @@
     "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
     "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
     "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
+    "start:tinylicious": "webpack-dev-server --config webpack.config.js --package package.json --env.mode tinylicious",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
@@ -48,7 +49,7 @@
     "codemirror": "^5.48.4"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.17.0",
+    "@fluidframework/build-common": "^0.18.0-0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@fluidframework/webpack-component-loader": "^0.21.0",
     "@types/node": "^10.17.24",

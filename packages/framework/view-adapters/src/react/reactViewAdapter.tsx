@@ -4,7 +4,7 @@
  */
 
 import { IComponent } from "@fluidframework/component-core-interfaces";
-import { IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 
 export interface IReactViewAdapterProps {
@@ -16,7 +16,7 @@ export interface IReactViewAdapterProps {
 
 /**
  * Abstracts rendering of views as a React component.  Supports React elements, as well as
- * components that implement IComponentReactViewable, IComponentHTMLView, or IComponentHTMLVisual.
+ * components that implement IComponentReactViewable or IComponentHTMLView.
  *
  * If the component is none of these, we render nothing.
  */
@@ -30,7 +30,6 @@ export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
             React.isValidElement(view)
             || view.IComponentReactViewable !== undefined
             || view.IComponentHTMLView !== undefined
-            || view.IComponentHTMLVisual !== undefined
         );
     }
 
@@ -56,12 +55,6 @@ export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
         const htmlView = this.props.view.IComponentHTMLView;
         if (htmlView !== undefined) {
             this.element = <HTMLViewEmbeddedComponent htmlView={htmlView} />;
-            return;
-        }
-
-        const htmlVisual = this.props.view.IComponentHTMLVisual;
-        if (htmlVisual !== undefined) {
-            this.element = <HTMLVisualEmbeddedComponent htmlVisual={htmlVisual} />;
             return;
         }
 
@@ -93,35 +86,6 @@ class HTMLViewEmbeddedComponent extends React.Component<IHTMLViewProps> {
         // eslint-disable-next-line no-null/no-null
         if (this.ref.current !== null) {
             this.props.htmlView.render(this.ref.current);
-        }
-    }
-
-    public render() {
-        return <div ref={this.ref}></div>;
-    }
-}
-
-interface IHTMLVisualProps {
-    htmlVisual: IComponentHTMLVisual;
-}
-
-/**
- * Embeds a Fluid Component that supports IComponentHTMLVisual
- */
-class HTMLVisualEmbeddedComponent extends React.Component<IHTMLVisualProps> {
-    private readonly ref: React.RefObject<HTMLDivElement>;
-
-    constructor(props: IHTMLVisualProps) {
-        super(props);
-
-        this.ref = React.createRef<HTMLDivElement>();
-    }
-
-    public async componentDidMount() {
-        // eslint-disable-next-line no-null/no-null
-        if (this.ref.current !== null) {
-            const view = this.props.htmlVisual.addView();
-            view.render(this.ref.current);
         }
     }
 

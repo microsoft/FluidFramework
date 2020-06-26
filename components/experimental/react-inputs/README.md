@@ -3,11 +3,10 @@
 Simple examples of React Input Components integrated with the FluidFramework.
 
 ## collabarativeCheckbox
-Fluid enabled checkbox
-The checkbox uses the counter to ensure consistency if two people both hit the button.
+Given a SharedCell will produce a collaborative checkbox.
 
 ## collaborativeInput
 Given a SharedString will produce a collaborative input element.
 
 ## collaborativeTextArea
-Given a SharedString will produce a collaborative textarea
+Given a SharedString will produce a collaborative textarea.

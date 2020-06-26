@@ -4,6 +4,10 @@
  */
 
 import assert from "assert";
+
+// eslint-disable-next-line import/no-internal-modules
+import cloneDeep from "lodash/cloneDeep";
+
 import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IValueChanged, MapKernel } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -35,9 +39,6 @@ import {
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
-// eslint-disable-next-line max-len
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
-const cloneDeep = require("lodash/cloneDeep");
 
 const snapshotFileName = "header";
 const contentPath = "content";
@@ -514,7 +515,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     protected didAttach() {
         // if we are not local, and we've attached we need to start generating and sending ops
         // so start collaboration and provide a default client id incase we are not connected
-        if  (!this.isLocal()) {
+        if (!this.isLocal()) {
             this.client.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
         }
     }

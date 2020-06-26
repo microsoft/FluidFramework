@@ -22,6 +22,11 @@ import { PrimedComponent, ISharedComponentProps } from "../components";
 import { SharedComponentFactory } from "./sharedComponentFactory";
 
 /**
+ * PrimedComponentFactory is the IComponentFactory for use with PrimedComponents.
+ * It facilitates PrimedComponent's features (such as its shared directory) by
+ * ensuring relevant shared objects etc are available to the factory.
+ *
+ * Generics:
  * P - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced component may take during creation
  */

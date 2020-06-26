@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-internal-modules
+import cloneDeep from "lodash/cloneDeep";
+
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     ChildLogger,
@@ -31,7 +34,6 @@ import {
 } from "./contracts";
 import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
-import { IFetchWrapper } from "./fetchWrapper";
 import { IOdspCache, startingUpdateUsageOpFrequency, updateUsageOpMultiplier } from "./odspCache";
 import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
@@ -39,10 +41,6 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
-
-// eslint-disable-next-line max-len
-// eslint-disable-next-line import/no-internal-modules, @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-const cloneDeep = require("lodash/cloneDeep");
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
@@ -71,8 +69,6 @@ export class OdspDocumentService implements IDocumentService {
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         getWebsocketToken: (refresh) => Promise<string | null>,
         logger: ITelemetryLogger,
-        storageFetchWrapper: IFetchWrapper,
-        deltasFetchWrapper: IFetchWrapper,
         socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
@@ -90,7 +86,7 @@ export class OdspDocumentService implements IDocumentService {
                     getStorageToken,
                     await options.newFileInfoPromise,
                     cache,
-                    storageFetchWrapper);
+                    logger);
                 const props = {
                     docId: odspResolvedUrl.hashedDocumentId,
                 };
@@ -105,8 +101,6 @@ export class OdspDocumentService implements IDocumentService {
             getStorageToken,
             getWebsocketToken,
             logger,
-            storageFetchWrapper,
-            deltasFetchWrapper,
             socketIoClientFactory,
             cache,
             hostPolicy,
@@ -147,8 +141,6 @@ export class OdspDocumentService implements IDocumentService {
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         getWebsocketToken: (refresh) => Promise<string | null>,
         logger: ITelemetryLogger,
-        private readonly storageFetchWrapper: IFetchWrapper,
-        private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
@@ -201,7 +193,6 @@ export class OdspDocumentService implements IDocumentService {
         if (!this.storageManager) {
             this.storageManager = new OdspDocumentStorageService(
                 this.odspResolvedUrl,
-                this.storageFetchWrapper,
                 this.getStorageToken,
                 this.logger,
                 true,
@@ -226,7 +217,6 @@ export class OdspDocumentService implements IDocumentService {
 
         const res = new OdspDeltaStorageService(
             urlProvider,
-            this.deltasFetchWrapper,
             this.storageManager?.ops,
             this.getStorageToken,
             this.logger,

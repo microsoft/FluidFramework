@@ -19,6 +19,7 @@ import {
     IGenericBlob,
     ContainerWarning,
     ILoader,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import {
     ChildLogger,
@@ -42,7 +43,7 @@ import {
     IEnvelope,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
-import { strongAssert } from "@fluidframework/runtime-utils";
+import { unreachableCase } from "@fluidframework/runtime-utils";
 import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
@@ -62,10 +63,6 @@ export interface ISharedObjectRegistry {
     get(name: string): ISharedObjectFactory | undefined;
 }
 
-function assertNeverMessageType(messageType: never): never {
-    throw new Error(`Never: unknown message type: ${messageType}`);
-}
-
 /**
  * Base component class
  */
@@ -83,7 +80,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         sharedObjectRegistry: ISharedObjectRegistry,
         componentRegistry?: IComponentRegistry,
     ): ComponentRuntime {
-        const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { componentId: context.id });
+        const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { componentId: uuid() });
         const runtime = new ComponentRuntime(
             context,
             context.documentId,
@@ -127,7 +124,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public get isAttached(): boolean {
-        return this._isAttached;
+        return this.attachState === AttachState.Attached;
     }
 
     public get path(): string {
@@ -150,7 +147,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
-    private _isAttached: boolean;
+    private attachState: AttachState;
     private readonly deferredAttached = new Deferred<void>();
     private readonly attachChannelQueue = new Map<string, LocalChannelContext>();
     private boundhandles: Set<IComponentHandle> | undefined;
@@ -202,7 +199,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         }
 
         this.attachListener();
-        this._isAttached = existing;
+        this.attachState = existing ? AttachState.Attached : AttachState.Detached;
 
         // If it's existing we know it has been attached.
         if (existing) {
@@ -301,7 +298,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      */
     public registerChannel(channel: IChannel): void {
         // If our Component is not local attach the channel.
-        if (this._isAttached) {
+        if (this.isAttached) {
             this.attachChannel(channel);
             return;
         } else {
@@ -325,10 +322,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      * 2. Attaching registered channels
      */
     public attach() {
-        if (this._isAttached) {
+        if (this.attachState !== AttachState.Detached) {
             return;
         }
-
+        this.attachState = AttachState.Attaching;
         if (this.boundhandles !== undefined) {
             this.boundhandles.forEach((handle) => {
                 handle.attach();
@@ -346,7 +343,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             channel.attach();
         });
 
-        this._isAttached = true;
+        this.attachState = AttachState.Attached;
         this.deferredAttached.resolve();
         this.attachChannelQueue.clear();
     }
@@ -509,6 +506,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             }
         }
 
+        // Fire this event telling dds that we are going live and they can do any
+        // custom processing based on that.
+        this.emit("collaborating");
+
         return entries;
     }
 
@@ -594,7 +595,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                     // For Operations, find the right channel and trigger resubmission on it.
                     const envelope = content as IEnvelope;
                     const channelContext = this.contexts.get(envelope.address);
-                    strongAssert(channelContext, "There should be a channel context for the op");
+                    assert(channelContext, "There should be a channel context for the op");
                     channelContext.reSubmit(envelope.contents, localOpMetadata);
                     break;
                 }
@@ -603,7 +604,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 this.submit(type, content, localOpMetadata);
                 break;
             default:
-                assertNeverMessageType(type);
+                unreachableCase(type);
         }
     }
 
@@ -630,6 +631,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     private attachListener() {
+        this.setMaxListeners(Number.MAX_SAFE_INTEGER);
         this.componentContext.on("leader", () => {
             this.emit("leader");
         });

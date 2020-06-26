@@ -14,6 +14,7 @@ import {
     IGenericBlob,
     ContainerWarning,
     ILoader,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { Deferred } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -38,7 +39,7 @@ import {
     IComponentRegistry,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker, strongAssert } from "@fluidframework/runtime-utils";
+import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerRuntime } from "./containerRuntime";
 
@@ -73,7 +74,7 @@ export abstract class ComponentContext extends EventEmitter implements
     IComponentContextLegacy,
     IDisposable {
     public isLocal(): boolean {
-        return this.containerRuntime.isLocal() || !this.isAttached;
+        return this.containerRuntime.isLocal() || this.attachState === AttachState.Detached;
     }
 
     public get documentId(): string {
@@ -152,7 +153,7 @@ export abstract class ComponentContext extends EventEmitter implements
     public get disposed() { return this._disposed; }
 
     public get isAttached(): boolean {
-        return this._isAttached;
+        return this.attachState === AttachState.Attached;
     }
 
     public readonly attach: (componentRuntime: IComponentRuntimeChannel) => void;
@@ -169,15 +170,23 @@ export abstract class ComponentContext extends EventEmitter implements
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
-        private _isAttached: boolean,
+        private attachState: AttachState,
         attach: (componentRuntime: IComponentRuntimeChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
         this.attach = (componentRuntime: IComponentRuntimeChannel) => {
+            // This needs to be there for back compat reasons because the old component runtime does not
+            // have attaching state and it does not stop attaching again while it is attaching.
+            // Previosuly that was prevented my container runtime.
+            // 0.20 back-compat Attaching
+            if (this.attachState !== AttachState.Detached) {
+                return;
+            }
+            this.attachState = AttachState.Attaching;
             attach(componentRuntime);
-            this._isAttached = true;
+            this.attachState = AttachState.Attached;
         };
     }
 
@@ -552,7 +561,7 @@ export abstract class ComponentContext extends EventEmitter implements
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
-        strongAssert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
+        assert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
 
         const innerContents = contents as ComponentMessage;
 
@@ -588,7 +597,7 @@ export class RemotedComponentContext extends ComponentContext {
             storage,
             scope,
             summaryTracker,
-            true,
+            AttachState.Attached,
             () => {
                 throw new Error("Already attached");
             },
@@ -662,7 +671,7 @@ export class LocalComponentContext extends ComponentContext {
          */
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);
+        super(runtime, id, false, storage, scope, summaryTracker, AttachState.Detached, attachCb, pkg);
     }
 
     public generateAttachMessage(): IAttachMessage {
@@ -673,6 +682,7 @@ export class LocalComponentContext extends ComponentContext {
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const entries = this.componentRuntime!.getAttachSnapshot();
+
         const snapshot: ITree = { entries, id: null };
 
         snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));

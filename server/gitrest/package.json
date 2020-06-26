@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Git REST API",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/www.js",
