@@ -64,6 +64,7 @@
                 "deps": [
                     "Protocol-Utils",
                     "Driver-Definitions",
+                    "Telemetry-Utils",
                     "@fluidframework/container-definitions"
                 ]
             },
@@ -89,6 +90,24 @@
                 ],
                 "deps": [
                     "Other-Utils"
+                ]
+            },
+            "Telemetry-Utils": {
+                "packages": [
+                    "@fluidframework/telemetry-utils"
+                ],
+                "deps": [
+                    "Base-Utils",
+                    "Base-Definitions"
+                ]
+            },
+            "Container-Utils": {
+                "packages": [
+                    "@fluidframework/container-utils"
+                ],
+                "deps": [
+                    "Telemetry-Utils",
+                    "Container-Definitions"
                 ]
             }
         }
@@ -141,7 +160,8 @@
                 ],
                 "deps": [
                     "Container-Definitions",
-                    "Driver-Utils"
+                    "Driver-Utils",
+                    "Container-Utils"
                 ]
             },
             "Hosts": {
@@ -164,7 +184,8 @@
                 ],
                 "deps": [
                     "Container-Definitions",
-                    "Driver-Utils"
+                    "Driver-Utils",
+                    "Container-Utils"
                 ]
             },
             "Framework": {
