@@ -28,7 +28,11 @@ export class ComponentHandleContext implements IComponentHandleContext {
     }
 
     public bind(handle: IComponentHandle): void {
-        return;
+        if (this.isAttached) {
+            handle.attachGraph();
+            return;
+        }
+        throw new Error("Cannot bind to an attached handle");
     }
 
     public async request(request: IRequest): Promise<IResponse> {

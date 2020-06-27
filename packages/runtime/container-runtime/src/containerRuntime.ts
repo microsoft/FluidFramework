@@ -654,19 +654,18 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
-        const useContext: boolean = true;
         this.latestSummaryAck = {
             proposalHandle: undefined,
             ackHandle: this.context.getLoadedFromVersion()?.id,
         };
         this.summaryTracker = new SummaryTracker(
-            useContext,
+            true,
             "", // fullPath - the root is unnamed
             this.deltaManager.initialSequenceNumber, // referenceSequenceNumber - last acked summary ref seq number
             this.deltaManager.initialSequenceNumber, // latestSequenceNumber - latest sequence number seen
             async () => undefined, // getSnapshotTree - this will be replaced on summary ack
         );
-        this.summaryTreeConverter = new SummaryTreeConverter(useContext);
+        this.summaryTreeConverter = new SummaryTreeConverter(true);
 
         // Extract components stored inside the snapshot
         const components = new Map<string, ISnapshotTree | string>();

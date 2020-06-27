@@ -43,7 +43,7 @@ export enum AttachState {
 
 // Represents the bind state of the entity.
 export enum BindState {
-    Unbounded = "Unbounded",
+    NotBound = "NotBound",
     Binding = "Binding",
     Binded = "Binded",
 }

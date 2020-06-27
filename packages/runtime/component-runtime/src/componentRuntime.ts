@@ -125,7 +125,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public get isAttached(): boolean {
-        return this.componentContext.isAttached && this.bindState !== BindState.Unbounded;
+        return this.componentContext.isAttached && this.bindState !== BindState.NotBound;
     }
 
     public get isBoundToContainer(): boolean {
@@ -206,7 +206,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         }
 
         this.attachListener();
-        this.bindState = existing ? BindState.Binded : BindState.Unbounded;
+        this.bindState = existing ? BindState.Binded : BindState.NotBound;
 
         // If it's existing we know it has been attached.
         if (existing) {
@@ -309,7 +309,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             this.attachChannel(channel);
             return;
         } else {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.bind(channel.handle);
 
             // If our Component is local then add the channel to the queue
@@ -350,10 +349,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      * 2. Attaching the graph.
      */
     public bindToContainer() {
-        if (this.bindState !== BindState.Unbounded) {
+        if (this.bindState !== BindState.NotBound) {
             return;
         }
-        this.attachGraph();
         this.bindState = BindState.Binding;
         // Attach the runtime to the container via this callback
         if (this.componentContext.bindToContainer !== undefined) {
@@ -369,7 +367,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     // 0.20 back-compat attach
     public attach() {
-        if (this.bindState !== BindState.Unbounded) {
+        if (this.bindState !== BindState.NotBound) {
             return;
         }
         this.bindState = BindState.Binding;
@@ -545,7 +543,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     public getAttachSnapshot(): ITreeEntry[] {
         const entries: ITreeEntry[] = [];
-
+        // As the component is attaching, attach the graph too.
+        this.attachGraph();
         // Fire this event telling dds that we are going live and they can do any
         // custom processing based on that.
         this.emit("collaborating");
@@ -600,16 +599,19 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         channel.handle.attachGraph();
 
         assert(this.isAttached, "Component should be attached to attach the channel.");
-        // Get the object snapshot and include it in the initial attach
-        const snapshot = snapshotChannel(channel);
+        // Get the object snapshot only if the component is binded and its graph is attached too,
+        // because if the graph is attaching, then it would get included in the component snapshot.
+        if (this.bindState === BindState.Binded && this.graphAttachState === AttachState.Attached) {
+            const snapshot = snapshotChannel(channel);
 
-        const message: IAttachMessage = {
-            id: channel.id,
-            snapshot,
-            type: channel.attributes.type,
-        };
-        this.pendingAttach.set(channel.id, message);
-        this.submit(ComponentMessageType.Attach, message);
+            const message: IAttachMessage = {
+                id: channel.id,
+                snapshot,
+                type: channel.attributes.type,
+            };
+            this.pendingAttach.set(channel.id, message);
+            this.submit(ComponentMessageType.Attach, message);
+        }
 
         const context = this.contexts.get(channel.id) as LocalChannelContext;
         context.attach();

@@ -154,7 +154,7 @@ export abstract class ComponentContext extends EventEmitter implements
     public get disposed() { return this._disposed; }
 
     public get isAttached(): boolean {
-        return this.bindState !== BindState.Unbounded && this.containerRuntime.isAttached();
+        return this.bindState !== BindState.NotBound && this.containerRuntime.isAttached();
     }
 
     public get isBoundToContainer(): boolean {
@@ -193,7 +193,7 @@ export abstract class ComponentContext extends EventEmitter implements
             // have Binding state and it does not stop Binding again while it is Binding.
             // Previosuly that was prevented my container runtime.
             // 0.20 back-compat Binding
-            if (this.bindState !== BindState.Unbounded) {
+            if (this.bindState !== BindState.NotBound) {
                 return;
             }
             this.bindState = BindState.Binding;
@@ -683,7 +683,7 @@ export class LocalComponentContext extends ComponentContext {
          */
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, BindState.Unbounded, bindComponent, pkg);
+        super(runtime, id, false, storage, scope, summaryTracker, BindState.NotBound, bindComponent, pkg);
     }
 
     public generateAttachMessage(): IAttachMessage {
