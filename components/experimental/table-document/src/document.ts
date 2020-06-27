@@ -55,14 +55,6 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
     private maybeCols?: SharedNumberSequence;
     private maybeMatrix?: SparseMatrix;
 
-    public evaluateCell(row: number, col: number): TableDocumentItem {
-        return "Not Implemented";
-    }
-
-    public evaluateFormula(formula: string): TableDocumentItem {
-        return "Not Implemented";
-    }
-
     public getCellValue(row: number, col: number): TableDocumentItem {
         return this.matrix.getItem(row, col);
     }
