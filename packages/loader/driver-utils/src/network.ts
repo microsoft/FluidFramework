@@ -64,7 +64,7 @@ export class NonRetryableError<T> extends NetworkErrorBasic<T> {
 /**
  * Throttling error class - used to communicate all throttling errors
  */
-class ThrottlingError extends CustomErrorWithProps implements IThrottlingWarning {
+export class ThrottlingError extends CustomErrorWithProps implements IThrottlingWarning {
     readonly errorType = DriverErrorType.throttlingError;
     readonly canRetry = true;
 

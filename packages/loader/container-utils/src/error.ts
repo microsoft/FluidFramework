@@ -35,7 +35,6 @@ class GenericError extends CustomErrorWithProps implements IGenericError {
 export function CreateContainerError(error: any): ICriticalContainerError {
     assert(error !== undefined);
 
-    // eslint-disable-next-line no-null/no-null
     if (typeof error === "object" && error !== null) {
         const err = error;
         if (error.errorType !== undefined && error instanceof CustomErrorWithProps) {
