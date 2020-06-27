@@ -190,9 +190,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).isAttached}
      */
     public isAttached(): boolean {
-        // A dds is assigned its services only when it is attached to storage. So if the services are present then the
-        // dds is attached.
-        return this.services !== undefined;
+        return this.services !== undefined && this.runtime.isAttached;
     }
 
     /**
