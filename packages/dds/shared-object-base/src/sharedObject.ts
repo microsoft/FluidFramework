@@ -183,14 +183,16 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // if somebody called register on dds explicitly without attaching it which will set
         // this.registered to be true.
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        return (!!this.services || this.boundToComponent);
+        return this.boundToComponent;
     }
 
     /**
      * {@inheritDoc (ISharedObject:interface).isAttached}
      */
     public isAttached(): boolean {
-        return this.services !== undefined && this.runtime.isAttached;
+        // A dds is assigned its services only when it is attached to storage. So if the services are present then the
+        // dds is attached.
+        return this.services !== undefined;
     }
 
     /**
@@ -337,12 +339,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     private attachDeltaHandler() {
         // Services should already be there in case we are attaching delta handler.
         assert(this.services !== undefined, "Services should be there to attach delta handler");
-        // Allows objects to do any custom processing if it is attached. In attached container, if the dds has
-        // services too, then the dds is attached too and so we will do the processing. However, we don't want
-        // do this in the detached container even if the dds has services.
-        if (this.isAttached()) {
-            this.didAttach();
-        }
+        this.boundToComponent = true;
+        // Allows objects to do any custom processing if it is attached.
+        this.didAttach();
 
         // attachDeltaHandler is only called after services is assigned
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
