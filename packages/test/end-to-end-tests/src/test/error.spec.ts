@@ -19,7 +19,6 @@ import {
 import { createWriteError } from "@fluidframework/driver-utils";
 import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import {
     createOdspNetworkError,
     invalidFileNameStatusCode,
@@ -95,7 +94,7 @@ describe("Errors Types", () => {
             message: "Some message",
         };
         const iError = (CreateContainerError(err) as any) as CustomErrorWithProps;
-        const props = iError.getCustomProperties() as ITelemetryProperties;
+        const props = iError.getCustomProperties();
         assert.equal(props.userData, undefined, "We shouldn't expose the properties of the inner/original error");
         assert.equal(props.message, err.message, "But name is copied over!");
     });
