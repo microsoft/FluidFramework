@@ -33,7 +33,8 @@ export abstract class SyncedComponent<
     implements IComponentHTMLView {
     private readonly syncedStateConfig: SyncedStateConfig = new Map();
     private readonly fluidComponentMap: FluidComponentMap = new Map();
-    private internalSyncedState: SharedMap | undefined;
+    private internalSyncedState: ISharedMap | undefined;
+    private readonly syncedStateDirectoryId = "syncedState";
 
     public get IComponentHTMLView() {
         return this;
@@ -95,8 +96,8 @@ export abstract class SyncedComponent<
     }
 
     private async initializeStateFirstTime() {
-        this.internalSyncedState = SharedMap.create(this.runtime);
-        this.root.set("syncedState", this.internalSyncedState.handle);
+        this.internalSyncedState = SharedMap.create(this.runtime, this.syncedStateDirectoryId);
+        this.internalSyncedState.register();
         for (const stateConfig of this.syncedStateConfig.values()) {
             const {
                 syncedStateId,
@@ -186,12 +187,8 @@ export abstract class SyncedComponent<
     }
 
     private async initializeStateFromExisting() {
-        // Fetch our synced state handle which is guaranteed to have been created by now
-        const internalSyncedStateHandle = this.root.get("syncedState");
-        if (internalSyncedStateHandle === undefined) {
-            throw new Error(this.getUninitializedErrorString(`syncedState`));
-        }
-        this.internalSyncedState = await internalSyncedStateHandle.get();
+        // Fetch our synced state that stores all of our information to re-initialize the view state
+        this.internalSyncedState = await this.runtime.getChannel(this.syncedStateDirectoryId) as ISharedMap;
         // Reload the stored state for each config provided
         for (const stateConfig of this.syncedStateConfig.values()) {
             const { syncedStateId, fluidToView } = stateConfig;
