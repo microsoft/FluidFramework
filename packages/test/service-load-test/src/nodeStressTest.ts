@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import fs from "fs";
 import child_process from "child_process";
 import { IProxyLoaderFactory, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -11,21 +12,14 @@ import { LocalCodeLoader } from "@fluidframework/test-utils";
 
 import { OdspTokenManager, odspTokensCache } from "@fluidframework/tool-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
-import { IRunConfig, fluidExport, ILoadTest } from "./loadTestComponent";
+import { ITestConfig, IRunConfig, fluidExport, ILoadTest } from "./loadTestComponent";
 const packageName = `${pkgName}@${pkgVersion}`;
 
-// TODO: Make these parameters
-const server = "a830edad9050849829E20060408.sharepoint.com";
-const tenant = `https://${server}`;
-const driveId = "b!o96WcQ93ck-dT5tlJfA7yZNP3Z9aM69JjJI6U4ASSXmZLLDGFcMBSqJ3iB3y04h0";
-
-const runConfig: IRunConfig = {
-    runId: 0,
-    opRatePerMin: 15,
-    progressInterval: 15000,
-    numClients: 240,
-    totalSendCount: 10000000,
-};
+interface IConfig {
+    server: string,
+    driveId: string,
+    testConfig: ITestConfig,
+}
 
 const codeDetails: IFluidCodeDetails = {
     package: packageName,
@@ -65,14 +59,14 @@ const fluidFetchWebNavigator = (url: string) => {
     console.log(`${message}\n  ${url}`);
 };
 
-function createLoader() {
+function createLoader(config: IConfig) {
     // Construct the loader
     const loader = new Loader(
         urlResolver,
         new OdspDocumentServiceFactory(
             async (siteUrl: string, refresh) => {
                 const tokens = await odspTokenManager.getOdspTokens(
-                    server, // REVIEW
+                    config.server, // REVIEW
                     getMicrosoftConfiguration(),
                     fluidFetchWebNavigator,
                     undefined,
@@ -83,7 +77,7 @@ function createLoader() {
             },
             async (refresh: boolean) => {
                 const tokens = await odspTokenManager.getPushTokens(
-                    server,  // REVIEW
+                    config.server,  // REVIEW
                     getMicrosoftConfiguration(),
                     fluidFetchWebNavigator,
                     undefined,
@@ -101,14 +95,15 @@ function createLoader() {
     return loader;
 }
 
-async function initialize() {
-    const loader = createLoader();
+async function initialize(config: IConfig) {
+    const loader = createLoader(config);
     const container = await loader.createDetachedContainer(codeDetails);
     container.on("error", (error) => {
         console.log(error);
         process.exit(-1);
     });
-    const request = urlResolver.createCreateNewRequest(tenant, driveId, "/test", "test");
+    const tenant = `https://${config.server}`;
+    const request = urlResolver.createCreateNewRequest(tenant, config.driveId, "/test", "test");
     await container.attach(request);
     const componentUrl = await container.getAbsoluteUrl("/");
     console.log(componentUrl);
@@ -117,19 +112,31 @@ async function initialize() {
     return componentUrl;
 }
 
-async function load(url: string) {
-    const loader = createLoader();
+async function load(config: IConfig, url: string) {
+    const loader = createLoader(config);
     const respond = await loader.request({ url });
     // TODO: Error checking
     return respond.value as ILoadTest;
 }
 
 async function main() {
+    let config: IConfig;
+    try {
+        config = JSON.parse(fs.readFileSync("./testConfig.json", "utf-8"));
+    } catch (e) {
+        console.error("Failed to read testConfig.json");
+        console.error(e);
+        process.exit(-1);
+    }
+
     // TODO: switch to use commander
     if (process.argv[2] === "--run") {
         if (process.argv[3] !== undefined && process.argv[4] !== undefined) {
-            runConfig.runId = parseInt(process.argv[3], 10);
-            const stressTest = await load(process.argv[4]);
+            const runConfig: IRunConfig = {
+                runId: parseInt(process.argv[3], 10),
+                testConfig: config.testConfig,
+            };
+            const stressTest = await load(config, process.argv[4]);
             await stressTest.run(runConfig);
             process.exit(0);
         }
@@ -147,7 +154,7 @@ async function main() {
 
     if (nextArg === "--refresh") {
         await odspTokenManager.getOdspTokens(
-            server, // REVIEW
+            config.server, // REVIEW
             getMicrosoftConfiguration(),
             fluidFetchWebNavigator,
             undefined,
@@ -156,7 +163,7 @@ async function main() {
         );
 
         await odspTokenManager.getPushTokens(
-            server,  // REVIEW
+            config.server,  // REVIEW
             getMicrosoftConfiguration(),
             fluidFetchWebNavigator,
             undefined,
@@ -167,11 +174,11 @@ async function main() {
 
     if (componentUrl === undefined) {
         // Create a new file
-        componentUrl = await initialize();
+        componentUrl = await initialize(config);
     }
 
     const p: Promise<void>[] = [];
-    for (let i = 0; i < runConfig.numClients; i++) {
+    for (let i = 0; i < config.testConfig.numClients; i++) {
         const process = child_process.spawn(
             "node",
             ["dist\\nodeStressTest.js", "--run", i.toString(), componentUrl],

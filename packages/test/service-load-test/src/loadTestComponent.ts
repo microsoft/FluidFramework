@@ -9,12 +9,16 @@ import {
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 
+export interface ITestConfig {
+    opRatePerMin: number,
+    progressInterval: number,
+    numClients: number,
+    totalSendCount: number
+}
+
 export interface IRunConfig {
-    runId: number;
-    opRatePerMin: number;
-    progressInterval: number;
-    totalSendCount: number;
-    numClients: number;
+    runId: number,
+    testConfig: ITestConfig
 }
 
 export interface ILoadTest {
@@ -61,10 +65,10 @@ class LoadTestComponent extends PrimedComponent implements ILoadTest {
         console.log(`${config.runId.toString().padStart(3)}> waiting`);
         await new Promise((resolve) => {
             let memberCount = this.context.getQuorum().getMembers().size;
-            if (memberCount >= config.numClients) { resolve(); }
+            if (memberCount >= config.testConfig.numClients) { resolve(); }
             this.context.getQuorum().on("addMember", () => {
                 memberCount++;
-                if (memberCount >= config.numClients) { resolve(); }
+                if (memberCount >= config.testConfig.numClients) { resolve(); }
             });
         });
         console.log(`${config.runId.toString().padStart(3)}> begin`);
@@ -73,7 +77,7 @@ class LoadTestComponent extends PrimedComponent implements ILoadTest {
 
         // Assuming we want 120 concurrent writers, so we need two set running together
         // So divide the numClients by two
-        const repeatTime = (config.numClients / 2) * 1000;
+        const repeatTime = (config.testConfig.numClients / 2) * 1000;
 
         runningStartTime += await this.pause((config.runId * 1000) % repeatTime);
 
@@ -84,15 +88,15 @@ class LoadTestComponent extends PrimedComponent implements ILoadTest {
             if (this.state !== "paused") {
                 this.printStatus(config, startTime, runningStartTime);
             }
-            t = setTimeout(printProgress, config.progressInterval);
+            t = setTimeout(printProgress, config.testConfig.progressInterval);
         };
-        t = setTimeout(printProgress, config.progressInterval);
+        t = setTimeout(printProgress, config.testConfig.progressInterval);
 
-        const opWaitSecond = (60 / config.opRatePerMin) * 1000;
-        const clientSendCount = config.totalSendCount / config.numClients;
+        const opWaitSecond = (60 / config.testConfig.opRatePerMin) * 1000;
+        const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         while (this.sentCount < clientSendCount) {
             await this.runStep();
-            if (this.sentCount % config.opRatePerMin === 0) {
+            if (this.sentCount % config.testConfig.opRatePerMin === 0) {
                 // Pause for a min
                 runningStartTime += await this.pause(repeatTime - 60000);  // assume run length is 1 min
             } else {
