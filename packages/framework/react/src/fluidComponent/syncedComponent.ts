@@ -32,7 +32,7 @@ export abstract class SyncedComponent<
 > extends PrimedComponent<P, S, E>
     implements IComponentHTMLView {
     private readonly syncedStateConfig: SyncedStateConfig = new Map();
-    protected fluidComponentMap: FluidComponentMap = new Map();
+    private readonly fluidComponentMap: FluidComponentMap = new Map();
     private internalSyncedState: SharedMap | undefined;
 
     public get IComponentHTMLView() {
