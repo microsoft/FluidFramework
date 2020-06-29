@@ -132,6 +132,7 @@ export class SummarizerNode implements ITrackingSummarizerNode {
     public async summarize(
         summarizeInternalFn: () => Promise<ISummarizeInternalResult>,
         fullTree: boolean,
+        throwOnFailure: boolean = false,
     ): Promise<ISummarizeResult> {
         // Try to reuse the tree if unchanged
         if (!fullTree && !this.hasChanged()) {
@@ -156,7 +157,7 @@ export class SummarizerNode implements ITrackingSummarizerNode {
             this.wipLocalPath = new EscapedPath(result.id);
             return { summary: result.summary, stats: result.stats };
         } catch (error) {
-            if (!this.trackChanges) {
+            if (!this.trackChanges || throwOnFailure) {
                 throw error;
             }
             const latestSummary = this.latestSummary;

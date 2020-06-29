@@ -23,7 +23,7 @@ describe("Component Context Tests", () => {
     let summaryTracker: SummaryTracker;
     let summarizerNode: SummarizerNode;
     beforeEach(async () => {
-        summaryTracker = new SummaryTracker(true, "", 0, 0, async () => undefined);
+        summaryTracker = new SummaryTracker(true, "", 0, 0);
         summarizerNode = SummarizerNode.createRootWithoutSummary(0);
     });
 

@@ -31,7 +31,6 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import {
     Deferred,
     Trace,
-    LazyPromise,
     ChildLogger,
     raiseConnectedEvent,
 } from "@fluidframework/common-utils";
@@ -658,7 +657,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             "", // fullPath - the root is unnamed
             this.deltaManager.initialSequenceNumber, // referenceSequenceNumber - last acked summary ref seq number
             this.deltaManager.initialSequenceNumber, // latestSequenceNumber - latest sequence number seen
-            async () => undefined, // getSnapshotTree - this will be replaced on summary ack
         );
 
         const changeSequenceNumber = this.deltaManager.lastSequenceNumber;
@@ -1209,22 +1207,27 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
      * Returns a summary of the runtime at the current sequence number.
      */
     private async summarize(fullTree: boolean = false): Promise<ISummaryTreeWithStats> {
-        const builder = new SummaryTreeBuilder();
+        // Both fullTree and throwOnFailure should be true:
+        // fullTree - prevents sending summary handle which would cause protocol to be included
+        // throwOnFailure - want to throw on any component failure that was too severe to be handled
+        return (await this.summarizerNode.summarize(async () => {
+            const builder = new SummaryTreeBuilder();
 
-        // Iterate over each component and ask it to snapshot
-        await Promise.all(Array.from(this.contexts)
-            .filter(([key, value]) =>
-                value.isAttached,
-            )
-            .map(async ([key, value]) => {
-                const componentSummary = await value.summarize(fullTree);
-                builder.addWithStats(key, componentSummary);
-            }));
+            // Iterate over each component and ask it to snapshot
+            await Promise.all(Array.from(this.contexts)
+                .filter(([key, value]) =>
+                    value.isAttached,
+                )
+                .map(async ([key, value]) => {
+                    const componentSummary = await value.summarize(fullTree);
+                    builder.addWithStats(key, componentSummary);
+                }));
 
-        const summary = builder.getSummaryTree();
-        this.serializeContainerBlobs(summary.summary);
+            const summary = builder.getSummaryTree();
+            this.serializeContainerBlobs(summary.summary);
 
-        return summary;
+            return { ...summary, id: "" };
+        }, true, true)) as ISummaryTreeWithStats;
     }
 
     private processAttachMessage(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {
@@ -1403,7 +1406,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             if (safe) {
                 const versions = await this.storage.getVersions(this.id, 1);
                 const parents = versions.map((version) => version.id);
-                await this.refreshLatestSummaryAck(
+                this.refreshLatestSummaryAck(
                     { proposalHandle: undefined, ackHandle: parents[0] },
                     this.summaryTracker.referenceSequenceNumber);
             }
@@ -1749,56 +1752,15 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
     }
 
-    private async refreshLatestSummaryAck(context: ISummaryContext, referenceSequenceNumber: number) {
+    private refreshLatestSummaryAck(context: ISummaryContext, referenceSequenceNumber: number) {
         if (referenceSequenceNumber < this.summaryTracker.referenceSequenceNumber) {
             return;
         }
 
-        const snapshotTree = new LazyPromise(async () => {
-            // We have to call get version to get the treeId for r11s; this isn't needed
-            // for odsp currently, since their treeId is undefined
-            const versionsResult = await this.setOrLogError("FailedToGetVersion",
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                async () => this.storage.getVersions(context.ackHandle!, 1),
-                (versions) => !!(versions && versions.length));
-
-            if (versionsResult.success) {
-                const snapshotResult = await this.setOrLogError("FailedToGetSnapshot",
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    async () => this.storage.getSnapshotTree(versionsResult.result![0]),
-                    (snapshot) => !!snapshot);
-
-                if (snapshotResult.success) {
-                    // Translate null to undefined
-                    return snapshotResult.result ?? undefined;
-                }
-            }
-        });
-
         this.latestSummaryAck = context;
-        await this.summaryTracker.refreshLatestSummary(referenceSequenceNumber, async () => snapshotTree);
-    }
-
-    private async setOrLogError<T>(
-        eventName: string,
-        setter: () => Promise<T>,
-        validator: (result: T) => boolean,
-    ): Promise<{ result: T | undefined; success: boolean }> {
-        let result: T;
-        try {
-            result = await setter();
-        } catch (error) {
-            // Send error event for exceptions
-            this.logger.sendErrorEvent({ eventName }, error);
-            return { result: undefined, success: false };
+        this.summaryTracker.refreshLatestSummary(referenceSequenceNumber);
+        if (context.proposalHandle !== undefined) {
+            this.summarizerNode.refreshLatestSummary(context.proposalHandle);
         }
-
-        const success = validator(result);
-
-        if (!success) {
-            // Send error event when result is invalid
-            this.logger.sendErrorEvent({ eventName });
-        }
-        return { result, success };
     }
 }

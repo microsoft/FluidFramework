@@ -93,7 +93,7 @@ describe("Component Creation Tests", () => {
                 isLocal: () => false,
                 on: (event, listener) => { },
             } as ContainerRuntime;
-            summaryTracker = new SummaryTracker(true, "", 0, 0, async () => undefined);
+            summaryTracker = new SummaryTracker(true, "", 0, 0);
             summarizerNode = SummarizerNode.createRootWithoutSummary(0);
         });
 
