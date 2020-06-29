@@ -107,6 +107,19 @@ function encodeSummary(summaryNode: ISummaryNode, outstandingOps: ISequencedDocu
     };
 }
 
+/**
+ * Encapsulates the summarizing work and state of an individual tree node in the
+ * summary tree. It tracks changes and allows for optimizations when unchanged, or
+ * can allow for fallback summaries to be generated when an error is encountered.
+ * Usage is for the root node to call startSummary first to begin tracking a WIP
+ * (work in progress) summary. Then all nodes will call summarize to summaries their
+ * individual parts. Once completed and uploaded to storage, the root node will call
+ * completeSummary or clearSummary to clear the WIP summary tracking state if something
+ * went wrong. The SummarizerNodes will track all pending summaries that have been
+ * recorded by the completeSummary call. When one of them is acked, the root node should
+ * call refreshLatestSummary to inform the tree of SummarizerNodes of the new baseline
+ * latest successful summary.
+ */
 export class SummarizerNode implements ITrackingSummarizerNode {
     /**
      * The latest sequence number of change to this node or subtree.
