@@ -81,7 +81,7 @@ class CounterReactView extends FluidReactComponent<CounterViewState, CounterFlui
     render() {
         return (
             <div>
-                <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
+                <span>
                     {this.state.counter?.value}
                 </span>
                 <button onClick={() => { this.state.counter?.increment(1); }}>+</button>

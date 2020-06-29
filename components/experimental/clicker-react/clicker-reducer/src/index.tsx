@@ -75,11 +75,8 @@ function CounterReactFunctionalReducer(
 
     return (
         <div>
-            <span
-                className="clickerWithHooks-value-class-reducer"
-                id={`clickerWithHooks-reducer-value-${Date.now().toString()}`}
-            >
-                {`Functional Reducer Component: ${state.viewState.value}`}
+            <span>
+                {state.viewState.value}
             </span>
             <button
                 onClick={() => {
@@ -115,7 +112,7 @@ export class ClickerReducer extends SyncedComponent {
                         "counter", {
                             type: SharedCounter.name,
                             viewKey: "value",
-                            viewConverter: (viewState, fluidState, fluidComponentMap) => {
+                            viewConverter: (viewState, fluidState) => {
                                 return {
                                     value: fluidState.counter?.value,
                                 };

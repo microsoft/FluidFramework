@@ -52,11 +52,8 @@ function CounterReactFunctionalContext(
                     <Consumer>
                         {(context) => (
                             <div>
-                                <span
-                                    className="clickerWithHooks-value-class-context"
-                                    id={`clickerWithHooks-context-value-${Date.now().toString()}`}
-                                >
-                                    {`Context Component: ${context.state.value}`}
+                                <span>
+                                    {context.state.value}
                                 </span>
                                 <button
                                     onClick={() => {
@@ -93,14 +90,6 @@ export class ClickerContext extends SyncedComponent {
                         "value", {
                             type: "number",
                             viewKey: "value",
-                        },
-                    ],
-                ]),
-                viewToFluid: new Map([
-                    [
-                        "value", {
-                            type: "number",
-                            fluidKey: "value",
                         },
                     ],
                 ]),

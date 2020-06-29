@@ -48,11 +48,8 @@ function CounterReactFunctional(
 
     return (
         <div>
-            <span
-                className="clickerWithHooks-value-class-functional"
-                id={`clickerWithHooks-functional-value-${Date.now().toString()}`}
-            >
-                {`Functional Component: ${state.value}`}
+            <span>
+                {state.value}
             </span>
             <button
                 onClick={() => {
@@ -73,22 +70,14 @@ export class ClickerFunctional extends SyncedComponent {
         super(props);
 
         this.setConfig<ICounterState>(
-            "counter-context",
+            "counter-functional",
             {
-                syncedStateId: "counter-context",
+                syncedStateId: "counter-functional",
                 fluidToView:  new Map([
                     [
                         "value", {
                             type: "number",
                             viewKey: "value",
-                        },
-                    ],
-                ]),
-                viewToFluid: new Map([
-                    [
-                        "value", {
-                            type: "number",
-                            fluidKey: "value",
                         },
                     ],
                 ]),
@@ -103,7 +92,7 @@ export class ClickerFunctional extends SyncedComponent {
         ReactDOM.render(
             <div>
                 <CounterReactFunctional
-                    syncedStateId={"counter-context"}
+                    syncedStateId={"counter-functional"}
                     syncedComponent={this}
                 />
             </div>,
