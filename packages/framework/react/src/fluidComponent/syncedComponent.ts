@@ -58,7 +58,6 @@ export abstract class SyncedComponent<
      * To extend this function, please call super() prior to adding to functionality to ensure correct initializing
      */
     protected async componentInitializingFirstTime(props?: any): Promise<void> {
-        await super.componentInitializingFirstTime(props);
         // Initialize our synced state map for the first time using our
         // syncedStateConfig values
         await this.initializeStateFirstTime();
@@ -70,7 +69,6 @@ export abstract class SyncedComponent<
      * To extend this function, please call super() prior to adding to functionality to ensure correct initializing
      */
     protected async componentInitializingFromExisting(): Promise<void> {
-        await super.componentInitializingFromExisting();
         // Load our existing state values to be ready for the render lifecycle
         await this.initializeStateFromExisting();
     }
