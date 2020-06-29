@@ -50,7 +50,7 @@ export function generateComponentSchema<
             if (defaultViewState[viewKey] !== undefined && typeof (defaultViewState[viewKey]) !== type) {
                 throw Error(`Failed to find fluid converter for key ${viewKey}`);
             } else {
-                break;
+                continue;
             }
         }
         if (type === fluidConverter.type) {
