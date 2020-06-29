@@ -42,7 +42,7 @@ import {
     ITrackingSummarizerNode,
     ISummarizerNode,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker, addBlobToSummary, decodeSummary } from "@fluidframework/runtime-utils";
+import { SummaryTracker, addBlobToSummary, decodeSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerRuntime } from "./containerRuntime";
 
@@ -435,9 +435,18 @@ export abstract class ComponentContext extends EventEmitter implements
             await this.realize();
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const summary = await this.componentRuntime!.summarize(fullTree);
-            addBlobToSummary(summary, ".component", JSON.stringify(componentAttributes));
-            return { ...summary, id: this.id };
+            const componentRuntime = this.componentRuntime!;
+            if (componentRuntime.summarize !== undefined) {
+                const summary = await componentRuntime.summarize(fullTree);
+                addBlobToSummary(summary, ".component", JSON.stringify(componentAttributes));
+                return { ...summary, id: this.id };
+            } else {
+                // back-compat: 0.21 summarizerNode - remove this case
+                const entries = await componentRuntime.snapshotInternal(fullTree);
+                entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
+                const summary = convertToSummaryTree({ entries, id: null });
+                return { ...summary, id: this.id };
+            }
         }, fullTree);
     }
 

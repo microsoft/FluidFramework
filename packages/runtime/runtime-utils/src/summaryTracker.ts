@@ -9,6 +9,7 @@ import { ISummaryTracker } from "@fluidframework/runtime-definitions";
  * SummaryTracker is a tree node which allows for deferred
  * snapshot tree access and tracks the latest acked summary
  * reference sequence number.
+ * @deprecated 0.21 summarizerNode - use SummarizerNode instead
  */
 export class SummaryTracker implements ISummaryTracker {
     /**

@@ -581,6 +581,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
     private latestSummaryAck: ISummaryContext;
+    // back-compat: 0.21 summarizerNode - remove all summary trackers
     private readonly summaryTracker: SummaryTracker;
     private readonly summarizerNode: SummarizerNode;
 
@@ -661,7 +662,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         const changeSequenceNumber = this.deltaManager.lastSequenceNumber;
         this.summarizerNode = context.baseSnapshot
-            ? SummarizerNode.createRootFromSummary(changeSequenceNumber, this.deltaManager.initialSequenceNumber, "")
+            ? SummarizerNode.createRootFromSummary(
+                changeSequenceNumber, // latest change sequence number
+                this.deltaManager.initialSequenceNumber, // summary reference sequence number
+                "", // path - the root is unnamed
+            )
             : SummarizerNode.createRootWithoutSummary(changeSequenceNumber);
 
         // Extract components stored inside the snapshot

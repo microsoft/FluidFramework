@@ -176,9 +176,10 @@ export interface IComponentRuntimeChannel extends
 
     /**
      * Generates a summary for the component.
+     * back-compat: 0.21 summarizerNode - should not be optional.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      */
-    summarize(fullTree?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize?(fullTree?: boolean): Promise<ISummaryTreeWithStats>;
 
     /**
      * Notifies this object about changes in the connection state.
@@ -200,6 +201,9 @@ export interface IComponentRuntimeChannel extends
     reSubmit(type: string, content: any, localOpMetadata: unknown);
 }
 
+/**
+ * @deprecated 0.21 summarizerNode - use ISummarizerNode instead
+ */
 export interface ISummaryTracker {
     /**
      * The reference sequence number of the most recent acked summary.
