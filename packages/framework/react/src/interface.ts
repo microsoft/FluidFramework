@@ -589,15 +589,27 @@ export interface ISyncedStateConfig<SV, SF> {
     viewToFluid?: ViewToFluidMap<SV, SF>;
 }
 
-    /**
-     * The configurations that define the relationships between Fluid and view states for
-     * views that are rendered in a SyncedComponent
-     */
+/**
+ * The configurations that define the relationships between Fluid and view states for
+ * views that are rendered in a SyncedComponent
+ */
 export type SyncedStateConfig = Map<string, ISyncedStateConfig<any, any>>;
 
+/**
+ * The interface for interacting with the synced state that is stored on a SyncedComponent
+ */
 export interface ISyncedState {
+    /**
+     * Set values on the synced state for a syncedStateId as key
+     */
     set: (key: string, value: any) => void;
+    /**
+     * Get values from the synced state for a syncedStateId as key
+     */
     get: <T,>(key: string) => T;
+    /**
+     * Add a listener to the synced state using a provided callback
+     */
     addValueChangedListener: (
         callback:  (changed: IDirectoryValueChanged, local: boolean) => void) => void;
 }

@@ -25,21 +25,38 @@ import {
     getComponentSchema,
 } from "../helpers";
 
+/**
+ * SyncedComponent is a base component for components with views. It extends PrimedComponent.
+ * In addition to the root and task manager, the SyncedComponent also provides a syncedStateConfig
+ * and assures that the syncedState will be initialized according the config by the time the view
+ * is rendered.
+ *
+ * As this is used for views, it also implements the IComponentHTMLView interface, and requires
+ * the render function to be filled in.
+ *
+ * Generics (extended from PrimedComponent):
+ * P - represents a type that will define optional providers that will be injected
+ * S - the initial state type that the produced component may take during creation
+ * E - represents events that will be available in the EventForwarder
+ */
 export abstract class SyncedComponent<
     P extends IComponent = object,
     S = undefined,
     E extends IEvent = IEvent
-> extends PrimedComponent<P, S, E>
-    implements IComponentHTMLView {
+> extends PrimedComponent<P, S, E> implements IComponentHTMLView {
     private readonly syncedStateConfig: SyncedStateConfig = new Map();
     private readonly fluidComponentMap: FluidComponentMap = new Map();
-    private internalSyncedState: ISharedMap | undefined;
     private readonly syncedStateDirectoryId = "syncedState";
+    private internalSyncedState: ISharedMap | undefined;
 
     public get IComponentHTMLView() {
         return this;
     }
 
+    /**
+     * Runs the first time the component is generated and sets up all necessary data structures for the view
+     * To extend this function, please call super() prior to adding to functionality to ensure correct initializing
+     */
     protected async componentInitializingFirstTime(props?: any): Promise<void> {
         await super.componentInitializingFirstTime(props);
         // Initialize our synced state map for the first time using our
@@ -47,12 +64,22 @@ export abstract class SyncedComponent<
         await this.initializeStateFirstTime();
     }
 
+    /**
+     * Runs any time the component is rendered again. It sets up all necessary data structures for the view, along
+     * with any additional ones that may have been added due to user behavior
+     * To extend this function, please call super() prior to adding to functionality to ensure correct initializing
+     */
     protected async componentInitializingFromExisting(): Promise<void> {
         await super.componentInitializingFromExisting();
         // Load our existing state values to be ready for the render lifecycle
         await this.initializeStateFromExisting();
     }
 
+    /**
+     * Returns an interface to interact with the stored synced state for the component. Views can get and fetch values
+     * from it based on their syncedStateId to retrieve their view-specific information. They can also attach listeners
+     * using the addValueChangedListener
+     */
     public get syncedState(): ISyncedState {
         if (!this.internalSyncedState) {
             throw new Error(this.getUninitializedErrorString(`syncedState`));
@@ -62,13 +89,18 @@ export abstract class SyncedComponent<
             get: this.internalSyncedState.get.bind(this.internalSyncedState),
             addValueChangedListener: (callback) => {
                 if (!this.internalSyncedState) {
-                    throw new Error(this.getUninitializedErrorString(`syncedState`));
+                    throw new Error(
+                        this.getUninitializedErrorString(`syncedState`),
+                    );
                 }
                 this.internalSyncedState.on("valueChanged", callback);
             },
         };
     }
 
+    /**
+     * Returns the data props used by the view to manage the different DDS' and add any new ones
+     */
     public get dataProps() {
         return {
             runtime: this.runtime,
@@ -76,6 +108,24 @@ export abstract class SyncedComponent<
         };
     }
 
+    /**
+     * Set values to the syncedStateConfig where the view and fluid states have the same values defined by S.
+     * Each view with a unique syncedStateId needs its own value in the syncedStateConfig.
+     * @param key - The syncedStateId that maps to the view that will be using these definitions
+     * @param value - The config value containing the syncedStateId and the fluidToView and viewToFluid maps
+     */
+    public setConfig<S>(key: string, value: ISyncedStateConfig<S, S>) {
+        this.syncedStateConfig.set(key, value);
+    }
+
+    /**
+     * Set values to the syncedStateConfig with different view and fluid state definitions.
+     * Each view with a unique syncedStateId needs its own value in the syncedStateConfig,
+     * with SV being the view state definition and SF being the fluid state definition.
+     * @param key - The syncedStateId that maps to the view that will be using these definitions
+     * @param value - The config value containing the syncedStateId and the fluidToView and viewToFluid maps
+     * that establish the relationship between SV and SF
+     */
     public setFluidConfig<
         SV extends IFluidFunctionalComponentViewState,
         SF extends IFluidFunctionalComponentFluidState
@@ -83,20 +133,28 @@ export abstract class SyncedComponent<
         this.syncedStateConfig.set(key, value);
     }
 
-    public setConfig<SV>(key: string, value: ISyncedStateConfig<SV, SV>) {
-        this.syncedStateConfig.set(key, value);
-    }
-
+    /**
+     * Get a config for a specific view with the key as its syncedStateId
+     * @param key - The syncedStateId to get the config for
+     */
     public getConfig(key: string) {
         return this.syncedStateConfig.get(key);
     }
 
+    /**
+     * Returns a view. This function need to be implemented for any consumer of SyncedComponent
+     * to render values that have been initialized using the syncedStateConfig
+     * @param element - The document that the rendered value will be displayed in
+     */
     public render(element: HTMLElement) {
         throw Error("Render function was not implemented");
     }
 
     private async initializeStateFirstTime() {
-        this.internalSyncedState = SharedMap.create(this.runtime, this.syncedStateDirectoryId);
+        this.internalSyncedState = SharedMap.create(
+            this.runtime,
+            this.syncedStateDirectoryId,
+        );
         this.internalSyncedState.register();
         for (const stateConfig of this.syncedStateConfig.values()) {
             const {
@@ -120,17 +178,15 @@ export abstract class SyncedComponent<
             );
             // Initialize any DDS' needed for the state or fetch any values from the root if they are stored
             // on the root under a different key
-            for (const key of fluidToView.keys()) {
+            for (const [key, value] of fluidToView.entries()) {
                 const fluidKey = key as string;
-                const rootKey = fluidToView.get(fluidKey)?.rootKey;
-                const createCallback = fluidToView.get(fluidKey)
-                    ?.sharedObjectCreate;
+                const rootKey = value.rootKey;
+                const createCallback = value.sharedObjectCreate;
                 if (createCallback) {
                     const sharedObject = createCallback(this.runtime);
                     this.fluidComponentMap.set(sharedObject.handle.path, {
                         component: sharedObject,
-                        listenedEvents: fluidToView?.get(fluidKey)
-                            ?.listenedEvents || ["valueChanged"],
+                        listenedEvents: value.listenedEvents || ["valueChanged"],
                     });
                     storedFluidState.set(fluidKey, sharedObject.handle);
                     if (rootKey) {
@@ -188,14 +244,16 @@ export abstract class SyncedComponent<
 
     private async initializeStateFromExisting() {
         // Fetch our synced state that stores all of our information to re-initialize the view state
-        this.internalSyncedState = await this.runtime.getChannel(this.syncedStateDirectoryId) as ISharedMap;
+        this.internalSyncedState = (await this.runtime.getChannel(
+            this.syncedStateDirectoryId,
+        )) as ISharedMap;
         // Reload the stored state for each config provided
         for (const stateConfig of this.syncedStateConfig.values()) {
             const { syncedStateId, fluidToView } = stateConfig;
             // Fetch this specific view's state using the syncedStateId
-            const storedFluidStateHandle = this.syncedState.get<IComponentHandle<ISharedMap>>(
-                `syncedState-${syncedStateId}`,
-            );
+            const storedFluidStateHandle = this.syncedState.get<
+                IComponentHandle<ISharedMap>
+            >(`syncedState-${syncedStateId}`);
             if (storedFluidStateHandle === undefined) {
                 throw new Error(
                     this.getUninitializedErrorString(
@@ -212,11 +270,10 @@ export abstract class SyncedComponent<
             });
             // If the view is using any Fluid Components or SharedObjects, asynchronously fetch them
             // from their stored handles
-            for (const key of fluidToView.keys()) {
+            for (const [key, value] of fluidToView.entries()) {
                 const fluidKey = key as string;
-                const rootKey = fluidToView.get(fluidKey)?.rootKey;
-                const createCallback = fluidToView.get(fluidKey)
-                    ?.sharedObjectCreate;
+                const rootKey = value.rootKey;
+                const createCallback = value.sharedObjectCreate;
                 if (createCallback) {
                     const handle = rootKey
                         ? this.root.get(rootKey)
@@ -228,8 +285,7 @@ export abstract class SyncedComponent<
                     }
                     this.fluidComponentMap.set(handle.path, {
                         component: await handle.get(),
-                        listenedEvents: fluidToView?.get(fluidKey)
-                            ?.listenedEvents || ["valueChanged"],
+                        listenedEvents: value.listenedEvents || ["valueChanged"],
                     });
                 } else {
                     const storedValue = rootKey
@@ -239,8 +295,9 @@ export abstract class SyncedComponent<
                     if (handle) {
                         this.fluidComponentMap.set(handle.path, {
                             component: await handle.get(),
-                            listenedEvents: fluidToView?.get(fluidKey)
-                                ?.listenedEvents || ["valueChanged"],
+                            listenedEvents: value.listenedEvents || [
+                                "valueChanged",
+                            ],
                         });
                     }
                 }
