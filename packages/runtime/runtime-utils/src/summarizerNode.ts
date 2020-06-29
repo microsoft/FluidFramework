@@ -16,6 +16,7 @@ import { mergeStats } from "./summaryUtils";
 
 const baseSummaryTreeKey = ".baseSummary";
 const outstandingOpsBlobKey = ".outstandingOps";
+const maxDecodeDepth = 10000;
 
 export interface IDecodedSummary {
     readonly baseSummary: ISnapshotTree;
@@ -27,16 +28,25 @@ export async function decodeSummary(
     snapshot: ISnapshotTree,
     readAndParseBlob: <T>(id: string) => Promise<T>,
 ): Promise<IDecodedSummary> {
-    const outstandingOpsBlob = snapshot.blobs[outstandingOpsBlobKey];
-    const baseSummary = snapshot.trees[baseSummaryTreeKey];
-    if (outstandingOpsBlob === undefined && baseSummary === undefined) {
-        return { baseSummary: snapshot, pathParts: [], outstandingOps: [] };
-    }
+    let baseSummary = snapshot;
+    const pathParts: string[] = [];
+    let outstandingOps: ISequencedDocumentMessage[] = [];
 
-    assert(outstandingOpsBlob, "Outstanding ops blob missing, but base summary tree exists");
-    assert(baseSummary, "Base summary tree missing, but outstanding ops blob exists");
-    const outstandingOps = await readAndParseBlob<ISequencedDocumentMessage[]>(outstandingOpsBlob);
-    return { baseSummary, pathParts: [baseSummaryTreeKey], outstandingOps };
+    for (let i = 0; i < maxDecodeDepth; i++) {
+        const outstandingOpsBlob = baseSummary.blobs[outstandingOpsBlobKey];
+        const newBaseSummary = baseSummary.trees[baseSummaryTreeKey];
+        if (outstandingOpsBlob === undefined && newBaseSummary === undefined) {
+            return { baseSummary, pathParts, outstandingOps };
+        }
+
+        assert(outstandingOpsBlob, "Outstanding ops blob missing, but base summary tree exists");
+        assert(newBaseSummary, "Base summary tree missing, but outstanding ops blob exists");
+        const newOutstandingOps = await readAndParseBlob<ISequencedDocumentMessage[]>(outstandingOpsBlob);
+        pathParts.push(outstandingOpsBlobKey);
+        outstandingOps = newOutstandingOps.concat(outstandingOps); // prepend
+        baseSummary = newBaseSummary;
+    }
+    assert.fail("Exceeded max depth while decoding a base summary");
 }
 
 class EscapedPath {
