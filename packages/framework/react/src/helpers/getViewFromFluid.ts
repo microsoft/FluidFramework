@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from "@fluidframework/map";
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import {
     FluidComponentMap,
     IViewConverter,
     IFluidFunctionalComponentViewState,
     IFluidFunctionalComponentFluidState,
+    ISyncedState,
 } from "../interface";
 import { getFluidState } from "./getFluidState";
 
@@ -29,7 +29,7 @@ export function getViewFromFluid<
     SF extends IFluidFunctionalComponentFluidState
 >(
     syncedStateId: string,
-    syncedState: ISharedMap,
+    syncedState: ISyncedState,
     fluidKey: keyof SF,
     fluidComponentMap: FluidComponentMap,
     fluidToView: Map<keyof SF, IViewConverter<SV, SF>>,

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ISharedMap } from "@fluidframework/map";
+import { ISharedMap, IDirectoryValueChanged } from "@fluidframework/map";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import {
     IComponentHandle,
@@ -594,3 +594,10 @@ export interface ISyncedStateConfig<SV, SF> {
      * views that are rendered in a SyncedComponent
      */
 export type SyncedStateConfig = Map<string, ISyncedStateConfig<any, any>>;
+
+export interface ISyncedState {
+    set: (key: string, value: any) => void;
+    get: <T,>(key: string) => T;
+    addValueChangedListener: (
+        callback:  (changed: IDirectoryValueChanged, local: boolean) => void) => void;
+}

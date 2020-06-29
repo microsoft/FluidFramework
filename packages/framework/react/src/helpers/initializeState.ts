@@ -14,6 +14,7 @@ import {
     ViewToFluidMap,
     IFluidFunctionalComponentViewState,
     IFluidFunctionalComponentFluidState,
+    ISyncedState,
 } from "../interface";
 import {
     syncedStateCallbackListener,
@@ -42,7 +43,7 @@ export async function initializeState<
     SF extends IFluidFunctionalComponentFluidState
 >(
     syncedStateId: string,
-    syncedState: SharedMap,
+    syncedState: ISyncedState,
     dataProps: IFluidDataProps,
     state: SV,
     setState: (
@@ -115,7 +116,7 @@ export async function initializeState<
     };
 
     // Add the callback to the component's own synced state
-    syncedState.on("valueChanged", syncedStateCallback);
+    syncedState.addValueChangedListener(syncedStateCallback);
     storedHandleMap.on("valueChanged", (
         change: IDirectoryValueChanged,
         local: boolean,

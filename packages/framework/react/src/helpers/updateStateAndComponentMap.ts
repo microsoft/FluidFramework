@@ -15,6 +15,7 @@ import {
 } from "../interface";
 import { addComponent, asyncForEach } from "./utils";
 import { syncState } from "./syncState";
+import { ISyncedState } from "..";
 
 /**
  * Add listeners too all the new handles passed in, store their respective components
@@ -43,7 +44,7 @@ export const updateStateAndComponentMap = async <
     storedHandleMap: SharedMap,
     isSyncedStateUpdate: boolean,
     syncedStateId: string,
-    syncedState: SharedMap,
+    syncedState: ISyncedState,
     runtime: IComponentRuntime,
     viewState: SV,
     setState: (newState: SV, isSyncedStateUpdate?: boolean) => void,

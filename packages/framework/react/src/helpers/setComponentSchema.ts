@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from "@fluidframework/map";
 import { IFluidSchemaHandles } from "./internalInterface";
+import { ISyncedState } from "..";
 
 /**
  * Store the component schema on to the shared synced state
@@ -14,7 +14,7 @@ import { IFluidSchemaHandles } from "./internalInterface";
  */
 export function setComponentSchema(
     syncedStateId: string,
-    syncedState: ISharedMap,
+    syncedState: ISyncedState,
     componentSchemaHandles: IFluidSchemaHandles,
 ): void {
     syncedState.set(`componentSchema-${syncedStateId}`, componentSchemaHandles);

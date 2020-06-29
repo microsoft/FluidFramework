@@ -16,6 +16,7 @@ import { syncState } from "./syncState";
 import { getByFluidKey } from "./utils";
 import { getViewFromFluid } from "./getViewFromFluid";
 import { getFluidState } from ".";
+import { ISyncedState } from "..";
 
 /**
  * The callback that is added to the "valueChanged" event on the IComponentListened this
@@ -38,7 +39,7 @@ export const syncedStateCallbackListener = <
     fluidComponentMap: FluidComponentMap,
     storedHandleMap: ISharedMap,
     syncedStateId,
-    syncedState: ISharedMap,
+    syncedState: ISyncedState,
     runtime: IComponentRuntime,
     state: SV,
     setState: (

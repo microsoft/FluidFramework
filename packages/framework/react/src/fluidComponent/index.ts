@@ -4,4 +4,3 @@
  */
 
 export * from "./syncedComponent";
-export * from "./componentSynced";

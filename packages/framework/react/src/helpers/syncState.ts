@@ -4,13 +4,14 @@
  */
 
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { ISharedMap } from "@fluidframework/map";
 import {
     FluidComponentMap,
     IFluidFunctionalComponentFluidState,
     IFluidFunctionalComponentViewState,
     ViewToFluidMap,
     FluidToViewMap,
+    ISyncedState,
 } from "../interface";
 import { getFluidFromView } from "./getFluidFromView";
 import { getViewFromFluid } from "./getViewFromFluid";
@@ -41,7 +42,7 @@ export function syncState<
 >(
     isSyncedStateUpdate: boolean,
     syncedStateId: string,
-    syncedState: ISharedMap,
+    syncedState: ISyncedState,
     runtime: IComponentRuntime,
     viewState: SV,
     setState: (
@@ -79,9 +80,9 @@ export function syncState<
     } = componentSchemaHandles;
 
     const viewMatchingMap = fluidComponentMap.get(viewMatchingMapHandle.path)
-        ?.component as SharedMap;
+        ?.component as ISharedMap;
     const fluidMatchingMap = fluidComponentMap.get(fluidMatchingMapHandle.path)
-        ?.component as SharedMap;
+        ?.component as ISharedMap;
 
     if (viewMatchingMap === undefined || fluidMatchingMap === undefined) {
         throw Error("Failed to fetch shared map DDS' from the schema handles");

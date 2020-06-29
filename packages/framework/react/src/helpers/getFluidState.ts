@@ -13,6 +13,7 @@ import {
     FluidComponentMap,
     IFluidFunctionalComponentViewState,
     IFluidFunctionalComponentFluidState,
+    ISyncedState,
 } from "..";
 
 /**
@@ -28,7 +29,7 @@ export function getFluidState<
     SF extends IFluidFunctionalComponentFluidState
 >(
     syncedStateId: string,
-    syncedState: ISharedMap,
+    syncedState: ISyncedState,
     componentMap: FluidComponentMap,
     fluidToView?: Map<keyof SF, IViewConverter<SV, SF>>,
 ): SF | undefined {

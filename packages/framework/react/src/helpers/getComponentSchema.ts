@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from "@fluidframework/map";
+import { ISyncedState } from "../interface";
 import { IFluidSchemaHandles } from "./internalInterface";
 
 /**
@@ -13,6 +13,6 @@ import { IFluidSchemaHandles } from "./internalInterface";
  */
 export const getComponentSchema = (
     syncedStateId: string,
-    syncedState: ISharedMap,
+    syncedState: ISyncedState,
 ): IFluidSchemaHandles | undefined =>
     syncedState.get<IFluidSchemaHandles>(`componentSchema-${syncedStateId}`);

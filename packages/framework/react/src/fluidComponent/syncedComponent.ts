@@ -8,7 +8,7 @@ import {
     IComponentHandle,
 } from "@fluidframework/component-core-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap, ISharedMap } from "@fluidframework/map";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 import {
@@ -17,26 +17,24 @@ import {
     ISyncedStateConfig,
     IFluidFunctionalComponentViewState,
     IFluidFunctionalComponentFluidState,
+    ISyncedState,
 } from "../interface";
 import {
     generateComponentSchema,
     setComponentSchema,
     getComponentSchema,
 } from "../helpers";
-import { IComponentSynced } from "./componentSynced";
 
 export abstract class SyncedComponent<
     P extends IComponent = object,
     S = undefined,
     E extends IEvent = IEvent
 > extends PrimedComponent<P, S, E>
-    implements IComponentSynced, IComponentHTMLView {
+    implements IComponentHTMLView {
     private readonly syncedStateConfig: SyncedStateConfig = new Map();
     protected fluidComponentMap: FluidComponentMap = new Map();
     private internalSyncedState: SharedMap | undefined;
-    public get IComponentSynced() {
-        return this;
-    }
+
     public get IComponentHTMLView() {
         return this;
     }
@@ -54,11 +52,20 @@ export abstract class SyncedComponent<
         await this.initializeStateFromExisting();
     }
 
-    public get syncedState() {
+    public get syncedState(): ISyncedState {
         if (!this.internalSyncedState) {
             throw new Error(this.getUninitializedErrorString(`syncedState`));
         }
-        return this.internalSyncedState;
+        return {
+            set: this.internalSyncedState.set.bind(this.internalSyncedState),
+            get: this.internalSyncedState.get.bind(this.internalSyncedState),
+            addValueChangedListener: (callback) => {
+                if (!this.internalSyncedState) {
+                    throw new Error(this.getUninitializedErrorString(`syncedState`));
+                }
+                this.internalSyncedState.on("valueChanged", callback);
+            },
+        };
     }
 
     public get dataProps() {
@@ -189,7 +196,7 @@ export abstract class SyncedComponent<
         for (const stateConfig of this.syncedStateConfig.values()) {
             const { syncedStateId, fluidToView } = stateConfig;
             // Fetch this specific view's state using the syncedStateId
-            const storedFluidStateHandle = this.syncedState.get(
+            const storedFluidStateHandle = this.syncedState.get<IComponentHandle<ISharedMap>>(
                 `syncedState-${syncedStateId}`,
             );
             if (storedFluidStateHandle === undefined) {
