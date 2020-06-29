@@ -40,7 +40,7 @@ Here's the breakdown of the repo:
   * [Docs](./docs)
   * [Tools](./tools)
 
-Dependencies between packages in various layers of the system are enforced via a build step called [layer-check](./tools/build-tools/src/layerCheck), you can view the full list of packages and layers in [PACKAGES.md](./docs/PACKAGES.md).
+Dependencies between packages in various layers of the system are enforced via a build step called [layer-check](./tools/build-tools/src/layerCheck). You can view the full list of packages and layers in [PACKAGES.md](./docs/PACKAGES.md).
 
 ## Building
 
