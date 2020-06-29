@@ -33,6 +33,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IProvideComponentRegistry } from "./componentRegistry";
 import { IInboundSignalMessage } from "./protocol";
+import { ISummarizerNodeProvider, ISummaryTreeWithStats } from "./summary";
 
 /**
  * Runtime flush mode handling
@@ -174,6 +175,12 @@ export interface IComponentRuntimeChannel extends
     snapshotInternal(fullTree?: boolean): Promise<ITreeEntry[]>;
 
     /**
+     * Generates a summary for the component.
+     * @param fullTree - true to bypass optimizations and force a full summary tree
+     */
+    summarize(fullTree?: boolean): Promise<ISummaryTreeWithStats>;
+
+    /**
      * Notifies this object about changes in the connection state.
      * @param value - New connection state.
      * @param clientId - ID of the client. It's old ID when in disconnected state and
@@ -234,7 +241,7 @@ export interface ISummaryTracker {
  * Represents the context for the component. It is used by the component runtime to
  * get information and call functionality to the container.
  */
-export interface IComponentContext extends EventEmitter {
+export interface IComponentContext extends EventEmitter, ISummarizerNodeProvider {
     readonly documentId: string;
     readonly id: string;
     /**

@@ -73,8 +73,17 @@ import {
     ISignalEnvelop,
     NamedComponentRegistryEntries,
     SchedulerType,
+    ISummaryTreeWithStats,
+    ISummaryStats,
 } from "@fluidframework/runtime-definitions";
-import { ComponentSerializer, SummaryTracker, unreachableCase } from "@fluidframework/runtime-utils";
+import {
+    ComponentSerializer,
+    SummaryTracker,
+    unreachableCase,
+    SummaryTreeBuilder,
+    SummarizerNode,
+    convertToSummaryTree,
+} from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
@@ -89,7 +98,6 @@ import { RequestParser } from "./requestParser";
 import { RuntimeRequestHandlerBuilder } from "./runtimeRequestHandlerBuilder";
 import { ISummarizerRuntime, Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
-import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportConnectionTelemetry } from "./connectionTelemetry";
@@ -123,11 +131,6 @@ export interface IChunkedOp {
 export interface ContainerRuntimeMessage {
     contents: any;
     type: ContainerMessageType;
-}
-
-interface ISummaryTreeWithStats {
-    summaryStats: ISummaryStats;
-    summaryTree: ISummaryTree;
 }
 
 export interface IPreviousState {
@@ -578,9 +581,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     public readonly logger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
-    private readonly summaryTreeConverter: SummaryTreeConverter;
     private latestSummaryAck: ISummaryContext;
     private readonly summaryTracker: SummaryTracker;
+    private readonly summarizerNode: SummarizerNode;
 
     private tasks: string[] = [];
 
@@ -646,20 +649,22 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
-        // useContext - back-compat: 0.14 uploadSummary
-        const useContext: boolean = this.isLocal() ? true : this.storage.uploadSummaryWithContext !== undefined;
         this.latestSummaryAck = {
             proposalHandle: undefined,
             ackHandle: this.context.getLoadedFromVersion()?.id,
         };
         this.summaryTracker = new SummaryTracker(
-            useContext,
+            true,
             "", // fullPath - the root is unnamed
             this.deltaManager.initialSequenceNumber, // referenceSequenceNumber - last acked summary ref seq number
             this.deltaManager.initialSequenceNumber, // latestSequenceNumber - latest sequence number seen
             async () => undefined, // getSnapshotTree - this will be replaced on summary ack
         );
-        this.summaryTreeConverter = new SummaryTreeConverter(useContext);
+
+        const changeSequenceNumber = this.deltaManager.lastSequenceNumber;
+        this.summarizerNode = context.baseSnapshot
+            ? SummarizerNode.createRootFromSummary(changeSequenceNumber, this.deltaManager.initialSequenceNumber, "")
+            : SummarizerNode.createRootWithoutSummary(changeSequenceNumber);
 
         // Extract components stored inside the snapshot
         const components = new Map<string, ISnapshotTree | string>();
@@ -681,7 +686,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 this,
                 this.storage,
                 this.containerScope,
-                this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber));
+                this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber),
+                this.summarizerNode.createTrackingChildFromSummary(this.summarizerNode.referenceSequenceNumber, key));
             this.setNewContext(key, componentContext);
         }
 
@@ -1093,6 +1099,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
+            this.summarizerNode.createTrackingChildWithoutSummary(this.deltaManager.lastSequenceNumber),
             (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
             props);
 
@@ -1118,6 +1125,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
+            this.summarizerNode.createTrackingChildWithoutSummary(this.deltaManager.lastSequenceNumber),
             (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
             undefined /* #1635: Remove LocalComponentContext createProps */);
 
@@ -1201,11 +1209,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
      * Returns a summary of the runtime at the current sequence number.
      */
     private async summarize(fullTree: boolean = false): Promise<ISummaryTreeWithStats> {
-        const summaryTree: ISummaryTree = {
-            tree: {},
-            type: SummaryType.Tree,
-        };
-        let summaryStats = SummaryTreeConverter.mergeStats();
+        const builder = new SummaryTreeBuilder();
 
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts)
@@ -1213,20 +1217,14 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 value.isAttached,
             )
             .map(async ([key, value]) => {
-                const snapshot = await value.snapshot(fullTree);
-                const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-                    snapshot,
-                    `/${encodeURIComponent(key)}`,
-                    fullTree,
-                );
-                summaryTree.tree[key] = treeWithStats.summaryTree;
-                summaryStats = SummaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
+                const componentSummary = await value.summarize(fullTree);
+                builder.addWithStats(key, componentSummary);
             }));
 
-        this.serializeContainerBlobs(summaryTree);
+        const summary = builder.getSummaryTree();
+        this.serializeContainerBlobs(summary.summary);
 
-        summaryStats.treeNodeCount++; // Add this root tree node
-        return { summaryStats, summaryTree };
+        return summary;
     }
 
     private processAttachMessage(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {
@@ -1256,6 +1254,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             new BlobCacheStorageService(this.storage, flatBlobsP),
             this.containerScope,
             this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
+            this.summarizerNode.createTrackingChildWithoutSummary(message.sequenceNumber),
             [attachMessage.type]);
 
         // If a non-local operation then go and create the object, otherwise mark it as officially attached.
@@ -1327,10 +1326,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     public createSummary(): ISummaryTree {
-        const summaryTree: ISummaryTree = {
-            tree: {},
-            type: SummaryType.Tree,
-        };
+        const builder = new SummaryTreeBuilder();
 
         // Iterate over each component and ask it to snapshot
         Array.from(this.contexts)
@@ -1339,14 +1335,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             )
             .map(async ([key, value]) => {
                 const snapshot = value.generateAttachMessage().snapshot;
-                const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-                    snapshot,
-                    `/${encodeURIComponent(key)}`,
-                    true,
-                );
-                summaryTree.tree[key] = treeWithStats.summaryTree;
+                const componentSummary = convertToSummaryTree(snapshot, true);
+                builder.addWithStats(key, componentSummary);
             });
 
+        const summaryTree = builder.summary;
         this.serializeContainerBlobs(summaryTree);
 
         return summaryTree;
@@ -1363,8 +1356,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         fullTree: boolean = false,
         safe: boolean = false,
     ): Promise<GenerateSummaryData | undefined> {
+        const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
         const message =
-            `Summary @${this.deltaManager.lastSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
+            `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 
         // TODO: Issue-2171 Support for Branch Snapshots
         if (this.parentBranch) {
@@ -1375,11 +1369,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             return;
         }
 
+        this.summarizerNode.startSummary(summaryRefSeqNum);
         try {
             await this.scheduleManager.pause();
 
             const attemptData: IUnsubmittedSummaryData = {
-                referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+                referenceSequenceNumber: summaryRefSeqNum,
                 submitted: false,
             };
 
@@ -1392,7 +1387,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             const treeWithStats = await this.summarize(fullTree || safe);
 
             const generateData: IGeneratedSummaryData = {
-                summaryStats: treeWithStats.summaryStats,
+                summaryStats: treeWithStats.stats,
                 generateDuration: trace.trace().duration,
             };
 
@@ -1400,17 +1395,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 return { ...attemptData, ...generateData };
             }
 
-            let handle: string;
-            if (this.summaryTracker.useContext === true) {
-                handle = await this.storage.uploadSummaryWithContext(
-                    treeWithStats.summaryTree,
-                    this.latestSummaryAck);
-            } else {
-                // back-compat: 0.14 uploadSummary
-                const summaryHandle = await this.storage.uploadSummary(
-                    treeWithStats.summaryTree);
-                handle = summaryHandle.handle;
-            }
+            const handle = await this.storage.uploadSummaryWithContext(
+                treeWithStats.summary,
+                this.latestSummaryAck);
 
             // safe mode refreshes the latest summary ack
             if (safe) {
@@ -1441,6 +1428,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             const clientSequenceNumber =
                 this.submitSystemMessage(MessageType.Summarize, summaryMessage);
 
+            this.summarizerNode.completeSummary(handle);
+
             return {
                 ...attemptData,
                 ...generateData,
@@ -1450,6 +1439,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 submitOpDuration: trace.trace().duration,
             };
         } finally {
+            // Cleanup wip summary in case of failure
+            this.summarizerNode.clearSummary();
             // Restart the delta manager
             this.scheduleManager.resume();
         }

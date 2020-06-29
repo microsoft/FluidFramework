@@ -38,8 +38,11 @@ import {
     IComponentFactory,
     IComponentRegistry,
     IInboundSignalMessage,
+    ISummarizeResult,
+    ITrackingSummarizerNode,
+    ISummarizerNode,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker } from "@fluidframework/runtime-utils";
+import { SummaryTracker, addBlobToSummary, decodeSummary } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerRuntime } from "./containerRuntime";
 
@@ -170,6 +173,7 @@ export abstract class ComponentContext extends EventEmitter implements
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
+        protected readonly summarizerNode: ITrackingSummarizerNode,
         private attachState: AttachState,
         attach: (componentRuntime: IComponentRuntimeChannel) => void,
         protected pkg?: readonly string[],
@@ -347,6 +351,7 @@ export abstract class ComponentContext extends EventEmitter implements
         };
 
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
+        this.summarizerNode.recordChange(message);
 
         if (this.loaded) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -368,6 +373,14 @@ export abstract class ComponentContext extends EventEmitter implements
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.componentRuntime!.processSignal(message, local);
+    }
+
+    public createChildFromSummary(changeSequenceNumber: number, id: string): ISummarizerNode {
+        return this.summarizerNode.createChildFromSummary(changeSequenceNumber, id);
+    }
+
+    public createChildWithoutSummary(changeSequenceNumber: number): ISummarizerNode {
+        return this.summarizerNode.createChildWithoutSummary(changeSequenceNumber);
     }
 
     public getQuorum(): IQuorum {
@@ -410,6 +423,24 @@ export abstract class ComponentContext extends EventEmitter implements
         return { entries, id: null };
     }
 
+    public async summarize(fullTree: boolean = false): Promise<ISummarizeResult> {
+        return this.summarizerNode.summarize(async () => {
+            const { pkg } = await this.getInitialSnapshotDetails();
+
+            const componentAttributes: IComponentAttributes = {
+                pkg: JSON.stringify(pkg),
+                snapshotFormatVersion: currentSnapshotFormatVersion,
+            };
+
+            await this.realize();
+
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const summary = await this.componentRuntime!.summarize(fullTree);
+            addBlobToSummary(summary, ".component", JSON.stringify(componentAttributes));
+            return { ...summary, id: this.id };
+        }, fullTree);
+    }
+
     /**
      * @deprecated 0.18.Should call request on the runtime directly
      */
@@ -447,6 +478,7 @@ export abstract class ComponentContext extends EventEmitter implements
 
         // Update our summary tracker's latestSequenceNumber.
         this.summaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
+        this.summarizerNode.invalidate(latestSequenceNumber); // TODO: not sure about this
 
         const channelSummaryTracker = this.summaryTracker.getChild(address);
         // If there is a summary tracker for the channel that called us, update it's latestSequenceNumber.
@@ -588,6 +620,7 @@ export class RemotedComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
+        summarizerNode: ITrackingSummarizerNode,
         pkg?: string[],
     ) {
         super(
@@ -597,6 +630,7 @@ export class RemotedComponentContext extends ComponentContext {
             storage,
             scope,
             summaryTracker,
+            summarizerNode,
             AttachState.Attached,
             () => {
                 throw new Error("Already attached");
@@ -622,12 +656,19 @@ export class RemotedComponentContext extends ComponentContext {
                 tree = await this.initSnapshotValue;
             }
 
+            const localReadAndParse = async <T>(id: string) => readAndParse<T>(this.storage, id);
+            if (tree) {
+                const decodedSummary = await decodeSummary(tree, localReadAndParse);
+                if (decodedSummary) {
+                    tree = decodedSummary.baseSummary;
+                    this.summarizerNode.prependOutstandingOps(decodedSummary.outstandingOps);
+                }
+            }
+
             if (tree !== null && tree.blobs[".component"] !== undefined) {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion } =
-                    await readAndParse<IComponentAttributes>(
-                        this.storage,
-                        tree.blobs[".component"]);
+                    await localReadAndParse<IComponentAttributes>(tree.blobs[".component"]);
 
                 let pkgFromSnapshot: string[];
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
@@ -665,13 +706,14 @@ export class LocalComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
+        summarizerNode: ITrackingSummarizerNode,
         attachCb: (componentRuntime: IComponentRuntimeChannel) => void,
         /**
          * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
          */
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, AttachState.Detached, attachCb, pkg);
+        super(runtime, id, false, storage, scope, summaryTracker, summarizerNode, AttachState.Detached, attachCb, pkg);
     }
 
     public generateAttachMessage(): IAttachMessage {

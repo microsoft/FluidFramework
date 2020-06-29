@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { DebugLogger } from "@fluidframework/common-utils";
 import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
@@ -20,9 +20,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
-import {
-    SummaryTreeConverter,
-} from "../summaryTreeConverter";
+import { convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { ScheduleManager } from "../containerRuntime";
 
 describe("Runtime", () => {
@@ -78,9 +76,8 @@ describe("Runtime", () => {
                 });
 
                 it("Should convert correctly", () => {
-                    const converter = new SummaryTreeConverter(false);
-                    const summaryResults = converter.convertToSummaryTree(inputTree, "");
-                    const summaryTree = assertSummaryTree(summaryResults.summaryTree);
+                    const summaryResults = convertToSummaryTree(inputTree);
+                    const summaryTree = assertSummaryTree(summaryResults.summary);
 
                     // blobs should parse
                     const blob = assertSummaryBlob(summaryTree.tree.b);
@@ -100,9 +97,8 @@ describe("Runtime", () => {
                 });
 
                 it("Should convert correctly with context converting to paths", () => {
-                    const converter = new SummaryTreeConverter(true);
-                    const summaryResults = converter.convertToSummaryTree(inputTree, "");
-                    const summaryTree = assertSummaryTree(summaryResults.summaryTree);
+                    const summaryResults = convertToSummaryTree(inputTree);
+                    const summaryTree = assertSummaryTree(summaryResults.summary);
 
                     // blobs should parse
                     const blob = assertSummaryBlob(summaryTree.tree.b);
@@ -122,13 +118,12 @@ describe("Runtime", () => {
                 });
 
                 it("Should calculate summary data correctly", () => {
-                    const converter = new SummaryTreeConverter(false);
-                    const summaryResults = converter.convertToSummaryTree(inputTree, "");
+                    const summaryResults = convertToSummaryTree(inputTree);
                     // nodes should count
-                    assert.strictEqual(summaryResults.summaryStats.blobNodeCount, 3);
-                    assert.strictEqual(summaryResults.summaryStats.handleNodeCount, 1);
-                    assert.strictEqual(summaryResults.summaryStats.treeNodeCount, 2);
-                    assert.strictEqual(summaryResults.summaryStats.totalBlobSize,
+                    assert.strictEqual(summaryResults.stats.blobNodeCount, 3);
+                    assert.strictEqual(summaryResults.stats.handleNodeCount, 1);
+                    assert.strictEqual(summaryResults.stats.treeNodeCount, 2);
+                    assert.strictEqual(summaryResults.stats.totalBlobSize,
                         bufferLength + Buffer.byteLength("test-blob") + Buffer.byteLength("test-u8"));
                 });
             });

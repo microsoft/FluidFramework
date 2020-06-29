@@ -14,7 +14,7 @@ import {
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
-import { SummaryTracker } from "@fluidframework/runtime-utils";
+import { SummaryTracker, SummarizerNode } from "@fluidframework/runtime-utils";
 import { LocalComponentContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
 
@@ -42,6 +42,7 @@ describe("Component Creation Tests", () => {
         const componentBName = "componentB";
         const componentCName = "componentC";
         let summaryTracker: SummaryTracker;
+        let summarizerNode: SummarizerNode;
 
         // Helper function that creates a ComponentRegistryEntry with the registry entries
         // provided to it.
@@ -93,6 +94,7 @@ describe("Component Creation Tests", () => {
                 on: (event, listener) => { },
             } as ContainerRuntime;
             summaryTracker = new SummaryTracker(true, "", 0, 0, async () => undefined);
+            summarizerNode = SummarizerNode.createRootWithoutSummary(0);
         });
 
         it("Valid global component", async () => {
@@ -105,6 +107,7 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
+                summarizerNode,
                 attachCb);
 
             try {
@@ -126,6 +129,7 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
+                summarizerNode,
                 attachCb);
 
             try {
@@ -147,6 +151,7 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
+                summarizerNode,
                 attachCb);
 
             try {
@@ -168,6 +173,7 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
+                summarizerNode,
                 attachCb);
 
             try {
@@ -189,6 +195,7 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
+                summarizerNode,
                 attachCb);
 
             try {
@@ -207,6 +214,7 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
+                summarizerNode,
                 attachCb);
 
             try {
@@ -228,6 +236,7 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
+                summarizerNode,
                 attachCb);
 
             try {
@@ -249,6 +258,7 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
+                summarizerNode,
                 attachCb);
 
             try {
@@ -270,6 +280,7 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
+                summarizerNode,
                 attachCb);
 
             try {

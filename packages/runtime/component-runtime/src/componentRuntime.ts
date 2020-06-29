@@ -43,8 +43,9 @@ import {
     IEnvelope,
     IInboundSignalMessage,
     SchedulerType,
+    ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { unreachableCase } from "@fluidframework/runtime-utils";
+import { unreachableCase, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
@@ -190,6 +191,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                     this.componentContext.summaryTracker.createOrGetChild(
                         path,
                         this.deltaManager.lastSequenceNumber,
+                    ),
+                    this.componentContext.createChildFromSummary(
+                        this.deltaManager.lastSequenceNumber,
+                        path,
                     ));
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -444,6 +449,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                             id,
                             message.sequenceNumber,
                         ),
+                        this.componentContext.createChildWithoutSummary(message.sequenceNumber),
                         attachMessage.type);
 
                     this.contexts.set(id, remoteChannelContext);
@@ -488,6 +494,22 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             }));
 
         return entries;
+    }
+
+    public async summarize(fullTree: boolean = false): Promise<ISummaryTreeWithStats> {
+        const builder = new SummaryTreeBuilder();
+
+        // Iterate over each component and ask it to snapshot
+        await Promise.all(Array.from(this.contexts)
+            .filter(([key, value]) =>
+                value.isRegistered(),
+            )
+            .map(async ([key, value]) => {
+                const channelSummary = await value.summarize(fullTree);
+                builder.addWithStats(key, channelSummary);
+            }));
+
+        return builder.getSummaryTree();
     }
 
     public getAttachSnapshot(): ITreeEntry[] {

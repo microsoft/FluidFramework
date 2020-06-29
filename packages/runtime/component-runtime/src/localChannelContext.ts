@@ -10,7 +10,8 @@ import {
     ITree,
 } from "@fluidframework/protocol-definitions";
 import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IComponentContext, ISummarizeResult } from "@fluidframework/runtime-definitions";
+import { convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
@@ -78,6 +79,12 @@ export class LocalChannelContext implements IChannelContext {
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
         return this.getAttachSnapshot();
+    }
+
+    public async summarize(fullTree: boolean = false): Promise<ISummarizeResult> {
+        const snapshot = this.getAttachSnapshot();
+        const summary = convertToSummaryTree(snapshot, fullTree);
+        return summary;
     }
 
     public getAttachSnapshot(): ITree {
