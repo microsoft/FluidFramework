@@ -908,7 +908,7 @@ export class Client {
         if(this.mergeTree.options?.newMergeTreeSnapshotFormat === true) {
             assert(
                 catchUpMsgs === undefined || catchUpMsgs.length === 0,
-                "New format should not emit catchup ops")
+                "New format should not emit catchup ops");
             const snap = new SnapshotV1(this.mergeTree, this.logger);
             snap.extractSync();
             return snap.emit(
