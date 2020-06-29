@@ -5,7 +5,7 @@
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
-  "main": "dist/fluidBuild.js",
+  "main": "dist/fluidBuild/fluidBuild.js",
   "bin": {
     "fluid-build": "bin/fluid-build",
     "fluid-build-version": "bin/fluid-build-version",
@@ -16,6 +16,7 @@
   },
   "scripts": {
     "build": "tsc -b",
+    "debug:layer-check": "node --inspect-brk dist/layerCheck/layerCheck.js --root ../..",
     "layer-check": "node dist/layerCheck/layerCheck.js --root ../..",
     "list-repo-files": "cd ../.. && git ls-files -co --exclude-standard",
     "policy-check": "cd ../.. && git ls-files -co --exclude-standard --full-name | node tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -s",

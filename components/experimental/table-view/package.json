@@ -40,7 +40,8 @@
     "@fluid-example/table-document": "^0.21.0",
     "@fluidframework/aqueduct": "^0.21.0",
     "@fluidframework/component-core-interfaces": "^0.21.0",
-    "@fluidframework/view-interfaces": "^0.21.0"
+    "@fluidframework/view-interfaces": "^0.21.0",
+    "@tiny-calc/micro": "0.0.0-alpha.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0-0",

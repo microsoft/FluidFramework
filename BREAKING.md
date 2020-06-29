@@ -5,6 +5,7 @@
 - [IComponentHTMLVisual deprecated](#IComponentHTMLVisual-deprecated)
 - [createValueType removed from SharedMap and SharedDirectory](#createValueType-removed-from-SharedMap-and-SharedDirectory)
 - [Add Undefined to getAbsoluteUrl return type](#Add-Undefined-to-getAbsoluteUrl-return-type)
+- [Sequence snapshot format change](#Sequence-snapshot-format-change)
 
 ### Removed `@fluidframework/local-test-utils`
 Removed this package so classes like `TestHost` are no longer supported. Please contact us if there were dependencies on this or if any assistance in required to get rid of it.
@@ -25,7 +26,6 @@ The `Counter` value type and `createValueType()` method on `SharedMap` and `Shar
 ### rename @fluidframework/aqueduct-react to @fluidframework/react-inputs
 
 aqueduct-react is actually just a react library and renamed it to reflect such.
-
 
 ### Add Undefined to getAbsoluteUrl return type
 
@@ -51,6 +51,10 @@ protected async componentHasInitialized() {
     }
 }
 ```
+
+### Sequence snapshot format change
+
+Due to a change in the sequence's snapshot format clients running a version less than 0.19 will not be able to load snapshots generated in 0.21. This will affect all sequence types includes shared string, and sparse matrix. If you need to support pre-0.19 clients please contact us for mitigations.
 
 ## 0.19 Breaking Changes
 - [Container's "error" event](#Container-Error-Event)

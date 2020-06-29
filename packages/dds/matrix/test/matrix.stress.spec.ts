@@ -10,24 +10,38 @@ import { Random } from "best-random";
 import { ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
 import {
     MockComponentRuntime,
-    MockContainerRuntimeFactory,
     MockStorage,
+    MockContainerRuntimeFactoryForReconnection,
+    MockContainerRuntimeForReconnection,
 } from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "../src";
 import { extract, expectSize } from "./utils";
 
 describe("Matrix", () => {
     describe("stress", () => {
-        let containerRuntimeFactory: MockContainerRuntimeFactory;
+        let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
         let matrices: SharedMatrix[];       // Array of matrices under test
+        let runtimes: MockContainerRuntimeForReconnection[] = [];
         let trace: string[];                // Repro steps to be printed if a failure is encountered.
 
         /**
          * Drains the queue of pending ops for each client and vets that all matrices converged on the same state.
          */
         const expect = async () => {
+            // Reconnect any disconnected clients before processing pending ops.
+            for (let matrixIndex = 0; matrixIndex < runtimes.length; matrixIndex++) {
+                const runtime = runtimes[matrixIndex];
+                if (!runtime.connected) {
+                    trace?.push(`containerRuntime${matrixIndex + 1}.connected = true;`);
+                    runtime.connected = true;
+                }
+            }
+
+            // Broadcast and process all pending messages across all matrices.
+            trace?.push("await expect();");
             containerRuntimeFactory.processAllMessages();
 
+            // Verify that all matrices have converged on the same final state.
             const matrix0 = matrices[0];
             const actual0 = extract(matrix0);
 
@@ -42,17 +56,23 @@ describe("Matrix", () => {
         };
 
         /**
-         * Performs a stress run using the given parameters.  'syncProbability' is the probability
-         * that the clients will drain their queue of incoming messages and check for convergence.
+         * Performs a stress run using the given parameters.
+         *
+         * 'syncProbability' is the probability that the clients will drain their queue of incoming messages
+         * and check for convergence.
+         *
+         * 'disconnectProbability' is the probability that a client will disconnect, forcing it to regenerate
+         * and resubmit any pending local operations on the next sync.
          *
          * 'seed' is the 32-bit integer used to seed the PRNG.
          */
-        async function stress(numClients: number, numOps: number, syncProbability: number, seed: number) {
+        async function stress(numClients: number, numOps: number, syncProbability: number, disconnectProbability: number, seed: number) {
             try {
                 matrices = [];
+                runtimes = [];
                 trace = [];
 
-                containerRuntimeFactory = new MockContainerRuntimeFactory();
+                containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
                 // Create matrices for this stress run.
                 for (let i = 0; i < numClients; i++) {
@@ -67,6 +87,7 @@ describe("Matrix", () => {
                     matrixN.connect(servicesN);
 
                     matrices.push(matrixN);
+                    runtimes.push(containerRuntimeN);
                 }
 
                 const matrix0 = matrices[0];
@@ -93,13 +114,13 @@ describe("Matrix", () => {
                 {
                     const rowCount = int32(5);
                     if (rowCount > 0) {
-                        trace?.push(`matrix1.insertRows(0,${rowCount});    // rowCount: ${matrix0.rowCount}, colCount: ${matrix0.colCount}`);
+                        trace?.push(`matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ ${rowCount});    // rowCount: ${matrix0.rowCount}, colCount: ${matrix0.colCount}`);
                         matrix0.insertRows(0, rowCount);
                     }
 
                     const colCount = int32(5);
                     if (colCount > 0) {
-                        trace?.push(`matrix1.insertCols(0,${colCount});    // rowCount: ${matrix0.rowCount}, colCount: ${matrix0.colCount}`);
+                        trace?.push(`matrix1.insertCols(/* colStart: */ 0, /* colCount: */ ${colCount});    // rowCount: ${matrix0.rowCount}, colCount: ${matrix0.colCount}`);
                         matrix0.insertCols(0, colCount);
                     }
 
@@ -136,7 +157,7 @@ describe("Matrix", () => {
                                     ? int32(rowCount - row - 1) + 1
                                     : 1;
 
-                                trace?.push(`matrix${matrixIndex + 1}.removeRows(${row},${numRemoved});    // rowCount: ${matrix.rowCount - numRemoved}, colCount: ${matrix.colCount}`);
+                                trace?.push(`matrix${matrixIndex + 1}.removeRows(/* rowStart: */ ${row}, /* rowCount: */ ${numRemoved});    // rowCount: ${matrix.rowCount - numRemoved}, colCount: ${matrix.colCount}`);
                                 matrix.removeRows(row, numRemoved);
                             }
                             break;
@@ -150,7 +171,7 @@ describe("Matrix", () => {
                                     ? int32(colCount - col - 1) + 1
                                     : 1;
 
-                                trace?.push(`matrix${matrixIndex + 1}.removeCols(${col},${numRemoved});    // rowCount: ${matrix.rowCount}, colCount: ${matrix.colCount - numRemoved}`);
+                                trace?.push(`matrix${matrixIndex + 1}.removeCols(/* colStart: */ ${col}, /* colCount: */ ${numRemoved});    // rowCount: ${matrix.rowCount}, colCount: ${matrix.colCount - numRemoved}`);
                                 matrix.removeCols(col, numRemoved);
                             }
                             break;
@@ -162,7 +183,7 @@ describe("Matrix", () => {
                                 ? int32(3) + 1
                                 : 1;
 
-                            trace?.push(`matrix${matrixIndex + 1}.insertRows(${row},${numInserted});    // rowCount: ${matrix.rowCount + numInserted}, colCount: ${matrix.colCount}`);
+                            trace?.push(`matrix${matrixIndex + 1}.insertRows(/* rowStart: */ ${row}, /* rowCount: */ ${numInserted});    // rowCount: ${matrix.rowCount + numInserted}, colCount: ${matrix.colCount}`);
                             matrix.insertRows(row, numInserted);
 
                             // 90% probability of filling the newly inserted row with values.
@@ -181,7 +202,7 @@ describe("Matrix", () => {
                                 ? int32(3) + 1
                                 : 1;
 
-                            trace?.push(`matrix${matrixIndex + 1}.insertCols(${col},${numInserted});    // rowCount: ${matrix.rowCount}, colCount: ${matrix.colCount + numInserted}`);
+                            trace?.push(`matrix${matrixIndex + 1}.insertCols(/* colStart: */ ${col}, /* colCount: */ ${numInserted});    // rowCount: ${matrix.rowCount}, colCount: ${matrix.colCount + numInserted}`);
                             matrix.insertCols(col, numInserted);
 
                             // 90% probability of filling the newly inserted col with values.
@@ -205,10 +226,15 @@ describe("Matrix", () => {
                         }
                     }
 
+                    if (runtimes[matrixIndex].connected && float64() < disconnectProbability) {
+                        trace?.push(`containerRuntime${matrixIndex + 1}.connected = false;`);
+
+                        runtimes[matrixIndex].connected = false;
+                    }
+
                     // Clients periodically exchanging ops, at which point we verify they have converged
                     // on the same state.
                     if (float64() < syncProbability) {
-                        trace?.push("await expect();");
                         await expect();
                     }
                 }
@@ -221,9 +247,6 @@ describe("Matrix", () => {
                     console.log(s);
                 }
 
-                // Append an 'await expect();' to the log.
-                console.log("await expect();");
-
                 // Also dump the current state of the matrices.
                 for (const m of matrices) {
                     console.log(m.toString());
@@ -234,16 +257,17 @@ describe("Matrix", () => {
             }
         }
 
-        for (const { numClients, numOps, syncProbability, seed } of [
-            { numClients: 2, numOps: 200, syncProbability: 0.3, seed: 0x84d43a0a },
-            { numClients: 3, numOps: 200, syncProbability: 0.1, seed: 0x655c763b },
-            { numClients: 5, numOps: 200, syncProbability: 0.0, seed: 0x2f98736d },
+        for (const { numClients, numOps, syncProbability, disconnectProbability, seed } of [
+            { numClients: 2, numOps: 200, syncProbability: 0.3, disconnectProbability: 0, seed: 0x84d43a0a },
+            { numClients: 3, numOps: 200, syncProbability: 0.1, disconnectProbability: 0, seed: 0x655c763b },
+            { numClients: 5, numOps: 200, syncProbability: 0.0, disconnectProbability: 0, seed: 0x2f98736d },
+            { numClients: 2, numOps: 200, syncProbability: 0.3, disconnectProbability: 1, seed: 0x84d43a0a },
         ]) {
-            it(`Stress (numClients=${numClients} numOps=${numOps} syncProbability=${syncProbability} seed=0x${seed.toString(16).padStart(8, "0")})`,
+            it(`Stress (numClients=${numClients} numOps=${numOps} syncProbability=${syncProbability} disconnectProbability=${disconnectProbability} seed=0x${seed.toString(16).padStart(8, "0")})`,
                 async function () {
                     this.timeout(10000);
 
-                    await stress(numClients, numOps, syncProbability, seed);
+                    await stress(numClients, numOps, syncProbability, disconnectProbability, seed);
                 });
         }
 
@@ -253,7 +277,14 @@ describe("Matrix", () => {
 
             const start = Date.now();
             while (true) {
-                await stress(/* numClients: */ 5, /* numOps: */ 2000, /* syncProbability: */ 0.05, (Math.random() * 0x100000000) >>> 0);
+                await stress(
+                    /* numClients: */ 2,
+                    /* numOps: */ 50,
+                    /* syncProbability: */ 0.3,
+                    /* disconnectProbability: */ 1,
+                    /* seed: */ (Math.random() * 0x100000000) >>> 0
+                );
+
                 console.log(matrices[0].toString());
                 console.log(`Total Elapsed: ${((Date.now() - start) / 1000).toFixed(2)}s\n`)
             }
