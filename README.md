@@ -40,6 +40,8 @@ Here's the breakdown of the repo:
   * [Docs](./docs)
   * [Tools](./tools)
 
+Dependencies between packages in various layers of the system are enforced via a build step called [layer-check](./tools/build-tools/src/layerCheck), you can view the full list of packages and layers in [PACKAGES.md](./docs/PACKAGES.md).
+
 ## Building
 
 In order to build the Fluid Framework, ensure that you have installed [Git](https://git-scm.com/downloads) and [Node.js](https://nodejs.org/).
@@ -61,6 +63,8 @@ Run the following to build the client packages:
 npm install
 npm run build:fast
 ```
+
+See also: [Contributing](#Contributing)
 
 ## Testing
 
@@ -136,9 +140,12 @@ Then:
 
 There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/master/CONTRIBUTING.md) to Fluid.
 
+* Participate in Q&A on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
 * [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
 * Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 * [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/master/CONTRIBUTING.md).
+
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see
 the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com)
