@@ -18,8 +18,6 @@ export interface ITable {
 
     getCellValue(row: number, col: number): TableDocumentItem;
     setCellValue(row: number, col: number, value: TableDocumentItem, properties?: PropertySet);
-    evaluateFormula(formula: string): TableDocumentItem;
-    evaluateCell(row: number, col: number): TableDocumentItem;
     annotateRows(startRow: number, endRow: number, properties: PropertySet, op?: ICombiningOp);
     getRowProperties(row: number): PropertySet;
     annotateCols(startCol: number, endCol: number, properties: PropertySet, op?: ICombiningOp);

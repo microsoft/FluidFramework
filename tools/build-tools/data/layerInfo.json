@@ -64,6 +64,7 @@
                 "deps": [
                     "Protocol-Utils",
                     "Driver-Definitions",
+                    "Telemetry-Utils",
                     "@fluidframework/container-definitions"
                 ]
             },
@@ -90,34 +91,23 @@
                 "deps": [
                     "Other-Utils"
                 ]
-            }
-        }
-    },
-    "Server": {
-        "layers": {
-            "Server-Shared-Utils": {
+            },
+            "Telemetry-Utils": {
                 "packages": [
-                    "@fluidframework/server-services-client"
+                    "@fluidframework/telemetry-utils"
                 ],
                 "deps": [
-                    "Protocol-Utils"
+                    "Base-Utils",
+                    "Base-Definitions"
                 ]
             },
-            "Server-Libs": {
-                "dirs": [
-                    "server/routerlicious/packages/"
-                ],
-                "deps": [
-                    "Protocol-Utils",
-                    "Server-Shared-Utils"
-                ]
-            },
-            "Server-Tools": {
+            "Container-Utils": {
                 "packages": [
-                    "tinylicious"
+                    "@fluidframework/container-utils"
                 ],
                 "deps": [
-                    "Server-Libs"
+                    "Telemetry-Utils",
+                    "Container-Definitions"
                 ]
             }
         }
@@ -141,7 +131,8 @@
                 ],
                 "deps": [
                     "Container-Definitions",
-                    "Driver-Utils"
+                    "Driver-Utils",
+                    "Container-Utils"
                 ]
             },
             "Hosts": {
@@ -164,7 +155,8 @@
                 ],
                 "deps": [
                     "Container-Definitions",
-                    "Driver-Utils"
+                    "Driver-Utils",
+                    "Container-Utils"
                 ]
             },
             "Framework": {
@@ -222,6 +214,35 @@
                 "dirs": [
                     "packages/test/",
                     "examples/hosts/"
+                ]
+            }
+        }
+    },
+    "Server": {
+        "layers": {
+            "Server-Shared-Utils": {
+                "packages": [
+                    "@fluidframework/server-services-client"
+                ],
+                "deps": [
+                    "Protocol-Utils"
+                ]
+            },
+            "Server-Libs": {
+                "dirs": [
+                    "server/routerlicious/packages/"
+                ],
+                "deps": [
+                    "Protocol-Utils",
+                    "Server-Shared-Utils"
+                ]
+            },
+            "Server-Tools": {
+                "packages": [
+                    "tinylicious"
+                ],
+                "deps": [
+                    "Server-Libs"
                 ]
             }
         }

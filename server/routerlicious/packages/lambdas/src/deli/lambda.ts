@@ -278,13 +278,17 @@ export class DeliLambda implements IPartitionLambda {
                     }
                 } else if (message.operation.type === MessageType.ClientJoin) {
                     const clientJoinMessage = systemContent as IClientJoin;
-                    this.clientSeqManager.upsertClient(
+                    const isNewClient = this.clientSeqManager.upsertClient(
                         clientJoinMessage.clientId,
                         0,
                         this.minimumSequenceNumber,
                         message.timestamp,
                         true,
                         clientJoinMessage.detail.scopes);
+                    // Return if the client has already been added due to a prior join message.
+                    if (!isNewClient) {
+                        return;
+                    }
                     this.canClose = false;
                 } else if (message.operation.type === MessageType.Fork) {
                     this.context.log.info(`Fork ${message.documentId} -> ${systemContent.name}`);

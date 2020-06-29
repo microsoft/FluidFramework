@@ -5,6 +5,7 @@
 
 import { KeyCode, Scheduler, Template } from "@fluid-example/flow-util-lib";
 import { colIndexToName, TableDocument } from "@fluid-example/table-document";
+import { ISheetlet, createSheetletProducer } from "@tiny-calc/micro";
 import { BorderRect } from "./borderstyle";
 import * as styles from "./index.css";
 import { TableView } from "./tableview";
@@ -62,14 +63,31 @@ export class GridView {
     ]);
     private readonly maxRows = 10;
 
-    private readonly invalidate: () => void;
+    private readonly invalidate: (op, local) => void;
+
+    private readonly sheetlet: ISheetlet;
 
     constructor(
         private readonly doc: TableDocument,
         private readonly tableView: TableView,
     ) {
         const scheduler = new Scheduler();
-        this.invalidate = scheduler.coalesce(scheduler.onLayout, this.refreshCells);
+
+        const refreshGrid = scheduler.coalesce(scheduler.onLayout, this.refreshCells);
+
+        this.invalidate = (op, local) => {
+            if (!local) {
+                // Temporarily, we invalidate the entire matrix when we receive a remote op.
+                // This can be improved w/the new SparseMatrix, which makes it easier to decode
+                // the range of cells impacted by matrix ops.
+                for (let row = 0; row < this.doc.numRows; row++) {
+                    for (let col = 0; col < this.doc.numCols; col++) {
+                        this.sheetlet.invalidate(row, col);
+                    }
+                }
+            }
+            refreshGrid();
+        };
 
         this.root.addEventListener("click", this.onGridClick as EventListener);
         this.tbody.addEventListener("pointerdown", this.cellPointerDown as EventListener);
@@ -81,6 +99,22 @@ export class GridView {
 
         const blank = headerTemplate.clone();
         this.cols.appendChild(blank);
+
+        const producer = {
+            get rowCount() { return doc.numRows; },
+            get colCount() { return doc.numCols; },
+            getCell: (row, col) => {
+                const raw = doc.getCellValue(row, col);
+                return typeof raw === "object"
+                    ? undefined
+                    : raw;
+            },
+            openMatrix() { return this; },
+            closeMatrix() { },
+            get matrixProducer() { return this; },
+        };
+
+        this.sheetlet = createSheetletProducer(producer);
 
         this.refreshCells();
     }
@@ -94,7 +128,7 @@ export class GridView {
         // While the cell is being edited, we use the <td>'s content to size the table to the
         // formula.  Don't synchronize it now.
         if (this.inputBox.parentElement !== td) {
-            const value = this.doc.evaluateCell(row, col);
+            const value = this.sheetlet.evaluateCell(row, col);
 
             const text = `\u200B${value ?? ""}`;
 
@@ -243,6 +277,7 @@ export class GridView {
             const current = this.parseInput(this.inputBox.value);
             if (previous !== current) {
                 this.doc.setCellValue(row, col, current);
+                this.sheetlet.invalidate(row, col);
             }
             this.refreshCell(maybeParent, row, col);
         }
@@ -396,6 +431,7 @@ export class GridView {
                 if (previous !== current) {
                     selectedCell.textContent = `\u200B${current}`;
                     this.doc.setCellValue(row, col, current);
+                    this.sheetlet.invalidate(row, col);
                 }
             }
         }
@@ -412,9 +448,9 @@ export class GridView {
         const countFormula = `=COUNT(${colStartLetter}${rowStart + 1}:${colEndLetter}${rowEnd + 1})`;
         const sumFormula = `=SUM(${colStartLetter}${rowStart + 1}:${colEndLetter}${rowEnd + 1})`;
 
-        const avg = this.doc.evaluateFormula(averageFormula);
-        const count = this.doc.evaluateFormula(countFormula);
-        const sum = this.doc.evaluateFormula(sumFormula);
+        const avg = this.sheetlet.evaluateFormula(averageFormula);
+        const count = this.sheetlet.evaluateFormula(countFormula);
+        const sum = this.sheetlet.evaluateFormula(sumFormula);
 
         if (count as number > 1) {
             this.tableView.selectionSummary = `Average:${avg} Count:${count} Sum:${sum}`;

@@ -32,6 +32,7 @@ interface IPerson {
 interface IPackage {
     name: string;
     version: string;
+    private: boolean;
     description: string;
     keywords: string[];
     homepage: string;
@@ -105,6 +106,10 @@ export class Package {
         return this.packageJson.version;
     }
 
+    public get isPublished(): boolean {
+        return !this.packageJson.private;
+    }
+
     public get matched() {
         return this._matched;
     }
@@ -123,7 +128,7 @@ export class Package {
     }
 
     public get dependencies() {
-        return this.packageJson.dependencies ? Object.keys(this.packageJson.dependencies) : [];
+        return Object.keys(this.packageJson.dependencies ?? {});
     }
 
     public get combinedDependencies() {
@@ -240,6 +245,9 @@ async function queueExec<TItem, TResult>(items: Iterable<TItem>, exec: (item: TI
 }
 
 export class Packages {
+    public constructor(public readonly packages: Package[]) {
+    }
+
     public static loadDir(dir: string, monoRepo?: MonoRepo, ignoreDirs?: string[]) {
         const packageJsonFileName = path.join(dir, "package.json");
         if (existsSync(packageJsonFileName)) {
@@ -255,9 +263,6 @@ export class Packages {
             }
         });
         return packages;
-    }
-
-    public constructor(public readonly packages: Package[]) {
     }
 
     public async cleanNodeModules() {
