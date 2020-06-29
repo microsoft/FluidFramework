@@ -7,8 +7,9 @@ import { LayerGraph } from "./layerGraph";
 import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { writeFileAsync } from "../common/utils";
+import { writeFileAsync, appendFileAsync } from "../common/utils";
 import { FluidRepoBase } from "../common/fluidRepoBase";
+import path from "path";
 
 function printUsage() {
     console.log(
@@ -16,11 +17,15 @@ function printUsage() {
 Usage: fluid-layer-check <options>
 Options:
      --dot <path>     Generate *.dot for GraphViz
+     --md             Generate PACKAGES.md file for human consumption
 ${commonOptionString}
 `);
 }
 
-let dotGraph: string | undefined;
+const packagesMdFileName: string = "PACKAGES.md";
+
+let dotGraphFilePath: string | undefined;
+let writePackagesMd: boolean = false;
 
 function parseOptions(argv: string[]) {
     let error = false;
@@ -44,12 +49,17 @@ function parseOptions(argv: string[]) {
 
         if (arg === "--dot") {
             if (i !== process.argv.length - 1) {
-                dotGraph = process.argv[++i];
+                dotGraphFilePath = process.argv[++i];
                 continue;
             }
             console.error("ERROR: Missing argument for --dot");
             error = true;
             break;
+        }
+
+        if (arg === "--md") {
+            writePackagesMd = true;
+            continue;
         }
 
         console.error(`ERROR: Invalid arguments ${arg}`);
@@ -77,8 +87,15 @@ async function main() {
     try {
         const layerGraph = LayerGraph.load(resolvedRoot, packages);
 
-        if (dotGraph !== undefined) {
-            await writeFileAsync(dotGraph, layerGraph.generateDotGraph());
+        // Write human-readable package list organized by layer
+        if (writePackagesMd) {
+            const packagesMdFilePath: string = path.join(resolvedRoot, "docs", packagesMdFileName);
+            await writeFileAsync(packagesMdFilePath, layerGraph.generatePackageLayersMarkdown(resolvedRoot));
+        }
+
+        // Write machine-readable dot file used to render a dependency graph
+        if (dotGraphFilePath !== undefined) {
+            await writeFileAsync(dotGraphFilePath, layerGraph.generateDotGraph());
         }
         const success = layerGraph.verify();
         timer.time("Layer check completed");
