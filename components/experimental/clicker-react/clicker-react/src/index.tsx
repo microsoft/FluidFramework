@@ -30,7 +30,7 @@ export class Clicker extends SyncedComponent {
         // so that it will be created on the first run and be available on our React state
         // We also mark the "incremented" event as we want to update the React state when the counter
         // is incremented to display the new value
-        this.setConfig<CounterState>(
+        this.setConfig<ICounterState>(
             "clicker",
             {
                 syncedStateId: "clicker",
@@ -65,12 +65,12 @@ export class Clicker extends SyncedComponent {
 
 // ----- REACT STUFF -----
 
-interface CounterState {
+interface ICounterState {
     counter?: SharedCounter;
 }
 
-type CounterViewState = IFluidFunctionalComponentViewState & CounterState;
-type CounterFluidState = IFluidFunctionalComponentFluidState & CounterState;
+type CounterViewState = IFluidFunctionalComponentViewState & ICounterState;
+type CounterFluidState = IFluidFunctionalComponentFluidState & ICounterState;
 
 class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
     constructor(props) {
