@@ -37,7 +37,6 @@ export interface ISummarizerNodeProvider {
 
 export interface ISummarizerNode extends ISummarizerNodeProvider {
     readonly referenceSequenceNumber: number;
-    readonly fullPath: string | undefined;
     hasChanged(): boolean;
     invalidate(sequenceNumber: number): void;
     summarize(
@@ -49,6 +48,6 @@ export interface ISummarizerNode extends ISummarizerNodeProvider {
 }
 
 export interface ITrackingSummarizerNode extends ISummarizerNode {
-    prependOutstandingOps(ops: ISequencedDocumentMessage[]): void;
+    prependOutstandingOps(pathParts: string[], outstandingOps: ISequencedDocumentMessage[]): void;
     recordChange(op: ISequencedDocumentMessage): void;
 }

@@ -19,6 +19,7 @@ const outstandingOpsBlobKey = ".outstandingOps";
 
 export interface IDecodedSummary {
     readonly baseSummary: ISnapshotTree;
+    readonly pathParts: string[];
     readonly outstandingOps: ISequencedDocumentMessage[];
 }
 
@@ -29,19 +30,19 @@ export async function decodeSummary(
     const outstandingOpsBlob = snapshot.blobs[outstandingOpsBlobKey];
     const baseSummary = snapshot.trees[baseSummaryTreeKey];
     if (outstandingOpsBlob === undefined && baseSummary === undefined) {
-        return { baseSummary: snapshot, outstandingOps: [] };
+        return { baseSummary: snapshot, pathParts: [], outstandingOps: [] };
     }
 
     assert(outstandingOpsBlob, "Outstanding ops blob missing, but base summary tree exists");
     assert(baseSummary, "Base summary tree missing, but outstanding ops blob exists");
     const outstandingOps = await readAndParseBlob<ISequencedDocumentMessage[]>(outstandingOpsBlob);
-    return { baseSummary, outstandingOps };
+    return { baseSummary, pathParts: [baseSummaryTreeKey], outstandingOps };
 }
 
 class EscapedPath {
-    public readonly path: string;
-    constructor(path: string) {
-        this.path = encodeURIComponent(path);
+    private constructor(public readonly path: string) {}
+    public static create(path: string): EscapedPath {
+        return new EscapedPath(encodeURIComponent(path));
     }
     public toString(): string {
         return this.path;
@@ -57,9 +58,19 @@ interface IEncodedSummary extends ISummaryTreeWithStats {
 
 interface ISummaryNode {
     readonly referenceSequenceNumber: number;
-    readonly fullPath: EscapedPath;
+    readonly basePath: EscapedPath | undefined;
     readonly localPath: EscapedPath;
+    localPathForChildren?: EscapedPath; // defaults to localPath
 }
+
+const getFullPath = (node: ISummaryNode): EscapedPath =>
+    node.basePath?.concat(node.localPath) ?? node.localPath;
+const getLocalPathForChildren = (node: ISummaryNode): EscapedPath =>
+    node.localPathForChildren ?? node.localPath;
+const getFullPathForChildren = (node: ISummaryNode): EscapedPath => {
+    const localPathForChildren = getLocalPathForChildren(node);
+    return node.basePath?.concat(localPathForChildren) ?? localPathForChildren;
+};
 
 function encodeSummary(summaryNode: ISummaryNode, outstandingOps: ISequencedDocumentMessage[]): IEncodedSummary {
     const stats = mergeStats();
@@ -72,7 +83,7 @@ function encodeSummary(summaryNode: ISummaryNode, outstandingOps: ISequencedDocu
             tree: {
                 [baseSummaryTreeKey]: {
                     type: SummaryType.Handle,
-                    handle: summaryNode.fullPath.path,
+                    handle: getFullPath(summaryNode).path,
                     handleType: SummaryType.Tree,
                 },
                 [outstandingOpsBlobKey]: {
@@ -82,7 +93,7 @@ function encodeSummary(summaryNode: ISummaryNode, outstandingOps: ISequencedDocu
             },
         },
         stats,
-        localPath: summaryNode.localPath.concat(new EscapedPath(baseSummaryTreeKey)),
+        localPath: summaryNode.localPath.concat(EscapedPath.create(baseSummaryTreeKey)),
     };
 }
 
@@ -102,19 +113,12 @@ export class SummarizerNode implements ITrackingSummarizerNode {
         return this.latestSummary?.referenceSequenceNumber ?? 0;
     }
 
-    /**
-     * The full path of this node as of the most recent acked summary.
-     * Returns undefined if there is not yet an acked summary.
-     */
-    public get fullPath() {
-        return this.latestSummary?.fullPath?.path;
-    }
-
     private readonly children = new Set<SummarizerNode>();
     private readonly pendingSummaries = new Map<string, ISummaryNode>();
     private outstandingOps: ISequencedDocumentMessage[] = [];
     private wipReferenceSequenceNumber: number | undefined;
-    private wipLocalPath: EscapedPath | undefined;
+    private wipLocalPaths: { forThis: EscapedPath, forChildren?: EscapedPath } | undefined;
+    private wipIsFailure = false;
 
     public startSummary(referenceSequenceNumber: number) {
         assert.strictEqual(
@@ -138,13 +142,13 @@ export class SummarizerNode implements ITrackingSummarizerNode {
         if (!fullTree && !this.hasChanged()) {
             const latestSummary = this.latestSummary;
             if (latestSummary !== undefined) {
-                this.wipLocalPath = latestSummary.localPath;
+                this.wipLocalPaths = { forThis: latestSummary.localPath };
                 const stats = mergeStats();
                 stats.handleNodeCount++;
                 return {
                     summary: {
                         type: SummaryType.Handle,
-                        handle: latestSummary.fullPath.path,
+                        handle: getFullPath(latestSummary).path,
                         handleType: SummaryType.Tree,
                     },
                     stats,
@@ -154,7 +158,7 @@ export class SummarizerNode implements ITrackingSummarizerNode {
 
         try {
             const result = await summarizeInternalFn();
-            this.wipLocalPath = new EscapedPath(result.id);
+            this.wipLocalPaths = { forThis: EscapedPath.create(result.id) };
             return { summary: result.summary, stats: result.stats };
         } catch (error) {
             if (!this.trackChanges || throwOnFailure) {
@@ -167,9 +171,12 @@ export class SummarizerNode implements ITrackingSummarizerNode {
             }
 
             const summary = encodeSummary(latestSummary, this.outstandingOps);
-            this.wipLocalPath = summary.localPath;
-            // TODO: PATH IS WRONG - REUSE VS CHILDREN
-            return summary;
+            this.wipLocalPaths = {
+                forThis: latestSummary.localPath,
+                forChildren: summary.localPath,
+            };
+            this.wipIsFailure = true;
+            return { summary: summary.summary, stats: summary.stats };
         }
     }
 
@@ -177,17 +184,37 @@ export class SummarizerNode implements ITrackingSummarizerNode {
         this.completeSummaryCore(proposalHandle);
     }
 
-    private completeSummaryCore(proposalHandle: string, parentPath?: EscapedPath) {
+    private completeSummaryCore(proposalHandle: string, parentPath?: EscapedPath, parentIsFailure = false) {
         assert(this.wipReferenceSequenceNumber, "Not tracking a summary");
-        assert(this.wipLocalPath, "Tracked summary local path not set");
+        assert(this.wipLocalPaths, "Tracked summary local paths not set");
 
+        let localPathsToUse = this.wipLocalPaths;
+        if (parentIsFailure === true) {
+            if (this.latestSummary !== undefined) {
+                // This case the parent node created a failure summary.
+                // This node and all children should only try to reference their last
+                // good state.
+                localPathsToUse = {
+                    forThis: this.latestSummary.localPath,
+                    forChildren: this.latestSummary.localPathForChildren,
+                };
+            } else {
+                // This case the child is added after the latest non-failure summary.
+                // This node and all children should consider themselves as still not
+                // having a successful summary yet.
+                this.clearSummary();
+                return;
+            }
+        }
         const summary: ISummaryNode = {
             referenceSequenceNumber: this.wipReferenceSequenceNumber,
-            fullPath: parentPath?.concat(this.wipLocalPath) ?? this.wipLocalPath,
-            localPath: this.wipLocalPath,
+            basePath: parentPath,
+            localPath: localPathsToUse.forThis,
+            localPathForChildren: localPathsToUse.forChildren,
         };
+        const fullPathForChildren = getFullPathForChildren(summary);
         for (const child of this.children.values()) {
-            child.completeSummaryCore(proposalHandle, summary.fullPath);
+            child.completeSummaryCore(proposalHandle, fullPathForChildren, this.wipIsFailure || parentIsFailure);
         }
         // Note that this overwrites existing pending summary with
         // the same proposalHandle. If proposalHandle is something like
@@ -201,7 +228,8 @@ export class SummarizerNode implements ITrackingSummarizerNode {
 
     public clearSummary() {
         this.wipReferenceSequenceNumber = undefined;
-        this.wipLocalPath = undefined;
+        this.wipLocalPaths = undefined;
+        this.wipIsFailure = false;
         for (const child of this.children.values()) {
             child.clearSummary();
         }
@@ -238,8 +266,14 @@ export class SummarizerNode implements ITrackingSummarizerNode {
         }
     }
 
-    public prependOutstandingOps(ops: ISequencedDocumentMessage[]): void {
+    public prependOutstandingOps(pathPartsForChildren: string[], ops: ISequencedDocumentMessage[]): void {
         assert(!this.trackChanges, "Should not prepend outstanding ops when trackChanges is disabled");
+        assert(this.latestSummary, "Should have latest summary defined to prepend outstanding ops");
+        let localPathForChildren = this.latestSummary.localPath; // assuming relative; safe assumption
+        for (const pathPart of pathPartsForChildren) {
+            localPathForChildren = localPathForChildren.concat(EscapedPath.create(pathPart));
+        }
+        this.latestSummary.localPathForChildren = localPathForChildren;
         if (ops.length > 0 && this.outstandingOps.length > 0) {
             const newOpsLatestSeq = ops[ops.length - 1].sequenceNumber;
             const prevOpsEarliestSeq = this.outstandingOps[0].sequenceNumber;
@@ -289,8 +323,8 @@ export class SummarizerNode implements ITrackingSummarizerNode {
             changeSequenceNumber,
             {
                 referenceSequenceNumber,
-                fullPath: new EscapedPath(id),
-                localPath: new EscapedPath(id),
+                basePath: undefined,
+                localPath: EscapedPath.create(id),
             },
         );
     }
@@ -310,12 +344,12 @@ export class SummarizerNode implements ITrackingSummarizerNode {
     }
 
     public createChildFromSummary(changeSequenceNumber: number, id: string): ISummarizerNode {
-        const thisFullPath = this.latestSummary?.fullPath;
-        assert(thisFullPath, "Must have previous summary with full path to create child with id");
-        const localPath = new EscapedPath(id);
-        const summary = {
+        const latestSummary = this.latestSummary;
+        assert(latestSummary, "Must have previous summary to create child with id");
+        const localPath = EscapedPath.create(id);
+        const summary: ISummaryNode = {
             referenceSequenceNumber: this.referenceSequenceNumber,
-            fullPath: thisFullPath.concat(localPath),
+            basePath: getFullPathForChildren(latestSummary),
             localPath,
         };
         return this.createChildCore(false, changeSequenceNumber, summary);
@@ -326,12 +360,12 @@ export class SummarizerNode implements ITrackingSummarizerNode {
     }
 
     public createTrackingChildFromSummary(changeSequenceNumber: number, id: string): ITrackingSummarizerNode {
-        const thisFullPath = this.latestSummary?.fullPath;
-        assert(thisFullPath, "Must have previous summary with full path to create child with id");
-        const localPath = new EscapedPath(id);
+        const latestSummary = this.latestSummary;
+        assert(latestSummary, "Must have previous summary to create child with id");
+        const localPath = EscapedPath.create(id);
         const summary = {
             referenceSequenceNumber: this.referenceSequenceNumber,
-            fullPath: thisFullPath.concat(localPath),
+            basePath: getFullPathForChildren(latestSummary),
             localPath,
         };
         return this.createChildCore(true, changeSequenceNumber, summary);

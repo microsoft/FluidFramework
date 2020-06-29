@@ -661,7 +661,7 @@ export class RemotedComponentContext extends ComponentContext {
                 const decodedSummary = await decodeSummary(tree, localReadAndParse);
                 if (decodedSummary) {
                     tree = decodedSummary.baseSummary;
-                    this.summarizerNode.prependOutstandingOps(decodedSummary.outstandingOps);
+                    this.summarizerNode.prependOutstandingOps(decodedSummary.pathParts, decodedSummary.outstandingOps);
                 }
             }
 
