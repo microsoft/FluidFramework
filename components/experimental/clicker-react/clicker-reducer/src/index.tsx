@@ -106,7 +106,7 @@ export class ClickerReducer extends SyncedComponent {
     constructor(props) {
         super(props);
 
-        this.syncedStateConfig.set(
+        this.setFluidConfig<ICounterReducerViewState,ICounterReducerFluidState>(
             "counter-reducer",
             {
                 syncedStateId: "counter-reducer",

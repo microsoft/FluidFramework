@@ -25,7 +25,7 @@ export function useStateFluid<
         syncedStateId,
         syncedComponent,
     } = props;
-    const config = syncedComponent.syncedStateConfig.get(syncedStateId);
+    const config = syncedComponent.getConfig(syncedStateId);
     if (config === undefined) {
         throw Error(`Failed to find configuration for synced state ID: ${syncedStateId}`);
     }

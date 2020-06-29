@@ -22,7 +22,7 @@ export const ClickerFunctionalName = pkg.name as string;
 
 // ----- REACT STUFF -----
 
-interface CounterState {
+interface ICounterState {
     value: number;
 }
 
@@ -30,10 +30,10 @@ interface CounterState {
 
 interface ICounterFunctionalViewState
     extends IFluidFunctionalComponentViewState,
-    CounterState {}
+    ICounterState {}
 interface ICounterFunctionalFluidState
     extends IFluidFunctionalComponentFluidState,
-    CounterState {}
+    ICounterState {}
 
 function CounterReactFunctional(
     props: IFluidProps<
@@ -72,7 +72,7 @@ export class ClickerFunctional extends SyncedComponent {
     constructor(props) {
         super(props);
 
-        this.syncedStateConfig.set(
+        this.setConfig<ICounterState>(
             "counter-context",
             {
                 syncedStateId: "counter-context",

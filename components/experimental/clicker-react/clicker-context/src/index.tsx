@@ -84,7 +84,7 @@ export class ClickerContext extends SyncedComponent {
     constructor(props) {
         super(props);
 
-        this.syncedStateConfig.set(
+        this.setConfig<CounterState>(
             "counter-context",
             {
                 syncedStateId: "counter-context",

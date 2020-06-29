@@ -30,7 +30,7 @@ export class Clicker extends SyncedComponent {
         // so that it will be created on the first run and be available on our React state
         // We also mark the "incremented" event as we want to update the React state when the counter
         // is incremented to display the new value
-        this.syncedStateConfig.set(
+        this.setConfig<CounterState>(
             "clicker",
             {
                 syncedStateId: "clicker",
