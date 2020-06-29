@@ -36,7 +36,7 @@ function applyOperations(sharedString: SharedString, content = sharedString.getL
     }
 }
 
-const mergeTreeSnapshotChunckSize = 5;
+const mergeTreeSnapshotChunkSize = 5;
 
 function generateSnapshotTree(
     containerRuntimeFactory: MockContainerRuntimeFactory,
@@ -66,7 +66,7 @@ function generateSnapshotTree(
     sharedString2.initializeLocal();
     sharedString2.connect(services2);
 
-    while (sharedString.getLength() < mergeTreeSnapshotChunckSize * 3) {
+    while (sharedString.getLength() < mergeTreeSnapshotChunkSize * 3) {
         applyOperations(sharedString);
         containerRuntimeFactory.processAllMessages();
     }
@@ -79,7 +79,7 @@ function generateSnapshotTree(
 describe("SharedString Partial Load", () => {
     it("Validate Full Load", async () => {
         const containerRuntimeFactory = new MockContainerRuntimeFactory();
-        const options = { mergeTreeSnapshotChunckSize };
+        const options = { mergeTreeSnapshotChunkSize };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
         const localComponentRuntime = new MockComponentRuntime();
@@ -100,7 +100,7 @@ describe("SharedString Partial Load", () => {
 
     it("Validate New Format Load", async () => {
         const containerRuntimeFactory = new MockContainerRuntimeFactory();
-        const options = { newMergeTreeSnapshotFormat: true, mergeTreeSnapshotChunckSize };
+        const options = { newMergeTreeSnapshotFormat: true, mergeTreeSnapshotChunkSize };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
         const localComponentRuntime = new MockComponentRuntime();
@@ -124,7 +124,7 @@ describe("SharedString Partial Load", () => {
         const options = {
             newMergeTreeSnapshotFormat: true,
             sequenceInitializeFromHeaderOnly: true,
-            mergeTreeSnapshotChunckSize,
+            mergeTreeSnapshotChunkSize,
         };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
@@ -154,7 +154,7 @@ describe("SharedString Partial Load", () => {
         const options =
             {
                 sequenceInitializeFromHeaderOnly: true,
-                mergeTreeSnapshotChunckSize,
+                mergeTreeSnapshotChunkSize,
             };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
@@ -199,7 +199,7 @@ describe("SharedString Partial Load", () => {
         const options =
             {
                 sequenceInitializeFromHeaderOnly: true,
-                mergeTreeSnapshotChunckSize,
+                mergeTreeSnapshotChunkSize,
             };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
@@ -241,7 +241,7 @@ describe("SharedString Partial Load", () => {
         const options =
             {
                 sequenceInitializeFromHeaderOnly: true,
-                mergeTreeSnapshotChunckSize,
+                mergeTreeSnapshotChunkSize,
             };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 

@@ -38,7 +38,7 @@ export class SnapshotV1 {
     // is really hard to correlate with any actual metric that matters (like bytes over the wire).
     // For test with small number of chunks it would be closer to blob size (before base64 encoding),
     // for very chunky text, blob size can easily be 4x-8x of that number.
-    public static readonly sizeOfChunks: number = 10000;
+    public static readonly chunkSize: number = 10000;
 
     private header: MergeTreeHeaderMetadata;
     private segments: JsonSegmentSpecs[];
@@ -52,7 +52,7 @@ export class SnapshotV1 {
         public filename?: string,
         public onCompletion?: () => void) {
         this.logger = ChildLogger.create(logger, "Snapshot");
-        this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunckSize ?? SnapshotV1.sizeOfChunks;
+        this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotV1.chunkSize;
     }
 
     getSeqLengthSegs(
@@ -84,8 +84,6 @@ export class SnapshotV1 {
      * the summary data rather than JSON.stringify.
      */
     emit(
-        // TODO: Remove unused 'catchUpMsgs' argument once new snapshot format is the default.
-        //       (See https://github.com/microsoft/FluidFramework/issues/84)
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
         bind?: IComponentHandle,

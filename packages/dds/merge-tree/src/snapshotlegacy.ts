@@ -67,7 +67,7 @@ export class SnapshotLegacy {
     constructor(public mergeTree: MergeTree.MergeTree, logger: ITelemetryLogger, public filename?: string,
         public onCompletion?: () => void) {
         this.logger = ChildLogger.create(logger, "Snapshot");
-        this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunckSize ?? SnapshotLegacy.sizeOfFirstChunk;
+        this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotLegacy.sizeOfFirstChunk;
     }
 
     getSeqLengthSegs(

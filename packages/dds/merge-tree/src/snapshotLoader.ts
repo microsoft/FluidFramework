@@ -61,7 +61,12 @@ export class SnapshotLoader {
     ): Promise<ISequencedDocumentMessage[]> {
         const blobsP = services.list("");
         const headerChunk = await headerChunkP;
+
+        // tslint:disable-next-line: no-suspicious-comment
+        // TODO we shouldn't need to wait on the body being complete to finish initialization.
+        // To fully support this we need to be able to process inbound ops for pending segments.
         await this.loadBody(headerChunk, services);
+
         const blobs = await blobsP;
         if (blobs.length === headerChunk.headerMetadata.orderedChunkMetadata.length + 1) {
             headerChunk.headerMetadata.orderedChunkMetadata.forEach(

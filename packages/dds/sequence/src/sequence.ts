@@ -529,10 +529,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             assert(!local, "Unexpected local op when loading not finished");
             this.loadedDeferredIncommingOps.push(message);
         } else {
-            let handled = false;
-            if (message.type === MessageType.Operation) {
-                handled = this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
-            }
+            assert(message.type === MessageType.Operation, "Sequence message not operation");
+
+            const handled = this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
 
             if (!handled) {
                 this.processMergeTreeMsg(message);
