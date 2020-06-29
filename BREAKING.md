@@ -30,7 +30,7 @@ aqueduct-react is actually just a react library and renamed it to reflect such.
 
 ### Sequence snapshot format change
 
-Due to a format change in the in the sequence snapshot format, client's running a version less than 0.19 will not be able to load snapshot generated for any sequences generated in 0.21. This will affect all sequence types include shared strings, and sparese matrix. If you need to support pre-0.19 please contact us for mitigations.
+Due to a change in the sequence's snapshot format clients running a version less than 0.19 will not be able to load snapshots generated in 0.21. This will affect all sequence types includes shared string, and sparse matrix. If you need to support pre-0.19 clients please contact us for mitigations.
 
 ## 0.19 Breaking Changes
 - [Container's "error" event](#Container-Error-Event)
