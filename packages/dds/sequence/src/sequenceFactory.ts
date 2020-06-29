@@ -48,13 +48,13 @@ export class SharedStringFactory implements ISharedObjectFactory {
         id: string,
         services: ISharedObjectServices,
         branchId: string,
-        attributes: IChannelAttributes): Promise<ISharedObject> {
+        attributes: IChannelAttributes): Promise<SharedString> {
         const sharedString = new SharedString(runtime, id, attributes);
         await sharedString.load(branchId, services);
         return sharedString;
     }
 
-    public create(document: IComponentRuntime, id: string): ISharedObject {
+    public create(document: IComponentRuntime, id: string): SharedString {
         const sharedString = new SharedString(document, id, this.attributes);
         sharedString.initializeLocal();
         return sharedString;
