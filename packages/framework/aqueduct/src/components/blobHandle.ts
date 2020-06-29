@@ -10,6 +10,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
+import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { ISharedDirectory } from "@fluidframework/map";
 
 /**
@@ -29,14 +30,30 @@ export class BlobHandle implements IComponentHandle {
     }
 
     constructor(
-        public readonly path: string,
+        public readonly id: string,
         private readonly directory: ISharedDirectory,
         public readonly routeContext: IComponentHandleContext,
     ) {
     }
 
+    /**
+     * Path to the handle context relative to the routeContext
+     * @deprecated Use `id` instead for the path relative to the routeContext.
+     * For absolute path from the Container use `absolutePath`.
+     */
+    public get path() {
+        return this.id;
+    }
+
+    /**
+     * Returns the absolute path for this ComponentHandle.
+     */
+    public get absolutePath(): string {
+        return generateHandleContextPath(this);
+    }
+
     public async get(): Promise<any> {
-        return this.directory.get<string>(this.path);
+        return this.directory.get<string>(this.id);
     }
 
     public attachGraph(): void {

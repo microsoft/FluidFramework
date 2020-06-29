@@ -8,26 +8,8 @@ import {
     IComponentHandleContext,
     IComponentSerializer,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentHandle } from "./componentHandle";
+import { DynamicComponentHandle } from "./dynanmicComponentHandle";
 import { isSerializedHandle } from "./utils";
-
-/**
- * Retrieves the absolute URL for a handle
- */
-function toAbsoluteUrl(handle: IComponentHandle): string {
-    let result = "";
-    let context: IComponentHandleContext | undefined = handle;
-
-    while (context !== undefined) {
-        if (context.path !== "") {
-            result = `/${context.path}${result}`;
-        }
-
-        context = context.routeContext;
-    }
-
-    return result;
-}
 
 /**
  * Component serializer implementation
@@ -85,9 +67,8 @@ export class ComponentSerializer implements IComponentSerializer {
                     }
                 }
 
-                const handle = new ComponentHandle(
-                    absoluteUrl ? value.url.substr(1) : value.url,
-                    absoluteUrl ? root : context);
+                // Create a dynamic component handle that will be used to load the component via call to `get`.
+                const handle = new DynamicComponentHandle(value.url, absoluteUrl ? root : context);
 
                 return handle;
             });
@@ -140,11 +121,8 @@ export class ComponentSerializer implements IComponentSerializer {
     private serializeHandle(handle: IComponentHandle, context: IComponentHandleContext, bind: IComponentHandle) {
         bind.bind(handle);
 
-        // If the handle contexts match then we can store a relative path. Otherwise we convert to an
-        // absolute path.
-        const url = context === handle.routeContext
-            ? handle.path
-            : toAbsoluteUrl(handle);
+        // If the handle contexts match then we can store a relative path. Otherwise we store the absolute path.
+        const url = context === handle.routeContext ? handle.id : handle.absolutePath;
 
         return {
             type: "__fluid_handle__",

@@ -47,7 +47,7 @@ import {
     IInboundSignalMessage,
     SchedulerType,
 } from "@fluidframework/runtime-definitions";
-import { unreachableCase } from "@fluidframework/runtime-utils";
+import { generateHandleContextPath, unreachableCase } from "@fluidframework/runtime-utils";
 import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
@@ -135,8 +135,16 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this._attachState;
     }
 
+    /**
+     * Path to the handle context relative to the routeContext
+     * @deprecated Use `id` instead.
+     */
     public get path(): string {
         return this.id;
+    }
+
+    public get absolutePath(): string {
+        return generateHandleContextPath(this.IComponentHandleContext);
     }
 
     public get routeContext(): IComponentHandleContext {

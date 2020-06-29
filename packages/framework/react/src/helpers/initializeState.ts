@@ -58,8 +58,25 @@ export async function initializeState<
         syncedStateId,
         syncedState,
     );
+<<<<<<< HEAD
     if (componentSchemaHandles?.storedHandleMapHandle.path === undefined) {
         throw Error(`Component schema not initialized prior to render for ${syncedStateId}`);
+=======
+    // TODO #2457 - Move synced state initializing into component lifecycle, expose API for update
+    if (storedFluidStateHandle === undefined) {
+        const storedFluidState = SharedMap.create(dataProps.runtime);
+        dataProps.fluidComponentMap.set(storedFluidState.handle.id, {
+            component: storedFluidState,
+            isRuntimeMap: true,
+        });
+        root.set(`syncedState-${syncedStateId}`, storedFluidState.handle);
+        storedFluidStateHandle = storedFluidState.handle;
+    } else {
+        dataProps.fluidComponentMap.set(storedFluidStateHandle.id, {
+            component: await storedFluidStateHandle.get(),
+            isRuntimeMap: true,
+        });
+>>>>>>> Replaced path with id in IComponentHandleContext and added absolutePath.
     }
     const storedHandleMap = dataProps.fluidComponentMap.get(
         componentSchemaHandles?.storedHandleMapHandle.path,
@@ -67,9 +84,41 @@ export async function initializeState<
     if (storedHandleMap === undefined) {
         throw Error(`Stored handle map not initialized prior to render for ${syncedStateId}`);
     }
+<<<<<<< HEAD
     const unlistenedHandles: IComponentHandle[] = [];
     for (const handle of storedHandleMap.values()) {
         unlistenedHandles.push(handle);
+=======
+
+    for (const key of fluidToView.keys()) {
+        const fluidKey = key as string;
+        const rootKey = fluidToView?.get(fluidKey as keyof SF)?.rootKey;
+        const createCallback = fluidToView?.get(fluidKey as keyof SF)
+            ?.sharedObjectCreate;
+        if (createCallback) {
+            if (fluidStateMap.get(fluidKey) === undefined) {
+                const sharedObject = createCallback(dataProps.runtime);
+                dataProps.fluidComponentMap.set(sharedObject.handle.id, {
+                    component: sharedObject,
+                    listenedEvents: fluidToView?.get(fluidKey as keyof SF)
+                        ?.listenedEvents || ["valueChanged"],
+                });
+                fluidStateMap.set(fluidKey, sharedObject.handle);
+                if (rootKey) {
+                    root.set(rootKey, sharedObject.handle);
+                }
+            } else {
+                const handle = fluidStateMap.get(fluidKey);
+                dataProps.fluidComponentMap.set(handle.path, {
+                    component: await handle.get(),
+                    listenedEvents: fluidToView?.get(fluidKey as keyof SF)
+                        ?.listenedEvents,
+                });
+            }
+        } else if (rootKey) {
+            fluidStateMap.set(fluidKey, root.get(rootKey));
+        }
+>>>>>>> Replaced path with id in IComponentHandleContext and added absolutePath.
     }
 
     const currentFluidState = getFluidState(
@@ -95,9 +144,42 @@ export async function initializeState<
 
     state.isInitialized = true;
     state.syncedStateId = syncedStateId;
+<<<<<<< HEAD
     // Define the synced state callback listener that will be responsible for triggering state updates on synced state
     // value changes
     const syncedStateCallback = (
+=======
+
+    // Add the list of SharedMap handles for the schema and any unlistened handles passed in through the component
+    // map to the list of handles we will fetch and start listening to
+    unlistenedComponentHandles = [
+        ...unlistenedComponentHandles,
+        ...[
+            componentSchemaHandles.componentKeyMapHandle,
+            componentSchemaHandles.fluidMatchingMapHandle,
+            componentSchemaHandles.viewMatchingMapHandle,
+        ],
+    ];
+    const unlistenedMapHandles = [...unlistenedComponentHandles];
+
+    dataProps.fluidComponentMap.forEach((value: IFluidComponent, k) => {
+        if (!value.isListened && value.component?.handle !== undefined) {
+            unlistenedComponentHandles.push(value.component.handle);
+        }
+    });
+
+    // Initialize the FluidComponentMap with our data handles
+    for (const handle of unlistenedMapHandles) {
+        dataProps.fluidComponentMap.set(handle.id, {
+            isListened: false,
+            isRuntimeMap: true,
+            component: await handle.get(),
+        });
+    }
+
+    // Define the root callback listener that will be responsible for triggering state updates on root value changes
+    const initRootCallback = (
+>>>>>>> Replaced path with id in IComponentHandleContext and added absolutePath.
         change: IDirectoryValueChanged,
         local: boolean,
     ) => {

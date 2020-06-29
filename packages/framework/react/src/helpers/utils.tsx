@@ -86,7 +86,7 @@ export const addComponent = async <
         }
         value.component = component;
         value.isListened = true;
-        fluidComponentMap.set(handle.path, value);
+        fluidComponentMap.set(handle.id, value);
     });
 };
 

@@ -70,7 +70,8 @@ describe("ConsensusRegisterCollection", () => {
                 if (handle === undefined) { assert.fail("Need an actual handle to test this case"); }
                 const writeResult = await writeAndProcessMsg("key1", handle);
                 const readValue = crc.read("key1");
-                assert.strictEqual(readValue.path, handle.path);
+                assert.strictEqual(readValue.id, handle.id);
+                assert.strictEqual(readValue.absolutePath, handle.absolutePath);
                 assert.strictEqual(writeResult, true, "No concurrency expected");
             });
 

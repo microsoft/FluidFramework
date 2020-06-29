@@ -373,7 +373,6 @@ export class MockComponentRuntime extends EventEmitter
     public options: any = {};
     public clientId: string | undefined = uuid();
     public readonly parentBranch: string;
-    public readonly path = "";
     public readonly connected = true;
     public readonly leader: boolean;
     public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> = new MockDeltaManager();
@@ -381,6 +380,14 @@ export class MockComponentRuntime extends EventEmitter
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockComponentRuntime");
     private readonly activeDeferred = new Deferred<void>();
     public readonly quorum = new MockQuorum();
+
+    public get path() {
+        return this.id;
+    }
+
+    public get absolutePath() {
+        return this.id;
+    }
 
     private _local = false;
 

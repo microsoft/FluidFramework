@@ -12,6 +12,7 @@ import {
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
+import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
 export class ComponentHandle implements IComponentHandle {
     // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
@@ -28,9 +29,25 @@ export class ComponentHandle implements IComponentHandle {
 
     constructor(
         private readonly value: IComponent,
-        public readonly path: string,
+        public readonly id: string,
         public readonly routeContext: IComponentHandleContext,
     ) {
+    }
+
+    /**
+     * Path to the handle context relative to the routeContext
+     * @deprecated Use `id` instead for the path relative to the routeContext.
+     * For absolute path from the Container use `absolutePath`.
+     */
+    public get path() {
+        return this.id;
+    }
+
+    /**
+     * Returns the absolute path for this ComponentHandle.
+     */
+    public get absolutePath(): string {
+        return generateHandleContextPath(this);
     }
 
     public async get(): Promise<any> {

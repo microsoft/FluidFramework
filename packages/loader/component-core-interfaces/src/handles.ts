@@ -19,8 +19,20 @@ export interface IProvideComponentHandleContext {
 export interface IComponentHandleContext extends IComponentRouter, IProvideComponentHandleContext {
     /**
      * Path to the handle context relative to the routeContext
+     * @deprecated Use `id` instead for the path relative to the routeContext.
+     * For absolute path from the Container use `absolutePath`.
      */
     path: string;
+
+    /**
+     * An id for the IComponentHandleContext.
+     */
+    id: string;
+
+    /**
+     * The absolute path to the handle context from the Container.
+     */
+    absolutePath: string;
 
     /**
      * The parent IComponentHandleContext that has provided a route path to this IComponentHandleContext or undefined

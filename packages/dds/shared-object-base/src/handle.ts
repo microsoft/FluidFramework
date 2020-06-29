@@ -10,6 +10,7 @@ import {
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
+import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { ISharedObject } from "./types";
 
 /**
@@ -41,14 +42,30 @@ export class SharedObjectComponentHandle implements IComponentHandle {
 
     /**
      * @param value - The shared object this handle is for
-     * @param path - An id for the shared object
+     * @param id - An id for the shared object
      * @param routeContext - Component handle context for the container, used to provide request services
      */
     constructor(
         private readonly value: ISharedObject,
-        public readonly path: string,
+        public readonly id: string,
         public readonly routeContext: IComponentHandleContext,
     ) {
+    }
+
+    /**
+     * Path to the handle context relative to the routeContext
+     * @deprecated Use `id` instead for the path relative to the routeContext.
+     * For absolute path from the Container use `absolutePath`.
+     */
+    public get path() {
+        return this.id;
+    }
+
+    /**
+     * Returns the absolute path for this ComponentHandle.
+     */
+    public get absolutePath(): string {
+        return generateHandleContextPath(this);
     }
 
     /**

@@ -50,10 +50,10 @@ export function getFluidState<
             ?.sharedObjectCreate;
         let value = componentState.get(fluidKey);
         if (value && createCallback) {
-            const possibleComponentPath = (value as IComponent)
-                ?.IComponentHandle?.path;
-            if (possibleComponentPath !== undefined) {
-                value = componentMap.get(possibleComponentPath);
+            const possibleComponentId = (value as IComponent)
+                ?.IComponentHandle?.id;
+            if (possibleComponentId !== undefined) {
+                value = componentMap.get(possibleComponentId);
                 fluidState[fluidKey] = value?.component;
             } else {
                 fluidState[fluidKey] = value;

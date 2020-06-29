@@ -12,6 +12,8 @@ import { SummarizerHandle } from "../summarizerHandle";
 
 const mockHandleContext: IComponentHandleContext = {
     path: "",
+    id: "",
+    absolutePath: "",
     isAttached: false,
     IComponentRouter: undefined as any,
     IComponentHandleContext: undefined as any,
