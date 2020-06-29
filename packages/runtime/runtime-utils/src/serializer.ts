@@ -68,7 +68,9 @@ export class ComponentSerializer implements IComponentSerializer {
                 }
 
                 // Create a dynamic component handle that will be used to load the component via call to `get`.
-                const handle = new DynamicComponentHandle(value.url, absoluteUrl ? root : context);
+                const handle = new DynamicComponentHandle(
+                    absoluteUrl ? value.url.substr(1) : value.url,
+                    absoluteUrl ? root : context);
 
                 return handle;
             });

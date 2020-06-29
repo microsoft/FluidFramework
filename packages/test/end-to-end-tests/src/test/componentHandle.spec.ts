@@ -145,8 +145,10 @@ describe("ComponentHandle", () => {
         // Get the handle in the remote client.
         const remoteSharedMapHandle = container2Component1._root.get<IComponentHandle<SharedMap>>("sharedMap");
 
-        // The `id` should be the absolutePath since the two DDSs have different ComponentRuntimes.
-        assert.equal(remoteSharedMapHandle.id, absolutePath, "The remote handle's id is incorrect");
+        // The `id` should be the path relative to the ContainerRuntime since the two DDSs have different
+        // ComponentRuntimes.
+        const expectedId = `${container1Component2._runtime.id}/${sharedMap.id}`;
+        assert.equal(remoteSharedMapHandle.id, expectedId, "The remote handle's id is incorrect");
         assert.equal(remoteSharedMapHandle.absolutePath, absolutePath, "The remote handle's absolutePath is incorrect");
 
         // Get the SharedMap from the handle.
@@ -174,9 +176,9 @@ describe("ComponentHandle", () => {
         const remoteComponentHandle =
             container2Component1._root.get<IComponentHandle<TestFluidComponent>>("component2");
 
-        // The `id` should be the absolutePath since the DDS has a different ComponentRuntime than the Component whose
-        // handle is stored in it.
-        assert.equal(remoteComponentHandle.id, absolutePath, "The remote handle's id is incorrect");
+        // The `id` should be the path relative to the ContainerRuntime since the DDS has a different ComponentRuntime
+        // than the Component whose handle is stored in it.
+        assert.equal(remoteComponentHandle.id, container1Component2._runtime.id, "The remote handle's id is incorrect");
         assert.equal(remoteComponentHandle.absolutePath, absolutePath, "The remote handle's absolutePath is incorrect");
 
         // Get the component from the handle.
