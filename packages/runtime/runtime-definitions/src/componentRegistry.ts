@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IProvideComponentFactory } from "./componentFactory";
+import { IProvideComponentFactory, IProvideCreateComponentWithAny } from "./componentFactory";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideComponentRegistry>> { }
 }
 
-export type ComponentRegistryEntry = Readonly<Partial<IProvideComponentRegistry & IProvideComponentFactory>>;
+export type ComponentRegistryEntry =
+    Readonly<Partial<IProvideComponentRegistry & IProvideComponentFactory & IProvideCreateComponentWithAny>>;
 export type NamedComponentRegistryEntry = [string, Promise<ComponentRegistryEntry>];
 export type NamedComponentRegistryEntries = Iterable<NamedComponentRegistryEntry>;
 

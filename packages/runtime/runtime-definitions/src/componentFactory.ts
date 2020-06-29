@@ -21,7 +21,7 @@ export interface IProvideComponentFactory {
 /**
  * The interface implemented by a component module.
  */
-export interface IComponentFactory extends IProvideComponentFactory, Partial<IProvideCreateComponentWithAny> {
+export interface IComponentFactory extends IProvideComponentFactory {
     /**
      * String that uniquely identifies the type of component created by this factory.
      */
