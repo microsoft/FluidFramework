@@ -158,7 +158,7 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public get isBoundToContainer(): boolean {
-        return this.bindState === BindState.Binded;
+        return this.bindState === BindState.Bound;
     }
 
     // 0.20 back-compat attach
@@ -198,7 +198,7 @@ export abstract class ComponentContext extends EventEmitter implements
             }
             this.bindState = BindState.Binding;
             bindComponent(componentRuntime);
-            this.bindState = BindState.Binded;
+            this.bindState = BindState.Bound;
         };
     }
 
@@ -609,7 +609,7 @@ export class RemotedComponentContext extends ComponentContext {
             storage,
             scope,
             summaryTracker,
-            BindState.Binded,
+            BindState.Bound,
             () => {
                 throw new Error("Already attached");
             },

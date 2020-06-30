@@ -45,7 +45,7 @@ export enum AttachState {
 export enum BindState {
     NotBound = "NotBound",
     Binding = "Binding",
-    Binded = "Binded",
+    Bound = "Bound",
 }
 
 /**

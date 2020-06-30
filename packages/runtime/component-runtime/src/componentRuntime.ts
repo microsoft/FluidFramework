@@ -129,7 +129,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public get isBoundToContainer(): boolean {
-        return this.bindState === BindState.Binded;
+        return this.bindState === BindState.Bound;
     }
 
     public get path(): string {
@@ -206,7 +206,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         }
 
         this.attachListener();
-        this.bindState = existing ? BindState.Binded : BindState.NotBound;
+        this.bindState = existing ? BindState.Bound : BindState.NotBound;
 
         // If it's existing we know it has been attached.
         if (existing) {
@@ -361,7 +361,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             (this.componentContext as any).attach(this);
         }
 
-        this.bindState = BindState.Binded;
+        this.bindState = BindState.Bound;
         this.deferredAttached.resolve();
     }
 
@@ -393,7 +393,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             channel.attach();
         });
 
-        this.bindState = BindState.Binded;
+        this.bindState = BindState.Bound;
         this.deferredAttached.resolve();
         this.localChannelContextQueue.clear();
     }
@@ -599,9 +599,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         channel.handle.attachGraph();
 
         assert(this.isAttached, "Component should be attached to attach the channel.");
-        // Get the object snapshot only if the component is binded and its graph is attached too,
+        // Get the object snapshot only if the component is Bound and its graph is attached too,
         // because if the graph is attaching, then it would get included in the component snapshot.
-        if (this.bindState === BindState.Binded && this.graphAttachState === AttachState.Attached) {
+        if (this.bindState === BindState.Bound && this.graphAttachState === AttachState.Attached) {
             const snapshot = snapshotChannel(channel);
 
             const message: IAttachMessage = {
