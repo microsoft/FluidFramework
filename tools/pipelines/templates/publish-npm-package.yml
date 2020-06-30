@@ -17,7 +17,7 @@ parameters:
 
 jobs:
   - ${{ each feed in parameters.feeds }}:
-    - deployment: publish
+    - deployment: publish_${{ replace(feed.environment, '-', '_') }}
       displayName: Publish ${{ feed.environment }}
       pool: ${{ parameters.pool }}
       environment: ${{ feed.environment }}
