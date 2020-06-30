@@ -10,7 +10,7 @@ import { Loader } from "@fluidframework/container-loader";
 import { OdspDocumentServiceFactory, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 
-import { OdspTokenManager, odspTokensCache } from "@fluidframework/tool-utils";
+import { OdspTokenManager, odspTokensCache, getMicrosoftConfiguration } from "@fluidframework/tool-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, IRunConfig, fluidExport, ILoadTest } from "./loadTestComponent";
 const packageName = `${pkgName}@${pkgVersion}`;
@@ -28,26 +28,6 @@ const codeDetails: IFluidCodeDetails = {
 
 const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 const urlResolver = new OdspDriverUrlResolver();
-
-interface IClientConfig {
-    clientId: string;
-    clientSecret: string;
-}
-const getMicrosoftConfiguration = (): IClientConfig => ({
-    get clientId() {
-        if (process.env.login__microsoft__clientId === undefined) {
-            throw new Error("Client ID environment variable not set: login__microsoft__clientId.");
-        }
-        return process.env.login__microsoft__clientId;
-    },
-    get clientSecret() {
-        if (process.env.login__microsoft__secret === undefined) {
-            throw new Error("Client Secret environment variable not set: login__microsoft__secret.");
-        }
-        return process.env.login__microsoft__secret;
-    },
-});
-
 const odspTokenManager = new OdspTokenManager(odspTokensCache);
 
 const fluidFetchWebNavigator = (url: string) => {
@@ -66,7 +46,7 @@ function createLoader(config: IConfig) {
         new OdspDocumentServiceFactory(
             async (siteUrl: string, refresh) => {
                 const tokens = await odspTokenManager.getOdspTokens(
-                    config.server, // REVIEW
+                    config.server,
                     getMicrosoftConfiguration(),
                     fluidFetchWebNavigator,
                     undefined,
@@ -76,7 +56,7 @@ function createLoader(config: IConfig) {
             },
             async (refresh: boolean) => {
                 const tokens = await odspTokenManager.getPushTokens(
-                    config.server,  // REVIEW
+                    config.server,
                     getMicrosoftConfiguration(),
                     fluidFetchWebNavigator,
                     undefined,
@@ -152,7 +132,7 @@ async function main() {
 
     if (nextArg === "--refresh") {
         await odspTokenManager.getOdspTokens(
-            config.server, // REVIEW
+            config.server,
             getMicrosoftConfiguration(),
             fluidFetchWebNavigator,
             undefined,
@@ -161,7 +141,7 @@ async function main() {
         );
 
         await odspTokenManager.getPushTokens(
-            config.server,  // REVIEW
+            config.server,
             getMicrosoftConfiguration(),
             fluidFetchWebNavigator,
             undefined,
