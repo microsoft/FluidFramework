@@ -72,6 +72,7 @@ import {
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedComponentRegistryEntries,
+    SchedulerType,
 } from "@fluidframework/runtime-definitions";
 import { ComponentSerializer, SummaryTracker, unreachableCase } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -411,7 +412,7 @@ export class ScheduleManager {
     }
 }
 
-export const schedulerId = "_scheduler";
+export const schedulerId = SchedulerType;
 const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length > 0 && request.pathParts[0] === schedulerId) {

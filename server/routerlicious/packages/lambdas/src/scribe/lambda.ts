@@ -69,8 +69,8 @@ export class ScribeLambda extends SequencedLambda {
     // Ref of the last client generated summary
     private lastClientSummaryHead: string;
 
-    // Last incoming op type.
-    private lastOpType: string;
+    // Indicates whether cache needs to be cleaned
+    private clearCache: boolean = false;
 
     constructor(
         protected readonly context: IContext,
@@ -155,6 +155,7 @@ export class ScribeLambda extends SequencedLambda {
                     this.processFromPending(this.minSequenceNumber);
                 }
 
+                this.clearCache = false;
                 if (value.operation.type === MessageType.Summarize) {
                     const summarySequenceNumber = value.operation.sequenceNumber;
                     const summaryRefSeqNumber = value.operation.referenceSequenceNumber;
@@ -210,15 +211,21 @@ export class ScribeLambda extends SequencedLambda {
                         const summarySequenceNumber = value.operation.sequenceNumber;
                         const deliContent = (value.operation as ISequencedDocumentAugmentedMessage).additionalContent;
                         const scribeCheckpoint = this.generateCheckpoint(this.lastOffset);
-                        await this.createServiceSummary(summarySequenceNumber, deliContent, scribeCheckpoint);
-                        this.context.log.info(
-                            `Service summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`);
+                        const success = await this.createServiceSummary(
+                            summarySequenceNumber,
+                            deliContent,
+                            scribeCheckpoint);
+
+                        if (success) {
+                            this.clearCache = true;
+                            this.context.log.info(
+                                `Service summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`);
+                        }
                     }
                 } else if (value.operation.type === MessageType.SummaryAck) {
                     const content = value.operation.contents as ISummaryAck;
                     this.lastClientSummaryHead = content.handle;
                 }
-                this.lastOpType = value.operation.type;
             }
         }
 
@@ -226,7 +233,7 @@ export class ScribeLambda extends SequencedLambda {
         this.checkpointCore(
             checkpoint,
             message,
-            this.generateServiceSummary && this.lastOpType === MessageType.NoClient);
+            this.clearCache);
         this.lastOffset = message.offset;
     }
 
@@ -514,14 +521,14 @@ export class ScribeLambda extends SequencedLambda {
     private async createServiceSummary(
         sequenceNumber: number,
         serviceContent: string,
-        checkpoint: IScribe): Promise<void> {
+        checkpoint: IScribe): Promise<boolean> {
         const existingRef = await this.storage.getRef(encodeURIComponent(this.documentId));
 
         // Client assumes at least one app generated summary. To keep compatibility for now, service summary requires
         // at least one prior client generated summary.
         // TODO: Once clients are updated, we can remove this check.
         if (!existingRef) {
-            return;
+            return false;
         }
 
         // Generate a tree of logTail starting from the last protocol state.
@@ -580,6 +587,7 @@ export class ScribeLambda extends SequencedLambda {
         await this.storage.upsertRef(this.documentId, commit.sha);
 
         await this.sendSummaryConfirmationMessage(sequenceNumber, true);
+        return true;
     }
 
     private async getLogTail(gt: number, lt: number): Promise<ISequencedDocumentMessage[]> {

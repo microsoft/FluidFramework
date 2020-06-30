@@ -108,23 +108,29 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     protected client: MergeTree.Client;
-    protected isLoaded = false;
     // Deferred that triggers once the object is loaded
     protected loadedDeferred = new Deferred<void>();
+    // cache out going ops created when parital loading
+    private readonly loadedDeferredOutgoingOps:
+        [MergeTree.IMergeTreeOp, MergeTree.SegmentGroup | MergeTree.SegmentGroup[]][] = [];
+    // cache incoming ops that arrive when partial loading
+    private deferIncomingOps = true;
+    private readonly loadedDeferredIncommingOps: ISequencedDocumentMessage[] = [];
+
     private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
     private readonly intervalMapKernel: MapKernel;
     constructor(
-        document: IComponentRuntime,
+        private readonly componentRuntime: IComponentRuntime,
         public id: string,
         attributes: IChannelAttributes,
         public readonly segmentFromSpec: (spec: MergeTree.IJSONSegment) => MergeTree.ISegment,
     ) {
-        super(id, document, attributes);
+        super(id, componentRuntime, attributes);
 
         this.client = new MergeTree.Client(
             segmentFromSpec,
             ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
-            document.options);
+            componentRuntime.options);
 
         super.on("newListener", (event) => {
             switch (event) {
@@ -321,7 +327,15 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.handle);
         const metadata = this.client.peekPendingSegmentGroups(
             message.type === MergeTree.MergeTreeDeltaType.GROUP ? message.ops.length : 1);
-        this.submitLocalMessage(translated, metadata);
+
+        // if loading isn't complete, we need to cache
+        // local ops until loading is complete, and then
+        // they will be resent
+        if (!this.loadedDeferred.isCompleted) {
+            this.loadedDeferredOutgoingOps.push([translated, metadata]);
+        } else {
+            this.submitLocalMessage(translated, metadata);
+        }
     }
 
     public addLocalReference(lref) {
@@ -480,25 +494,48 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.intervalMapKernel.populate(data);
 
         try {
-            const msgs = await this.client.load(
+            // this will load the header, and return a promise
+            // that will resolve when the body is loaded
+            // and the catchup ops are avaialible.
+            const { catchupOpsP } = await this.client.load(
                 this.runtime,
                 new ObjectStoragePartition(storage, contentPath),
                 branchId);
-            msgs.forEach((m) => this.processMergeTreeMsg(m));
-            this.loadFinished();
+
+            // setup a promise to process the
+            // catch up ops, and finishing the loading process
+            const loadCatchUpOps = catchupOpsP
+                .then((msgs)=>{
+                    msgs.forEach((m) => this.processMergeTreeMsg(m));
+                    this.loadFinished();
+                })
+                .catch((error)=>{
+                    this.loadFinished(error);
+                });
+            if (this.componentRuntime.options?.sequenceInitializeFromHeaderOnly !== true) {
+                // if we not doing parital load, await the catch up ops,
+                // and the finalization of the load
+                await loadCatchUpOps;
+            }
         } catch (error) {
             this.loadFinished(error);
         }
     }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        let handled = false;
-        if (message.type === MessageType.Operation) {
-            handled = this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
-        }
+        // if loading isn't complete, we need to cache all
+        // incoming ops to be applied after loading is complete
+        if (this.deferIncomingOps) {
+            assert(!local, "Unexpected local op when loading not finished");
+            this.loadedDeferredIncommingOps.push(message);
+        } else {
+            assert(message.type === MessageType.Operation, "Sequence message not operation");
 
-        if (!handled) {
-            this.processMergeTreeMsg(message);
+            const handled = this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
+
+            if (!handled) {
+                this.processMergeTreeMsg(message);
+            }
         }
     }
 
@@ -527,15 +564,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     private snapshotMergeTree(): ITree {
         // Are we fully loaded? If not, things will go south
-        assert(this.isLoaded, "Snapshot called when not fully loaded");
+        assert(this.loadedDeferred.isCompleted, "Snapshot called when not fully loaded");
+        assert(this.runtime.deltaManager, "DeltaManager does not exit");
+        const minSeq = this.runtime.deltaManager.minimumSequenceNumber;
 
-        const minSeq = this.runtime.deltaManager
-            ? this.runtime.deltaManager.minimumSequenceNumber
-            : 0;
-
-        if (this.runtime.deltaManager) {
-            this.processMinSequenceNumberChanged(minSeq);
-        }
+        this.processMinSequenceNumberChanged(minSeq);
 
         this.messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
 
@@ -555,25 +588,29 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
         const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
         let stashMessage = message;
-        if (needsTransformation) {
-            stashMessage = cloneDeep(message);
-            stashMessage.referenceSequenceNumber = message.sequenceNumber - 1;
-            this.on("sequenceDelta", transfromOps);
+        if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
+            if (needsTransformation) {
+                stashMessage = cloneDeep(message);
+                stashMessage.referenceSequenceNumber = message.sequenceNumber - 1;
+                this.on("sequenceDelta", transfromOps);
+            }
         }
 
         this.client.applyMsg(message);
 
-        if (needsTransformation) {
-            this.removeListener("sequenceDelta", transfromOps);
-            stashMessage.contents = ops.length !== 1 ? MergeTree.createGroupOp(...ops) : ops[0];
-        }
+        if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
+            if (needsTransformation) {
+                this.removeListener("sequenceDelta", transfromOps);
+                stashMessage.contents = ops.length !== 1 ? MergeTree.createGroupOp(...ops) : ops[0];
+            }
 
-        this.messagesSinceMSNChange.push(stashMessage);
+            this.messagesSinceMSNChange.push(stashMessage);
 
-        // Do GC every once in a while...
-        if (this.messagesSinceMSNChange.length > 20
-            && this.messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber) {
-            this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
+            // Do GC every once in a while...
+            if (this.messagesSinceMSNChange.length > 20
+                && this.messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber) {
+                this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
+            }
         }
     }
 
@@ -594,14 +631,29 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     private loadFinished(error?: any) {
-        // Initialize the interval collections
-        this.initializeIntervalCollections();
-        if (error) {
-            this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
-            this.loadedDeferred.reject(error);
-        } else {
-            this.isLoaded = true;
-            this.loadedDeferred.resolve();
+        if (!this.loadedDeferred.isCompleted) {
+            // Initialize the interval collections
+            this.initializeIntervalCollections();
+            if (error) {
+                this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
+                this.loadedDeferred.reject(error);
+            } else {
+                // it is important this series remains sychronous
+                // first we stop defering incomming ops, and apply then all
+                this.deferIncomingOps = false;
+                while (this.loadedDeferredIncommingOps.length > 0) {
+                    this.processCore(this.loadedDeferredIncommingOps.shift(), false, undefined);
+                }
+                // then resolve the loaded promise
+                // and resbumit all the outstanding ops, as the snapshot
+                // is fully loaded, and all outstanding ops are applied
+                this.loadedDeferred.resolve();
+
+                while (this.loadedDeferredOutgoingOps.length > 0) {
+                    const opData = this.loadedDeferredOutgoingOps.shift();
+                    this.reSubmitCore(opData[0], opData[1]);
+                }
+            }
         }
     }
 

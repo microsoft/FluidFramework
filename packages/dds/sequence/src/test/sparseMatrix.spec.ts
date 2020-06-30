@@ -146,6 +146,7 @@ describe("SparseMatrix", () => {
                     objectStorage: new MockStorage(),
                 };
                 matrix1 = new SparseMatrix(componentRuntime1, "matrix1", SparseMatrixFactory.Attributes);
+                matrix1.initializeLocal();
                 matrix1.connect(services1);
 
                 // Create and connect the second SparseMatrix.
@@ -156,6 +157,7 @@ describe("SparseMatrix", () => {
                     objectStorage: new MockStorage(),
                 };
                 matrix2 = new SparseMatrix(componentRuntime2, "matrix2", SparseMatrixFactory.Attributes);
+                matrix2.initializeLocal();
                 matrix2.connect(services2);
             });
 
@@ -271,6 +273,7 @@ describe("SparseMatrix", () => {
                     objectStorage: new MockStorage(),
                 };
                 matrix1 = new SparseMatrix(componentRuntime1, "matrix", SparseMatrixFactory.Attributes);
+                matrix1.initializeLocal();
                 matrix1.connect(services1);
 
                 // Create and connect the second SharedMatrix.
@@ -282,6 +285,7 @@ describe("SparseMatrix", () => {
                     objectStorage: new MockStorage(),
                 };
                 matrix2 = new SparseMatrix(componentRuntime2, "matrix2", SparseMatrixFactory.Attributes);
+                matrix2.initializeLocal();
                 matrix2.connect(services2);
             });
 

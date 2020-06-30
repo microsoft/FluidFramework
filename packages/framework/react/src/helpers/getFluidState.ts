@@ -7,47 +7,48 @@ import {
     IComponent,
     IComponentHandle,
 } from "@fluidframework/component-core-interfaces";
-import { ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IViewConverter,
     FluidComponentMap,
     IFluidFunctionalComponentViewState,
     IFluidFunctionalComponentFluidState,
+    ISyncedState,
 } from "..";
 
 /**
- * Return the Fluid state from the root with all handles converted into components
+ * Return the Fluid state from the syncedState with all handles converted into components
  * @param syncedStateId - Unique ID for the synced state of this component
- * @param root - Shared directory the component's synced state is stored on
+ * @param syncedState - Shared directory the component's synced state is stored on
  * @param componentMap - Map of component handle paths to their respective components
- * @param fluidToView - Map of the Fluid state keys contains the optional root key parameter,
- * in case the fluid value is stored in the root under a different key
+ * @param fluidToView - Map of the Fluid state keys contains the optional syncedState key parameter,
+ * in case the fluid value is stored in the syncedState under a different key
  */
-export function getFluidStateFromRoot<
+export function getFluidState<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
 >(
     syncedStateId: string,
-    root: ISharedDirectory,
+    syncedState: ISyncedState,
     componentMap: FluidComponentMap,
     fluidToView?: Map<keyof SF, IViewConverter<SV, SF>>,
 ): SF | undefined {
-    const rootStateHandle = root.get<IComponentHandle<ISharedMap>>(
+    const componentStateHandle = syncedState.get<IComponentHandle<ISharedMap>>(
         `syncedState-${syncedStateId}`,
     );
-    if (rootStateHandle === undefined) {
+    if (componentStateHandle === undefined) {
         return;
     }
-    const rootState = componentMap.get(rootStateHandle.path)
+    const componentState = componentMap.get(componentStateHandle.path)
         ?.component as SharedMap;
-    if (rootState === undefined) {
+    if (componentState === undefined) {
         return;
     }
     const fluidState = {};
-    for (const fluidKey of rootState.keys()) {
+    for (const fluidKey of componentState.keys()) {
         const createCallback = fluidToView?.get(fluidKey as keyof SF)
             ?.sharedObjectCreate;
-        let value = rootState.get(fluidKey);
+        let value = componentState.get(fluidKey);
         if (value && createCallback) {
             const possibleComponentPath = (value as IComponent)
                 ?.IComponentHandle?.path;
