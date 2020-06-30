@@ -313,16 +313,21 @@ export class SummarizerNode implements ITrackingSummarizerNode {
 
     public recordChange(op: ISequencedDocumentMessage): void {
         assert(this.trackChanges, "Should not record changes when trackChanges is disabled");
+        const lastOp = this.outstandingOps[this.outstandingOps.length - 1];
+        if (lastOp !== undefined) {
+            assert(
+                lastOp.sequenceNumber < op.sequenceNumber,
+                `Out of order change recorded: ${lastOp.sequenceNumber} > ${op.sequenceNumber}`,
+            );
+        }
         this.invalidate(op.sequenceNumber);
         this.outstandingOps.push(op);
     }
 
     public invalidate(sequenceNumber: number): void {
-        assert(
-            this._changeSequenceNumber <= sequenceNumber,
-            `Out of order change recorded: ${this._changeSequenceNumber} > ${sequenceNumber}`,
-        );
-        this._changeSequenceNumber = sequenceNumber;
+        if (sequenceNumber > this._changeSequenceNumber) {
+            this._changeSequenceNumber = sequenceNumber;
+        }
     }
 
     public hasChanged(): boolean {
