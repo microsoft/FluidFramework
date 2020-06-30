@@ -347,7 +347,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      * Binds this runtime to the container
      * This includes the following:
      * 1. Sending an Attach op that includes all existing state
-     * 2. Attaching the graph.
+     * 2. Attaching the graph if the component becomes attached.
      */
     public bindToContext() {
         if (this.bindState !== BindState.NotBound) {
