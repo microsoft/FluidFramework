@@ -290,7 +290,7 @@ export class SummarizerNode implements ITrackingSummarizerNode {
     }
 
     public prependOutstandingOps(pathPartsForChildren: string[], ops: ISequencedDocumentMessage[]): void {
-        assert(!this.trackChanges, "Should not prepend outstanding ops when trackChanges is disabled");
+        assert(this.trackChanges, "Should not prepend outstanding ops when trackChanges is disabled");
         assert(this.latestSummary, "Should have latest summary defined to prepend outstanding ops");
         let localPathForChildren = this.latestSummary.localPath; // assuming relative; safe assumption
         for (const pathPart of pathPartsForChildren) {
@@ -309,7 +309,7 @@ export class SummarizerNode implements ITrackingSummarizerNode {
     }
 
     public recordChange(op: ISequencedDocumentMessage): void {
-        assert(!this.trackChanges, "Should not record changes when trackChanges is disabled");
+        assert(this.trackChanges, "Should not record changes when trackChanges is disabled");
         this.invalidate(op.sequenceNumber);
         this.outstandingOps.push(op);
     }
