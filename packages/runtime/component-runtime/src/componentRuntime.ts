@@ -129,7 +129,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this.componentContext.isAttached && this.bindState !== BindState.NotBound;
     }
 
-    public get isBoundToContainer(): boolean {
+    public get isBoundToContext(): boolean {
         return this.bindState === BindState.Bound;
     }
 
@@ -530,7 +530,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             .filter(([key, value]) =>
                 // If the object is registered - and we have received the sequenced op creating the object
                 // (i.e. it has a base mapping) - then we go ahead and snapshot
-                value.isBoundToComponent(),
+                value.isBoundToContext(),
             )
             .map(async ([key, value]) => {
                 const snapshot = await value.snapshot(fullTree);
@@ -556,7 +556,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 throw new Error("Should only be called with local channel handles");
             }
 
-            if (value.isBoundToComponent()) {
+            if (value.isBoundToContext()) {
                 const snapshot = value.getAttachSnapshot();
 
                 // And then store the tree

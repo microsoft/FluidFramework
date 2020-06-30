@@ -157,7 +157,7 @@ export abstract class ComponentContext extends EventEmitter implements
         return this.bindState !== BindState.NotBound && this.containerRuntime.isAttached();
     }
 
-    public get isBoundToContainer(): boolean {
+    public get isBoundToContext(): boolean {
         return this.bindState === BindState.Bound;
     }
 

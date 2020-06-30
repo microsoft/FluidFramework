@@ -48,8 +48,8 @@ export class LocalChannelContext implements IChannelContext {
         return this.channel;
     }
 
-    public isBoundToComponent(): boolean {
-        return this.channel.isBoundToComponent();
+    public isBoundToContext(): boolean {
+        return this.channel.isBoundToContext();
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {

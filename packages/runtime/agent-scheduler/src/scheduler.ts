@@ -265,7 +265,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             }
         });
 
-        if (!this.runtime.isBoundToContainer) {
+        if (!this.runtime.isBoundToContext) {
             this.runtime.waitAttached().then(() => {
                 this.clearRunningTasks();
             }).catch((error) => {
@@ -320,7 +320,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     private isActive() {
-        if (!this.runtime.isBoundToContainer) {
+        if (!this.runtime.isBoundToContext) {
             return true;
         }
         if (!this.runtime.connected) {

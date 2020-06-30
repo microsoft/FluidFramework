@@ -99,20 +99,20 @@ import { SharedMap } from "@fluidframework/map";
 
             assert.strictEqual(component2.runtime.isAttached, false,
                 createTestStatementForAttachedDetached("Component2", false));
-            assert.strictEqual(component2.runtime.isBoundToContainer, false, "Component2 should be unbound");
+            assert.strictEqual(component2.runtime.isBoundToContext, false, "Component2 should be unbound");
 
             // Create a channel
             const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel.isBoundToComponent(), false, "Channel should be unregistered");
+            assert.strictEqual(channel.isBoundToContext(), false, "Channel should be unregistered");
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             component2RuntimeChannel.bindToContext();
 
             assert.strictEqual(component2.runtime.isAttached, isAttached,
                 createTestStatementForAttachedDetached("Component2", isAttached));
-            assert.strictEqual(component2.runtime.isBoundToContainer, true, "Component2 should be bound");
+            assert.strictEqual(component2.runtime.isBoundToContext, true, "Component2 should be bound");
 
-            assert.strictEqual(channel.isBoundToComponent(), false,
+            assert.strictEqual(channel.isBoundToContext(), false,
                 "Channel should not be registered as it was not registered");
             assert.strictEqual(channel.handle.isAttached, false,
                 "Channel should not be attached as it was not registered");
@@ -131,21 +131,21 @@ import { SharedMap } from "@fluidframework/map";
             const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
             assert.strictEqual(component2.runtime.isAttached, false,
                 createTestStatementForAttachedDetached("Component2", false));
-            assert.strictEqual(component2.runtime.isBoundToContainer, false, "Component2 should be unbound");
+            assert.strictEqual(component2.runtime.isBoundToContext, false, "Component2 should be unbound");
 
             // Create a channel
             const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel.isBoundToComponent(), false, "Channel should be unregistered");
+            assert.strictEqual(channel.isBoundToContext(), false, "Channel should be unregistered");
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             // Now register the channel
             (await channel.handle.get() as SharedObject).bindToContext();
-            assert.strictEqual(channel.isBoundToComponent(), true, "Channel should be registered");
+            assert.strictEqual(channel.isBoundToContext(), true, "Channel should be registered");
             component2RuntimeChannel.bindToContext();
 
             assert.strictEqual(component2.runtime.isAttached, isAttached,
                 createTestStatementForAttachedDetached("Component2", isAttached));
-            assert.strictEqual(component2.runtime.isBoundToContainer, true, "Component2 should be bound");
+            assert.strictEqual(component2.runtime.isBoundToContext, true, "Component2 should be bound");
 
             // Channel should get attached as it was registered to its component
             assert.strictEqual(channel.handle.isAttached, isAttached,
@@ -164,15 +164,15 @@ import { SharedMap } from "@fluidframework/map";
             const component2 = peerComponent.peerComponent;
             assert.strictEqual(component2.runtime.isAttached, false,
                 createTestStatementForAttachedDetached("Component2", false));
-            assert.strictEqual(component2.runtime.isBoundToContainer, false, "Component2 should be unbound");
+            assert.strictEqual(component2.runtime.isBoundToContext, false, "Component2 should be unbound");
 
             // Create a channel
             const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel.isBoundToComponent(), false, "Channel should be unregistered");
+            assert.strictEqual(channel.isBoundToContext(), false, "Channel should be unregistered");
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             channel.handle.attachGraph();
-            assert.strictEqual(channel.isBoundToComponent(), true,
+            assert.strictEqual(channel.isBoundToContext(), true,
                 createTestStatementForAttachedDetached("Channel", isAttached));
 
             // Channel should get attached as it was registered to its component
@@ -180,7 +180,7 @@ import { SharedMap } from "@fluidframework/map";
 
             assert.strictEqual(component2.runtime.isAttached, isAttached,
                 createTestStatementForAttachedDetached("Component2", isAttached));
-            assert.strictEqual(component2.runtime.isBoundToContainer, true, "Component2 should be bound");
+            assert.strictEqual(component2.runtime.isBoundToContext, true, "Component2 should be bound");
         });
 
         it("Sticking handle in attached dds should attach the DDS in attached container", async () => {
@@ -196,11 +196,11 @@ import { SharedMap } from "@fluidframework/map";
             const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
             assert.strictEqual(component2.runtime.isAttached, false,
                 createTestStatementForAttachedDetached("Component2", false));
-            assert.strictEqual(component2.runtime.isBoundToContainer, false, "Component2 should be NotBound");
+            assert.strictEqual(component2.runtime.isBoundToContext, false, "Component2 should be NotBound");
 
             // Create a channel
             const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel.isBoundToComponent(), false, "Channel should be unregistered");
+            assert.strictEqual(channel.isBoundToContext(), false, "Channel should be unregistered");
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             component2RuntimeChannel.bindToContext();
@@ -208,13 +208,13 @@ import { SharedMap } from "@fluidframework/map";
             const rootOfComponent2 = await component2.runtime.getChannel("root") as SharedMap;
             const testChannelOfComponent2 = await component2.runtime.getChannel("test1");
 
-            assert.strictEqual(rootOfComponent2.isBoundToComponent(), true,
+            assert.strictEqual(rootOfComponent2.isBoundToContext(), true,
                 "Root Channel should be bound");
-            assert.strictEqual(testChannelOfComponent2.isBoundToComponent(), false,
+            assert.strictEqual(testChannelOfComponent2.isBoundToContext(), false,
                 "Test Channel should not be bound");
             rootOfComponent2.set("test1handle", channel.handle);
 
-            assert.strictEqual(testChannelOfComponent2.isBoundToComponent(), isAttached,
+            assert.strictEqual(testChannelOfComponent2.isBoundToContext(), isAttached,
                 "Test Channel should be bound only in attached container after sticking it in bounded dds");
         });
 
@@ -232,17 +232,17 @@ import { SharedMap } from "@fluidframework/map";
 
             assert.strictEqual(component2.runtime.isAttached, false,
                 createTestStatementForAttachedDetached("Component2", false));
-            assert.strictEqual(component2.runtime.isBoundToContainer, false, "Component2 should be NotBound");
+            assert.strictEqual(component2.runtime.isBoundToContext, false, "Component2 should be NotBound");
 
             // Create a channel
             const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel.isBoundToComponent(), false, "Channel should be unregistered");
+            assert.strictEqual(channel.isBoundToContext(), false, "Channel should be unregistered");
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             component2RuntimeChannel.bindToContext();
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            assert.strictEqual(channel.isBoundToComponent(), true, "Channel should be registered");
+            assert.strictEqual(channel.isBoundToContext(), true, "Channel should be registered");
             assert.strictEqual(channel.handle.isAttached, isAttached,
                 createTestStatementForAttachedDetached("Channel", isAttached));
         });
@@ -264,11 +264,11 @@ import { SharedMap } from "@fluidframework/map";
 
             // Create a channel
             const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel.isBoundToComponent(), false, "Channel should be unregistered");
+            assert.strictEqual(channel.isBoundToContext(), false, "Channel should be unregistered");
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            assert.strictEqual(channel.isBoundToComponent(), true, "Channel should be registered");
+            assert.strictEqual(channel.isBoundToContext(), true, "Channel should be registered");
             assert.strictEqual(channel.handle.isAttached, false,
                 "Channel should not get attached on registering it to unattached component");
         });
@@ -292,12 +292,12 @@ import { SharedMap } from "@fluidframework/map";
 
                 // Create first channel
                 const channel1 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-                assert.strictEqual(channel1.isBoundToComponent(), false, "Channel should be unregistered");
+                assert.strictEqual(channel1.isBoundToContext(), false, "Channel should be unregistered");
                 assert.strictEqual(channel1.handle.isAttached, false, "Channel should be detached");
 
                 // Create second channel
                 const channel2 = component2.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
-                assert.strictEqual(channel2.isBoundToComponent(), false, "Channel should be unregistered");
+                assert.strictEqual(channel2.isBoundToContext(), false, "Channel should be unregistered");
                 assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
 
                 // Now register both dds to parent component
@@ -312,9 +312,9 @@ import { SharedMap } from "@fluidframework/map";
 
                 // Now attach the component2. Currently this will end up in infinite loop.
                 component2RuntimeChannel.bindToContext();
-                assert.strictEqual(testChannel1OfComponent2.isBoundToComponent(), true,
+                assert.strictEqual(testChannel1OfComponent2.isBoundToContext(), true,
                     "Test Channel 1 should be bound now after attaching parent component");
-                assert.strictEqual(testChannel2OfComponent2.isBoundToComponent(), true,
+                assert.strictEqual(testChannel2OfComponent2.isBoundToContext(), true,
                     "Test Channel 2 should be bound now after attaching parent component");
                 assert.strictEqual(testChannel1OfComponent2.handle.isAttached, isAttached,
                     createTestStatementForAttachedDetached("Test Channel 1", isAttached));
@@ -340,12 +340,12 @@ import { SharedMap } from "@fluidframework/map";
 
                 // Create first channel
                 const channel1 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-                assert.strictEqual(channel1.isBoundToComponent(), false, "Channel should be unregistered");
+                assert.strictEqual(channel1.isBoundToContext(), false, "Channel should be unregistered");
                 assert.strictEqual(channel1.handle.isAttached, false, "Channel should be detached");
 
                 // Create second channel
                 const channel2 = component2.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
-                assert.strictEqual(channel2.isBoundToComponent(), false, "Channel should be unregistered");
+                assert.strictEqual(channel2.isBoundToContext(), false, "Channel should be unregistered");
                 assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
 
                 // Now register both dds to parent component
@@ -359,9 +359,9 @@ import { SharedMap } from "@fluidframework/map";
                 testChannel2OfComponent2.set("test1handle", channel1.handle);
 
                 channel1.handle.attachGraph();
-                assert.strictEqual(testChannel1OfComponent2.isBoundToComponent(), true,
+                assert.strictEqual(testChannel1OfComponent2.isBoundToContext(), true,
                     "Test Channel 1 should be bound now after attaching graph it");
-                assert.strictEqual(testChannel2OfComponent2.isBoundToComponent(), true,
+                assert.strictEqual(testChannel2OfComponent2.isBoundToContext(), true,
                     "Test Channel 2 should be bound now after attaching other DDS");
             });
 
@@ -386,16 +386,16 @@ import { SharedMap } from "@fluidframework/map";
                 const component3 = peerComponent2.peerComponent;
                 assert.strictEqual(component3.runtime.isAttached, false,
                     createTestStatementForAttachedDetached("Component2", false));
-                assert.strictEqual(component3.runtime.isBoundToContainer, false, "Component2 should be unbound");
+                assert.strictEqual(component3.runtime.isBoundToContext, false, "Component2 should be unbound");
 
                 // Create first channel from component2
                 const channel2 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-                assert.strictEqual(channel2.isBoundToComponent(), false, "Channel should be unregistered");
+                assert.strictEqual(channel2.isBoundToContext(), false, "Channel should be unregistered");
                 assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
 
                 // Create second channel from component 3
                 const channel3 = component3.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
-                assert.strictEqual(channel3.isBoundToComponent(), false, "Channel should be unregistered");
+                assert.strictEqual(channel3.isBoundToContext(), false, "Channel should be unregistered");
                 assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
 
                 const testChannelOfComponent2 = await component2.runtime.getChannel("test1") as SharedMap;
@@ -406,12 +406,12 @@ import { SharedMap } from "@fluidframework/map";
 
                 // Currently it will go in infinite loop.
                 channel2.handle.attachGraph();
-                assert.strictEqual(testChannelOfComponent2.isBoundToComponent(), true,
+                assert.strictEqual(testChannelOfComponent2.isBoundToContext(), true,
                     "Test Channel 1 should be bound now after attaching it");
-                assert.strictEqual(testChannelOfComponent3.isBoundToComponent(), true,
+                assert.strictEqual(testChannelOfComponent3.isBoundToContext(), true,
                     "Test Channel 2 should be bound now after attaching other DDS");
-                assert.strictEqual(component2.runtime.isBoundToContainer, true, "Component 2 should have get bound");
-                assert.strictEqual(component3.runtime.isBoundToContainer, true, "Component 3 should have get bound");
+                assert.strictEqual(component2.runtime.isBoundToContext, true, "Component 2 should have get bound");
+                assert.strictEqual(component3.runtime.isBoundToContext, true, "Component 3 should have get bound");
             });
 
         it("Stick handle of 2 different components and dds in each other and then attaching 1 component should " +
@@ -435,12 +435,12 @@ import { SharedMap } from "@fluidframework/map";
 
                 // Create first channel from component2
                 const channel2 = await component2.getSharedObject<SharedMap>(mapId1);
-                assert.strictEqual(channel2.isBoundToComponent(), false, "Channel should be unregistered");
+                assert.strictEqual(channel2.isBoundToContext(), false, "Channel should be unregistered");
                 assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
 
                 // Create second channel from component 3
                 const channel3 = await component3.getSharedObject<SharedMap>(mapId2);
-                assert.strictEqual(channel3.isBoundToComponent(), false, "Channel should be unregistered");
+                assert.strictEqual(channel3.isBoundToContext(), false, "Channel should be unregistered");
                 assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
 
                 // component2 POINTS TO component3, channel3
@@ -457,9 +457,9 @@ import { SharedMap } from "@fluidframework/map";
                 component3.handle.bind(channel2.handle);
 
                 component2.handle.attachGraph();
-                assert.strictEqual(channel2.isBoundToComponent(), true,
+                assert.strictEqual(channel2.isBoundToContext(), true,
                     "Test Channel 2 should be bound now after attaching it");
-                assert.strictEqual(channel3.isBoundToComponent(), true,
+                assert.strictEqual(channel3.isBoundToContext(), true,
                     "Test Channel 3 should be bound now after attaching other DDS");
                 assert.strictEqual(component2.handle.isAttached, isAttached,
                     createTestStatementForAttachedDetached("Component2", isAttached));
@@ -492,25 +492,25 @@ import { SharedMap } from "@fluidframework/map";
 
                 // Create two channel from component2
                 const channel1OfComponent2 = await component2.getSharedObject<SharedMap>(mapId1);
-                assert.strictEqual(channel1OfComponent2.isBoundToComponent(), false, "Channel should be unregistered");
+                assert.strictEqual(channel1OfComponent2.isBoundToContext(), false, "Channel should be unregistered");
                 assert.strictEqual(channel1OfComponent2.handle.isAttached, false, "Channel should be detached");
 
                 const channel2OfComponent2 = await component2.getSharedObject<SharedMap>(mapId2);
-                assert.strictEqual(channel2OfComponent2.isBoundToComponent(), false, "Channel should be unregistered");
+                assert.strictEqual(channel2OfComponent2.isBoundToContext(), false, "Channel should be unregistered");
                 assert.strictEqual(channel2OfComponent2.handle.isAttached, false, "Channel should be detached");
 
                 // Create two channel from component 3
                 const channel1OfComponent3 = await component3.getSharedObject<SharedMap>(mapId1);
-                assert.strictEqual(channel1OfComponent3.isBoundToComponent(), false, "Channel should be unregistered");
+                assert.strictEqual(channel1OfComponent3.isBoundToContext(), false, "Channel should be unregistered");
                 assert.strictEqual(channel1OfComponent3.handle.isAttached, false, "Channel should be detached");
 
                 const channel2OfComponent3 = await component3.getSharedObject<SharedMap>(mapId2);
-                assert.strictEqual(channel2OfComponent3.isBoundToComponent(), false, "Channel should be unregistered");
+                assert.strictEqual(channel2OfComponent3.isBoundToContext(), false, "Channel should be unregistered");
                 assert.strictEqual(channel2OfComponent3.handle.isAttached, false, "Channel should be detached");
 
                 // Create one channel from component 4
                 const channel1OfComponent4 = await component4.getSharedObject<SharedMap>(mapId1);
-                assert.strictEqual(channel1OfComponent4.isBoundToComponent(), false, "Channel should be unregistered");
+                assert.strictEqual(channel1OfComponent4.isBoundToContext(), false, "Channel should be unregistered");
                 assert.strictEqual(channel1OfComponent4.handle.isAttached, false, "Channel should be detached");
 
                 channel2OfComponent2.set("componet3Handle", component3.handle);
@@ -526,14 +526,14 @@ import { SharedMap } from "@fluidframework/map";
                 channel1OfComponent2.handle.attachGraph();
 
                 // Everything should be attached except channel 1 of component 4
-                assert.strictEqual(channel1OfComponent2.isBoundToComponent(), true, "Test Channel 12 should be bound");
-                assert.strictEqual(channel2OfComponent2.isBoundToComponent(), true, "Test Channel 22 should be bound");
-                assert.strictEqual(channel1OfComponent3.isBoundToComponent(), true, "Test Channel 13 should be bound");
-                assert.strictEqual(channel2OfComponent3.isBoundToComponent(), true, "Test Channel 23 should be bound");
-                assert.strictEqual(component2.isBoundToContainer, true, "Component 2 should have get bound");
-                assert.strictEqual(component3.isBoundToContainer, true, "Component 3 should have get bound");
-                assert.strictEqual(component4.isBoundToContainer, true, "Component 4 should have get bound");
-                assert.strictEqual(channel1OfComponent4.isBoundToComponent(), true, "Test Channel 14 should be bound");
+                assert.strictEqual(channel1OfComponent2.isBoundToContext(), true, "Test Channel 12 should be bound");
+                assert.strictEqual(channel2OfComponent2.isBoundToContext(), true, "Test Channel 22 should be bound");
+                assert.strictEqual(channel1OfComponent3.isBoundToContext(), true, "Test Channel 13 should be bound");
+                assert.strictEqual(channel2OfComponent3.isBoundToContext(), true, "Test Channel 23 should be bound");
+                assert.strictEqual(component2.isBoundToContext, true, "Component 2 should have get bound");
+                assert.strictEqual(component3.isBoundToContext, true, "Component 3 should have get bound");
+                assert.strictEqual(component4.isBoundToContext, true, "Component 4 should have get bound");
+                assert.strictEqual(channel1OfComponent4.isBoundToContext(), true, "Test Channel 14 should be bound");
             });
 
         afterEach(async () => {

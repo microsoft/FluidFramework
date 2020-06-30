@@ -151,7 +151,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).bindToContext}
      */
     public bindToContext(): void {
-        if (this.isBoundToComponent()) {
+        if (this.isBoundToContext()) {
             return;
         }
 
@@ -174,9 +174,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).isBoundToComponent}
+     * {@inheritDoc (ISharedObject:interface).isBoundToContext}
      */
-    public isBoundToComponent(): boolean {
+    public isBoundToContext(): boolean {
         // If the dds is attached to the component then it should be registered irrespective of
         // whether the container is attached/detached. If it is attached to its component, it will
         // have its services. This will lead to get the dds summarized. It should also be registered

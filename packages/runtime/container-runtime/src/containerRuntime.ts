@@ -1287,7 +1287,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.verifyNotClosed();
 
         const context = this.getContext(componentRuntime.id);
-        if (context.isBoundToContainer) {
+        if (context.isBoundToContext) {
             return;
         }
         // If the container is detached, we don't need to send OP or add to pending attach because
@@ -1345,7 +1345,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         Array.from(this.contexts)
             .filter(([key, value]) =>
                 // Take summary of bounded components.
-                value.isBoundToContainer,
+                value.isBoundToContext,
             )
             .map(async ([key, value]) => {
                 const snapshot = value.generateAttachMessage().snapshot;

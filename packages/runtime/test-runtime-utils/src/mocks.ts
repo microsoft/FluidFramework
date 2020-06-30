@@ -405,7 +405,7 @@ export class MockComponentRuntime extends EventEmitter
         return this.activeDeferred.promise;
     }
 
-    public get isBoundToContainer(): boolean {
+    public get isBoundToContext(): boolean {
         return true;
     }
 

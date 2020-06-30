@@ -69,7 +69,7 @@ export class RemoteChannelContext implements IChannelContext {
         return this.channelP;
     }
 
-    public isBoundToComponent(): boolean {
+    public isBoundToContext(): boolean {
         // A remote channel by definition is bound
         return true;
     }

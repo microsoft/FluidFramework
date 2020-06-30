@@ -61,7 +61,7 @@ export interface IComponentRuntime extends
     /**
      * Returns if the runtime is bound to container.
      */
-    isBoundToContainer: boolean;
+    isBoundToContext: boolean;
 
     on(
         event: "disconnected" | "dispose" | "leader" | "notleader" | "collaborating",

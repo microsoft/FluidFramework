@@ -38,7 +38,7 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
      * Returns whether the given shared object is bound to component.
      * @returns True if the given shared object is bound
      */
-    isBoundToComponent(): boolean;
+    isBoundToContext(): boolean;
 
     /**
      * Returns whether the given shared object is attached to storage.
