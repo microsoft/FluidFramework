@@ -9,11 +9,13 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import util from "util";
+import { lock } from "proper-lockfile";
 import { IOdspTokens } from "@fluidframework/odsp-utils";
 
 export interface IAsyncCache<K, T> {
     get(key: K): Promise<T | undefined>;
     save(key: K, value: T): Promise<void>;
+    lock<T2>(callback: () => Promise<T2>): Promise<T2>;
 }
 
 interface IResources {
@@ -42,4 +44,9 @@ export async function saveRC(rc: IResources) {
     const writeFile = util.promisify(fs.writeFile);
     const content = JSON.stringify(rc, undefined, 2);
     return writeFile(getRCFileName(), Buffer.from(content, "utf8"));
+}
+
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+export async function lockRC() {
+    return lock(getRCFileName());
 }

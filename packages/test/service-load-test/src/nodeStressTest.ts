@@ -70,7 +70,6 @@ function createLoader(config: IConfig) {
                     getMicrosoftConfiguration(),
                     fluidFetchWebNavigator,
                     undefined,
-                    undefined,
                     refresh,
                 );
                 return tokens.accessToken;
@@ -80,7 +79,6 @@ function createLoader(config: IConfig) {
                     config.server,  // REVIEW
                     getMicrosoftConfiguration(),
                     fluidFetchWebNavigator,
-                    undefined,
                     undefined,
                     refresh,
                 );
