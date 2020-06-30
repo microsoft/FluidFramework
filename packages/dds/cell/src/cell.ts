@@ -122,8 +122,8 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
         // Set the value locally.
         this.setCore(value);
 
-        // If we are in local state, don't submit the op.
-        if (this.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.isAttached()) {
             return;
         }
 
@@ -141,8 +141,8 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
         // Delete the value locally.
         this.deleteCore();
 
-        // If we are in local state, don't submit the op.
-        if (this.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.isAttached()) {
             return;
         }
 
@@ -222,7 +222,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      */
     protected registerCore() {
         if (SharedObject.is(this.data)) {
-            this.data.register();
+            this.data.bindToContext();
         }
     }
 

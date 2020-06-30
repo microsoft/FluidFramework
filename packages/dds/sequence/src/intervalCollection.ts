@@ -451,7 +451,7 @@ class IntervalCollectionFactory
             create: createInterval,
         };
         const collection = new IntervalCollection<Interval>(helpers, false, emitter, raw);
-        collection.attach(undefined, "");
+        collection.attachGraph(undefined, "");
         return collection;
     }
 
@@ -680,7 +680,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
         this.savedSerializedIntervals = serializedIntervals;
     }
 
-    public attach(client: MergeTree.Client, label: string) {
+    public attachGraph(client: MergeTree.Client, label: string) {
         if (this.view) {
             throw new Error("Only supports one Sequence attach");
         }

@@ -149,7 +149,7 @@ export class ProseMirror extends EventEmitter
             text.insertText(1, "Hello, world!");
 
             this.root.set("text", text.handle);
-            this.root.register();
+            this.root.bindToContext();
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;

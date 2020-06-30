@@ -9,6 +9,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
+import { AttachState } from "@fluidframework/container-definitions";
 import { ISharedObject } from "./types";
 
 /**
@@ -20,7 +21,8 @@ import { ISharedObject } from "./types";
  * and loads shared object.
  */
 export class SharedObjectComponentHandle implements IComponentHandle {
-    private isHandleAttached: boolean = false;
+    // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
+    private graphAttachState: AttachState = AttachState.Detached;
     /**
      * The set of handles to other shared objects that should be registered before this one.
      */
@@ -34,10 +36,6 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      * Whether services have been attached for the associated shared object.
      */
     public get isAttached(): boolean {
-        // Attached tells if the shared object is attached to parent component. Parent component should also be
-        // attached. It does not matter if the container is live or local.
-        // If the dds was registered to attached component, it should have get attached and isAttached should
-        // be true in that case.
         return this.value.isAttached();
     }
 
@@ -64,21 +62,22 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      * Attaches all bound handles first (which may in turn attach further handles), then attaches this handle.
      * When attaching the handle, it registers the associated shared object.
      */
-    public attach(): void {
-        // If this handle is already in attaching state in the graph or marked as attached, no need to attach again.
-        if (this.isHandleAttached) {
+    public attachGraph(): void {
+        // If this handle is already in attaching state in the graph or attached, no need to attach again.
+        if (this.graphAttachState !== AttachState.Detached) {
             return;
         }
-        this.isHandleAttached = true;
+        this.graphAttachState = AttachState.Attaching;
         if (this.bound !== undefined) {
             for (const handle of this.bound) {
-                handle.attach();
+                handle.attachGraph();
             }
 
             this.bound = undefined;
         }
-        this.routeContext.attach();
-        this.value.register();
+        this.routeContext.attachGraph();
+        this.value.bindToContext();
+        this.graphAttachState = AttachState.Attached;
     }
 
     /**
@@ -86,8 +85,10 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      * @param handle - The handle to bind
      */
     public bind(handle: IComponentHandle): void {
-        if (this.isAttached) {
-            handle.attach();
+        // If the dds is already attached or its graph is already in attaching or attached state,
+        // then attach the incoming handle too.
+        if (this.isAttached || this.graphAttachState !== AttachState.Detached) {
+            handle.attachGraph();
             return;
         }
         if (this.bound === undefined) {

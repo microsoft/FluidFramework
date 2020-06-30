@@ -405,7 +405,7 @@ export class MockComponentRuntime extends EventEmitter
         return this.activeDeferred.promise;
     }
 
-    public get isAttached(): boolean {
+    public get isBoundToContext(): boolean {
         return true;
     }
 
@@ -416,15 +416,19 @@ export class MockComponentRuntime extends EventEmitter
         return null;
     }
 
-    public isLocal(): boolean {
-        return this.local;
+    public get isAttached(): boolean {
+        return !this.local;
     }
 
-    public registerChannel(channel: IChannel): void {
+    public bindChannel(channel: IChannel): void {
         return;
     }
 
-    public attach(): void {
+    public attachGraph(): void {
+        return;
+    }
+
+    public bindToContext(): void {
         return;
     }
 
