@@ -54,7 +54,8 @@
     "@fluidframework/map": "^0.21.0",
     "@fluidframework/merge-tree": "^0.21.0",
     "@fluidframework/runtime-definitions": "^0.21.0",
-    "@fluidframework/sequence": "^0.21.0"
+    "@fluidframework/sequence": "^0.21.0",
+    "@fluidframework/shared-object-base": "^0.21.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0-0",

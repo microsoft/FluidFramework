@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./sequence";
-export * from "./map";
-export * from "./sharedObject";
+module.exports = {
+    mode: "development",
+    devtool: "inline-source-map"
+};
