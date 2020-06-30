@@ -52,7 +52,7 @@ function CounterReactFunctionalContext(
                     <Consumer>
                         {(context) => (
                             <div>
-                                <span>
+                                <span className="value">
                                     {context.state.value}
                                 </span>
                                 <button

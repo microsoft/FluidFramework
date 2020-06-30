@@ -75,7 +75,7 @@ function CounterReactFunctionalReducer(
 
     return (
         <div>
-            <span>
+            <span className="value">
                 {state.viewState.value}
             </span>
             <button
