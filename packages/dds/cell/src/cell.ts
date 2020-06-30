@@ -222,7 +222,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      */
     protected registerCore() {
         if (SharedObject.is(this.data)) {
-            this.data.bindToComponent();
+            this.data.bindToContext();
         }
     }
 

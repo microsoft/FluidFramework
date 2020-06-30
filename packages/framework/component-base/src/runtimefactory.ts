@@ -75,8 +75,8 @@ export class RuntimeFactory implements IRuntimeFactory {
                 .createComponent(defaultComponentId, this.defaultComponent.type)
                 .then((componentRuntime) => {
                     // 0.20 back-compat attach
-                    if (componentRuntime.bindToContainer !== undefined) {
-                        componentRuntime.bindToContainer();
+                    if (componentRuntime.bindToContext !== undefined) {
+                        componentRuntime.bindToContext();
                     } else {
                         (componentRuntime as any).attach();
                     }

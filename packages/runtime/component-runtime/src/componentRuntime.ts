@@ -338,7 +338,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         });
 
         this.localChannelContextQueue.clear();
-        this.bindToContainer();
+        this.bindToContext();
         this.graphAttachState = AttachState.Attached;
     }
 
@@ -348,14 +348,14 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      * 1. Sending an Attach op that includes all existing state
      * 2. Attaching the graph.
      */
-    public bindToContainer() {
+    public bindToContext() {
         if (this.bindState !== BindState.NotBound) {
             return;
         }
         this.bindState = BindState.Binding;
         // Attach the runtime to the container via this callback
-        if (this.componentContext.bindToContainer !== undefined) {
-            this.componentContext.bindToContainer(this);
+        if (this.componentContext.bindToContext !== undefined) {
+            this.componentContext.bindToContext(this);
         } else {
             // 0.20 back-compat attach
             (this.componentContext as any).attach(this);
@@ -379,8 +379,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         }
 
         // Attach the runtime to the container via this callback
-        if (this.componentContext.bindToContainer !== undefined) {
-            this.componentContext.bindToContainer(this);
+        if (this.componentContext.bindToContext !== undefined) {
+            this.componentContext.bindToContext(this);
         } else {
             // 0.20 back-compat attach
             (this.componentContext as any).attach(this);

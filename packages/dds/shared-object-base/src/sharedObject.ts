@@ -56,7 +56,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     private services: ISharedObjectServices | undefined;
 
     /**
-     * True if bindToComponent() has been called.
+     * True if the dds is bound to its parent.
      */
     private boundToComponent: boolean = false;
 
@@ -148,9 +148,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).bindToComponent}
+     * {@inheritDoc (ISharedObject:interface).bindToContext}
      */
-    public bindToComponent(): void {
+    public bindToContext(): void {
         if (this.isBoundToComponent()) {
             return;
         }

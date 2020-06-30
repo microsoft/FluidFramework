@@ -423,7 +423,7 @@ export class MockComponentRuntime extends EventEmitter
         return;
     }
 
-    public bindToContainer(): void {
+    public bindToContext(): void {
         return;
     }
 

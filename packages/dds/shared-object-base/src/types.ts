@@ -32,7 +32,7 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
      * Binds the given shared object to its containing component runtime, causing it to attach once
      * the runtime attaches.
      */
-    bindToComponent(): void;
+    bindToContext(): void;
 
     /**
      * Returns whether the given shared object is bound to component.

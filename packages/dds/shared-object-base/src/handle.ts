@@ -76,7 +76,7 @@ export class SharedObjectComponentHandle implements IComponentHandle {
             this.bound = undefined;
         }
         this.routeContext.attachGraph();
-        this.value.bindToComponent();
+        this.value.bindToContext();
         this.graphAttachState = AttachState.Attached;
     }
 

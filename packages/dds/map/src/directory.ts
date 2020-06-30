@@ -719,7 +719,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         for (const currentSubDir of subdirsToRegisterFrom) {
             for (const value of currentSubDir.values()) {
                 if (SharedObject.is(value)) {
-                    value.bindToComponent();
+                    value.bindToContext();
                 }
             }
 

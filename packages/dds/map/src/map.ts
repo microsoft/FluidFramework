@@ -369,7 +369,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     protected registerCore() {
         for (const value of this.values()) {
             if (SharedObject.is(value)) {
-                value.bindToComponent();
+                value.bindToContext();
             }
         }
     }

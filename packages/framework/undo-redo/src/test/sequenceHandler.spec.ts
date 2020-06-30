@@ -48,7 +48,7 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 
     beforeEach(() => {
         const componentRuntime = new MockComponentRuntime();
-        componentRuntime.bindToContainer();
+        componentRuntime.bindToContext();
 
         containerRuntimeFactory = new MockContainerRuntimeFactory();
         const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
@@ -59,7 +59,7 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 
         sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
-        sharedString.bindToComponent();
+        sharedString.bindToContext();
         sharedString.connect(services);
 
         undoRedoStack = new UndoRedoStackManager();

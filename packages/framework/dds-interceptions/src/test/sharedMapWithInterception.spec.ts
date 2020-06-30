@@ -33,7 +33,7 @@ describe("Shared Map with Interception", () => {
         beforeEach(() => {
             const componentRuntime = new MockComponentRuntime();
             sharedMap = new SharedMap(documentId, componentRuntime, MapFactory.Attributes);
-            componentRuntime.bindToContainer();
+            componentRuntime.bindToContext();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;

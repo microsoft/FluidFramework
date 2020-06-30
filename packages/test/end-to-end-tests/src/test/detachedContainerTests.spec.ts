@@ -55,7 +55,7 @@ describe("Detached Container", () => {
         type: string,
     ) => {
         const doc = await componentContext.createComponent(componentId, type);
-        doc.bindToContainer();
+        doc.bindToContext();
     });
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
@@ -319,7 +319,7 @@ describe("Detached Container", () => {
         peerComponentRuntimeChannel = await (component.context.containerRuntime as IContainerRuntime)
             .createComponentWithRealizationFn([testComponentType]);
         // Fire attach op
-        peerComponentRuntimeChannel.bindToContainer();
+        peerComponentRuntimeChannel.bindToContext();
         await containerP;
         await defPromise.promise;
     });

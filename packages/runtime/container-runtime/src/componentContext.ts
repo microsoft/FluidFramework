@@ -163,7 +163,7 @@ export abstract class ComponentContext extends EventEmitter implements
 
     // 0.20 back-compat attach
     public readonly attach: (componentRuntime: IComponentRuntimeChannel) => void;
-    public readonly bindToContainer: (componentRuntime: IComponentRuntimeChannel) => void;
+    public readonly bindToContext: (componentRuntime: IComponentRuntimeChannel) => void;
     protected componentRuntime: IComponentRuntimeChannel | undefined;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
@@ -185,10 +185,10 @@ export abstract class ComponentContext extends EventEmitter implements
 
         // 0.20 back-compat attach
         this.attach = (componentRuntime: IComponentRuntimeChannel) => {
-            this.bindToContainer(componentRuntime);
+            this.bindToContext(componentRuntime);
         };
 
-        this.bindToContainer = (componentRuntime: IComponentRuntimeChannel) => {
+        this.bindToContext = (componentRuntime: IComponentRuntimeChannel) => {
             // This needs to be there for back compat reasons because the old component runtime does not
             // have Binding state and it does not stop Binding again while it is Binding.
             // Previosuly that was prevented my container runtime.

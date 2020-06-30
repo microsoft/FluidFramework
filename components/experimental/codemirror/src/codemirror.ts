@@ -250,7 +250,7 @@ export class CodeMirrorComponent
                 { [reservedTileLabelsKey]: ["pg"] });
 
             this.root.set("text", text.handle);
-            this.root.bindToComponent();
+            this.root.bindToContext();
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;

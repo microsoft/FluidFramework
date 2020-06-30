@@ -505,7 +505,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     protected registerCore() {
         for (const value of this.intervalMapKernel.values()) {
             if (SharedObject.is(value)) {
-                value.bindToComponent();
+                value.bindToContext();
             }
         }
 

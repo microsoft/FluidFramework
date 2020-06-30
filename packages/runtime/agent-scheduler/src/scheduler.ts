@@ -40,9 +40,9 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         let scheduler: ConsensusRegisterCollection<string | null>;
         if (!runtime.existing) {
             root = SharedMap.create(runtime, "root");
-            root.bindToComponent();
+            root.bindToContext();
             scheduler = ConsensusRegisterCollection.create(runtime);
-            scheduler.bindToComponent();
+            scheduler.bindToContext();
             root.set("scheduler", scheduler.handle);
         } else {
             root = await runtime.getChannel("root") as ISharedMap;

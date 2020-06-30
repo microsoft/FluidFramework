@@ -34,7 +34,7 @@ const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string)
     if (simpleResult.status !== 200 || simpleResult.mimeType !== "fluid/component") {
         throw new Error("Error in creating the default option picker model.");
     }
-    simpleCoordinateComponentRuntime.bindToContainer();
+    simpleCoordinateComponentRuntime.bindToContext();
     return simpleResult.value as ICoordinate;
 };
 
