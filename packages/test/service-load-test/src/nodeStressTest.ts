@@ -131,6 +131,7 @@ async function main() {
     }
 
     if (nextArg === "--refresh") {
+        console.log("Refreshing tokens");
         await odspTokenManager.getOdspTokens(
             config.server,
             getMicrosoftConfiguration(),

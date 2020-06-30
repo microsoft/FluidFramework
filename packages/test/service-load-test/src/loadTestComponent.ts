@@ -11,9 +11,10 @@ import {
 
 export interface ITestConfig {
     opRatePerMin: number,
-    progressInterval: number,
+    progressIntervalMs: number,
     numClients: number,
-    totalSendCount: number
+    totalSendCount: number,
+    readWriteCycleMs: number,
 }
 
 export interface IRunConfig {
@@ -25,7 +26,7 @@ export interface ILoadTest {
     run(config: IRunConfig): Promise<void>;
 }
 
-const wait = async (time: number) => new Promise((resolve) => setTimeout(resolve, time));
+const wait = async (timeMs: number) => new Promise((resolve) => setTimeout(resolve, timeMs));
 
 class LoadTestComponent extends PrimedComponent implements ILoadTest {
     public static ComponentName = "StressTestComponent";
@@ -38,18 +39,18 @@ class LoadTestComponent extends PrimedComponent implements ILoadTest {
         });
     }
 
-    public async pause(time: number) {
-        const startTime = Date.now();
+    public async pause(timeMs: number) {
+        const startTimeMs = Date.now();
         this.state = "paused";
-        await wait(time);
+        await wait(timeMs);
         this.state = "running";
-        return Date.now() - startTime;
+        return Date.now() - startTimeMs;
     }
 
-    private printStatus(config: IRunConfig, startTime: number, runningStartTime: number) {
+    private printStatus(config: IRunConfig, startTimeMs: number, runningStartTimeMs: number) {
         const now = Date.now();
-        const totalMin = (now - startTime) / 60000;
-        const runningMin = (now - runningStartTime) / 60000;
+        const totalMin = (now - startTimeMs) / 60000;
+        const runningMin = (now - runningStartTimeMs) / 60000;
         const opRate = Math.floor(this.opCount / totalMin);
         const sendRate = Math.floor(this.sentCount / runningMin);
         console.log(
@@ -72,43 +73,51 @@ class LoadTestComponent extends PrimedComponent implements ILoadTest {
             });
         });
         console.log(`${config.runId.toString().padStart(3)}> begin`);
-        const startTime = Date.now();
-        let runningStartTime = startTime;
 
-        // Assuming we want 120 concurrent writers, so we need two set running together
-        // So divide the numClients by two
-        const repeatTime = (config.testConfig.numClients / 2) * 1000;
+        // At every moment, we want half the client to be concurrent writers, and start and stop
+        // in a rotation fashion for every cycle.
+        // To set that up we start each client in a staggered way, each will independently go thru write
+        // and listen cycles
 
-        runningStartTime += await this.pause((config.runId * 1000) % repeatTime);
+        const cycleMs = config.testConfig.readWriteCycleMs;
+
+        // the time gap to start each client over two cycles  (or one full read/write cycle)
+        // to get half the client active at a time
+        const clientStartGapMs = cycleMs * 2 / config.testConfig.numClients;
+
+        const startTimeMs = Date.now();
+        let runningStartTimeMs = startTimeMs + await this.pause(config.runId * clientStartGapMs);
 
         console.log(`${config.runId.toString().padStart(3)}> started`);
 
         let t: NodeJS.Timeout;
         const printProgress = () => {
             if (this.state !== "paused") {
-                this.printStatus(config, startTime, runningStartTime);
+                this.printStatus(config, startTimeMs, runningStartTimeMs);
             }
-            t = setTimeout(printProgress, config.testConfig.progressInterval);
+            t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
         };
-        t = setTimeout(printProgress, config.testConfig.progressInterval);
+        t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
 
-        const opWaitSecond = (60 / config.testConfig.opRatePerMin) * 1000;
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
+        const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
+        const opsGapMs = cycleMs / opsPerCycle;
         while (this.sentCount < clientSendCount) {
             await this.runStep();
-            if (this.sentCount % config.testConfig.opRatePerMin === 0) {
-                // Pause for a min
-                runningStartTime += await this.pause(repeatTime - 60000);  // assume run length is 1 min
+            // Send cycle worth of Ops
+            if (this.sentCount % opsPerCycle === 0) {
+                // Pause writing for cycle before resuming
+                runningStartTimeMs += await this.pause(cycleMs);
             } else {
-                // Wait +- .5s of waitTime
-                await wait(opWaitSecond - 500 + Math.random() * 1000);
+                // Random jitter of +- 50% of opWaitMs
+                await wait(opsGapMs + opsGapMs * (Math.random() - 0.5));
             }
         }
 
         this.state = "stopped";
         clearTimeout(t);
 
-        this.printStatus(config, startTime, runningStartTime);
+        this.printStatus(config, startTimeMs, runningStartTimeMs);
         console.log(`${config.runId.toString().padStart(3)}> finished`);
     }
 

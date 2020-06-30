@@ -106,11 +106,11 @@ export class OdspTokenManager {
             return this.tokenCache.lock(async () => {
                 return this.getTokensCore(
                     isPush, server, clientConfig, initialNavigator,
-                    redirectUriCallback, forceRefresh, forceRefresh);
+                    redirectUriCallback, forceRefresh, forceReauth);
             });
         }
         return this.getTokensCore(isPush, server, clientConfig, initialNavigator,
-            redirectUriCallback, forceRefresh, forceRefresh);
+            redirectUriCallback, forceRefresh, forceReauth);
     }
 
     private async getTokensCore(
