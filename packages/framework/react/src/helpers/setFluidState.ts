@@ -36,7 +36,7 @@ export function setFluidState<SV, SF>(
     const storedStateHandle = syncedState.get<IComponentHandle>(
         `syncedState-${syncedStateId}`,
     );
-    let storedState = componentMap.get(storedStateHandle?.path)
+    let storedState = componentMap.get(storedStateHandle?.absolutePath)
         ?.component as ISharedMap;
     if (storedStateHandle === undefined || storedState === undefined) {
         const newState = SharedMap.create(runtime);

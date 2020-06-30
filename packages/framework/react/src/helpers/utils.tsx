@@ -58,23 +58,23 @@ export const addComponent = async <
     refreshView: () => void,
     storedHandleMap: SharedMap,
 ): Promise<void> => {
-    const maybeValue: IFluidComponent | undefined = fluidComponentMap.get(handle.path);
+    const maybeValue: IFluidComponent | undefined = fluidComponentMap.get(handle.absolutePath);
     let value: IFluidComponent = {
         isListened: false,
         isRuntimeMap: false,
     };
     if (maybeValue === undefined) {
         fluidComponentMap.set(
-            handle.path,
+            handle.absolutePath,
             value,
         );
     } else {
         value = maybeValue;
     }
     value.isListened = false;
-    fluidComponentMap.set(handle.path, value);
-    if (!storedHandleMap.has(handle.path)) {
-        storedHandleMap.set(handle.path, handle);
+    fluidComponentMap.set(handle.absolutePath, value);
+    if (!storedHandleMap.has(handle.absolutePath)) {
+        storedHandleMap.set(handle.absolutePath, handle);
     }
     return handle.get().then((component) => {
         if (value.isRuntimeMap) {

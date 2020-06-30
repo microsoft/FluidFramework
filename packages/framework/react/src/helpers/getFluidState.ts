@@ -39,7 +39,7 @@ export function getFluidState<
     if (componentStateHandle === undefined) {
         return;
     }
-    const componentState = componentMap.get(componentStateHandle.path)
+    const componentState = componentMap.get(componentStateHandle.absolutePath)
         ?.component as SharedMap;
     if (componentState === undefined) {
         return;
