@@ -18,6 +18,7 @@ import {
     IGenericBlob,
     ContainerWarning,
     ILoader,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import {
     DebugLogger,
@@ -418,6 +419,10 @@ export class MockComponentRuntime extends EventEmitter
 
     public get isAttached(): boolean {
         return !this.local;
+    }
+
+    public attachState(): AttachState {
+        return this.local ? AttachState.Detached : AttachState.Attached;
     }
 
     public bindChannel(channel: IChannel): void {

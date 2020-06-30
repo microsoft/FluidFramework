@@ -26,6 +26,7 @@ import {
     IRuntimeState,
     ContainerWarning,
     CriticalContainerError,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
@@ -569,12 +570,18 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.registry;
     }
 
-    public isAttached(): boolean {
-        if (this.context.isAttached !== undefined) {
-            return this.context.isAttached();
+    public attachState(): AttachState {
+        if (this.context.attachState !== undefined) {
+            return this.context.attachState();
+        }
+        let isAttached = false;
+        // 0.20 back-compat isAttached
+        if ((this.context as any).isAttached !== undefined) {
+            isAttached = (this.context as any).isAttached();
         }
         // 0.20 back-compat islocal
-        return !((this.context as any).isLocal() as boolean);
+        isAttached = !(this.context as any).isLocal();
+        return isAttached ? AttachState.Attached : AttachState.Detached;
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
@@ -1293,7 +1300,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients but we do need to submit op if container forced us to do so.
-        if (this.isAttached()) {
+        if (this.attachState() !== AttachState.Detached) {
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);

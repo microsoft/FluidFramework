@@ -20,6 +20,7 @@ import {
     IDeltaManager,
     ContainerWarning,
     ILoader,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -356,9 +357,9 @@ export interface IComponentContext extends EventEmitter {
     setChannelDirty(address: string): void;
 
     /**
-     * It is true if the component is attached or attaching to storage.
+     * Indicates the attachment state of the component to a host service.
      */
-    isAttached: boolean;
+    attachState(): AttachState;
 
     /**
      * Get an absolute url to the containe rbased on the provided relativeUrl.

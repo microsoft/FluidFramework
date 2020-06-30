@@ -16,6 +16,7 @@ import {
     IGenericBlob,
     ContainerWarning,
     ILoader,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
@@ -142,4 +143,9 @@ export interface IComponentRuntime extends
 
     // Returns if the runtime is attached or attaching to storage
     isAttached: boolean;
+
+    /**
+     * Indicates the attachment state of the component to a host service.
+     */
+    attachState(): AttachState;
 }

@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IRequest } from "@fluidframework/component-core-interfaces";
-import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
@@ -90,7 +90,7 @@ describe("Detached Container", () => {
 
     it("Create detached container", async () => {
         const container = await loader.createDetachedContainer(pkg);
-        assert.strictEqual(container.isAttached(), false, "Container should be detached");
+        assert.strictEqual(container.attachState(), AttachState.Detached, "Container should be detached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
         assert.strictEqual(container.getQuorum().getMembers().size, 0, "Quorum should not contain any memebers");
@@ -106,7 +106,7 @@ describe("Detached Container", () => {
     it("Attach detached container", async () => {
         const container = await loader.createDetachedContainer(pkg);
         await container.attach(request);
-        assert.strictEqual(container.isAttached(), true, "Container should be attached");
+        assert.strictEqual(container.attachState(), AttachState.Attached, "Container should be attached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
         assert.strictEqual(container.id, documentId, "Doc id is not matching!!");
@@ -136,7 +136,7 @@ describe("Detached Container", () => {
         const testChannel = await subComponent.runtime.getChannel("root");
         assert.strictEqual(testChannel.isBoundToContext(), true, "Channel should be registered!!");
         assert.strictEqual(testChannel.isAttached(), false, "Channel should be detached!!");
-        assert.strictEqual(subComponent.context.isAttached, false, "Component should be detached!!");
+        assert.strictEqual(subComponent.context.attachState(), AttachState.Detached, "Component should be detached!!");
     });
 
     it("Components in attached container", async () => {
@@ -165,7 +165,7 @@ describe("Detached Container", () => {
         assert.strictEqual(testChannel.isBoundToContext(), true, "Channel should be registered!!");
         assert.strictEqual(testChannel.isAttached(), true, "Channel should be attached!!");
 
-        assert.strictEqual(testComponent.context.isAttached, true, "Component should be attached!!");
+        assert.strictEqual(testComponent.context.attachState(), AttachState.Attached, "Component should be attached!!");
     });
 
     it("Load attached container and check for components", async () => {
