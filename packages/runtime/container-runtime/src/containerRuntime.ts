@@ -690,7 +690,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 this.storage,
                 this.containerScope,
                 this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber),
-                this.summarizerNode.createTrackingChildFromSummary(this.summarizerNode.referenceSequenceNumber, key));
+                this.summarizerNode.createTrackingChild(this.summarizerNode.referenceSequenceNumber, key));
             this.setNewContext(key, componentContext);
         }
 
@@ -1102,7 +1102,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            this.summarizerNode.createTrackingChildWithoutSummary(this.deltaManager.lastSequenceNumber),
+            this.summarizerNode.createTrackingChild(this.deltaManager.lastSequenceNumber, id),
             (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
             props);
 
@@ -1128,7 +1128,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            this.summarizerNode.createTrackingChildWithoutSummary(this.deltaManager.lastSequenceNumber),
+            this.summarizerNode.createTrackingChild(this.deltaManager.lastSequenceNumber, id),
             (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
             undefined /* #1635: Remove LocalComponentContext createProps */);
 
@@ -1262,7 +1262,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             new BlobCacheStorageService(this.storage, flatBlobsP),
             this.containerScope,
             this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
-            this.summarizerNode.createTrackingChildWithoutSummary(message.sequenceNumber),
+            this.summarizerNode.createTrackingChild(message.sequenceNumber, attachMessage.id),
             [attachMessage.type]);
 
         // If a non-local operation then go and create the object, otherwise mark it as officially attached.

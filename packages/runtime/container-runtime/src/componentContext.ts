@@ -40,7 +40,6 @@ import {
     IInboundSignalMessage,
     ISummarizeResult,
     ITrackingSummarizerNode,
-    ISummarizerNode,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker, addBlobToSummary, decodeSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -375,14 +374,6 @@ export abstract class ComponentContext extends EventEmitter implements
         this.componentRuntime!.processSignal(message, local);
     }
 
-    public createChildFromSummary(changeSequenceNumber: number, id: string): ISummarizerNode {
-        return this.summarizerNode.createChildFromSummary(changeSequenceNumber, id);
-    }
-
-    public createChildWithoutSummary(changeSequenceNumber: number): ISummarizerNode {
-        return this.summarizerNode.createChildWithoutSummary(changeSequenceNumber);
-    }
-
     public getQuorum(): IQuorum {
         return this._containerRuntime.getQuorum();
     }
@@ -424,6 +415,7 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public async summarize(fullTree: boolean = false): Promise<ISummarizeResult> {
+        assert(!this.isLocal(), "Should not summarize a local component");
         return this.summarizerNode.summarize(async () => {
             const { pkg } = await this.getInitialSnapshotDetails();
 
@@ -616,6 +608,10 @@ export abstract class ComponentContext extends EventEmitter implements
         if (this._disposed) {
             throw new Error("Context is closed");
         }
+    }
+
+    public createChildSummarizerNode(changeSequenceNumber: number, id: string) {
+        return this.summarizerNode.createChild(changeSequenceNumber, id);
     }
 }
 

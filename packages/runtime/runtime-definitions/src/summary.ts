@@ -30,12 +30,7 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
     id: string;
 }
 
-export interface ISummarizerNodeProvider {
-    createChildFromSummary(changeSequenceNumber: number, id: string): ISummarizerNode;
-    createChildWithoutSummary(changeSequenceNumber: number): ISummarizerNode;
-}
-
-export interface ISummarizerNode extends ISummarizerNodeProvider {
+export interface ISummarizerNode {
     /** Latest successful summary reference sequence number */
     readonly referenceSequenceNumber: number;
     /**
@@ -56,13 +51,14 @@ export interface ISummarizerNode extends ISummarizerNodeProvider {
      * a summary with a pointer to the previous summary + a blob of outstanding ops.
      * @param summarizeInternalFn - internal summarize function
      * @param fullTree - true to skip optimizations and always generate the full tree
+     * @param decodedPathParts - path parts resulting from decoded summary
      */
     summarize(
         summarizeInternalFn: () => Promise<ISummarizeInternalResult>,
         fullTree: boolean,
     ): Promise<ISummarizeResult>;
-    createTrackingChildFromSummary(changeSequenceNumber: number, id: string): ITrackingSummarizerNode;
-    createTrackingChildWithoutSummary(changeSequenceNumber: number): ITrackingSummarizerNode;
+    createChild(changeSequenceNumber: number, id: string): ISummarizerNode;
+    createTrackingChild(changeSequenceNumber: number, id: string): ITrackingSummarizerNode;
 }
 
 export interface ITrackingSummarizerNode extends ISummarizerNode {

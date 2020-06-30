@@ -60,6 +60,13 @@ class EscapedPath {
     public concat(path: EscapedPath): EscapedPath {
         return new EscapedPath(`${this.path}/${path.path}`);
     }
+    public createAndConcat(pathParts: string[]): EscapedPath {
+        let ret = EscapedPath.create(pathParts[0] ?? "");
+        for (let i = 1; i < pathParts.length; i++) {
+            ret = ret.concat(EscapedPath.create(pathParts[i]));
+        }
+        return ret;
+    }
 }
 
 interface IEncodedSummary extends ISummaryTreeWithStats {
@@ -292,11 +299,7 @@ export class SummarizerNode implements ITrackingSummarizerNode {
     public prependOutstandingOps(pathPartsForChildren: string[], ops: ISequencedDocumentMessage[]): void {
         assert(this.trackChanges, "Should not prepend outstanding ops when trackChanges is disabled");
         assert(this.latestSummary, "Should have latest summary defined to prepend outstanding ops");
-        let localPathForChildren = this.latestSummary.localPath; // assuming relative; safe assumption
-        for (const pathPart of pathPartsForChildren) {
-            localPathForChildren = localPathForChildren.concat(EscapedPath.create(pathPart));
-        }
-        this.latestSummary.localPathForChildren = localPathForChildren;
+        this.latestSummary.localPathForChildren = this.latestSummary.localPath.createAndConcat(pathPartsForChildren);
         if (ops.length > 0 && this.outstandingOps.length > 0) {
             const newOpsLatestSeq = ops[ops.length - 1].sequenceNumber;
             const prevOpsEarliestSeq = this.outstandingOps[0].sequenceNumber;
@@ -355,46 +358,36 @@ export class SummarizerNode implements ITrackingSummarizerNode {
     private createChildCore(
         trackChanges: boolean,
         changeSequenceNumber: number,
-        latestSummary?: ISummaryNode,
+        id: string,
     ): SummarizerNode {
+        let summary: ISummaryNode | undefined;
+        if (this.latestSummary !== undefined) {
+            summary = {
+                referenceSequenceNumber: this.latestSummary.referenceSequenceNumber,
+                basePath: getFullPathForChildren(this.latestSummary),
+                localPath: EscapedPath.create(id),
+            };
+        }
         const child = new SummarizerNode(
             trackChanges,
             changeSequenceNumber,
-            latestSummary,
+            summary,
         );
         this.children.add(child);
         return child;
     }
 
-    public createChildFromSummary(changeSequenceNumber: number, id: string): ISummarizerNode {
-        const latestSummary = this.latestSummary;
-        assert(latestSummary, "Must have previous summary to create child with id");
-        const localPath = EscapedPath.create(id);
-        const summary: ISummaryNode = {
-            referenceSequenceNumber: this.referenceSequenceNumber,
-            basePath: getFullPathForChildren(latestSummary),
-            localPath,
-        };
-        return this.createChildCore(false, changeSequenceNumber, summary);
+    public createChild(
+        changeSequenceNumber: number,
+        id: string,
+    ): ISummarizerNode {
+        return this.createChildCore(false, changeSequenceNumber, id);
     }
 
-    public createChildWithoutSummary(changeSequenceNumber: number): ISummarizerNode {
-        return this.createChildCore(false, changeSequenceNumber);
-    }
-
-    public createTrackingChildFromSummary(changeSequenceNumber: number, id: string): ITrackingSummarizerNode {
-        const latestSummary = this.latestSummary;
-        assert(latestSummary, "Must have previous summary to create child with id");
-        const localPath = EscapedPath.create(id);
-        const summary = {
-            referenceSequenceNumber: this.referenceSequenceNumber,
-            basePath: getFullPathForChildren(latestSummary),
-            localPath,
-        };
-        return this.createChildCore(true, changeSequenceNumber, summary);
-    }
-
-    public createTrackingChildWithoutSummary(changeSequenceNumber: number): ITrackingSummarizerNode {
-        return this.createChildCore(true, changeSequenceNumber);
+    public createTrackingChild(
+        changeSequenceNumber: number,
+        id: string,
+    ): ITrackingSummarizerNode {
+        return this.createChildCore(true, changeSequenceNumber, id);
     }
 }

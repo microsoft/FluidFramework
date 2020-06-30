@@ -192,7 +192,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                         path,
                         this.deltaManager.lastSequenceNumber,
                     ),
-                    this.componentContext.createChildFromSummary(
+                    this.componentContext.createChildSummarizerNode(
                         this.deltaManager.lastSequenceNumber,
                         path,
                     ));
@@ -449,7 +449,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                             id,
                             message.sequenceNumber,
                         ),
-                        this.componentContext.createChildWithoutSummary(message.sequenceNumber),
+                        this.componentContext.createChildSummarizerNode(message.sequenceNumber, id),
                         attachMessage.type);
 
                     this.contexts.set(id, remoteChannelContext);
