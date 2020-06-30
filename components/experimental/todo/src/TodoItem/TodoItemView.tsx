@@ -83,15 +83,13 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
                         }}>
                         {this.state.innerComponentVisible ? "▲" : "▼"}
                     </button>
-                    {
-                        this.state.absoluteUrl !== undefined &&
-                        <button
-                            id={this.state.absoluteUrl}
-                            name="OpenSubComponent"
-                            style={this.buttonStyle}
-                            onClick={() => window.open(this.state.absoluteUrl, "_blank")}>↗
-                        </button>
-                    }
+                    <button
+                        name="OpenSubComponent"
+                        id={this.state.absoluteUrl}
+                        style={this.buttonStyle}
+                        onClick={() => window.open(this.state.absoluteUrl, "_blank")}
+                        disabled={this.state.absoluteUrl === undefined}>↗
+                    </button>
                     <button
                         style={this.buttonStyle}
                         onClick={() => alert("Implement Delete")}>X</button>

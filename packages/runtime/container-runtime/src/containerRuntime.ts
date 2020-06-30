@@ -1366,7 +1366,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         if (this.context.getAbsoluteUrl === undefined) {
             throw new Error("Driver does not implement getAbsoluteUrl");
         }
-        if (this.isLocal()) {
+        if (!this.isAttached()) {
             return undefined;
         }
         return this.context.getAbsoluteUrl(relativeUrl);
