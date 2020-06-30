@@ -45,7 +45,7 @@ describe("Shared String with Interception", () => {
         beforeEach(() => {
             const componentRuntime = new MockComponentRuntime();
             sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
-            componentRuntime.attach();
+            componentRuntime.bindToContext();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;

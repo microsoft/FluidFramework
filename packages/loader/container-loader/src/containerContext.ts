@@ -212,8 +212,13 @@ export class ContainerContext implements IContainerContext {
         return this.runtime!.stop();
     }
 
+    // 0.20 back-compat islocal
     public isLocal(): boolean {
-        return this.container.isLocal();
+        return !this.isAttached();
+    }
+
+    public isAttached(): boolean {
+        return this.container.isAttached();
     }
 
     public createSummary(): ISummaryTree {

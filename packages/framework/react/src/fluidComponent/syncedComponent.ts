@@ -153,7 +153,7 @@ export abstract class SyncedComponent<
             this.runtime,
             this.syncedStateDirectoryId,
         );
-        this.internalSyncedState.register();
+        this.internalSyncedState.bindToContext();
         for (const stateConfig of this.syncedStateConfig.values()) {
             const {
                 syncedStateId,
