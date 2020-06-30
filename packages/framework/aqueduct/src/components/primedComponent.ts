@@ -131,7 +131,7 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
         await this.componentHasInitialized();
     }
 
-    private getUninitializedErrorString(item: string) {
+    protected getUninitializedErrorString(item: string) {
         return `${item} must be initialized before being accessed.`;
     }
 }
