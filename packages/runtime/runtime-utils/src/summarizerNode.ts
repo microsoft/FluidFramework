@@ -266,12 +266,15 @@ export class SummarizerNode implements ITrackingSummarizerNode {
     }
 
     public refreshLatestSummary(proposalHandle: string): void {
-        if (this.latestSummary === undefined) {
-            return; // TODO: WRONG
-        }
-
         const summaryNode = this.pendingSummaries.get(proposalHandle);
-        assert(summaryNode, `Not found: proposalHandle in pendingSummaries: "${proposalHandle}"`);
+        if (summaryNode === undefined) {
+            assert.strictEqual(
+                this.latestSummary,
+                undefined,
+                "Not found pending summary, but this node has previously completed a summary",
+            );
+            return;
+        }
         this.latestSummary = summaryNode;
 
         // Clear earlier pending summaries
