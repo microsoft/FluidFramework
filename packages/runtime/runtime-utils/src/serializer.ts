@@ -39,7 +39,7 @@ export class ComponentSerializer implements IComponentSerializer {
             // TODO - understand why handle === false in some of our tests
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             return handle
-                ? this.serializeHandle(handle, context, bind)
+                ? this.serializeHandle(handle, bind)
                 : value;
         });
     }
@@ -55,22 +55,14 @@ export class ComponentSerializer implements IComponentSerializer {
                     return value;
                 }
 
-                // If the stored URL is absolute then we need to adjust the context from which we load. For
-                // absolute URLs we load from the root context. Given this is not always needed we delay looking
-                // up the root component until needed.
-                const absoluteUrl = value.url.startsWith("/");
-                if (absoluteUrl && root === undefined) {
-                    // Find the root context to use for absolute requests
-                    root = context;
-                    while (root.routeContext !== undefined) {
-                        root = root.routeContext;
-                    }
+                // Find the root context to use for absolute requests
+                root = context;
+                while (root.routeContext !== undefined) {
+                    root = root.routeContext;
                 }
 
                 // Create a dynamic component handle that will be used to load the component via call to `get`.
-                const handle = new DynamicComponentHandle(
-                    absoluteUrl ? value.url.substr(1) : value.url,
-                    absoluteUrl ? root : context);
+                const handle = new DynamicComponentHandle(value.url, root);
 
                 return handle;
             });
@@ -89,7 +81,7 @@ export class ComponentSerializer implements IComponentSerializer {
         // Note: Caller is responsible for ensuring that `input` is a non-null object.
         const handle = input.IComponentHandle;
         if (handle !== undefined) {
-            return this.serializeHandle(handle, context, bind);
+            return this.serializeHandle(handle, bind);
         }
 
         let clone: object | undefined;
@@ -120,15 +112,12 @@ export class ComponentSerializer implements IComponentSerializer {
         return clone ?? input;
     }
 
-    private serializeHandle(handle: IComponentHandle, context: IComponentHandleContext, bind: IComponentHandle) {
+    private serializeHandle(handle: IComponentHandle, bind: IComponentHandle) {
         bind.bind(handle);
-
-        // If the handle contexts match then we can store a relative path. Otherwise we store the absolute path.
-        const url = context === handle.routeContext ? handle.id : handle.absolutePath;
 
         return {
             type: "__fluid_handle__",
-            url,
+            url: handle.absolutePath,
         };
     }
 }

@@ -80,9 +80,9 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
         this.context = props.context;
         this.providers = props.providers;
 
-        // Create a ComponentHandle with empty string as `id`. This is because our `id` is the ComponentRuntime's `id`
-        // which is also the routeContent for this handle. Adding our `id` here would mess up the absolutePath of the
-        // ComponentHandle.
+        // Create a ComponentHandle with empty string as `path`. This is because reaching this SharedComponent is the
+        // same as reaching its routeContext (ComponentRuntime) so there is so the relative path to it from the
+        // routeContext is empty.
         this.innerHandle = new ComponentHandle(this, "", this.runtime.IComponentHandleContext);
 
         // Container event handlers

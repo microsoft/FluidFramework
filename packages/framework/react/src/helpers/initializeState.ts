@@ -65,14 +65,14 @@ export async function initializeState<
     // TODO #2457 - Move synced state initializing into component lifecycle, expose API for update
     if (storedFluidStateHandle === undefined) {
         const storedFluidState = SharedMap.create(dataProps.runtime);
-        dataProps.fluidComponentMap.set(storedFluidState.handle.id, {
+        dataProps.fluidComponentMap.set(storedFluidState.handle.absolutePath, {
             component: storedFluidState,
             isRuntimeMap: true,
         });
         root.set(`syncedState-${syncedStateId}`, storedFluidState.handle);
         storedFluidStateHandle = storedFluidState.handle;
     } else {
-        dataProps.fluidComponentMap.set(storedFluidStateHandle.id, {
+        dataProps.fluidComponentMap.set(storedFluidStateHandle.absolutePath, {
             component: await storedFluidStateHandle.get(),
             isRuntimeMap: true,
         });
@@ -98,7 +98,7 @@ export async function initializeState<
         if (createCallback) {
             if (fluidStateMap.get(fluidKey) === undefined) {
                 const sharedObject = createCallback(dataProps.runtime);
-                dataProps.fluidComponentMap.set(sharedObject.handle.id, {
+                dataProps.fluidComponentMap.set(sharedObject.handle.absolutePath, {
                     component: sharedObject,
                     listenedEvents: fluidToView?.get(fluidKey as keyof SF)
                         ?.listenedEvents || ["valueChanged"],
@@ -170,7 +170,7 @@ export async function initializeState<
 
     // Initialize the FluidComponentMap with our data handles
     for (const handle of unlistenedMapHandles) {
-        dataProps.fluidComponentMap.set(handle.id, {
+        dataProps.fluidComponentMap.set(handle.absolutePath, {
             isListened: false,
             isRuntimeMap: true,
             component: await handle.get(),

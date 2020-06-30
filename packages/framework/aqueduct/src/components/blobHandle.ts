@@ -29,31 +29,18 @@ export class BlobHandle implements IComponentHandle {
         return true;
     }
 
+    public readonly absolutePath: string;
+
     constructor(
-        public readonly id: string,
+        private readonly path: string,
         private readonly directory: ISharedDirectory,
         public readonly routeContext: IComponentHandleContext,
     ) {
-    }
-
-    /**
-     * Path to the handle context relative to the routeContext
-     * @deprecated Use `id` instead for the path relative to the routeContext.
-     * For absolute path from the Container use `absolutePath`.
-     */
-    public get path() {
-        return this.id;
-    }
-
-    /**
-     * Returns the absolute path for this ComponentHandle.
-     */
-    public get absolutePath(): string {
-        return generateHandleContextPath(this);
+        this.absolutePath = generateHandleContextPath(path, this.routeContext);
     }
 
     public async get(): Promise<any> {
-        return this.directory.get<string>(this.id);
+        return this.directory.get<string>(this.path);
     }
 
     public attachGraph(): void {

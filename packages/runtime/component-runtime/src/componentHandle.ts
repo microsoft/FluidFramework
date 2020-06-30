@@ -18,6 +18,7 @@ export class ComponentHandle implements IComponentHandle {
     // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
     private graphAttachState: AttachState = AttachState.Detached;
     private bound: Set<IComponentHandle> | undefined;
+    public readonly absolutePath: string;
 
     public get IComponentRouter(): IComponentRouter { return this; }
     public get IComponentHandleContext(): IComponentHandleContext { return this; }
@@ -27,27 +28,18 @@ export class ComponentHandle implements IComponentHandle {
         return this.routeContext.isAttached;
     }
 
+    /**
+     * Creates a new ComponentHandle.
+     * @param value - The IComponent object this handle is for.
+     * @param path - The path to this handle relative to the routeContext.
+     * @param routeContext - The parent IComponentHandleContext that has a route to this handle.
+     */
     constructor(
         private readonly value: IComponent,
-        public readonly id: string,
+        path: string,
         public readonly routeContext: IComponentHandleContext,
     ) {
-    }
-
-    /**
-     * Path to the handle context relative to the routeContext
-     * @deprecated Use `id` instead for the path relative to the routeContext.
-     * For absolute path from the Container use `absolutePath`.
-     */
-    public get path() {
-        return this.id;
-    }
-
-    /**
-     * Returns the absolute path for this ComponentHandle.
-     */
-    public get absolutePath(): string {
-        return generateHandleContextPath(this);
+        this.absolutePath = generateHandleContextPath(path, this.routeContext);
     }
 
     public async get(): Promise<any> {

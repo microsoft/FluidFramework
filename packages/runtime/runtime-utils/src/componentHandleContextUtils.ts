@@ -6,18 +6,20 @@
 import { IComponentHandleContext } from "@fluidframework/component-core-interfaces";
 
 /**
- * Generates the absolute path for the ComponentHandle by iterating through the routeContexts.
+ * Generates the absolute path for an IComponentHandleContext given its path and its parent routeContext.
  */
-export function generateHandleContextPath(handleContext: IComponentHandleContext): string {
-    let result = "";
-    let context: IComponentHandleContext | undefined = handleContext;
+export function generateHandleContextPath(path: string, routeContext?: IComponentHandleContext): string {
+    let result: string;
 
-    while (context !== undefined) {
-        if (context.id !== "") {
-            result = `/${context.id}${result}`;
-        }
-
-        context = context.routeContext;
+    if (path === "") {
+        // The `path` is empty.
+        // If the routeContext does not exist, this is the root and it shouldn't have an absolute path.
+        // If the routeContext exists, the absolute path is the same as that of the routeContext.
+        result = routeContext === undefined ? "" : routeContext.absolutePath;
+    } else {
+        // If the routeContext does not exist, path is the absolute path.
+        // If the routeContext exists, absolute path is routeContext's absolute path plus the path.
+        result = routeContext === undefined ? `/${path}` : `${routeContext.absolutePath}/${path}`;
     }
 
     return result;

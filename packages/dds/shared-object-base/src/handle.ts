@@ -28,6 +28,7 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      * The set of handles to other shared objects that should be registered before this one.
      */
     private bound: Set<IComponentHandle> | undefined;
+    public readonly absolutePath: string;
 
     public get IComponentHandle() { return this; }
     public get IComponentRouter() { return this; }
@@ -41,31 +42,17 @@ export class SharedObjectComponentHandle implements IComponentHandle {
     }
 
     /**
-     * @param value - The shared object this handle is for
-     * @param id - An id for the shared object
-     * @param routeContext - Component handle context for the container, used to provide request services
+     * Creates a new SharedObjectComponentHandle.
+     * @param value - The shared object this handle is for.
+     * @param path - The id of the shared object. It is also the path to this object relative to the routeContext.
+     * @param routeContext - The parent IComponentHandleContext that has a route to this handle.
      */
     constructor(
         private readonly value: ISharedObject,
-        public readonly id: string,
+        path: string,
         public readonly routeContext: IComponentHandleContext,
     ) {
-    }
-
-    /**
-     * Path to the handle context relative to the routeContext
-     * @deprecated Use `id` instead for the path relative to the routeContext.
-     * For absolute path from the Container use `absolutePath`.
-     */
-    public get path() {
-        return this.id;
-    }
-
-    /**
-     * Returns the absolute path for this ComponentHandle.
-     */
-    public get absolutePath(): string {
-        return generateHandleContextPath(this);
+        this.absolutePath = generateHandleContextPath(path, this.routeContext);
     }
 
     /**

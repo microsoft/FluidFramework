@@ -96,16 +96,44 @@ describe("ComponentHandle", () => {
         await containerDeltaEventManager.process();
     });
 
+    it("should generate the absolute path for ContainerRuntime correctly", () => {
+        // The expected absolute path for the ContainerRuntime is empty string.
+        const absolutePath = "";
+
+        // Verify that the local client's ContainerRuntime has the correct absolute path.
+        const containerRuntime1 = container1Component1._context.containerRuntime.IComponentHandleContext;
+        assert.equal(containerRuntime1.absolutePath, absolutePath, "The ContainerRuntime's path is incorrect");
+
+        // Verify that the remote client's ContainerRuntime has the correct absolute path.
+        const containerRuntime2 = container2Component1._context.containerRuntime.IComponentHandleContext;
+        assert.equal(containerRuntime2.absolutePath, absolutePath, "The remote ContainerRuntime's path is incorrect");
+    });
+
+    it("should generate the absolute path for ComponentRuntime correctly", () => {
+        // The expected absolute path for the ComponentRuntime.
+        const absolutePath = `/${container1Component1._runtime.id}`;
+
+        // Verify that the local client's ComponentRuntime has the correct absolute path.
+        const componentRuntime1 = container1Component1._runtime.IComponentHandleContext;
+        assert.equal(componentRuntime1.absolutePath, absolutePath, "The ComponentRuntime's path is incorrect");
+
+        // Verify that the remote client's ComponentRuntime has the correct absolute path.
+        const componentRuntime2 = container2Component1._runtime.IComponentHandleContext;
+        assert.equal(componentRuntime2.absolutePath, absolutePath, "The remote ComponentRuntime's path is incorrect");
+    });
+
     it("can store and retrieve a DDS from handle within same component runtime", async () => {
         // Create a new SharedMap in `container1Component1` and set a value.
         const sharedMap = SharedMap.create(container1Component1._runtime);
         sharedMap.set("key1", "value1");
 
+        const sharedMapHandle = sharedMap.handle;
+
+        // The expected absolute path.
         const absolutePath = `/default/${sharedMap.id}`;
 
-        const sharedMapHandle = sharedMap.handle;
-        assert.equal(sharedMapHandle.id, sharedMap.id, "The handle's id is incorrect");
-        assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's absolutepath is not correct");
+        // Verify that the local client's handle has the correct absolute path.
+        assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");
 
         // Add the handle to the root DDS of `container1Component1`.
         container1Component1._root.set("sharedMap", sharedMapHandle);
@@ -115,10 +143,8 @@ describe("ComponentHandle", () => {
         // Get the handle in the remote client.
         const remoteSharedMapHandle = container2Component1._root.get<IComponentHandle<SharedMap>>("sharedMap");
 
-        // The `id` should be the id of the shared map. It  is the path relative to the ComponentRuntime since both
-        // the DDS have the same ComponentRuntime.
-        assert.equal(remoteSharedMapHandle.id, sharedMap.id, "The remote handle's id is incorrect");
-        assert.equal(remoteSharedMapHandle.absolutePath, absolutePath, "The remote handle's absolutepath is incorrect");
+        // Verify that the remote client's handle has the correct absolute path.
+        assert.equal(remoteSharedMapHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
 
         // Get the SharedMap from the handle.
         const remoteSharedMap = await remoteSharedMapHandle.get();
@@ -131,11 +157,13 @@ describe("ComponentHandle", () => {
         const sharedMap = SharedMap.create(container1Component2._runtime);
         sharedMap.set("key1", "value1");
 
+        const sharedMapHandle = sharedMap.handle;
+
+        // The expected absolute path.
         const absolutePath = `/${container1Component2._runtime.id}/${sharedMap.id}`;
 
-        const sharedMapHandle = sharedMap.handle;
-        assert.equal(sharedMapHandle.id, sharedMap.id, "The handle's id is incorrect");
-        assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's absolutepath is not correct");
+        // Verify that the local client's handle has the correct absolute path.
+        assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");
 
         // Add the handle to the root DDS of `container1Component1` so that the ComponentRuntime is different.
         container1Component1._root.set("sharedMap", sharedMap.handle);
@@ -145,11 +173,8 @@ describe("ComponentHandle", () => {
         // Get the handle in the remote client.
         const remoteSharedMapHandle = container2Component1._root.get<IComponentHandle<SharedMap>>("sharedMap");
 
-        // The `id` should be the path relative to the ContainerRuntime since the two DDSs have different
-        // ComponentRuntimes.
-        const expectedId = `${container1Component2._runtime.id}/${sharedMap.id}`;
-        assert.equal(remoteSharedMapHandle.id, expectedId, "The remote handle's id is incorrect");
-        assert.equal(remoteSharedMapHandle.absolutePath, absolutePath, "The remote handle's absolutePath is incorrect");
+        // Verify that the remote client's handle has the correct absolute path.
+        assert.equal(remoteSharedMapHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
 
         // Get the SharedMap from the handle.
         const remoteSharedMap = await remoteSharedMapHandle.get();
@@ -157,13 +182,13 @@ describe("ComponentHandle", () => {
         assert.equal(remoteSharedMap.get("key1"), "value1", "The map does not have the value that was set");
     });
 
-    it("can store and retrieve a Component from handle in different component runtime", async () => {
+    it("can store and retrieve a SharedComponent from handle in different component runtime", async () => {
+        // The expected absolute path.
         const absolutePath = `/${container1Component2._runtime.id}`;
 
         const componentHandle = container1Component2.handle;
-        // The ComponentHandle's `id` should be an empty string. This is because SharedComponent's ComponentHandle
-        // is essentially just a wrapper around the ComponentRuntime's handle.
-        assert.equal(componentHandle.id, "", "The handle's id is incorrect");
+
+        // Verify that the local client's handle has the correct absolute path.
         assert.equal(componentHandle.absolutePath, absolutePath, "The handle's absolutepath is not correct");
 
         // Add `container1Component2's` handle to the root DDS of `container1Component1` so that the ComponentRuntime
@@ -176,10 +201,8 @@ describe("ComponentHandle", () => {
         const remoteComponentHandle =
             container2Component1._root.get<IComponentHandle<TestFluidComponent>>("component2");
 
-        // The `id` should be the path relative to the ContainerRuntime since the DDS has a different ComponentRuntime
-        // than the Component whose handle is stored in it.
-        assert.equal(remoteComponentHandle.id, container1Component2._runtime.id, "The remote handle's id is incorrect");
-        assert.equal(remoteComponentHandle.absolutePath, absolutePath, "The remote handle's absolutePath is incorrect");
+        // Verify that the remote client's handle has the correct absolute path.
+        assert.equal(remoteComponentHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
 
         // Get the component from the handle.
         const container2Component2 = await remoteComponentHandle.get();

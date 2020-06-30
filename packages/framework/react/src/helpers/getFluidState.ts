@@ -51,7 +51,7 @@ export function getFluidState<
         let value = componentState.get(fluidKey);
         if (value && createCallback) {
             const possibleComponentId = (value as IComponent)
-                ?.IComponentHandle?.id;
+                ?.IComponentHandle?.absolutePath;
             if (possibleComponentId !== undefined) {
                 value = componentMap.get(possibleComponentId);
                 fluidState[fluidKey] = value?.component;

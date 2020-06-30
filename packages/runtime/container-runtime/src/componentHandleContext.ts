@@ -16,28 +16,20 @@ export class ComponentHandleContext implements IComponentHandleContext {
     public get IComponentRouter() { return this; }
     public get IComponentHandleContext() { return this; }
     public readonly isAttached = true;
+    public readonly absolutePath: string;
 
+    /**
+     * Creates a new ComponentHandleContext.
+     * @param path - The path to this handle relative to the routeContext.
+     * @param runtime - The IRuntime object this context represents.
+     * @param routeContext - The parent IComponentHandleContext that has a route to this handle.
+     */
     constructor(
-        public readonly id: string,
+        path: string,
         private readonly runtime: IRuntime,
         public readonly routeContext?: IComponentHandleContext,
     ) {
-    }
-
-    /**
-     * Path to the handle context relative to the routeContext
-     * @deprecated Use `id` instead for the path relative to the routeContext.
-     * For absolute path from the Container use `absolutePath`.
-     */
-    public get path() {
-        return this.id;
-    }
-
-    /**
-     * Returns the absolute path for this ComponentHandle.
-     */
-    public get absolutePath(): string {
-        return generateHandleContextPath(this);
+        this.absolutePath = generateHandleContextPath(path, this.routeContext);
     }
 
     public attachGraph(): void {

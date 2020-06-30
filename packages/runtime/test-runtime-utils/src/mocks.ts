@@ -381,10 +381,6 @@ export class MockComponentRuntime extends EventEmitter
     private readonly activeDeferred = new Deferred<void>();
     public readonly quorum = new MockQuorum();
 
-    public get path() {
-        return this.id;
-    }
-
     public get absolutePath() {
         return this.id;
     }

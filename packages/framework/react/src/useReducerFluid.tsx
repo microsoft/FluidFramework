@@ -334,7 +334,7 @@ export function useReducerFluid<
                     handle &&
                     instanceOfComponentSelectorFunction<SV, SF, C>(action) &&
                     combinedFetchDataProps.fluidComponentMap.get(
-                        handle.id,
+                        handle.absolutePath,
                     ) === undefined
                 ) {
                     newHandles.push(handle);

@@ -357,12 +357,10 @@ describe("Map", () => {
 
                 // Verify the local SharedMap
                 const localSubMap = map.get<IComponentHandle>("test");
-                assert.equal(localSubMap.id, subMap.id, "could not get the handle's id");
                 assert.equal(localSubMap.absolutePath, subMap.handle.absolutePath, "could not get the handle's path");
 
                 // Verify the remote SharedMap
                 const remoteSubMap = map2.get<IComponentHandle>("test");
-                assert.equal(remoteSubMap.id, subMap.id, "could not get the handle's id in remote map");
                 assert.equal(
                     remoteSubMap.absolutePath,
                     subMap.handle.absolutePath,

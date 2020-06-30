@@ -40,7 +40,7 @@ export function setFluidState<SV, SF>(
         ?.component as ISharedMap;
     if (storedStateHandle === undefined || storedState === undefined) {
         const newState = SharedMap.create(runtime);
-        componentMap.set(newState.handle.id, {
+        componentMap.set(newState.handle.absolutePath, {
             component: newState,
             isRuntimeMap: true,
         });
@@ -57,7 +57,7 @@ export function setFluidState<SV, SF>(
         if (createCallback) {
             if (storedState.get(fluidKey) === undefined) {
                 const sharedObject = createCallback(runtime);
-                componentMap.set(sharedObject.handle.id, {
+                componentMap.set(sharedObject.handle.absolutePath, {
                     component: sharedObject,
                     listenedEvents: fluidToView?.get(fluidKey as keyof SF)
                         ?.listenedEvents || ["valueChanged"],

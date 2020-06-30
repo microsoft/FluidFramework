@@ -1,5 +1,12 @@
 # Breaking changes
 
+## 0.22 Breaking Changes
+
+### Removed `path` from `IComponentHandleContext`
+Removed the `path` field from the interface `IComponentHandleContext`. This means it is removed from `IComponentHandle` as well.
+
+Added an `absolutePath` field to `IComponentHandleContext` which is the absolute path to reach it from the container runtime.
+
 ## 0.21 Breaking Changes
 - [Removed `@fluidframework/local-test-utils`](#removed-`@fluidframework/local-test-utils`)
 - [IComponentHTMLVisual deprecated](#IComponentHTMLVisual-deprecated)
