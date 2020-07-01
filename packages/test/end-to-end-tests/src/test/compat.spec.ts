@@ -23,6 +23,7 @@ import {
     IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
@@ -92,7 +93,7 @@ describe("loader/runtime compatibility", () => {
     const createOldRuntimeFactory = (
         type: string,
         componentFactory: IComponentFactory | old.IComponentFactory,
-        runtimeOptions: old.IContainerRuntimeOptions = {},
+        runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): old.IRuntimeFactory => {
         return {
             get IRuntimeFactory() { return this; },
@@ -156,14 +157,6 @@ describe("loader/runtime compatibility", () => {
         });
 
         it("can summarize", async function() {
-            if (this.container.context.runtime.runtimeOptions.initialSummarizerDelayMs === undefined) {
-                // default initial delay will cause test to time out, so just skip
-                return this.skip();
-            }
-
-            // this will cause summarizer to summarize immediately
-            this.container.serviceConfiguration.summary.maxOps = 1;
-
             let success = true;
             this.container.on("error", () => success = false);
             this.container.on("warning", () => success = false);
@@ -225,7 +218,11 @@ describe("loader/runtime compatibility", () => {
 
     describe("old loader, new runtime", function() {
         beforeEach(async function() {
-            this.deltaConnectionServer = LocalDeltaConnectionServer.create();
+            this.deltaConnectionServer = LocalDeltaConnectionServer.create(
+                undefined,
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                { summary: { maxOps: 1 } as ISummaryConfiguration },
+            );
             this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
             this.container = await createContainerWithOldLoader(
                 { fluidExport: createRuntimeFactory(TestComponent.type, createComponentFactory()) },
@@ -243,7 +240,11 @@ describe("loader/runtime compatibility", () => {
 
     describe("new loader, old runtime", function() {
         beforeEach(async function() {
-            this.deltaConnectionServer = LocalDeltaConnectionServer.create();
+            this.deltaConnectionServer = LocalDeltaConnectionServer.create(
+                undefined,
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                { summary: { maxOps: 1 } as ISummaryConfiguration },
+            );
             this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
             this.container = await createContainer(
                 { fluidExport: createOldRuntimeFactory(OldTestComponent.type, createOldComponentFactory()) },
@@ -263,7 +264,11 @@ describe("loader/runtime compatibility", () => {
 
     describe("new ContainerRuntime, old ComponentRuntime", function() {
         beforeEach(async function() {
-            this.deltaConnectionServer = LocalDeltaConnectionServer.create();
+            this.deltaConnectionServer = LocalDeltaConnectionServer.create(
+                undefined,
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                { summary: { maxOps: 1 } as ISummaryConfiguration },
+            );
             this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
             this.container = await createContainer(
                 { fluidExport: createRuntimeFactory(OldTestComponent.type, createOldComponentFactory()) },
