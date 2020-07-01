@@ -3,27 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ISequencedDocumentMessage, IQuorum } from "@fluidframework/protocol-definitions";
-import { IAttachMessage, IEnvelope, SchedulerType } from "@fluidframework/runtime-definitions";
-import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { ContainerMessageType, ContainerRuntime } from "@fluidframework/container-runtime";
 import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
-
-// Returns if an "Attach" or "Operation" type message is from the scheduler.
-function isSchedulerMessage(message: ISequencedDocumentMessage) {
-    if (message.type === ContainerMessageType.Attach) {
-        const attachMessage = message.contents as IAttachMessage;
-        if (attachMessage.id === SchedulerType) {
-            return true;
-        }
-    } else if (message.type === ContainerMessageType.ComponentOp) {
-        const envelope = message.contents as IEnvelope;
-        if (envelope.address === SchedulerType) {
-            return true;
-        }
-    }
-    return false;
-}
 
 // Default implementation of the shouldDiscardMessageFn function below that tells that all messages other
 // than "Attach" and "Operation" type messages should be discarded.
@@ -68,7 +50,7 @@ function getLastEditDetailsFromMessage(
  */
 export async function setupLastEditedTrackerForContainer(
     componentId: string,
-    runtime: IContainerRuntime,
+    runtime: ContainerRuntime,
     shouldDiscardMessageFn: (message: ISequencedDocumentMessage) => boolean = shouldDiscardMessageDefault,
 ) {
     // eslint-disable-next-line prefer-const
@@ -80,7 +62,11 @@ export async function setupLastEditedTrackerForContainer(
     // last edited tracker. If the component hasn't loaded, store the last edited information temporarily.
     runtime.on("op", (message: ISequencedDocumentMessage) => {
         // If this is a scheduler messages or it should be discarded as per shouldDiscardMessageFn, return.
-        if (shouldDiscardMessageFn(message) || isSchedulerMessage(message)) {
+        if (shouldDiscardMessageFn(message)
+        || runtime.IContainerRuntimeDirtyable.isMessageDirtyable(
+            message.type as ContainerMessageType,
+            message.contents,
+        )) {
             return;
         }
 

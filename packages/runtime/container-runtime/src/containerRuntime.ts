@@ -96,6 +96,7 @@ import { ReportConnectionTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
+import { IContainerRuntimeDirtyable } from "./interfaces";
 
 const chunksBlobName = ".chunks";
 
@@ -435,8 +436,10 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime, ISummarizerRuntime {
+export class ContainerRuntime extends EventEmitter
+implements IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
     public get IContainerRuntime() { return this; }
+    public get IContainerRuntimeDirtyable() { return this; }
 
     /**
      * Load the components from a snapshot and returns the runtime.
@@ -1188,6 +1191,22 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.dirtyDocument;
     }
 
+    // Returns if an "Attach" or "Operation" type message is from the scheduler.
+    public isMessageDirtyable(type: ContainerMessageType, contents: any) {
+        if (type === ContainerMessageType.Attach) {
+            const attachMessage = contents as IAttachMessage;
+            if (attachMessage.id === SchedulerType) {
+                return true;
+            }
+        } else if (type === ContainerMessageType.ComponentOp) {
+            const envelope = contents as IEnvelope;
+            if (envelope.address === SchedulerType) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Submits the signal to be sent to other clients.
      * @param type - Type of the signal.
@@ -1565,8 +1584,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         // Let the PendingStateManager know that a message was submitted.
         this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata);
-
-        this.updateDocumentDirtyState(true);
+        if (this.isMessageDirtyable(type, content)) {
+            this.updateDocumentDirtyState(true);
+        }
 
         return clientSequenceNumber;
     }

@@ -9,7 +9,6 @@ import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { Spaces } from "@fluid-example/spaces";
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
 import { IComponent } from "@fluidframework/component-core-interfaces";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     LastEditedTrackerComponentName,
     LastEditedTrackerComponent,
@@ -20,6 +19,7 @@ import {
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
 } from "@fluidframework/runtime-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 import {
     Anchor,
@@ -77,7 +77,7 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultComp
     /**
      * {@inheritDoc BaseContainerRuntimeFactory.containerHasInitialized}
      */
-    protected async containerHasInitialized(runtime: IContainerRuntime) {
+    protected async containerHasInitialized(runtime: ContainerRuntime) {
         // Load the last edited tracker component (done by the setup method below). This component provides container
         // level tracking of last edit and has to be loaded before any other component.
 
