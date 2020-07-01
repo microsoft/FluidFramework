@@ -56,9 +56,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     private services: ISharedObjectServices | undefined;
 
     /**
-     * True if register() has been called.
+     * True if the dds is bound to its parent.
      */
-    private registered: boolean = false;
+    private boundToComponent: boolean = false;
 
     /**
      * Gets the connection state
@@ -105,8 +105,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             this.runtime.emit("error", error);
         });
 
-        // Only listen to these events if local.
-        if (this.isLocal()) {
+        // Only listen to these events if not attached.
+        if (!this.isAttached()) {
             this.runtime.on("collaborating", () => {
                 // Calling this will let the dds to do any custom processing based on attached
                 // like starting generating ops.
@@ -148,21 +148,21 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).register}
+     * {@inheritDoc (ISharedObject:interface).bindToContext}
      */
-    public register(): void {
-        if (this.isRegistered()) {
+    public bindToContext(): void {
+        if (this.isBoundToContext()) {
             return;
         }
 
-        this.registered = true;
+        this.boundToComponent = true;
 
         this.setOwner();
 
         // Allow derived classes to perform custom processing prior to registering this object
         this.registerCore();
 
-        this.runtime.registerChannel(this);
+        this.runtime.bindChannel(this);
     }
 
     /**
@@ -174,34 +174,23 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).isLocal}
+     * {@inheritDoc (ISharedObject:interface).isBoundToContext}
      */
-    public isLocal(): boolean {
-        return this.services === undefined || this.runtime.isLocal();
-    }
-
-    /**
-     * {@inheritDoc (ISharedObject:interface).isRegistered}
-     */
-    public isRegistered(): boolean {
+    public isBoundToContext(): boolean {
         // If the dds is attached to the component then it should be registered irrespective of
         // whether the container is attached/detached. If it is attached to its component, it will
         // have its services. This will lead to get the dds summarized. It should also be registered
         // if somebody called register on dds explicitly without attaching it which will set
         // this.registered to be true.
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        const isRegistered = (!!this.services || this.registered);
-        assert(isRegistered ? true : this.isLocal());
-        return isRegistered;
+        return this.boundToComponent;
     }
 
     /**
      * {@inheritDoc (ISharedObject:interface).isAttached}
      */
     public isAttached(): boolean {
-        const isAttached = this.services !== undefined;
-        assert(isAttached ? this.isRegistered() : this.isLocal());
-        return isAttached;
+        return this.services !== undefined && this.runtime.isAttached;
     }
 
     /**
@@ -269,7 +258,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @returns Client sequence number
      */
     protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): number {
-        if (this.isLocal()) {
+        if (!this.isAttached()) {
             return -1;
         }
 
@@ -282,7 +271,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * that want to be part of summary but does not generate ops.
      */
     protected dirty(): void {
-        if (this.isLocal()) {
+        if (!this.isAttached()) {
             return;
         }
 
@@ -346,14 +335,15 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     private attachDeltaHandler() {
-        // Allows objects to start listening for events if not local
-        if (!this.isLocal()) {
-            this.didAttach();
-        }
+        // Services should already be there in case we are attaching delta handler.
+        assert(this.services !== undefined, "Services should be there to attach delta handler");
+        this.boundToComponent = true;
+        // Allows objects to do any custom processing if it is attached.
+        this.didAttach();
 
         // attachDeltaHandler is only called after services is assigned
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.services!.deltaConnection.attach({
+        this.services.deltaConnection.attach({
             process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
                 this.process(message, local, localOpMetadata);
             },
@@ -368,7 +358,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // Trigger initial state
         // attachDeltaHandler is only called after services is assigned
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.setConnectionState(this.services!.deltaConnection.connected);
+        this.setConnectionState(this.services.deltaConnection.connected);
     }
 
     /**

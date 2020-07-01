@@ -719,7 +719,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         for (const currentSubDir of subdirsToRegisterFrom) {
             for (const value of currentSubDir.values()) {
                 if (SharedObject.is(value)) {
-                    value.register();
+                    value.bindToContext();
                 }
             }
 
@@ -1029,8 +1029,8 @@ class SubDirectory implements IDirectory {
             null,
         );
 
-        // If we are in local state, don't submit the op.
-        if (this.directory.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.directory.isAttached()) {
             return this;
         }
 
@@ -1062,8 +1062,8 @@ class SubDirectory implements IDirectory {
 
         const subDir: IDirectory = this._subdirectories.get(subdirName);
 
-        // If we are in local state, don't submit the op.
-        if (this.directory.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.directory.isAttached()) {
             return subDir;
         }
 
@@ -1098,8 +1098,8 @@ class SubDirectory implements IDirectory {
         // Delete the sub directory locally first.
         const successfullyRemoved = this.deleteSubDirectoryCore(subdirName, true, null);
 
-        // If we are in local state, don't submit the op.
-        if (this.directory.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.directory.isAttached()) {
             return successfullyRemoved;
         }
 
@@ -1136,8 +1136,8 @@ class SubDirectory implements IDirectory {
         // Delete the key locally first.
         const successfullyRemoved = this.deleteCore(key, true, null);
 
-        // If we are in local state, don't submit the op.
-        if (this.directory.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.directory.isAttached()) {
             return successfullyRemoved;
         }
 
@@ -1158,8 +1158,8 @@ class SubDirectory implements IDirectory {
         // Clear the data locally first.
         this.clearCore(true, null);
 
-        // If we are in local state, don't submit the op.
-        if (this.directory.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.directory.isAttached()) {
             return;
         }
 

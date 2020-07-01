@@ -61,13 +61,14 @@ export class TestClient extends Client {
         const services = new MockStorage(snapshotTree);
 
         const client2 = new TestClient(undefined, specToSeg);
-        await client2.load(
+        const { catchupOpsP } = await client2.load(
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             {
                 logger: client2.logger,
                 clientId: newLongClientId,
             } as IComponentRuntime,
             services);
+        await catchupOpsP;
         return client2;
     }
 

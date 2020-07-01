@@ -12,6 +12,7 @@ import {
     IFluidFunctionalComponentViewState,
     IFluidConverter,
 } from "../interface";
+import { IFluidComponent } from "..";
 
 export function getByFluidKey<
     SV extends IFluidFunctionalComponentViewState,
@@ -29,17 +30,19 @@ export async function asyncForEach(
     callback: (
         handle: IComponentHandle,
         fluidComponentMap: FluidComponentMap,
-        rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
-        refreshView: () => void
+        syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
+        refreshView: () => void,
+        storedHandleMap: SharedMap,
     ) => Promise<void>,
     fluidComponentMap: FluidComponentMap,
-    rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
+    syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
     refreshView: () => void,
+    storedHandleMap: SharedMap,
 ): Promise<void> {
     const promises: Promise<void>[] = [];
     for (const value of array) {
         promises.push(
-            callback(value, fluidComponentMap, rootCallback, refreshView),
+            callback(value, fluidComponentMap, syncedStateCallback, refreshView, storedHandleMap),
         );
     }
     await Promise.all(promises);
@@ -51,20 +54,31 @@ export const addComponent = async <
 >(
     handle: IComponentHandle,
     fluidComponentMap: FluidComponentMap,
-    rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
+    syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
     refreshView: () => void,
+    storedHandleMap: SharedMap,
 ): Promise<void> => {
-    const value = fluidComponentMap.get(handle.path);
-    if (!value) {
-        throw Error(
-            "Tried fetch a component that wasn't present on the fluid component map",
+    const maybeValue: IFluidComponent | undefined = fluidComponentMap.get(handle.path);
+    let value: IFluidComponent = {
+        isListened: false,
+        isRuntimeMap: false,
+    };
+    if (maybeValue === undefined) {
+        fluidComponentMap.set(
+            handle.path,
+            value,
         );
+    } else {
+        value = maybeValue;
     }
     value.isListened = false;
     fluidComponentMap.set(handle.path, value);
+    if (!storedHandleMap.has(handle.path)) {
+        storedHandleMap.set(handle.path, handle);
+    }
     return handle.get().then((component) => {
         if (value.isRuntimeMap) {
-            (component as SharedMap).on("valueChanged", rootCallback);
+            (component as SharedMap).on("valueChanged", syncedStateCallback);
         } else if (value.listenedEvents) {
             for (const event of value.listenedEvents) {
                 (component as SharedObject).on(event, refreshView);

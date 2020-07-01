@@ -107,7 +107,7 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
         if (!this.runtime.existing) {
             // Create a root directory and register it before calling componentInitializingFirstTime
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
-            this.internalRoot.register();
+            this.internalRoot.bindToContext();
             await this.componentInitializingFirstTime(props);
         } else {
             // Component has a root directory so we just need to set it before calling componentInitializingFromExisting
@@ -131,7 +131,7 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
         await this.componentHasInitialized();
     }
 
-    private getUninitializedErrorString(item: string) {
+    protected getUninitializedErrorString(item: string) {
         return `${item} must be initialized before being accessed.`;
     }
 }

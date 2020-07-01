@@ -89,7 +89,7 @@ describe("Shared Directory with Interception", () => {
         beforeEach(() => {
             const componentRuntime = new MockComponentRuntime();
             sharedDirectory = new SharedDirectory(documentId, componentRuntime, DirectoryFactory.Attributes);
-            componentRuntime.attach();
+            componentRuntime.bindToContext();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;

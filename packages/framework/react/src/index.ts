@@ -8,3 +8,4 @@ export * from "./useStateFluid";
 export * from "./useReducerFluid";
 export * from "./createContextFluid";
 export * from "./interface";
+export * from "./fluidComponent";

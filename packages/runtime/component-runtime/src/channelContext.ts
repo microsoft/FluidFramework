@@ -23,7 +23,7 @@ export interface IChannelContext {
 
     snapshot(fullTree?: boolean): Promise<ITree>;
 
-    isRegistered(): boolean;
+    isBoundToContext(): boolean;
 
     reSubmit(content: any, localOpMetadata: unknown): void;
 }
