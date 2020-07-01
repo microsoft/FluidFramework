@@ -15,7 +15,8 @@ declare module "@fluidframework/component-core-interfaces" {
  */
 export type ComponentRegistryEntry = Readonly<Partial<IProvideComponentRegistry & IProvideComponentFactory>>;
 /**
- * An associated pair of an identifier and registry entry
+ * An associated pair of an identifier and registry entry.  Registry entries
+ * may be dynamically loaded.
  */
 export type NamedComponentRegistryEntry = [string, Promise<ComponentRegistryEntry>];
 /**
