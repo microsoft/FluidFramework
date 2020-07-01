@@ -26,7 +26,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.20.0-0",
+    "@fluidframework/common-utils": "^0.20.0",
     "@fluidframework/component-core-interfaces": "^0.21.0",
     "@fluidframework/driver-definitions": "^0.21.0",
     "@types/debug": "^4.1.5",

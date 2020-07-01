@@ -46,7 +46,7 @@
   },
   "dependencies": {
     "@fluidframework/cell": "^0.21.0",
-    "@fluidframework/common-utils": "^0.20.0-0",
+    "@fluidframework/common-utils": "^0.20.0",
     "@fluidframework/component-core-interfaces": "^0.21.0",
     "@fluidframework/component-runtime": "^0.21.0",
     "@fluidframework/container-definitions": "^0.21.0",
