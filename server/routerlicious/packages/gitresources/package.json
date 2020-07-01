@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/gitresources",
-  "version": "0.1008.0",
+  "version": "0.1008.1",
   "description": "Git resource definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
