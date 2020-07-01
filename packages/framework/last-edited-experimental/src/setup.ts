@@ -4,7 +4,8 @@
  */
 
 import { ISequencedDocumentMessage, IQuorum } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType, ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
 
 // Default implementation of the shouldDiscardMessageFn function below that tells that all messages other
@@ -50,7 +51,7 @@ function getLastEditDetailsFromMessage(
  */
 export async function setupLastEditedTrackerForContainer(
     componentId: string,
-    runtime: ContainerRuntime,
+    runtime: IContainerRuntime,
     shouldDiscardMessageFn: (message: ISequencedDocumentMessage) => boolean = shouldDiscardMessageDefault,
 ) {
     // eslint-disable-next-line prefer-const
@@ -63,10 +64,7 @@ export async function setupLastEditedTrackerForContainer(
     runtime.on("op", (message: ISequencedDocumentMessage) => {
         // If this is a scheduler messages or it should be discarded as per shouldDiscardMessageFn, return.
         if (shouldDiscardMessageFn(message)
-        || runtime.IContainerRuntimeDirtyable.isMessageDirtyable(
-            message.type as ContainerMessageType,
-            message.contents,
-        )) {
+        || runtime.IContainerRuntimeDirtyable.isMessageDirtyable(message.type as ContainerMessageType, message.contents)) {
             return;
         }
 
