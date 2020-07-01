@@ -28,7 +28,7 @@
     "proper-lockfile": "^4.1.1"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.18.0-0",
+    "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
