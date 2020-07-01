@@ -12,6 +12,25 @@ import { DynamicComponentHandle } from "./dynanmicComponentHandle";
 import { isSerializedHandle } from "./utils";
 
 /**
+ * 0.21 back-compat
+ * Retrieves the absolute URL for a handle
+ */
+function toAbsoluteUrl(handle: IComponentHandle): string {
+    let result = "";
+    let context: any = handle;
+
+    while (context !== undefined) {
+        if (context.path !== "") {
+            result = `/${context.path}${result}`;
+        }
+
+        context = context.routeContext;
+    }
+
+    return result;
+}
+
+/**
  * Component serializer implementation
  */
 export class ComponentSerializer implements IComponentSerializer {
@@ -39,7 +58,7 @@ export class ComponentSerializer implements IComponentSerializer {
             // TODO - understand why handle === false in some of our tests
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             return handle
-                ? this.serializeHandle(handle, bind)
+                ? this.serializeHandle(handle, context, bind)
                 : value;
         });
     }
@@ -55,14 +74,19 @@ export class ComponentSerializer implements IComponentSerializer {
                     return value;
                 }
 
-                // Find the root context to use for absolute requests
-                root = context;
-                while (root.routeContext !== undefined) {
-                    root = root.routeContext;
+                // 0.21 back-compat
+                // 0.22 onwards, we always use the routeContext of the root to create the DynamicComponentHandle.
+                // We won't need to check for the if condition below once we remove the back-compat code.
+                const absoluteUrl = value.url.startsWith("/");
+                if (absoluteUrl && root === undefined) {
+                    // Find the root context to use for absolute requests
+                    root = context;
+                    while (root.routeContext !== undefined) {
+                        root = root.routeContext;
+                    }
                 }
 
-                // Create a dynamic component handle that will be used to load the component via call to `get`.
-                const handle = new DynamicComponentHandle(value.url, root);
+                const handle = new DynamicComponentHandle(value.url, absoluteUrl ? root : context);
 
                 return handle;
             });
@@ -81,7 +105,7 @@ export class ComponentSerializer implements IComponentSerializer {
         // Note: Caller is responsible for ensuring that `input` is a non-null object.
         const handle = input.IComponentHandle;
         if (handle !== undefined) {
-            return this.serializeHandle(handle, bind);
+            return this.serializeHandle(handle, context, bind);
         }
 
         let clone: object | undefined;
@@ -112,12 +136,22 @@ export class ComponentSerializer implements IComponentSerializer {
         return clone ?? input;
     }
 
-    private serializeHandle(handle: IComponentHandle, bind: IComponentHandle) {
+    private serializeHandle(handle: IComponentHandle, context: IComponentHandleContext, bind: IComponentHandle) {
         bind.bind(handle);
+        let url: string;
+
+        if (handle.absolutePath !== undefined) {
+            url = handle.absolutePath;
+        } else {
+            // 0.21 back-compat
+            // 0.21 and earlier version do not have `absolutePath` so we genrate the absolute path from the
+            // routeContext's `path`.
+            url = toAbsoluteUrl(handle);
+        }
 
         return {
             type: "__fluid_handle__",
-            url: handle.absolutePath,
+            url,
         };
     }
 }

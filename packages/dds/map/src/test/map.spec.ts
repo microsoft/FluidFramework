@@ -80,8 +80,9 @@ describe("Map", () => {
                         assert.equal(parsed[key].type, "Plain");
                         assert.equal(parsed[key].value, value);
                     } else {
-                        assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value.url, subMap.id);
+                        const val = parsed[key];
+                        assert.equal(val.type, "Plain");
+                        assert.equal(parsed[key].value.url, subMap.handle.absolutePath);
                     }
                 });
             });
@@ -102,7 +103,7 @@ describe("Map", () => {
                         assert.equal(parsed[key].value, value);
                     } else {
                         assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value.url, subMap.id);
+                        assert.equal(parsed[key].value.url, subMap.handle.absolutePath);
                     }
                 });
             });
@@ -118,9 +119,11 @@ describe("Map", () => {
                 };
                 map.set("object", containingObject);
 
+                const subMapHandleUrl = subMap.handle.absolutePath;
+                const subMap2HandleUrl = subMap2.handle.absolutePath;
                 const serialized = JSON.stringify(map.getSerializableStorage());
                 // eslint-disable-next-line max-len
-                assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"subMap"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"subMap2"}}}}}`);
+                assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}}}}`);
             });
 
             it("can load old serialization format", async () => {
