@@ -8,8 +8,9 @@ import {
     IFluidFunctionalComponentViewState,
     IFluidProps,
     IFluidFunctionalComponentFluidState,
+    ISyncedStateConfig,
 } from "./interface";
-import { initializeState, syncStateAndRoot } from "./helpers";
+import { initializeState, syncState } from "./helpers";
 
 /**
  * A wrapper around the useState React hook that combines local and Fluid state updates
@@ -19,15 +20,18 @@ export function useStateFluid<
     SF extends IFluidFunctionalComponentFluidState
 >(
     props: IFluidProps<SV, SF>, initialViewState: SV,
-): [SV, (newState: SV, fromRootUpdate?: boolean) => void] {
+): [SV, (newState: SV, isSyncedStateUpdate?: boolean) => void] {
     const {
         syncedStateId,
-        root,
-        fluidToView,
-        viewToFluid,
-        dataProps,
+        syncedComponent,
     } = props;
-
+    const config = syncedComponent.getConfig(syncedStateId);
+    if (config === undefined) {
+        throw Error(`Failed to find configuration for synced state ID: ${syncedStateId}`);
+    }
+    const syncedState = syncedComponent.syncedState;
+    const dataProps = props.dataProps || syncedComponent.dataProps;
+    const { fluidToView, viewToFluid } = config as ISyncedStateConfig<SV, SF>;
     // Establish the react state and setState functions using the initialViewState passed in
     const [reactState, reactSetState] = React.useState<SV>(initialViewState);
 
@@ -36,9 +40,9 @@ export function useStateFluid<
     // after the async call has finished
     if (!reactState.isInitialized) {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        initializeState(
+        initializeState<SV, SF>(
             syncedStateId,
-            root,
+            syncedState,
             dataProps,
             reactState,
             reactSetState,
@@ -60,10 +64,10 @@ export function useStateFluid<
             if (isLocal) {
                 reactSetState(newCombinedState);
             } else {
-                syncStateAndRoot(
+                syncState(
                     fromRootUpdate,
                     syncedStateId,
-                    root,
+                    syncedState,
                     dataProps.runtime,
                     newCombinedState,
                     reactSetState,
@@ -73,7 +77,7 @@ export function useStateFluid<
                 );
             }
         },
-        [root, viewToFluid, reactState, reactSetState, dataProps],
+        [syncedState, viewToFluid, reactState, reactSetState, dataProps],
     );
     return [reactState, fluidSetState];
 }

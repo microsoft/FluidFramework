@@ -459,8 +459,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.removeAllListeners();
     }
 
-    public isLocal(): boolean {
-        return this.attachState === AttachState.Detached;
+    public isAttached(): boolean {
+        return this.attachState !== AttachState.Detached;
     }
 
     public async attach(request: IRequest): Promise<void> {

@@ -149,10 +149,10 @@ export interface IComponentRuntimeChannel extends
     readonly id: string;
 
     /**
-     * Called to attach the runtime to the container.
+     * Called to bind the runtime to the container.
      * If the container is not attached to storage, then this would also be unknown to other clients.
      */
-    attach(): void;
+    bindToContext(): void;
 
     /**
      * Retrieves the snapshot used as part of the initial snapshot message
@@ -350,10 +350,10 @@ export interface IComponentContext extends EventEmitter {
     bindRuntime(componentRuntime: IComponentRuntimeChannel): void;
 
     /**
-     * Attaches the runtime to the container
+     * Register the runtime to the container
      * @param componentRuntime - runtime to attach
      */
-    attach(componentRuntime: IComponentRuntimeChannel): void;
+    bindToContext(componentRuntime: IComponentRuntimeChannel): void;
 
     /**
      * Call by IComponentRuntimeChannel, indicates that a channel is dirty and needs to be part of the summary.
@@ -362,9 +362,9 @@ export interface IComponentContext extends EventEmitter {
     setChannelDirty(address: string): void;
 
     /**
-     * It is false if the container is attached to storage and the component is attached to container.
+     * It is true if the component is attached or attaching to storage.
      */
-    isLocal(): boolean;
+    isAttached: boolean;
 
     /**
      * Get an absolute url to the containe rbased on the provided relativeUrl.

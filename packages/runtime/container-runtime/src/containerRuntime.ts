@@ -485,7 +485,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         if (!context.existing) {
             await runtime.createComponent(schedulerId, schedulerId)
                 .then((componentRuntime) => {
-                    componentRuntime.attach();
+                    // 0.20 back-compat attach
+                    if (componentRuntime.bindToContext !== undefined) {
+                        componentRuntime.bindToContext();
+                    } else {
+                        (componentRuntime as any).attach();
+                    }
                 });
         }
 
@@ -566,8 +571,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.registry;
     }
 
-    public isLocal(): boolean {
-        return this.context.isLocal();
+    public isAttached(): boolean {
+        if (this.context.isAttached !== undefined) {
+            return this.context.isAttached();
+        }
+        // 0.20 back-compat islocal
+        return !((this.context as any).isLocal() as boolean);
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
@@ -1103,7 +1112,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             this.summarizerNode.createTrackingChild(this.deltaManager.lastSequenceNumber, id),
-            (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
+            (cr: IComponentRuntimeChannel) => this.bindComponent(cr),
             props);
 
         const deferred = new Deferred<ComponentContext>();
@@ -1129,7 +1138,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             this.summarizerNode.createTrackingChild(this.deltaManager.lastSequenceNumber, id),
-            (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
+            (cr: IComponentRuntimeChannel) => this.bindComponent(cr),
             undefined /* #1635: Remove LocalComponentContext createProps */);
 
         const deferred = new Deferred<ComponentContext>();
@@ -1283,15 +1292,17 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         componentContext.process(transformed, local, localMessageMetadata);
     }
 
-    private attachComponent(componentRuntime: IComponentRuntimeChannel): void {
+    private bindComponent(componentRuntime: IComponentRuntimeChannel): void {
         this.verifyNotClosed();
 
         const context = this.getContext(componentRuntime.id);
-        if (context.isAttached) {
+        if (context.isBoundToContext) {
             return;
         }
-        // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
-        if (!this.isLocal()) {
+        // If the container is detached, we don't need to send OP or add to pending attach because
+        // we will summarize it while uploading the create new summary and make it known to other
+        // clients but we do need to submit op if container forced us to do so.
+        if (this.isAttached()) {
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
@@ -1339,7 +1350,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // Iterate over each component and ask it to snapshot
         Array.from(this.contexts)
             .filter(([key, value]) =>
-                value.isAttached,
+                // Take summary of bounded components.
+                value.isBoundToContext,
             )
             .map(async ([key, value]) => {
                 const snapshot = value.generateAttachMessage().snapshot;

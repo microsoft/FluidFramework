@@ -13,7 +13,6 @@ import {
     SparseMatrix,
     SequenceDeltaEvent,
 } from "@fluidframework/sequence";
-import { ISheetlet, createSheetletProducer } from "@tiny-calc/micro";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IEvent } from "@fluidframework/common-definitions";
 import { CellRange } from "./cellrange";
@@ -51,28 +50,10 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
     public get numRows() { return this.matrix.numRows; }
 
     private get matrix(): SparseMatrix { return this.maybeMatrix; }
-    private get workbook() { return this.maybeWorkbook; }
 
     private maybeRows?: SharedNumberSequence;
     private maybeCols?: SharedNumberSequence;
     private maybeMatrix?: SparseMatrix;
-    private maybeWorkbook?: ISheetlet;
-
-    public evaluateCell(row: number, col: number): TableDocumentItem {
-        try {
-            return this.workbook.evaluateCell(row, col);
-        } catch (e) {
-            return `${e}`;
-        }
-    }
-
-    public evaluateFormula(formula: string): TableDocumentItem {
-        try {
-            return this.workbook.evaluateFormula(formula);
-        } catch (e) {
-            return `${e}`;
-        }
-    }
 
     public getCellValue(row: number, col: number): TableDocumentItem {
         return this.matrix.getItem(row, col);
@@ -80,7 +61,6 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
 
     public setCellValue(row: number, col: number, value: TableDocumentItem, properties?: PropertySet) {
         this.matrix.setItems(row, col, [value], properties);
-        this.workbook.invalidate(row, col);
     }
 
     public async getRange(label: string) {
@@ -181,58 +161,9 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
         this.maybeRows = await maybeRowsHandle.get();
         this.maybeCols = await maybeColsHandle.get();
 
-        this.matrix.on("op", (op, local, target) => {
-            if (!local) {
-                // Temporarily, we invalidate the entire matrix when we receive a remote op.
-                // This can be improved w/the new SparseMatrix, which makes it easier to decode
-                // the range of cells impacted by matrix ops.
-                for (let row = 0; row < this.numRows; row++) {
-                    for (let col = 0; col < this.numCols; col++) {
-                        this.workbook.invalidate(row, col);
-                    }
-                }
-            }
-        });
         this.forwardEvent(this.maybeCols, "op", "sequenceDelta");
         this.forwardEvent(this.maybeRows, "op", "sequenceDelta");
         this.forwardEvent(this.matrix, "op", "sequenceDelta");
-
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        const table = this;
-
-        const producer = {
-            get rowCount() { return table.numRows; },
-            get colCount() { return table.numCols; },
-            getCell: (row, col) => {
-                const raw = table.matrix.getItem(row, col);
-                return typeof raw === "object"
-                    ? undefined
-                    : raw;
-            },
-            openMatrix() { return this; },
-            closeMatrix() { },
-            get matrixProducer() { return this; },
-        };
-
-        const grid = {
-            getCell: (row: number, col: number) => table.matrix.getTag(row, col),
-            write(row: number, col: number, value: any) {
-                table.matrix.setTag(row, col, value);
-            },
-            readOrWrite(row: number, col: number, value: () => any) {
-                const existing = this.getCell(row, col);
-                if (existing !== undefined) {
-                    return existing;
-                }
-
-                this.write(row, col, value());
-            },
-            clear(row: number, col: number) {
-                this.write(row, col, undefined);
-            },
-        };
-
-        this.maybeWorkbook = createSheetletProducer(producer, grid);
     }
 
     private readonly localRefToRowCol = (localRef: LocalReference) => {

@@ -87,7 +87,7 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
         const root = runtime.createChannel("root", this.root.type) as ISharedObject;
         const instance = new this.ctor(context, runtime, root);
         instance.create(props);
-        root.register();
+        root.bindToContext();
         return instance;
     }
 
