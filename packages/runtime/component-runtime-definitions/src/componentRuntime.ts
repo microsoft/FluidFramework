@@ -147,5 +147,5 @@ export interface IComponentRuntime extends
     /**
      * Indicates the attachment state of the component to a host service.
      */
-    attachState(): AttachState;
+    attachState: AttachState;
 }

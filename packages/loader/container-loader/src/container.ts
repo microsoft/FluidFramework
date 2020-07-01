@@ -459,7 +459,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.removeAllListeners();
     }
 
-    public attachState(): AttachState {
+    public get attachState(): AttachState {
         return this._attachState;
     }
 

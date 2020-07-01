@@ -421,7 +421,7 @@ export class MockComponentRuntime extends EventEmitter
         return !this.local;
     }
 
-    public attachState(): AttachState {
+    public get attachState(): AttachState {
         return this.local ? AttachState.Detached : AttachState.Attached;
     }
 

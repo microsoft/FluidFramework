@@ -92,7 +92,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     /**
      * Indicates the attachment state of the container to a host service.
      */
-    attachState(): AttachState;
+    attachState: AttachState;
 
     /**
      * Attaches the container to the provided host.

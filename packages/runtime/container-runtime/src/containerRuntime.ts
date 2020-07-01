@@ -572,7 +572,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     public attachState(): AttachState {
         if (this.context.attachState !== undefined) {
-            return this.context.attachState();
+            return this.context.attachState;
         }
         let isAttached = false;
         // 0.20 back-compat isAttached
