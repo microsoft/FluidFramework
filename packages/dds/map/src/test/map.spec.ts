@@ -80,8 +80,7 @@ describe("Map", () => {
                         assert.equal(parsed[key].type, "Plain");
                         assert.equal(parsed[key].value, value);
                     } else {
-                        const val = parsed[key];
-                        assert.equal(val.type, "Plain");
+                        assert.equal(parsed[key].type, "Plain");
                         assert.equal(parsed[key].value.url, subMap.handle.absolutePath);
                     }
                 });
