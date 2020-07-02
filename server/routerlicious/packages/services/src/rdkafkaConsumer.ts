@@ -168,7 +168,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			throw new Error(`There is a already pending commit for partition ${partitionId}`);
 		}
 
-		// this will be resolved in "offset.commit" event
+		// this will be resolved in the "offset.commit" event
 		const deferredCommit = new Deferred<void>();
 		this.pendingCommits.set(partitionId, deferredCommit);
 
