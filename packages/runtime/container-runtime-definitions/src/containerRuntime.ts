@@ -28,6 +28,7 @@ import {
     IComponentContext,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
+import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -45,6 +46,7 @@ export interface IProvideContainerRuntime {
  */
 export interface IContainerRuntime extends
     IProvideContainerRuntime,
+    Partial<IProvideContainerRuntimeDirtyable>,
     IContainerRuntimeBase {
     readonly id: string;
     readonly existing: boolean;

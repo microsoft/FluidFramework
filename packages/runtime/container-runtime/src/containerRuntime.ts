@@ -27,7 +27,7 @@ import {
     ContainerWarning,
     CriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
 import {
     Deferred,
     Trace,
@@ -96,7 +96,6 @@ import { ReportConnectionTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
-import { IContainerRuntimeDirtyable } from "./interfaces";
 
 const chunksBlobName = ".chunks";
 
@@ -437,7 +436,7 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * It will define the component level mappings.
  */
 export class ContainerRuntime extends EventEmitter
-implements IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
+implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
     public get IContainerRuntime() { return this; }
     public get IContainerRuntimeDirtyable() { return this; }
 
@@ -1191,20 +1190,30 @@ implements IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
         return this.dirtyDocument;
     }
 
-    // Returns if an "Attach" or "Operation" type message is from the scheduler.
-    public isMessageDirtyable(type: ContainerMessageType, contents: any) {
+    /**
+     * Will return true for any message that affect the dirty state of this document
+     * This function can be used to filter out any runtime operations that should not be affecting whether or not
+     * the IComponentRuntime.isDocumentDirty call returns true/false
+     * @param type - The type of ContainerRuntime message that is being checked
+     * @param contents - The contents of the message that is being verified
+     */
+    public isMessageDirtyable(message: ISequencedDocumentMessage) {
+        return this.isContainerMessageDirtyable(message.type as ContainerMessageType, message.contents);
+    }
+
+    private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
         if (type === ContainerMessageType.Attach) {
             const attachMessage = contents as IAttachMessage;
             if (attachMessage.id === SchedulerType) {
-                return true;
+                return false;
             }
         } else if (type === ContainerMessageType.ComponentOp) {
             const envelope = contents as IEnvelope;
             if (envelope.address === SchedulerType) {
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     /**
@@ -1584,7 +1593,7 @@ implements IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
 
         // Let the PendingStateManager know that a message was submitted.
         this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata);
-        if (this.isMessageDirtyable(type, content)) {
+        if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }
 

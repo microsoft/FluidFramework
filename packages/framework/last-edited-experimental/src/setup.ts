@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage, IQuorum } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { ContainerMessageType  } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
 
@@ -63,8 +63,10 @@ export async function setupLastEditedTrackerForContainer(
     // last edited tracker. If the component hasn't loaded, store the last edited information temporarily.
     runtime.on("op", (message: ISequencedDocumentMessage) => {
         // If this is a scheduler messages or it should be discarded as per shouldDiscardMessageFn, return.
-        if (shouldDiscardMessageFn(message)
-        || runtime.IContainerRuntimeDirtyable.isMessageDirtyable(message.type as ContainerMessageType, message.contents)) {
+        // To check for this, we use the runtime's isMessageDirtyable API
+        const isDirtyable = runtime.IContainerRuntimeDirtyable === undefined
+        ? true : runtime.IContainerRuntimeDirtyable.isMessageDirtyable(message);
+        if (shouldDiscardMessageFn(message) || !isDirtyable) {
             return;
         }
 
