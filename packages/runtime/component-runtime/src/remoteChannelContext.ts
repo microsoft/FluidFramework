@@ -69,11 +69,6 @@ export class RemoteChannelContext implements IChannelContext {
         return this.channelP;
     }
 
-    public isBoundToContext(): boolean {
-        // A remote channel by definition is bound
-        return true;
-    }
-
     public setConnectionState(connected: boolean, clientId?: string) {
         // Connection events are ignored if the component is not yet loaded
         if (!this.isLoaded) {

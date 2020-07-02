@@ -58,11 +58,6 @@ export interface IComponentRuntime extends
 
     readonly logger: ITelemetryLogger;
 
-    /**
-     * Returns if the runtime is bound to container.
-     */
-    isBoundToContext: boolean;
-
     on(
         event: "disconnected" | "dispose" | "leader" | "notleader" | "collaborating",
         listener: () => void,
