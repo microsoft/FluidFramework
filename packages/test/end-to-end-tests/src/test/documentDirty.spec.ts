@@ -143,6 +143,8 @@ describe("Document Dirty", () => {
                 "Document is cleaned after all ops have been acked");
         });
 
+        // TODO: Add batch connected test here and fix batch dirty scenario
+
         it(`doesn't marks document as clean when disconnected`, async () => {
             // Disconnect the client.
             documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
@@ -195,12 +197,12 @@ describe("Document Dirty", () => {
                 "Document is cleaned after all ops have been acked");
 
             // Document should have been marked dirty again due to pending DDS ops
-            assert.equal(wasMarkedDirtyCount, 4,
-                `Document will have incremented the dirty count twice, once for itself and once for the DDS`);
+            assert.equal(wasMarkedDirtyCount, 3,
+                `Document will have incremented the dirty count`);
 
             // Document will have been marked clean on reconnection
-            assert.equal(wasMarkedCleanCount, 4,
-                "Document will have been marked clean three times, twice for the DDS, once for itself");
+            assert.equal(wasMarkedCleanCount, 3,
+                "Document will have been marked clean two more times");
         });
 
         it(`sets on connected, but disconnects before sending ops, then reconnects`, async () => {
@@ -238,12 +240,113 @@ describe("Document Dirty", () => {
             // Wait for the ops to get processed.
             await containerDeltaEventManager.process();
 
-            assert.equal(wasMarkedDirtyCount, 3,
-                `Document will have incremented the dirty count twice, once for itself and once for the DDS`);
+            assert.equal(wasMarkedDirtyCount, 2,
+                `Document will have incremented the dirty count`);
 
             // Document will have been marked clean again on reconnection
+            assert.equal(wasMarkedCleanCount, 2,
+                `Document will have been incremented the clean count on reconnection.
+                Clean count: ${wasMarkedCleanCount}`);
+
+            assert.equal(containerCompContainerRuntime.isDocumentDirty(), false,
+                "Document is cleaned after all ops have been acked");
+        });
+    });
+
+    describe("Disconnected state with batch operations", () => {
+        it(`set when disconnected and reconnected`, async () => {
+            // Disconnect the client.
+            documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
+
+            // Set batch values in DDSes in disconnected state.
+            containerComp.context.containerRuntime.orderSequentially(() => {
+                containerCompMap.set("key1", "value1");
+                containerCompMap.set("key2", "value2");
+            });
+
+            assert.equal(containerCompContainerRuntime.isDocumentDirty(), true,
+                "Document is marked dirty on edit");
+
+            // Document should have been marked dirty again due to pending DDS ops
+            assert.equal(wasMarkedDirtyCount, 1,
+                `Document should have been marked dirty due to value set`);
+
+            // Wait for the Container to get reconnected.
+            await waitForContainerReconnection(container);
+
+            // Document will have been marked clean on reconnection
+            assert.equal(wasMarkedCleanCount, 1,
+                "Document will have been marked clean on reconnection");
+
+            // Document should have been marked dirty again due to pending DDS ops
+            assert.equal(wasMarkedDirtyCount, 2,
+                `Document should have been marked dirty again due to pending DDS ops and incremented the count.
+                Dirty count: ${wasMarkedDirtyCount}`);
+
+            // Document should have been marked dirty after to overwrite the clean value, so that the final
+            // state is dirty
+            assert.equal(containerCompContainerRuntime.isDocumentDirty(), true,
+                "Document should have been marked dirty after to overwrite the clean value,"
+                + "so that the final state is dirty");
+
+            await containerDeltaEventManager.process();
+
+            assert.equal(containerCompContainerRuntime.isDocumentDirty(), false,
+                "Document is cleaned after all ops have been acked");
+
+            // Document should have been marked dirty again due to pending DDS ops
+            assert.equal(wasMarkedDirtyCount, 3,
+                `Document will have incremented the dirty count`);
+
+            // Document will have been marked clean on reconnection
             assert.equal(wasMarkedCleanCount, 3,
-                `Document will have been marked clean twice on reconnection, for itself and its DDS.
+                "Document will have been marked clean twice more");
+        });
+
+        it(`sets on connected, but disconnects before sending ops, then reconnects`, async () => {
+            // Set batch values in DDSes in disconnected state.
+            containerComp.context.containerRuntime.orderSequentially(() => {
+                containerCompMap.set("key1", "value1");
+                containerCompMap.set("key2", "value2");
+            });
+
+            assert.equal(wasMarkedDirtyCount, 1,
+                `Document will have incremented the dirty count due to the value set`);
+
+            assert.equal(containerCompContainerRuntime.isDocumentDirty(), true,
+                "Document is marked dirty on edit");
+
+            // Disconnect the client.
+            documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
+
+            assert.equal(wasMarkedDirtyCount, 1,
+                `Document will not increment the dirty count as it was already dirty`);
+
+            assert.equal(containerCompContainerRuntime.isDocumentDirty(), true,
+                "Document is still dirty on disconnect");
+
+            // Wait for the Container to get reconnected.
+            await waitForContainerReconnection(container);
+
+            // Document will have been marked clean on reconnection
+            assert.equal(wasMarkedCleanCount, 1,
+                "Document will have been marked clean on reconnection");
+
+            // Document should have been marked dirty after to overwrite the clean value, so that the final
+            // state is dirty
+            assert.equal(containerCompContainerRuntime.isDocumentDirty(), true,
+                "Document should have been marked dirty after to overwrite the clean value, so that the final"
+                + "state is dirty");
+
+            // Wait for the ops to get processed.
+            await containerDeltaEventManager.process();
+
+            assert.equal(wasMarkedDirtyCount, 2,
+                `Document will have incremented the dirty count`);
+
+            // Document will have been marked clean again on reconnection
+            assert.equal(wasMarkedCleanCount, 2,
+                `Document will have been marked clean again.
                 Clean count: ${wasMarkedCleanCount}`);
 
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), false,
