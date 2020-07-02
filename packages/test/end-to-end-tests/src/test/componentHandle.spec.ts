@@ -4,7 +4,11 @@
  */
 
 import assert from "assert";
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import {
+    ContainerRuntimeFactoryWithDefaultComponent,
+    PrimedComponent,
+    PrimedComponentFactory,
+} from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
@@ -34,6 +38,12 @@ class TestSharedComponent extends PrimedComponent {
     }
 }
 
+const TestSharedComponentFactory = new PrimedComponentFactory(
+    "TestSharedComponent",
+    TestSharedComponent,
+    [SharedMap.getFactory()],
+    []);
+
 describe("ComponentHandle", () => {
     const id = "fluid-test://localhost/componentHandleTest";
     const codeDetails: IFluidCodeDetails = {
@@ -46,7 +56,6 @@ describe("ComponentHandle", () => {
     let container1Component1: TestSharedComponent;
     let container1Component2: TestSharedComponent;
     let container2Component1: TestSharedComponent;
-    let factory: PrimedComponentFactory;
 
     async function getComponent(componentId: string, container: Container): Promise<TestSharedComponent> {
         const response = await container.request({ url: componentId });
@@ -57,13 +66,16 @@ describe("ComponentHandle", () => {
     }
 
     async function createContainer(): Promise<Container> {
-        factory = new PrimedComponentFactory(
-            "default",
-            TestSharedComponent,
-            [SharedMap.getFactory()],
-            [],
-        );
-        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
+        const runtimeFactory =
+            new ContainerRuntimeFactoryWithDefaultComponent(
+                "default",
+                [
+                    ["default", Promise.resolve(TestSharedComponentFactory)],
+                    ["TestSharedComponent", Promise.resolve(TestSharedComponentFactory)],
+                ],
+            );
+
+        const loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
@@ -72,7 +84,8 @@ describe("ComponentHandle", () => {
 
         const container1 = await createContainer();
         container1Component1 = await getComponent("default", container1);
-        container1Component2 = await factory.createComponent(container1Component1._context) as TestSharedComponent;
+        container1Component2 =
+            await TestSharedComponentFactory.createComponent(container1Component1._context) as TestSharedComponent;
 
         const container2 = await createContainer();
         container2Component1 = await getComponent("default", container2);
