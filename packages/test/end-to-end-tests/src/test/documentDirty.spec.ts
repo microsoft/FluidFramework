@@ -164,7 +164,7 @@ describe("Document Dirty", () => {
                 "Document is cleaned after all ops have been acked");
         });
 
-        it(`doesn't marks document as clean when disconnected`, async () => {
+        it(`doesn't affect document state while reconnecting`, async () => {
             // Disconnect the client.
             documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
 
@@ -178,7 +178,7 @@ describe("Document Dirty", () => {
     });
 
     describe("Disconnected state", () => {
-        it(`set when disconnected and reconnected`, async () => {
+        it(`sets operations when disconnected and then reconnects to process them`, async () => {
             // Disconnect the client.
             documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
 
@@ -207,7 +207,7 @@ describe("Document Dirty", () => {
             // Document should have been marked dirty after to overwrite the clean value, so that the final
             // state is dirty
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), true,
-                "Document should have been marked dirty after to overwrite the clean value,"
+                "Document should have been marked dirty to overwrite the clean value,"
                 + "so that the final state is dirty");
 
             await containerDeltaEventManager.process();
@@ -215,6 +215,7 @@ describe("Document Dirty", () => {
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), false,
                 "Document is cleaned after all ops have been acked");
 
+            // TODO: These counts should be 2 once #2724 is closed
             // Document should have been marked dirty again due to pending DDS ops
             assert.equal(wasMarkedDirtyCount, 3,
                 `Document will have incremented the dirty count`);
@@ -224,7 +225,7 @@ describe("Document Dirty", () => {
                 "Document will have been marked clean two more times");
         });
 
-        it(`sets on connected, but disconnects before sending ops, then reconnects`, async () => {
+        it(`sets ops while connected, but disconnects before sending ops, then reconnects to process them`, async () => {
             // Set values in DDSes in disconnected state.
             containerCompMap.set("key", "value");
 
@@ -253,7 +254,7 @@ describe("Document Dirty", () => {
             // Document should have been marked dirty after to overwrite the clean value, so that the final
             // state is dirty
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), true,
-                "Document should have been marked dirty after to overwrite the clean value, so that the final"
+                "Document should have been marked dirty to overwrite the clean value, so that the final"
                 + "state is dirty");
 
             // Wait for the ops to get processed.
@@ -273,7 +274,7 @@ describe("Document Dirty", () => {
     });
 
     describe("Disconnected state with batch operations", () => {
-        it(`set when disconnected and reconnected`, async () => {
+        it(`sets operations when disconnected and then reconnects to process them`, async () => {
             // Disconnect the client.
             documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
 
@@ -313,6 +314,7 @@ describe("Document Dirty", () => {
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), false,
                 "Document is cleaned after all ops have been acked");
 
+            // TODO: These counts should be 2 once #2724 is closed
             // Document should have been marked dirty again due to pending DDS ops
             assert.equal(wasMarkedDirtyCount, 3,
                 `Document will have incremented the dirty count`);
@@ -322,7 +324,7 @@ describe("Document Dirty", () => {
                 "Document will have been marked clean twice more");
         });
 
-        it(`sets on connected, but disconnects before sending ops, then reconnects`, async () => {
+        it(`sets ops while connected, but disconnects before sending ops, then reconnects to process them`, async () => {
             // Set batch values in DDSes in disconnected state.
             containerComp.context.containerRuntime.orderSequentially(() => {
                 containerCompMap.set("key1", "value1");
