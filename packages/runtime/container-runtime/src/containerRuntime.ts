@@ -1198,6 +1198,10 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
      * @param contents - The contents of the message that is being verified
      */
     public isMessageDirtyable(message: ISequencedDocumentMessage) {
+        assert(
+            isRuntimeMessage(message) === true,
+            "Message passed for dirtyable check should be a container runtime message",
+        );
         return this.isContainerMessageDirtyable(message.type as ContainerMessageType, message.contents);
     }
 
