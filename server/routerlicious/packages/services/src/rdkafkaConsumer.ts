@@ -165,7 +165,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		}
 
 		if (this.pendingCommits.has(partitionId)) {
-			throw new Error(`There is a already pending commit for partition ${partitionId}`);
+			throw new Error(`There is already a pending commit for partition ${partitionId}`);
 		}
 
 		// this will be resolved in the "offset.commit" event
