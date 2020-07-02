@@ -218,7 +218,7 @@ export class ContainerContext implements IContainerContext {
         return !this.isAttached();
     }
 
-    // 0.20 back-compat isAttached
+    // 0.21 back-compat isAttached
     public isAttached(): boolean {
         return this.container.attachState !== AttachState.Detached;
     }

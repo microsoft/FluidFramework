@@ -577,7 +577,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             return this.context.attachState;
         }
         let isAttached = false;
-        // 0.20 back-compat isAttached
+        // 0.21 back-compat isAttached
         if ((this.context as any).isAttached !== undefined) {
             isAttached = (this.context as any).isAttached();
         } else {

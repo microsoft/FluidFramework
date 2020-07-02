@@ -154,7 +154,7 @@ export abstract class ComponentContext extends EventEmitter implements
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
-    // 0.20 back-compat isAttached
+    // 0.21 back-compat isAttached
     public get isAttached(): boolean {
         return this.attachState !== AttachState.Detached;
     }
