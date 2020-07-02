@@ -18,7 +18,7 @@ export interface IProvideComponentHandleContext {
  */
 export interface IComponentHandleContext extends IComponentRouter, IProvideComponentHandleContext {
     /**
-     * The absolute path to the handle context from the container runtime.
+     * The absolute path to the handle context from the root.
      */
     absolutePath: string;
 

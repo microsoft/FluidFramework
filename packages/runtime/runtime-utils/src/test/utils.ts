@@ -4,7 +4,7 @@
  */
 
 import { IComponentHandle, IComponentHandleContext } from "@fluidframework/component-core-interfaces";
-import { DynamicComponentHandle } from "../dynanmicComponentHandle";
+import { DynamicComponentHandle } from "../dynamicComponentHandle";
 
 export const mockHandleContext: IComponentHandleContext = {
     absolutePath: "",

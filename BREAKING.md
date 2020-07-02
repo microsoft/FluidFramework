@@ -1,6 +1,8 @@
 # Breaking changes
 
 ## 0.22 Breaking Changes
+- [Removed `path` from `IComponentHandleContext`](#Removed-`path`-from-`IComponentHandleContext`)
+
 
 ### Removed `path` from `IComponentHandleContext`
 Removed the `path` field from the interface `IComponentHandleContext`. This means it is removed from `IComponentHandle` as well.

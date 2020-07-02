@@ -8,7 +8,7 @@ import {
     IComponentHandleContext,
     IComponentSerializer,
 } from "@fluidframework/component-core-interfaces";
-import { DynamicComponentHandle } from "./dynanmicComponentHandle";
+import { DynamicComponentHandle } from "./dynamicComponentHandle";
 import { isSerializedHandle } from "./utils";
 
 /**
@@ -140,7 +140,7 @@ export class ComponentSerializer implements IComponentSerializer {
         bind.bind(handle);
         let url: string;
 
-        if (handle.absolutePath !== undefined) {
+        if ("absolutePath" in handle) {
             url = handle.absolutePath;
         } else {
             // 0.21 back-compat

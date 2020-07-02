@@ -13,8 +13,9 @@ import {
 
 /**
  * Handle to dynamically load a component. This is created on parsing a seralized ComponentHandle.
- * This class is used to represent generic IComponent (through request handler on ComponentRuntime),
- * as well as shared objects (see ComponentRuntime.request for details).
+ * This class is used to generate an IComponentHandle when de-serializing Fluid Component and
+ * SharedObject handles that are stored in SharedObjects. The Component or SharedObject corresponding
+ * to the IComponentHandle can be retrieved by calling `get` on it.
  */
 export class DynamicComponentHandle implements IComponentHandle {
     public get IComponentRouter() { return this; }

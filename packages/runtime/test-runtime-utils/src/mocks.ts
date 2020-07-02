@@ -368,7 +368,7 @@ export class MockComponentRuntime extends EventEmitter
     public readonly IComponentSerializer = new ComponentSerializer();
 
     public readonly documentId: string;
-    public readonly id: string;
+    public readonly id: string = uuid();
     public readonly existing: boolean;
     public options: any = {};
     public clientId: string | undefined = uuid();
@@ -380,11 +380,6 @@ export class MockComponentRuntime extends EventEmitter
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockComponentRuntime");
     private readonly activeDeferred = new Deferred<void>();
     public readonly quorum = new MockQuorum();
-
-    constructor() {
-        super();
-        this.id = uuid();
-    }
 
     public get absolutePath() {
         return `/${this.id}`;
