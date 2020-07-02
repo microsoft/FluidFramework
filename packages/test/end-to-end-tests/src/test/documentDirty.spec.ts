@@ -40,13 +40,14 @@ describe("Document Dirty", () => {
      * Waits for the "connected" event from the given container.
      */
     async function waitForContainerReconnection(c: Container): Promise<void> {
+        assert.equal(c.connected, false);
         await new Promise((resolve) => c.once("connected", () => resolve()));
     }
 
     /**
      * Increments clean count when the "savedDocument" event is fired
      */
-    function onMarkedClean(runtime: IContainerRuntime): void {
+    function registerSavedDocumentHandler(runtime: IContainerRuntime): void {
         runtime.on("savedDocument", () => {
             wasMarkedCleanCount += 1;
             assert.equal(runtime.isDocumentDirty(), false, "Document is marked clean");
@@ -56,7 +57,7 @@ describe("Document Dirty", () => {
     /**
      * Increments dirty count when the "dirtyDocument" event is fired
      */
-    function onMarkedDirty(runtime: IContainerRuntime): void {
+    function registerDirtyDocumentHandler(runtime: IContainerRuntime): void {
         runtime.on("dirtyDocument", () => {
             wasMarkedDirtyCount += 1;
             assert.equal(runtime.isDocumentDirty(), true, "Document is marked dirty");
@@ -118,8 +119,8 @@ describe("Document Dirty", () => {
         wasMarkedDirtyCount = 0;
         wasMarkedCleanCount = 0;
 
-        onMarkedClean(containerCompContainerRuntime);
-        onMarkedDirty(containerCompContainerRuntime);
+        registerSavedDocumentHandler(containerCompContainerRuntime);
+        registerDirtyDocumentHandler(containerCompContainerRuntime);
     });
 
     describe("Connected state", () => {
