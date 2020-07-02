@@ -1,11 +1,16 @@
 # Breaking changes
 
+## 0.22 Breaking Changes
+- [IComponentHTMLVisual removed](#IComponentHTMLVisual-removed)
+
+### IComponentHTMLVisual removed
+The `IComponentHTMLVisual` interface was deprecated in 0.21, and is now removed in 0.22.  To support multiview scenarios, consider split view/model patterns like those demonstrated in the multiview sample.
+
 ## 0.21 Breaking Changes
 - [Removed `@fluidframework/local-test-utils`](#removed-`@fluidframework/local-test-utils`)
 - [IComponentHTMLVisual deprecated](#IComponentHTMLVisual-deprecated)
 - [createValueType removed from SharedMap and SharedDirectory](#createValueType-removed-from-SharedMap-and-SharedDirectory)
 - [Sequence snapshot format change](#Sequence-snapshot-format-change)
-
 
 ### Removed `@fluidframework/local-test-utils`
 Removed this package so classes like `TestHost` are no longer supported. Please contact us if there were dependencies on this or if any assistance in required to get rid of it.
@@ -26,7 +31,6 @@ The `Counter` value type and `createValueType()` method on `SharedMap` and `Shar
 ### rename @fluidframework/aqueduct-react to @fluidframework/react-inputs
 
 aqueduct-react is actually just a react library and renamed it to reflect such.
-
 
 ### Sequence snapshot format change
 
