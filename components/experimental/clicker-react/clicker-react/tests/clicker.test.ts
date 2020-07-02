@@ -8,7 +8,7 @@ import { globals } from "../jest.config";
 describe("clicker", () => {
     const getValue = async (index: number) => {
         return page.evaluate((i: number) => {
-            const clickerElements = document.getElementsByClassName("clicker-value-class");
+            const clickerElements = document.getElementsByClassName("value");
             const clicker = clickerElements[i] as HTMLDivElement;
             if (clicker) {
                 return clicker.innerText;

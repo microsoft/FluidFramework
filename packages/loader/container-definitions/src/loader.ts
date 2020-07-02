@@ -69,7 +69,8 @@ export interface ICodeAllowList {
 
 export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
-    (event: "connected" | "contextChanged", listener: (clientId: string) => void);
+    (event: "connected", listener: (clientId: string) => void);
+    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
     (event: "disconnected" | "joining", listener: () => void);
     (event: "closed", listener: (error?: CriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
@@ -90,9 +91,8 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 
     /**
      * Flag indicating if the given container has been attached to a host service.
-     * False if the container is attached to storage.
      */
-    isLocal(): boolean;
+    isAttached(): boolean;
 
     /**
      * Attaches the container to the provided host.

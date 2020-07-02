@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     ISequencedDocumentMessage,
@@ -10,7 +11,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { IComponentContext } from "@fluidframework/runtime-definitions";
-import { strongAssert } from "@fluidframework/runtime-utils";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
@@ -48,8 +48,8 @@ export class LocalChannelContext implements IChannelContext {
         return this.channel;
     }
 
-    public isRegistered(): boolean {
-        return this.channel.isRegistered();
+    public isBoundToContext(): boolean {
+        return this.channel.isBoundToContext();
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
@@ -63,14 +63,14 @@ export class LocalChannelContext implements IChannelContext {
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
-        strongAssert(this.attached, "Local channel must be attached when processing op");
+        assert(this.attached, "Local channel must be attached when processing op");
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.connection!.process(message, local, localOpMetadata);
     }
 
     public reSubmit(content: any, localOpMetadata: unknown) {
-        strongAssert(this.attached, "Local channel must be attached when resubmitting op");
+        assert(this.attached, "Local channel must be attached when resubmitting op");
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.connection!.reSubmit(content, localOpMetadata);

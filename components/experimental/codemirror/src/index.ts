@@ -53,7 +53,7 @@ class CodeMirrorFactory implements IRuntimeFactory {
         if (!runtime.existing) {
             await Promise.all([
                 runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
-                    componentRuntime.attach();
+                    componentRuntime.bindToContext();
                 }),
             ]);
         }

@@ -21,7 +21,7 @@ export function createContextFluid<
     const PrimedFluidContext = React.createContext({
         state,
         setState,
-        reactContext: props.reactContext,
+        reactContext: props.reactContext || {},
     });
     return {
         Provider: PrimedFluidContext.Provider,

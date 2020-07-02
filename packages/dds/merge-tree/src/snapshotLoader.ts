@@ -31,21 +31,36 @@ export class SnapshotLoader {
         this.logger = ChildLogger.create(logger, "SnapshotLoader");
     }
 
-    public async initialize(
+    public  async initialize(
         branchId: string,
-        services: IObjectStorageService): Promise<ISequencedDocumentMessage[]> {
-        const headerP = services.read(SnapshotLegacy.header);
-        const blobsP = services.list("");
-
-        const header = await headerP;
-        assert(header);
+        services: IObjectStorageService,
+    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
         // Override branch by default which is derived from document id,
         // as document id isn't stable for spo
         // which leads to branch id being in correct
         const branch = this.runtime.options && this.runtime.options.enableBranching
             ? branchId : this.runtime.documentId;
+        const headerLoadedP =
+            services.read(SnapshotLegacy.header).then((header)=>{
+                assert(header);
+                return this.loadHeader(header, branch);
+            });
 
-        const headerChunk = this.loadHeader(header, branch);
+        const catchupOpsP =
+            this.loadBodyAndCatchupOps(headerLoadedP, services, branch);
+
+        await headerLoadedP;
+
+        return { catchupOpsP };
+    }
+
+    private async loadBodyAndCatchupOps(
+        headerChunkP: Promise<MergeTreeChunkV1>,
+        services: IObjectStorageService,
+        branch: string,
+    ): Promise<ISequencedDocumentMessage[]> {
+        const blobsP = services.list("");
+        const headerChunk = await headerChunkP;
 
         // tslint:disable-next-line: no-suspicious-comment
         // TODO we shouldn't need to wait on the body being complete to finish initialization.

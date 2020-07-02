@@ -5,7 +5,6 @@
 
 import assert from "assert";
 import { IDeltaConnection, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
-import { strongAssert } from "@fluidframework/runtime-utils";
 import {
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
@@ -67,7 +66,7 @@ describe("ConsensusOrderedCollection", () => {
             it("Can add and remove a handle", async () => {
                 assert.strictEqual(await removeItem(), undefined);
                 const handle = testCollection.handle;
-                strongAssert(handle, "Need an actual handle to test this case");
+                assert(handle, "Need an actual handle to test this case");
                 await addItem(handle);
 
                 const acquiredValue = await removeItem();

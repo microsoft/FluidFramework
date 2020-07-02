@@ -18,7 +18,6 @@ import {
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { IDeltaConnection, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
-import { strongAssert } from "@fluidframework/runtime-utils";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection } from "../interfaces";
 
@@ -123,7 +122,7 @@ describe("ConsensusRegisterCollection", () => {
                 const tree: ITree = crc.snapshot();
                 assert(tree.entries.length === 1, "snapshot should return a tree with blob");
                 const serialized: string = (tree.entries[0]?.value as IBlob)?.contents;
-                strongAssert(serialized, "snapshot should return a tree with blob with contents");
+                assert(serialized, "snapshot should return a tree with blob with contents");
                 assert.strictEqual(serialized, expectedSerialization);
             });
 

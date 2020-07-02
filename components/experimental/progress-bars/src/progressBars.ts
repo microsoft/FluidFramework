@@ -191,7 +191,7 @@ export class ProgressCollection
     private async initialize() {
         if (!this.runtime.existing) {
             this.root = SharedMap.create(this.runtime, "root");
-            this.root.register();
+            this.root.bindToContext();
         } else {
             this.root = await this.runtime.getChannel("root") as ISharedMap;
         }

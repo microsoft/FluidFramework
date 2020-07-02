@@ -84,6 +84,7 @@ export async function getSharepointFiles(server: string, serverRelativePath: str
     const clientConfig = getMicrosoftConfiguration();
 
     const fileInfo = await resolveDriveItemByServerRelativePath(server, serverRelativePath, clientConfig);
+    console.log(fileInfo);
     const pendingFolder: { path: string, folder: IOdspDriveItem }[] = [];
     const files: IOdspDriveItem[] = [];
     if (fileInfo.isFolder) {

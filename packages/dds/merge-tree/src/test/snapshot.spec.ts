@@ -20,7 +20,8 @@ async function loadSnapshot(tree: ITree) {
         clientId: "1",
     };
 
-    await client2.load(runtime as IComponentRuntime, services);
+    const { catchupOpsP } = await client2.load(runtime as IComponentRuntime, services);
+    await catchupOpsP;
     return client2;
 }
 
@@ -77,7 +78,7 @@ class TestString {
     public getSnapshot() {
         const snapshot = new SnapshotV1(this.client.mergeTree, this.client.logger);
         snapshot.extractSync();
-        return snapshot.emit([]);
+        return snapshot.emit();
     }
 
     public getText() { return this.client.getText(); }
@@ -185,7 +186,7 @@ describe("snapshot", () => {
     });
 
     it("includes ACKed segments below MSN in body", async () => {
-        for (let i = 0; i < SnapshotV1.sizeOfChunks + 10; i++) {
+        for (let i = 0; i < SnapshotV1.chunkSize + 10; i++) {
             str.append(`${i % 10}`, /* increaseMsn: */ true);
         }
 
@@ -193,7 +194,7 @@ describe("snapshot", () => {
     });
 
     it("includes ACKed segments above MSN in body", async () => {
-        for (let i = 0; i < SnapshotV1.sizeOfChunks + 10; i++) {
+        for (let i = 0; i < SnapshotV1.chunkSize + 10; i++) {
             str.append(`${i % 10}`, /* increaseMsn: */ false);
         }
 

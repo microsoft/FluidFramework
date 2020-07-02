@@ -34,6 +34,20 @@ import { ICodeLoader, ILoader } from "./loader";
 // TODO: remove, replace all usage with version from protocol-definitions
 export const summarizerClientType = "summarizer";
 
+// Represents the attachment state of the entity.
+export enum AttachState {
+    Detached = "Detached",
+    Attaching = "Attaching",
+    Attached = "Attached",
+}
+
+// Represents the bind state of the entity.
+export enum BindState {
+    NotBound = "NotBound",
+    Binding = "Binding",
+    Bound = "Bound",
+}
+
 /**
  * Person definition in a npm script
  */
@@ -230,9 +244,9 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
 
     /**
      * Flag indicating if the given container has been attached to a host service.
-     * False if the container is attached to storage.
+     * True if the container is attached to storage.
      */
-    isLocal(): boolean;
+    isAttached(): boolean;
 
     getLoadedFromVersion(): IVersion | undefined;
 

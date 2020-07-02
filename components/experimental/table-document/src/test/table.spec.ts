@@ -113,64 +113,6 @@ describe("TableDocument", () => {
         });
     });
 
-    describe("eval", () => {
-        it("=A1", () => {
-            table.insertRows(0, 1);
-            table.insertCols(0, 2);
-            table.setCellValue(0, 0, 10);
-            table.setCellValue(0, 1, "=A1");
-            assert.strictEqual(table.evaluateCell(0, 1), 10);
-        });
-
-        it("=A1 w/invalidation", () => {
-            table.insertRows(0, 1);
-            table.insertCols(0, 2);
-            table.setCellValue(0, 0, 10);
-            table.setCellValue(0, 1, "=A1");
-            assert.strictEqual(table.evaluateCell(0, 1), 10);
-            table.setCellValue(0, 0, 20);
-            assert.strictEqual(table.evaluateCell(0, 1), 20);
-        });
-
-        it("=A1 w/insert col", () => {
-            table.insertRows(0, 1);
-            table.insertCols(0, 2);
-            table.setCellValue(0, 0, 10);
-            table.setCellValue(0, 1, "=A1");
-            assert.strictEqual(table.evaluateCell(0, 1), 10);
-            table.insertCols(1, 1);
-            assert.strictEqual(table.evaluateCell(0, 1), undefined);
-            assert.strictEqual(table.evaluateCell(0, 2), 10);
-        });
-
-        it("=A1 w/insert row", () => {
-            table.insertRows(0, 1);
-            table.insertCols(0, 2);
-            table.setCellValue(0, 0, 10);
-            table.setCellValue(0, 1, "=A1");
-            assert.strictEqual(table.evaluateCell(0, 1), 10);
-            table.insertRows(0, 1);
-            assert.strictEqual(table.evaluateCell(0, 1), undefined);
-            assert.strictEqual(table.evaluateCell(1, 1), 10);
-        });
-
-        it("cascading recalcs", () => {
-            table.insertRows(0, 1);
-            table.insertCols(0, 4);
-            table.setCellValue(0, 1, "=A1");
-            table.setCellValue(0, 2, "=B1");
-            table.setCellValue(0, 3, "=C1");
-            for (const expected of [10, 20, 30]) {
-                table.setCellValue(0, 0, expected);
-                for (let r = 0; r < table.numRows; r++) {
-                    for (let c = 0; c < table.numCols; c++) {
-                        assert.strictEqual(table.evaluateCell(r, c), expected);
-                    }
-                }
-            }
-        });
-    });
-
     describe("annotations", () => {
         it("row", () => {
             table.insertRows(0, 2);

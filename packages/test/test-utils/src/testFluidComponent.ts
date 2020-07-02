@@ -76,6 +76,10 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
         throw new Error(`Shared object with id ${id} not found.`);
     }
 
+    public get isBoundToContext(): boolean {
+        return this.runtime.isBoundToContext;
+    }
+
     public async request(request: IRequest): Promise<IResponse> {
         return {
             mimeType: "fluid/component",
@@ -93,7 +97,7 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
                 this.root.set(key, sharedObject.handle);
             });
 
-            this.root.register();
+            this.root.bindToContext();
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;

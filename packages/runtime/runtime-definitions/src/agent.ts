@@ -48,6 +48,7 @@ export interface ITaskManager extends IProvideTaskManager, IComponentLoadable, I
 }
 
 export const IAgentScheduler: keyof IProvideAgentScheduler = "IAgentScheduler";
+export const SchedulerType = "_scheduler";
 
 export interface IProvideAgentScheduler {
     readonly IAgentScheduler: IAgentScheduler;

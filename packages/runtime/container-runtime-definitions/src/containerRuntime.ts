@@ -28,6 +28,7 @@ import {
     IComponentContext,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
+import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -45,6 +46,7 @@ export interface IProvideContainerRuntime {
  */
 export interface IContainerRuntime extends
     IProvideContainerRuntime,
+    Partial<IProvideContainerRuntimeDirtyable>,
     IContainerRuntimeBase {
     readonly id: string;
     readonly existing: boolean;
@@ -128,9 +130,9 @@ export interface IContainerRuntime extends
 
     /**
      * Flag indicating if the given container has been attached to a host service.
-     * False if the container is attached to storage.
+     * True if the container is attached to storage.
      */
-    isLocal(): boolean;
+    isAttached(): boolean;
 
     /**
      * Get an absolute url for a provided container-relative request.

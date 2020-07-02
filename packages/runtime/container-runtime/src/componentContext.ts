@@ -14,6 +14,7 @@ import {
     IGenericBlob,
     ContainerWarning,
     ILoader,
+    BindState,
 } from "@fluidframework/container-definitions";
 import { Deferred } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -38,7 +39,7 @@ import {
     IComponentRegistry,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker, strongAssert } from "@fluidframework/runtime-utils";
+import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerRuntime } from "./containerRuntime";
 
@@ -72,8 +73,9 @@ export abstract class ComponentContext extends EventEmitter implements
     IComponentContext,
     IComponentContextLegacy,
     IDisposable {
+    // 0.20 back-compat islocal
     public isLocal(): boolean {
-        return this.containerRuntime.isLocal() || !this.isAttached;
+        return !this.isAttached;
     }
 
     public get documentId(): string {
@@ -152,10 +154,16 @@ export abstract class ComponentContext extends EventEmitter implements
     public get disposed() { return this._disposed; }
 
     public get isAttached(): boolean {
-        return this._isAttached;
+        return this.bindState !== BindState.NotBound && this.containerRuntime.isAttached();
     }
 
+    public get isBoundToContext(): boolean {
+        return this.bindState === BindState.Bound;
+    }
+
+    // 0.20 back-compat attach
     public readonly attach: (componentRuntime: IComponentRuntimeChannel) => void;
+    public readonly bindToContext: (componentRuntime: IComponentRuntimeChannel) => void;
     protected componentRuntime: IComponentRuntimeChannel | undefined;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
@@ -169,15 +177,28 @@ export abstract class ComponentContext extends EventEmitter implements
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
-        private _isAttached: boolean,
-        attach: (componentRuntime: IComponentRuntimeChannel) => void,
+        private bindState: BindState,
+        bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
+        // 0.20 back-compat attach
         this.attach = (componentRuntime: IComponentRuntimeChannel) => {
-            attach(componentRuntime);
-            this._isAttached = true;
+            this.bindToContext(componentRuntime);
+        };
+
+        this.bindToContext = (componentRuntime: IComponentRuntimeChannel) => {
+            // This needs to be there for back compat reasons because the old component runtime does not
+            // have Binding state and it does not stop Binding again while it is Binding.
+            // Previosuly that was prevented my container runtime.
+            // 0.20 back-compat Binding
+            if (this.bindState !== BindState.NotBound) {
+                return;
+            }
+            this.bindState = BindState.Binding;
+            bindComponent(componentRuntime);
+            this.bindState = BindState.Bound;
         };
     }
 
@@ -552,7 +573,7 @@ export abstract class ComponentContext extends EventEmitter implements
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
-        strongAssert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
+        assert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
 
         const innerContents = contents as ComponentMessage;
 
@@ -588,7 +609,7 @@ export class RemotedComponentContext extends ComponentContext {
             storage,
             scope,
             summaryTracker,
-            true,
+            BindState.Bound,
             () => {
                 throw new Error("Already attached");
             },
@@ -656,13 +677,13 @@ export class LocalComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
-        attachCb: (componentRuntime: IComponentRuntimeChannel) => void,
+        bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
         /**
          * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
          */
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);
+        super(runtime, id, false, storage, scope, summaryTracker, BindState.NotBound, bindComponent, pkg);
     }
 
     public generateAttachMessage(): IAttachMessage {

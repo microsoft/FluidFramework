@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/replay-driver";
-export const pkgVersion = "0.21.0";
+export const pkgVersion = "0.22.0";
