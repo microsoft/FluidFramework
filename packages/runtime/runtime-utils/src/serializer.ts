@@ -17,7 +17,7 @@ import { isSerializedHandle } from "./utils";
  */
 function toAbsoluteUrl(handle: IComponentHandle): string {
     let result = "";
-    let context: any = handle;
+    let context: IComponentHandleContext | undefined = handle;
 
     while (context !== undefined) {
         if (context.path !== "") {

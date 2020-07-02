@@ -135,6 +135,13 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this._attachState;
     }
 
+    /**
+     * @deprecated - 0.21 back-compat
+     */
+    public get path(): string {
+        return this.id;
+    }
+
     public get absolutePath(): string {
         return generateHandleContextPath(this.id, this.routeContext);
     }

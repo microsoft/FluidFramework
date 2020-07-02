@@ -32,7 +32,7 @@ export class BlobHandle implements IComponentHandle {
     public readonly absolutePath: string;
 
     constructor(
-        private readonly path: string,
+        public readonly path: string,
         private readonly directory: ISharedDirectory,
         public readonly routeContext: IComponentHandleContext,
     ) {

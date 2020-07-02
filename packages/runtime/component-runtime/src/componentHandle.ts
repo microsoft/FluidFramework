@@ -36,7 +36,7 @@ export class ComponentHandle implements IComponentHandle {
      */
     constructor(
         private readonly value: IComponent,
-        path: string,
+        public readonly path: string,
         public readonly routeContext: IComponentHandleContext,
     ) {
         this.absolutePath = generateHandleContextPath(path, this.routeContext);

@@ -15,6 +15,7 @@ import { ComponentHandle } from "@fluidframework/component-runtime";
 import { DependencyContainer } from "..";
 
 const mockHandleContext: IComponentHandleContext = {
+    path: "",
     absolutePath: "",
     isAttached: false,
     IComponentRouter: undefined as any,

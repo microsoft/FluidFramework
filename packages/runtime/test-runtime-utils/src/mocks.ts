@@ -373,6 +373,7 @@ export class MockComponentRuntime extends EventEmitter
     public options: any = {};
     public clientId: string | undefined = uuid();
     public readonly parentBranch: string;
+    public readonly path = "";
     public readonly connected = true;
     public readonly leader: boolean;
     public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> = new MockDeltaManager();

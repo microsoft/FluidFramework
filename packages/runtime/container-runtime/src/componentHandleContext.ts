@@ -25,7 +25,7 @@ export class ComponentHandleContext implements IComponentHandleContext {
      * @param routeContext - The parent IComponentHandleContext that has a route to this handle.
      */
     constructor(
-        path: string,
+        public readonly path: string,
         private readonly runtime: IRuntime,
         public readonly routeContext?: IComponentHandleContext,
     ) {

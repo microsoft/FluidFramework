@@ -49,7 +49,7 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      */
     constructor(
         private readonly value: ISharedObject,
-        path: string,
+        public readonly path: string,
         public readonly routeContext: IComponentHandleContext,
     ) {
         this.absolutePath = generateHandleContextPath(path, this.routeContext);

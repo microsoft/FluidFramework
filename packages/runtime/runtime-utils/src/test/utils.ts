@@ -7,6 +7,7 @@ import { IComponentHandle, IComponentHandleContext } from "@fluidframework/compo
 import { DynamicComponentHandle } from "../dynamicComponentHandle";
 
 export const mockHandleContext: IComponentHandleContext = {
+    path: "",
     absolutePath: "",
     isAttached: false,
     IComponentRouter: undefined as any,

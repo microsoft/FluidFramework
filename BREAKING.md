@@ -1,11 +1,11 @@
 # Breaking changes
 
 ## 0.22 Breaking Changes
-- [Removed `path` from `IComponentHandleContext`](#Removed-`path`-from-`IComponentHandleContext`)
+- [Deprecated `path` from `IComponentHandleContext`](#Deprecated-`path`-from-`IComponentHandleContext`)
 
 
-### Removed `path` from `IComponentHandleContext`
-Removed the `path` field from the interface `IComponentHandleContext`. This means it is removed from `IComponentHandle` as well.
+### Deprecated `path` from `IComponentHandleContext`
+Deprecated the `path` field from the interface `IComponentHandleContext`. This means that `IComponentHandle` will not have this going forward as well.
 
 Added an `absolutePath` field to `IComponentHandleContext` which is the absolute path to reach it from the container runtime.
 

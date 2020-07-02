@@ -36,6 +36,13 @@ export class DynamicComponentHandle implements IComponentHandle {
     ) {
     }
 
+    /**
+     * @deprecated - This returns the absolute path.
+     */
+    public get path() {
+        return this.absolutePath;
+    }
+
     public async get(): Promise<any> {
         if (this.componentP === undefined) {
             this.componentP = this.routeContext.request({ url: this.absolutePath })
