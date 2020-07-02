@@ -245,7 +245,7 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
     /**
      * Indicates the attachment state of the container to a host service.
      */
-    attachState: AttachState;
+    readonly attachState: AttachState;
 
     getLoadedFromVersion(): IVersion | undefined;
 

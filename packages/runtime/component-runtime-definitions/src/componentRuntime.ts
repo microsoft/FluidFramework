@@ -60,6 +60,11 @@ export interface IComponentRuntime extends
     readonly logger: ITelemetryLogger;
 
     /**
+     * Indicates the attachment state of the component to a host service.
+     */
+    readonly attachState: AttachState;
+
+    /**
      * Returns if the runtime is bound to container.
      */
     isBoundToContext: boolean;
@@ -140,12 +145,4 @@ export interface IComponentRuntime extends
      * Errors raised by distributed data structures
      */
     raiseContainerWarning(warning: ContainerWarning): void;
-
-    // Returns if the runtime is attached or attaching to storage
-    isAttached: boolean;
-
-    /**
-     * Indicates the attachment state of the component to a host service.
-     */
-    attachState: AttachState;
 }

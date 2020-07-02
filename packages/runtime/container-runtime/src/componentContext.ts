@@ -154,15 +154,16 @@ export abstract class ComponentContext extends EventEmitter implements
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
+    // 0.20 back-compat isAttached
     public get isAttached(): boolean {
-        return this.bindState !== BindState.NotBound && this.containerRuntime.attachState() !== AttachState.Detached;
+        return this.attachState !== AttachState.Detached;
     }
 
-    public attachState(): AttachState {
+    public get attachState(): AttachState {
         // If the container is detached or component is NotBound, then the component is Detached.
         // If container is attached and the component is Bound, then the component is Attached.
         // Else the component is Attaching.
-        const containerAttachState = this.containerRuntime.attachState();
+        const containerAttachState = this.containerRuntime.attachState;
         const componentBindState = this.bindState;
         if (containerAttachState === AttachState.Detached || componentBindState === BindState.NotBound) {
             return AttachState.Detached;

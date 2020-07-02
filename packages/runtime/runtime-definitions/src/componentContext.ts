@@ -257,6 +257,10 @@ export interface IComponentContext extends EventEmitter {
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
+    /**
+     * Indicates the attachment state of the component to a host service.
+     */
+    readonly attachState: AttachState;
 
     readonly containerRuntime: IContainerRuntimeBase;
     /**
@@ -355,11 +359,6 @@ export interface IComponentContext extends EventEmitter {
      * @param address - The address of the channe that is dirty.
      */
     setChannelDirty(address: string): void;
-
-    /**
-     * Indicates the attachment state of the component to a host service.
-     */
-    attachState(): AttachState;
 
     /**
      * Get an absolute url to the containe rbased on the provided relativeUrl.

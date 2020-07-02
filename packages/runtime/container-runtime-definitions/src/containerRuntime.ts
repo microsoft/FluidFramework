@@ -63,6 +63,10 @@ export interface IContainerRuntime extends
     readonly flushMode: FlushMode;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly scope: IComponent;
+    /**
+     * Indicates the attachment state of the container to a host service.
+     */
+    readonly attachState: AttachState;
 
     on(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): this;
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
@@ -126,11 +130,6 @@ export interface IContainerRuntime extends
      * Used to notify the HostingRuntime that the ComponentRuntime has be instantiated.
      */
     notifyComponentInstantiated(componentContext: IComponentContext): void;
-
-    /**
-     * Indicates the attachment state of the container to a host service.
-     */
-    attachState(): AttachState;
 
     /**
      * Get an absolute url for a provided container-relative request.

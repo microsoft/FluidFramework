@@ -570,7 +570,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.registry;
     }
 
-    public attachState(): AttachState {
+    public get attachState(): AttachState {
         if (this.context.attachState !== undefined) {
             return this.context.attachState;
         }
@@ -578,9 +578,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // 0.20 back-compat isAttached
         if ((this.context as any).isAttached !== undefined) {
             isAttached = (this.context as any).isAttached();
+        } else {
+            // 0.20 back-compat islocal
+            isAttached = !(this.context as any).isLocal();
         }
-        // 0.20 back-compat islocal
-        isAttached = !(this.context as any).isLocal();
         return isAttached ? AttachState.Attached : AttachState.Detached;
     }
 
@@ -1300,7 +1301,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients but we do need to submit op if container forced us to do so.
-        if (this.attachState() !== AttachState.Detached) {
+        if (this.attachState !== AttachState.Detached) {
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);

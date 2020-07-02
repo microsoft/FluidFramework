@@ -136,7 +136,7 @@ describe("Detached Container", () => {
         const testChannel = await subComponent.runtime.getChannel("root");
         assert.strictEqual(testChannel.isBoundToContext(), true, "Channel should be registered!!");
         assert.strictEqual(testChannel.isAttached(), false, "Channel should be detached!!");
-        assert.strictEqual(subComponent.context.attachState(), AttachState.Detached, "Component should be detached!!");
+        assert.strictEqual(subComponent.context.attachState, AttachState.Detached, "Component should be detached!!");
     });
 
     it("Components in attached container", async () => {
@@ -158,14 +158,15 @@ describe("Detached Container", () => {
             assert.fail("New components should be created in detached container");
         }
         const testComponent = testResponse.value as ITestFluidComponent;
-        assert.strictEqual(testComponent.runtime.isAttached, true, "Component should be attached!!");
+        assert.strictEqual(testComponent.runtime.IComponentHandleContext.isAttached, true,
+            "Component should be attached!!");
 
         // Get the sub component's "root" channel and verify that it is attached.
         const testChannel = await testComponent.runtime.getChannel("root");
         assert.strictEqual(testChannel.isBoundToContext(), true, "Channel should be registered!!");
         assert.strictEqual(testChannel.isAttached(), true, "Channel should be attached!!");
 
-        assert.strictEqual(testComponent.context.attachState(), AttachState.Attached, "Component should be attached!!");
+        assert.strictEqual(testComponent.context.attachState, AttachState.Attached, "Component should be attached!!");
     });
 
     it("Load attached container and check for components", async () => {
@@ -193,7 +194,8 @@ describe("Detached Container", () => {
         // Get the sub component and assert that it is attached.
         const response2 = await container2.request({ url: `/${subCompId}` });
         const subComponent2 = response2.value as ITestFluidComponent;
-        assert.strictEqual(subComponent2.runtime.isAttached, true, "Component should be attached!!");
+        assert.strictEqual(subComponent2.runtime.IComponentHandleContext.isAttached, true,
+            "Component should be attached!!");
 
         // Verify the attributes of the root channel of both sub components.
         const testChannel1 = await subComponent1.runtime.getChannel("root");

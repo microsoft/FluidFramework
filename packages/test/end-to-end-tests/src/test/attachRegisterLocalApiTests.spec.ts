@@ -97,7 +97,7 @@ import { SharedMap } from "@fluidframework/map";
             const component2 = peerComponent.peerComponent;
             const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
 
-            assert.strictEqual(component2.runtime.isAttached, false,
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
                 createTestStatementForAttachedDetached("Component2", false));
             assert.strictEqual(component2.runtime.isBoundToContext, false, "Component2 should be unbound");
 
@@ -108,7 +108,7 @@ import { SharedMap } from "@fluidframework/map";
 
             component2RuntimeChannel.bindToContext();
 
-            assert.strictEqual(component2.runtime.isAttached, isAttached,
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, isAttached,
                 createTestStatementForAttachedDetached("Component2", isAttached));
             assert.strictEqual(component2.runtime.isBoundToContext, true, "Component2 should be bound");
 
@@ -129,7 +129,7 @@ import { SharedMap } from "@fluidframework/map";
             const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component2 = peerComponent.peerComponent;
             const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
-            assert.strictEqual(component2.runtime.isAttached, false,
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
                 createTestStatementForAttachedDetached("Component2", false));
             assert.strictEqual(component2.runtime.isBoundToContext, false, "Component2 should be unbound");
 
@@ -143,7 +143,7 @@ import { SharedMap } from "@fluidframework/map";
             assert.strictEqual(channel.isBoundToContext(), true, "Channel should be registered");
             component2RuntimeChannel.bindToContext();
 
-            assert.strictEqual(component2.runtime.isAttached, isAttached,
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, isAttached,
                 createTestStatementForAttachedDetached("Component2", isAttached));
             assert.strictEqual(component2.runtime.isBoundToContext, true, "Component2 should be bound");
 
@@ -162,7 +162,7 @@ import { SharedMap } from "@fluidframework/map";
             // Create another component which returns the runtime channel.
             const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component2 = peerComponent.peerComponent;
-            assert.strictEqual(component2.runtime.isAttached, false,
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
                 createTestStatementForAttachedDetached("Component2", false));
             assert.strictEqual(component2.runtime.isBoundToContext, false, "Component2 should be unbound");
 
@@ -178,7 +178,7 @@ import { SharedMap } from "@fluidframework/map";
             // Channel should get attached as it was registered to its component
             assert.strictEqual(channel.handle.isAttached, isAttached, "Channel should be attached");
 
-            assert.strictEqual(component2.runtime.isAttached, isAttached,
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, isAttached,
                 createTestStatementForAttachedDetached("Component2", isAttached));
             assert.strictEqual(component2.runtime.isBoundToContext, true, "Component2 should be bound");
         });
@@ -194,7 +194,7 @@ import { SharedMap } from "@fluidframework/map";
             const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component2 = peerComponent.peerComponent;
             const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
-            assert.strictEqual(component2.runtime.isAttached, false,
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
                 createTestStatementForAttachedDetached("Component2", false));
             assert.strictEqual(component2.runtime.isBoundToContext, false, "Component2 should be NotBound");
 
@@ -230,7 +230,7 @@ import { SharedMap } from "@fluidframework/map";
             const component2 = peerComponent.peerComponent;
             const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
 
-            assert.strictEqual(component2.runtime.isAttached, false,
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
                 createTestStatementForAttachedDetached("Component2", false));
             assert.strictEqual(component2.runtime.isBoundToContext, false, "Component2 should be NotBound");
 
@@ -258,9 +258,10 @@ import { SharedMap } from "@fluidframework/map";
             const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component2 = peerComponent.peerComponent;
 
-            assert.strictEqual(component2.runtime.isAttached, false,
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
                 createTestStatementForAttachedDetached("Component2", false));
-            assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
+                "Component2 should be unattached");
 
             // Create a channel
             const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
@@ -286,9 +287,10 @@ import { SharedMap } from "@fluidframework/map";
                 const component2 = peerComponent.peerComponent;
                 const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
 
-                assert.strictEqual(component2.runtime.isAttached, false,
+                assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
                     createTestStatementForAttachedDetached("Component2", false));
-                assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+                assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
+                    "Component2 should be unattached");
 
                 // Create first channel
                 const channel1 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
@@ -334,9 +336,10 @@ import { SharedMap } from "@fluidframework/map";
                 const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
                 const component2 = peerComponent.peerComponent;
 
-                assert.strictEqual(component2.runtime.isAttached, false,
+                assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
                     createTestStatementForAttachedDetached("Component2", false));
-                assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+                assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
+                    "Component2 should be unattached");
 
                 // Create first channel
                 const channel1 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
@@ -377,14 +380,15 @@ import { SharedMap } from "@fluidframework/map";
                 // Create another component which returns the runtime channel.
                 const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
                 const component2 = peerComponent1.peerComponent;
-                assert.strictEqual(component2.runtime.isAttached, false,
+                assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
                     createTestStatementForAttachedDetached("Component2", false));
-                assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+                assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
+                    "Component2 should be unattached");
 
                 // Create another component which returns the runtime channel.
                 const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
                 const component3 = peerComponent2.peerComponent;
-                assert.strictEqual(component3.runtime.isAttached, false,
+                assert.strictEqual(component3.runtime.IComponentHandleContext.isAttached, false,
                     createTestStatementForAttachedDetached("Component2", false));
                 assert.strictEqual(component3.runtime.isBoundToContext, false, "Component2 should be unbound");
 
@@ -426,12 +430,14 @@ import { SharedMap } from "@fluidframework/map";
                 // Create another component which returns the runtime channel.
                 const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
                 const component2 = peerComponent1.peerComponent as TestFluidComponent;
-                assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+                assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
+                    "Component2 should be unattached");
 
                 // Create another component which returns the runtime channel.
                 const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
                 const component3 = peerComponent2.peerComponent as TestFluidComponent;
-                assert.strictEqual(component3.runtime.isAttached, false, "Component3 should be unattached");
+                assert.strictEqual(component3.runtime.IComponentHandleContext.isAttached, false,
+                    "Component3 should be unattached");
 
                 // Create first channel from component2
                 const channel2 = await component2.getSharedObject<SharedMap>(mapId1);
@@ -477,18 +483,21 @@ import { SharedMap } from "@fluidframework/map";
                 // Create another component which returns the runtime channel.
                 const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
                 const component2 = peerComponent1.peerComponent as TestFluidComponent;
-                assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+                assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
+                    "Component2 should be unattached");
 
                 // Create another component which returns the runtime channel.
                 // Create another component which returns the runtime channel.
                 const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
                 const component3 = peerComponent2.peerComponent as TestFluidComponent;
-                assert.strictEqual(component3.runtime.isAttached, false, "Component3 should be unattached");
+                assert.strictEqual(component3.runtime.IComponentHandleContext.isAttached, false,
+                    "Component3 should be unattached");
 
                 // Create another component which returns the runtime channel.
                 const peerComponent3 = await createPeerComponent(defaultComponent.context.containerRuntime);
                 const component4 = peerComponent3.peerComponent as TestFluidComponent;
-                assert.strictEqual(component4.runtime.isAttached, false, "Component4 should be unattached");
+                assert.strictEqual(component4.runtime.IComponentHandleContext.isAttached, false,
+                    "Component4 should be unattached");
 
                 // Create two channel from component2
                 const channel1OfComponent2 = await component2.getSharedObject<SharedMap>(mapId1);

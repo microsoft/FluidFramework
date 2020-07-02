@@ -126,11 +126,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public get isAttached(): boolean {
-        return this.componentContext.attachState() !== AttachState.Detached && this.bindState !== BindState.NotBound;
+        return this.componentContext.attachState !== AttachState.Detached;
     }
 
     public get attachState(): AttachState {
-        return this.componentContext.attachState();
+        return this.componentContext.attachState;
     }
 
     public get isBoundToContext(): boolean {
