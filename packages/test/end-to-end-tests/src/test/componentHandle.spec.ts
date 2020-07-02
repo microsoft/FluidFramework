@@ -53,9 +53,9 @@ describe("ComponentHandle", () => {
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let containerDeltaEventManager: DocumentDeltaEventManager;
-    let container1Component1: TestSharedComponent;
-    let container1Component2: TestSharedComponent;
-    let container2Component1: TestSharedComponent;
+    let firstContainerComponent1: TestSharedComponent;
+    let firstContainerComponent2: TestSharedComponent;
+    let secondContainerComponent1: TestSharedComponent;
 
     async function getComponent(componentId: string, container: Container): Promise<TestSharedComponent> {
         const response = await container.request({ url: componentId });
@@ -82,16 +82,17 @@ describe("ComponentHandle", () => {
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-        const container1 = await createContainer();
-        container1Component1 = await getComponent("default", container1);
-        container1Component2 =
-            await TestSharedComponentFactory.createComponent(container1Component1._context) as TestSharedComponent;
+        const firstContainer = await createContainer();
+        firstContainerComponent1 = await getComponent("default", firstContainer);
+        firstContainerComponent2 =
+            await TestSharedComponentFactory.createComponent(firstContainerComponent1._context) as TestSharedComponent;
 
-        const container2 = await createContainer();
-        container2Component1 = await getComponent("default", container2);
+        const secondContainer = await createContainer();
+        secondContainerComponent1 = await getComponent("default", secondContainer);
 
         containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-        containerDeltaEventManager.registerDocuments(container1Component1._runtime, container2Component1._runtime);
+        containerDeltaEventManager.registerDocuments(
+            firstContainerComponent1._runtime, secondContainerComponent1._runtime);
 
         await containerDeltaEventManager.process();
     });
@@ -101,30 +102,30 @@ describe("ComponentHandle", () => {
         const absolutePath = "";
 
         // Verify that the local client's ContainerRuntime has the correct absolute path.
-        const containerRuntime1 = container1Component1._context.containerRuntime.IComponentHandleContext;
+        const containerRuntime1 = firstContainerComponent1._context.containerRuntime.IComponentHandleContext;
         assert.equal(containerRuntime1.absolutePath, absolutePath, "The ContainerRuntime's path is incorrect");
 
         // Verify that the remote client's ContainerRuntime has the correct absolute path.
-        const containerRuntime2 = container2Component1._context.containerRuntime.IComponentHandleContext;
+        const containerRuntime2 = secondContainerComponent1._context.containerRuntime.IComponentHandleContext;
         assert.equal(containerRuntime2.absolutePath, absolutePath, "The remote ContainerRuntime's path is incorrect");
     });
 
     it("should generate the absolute path for ComponentRuntime correctly", () => {
         // The expected absolute path for the ComponentRuntime.
-        const absolutePath = `/${container1Component1._runtime.id}`;
+        const absolutePath = `/${firstContainerComponent1._runtime.id}`;
 
         // Verify that the local client's ComponentRuntime has the correct absolute path.
-        const componentRuntime1 = container1Component1._runtime.IComponentHandleContext;
+        const componentRuntime1 = firstContainerComponent1._runtime.IComponentHandleContext;
         assert.equal(componentRuntime1.absolutePath, absolutePath, "The ComponentRuntime's path is incorrect");
 
         // Verify that the remote client's ComponentRuntime has the correct absolute path.
-        const componentRuntime2 = container2Component1._runtime.IComponentHandleContext;
+        const componentRuntime2 = secondContainerComponent1._runtime.IComponentHandleContext;
         assert.equal(componentRuntime2.absolutePath, absolutePath, "The remote ComponentRuntime's path is incorrect");
     });
 
     it("can store and retrieve a DDS from handle within same component runtime", async () => {
-        // Create a new SharedMap in `container1Component1` and set a value.
-        const sharedMap = SharedMap.create(container1Component1._runtime);
+        // Create a new SharedMap in `firstContainerComponent1` and set a value.
+        const sharedMap = SharedMap.create(firstContainerComponent1._runtime);
         sharedMap.set("key1", "value1");
 
         const sharedMapHandle = sharedMap.handle;
@@ -135,13 +136,13 @@ describe("ComponentHandle", () => {
         // Verify that the local client's handle has the correct absolute path.
         assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");
 
-        // Add the handle to the root DDS of `container1Component1`.
-        container1Component1._root.set("sharedMap", sharedMapHandle);
+        // Add the handle to the root DDS of `firstContainerComponent1`.
+        firstContainerComponent1._root.set("sharedMap", sharedMapHandle);
 
         await containerDeltaEventManager.process();
 
         // Get the handle in the remote client.
-        const remoteSharedMapHandle = container2Component1._root.get<IComponentHandle<SharedMap>>("sharedMap");
+        const remoteSharedMapHandle = secondContainerComponent1._root.get<IComponentHandle<SharedMap>>("sharedMap");
 
         // Verify that the remote client's handle has the correct absolute path.
         assert.equal(remoteSharedMapHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
@@ -153,25 +154,25 @@ describe("ComponentHandle", () => {
     });
 
     it("can store and retrieve a DDS from handle in different component runtime", async () => {
-        // Create a new SharedMap in `container1Component2` and set a value.
-        const sharedMap = SharedMap.create(container1Component2._runtime);
+        // Create a new SharedMap in `firstContainerComponent2` and set a value.
+        const sharedMap = SharedMap.create(firstContainerComponent2._runtime);
         sharedMap.set("key1", "value1");
 
         const sharedMapHandle = sharedMap.handle;
 
         // The expected absolute path.
-        const absolutePath = `/${container1Component2._runtime.id}/${sharedMap.id}`;
+        const absolutePath = `/${firstContainerComponent2._runtime.id}/${sharedMap.id}`;
 
         // Verify that the local client's handle has the correct absolute path.
         assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");
 
-        // Add the handle to the root DDS of `container1Component1` so that the ComponentRuntime is different.
-        container1Component1._root.set("sharedMap", sharedMap.handle);
+        // Add the handle to the root DDS of `firstContainerComponent1` so that the ComponentRuntime is different.
+        firstContainerComponent1._root.set("sharedMap", sharedMap.handle);
 
         await containerDeltaEventManager.process();
 
         // Get the handle in the remote client.
-        const remoteSharedMapHandle = container2Component1._root.get<IComponentHandle<SharedMap>>("sharedMap");
+        const remoteSharedMapHandle = secondContainerComponent1._root.get<IComponentHandle<SharedMap>>("sharedMap");
 
         // Verify that the remote client's handle has the correct absolute path.
         assert.equal(remoteSharedMapHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
@@ -184,22 +185,22 @@ describe("ComponentHandle", () => {
 
     it("can store and retrieve a SharedComponent from handle in different component runtime", async () => {
         // The expected absolute path.
-        const absolutePath = `/${container1Component2._runtime.id}`;
+        const absolutePath = `/${firstContainerComponent2._runtime.id}`;
 
-        const componentHandle = container1Component2.handle;
+        const componentHandle = firstContainerComponent2.handle;
 
         // Verify that the local client's handle has the correct absolute path.
         assert.equal(componentHandle.absolutePath, absolutePath, "The handle's absolutepath is not correct");
 
-        // Add `container1Component2's` handle to the root DDS of `container1Component1` so that the ComponentRuntime
-        // is different.
-        container1Component1._root.set("component2", container1Component2.handle);
+        // Add `firstContainerComponent2's` handle to the root DDS of `firstContainerComponent1` so that the
+        // ComponentRuntime is different.
+        firstContainerComponent1._root.set("component2", firstContainerComponent2.handle);
 
         await containerDeltaEventManager.process();
 
         // Get the handle in the remote client.
         const remoteComponentHandle =
-            container2Component1._root.get<IComponentHandle<TestFluidComponent>>("component2");
+            secondContainerComponent1._root.get<IComponentHandle<TestFluidComponent>>("component2");
 
         // Verify that the remote client's handle has the correct absolute path.
         assert.equal(remoteComponentHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
@@ -207,7 +208,7 @@ describe("ComponentHandle", () => {
         // Get the component from the handle.
         const container2Component2 = await remoteComponentHandle.get();
         // Verify that the `url` matches with that of the component in container1.
-        assert.equal(container2Component2.url, container1Component2.url, "The urls do not match");
+        assert.equal(container2Component2.url, firstContainerComponent2.url, "The urls do not match");
     });
 
     afterEach(async () => {
