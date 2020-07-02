@@ -130,11 +130,9 @@ describe("Detached Container", () => {
         }
         const subComponent = subResponse.value as ITestFluidComponent;
         assert.strictEqual(subComponent.context.storage, undefined, "No storage should be there!!");
-        assert.strictEqual(subComponent.runtime.isBoundToContext, true, "Component should be attached!!");
 
         // Get the sub component's root channel and verify that it is attached.
         const testChannel = await subComponent.runtime.getChannel("root");
-        assert.strictEqual(testChannel.isBoundToContext(), true, "Channel should be registered!!");
         assert.strictEqual(testChannel.isAttached(), false, "Channel should be detached!!");
         assert.strictEqual(subComponent.context.attachState, AttachState.Detached, "Component should be detached!!");
     });
@@ -163,7 +161,6 @@ describe("Detached Container", () => {
 
         // Get the sub component's "root" channel and verify that it is attached.
         const testChannel = await testComponent.runtime.getChannel("root");
-        assert.strictEqual(testChannel.isBoundToContext(), true, "Channel should be registered!!");
         assert.strictEqual(testChannel.isAttached(), true, "Channel should be attached!!");
 
         assert.strictEqual(testComponent.context.attachState, AttachState.Attached, "Component should be attached!!");
@@ -200,10 +197,9 @@ describe("Detached Container", () => {
         // Verify the attributes of the root channel of both sub components.
         const testChannel1 = await subComponent1.runtime.getChannel("root");
         const testChannel2 = await subComponent2.runtime.getChannel("root");
-        assert.strictEqual(testChannel2.isBoundToContext(), true, "Channel should be bound to component!!");
         assert.strictEqual(testChannel2.isAttached(), true, "Channel should be attached!!");
-        assert.strictEqual(testChannel2.isBoundToContext(), testChannel1.isBoundToContext(),
-            "Value for registration should be same!!");
+        assert.strictEqual(JSON.stringify(testChannel2.snapshot()), JSON.stringify(testChannel1.snapshot()),
+            "Value for snapshot should be same!!");
         assert.strictEqual(testChannel2.isAttached(), testChannel1.isAttached(),
             "Value for isAttached should persist!!");
     });

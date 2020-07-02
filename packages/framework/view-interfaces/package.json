@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/view-interfaces",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "description": "View interfaces for rendering components",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,10 +26,10 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.21.0"
+    "@fluidframework/component-core-interfaces": "^0.22.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.18.0-0",
+    "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/react": "^16.9.15",

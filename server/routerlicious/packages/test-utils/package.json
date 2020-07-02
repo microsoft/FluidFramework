@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-test-utils",
-  "version": "0.1008.0",
+  "version": "0.1009.0",
   "description": "Fluid test utility methods",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -47,12 +47,12 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.20.0-0",
-    "@fluidframework/gitresources": "^0.1008.0",
-    "@fluidframework/protocol-base": "^0.1008.0",
-    "@fluidframework/protocol-definitions": "^0.1008.0",
-    "@fluidframework/server-services-client": "^0.1008.0",
-    "@fluidframework/server-services-core": "^0.1008.0",
+    "@fluidframework/common-utils": "^0.20.0",
+    "@fluidframework/gitresources": "^0.1009.0",
+    "@fluidframework/protocol-base": "^0.1009.0",
+    "@fluidframework/protocol-definitions": "^0.1009.0",
+    "@fluidframework/server-services-client": "^0.1009.0",
+    "@fluidframework/server-services-core": "^0.1009.0",
     "debug": "^4.1.1",
     "lodash": "^4.17.11",
     "moniker": "^0.1.2",
@@ -60,7 +60,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.18.0-0",
+    "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^5.2.5",

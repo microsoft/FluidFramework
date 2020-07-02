@@ -76,10 +76,6 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
         throw new Error(`Shared object with id ${id} not found.`);
     }
 
-    public get isBoundToContext(): boolean {
-        return this.runtime.isBoundToContext;
-    }
-
     public async request(request: IRequest): Promise<IResponse> {
         return {
             mimeType: "fluid/component",

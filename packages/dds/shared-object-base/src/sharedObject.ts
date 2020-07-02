@@ -59,7 +59,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * True if the dds is bound to its parent.
      */
-    private boundToComponent: boolean = false;
+    private _isBoundToContext: boolean = false;
 
     /**
      * Gets the connection state
@@ -152,11 +152,11 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).bindToContext}
      */
     public bindToContext(): void {
-        if (this.isBoundToContext()) {
+        if (this._isBoundToContext) {
             return;
         }
 
-        this.boundToComponent = true;
+        this._isBoundToContext = true;
 
         this.setOwner();
 
@@ -172,19 +172,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     public connect(services: ISharedObjectServices) {
         this.services = services;
         this.attachDeltaHandler();
-    }
-
-    /**
-     * {@inheritDoc (ISharedObject:interface).isBoundToContext}
-     */
-    public isBoundToContext(): boolean {
-        // If the dds is attached to the component then it should be registered irrespective of
-        // whether the container is attached/detached. If it is attached to its component, it will
-        // have its services. This will lead to get the dds summarized. It should also be registered
-        // if somebody called register on dds explicitly without attaching it which will set
-        // this.registered to be true.
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        return this.boundToComponent;
     }
 
     /**
@@ -338,7 +325,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     private attachDeltaHandler() {
         // Services should already be there in case we are attaching delta handler.
         assert(this.services !== undefined, "Services should be there to attach delta handler");
-        this.boundToComponent = true;
+        this._isBoundToContext = true;
         // Allows objects to do any custom processing if it is attached.
         this.didAttach();
 

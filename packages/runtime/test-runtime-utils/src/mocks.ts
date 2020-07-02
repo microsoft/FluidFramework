@@ -406,10 +406,6 @@ export class MockComponentRuntime extends EventEmitter
         return this.activeDeferred.promise;
     }
 
-    public get isBoundToContext(): boolean {
-        return true;
-    }
-
     public async getChannel(id: string): Promise<IChannel> {
         return null;
     }
