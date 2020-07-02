@@ -590,6 +590,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     private readonly summaryTreeConverter: SummaryTreeConverter;
     private latestSummaryAck: ISummaryContext;
     private readonly summaryTracker: SummaryTracker;
+    private readonly notBoundedComponentContexts = new Set<string>();
 
     private tasks: string[] = [];
 
@@ -1092,7 +1093,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), "Creating component with existing ID");
-
+        this.notBoundedComponentContexts.add(id);
         const context = new LocalComponentContext(
             id,
             pkg,
@@ -1118,6 +1119,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         // tslint:disable-next-line: no-unsafe-any
         const id: string = uuid();
+        this.notBoundedComponentContexts.add(id);
         const context = new LocalComponentContext(
             id,
             pkg,
@@ -1285,11 +1287,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     private bindComponent(componentRuntime: IComponentRuntimeChannel): void {
         this.verifyNotClosed();
-
+        this.notBoundedComponentContexts.delete(componentRuntime.id);
         const context = this.getContext(componentRuntime.id);
-        if (context.isBoundToContext) {
-            return;
-        }
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients but we do need to submit op if container forced us to do so.
@@ -1345,7 +1344,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         Array.from(this.contexts)
             .filter(([key, value]) =>
                 // Take summary of bounded components.
-                value.isBoundToContext,
+                !this.notBoundedComponentContexts.has(key),
             )
             .map(async ([key, value]) => {
                 const snapshot = value.generateAttachMessage().snapshot;
