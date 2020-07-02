@@ -68,10 +68,10 @@ export class UserInfo extends EventEmitter implements IComponentUserInformation 
 export const userInfoFactory = async (dc: DependencyContainer) => {
     const s = dc.synthesize<IContainerRuntime>({
         IContainerRuntime,
+        IContainerRuntimeDirtyable,
         IComponentHandleContext,
         IComponentSerializer,
         IComponentRegistry,
-        IContainerRuntimeDirtyable,
     }, {});
     const containerRuntime = await s.IContainerRuntime;
     if (containerRuntime) {
