@@ -12,7 +12,7 @@ import {
 import { IQuorum } from "@fluidframework/protocol-definitions";
 import { DependencyContainer } from "@fluidframework/synthesize";
 import { IComponentRegistry } from "@fluidframework/runtime-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
 
 import { IComponentUserInformation } from "../interfaces";
 
@@ -68,6 +68,7 @@ export class UserInfo extends EventEmitter implements IComponentUserInformation 
 export const userInfoFactory = async (dc: DependencyContainer) => {
     const s = dc.synthesize<IContainerRuntime>({
         IContainerRuntime,
+        IContainerRuntimeDirtyable,
         IComponentHandleContext,
         IComponentSerializer,
         IComponentRegistry,
