@@ -107,12 +107,15 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const topic = config.get("alfred:topic");
         const metricClientConfig = config.get("metric");
         const maxKafkaMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
+        const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
         const producer = services.createProducer(
             kafkaLibrary,
             kafkaEndpoint,
             kafkaClientId,
             topic,
-            maxKafkaMessageSize);
+            maxKafkaMessageSize,
+            false,
+            kafkaProducerPollIntervalMs);
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");

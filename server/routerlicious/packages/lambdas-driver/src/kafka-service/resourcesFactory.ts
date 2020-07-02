@@ -40,6 +40,7 @@ export class KafkaResourcesFactory implements IResourcesFactory<KafkaResources> 
         const lambdaFactory = await plugin.create(config) as IPartitionLambdaFactory;
 
         // Inbound Kafka configuration
+        const kafkaLibrary = config.get("kafka:lib:name");
         const kafkaEndpoint = config.get("kafka:lib:endpoint");
         const zookeeperEndpoint = config.get("zookeeper:endpoint");
 
@@ -50,7 +51,13 @@ export class KafkaResourcesFactory implements IResourcesFactory<KafkaResources> 
         const receiveTopic = streamConfig.topic;
 
         const clientId = moniker.choose();
-        const consumer = createConsumer(kafkaEndpoint, zookeeperEndpoint, clientId, groupId, receiveTopic);
+        const consumer = createConsumer(
+            kafkaLibrary,
+            kafkaEndpoint,
+            zookeeperEndpoint,
+            clientId,
+            groupId,
+            receiveTopic);
 
         return new KafkaResources(
             lambdaFactory,
