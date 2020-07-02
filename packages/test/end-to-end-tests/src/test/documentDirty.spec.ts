@@ -225,7 +225,8 @@ describe("Document Dirty", () => {
                 "Document will have been marked clean two more times");
         });
 
-        it(`sets ops while connected, but disconnects before sending ops, then reconnects to process them`, async () => {
+        it(`sets ops while connected, but disconnects before sending ops,
+        then reconnects to process them`, async () => {
             // Set values in DDSes in disconnected state.
             containerCompMap.set("key", "value");
 
@@ -324,7 +325,8 @@ describe("Document Dirty", () => {
                 "Document will have been marked clean twice more");
         });
 
-        it(`sets ops while connected, but disconnects before sending ops, then reconnects to process them`, async () => {
+        it(`sets ops while connected, but disconnects before sending ops,
+        then reconnects to process them`, async () => {
             // Set batch values in DDSes in disconnected state.
             containerComp.context.containerRuntime.orderSequentially(() => {
                 containerCompMap.set("key1", "value1");
