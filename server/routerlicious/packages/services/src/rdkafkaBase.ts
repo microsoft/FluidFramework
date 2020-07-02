@@ -32,10 +32,8 @@ export abstract class RdkafkaBase extends EventEmitter {
 		} catch (ex) {
 			this.emit("error", ex);
 
-			setTimeout(() => {
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
-				this.initialize();
-			}, 5000);
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this.initialize();
 
 			return;
 		}

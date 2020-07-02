@@ -5,21 +5,10 @@
 
 import * as kafka from "node-rdkafka";
 
-import { Deferred } from "@fluidframework/common-utils";
 import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@fluidframework/server-services-core";
 
 import { IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
-
-// 1MB batch size / (16KB max message size + overhead)
-const maxBatchSize = 32;
-
-class PendingBoxcar implements IPendingBoxcar {
-	public deferred: any = new Deferred<void>();
-	public messages = [];
-
-	constructor(public tenantId: string, public documentId: string) {
-	}
-}
+import { PendingBoxcar, MaxBatchSize } from "./pendingBoxcar";
 
 /**
  * Kafka producer using the node-rdkafka library
@@ -116,7 +105,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		}
 
 		// Create a new boxcar if necessary (will only happen when not connected)
-		if (boxcars[boxcars.length - 1].messages.length + messages.length >= maxBatchSize) {
+		if (boxcars[boxcars.length - 1].messages.length + messages.length >= MaxBatchSize) {
 			boxcars.push(new PendingBoxcar(tenantId, documentId));
 		}
 
@@ -126,7 +115,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		// If adding a new message to the boxcar filled it up, and we are connected, then send immediately. Otherwise
 		// request a send
-		if (this.connected && boxcar.messages.length >= maxBatchSize) {
+		if (this.connected && boxcar.messages.length >= MaxBatchSize) {
 			// Send all the boxcars
 			this.sendBoxcars(boxcars);
 			this.messages.delete(key);

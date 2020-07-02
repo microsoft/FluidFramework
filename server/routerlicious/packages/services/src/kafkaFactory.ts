@@ -29,8 +29,7 @@ export function createProducer(
     kafkaEndPoint: string,
     clientId: string,
     topic: string,
-    maxKafkaMessageSize: number,
-    useRdkafka: boolean = false): IProducer {
+    maxKafkaMessageSize: number): IProducer {
     if (type === "rdkafka") {
         return new RdkafkaProducer({ kafka: [kafkaEndPoint] }, clientId, topic, false);
     }
