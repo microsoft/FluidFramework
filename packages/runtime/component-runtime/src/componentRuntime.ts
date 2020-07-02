@@ -302,6 +302,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      * @param channel - channel to be registered.
      */
     public bindChannel(channel: IChannel): void {
+        assert(this.notBoundedChannelContextSet.has(channel.id), "Channel to be binded should be in not bounded set");
         this.notBoundedChannelContextSet.delete(channel.id);
         // If our Component is attached, then attach the channel.
         if (this.isAttached) {

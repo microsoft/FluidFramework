@@ -1287,6 +1287,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     private bindComponent(componentRuntime: IComponentRuntimeChannel): void {
         this.verifyNotClosed();
+        assert(this.notBoundedComponentContexts.has(componentRuntime.id),
+            "Component to be binded should be in not bounded set");
         this.notBoundedComponentContexts.delete(componentRuntime.id);
         const context = this.getContext(componentRuntime.id);
         // If the container is detached, we don't need to send OP or add to pending attach because
