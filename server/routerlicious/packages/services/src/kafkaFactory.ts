@@ -29,9 +29,11 @@ export function createProducer(
     kafkaEndPoint: string,
     clientId: string,
     topic: string,
-    maxKafkaMessageSize: number): IProducer {
+    maxKafkaMessageSize: number,
+    enableIdempotence?: boolean,
+    pollIntervalMs?: number): IProducer {
     if (type === "rdkafka") {
-        return new RdkafkaProducer({ kafka: [kafkaEndPoint] }, clientId, topic, false);
+        return new RdkafkaProducer({ kafka: [kafkaEndPoint] }, clientId, topic, enableIdempotence, pollIntervalMs);
     }
 
     return new KafkaNodeProducer({ kafkaHost: kafkaEndPoint }, clientId, topic);

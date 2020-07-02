@@ -24,7 +24,8 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		endpoints: IKafkaEndpoints,
 		clientId: string,
 		topic: string,
-		private readonly enableIdempotence: boolean,
+		private readonly enableIdempotence: boolean = false,
+		private readonly pollIntervalMs: number = 10,
 		numberOfPartitions?: number,
 		replicationFactor?: number) {
 		super(endpoints, clientId, topic, numberOfPartitions, replicationFactor);
@@ -76,7 +77,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		this.producer.connect();
 
-		this.producer.setPollInterval(10);
+		this.producer.setPollInterval(this.pollIntervalMs);
 	}
 
 	public async close(): Promise<void> {
