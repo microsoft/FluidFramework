@@ -143,7 +143,25 @@ describe("Document Dirty", () => {
                 "Document is cleaned after all ops have been acked");
         });
 
-        // TODO: Add batch connected test here and fix batch dirty scenario
+        // TODO: Enable this test once #2653 is fixed
+        it.skip("marks state as dirty when batch ops are sent and clean when acks are received", async () => {
+            containerComp.context.containerRuntime.orderSequentially(() => {
+                containerCompMap.set("key1", "value1");
+                containerCompMap.set("key2", "value2");
+            });
+
+            assert.equal(wasMarkedDirtyCount, 1,
+                "Document will have been marked dirty after value set");
+
+            assert.equal(containerCompContainerRuntime.isDocumentDirty(), true,
+                "Document is dirty after value set");
+
+            // Wait for the ops to get processed which should mark the document clean after processing
+            await containerDeltaEventManager.process();
+
+            assert.equal(containerCompContainerRuntime.isDocumentDirty(), false,
+                "Document is cleaned after all ops have been acked");
+        });
 
         it(`doesn't marks document as clean when disconnected`, async () => {
             // Disconnect the client.
