@@ -44,7 +44,7 @@ stages:
     # current release
     - ${{ if eq(variables.releasePipeline, true) }}:
       - deployment: current_release
-        displayName: 'Deploy docs v ${{ variables.RELEASE_VERSION }}'
+        displayName: 'Deploy docs: release branch'
         steps:
         - template: templates/deploy-docs-steps.yml
           parameters:
@@ -53,7 +53,7 @@ stages:
             DEST_PATH: '/'
 
       - deployment: current_release_versioned
-        displayName: 'Deploy docs v ${{ variables.RELEASE_VERSION }} (version path)'
+        displayName: 'Deploy docs: release branch (version path)'
         steps:
         - template: templates/deploy-docs-steps.yml
           parameters:
@@ -64,7 +64,7 @@ stages:
     # latest - master branch
     - ${{ if eq(variables.latestPipeline, true) }}:
       - deployment: latest_release
-        displayName: 'Deploy docs v ${{ variables.MASTER_BRANCH_VERSION }}'
+        displayName: 'Deploy docs: master branch'
         steps:
         - template: templates/deploy-docs-steps.yml
           parameters:
@@ -73,7 +73,7 @@ stages:
             DEST_PATH: '/'
 
       - deployment: latest_release_versioned
-        displayName: 'Deploy docs v ${{ variables.MASTER_BRANCH_VERSION }} (version path)'
+        displayName: 'Deploy docs: master branch (version path)'
         steps:
         - template: templates/deploy-docs-steps.yml
           parameters:
@@ -84,7 +84,7 @@ stages:
     # n-1 release
     - ${{ if eq(variables.n1Pipeline, true) }}:
       - deployment: old_release
-        displayName: 'Deploy docs v ${{ variables.N1_VERSION }} (version path)'
+        displayName: 'Deploy docs: n-1 version (version path)'
         steps:
         - template: templates/deploy-docs-steps.yml
           parameters:
