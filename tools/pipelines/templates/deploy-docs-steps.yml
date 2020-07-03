@@ -14,11 +14,11 @@ parameters:
   type: string
 
 steps:
-  - task: AzureCLI@2
-    displayName: 'Deploy docs'
-    inputs:
-      azureSubscription: 'fluid-docs'
-      scriptType: pscore
-      scriptLocation: inlineScript
-      inlineScript: |
-        az storage blob upload-batch -s '$(System.DefaultWorkingDirectory)/_build-docs/fluid-docs' -d '$web' --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }}  --destination-path ${{ parameters.DEST_PATH }}
+- task: AzureCLI@2
+  displayName: 'Deploy docs'
+  inputs:
+    azureSubscription: 'fluid-docs'
+    scriptType: pscore
+    scriptLocation: inlineScript
+    inlineScript: |
+      az storage blob upload-batch -s '$(System.DefaultWorkingDirectory)/_build-docs/fluid-docs' -d '$web' --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }}  --destination-path ${{ parameters.DEST_PATH }}
