@@ -29,8 +29,8 @@ resources:
     trigger:
       branches:
         include:
-          - release/*
-          - master
+        - release/*
+        - master
 
 # no branch and PR triggers
 trigger: none
