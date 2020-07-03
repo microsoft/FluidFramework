@@ -19,12 +19,6 @@ parameters:
 - name: VUEPRESS_BASE
   type: string
 
-# - name: STORAGE_ACCOUNT
-#   type: string
-
-# - name: STORAGE_KEY
-#   type: string
-
 - name: DOCKER_CONTAINER_NAME
   type: string
   default: fluid-docs
@@ -40,6 +34,10 @@ parameters:
 - name: jobName
   type: string
   default: build
+
+- name: artifactName
+  type: string
+  default: fluid-docs
 
 steps:
 - checkout: self
@@ -103,7 +101,7 @@ steps:
 
 # Publish the static site as a pipeline artifact
 - publish: $(System.DefaultWorkingDirectory)/fluid-docs/dist
-  artifact: fluid-docs
+  artifact: ${{ parameters.$artifactName }}
 
 - task: Docker@0
   displayName: 'Remove docker image'

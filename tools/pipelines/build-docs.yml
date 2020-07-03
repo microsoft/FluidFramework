@@ -76,6 +76,7 @@ stages:
             RELEASE_VERSION: $(RELEASE_VERSION)
             N1_VERSION: $(N1_VERSION)
             VUEPRESS_BASE: '/versions/$(RELEASE_VERSION)/'
+            artifactName: fluid-docs-version-path
 
     # latest - master branch
     - ${{ if eq(variables.latestPipeline, true) }}:
@@ -101,6 +102,7 @@ stages:
             RELEASE_VERSION: $(RELEASE_VERSION)
             N1_VERSION: $(N1_VERSION)
             VUEPRESS_BASE: '/versions/$(MASTER_BRANCH_VERSION)/'
+            artifactName: fluid-docs-version-path
 
     # n-1 release
     - ${{ if eq(variables.n1Pipeline, true) }}:
@@ -113,3 +115,4 @@ stages:
             MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
             N1_VERSION: $(N1_VERSION)
             VUEPRESS_BASE: '/versions/$(N1_VERSION)/'
+            artifactName: fluid-docs-version-path
