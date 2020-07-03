@@ -96,7 +96,6 @@ stages:
         steps:
         - template: templates/build-docs-steps.yml
           parameters:
-            jobName:
             THIS_VERSION: $(MASTER_BRANCH_VERSION)
             MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
             RELEASE_VERSION: $(RELEASE_VERSION)
