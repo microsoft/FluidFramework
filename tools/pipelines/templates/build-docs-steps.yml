@@ -27,17 +27,9 @@ parameters:
   type: string
   default: docs
 
-- name: agentPool
-  type: string
-  default: Default
-
-- name: jobName
-  type: string
-  default: build
-
 - name: artifactName
   type: string
-  default: fluid-docs
+  default: $(DOCKER_CONTAINER_NAME)
 
 steps:
 - checkout: self
