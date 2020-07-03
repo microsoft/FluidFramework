@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-# build-docs pipeline - builds docs from master branch
+# build-docs pipeline
 
 name: $(Build.BuildId)
 
