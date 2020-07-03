@@ -101,7 +101,7 @@ steps:
 
 # Publish the static site as a pipeline artifact
 - publish: $(System.DefaultWorkingDirectory)/fluid-docs/dist
-  artifact: ${{ parameters.$artifactName }}
+  artifact: ${{ parameters.artifactName }}
 
 - task: Docker@0
   displayName: 'Remove docker image'
