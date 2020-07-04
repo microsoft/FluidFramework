@@ -16,8 +16,6 @@ variables:
       eq(variables['Build.SourceBranchName'], 'master'),
       eq(variables['Build.SourceBranchName'], 'api-pipeline')
       )}}
-  # - name: n1Branch
-  #   value: ${{ join('/refs/heads/release/', variables['N1_BRANCH']) }}
   - name: n1Pipeline
     value: ${{ eq(variables['Build.SourceBranchName'], variables['N1_BRANCH']) }}
   - name: releasePipeline
@@ -44,19 +42,6 @@ stages:
   - stage: deploy
     displayName: 'Deploy docs'
     jobs:
-    - job: debug
-      displayName: Debug
-      steps:
-      - script: |
-          echo $(resources.pipeline.myresourcevars.pipelineID)
-          echo $(resources.pipeline.myresourcevars.runName)
-          echo $(resources.pipeline.myresourcevars.runID)
-          echo $(resources.pipeline.myresourcevars.runURI)
-          echo $(resources.pipeline.myresourcevars.sourceBranch)
-          echo $(resources.pipeline.myresourcevars.sourceCommit)
-          echo $(resources.pipeline.myresourcevars.sourceProvider)
-          echo $(resources.pipeline.myresourcevars.requestedFor)
-          echo $(resources.pipeline.myresourcevars.requestedForID)
     # current release
     - ${{ if eq(variables.releasePipeline, true) }}:
       - deployment: current_release
@@ -66,24 +51,29 @@ stages:
           runOnce:
             deploy:
               steps:
+              - script: |
+                  echo $(resources.pipeline.docs.pipelineID)
+                  echo $(resources.pipeline.docs.runName)
+                  echo $(resources.pipeline.docs.runID)
+                  echo $(resources.pipeline.docs.runURI)
+                  echo $(resources.pipeline.docs.sourceBranch)
+                  echo $(resources.pipeline.docs.sourceCommit)
+                  echo $(resources.pipeline.docs.sourceProvider)
+                  echo $(resources.pipeline.docs.requestedFor)
+                  echo $(resources.pipeline.docs.requestedForID)
+
               - template: templates/deploy-docs-steps.yml
                 parameters:
                   STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                   STORAGE_KEY: $(STORAGE_KEY)
                   DEST_PATH: '/'
 
-      - deployment: current_release_versioned
-        displayName: 'Current release (/versions/)'
-        environment: 'fluid-docs-cdn'
-        strategy:
-          runOnce:
-            deploy:
-              steps:
               - template: templates/deploy-docs-steps.yml
                 parameters:
                   STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                   STORAGE_KEY: $(STORAGE_KEY)
                   DEST_PATH: '/versions/$(RELEASE_VERSION)/'
+                  artifactName: fluid-docs-version-path
 
     # latest - master branch
     - ${{ if eq(variables.latestPipeline, true) }}:
@@ -95,15 +85,15 @@ stages:
             deploy:
               steps:
               - script: |
-                  echo $(resources.pipeline.myresourcevars.pipelineID)
-                  echo $(resources.pipeline.myresourcevars.runName)
-                  echo $(resources.pipeline.myresourcevars.runID)
-                  echo $(resources.pipeline.myresourcevars.runURI)
-                  echo $(resources.pipeline.myresourcevars.sourceBranch)
-                  echo $(resources.pipeline.myresourcevars.sourceCommit)
-                  echo $(resources.pipeline.myresourcevars.sourceProvider)
-                  echo $(resources.pipeline.myresourcevars.requestedFor)
-                  echo $(resources.pipeline.myresourcevars.requestedForID)
+                  echo $(resources.pipeline.docs.pipelineID)
+                  echo $(resources.pipeline.docs.runName)
+                  echo $(resources.pipeline.docs.runID)
+                  echo $(resources.pipeline.docs.runURI)
+                  echo $(resources.pipeline.docs.sourceBranch)
+                  echo $(resources.pipeline.docs.sourceCommit)
+                  echo $(resources.pipeline.docs.sourceProvider)
+                  echo $(resources.pipeline.docs.requestedFor)
+                  echo $(resources.pipeline.docs.requestedForID)
 
               - template: templates/deploy-docs-steps.yml
                 parameters:
@@ -117,19 +107,6 @@ stages:
                   STORAGE_KEY: $(STORAGE_KEY)
                   DEST_PATH: '/versions/$(MASTER_BRANCH_VERSION)/'
                   artifactName: fluid-docs-version-path
-
-      - deployment: latest_release_versioned
-        displayName: 'Main branch (/versions/)'
-        environment: 'fluid-docs-cdn'
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-              - template: templates/deploy-docs-steps.yml
-                parameters:
-                  STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
-                  STORAGE_KEY: $(STORAGE_KEY)
-                  DEST_PATH: '/versions/$(MASTER_BRANCH_VERSION)/'
 
     # n-1 release
     - ${{ if eq(variables.n1Pipeline, true) }}:
