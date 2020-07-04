@@ -40,7 +40,7 @@ pr: none
 stages:
   - stage: deploy
     displayName: 'Deploy docs'
-    pool: Default
+    pool: 'Azure Pipelines'
     jobs:
     # current release
     - ${{ if eq(variables.releasePipeline, true) }}:
