@@ -29,7 +29,7 @@ parameters:
 
 - name: artifactName
   type: string
-  default: $(DOCKER_CONTAINER_NAME)
+  default: fluid-docs
 
 steps:
 - checkout: self
