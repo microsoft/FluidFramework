@@ -4,20 +4,9 @@
  */
 
 import { EventEmitter } from "events";
-import { EventData, EventHubClient } from "@azure/event-hubs";
-import { Deferred } from "@fluidframework/common-utils";
+import { EventHubClient } from "@azure/event-hubs";
 import { IPendingBoxcar, IProducer } from "@fluidframework/server-services-core";
-
-// 1MB batch size / (16KB max message size + overhead)
-const MaxBatchSize = 32;
-
-class PendingBoxcar implements IPendingBoxcar {
-    public deferred = new Deferred<void>();
-    public messages: EventData[] = [];
-
-    constructor(public tenantId: string, public documentId: string) {
-    }
-}
+import { PendingBoxcar, MaxBatchSize } from "./pendingBoxcar";
 
 export class EventHubProducer implements IProducer {
     private readonly events = new EventEmitter();

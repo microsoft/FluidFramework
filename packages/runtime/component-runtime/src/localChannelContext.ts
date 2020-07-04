@@ -48,10 +48,6 @@ export class LocalChannelContext implements IChannelContext {
         return this.channel;
     }
 
-    public isBoundToContext(): boolean {
-        return this.channel.isBoundToContext();
-    }
-
     public setConnectionState(connected: boolean, clientId?: string) {
         // Connection events are ignored if the component is not yet attached
         if (!this.attached) {

@@ -18,6 +18,7 @@ import {
     IGenericBlob,
     ContainerWarning,
     ILoader,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import {
     Deferred,
@@ -405,10 +406,6 @@ export class MockComponentRuntime extends EventEmitter
         return this.activeDeferred.promise;
     }
 
-    public get isBoundToContext(): boolean {
-        return true;
-    }
-
     public async getChannel(id: string): Promise<IChannel> {
         return null;
     }
@@ -418,6 +415,10 @@ export class MockComponentRuntime extends EventEmitter
 
     public get isAttached(): boolean {
         return !this.local;
+    }
+
+    public get attachState(): AttachState {
+        return this.local ? AttachState.Detached : AttachState.Attached;
     }
 
     public bindChannel(channel: IChannel): void {

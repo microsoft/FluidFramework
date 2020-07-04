@@ -23,7 +23,8 @@
     "kafka": {
         "lib": {
             "name": "kafka-node",
-            "endpoint": "kafka:9092"
+            "endpoint": "kafka:9092",
+            "producerPollIntervalMs": 10
         },
         "maxMessageSize": "1MB"
     },

@@ -39,11 +39,6 @@ export interface IChannel extends IProvideChannel, IComponentLoadable {
     isAttached(): boolean;
 
     /**
-     * True if the channel is bound to component.
-     */
-    isBoundToContext(): boolean;
-
-    /**
      * Enables the channel to send and receive ops
      */
     connect(services: ISharedObjectServices): void;

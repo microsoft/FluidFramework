@@ -239,10 +239,9 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
     getAbsoluteUrl?(relativeUrl: string): Promise<string>;
 
     /**
-     * Flag indicating if the given container has been attached to a host service.
-     * True if the container is attached to storage.
+     * Indicates the attachment state of the container to a host service.
      */
-    isAttached(): boolean;
+    readonly attachState: AttachState;
 
     getLoadedFromVersion(): IVersion | undefined;
 

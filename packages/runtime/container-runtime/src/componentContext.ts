@@ -15,6 +15,7 @@ import {
     ContainerWarning,
     ILoader,
     BindState,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { Deferred } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -153,12 +154,16 @@ export abstract class ComponentContext extends EventEmitter implements
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
+    // 0.21 back-compat isAttached
     public get isAttached(): boolean {
-        return this.bindState !== BindState.NotBound && this.containerRuntime.isAttached();
+        return this.attachState !== AttachState.Detached;
     }
 
-    public get isBoundToContext(): boolean {
-        return this.bindState === BindState.Bound;
+    public get attachState(): AttachState {
+        if (this.componentRuntime !== undefined) {
+            return this.componentRuntime.attachState;
+        }
+        return AttachState.Detached;
     }
 
     // 0.20 back-compat attach
