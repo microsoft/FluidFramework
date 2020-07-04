@@ -38,6 +38,7 @@ trigger:
     include:
     - release/*
     - master
+    - docs/api-pipeline # for testing
   paths:
     exclude:
     - packages
