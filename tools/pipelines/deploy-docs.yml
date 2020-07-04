@@ -70,7 +70,7 @@ stages:
           parameters:
             STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
             STORAGE_KEY: $(STORAGE_KEY)
-            DEST_PATH: '/'
+            DEST_PATH: '/versions/latest/'
 
       - deployment: latest_release_versioned
         displayName: 'Deploy docs: master branch (version path)'
