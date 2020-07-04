@@ -24,19 +24,19 @@ import {
     IRuntimeFactory,
     LoaderHeader,
     IRuntimeState,
-    CriticalContainerError,
+    ICriticalContainerError,
     ContainerWarning,
     IThrottlingWarning,
     AttachState,
 } from "@fluidframework/container-definitions";
+import { performanceNow } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     EventEmitterWithErrorHandling,
     PerformanceEvent,
-    performanceNow,
     raiseConnectedEvent,
     TelemetryLogger,
-} from "@fluidframework/common-utils";
+} from "@fluidframework/telemetry-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -49,13 +49,13 @@ import {
 import {
     BlobCacheStorageService,
     buildSnapshotTree,
-    CreateContainerError,
     readAndParse,
     OnlineStatus,
     isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     isSystemMessage,
     ProtocolOpHandler,
@@ -95,8 +95,6 @@ import { NullChaincode } from "./nullRuntime";
 import { pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { parseUrl } from "./utils";
-
-export { ErrorWithProps, CreateContainerError } from "@fluidframework/driver-utils";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -164,7 +162,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             const perfEvent = PerformanceEvent.start(container.logger, { eventName: "Load" });
 
-            const onClosed = (err?: CriticalContainerError) => {
+            const onClosed = (err?: ICriticalContainerError) => {
                 // Depending where error happens, we can be attempting to connect to web socket
                 // and continuously retrying (consider offline mode)
                 // Host has no container to close, so it's prudent to do it here
@@ -422,7 +420,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.protocolHandler!.quorum;
     }
 
-    public close(error?: CriticalContainerError) {
+    public close(error?: ICriticalContainerError) {
         if (this._closed) {
             return;
         }
@@ -434,7 +432,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.protocolHandler.close();
         }
 
-        this.context?.dispose(error ? new Error(error.errorType.toString()) : undefined);
+        this.context?.dispose(error ? new Error(error.message) : undefined);
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
@@ -1220,7 +1218,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
-        this._deltaManager.on("closed", (error?: CriticalContainerError) => {
+        this._deltaManager.on("closed", (error?: ICriticalContainerError) => {
             this.close(error);
         });
 
@@ -1448,7 +1446,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
-            (error?: CriticalContainerError) => this.close(error),
+            (error?: ICriticalContainerError) => this.close(error),
             Container.version,
             previousRuntimeState,
         );
@@ -1486,7 +1484,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
-            (error?: CriticalContainerError) => this.close(error),
+            (error?: ICriticalContainerError) => this.close(error),
             Container.version,
             {},
         );

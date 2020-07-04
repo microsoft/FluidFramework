@@ -27,12 +27,8 @@ import {
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
 import { IDeltaManager } from "./deltas";
-import { CriticalContainerError, ContainerWarning } from "./error";
+import { ICriticalContainerError, ContainerWarning } from "./error";
 import { ICodeLoader, ILoader } from "./loader";
-
-// Issue #2375
-// TODO: remove, replace all usage with version from protocol-definitions
-export const summarizerClientType = "summarizer";
 
 // Represents the attachment state of the entity.
 export enum AttachState {
@@ -215,7 +211,7 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly closeFn: (error?: CriticalContainerError) => void;
+    readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;

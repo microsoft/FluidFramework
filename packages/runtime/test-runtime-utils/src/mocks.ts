@@ -21,10 +21,10 @@ import {
     AttachState,
 } from "@fluidframework/container-definitions";
 import {
-    DebugLogger,
     Deferred,
     fromUtf8ToBase64,
 } from "@fluidframework/common-utils";
+import { DebugLogger } from "@fluidframework/telemetry-utils";
 import * as git from "@fluidframework/gitresources";
 import {
     IBlob,

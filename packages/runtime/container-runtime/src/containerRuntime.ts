@@ -25,7 +25,7 @@ import {
     IRuntime,
     IRuntimeState,
     ContainerWarning,
-    CriticalContainerError,
+    ICriticalContainerError,
     AttachState,
 } from "@fluidframework/container-definitions";
 import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
@@ -33,16 +33,18 @@ import {
     Deferred,
     Trace,
     LazyPromise,
+} from "@fluidframework/common-utils";
+import {
     ChildLogger,
     raiseConnectedEvent,
-} from "@fluidframework/common-utils";
+} from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
     BlobCacheStorageService,
-    CreateContainerError,
     buildSnapshotTree,
     readAndParse,
 } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     BlobTreeEntry,
     TreeTreeEntry,
@@ -552,7 +554,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         return this.reSubmit;
     }
 
-    public get closeFn(): (error?: CriticalContainerError) => void {
+    public get closeFn(): (error?: ICriticalContainerError) => void {
         return this.context.closeFn;
     }
 
