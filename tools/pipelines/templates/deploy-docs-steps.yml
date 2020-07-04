@@ -15,7 +15,7 @@ parameters:
 
 steps:
 - task: AzureCLI@2
-  displayName: 'Deploy docs'
+  displayName: 'CDN Upload'
   inputs:
     azureSubscription: 'fluid-docs'
     scriptType: pscore

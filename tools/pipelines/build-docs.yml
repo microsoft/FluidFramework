@@ -57,7 +57,7 @@ stages:
     # current release
     - ${{ if eq(variables.releasePipeline, true) }}:
       - job: current_release
-        displayName: 'Build docs: release branch'
+        displayName: 'Current release'
         steps:
         - template: templates/build-docs-steps.yml
           parameters:
@@ -68,7 +68,7 @@ stages:
             VUEPRESS_BASE: '/'
 
       - job: current_release_versioned
-        displayName: 'Build docs: release branch (version path)'
+        displayName: 'Current release (/versions/)'
         steps:
         - template: templates/build-docs-steps.yml
           parameters:
@@ -82,7 +82,7 @@ stages:
     # latest - master branch
     - ${{ if eq(variables.latestPipeline, true) }}:
       - job: latest_release
-        displayName: 'Build docs: master branch'
+        displayName: 'Main branch'
         steps:
         - template: templates/build-docs-steps.yml
           parameters:
@@ -93,7 +93,7 @@ stages:
             VUEPRESS_BASE: '/versions/latest/'
 
       - job: latest_release_versioned
-        displayName: 'Build docs: master branch (version path)'
+        displayName: 'Main branch (/versions/)'
         steps:
         - template: templates/build-docs-steps.yml
           parameters:
@@ -107,7 +107,7 @@ stages:
     # n-1 release
     - ${{ if eq(variables.n1Pipeline, true) }}:
       - job: old_release
-        displayName: 'Build docs: n-1 version (version path)'
+        displayName: 'N-1 release (/versions/)'
         steps:
         - template: templates/build-docs-steps.yml
           parameters:
