@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IFluidCodeDetails, IFluidModule, IFluidPackage } from "./chaincode";
+import { IFluidCodeDetails, IFluidModule, IFluidPackage, AttachState } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 import { CriticalContainerError, ContainerWarning } from "./error";
 
@@ -90,9 +90,9 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     resolvedUrl: IResolvedUrl | undefined;
 
     /**
-     * Flag indicating if the given container has been attached to a host service.
+     * Indicates the attachment state of the container to a host service.
      */
-    isAttached(): boolean;
+    readonly attachState: AttachState;
 
     /**
      * Attaches the container to the provided host.

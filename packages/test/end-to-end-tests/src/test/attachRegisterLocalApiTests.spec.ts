@@ -94,7 +94,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         const component2 = peerComponent.peerComponent;
         const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
 
-        assert.strictEqual(component2.runtime.isAttached, false,
+        assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
             createTestStatementForAttachedDetached("Component2", false));
 
         // Create a channel
@@ -103,7 +103,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
         component2RuntimeChannel.bindToContext();
 
-        assert.strictEqual(component2.runtime.isAttached, true,
+        assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, true,
             createTestStatementForAttachedDetached("Component2", true));
 
         assert.strictEqual(channel.handle.isAttached, false,
@@ -119,7 +119,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
         const component2 = peerComponent.peerComponent;
         const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
-        assert.strictEqual(component2.runtime.isAttached, false,
+        assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
             createTestStatementForAttachedDetached("Component2", false));
 
         // Create a channel
@@ -130,7 +130,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         (await channel.handle.get() as SharedObject).bindToContext();
         component2RuntimeChannel.bindToContext();
 
-        assert.strictEqual(component2.runtime.isAttached, true,
+        assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, true,
             createTestStatementForAttachedDetached("Component2", true));
 
         // Channel should get attached as it was registered to its component
@@ -146,7 +146,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         // Create another component which returns the runtime channel.
         const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
         const component2 = peerComponent.peerComponent;
-        assert.strictEqual(component2.runtime.isAttached, false,
+        assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
             createTestStatementForAttachedDetached("Component2", false));
 
         // Create a channel
@@ -159,7 +159,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         assert.strictEqual(channel.handle.isAttached, true,
             createTestStatementForAttachedDetached("Channel", true));
 
-        assert.strictEqual(component2.runtime.isAttached, true,
+        assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, true,
             createTestStatementForAttachedDetached("Component2", true));
     });
 
@@ -172,7 +172,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
         const component2 = peerComponent.peerComponent;
         const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
-        assert.strictEqual(component2.runtime.isAttached, false,
+        assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
             createTestStatementForAttachedDetached("Component2", false));
 
         // Create a channel
@@ -204,7 +204,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         const component2 = peerComponent.peerComponent;
         const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
 
-        assert.strictEqual(component2.runtime.isAttached, false,
+        assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
             createTestStatementForAttachedDetached("Component2", false));
 
         // Create a channel
@@ -227,9 +227,10 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
         const component2 = peerComponent.peerComponent;
 
-        assert.strictEqual(component2.runtime.isAttached, false,
+        assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
             createTestStatementForAttachedDetached("Component2", false));
-        assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+        assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
+            "Component2 should be unattached");
 
         // Create a channel
         const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
@@ -251,9 +252,10 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             const component2 = peerComponent.peerComponent;
             const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
 
-            assert.strictEqual(component2.runtime.isAttached, false,
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
                 createTestStatementForAttachedDetached("Component2", false));
-            assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
+                "Component2 should be unattached");
 
             // Create first channel
             const channel1 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
@@ -291,9 +293,10 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component2 = peerComponent.peerComponent;
 
-            assert.strictEqual(component2.runtime.isAttached, false,
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
                 createTestStatementForAttachedDetached("Component2", false));
-            assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
+                "Component2 should be unattached");
 
             // Create first channel
             const channel1 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
@@ -330,14 +333,15 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             // Create another component which returns the runtime channel.
             const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component2 = peerComponent1.peerComponent;
-            assert.strictEqual(component2.runtime.isAttached, false,
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
                 createTestStatementForAttachedDetached("Component2", false));
-            assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
+                "Component2 should be unattached");
 
             // Create another component which returns the runtime channel.
             const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component3 = peerComponent2.peerComponent;
-            assert.strictEqual(component3.runtime.isAttached, false,
+            assert.strictEqual(component3.runtime.IComponentHandleContext.isAttached, false,
                 createTestStatementForAttachedDetached("Component2", false));
 
             // Create first channel from component2
@@ -360,8 +364,10 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
                 "Test Channel 1 should be bound now after attaching it");
             assert.strictEqual(testChannelOfComponent3.isAttached(), true,
                 "Test Channel 2 should be bound now after attaching other DDS");
-            assert.strictEqual(component2.runtime.isAttached, true, "Component 2 should be attached");
-            assert.strictEqual(component3.runtime.isAttached, true, "Component 3 should be attached");
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, true,
+                "Component 2 should be attached");
+            assert.strictEqual(component3.runtime.IComponentHandleContext.isAttached, true,
+                "Component 3 should be attached");
         });
 
     it("Stick handle of 2 different components and dds in each other and then attaching 1 component should " +
@@ -374,12 +380,14 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             // Create another component which returns the runtime channel.
             const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component2 = peerComponent1.peerComponent as TestFluidComponent;
-            assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
+                "Component2 should be unattached");
 
             // Create another component which returns the runtime channel.
             const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component3 = peerComponent2.peerComponent as TestFluidComponent;
-            assert.strictEqual(component3.runtime.isAttached, false, "Component3 should be unattached");
+            assert.strictEqual(component3.runtime.IComponentHandleContext.isAttached, false,
+                "Component3 should be unattached");
 
             // Create first channel from component2
             const channel2 = await component2.getSharedObject<SharedMap>(mapId1);
@@ -421,18 +429,21 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             // Create another component which returns the runtime channel.
             const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component2 = peerComponent1.peerComponent as TestFluidComponent;
-            assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, false,
+                "Component2 should be unattached");
 
             // Create another component which returns the runtime channel.
             // Create another component which returns the runtime channel.
             const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component3 = peerComponent2.peerComponent as TestFluidComponent;
-            assert.strictEqual(component3.runtime.isAttached, false, "Component3 should be unattached");
+            assert.strictEqual(component3.runtime.IComponentHandleContext.isAttached, false,
+                "Component3 should be unattached");
 
             // Create another component which returns the runtime channel.
             const peerComponent3 = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component4 = peerComponent3.peerComponent as TestFluidComponent;
-            assert.strictEqual(component4.runtime.isAttached, false, "Component4 should be unattached");
+            assert.strictEqual(component4.runtime.IComponentHandleContext.isAttached, false,
+                "Component4 should be unattached");
 
             // Create two channel from component2
             const channel1OfComponent2 = await component2.getSharedObject<SharedMap>(mapId1);
@@ -469,9 +480,12 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             assert.strictEqual(channel2OfComponent2.isAttached(), true, "Test Channel 22 should be bound");
             assert.strictEqual(channel1OfComponent3.isAttached(), true, "Test Channel 13 should be bound");
             assert.strictEqual(channel2OfComponent3.isAttached(), true, "Test Channel 23 should be bound");
-            assert.strictEqual(component2.runtime.isAttached, true, "Component 2 should have get bound");
-            assert.strictEqual(component3.runtime.isAttached, true, "Component 3 should have get bound");
-            assert.strictEqual(component4.runtime.isAttached, true, "Component 4 should have get bound");
+            assert.strictEqual(component2.runtime.IComponentHandleContext.isAttached, true,
+                "Component 2 should have get bound");
+            assert.strictEqual(component3.runtime.IComponentHandleContext.isAttached, true,
+                "Component 3 should have get bound");
+            assert.strictEqual(component4.runtime.IComponentHandleContext.isAttached, true,
+                "Component 4 should have get bound");
             assert.strictEqual(channel1OfComponent4.isAttached(), true, "Test Channel 14 should be bound");
         });
 

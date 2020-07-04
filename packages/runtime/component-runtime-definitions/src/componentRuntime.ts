@@ -16,6 +16,7 @@ import {
     IGenericBlob,
     ContainerWarning,
     ILoader,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
@@ -57,6 +58,11 @@ export interface IComponentRuntime extends
     readonly loader: ILoader;
 
     readonly logger: ITelemetryLogger;
+
+    /**
+     * Indicates the attachment state of the component to a host service.
+     */
+    readonly attachState: AttachState;
 
     on(
         event: "disconnected" | "dispose" | "leader" | "notleader" | "collaborating",
@@ -134,7 +140,4 @@ export interface IComponentRuntime extends
      * Errors raised by distributed data structures
      */
     raiseContainerWarning(warning: ContainerWarning): void;
-
-    // Returns if the runtime is attached or attaching to storage
-    isAttached: boolean;
 }

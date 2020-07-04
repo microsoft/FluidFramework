@@ -14,6 +14,7 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@fluidframework/component-runtime-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { v4 as uuid } from "uuid";
 import { SharedObjectComponentHandle } from "./handle";
 import { ISharedObject, ISharedObjectEvents } from "./types";
@@ -177,7 +178,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).isAttached}
      */
     public isAttached(): boolean {
-        return this.services !== undefined && this.runtime.isAttached;
+        return this.services !== undefined && this.runtime.attachState !== AttachState.Detached;
     }
 
     /**

@@ -126,7 +126,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public get isAttached(): boolean {
-        return this.componentContext.isAttached && this.bindState !== BindState.NotBound;
+        return this.attachState !== AttachState.Detached;
+    }
+
+    public get attachState(): AttachState {
+        return this._attachState;
     }
 
     public get path(): string {
@@ -156,6 +160,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     private readonly localChannelContextQueue = new Map<string, LocalChannelContext>();
     private readonly notBoundedChannelContextSet = new Set<string>();
     private boundhandles: Set<IComponentHandle> | undefined;
+    private _attachState: AttachState;
 
     private constructor(
         private readonly componentContext: IComponentContext,
@@ -205,6 +210,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
         this.attachListener();
         this.bindState = existing ? BindState.Bound : BindState.NotBound;
+        this._attachState = existing ? AttachState.Attached : AttachState.Detached;
 
         // If it's existing we know it has been attached.
         if (existing) {
@@ -543,6 +549,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     public getAttachSnapshot(): ITreeEntry[] {
         const entries: ITreeEntry[] = [];
+        this._attachState = AttachState.Attached;
         // As the component is attaching, attach the graph too.
         this.attachGraph();
         // Fire this event telling dds that we are going live and they can do any
