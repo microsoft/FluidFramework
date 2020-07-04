@@ -26,7 +26,13 @@ import {
     SharedMap,
 } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
-import { IComponentRuntimeChannel, IComponentContext, ITask, ITaskManager } from "@fluidframework/runtime-definitions";
+import {
+    IComponentRuntimeChannel,
+    IComponentContext,
+    ITask,
+    ITaskManager,
+    SchedulerType,
+} from "@fluidframework/runtime-definitions";
 import {
     IProvideSharedString,
     SharedNumberSequence,
@@ -178,7 +184,7 @@ export class SharedTextRunner
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performanceNow()}`);
 
-        const schedulerResponse = await this.runtime.request({ url: "/_scheduler" });
+        const schedulerResponse = await this.runtime.request({ url: `/${SchedulerType}` });
         const schedulerComponent = schedulerResponse.value as IComponent;
         this.taskManager = schedulerComponent.ITaskManager;
 

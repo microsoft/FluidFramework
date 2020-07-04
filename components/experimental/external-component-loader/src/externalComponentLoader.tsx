@@ -71,7 +71,7 @@ export class ExternalComponentLoader extends PrimedComponent {
         if (component.IComponentLoadable === undefined) {
             throw new Error(`${componentUrl} must implement the IComponentLoadable interface to be loaded here`);
         }
-        componentRuntime.attach();
+        componentRuntime.bindToContext();
         if (component.IComponentCollection !== undefined) {
             component = component.IComponentCollection.createCollectionItem();
             if (component.IComponentLoadable === undefined) {

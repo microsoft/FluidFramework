@@ -42,15 +42,6 @@ export class TableSlice extends PrimedComponent<{}, ITableSliceConfig> implement
     private maybeDoc?: TableDocument;
     private maybeValues?: CellRange;
 
-    public evaluateCell(row: number, col: number): TableDocumentItem {
-        this.validateInSlice(row, col);
-        return this.doc.evaluateCell(row, col);
-    }
-
-    public evaluateFormula(formula: string): TableDocumentItem {
-        return this.doc.evaluateFormula(formula);
-    }
-
     public getCellValue(row: number, col: number): TableDocumentItem {
         this.validateInSlice(row, col);
         return this.doc.getCellValue(row, col);

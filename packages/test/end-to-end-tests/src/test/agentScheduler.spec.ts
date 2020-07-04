@@ -8,7 +8,7 @@ import { AgentSchedulerFactory, TaskManager } from "@fluidframework/agent-schedu
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
-import { IAgentScheduler } from "@fluidframework/runtime-definitions";
+import { IAgentScheduler, SchedulerType } from "@fluidframework/runtime-definitions";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 
@@ -46,7 +46,7 @@ describe("AgentScheduler", () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
 
             const container = await createContainer();
-            scheduler = await getComponent("_scheduler", container)
+            scheduler = await getComponent(`${SchedulerType}`, container)
                 .then((taskManager) => taskManager.IAgentScheduler);
 
             // Make sure all initial ops (around leadership) are processed.
@@ -133,11 +133,11 @@ describe("AgentScheduler", () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
 
             container1 = await createContainer();
-            scheduler1 = await getComponent("_scheduler", container1)
+            scheduler1 = await getComponent(`${SchedulerType}`, container1)
                 .then((taskManager) => taskManager.IAgentScheduler);
 
             container2 = await createContainer();
-            scheduler2 = await getComponent("_scheduler", container2)
+            scheduler2 = await getComponent(`${SchedulerType}`, container2)
                 .then((taskManager) => taskManager.IAgentScheduler);
 
             // Make sure all initial ops (around leadership) are processed.

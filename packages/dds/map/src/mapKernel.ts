@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { strongAssert } from "@fluidframework/runtime-utils";
 import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -182,7 +182,7 @@ export class MapKernel implements IValueTypeCreator {
      * @param runtime - The component runtime the shared object using the kernel will be associated with
      * @param handle - The handle of the shared object using the kernel
      * @param submitMessage - A callback to submit a message through the shared object
-     * @param isLocal - To query whether the shared object is in local state
+     * @param isAttached - To query whether the shared object should generate ops
      * @param valueTypes - The value types to register
      * @param eventEmitter - The object that will emit map events
      */
@@ -190,7 +190,7 @@ export class MapKernel implements IValueTypeCreator {
         private readonly runtime: IComponentRuntime,
         private readonly handle: IComponentHandle,
         private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
-        private readonly isLocal: () => boolean,
+        private readonly isAttached: () => boolean,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
@@ -342,8 +342,8 @@ export class MapKernel implements IValueTypeCreator {
             null,
         );
 
-        // If we are in local state, don't submit the op.
-        if (this.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.isAttached()) {
             return;
         }
 
@@ -379,8 +379,8 @@ export class MapKernel implements IValueTypeCreator {
             null,
         );
 
-        // If we are in local state, don't submit the op.
-        if (this.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.isAttached()) {
             return;
         }
 
@@ -405,8 +405,8 @@ export class MapKernel implements IValueTypeCreator {
         // Delete the key locally first.
         const successfullyRemoved = this.deleteCore(key, true, null);
 
-        // If we are in local state, don't submit the op.
-        if (this.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.isAttached()) {
             return successfullyRemoved;
         }
 
@@ -426,8 +426,8 @@ export class MapKernel implements IValueTypeCreator {
         // Clear the data locally first.
         this.clearCore(true, null);
 
-        // If we are in local state, don't submit the op.
-        if (this.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.isAttached()) {
             return;
         }
 
@@ -619,7 +619,7 @@ export class MapKernel implements IValueTypeCreator {
     ): boolean {
         if (this.pendingClearMessageId !== -1) {
             if (local) {
-                strongAssert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
+                assert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
                     "Received out of order op when there is an unackd clear message");
             }
             // If we have an unack'd clear, we can ignore all ops.
@@ -630,7 +630,7 @@ export class MapKernel implements IValueTypeCreator {
             // Found an unack'd op. Clear it from the map if the pendingMessageId in the map matches this message's
             // and don't process the op.
             if (local) {
-                strongAssert(localOpMetadata !== undefined,
+                assert(localOpMetadata !== undefined,
                     `pendingMessageId is missing from the local client's ${op.type} operation`);
                 const pendingMessageId = localOpMetadata as number;
                 const pendingKeyMessageId = this.pendingKeys.get(op.key);
@@ -656,7 +656,7 @@ export class MapKernel implements IValueTypeCreator {
             {
                 process: (op: IMapClearOperation, local, message, localOpMetadata) => {
                     if (local) {
-                        strongAssert(localOpMetadata !== undefined,
+                        assert(localOpMetadata !== undefined,
                             "pendingMessageId is missing from the local client's clear operation");
                         const pendingMessageId = localOpMetadata as number;
                         if (this.pendingClearMessageId === pendingMessageId) {

@@ -4,6 +4,9 @@
  */
 
 import assert from "assert";
+// eslint-disable-next-line import/no-internal-modules
+import cloneDeep from "lodash/cloneDeep";
+
 import { Deferred, doIfNotDisposed, EventForwarder, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ICommittedProposal,
@@ -14,9 +17,6 @@ import {
     ISequencedDocumentMessage,
     ISequencedProposal,
 } from "@fluidframework/protocol-definitions";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules
-const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 
 /**
  * Appends a deferred and rejection count to a sequenced proposal. For locally generated promises this allows us to

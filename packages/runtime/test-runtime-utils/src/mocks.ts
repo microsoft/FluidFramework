@@ -18,6 +18,7 @@ import {
     IGenericBlob,
     ContainerWarning,
     ILoader,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import {
     DebugLogger,
@@ -109,8 +110,7 @@ export interface IMockContainerRuntimePendingMessage {
 export class MockContainerRuntime {
     public clientId: string;
     protected clientSequenceNumber: number = 0;
-    protected referenceSequenceNumber = 0;
-    private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    private readonly deltaManager: MockDeltaManager;
     protected readonly deltaConnections: MockDeltaConnection[] = [];
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
 
@@ -140,7 +140,7 @@ export class MockContainerRuntime {
             clientId: this.clientId,
             clientSequenceNumber,
             contents: messageContent,
-            referenceSequenceNumber: this.referenceSequenceNumber,
+            referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
             type: MessageType.Operation,
 
         };
@@ -154,7 +154,8 @@ export class MockContainerRuntime {
     public dirty(): void { }
 
     public process(message: ISequencedDocumentMessage) {
-        this.referenceSequenceNumber = message.sequenceNumber;
+        this.deltaManager.lastSequenceNumber = message.sequenceNumber;
+        this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
         const [local, localOpMetadata] = this.processInternal(message);
         this.deltaConnections.forEach((dc) => {
             dc.process(message, local, localOpMetadata);
@@ -195,6 +196,10 @@ export class MockContainerRuntimeFactory {
     protected messages: ISequencedDocumentMessage[] = [];
     protected readonly runtimes: MockContainerRuntime[] = [];
 
+    public get outstandingMessageCount() {
+        return this.messages.length;
+    }
+
     public getMinSeq(): number {
         let minSeq: number;
         for (const [, clientSeq] of this.minSeq) {
@@ -208,7 +213,8 @@ export class MockContainerRuntimeFactory {
     }
 
     public createContainerRuntime(componentRuntime: MockComponentRuntime): MockContainerRuntime {
-        const containerRuntime = new MockContainerRuntime(componentRuntime, this);
+        const containerRuntime =
+            new MockContainerRuntime(componentRuntime, this);
         this.runtimes.push(containerRuntime);
         return containerRuntime;
     }
@@ -366,13 +372,13 @@ export class MockComponentRuntime extends EventEmitter
     public readonly documentId: string;
     public readonly id: string;
     public readonly existing: boolean;
-    public readonly options: any = {};
+    public options: any = {};
     public clientId: string | undefined = uuid();
     public readonly parentBranch: string;
     public readonly path = "";
     public readonly connected = true;
     public readonly leader: boolean;
-    public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> = new MockDeltaManager();
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockComponentRuntime");
     private readonly activeDeferred = new Deferred<void>();
@@ -400,10 +406,6 @@ export class MockComponentRuntime extends EventEmitter
         return this.activeDeferred.promise;
     }
 
-    public get isAttached(): boolean {
-        return true;
-    }
-
     public async getChannel(id: string): Promise<IChannel> {
         return null;
     }
@@ -411,15 +413,23 @@ export class MockComponentRuntime extends EventEmitter
         return null;
     }
 
-    public isLocal(): boolean {
-        return this.local;
+    public get isAttached(): boolean {
+        return !this.local;
     }
 
-    public registerChannel(channel: IChannel): void {
+    public get attachState(): AttachState {
+        return this.local ? AttachState.Detached : AttachState.Attached;
+    }
+
+    public bindChannel(channel: IChannel): void {
         return;
     }
 
-    public attach(): void {
+    public attachGraph(): void {
+        return;
+    }
+
+    public bindToContext(): void {
         return;
     }
 
@@ -679,7 +689,6 @@ export class MockObjectStorageService implements IObjectStorageService {
         const pathPartsLength = getNormalizedObjectStoragePathParts(path).length;
         return Object.keys(this.contents)
             .filter((key) => key.startsWith(path)
-                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                 && key.split("/").length === pathPartsLength + 1);
     }
 }

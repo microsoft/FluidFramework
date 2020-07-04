@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDirectoryValueChanged, ISharedDirectory } from "@fluidframework/map";
+import { IDirectoryValueChanged, SharedMap } from "@fluidframework/map";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import {
@@ -14,20 +14,22 @@ import {
     FluidToViewMap,
 } from "../interface";
 import { addComponent, asyncForEach } from "./utils";
-import { syncStateAndRoot } from "./syncStateAndRoot";
+import { syncState } from "./syncState";
+import { ISyncedState } from "..";
 
 /**
  * Add listeners too all the new handles passed in, store their respective components
  * on the fluidComponentMap, and then update both the local and synced state
  * @param newHandleList - List of IComponentHandles for new components that need to be added to the map
  * @param fluidComponentMap - A map of component handle paths to their respective components
- * @param fromRootUpdate - Is the update from a local state update or from one triggered by the root
+ * @param isSyncedStateUpdate - Is the update from a local state update or from one triggered by the synced state
  * @param syncedStateId - Unique ID for this synced component's state
- * @param root - The shared directory this component shared state is stored on
+ * @param syncedState - The shared map this component's synced state is stored on
  * @param runtime - The component runtime
  * @param viewState - The current view state
  * @param setState - Callback to update the react view state
- * @param rootCallback - The callback that will be triggered when the root value for the components passed in changes
+ * @param syncedStateCallback - The callback that will be triggered when the synced state value for the components
+ * passed in changes
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
  * respective converters
  * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
@@ -39,13 +41,14 @@ export const updateStateAndComponentMap = async <
 >(
     newHandleList: IComponentHandle[],
     fluidComponentMap: FluidComponentMap,
-    fromRootUpdate: boolean,
+    storedHandleMap: SharedMap,
+    isSyncedStateUpdate: boolean,
     syncedStateId: string,
-    root: ISharedDirectory,
+    syncedState: ISyncedState,
     runtime: IComponentRuntime,
     viewState: SV,
-    setState: (newState: SV, fromRootUpdate?: boolean | undefined) => void,
-    rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
+    setState: (newState: SV, isSyncedStateUpdate?: boolean) => void,
+    syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
     fluidToView: FluidToViewMap<SV, SF>,
     viewToFluid?: ViewToFluidMap<SV, SF>,
 ) =>
@@ -53,12 +56,12 @@ export const updateStateAndComponentMap = async <
         newHandleList,
         addComponent,
         fluidComponentMap,
-        rootCallback,
+        syncedStateCallback,
         () =>
-            syncStateAndRoot(
+            syncState(
                 true,
                 syncedStateId,
-                root,
+                syncedState,
                 runtime,
                 viewState,
                 setState,
@@ -66,11 +69,12 @@ export const updateStateAndComponentMap = async <
                 fluidToView,
                 viewToFluid,
             ),
+        storedHandleMap,
     ).then(() =>
-        syncStateAndRoot(
-            fromRootUpdate,
+        syncState(
+            isSyncedStateUpdate,
             syncedStateId,
-            root,
+            syncedState,
             runtime,
             viewState,
             setState,

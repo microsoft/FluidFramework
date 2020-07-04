@@ -34,16 +34,9 @@ export interface IChannel extends IProvideChannel, IComponentLoadable {
     snapshot(): ITree;
 
     /**
-     * True if the data structure is local.
-     * It is local if either it is not attached or container is not attached to storage.
-     * It will be lost on browser tab closure if not attached.
+     * True if the data structure is attached to storage.
      */
-    isLocal(): boolean;
-
-    /**
-     * True if the channel has been registered.
-     */
-    isRegistered(): boolean;
+    isAttached(): boolean;
 
     /**
      * Enables the channel to send and receive ops

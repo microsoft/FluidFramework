@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IFluidCodeDetails, IFluidModule, IFluidPackage } from "./chaincode";
+import { IFluidCodeDetails, IFluidModule, IFluidPackage, AttachState } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 import { CriticalContainerError, ContainerWarning } from "./error";
 
@@ -69,7 +69,8 @@ export interface ICodeAllowList {
 
 export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
-    (event: "connected" | "contextChanged", listener: (clientId: string) => void);
+    (event: "connected", listener: (clientId: string) => void);
+    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
     (event: "disconnected" | "joining", listener: () => void);
     (event: "closed", listener: (error?: CriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
@@ -89,10 +90,9 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     resolvedUrl: IResolvedUrl | undefined;
 
     /**
-     * Flag indicating if the given container has been attached to a host service.
-     * False if the container is attached to storage.
+     * Indicates the attachment state of the container to a host service.
      */
-    isLocal(): boolean;
+    readonly attachState: AttachState;
 
     /**
      * Attaches the container to the provided host.

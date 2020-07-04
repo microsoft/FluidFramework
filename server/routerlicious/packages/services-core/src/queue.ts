@@ -82,8 +82,8 @@ export interface IProducer {
     /**
      * Event handlers
      */
-    on(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this;
-    once(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this;
+    on(event: "connected" | "disconnected" | "produced" | "error", listener: (...args: any[]) => void): this;
+    once(event: "connected" | "disconnected" | "produced" | "error", listener: (...args: any[]) => void): this;
 }
 
 export interface IPendingBoxcar {

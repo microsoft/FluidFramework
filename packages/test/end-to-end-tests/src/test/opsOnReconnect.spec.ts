@@ -11,7 +11,7 @@ import { Container, Loader } from "@fluidframework/container-loader";
 import { DocumentDeltaEventManager, TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { ISequencedDocumentMessage, ConnectionState } from "@fluidframework/protocol-definitions";
-import { IEnvelope } from "@fluidframework/runtime-definitions";
+import { IEnvelope, SchedulerType } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { SharedString } from "@fluidframework/sequence";
 import {
@@ -107,7 +107,7 @@ describe("Ops on Reconnect", () => {
             const message = unpackRuntimeMessage(containerMessage);
             if (message.type === ContainerMessageType.ComponentOp) {
                 const envelope = message.contents as IEnvelope;
-                if (envelope.address !== "_scheduler") {
+                if (envelope.address !== `${SchedulerType}`) {
                     // The client ID of firstContainer should have changed on disconnect.
                     assert.notEqual(
                         message.clientId, firstContainerClientId, "The clientId did not change after disconnect");

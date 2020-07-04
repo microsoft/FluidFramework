@@ -12,6 +12,7 @@ import {
     IDeltaManager,
     ContainerWarning,
     ILoader,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -28,6 +29,7 @@ import {
     IComponentContext,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
+import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -45,6 +47,7 @@ export interface IProvideContainerRuntime {
  */
 export interface IContainerRuntime extends
     IProvideContainerRuntime,
+    Partial<IProvideContainerRuntimeDirtyable>,
     IContainerRuntimeBase {
     readonly id: string;
     readonly existing: boolean;
@@ -62,6 +65,10 @@ export interface IContainerRuntime extends
     readonly flushMode: FlushMode;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly scope: IComponent;
+    /**
+     * Indicates the attachment state of the container to a host service.
+     */
+    readonly attachState: AttachState;
 
     on(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): this;
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
@@ -125,12 +132,6 @@ export interface IContainerRuntime extends
      * Used to notify the HostingRuntime that the ComponentRuntime has be instantiated.
      */
     notifyComponentInstantiated(componentContext: IComponentContext): void;
-
-    /**
-     * Flag indicating if the given container has been attached to a host service.
-     * False if the container is attached to storage.
-     */
-    isLocal(): boolean;
 
     /**
      * Get an absolute url for a provided container-relative request.

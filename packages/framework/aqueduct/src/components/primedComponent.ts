@@ -10,7 +10,7 @@ import {
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
-import { ITaskManager } from "@fluidframework/runtime-definitions";
+import { ITaskManager, SchedulerType } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IEvent } from "@fluidframework/common-definitions";
 import { BlobHandle } from "./blobHandle";
@@ -92,13 +92,14 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
     }
 
     /**
-     * Calls existing, and opened().  Caller is responsible for ensuring this is only invoked once.
+     * Initializes internal objects and calls initialization overrides.
+     * Caller is responsible for ensuring this is only invoked once.
      */
     protected async initializeInternal(props?: any): Promise<void> {
         // Initialize task manager.
         const request = {
             headers: [[true]],
-            url: `/_scheduler`,
+            url: `/${SchedulerType}`,
         };
 
         this.internalTaskManager = await this.asComponent<ITaskManager>(this.context.containerRuntime.request(request));
@@ -106,7 +107,7 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
         if (!this.runtime.existing) {
             // Create a root directory and register it before calling componentInitializingFirstTime
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
-            this.internalRoot.register();
+            this.internalRoot.bindToContext();
             await this.componentInitializingFirstTime(props);
         } else {
             // Component has a root directory so we just need to set it before calling componentInitializingFromExisting
@@ -130,7 +131,7 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
         await this.componentHasInitialized();
     }
 
-    private getUninitializedErrorString(item: string) {
+    protected getUninitializedErrorString(item: string) {
         return `${item} must be initialized before being accessed.`;
     }
 }

@@ -22,6 +22,7 @@ import {
     IRuntimeState,
     CriticalContainerError,
     ContainerWarning,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -212,8 +213,18 @@ export class ContainerContext implements IContainerContext {
         return this.runtime!.stop();
     }
 
+    // 0.20 back-compat islocal
     public isLocal(): boolean {
-        return this.container.isLocal();
+        return !this.isAttached();
+    }
+
+    // 0.21 back-compat isAttached
+    public isAttached(): boolean {
+        return this.container.attachState !== AttachState.Detached;
+    }
+
+    public get attachState(): AttachState {
+        return this.container.attachState;
     }
 
     public createSummary(): ISummaryTree {
