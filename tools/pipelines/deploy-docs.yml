@@ -46,6 +46,7 @@ stages:
     - ${{ if eq(variables.releasePipeline, true) }}:
       - deployment: current_release
         displayName: 'Current release'
+        environment: 'fluid-docs-cdn'
         strategy:
           runOnce:
             deploy:
@@ -58,6 +59,7 @@ stages:
 
       - deployment: current_release_versioned
         displayName: 'Current release (/versions/)'
+        environment: 'fluid-docs-cdn'
         strategy:
           runOnce:
             deploy:
@@ -72,6 +74,7 @@ stages:
     - ${{ if eq(variables.latestPipeline, true) }}:
       - deployment: latest_release
         displayName: 'Main branch'
+        environment: 'fluid-docs-cdn'
         strategy:
           runOnce:
             deploy:
@@ -84,6 +87,7 @@ stages:
 
       - deployment: latest_release_versioned
         displayName: 'Main branch (/versions/)'
+        environment: 'fluid-docs-cdn'
         strategy:
           runOnce:
             deploy:
@@ -98,6 +102,7 @@ stages:
     - ${{ if eq(variables.n1Pipeline, true) }}:
       - deployment: old_release
         displayName: 'N-1 release (/versions/)'
+        environment: 'fluid-docs-cdn'
         strategy:
           runOnce:
             deploy:
