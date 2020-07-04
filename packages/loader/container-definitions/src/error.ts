@@ -16,11 +16,6 @@ export enum ContainerErrorType {
 }
 
 /**
- * Represents warnings raised on container.
- */
-export type ContainerWarning = IErrorBase;
-
-/**
  * Base interface for all errors and warnings at container level
  */
 export interface IErrorBase {
@@ -35,13 +30,27 @@ export interface IErrorBase {
     sequenceNumber?: number;
 }
 
+/**
+ * Represents warnings raised on container.
+ */
+export type ContainerWarning = IErrorBase;
+
+/**
+ * Represents errors raised on container.
+ */
 export type ICriticalContainerError = IErrorBase;
 
+/**
+ * Generic container error
+ */
 export interface IGenericError extends IErrorBase {
     readonly errorType: ContainerErrorType.genericError;
     error?: any;
 }
 
+/**
+ * Throttling container error
+ */
 export interface IThrottlingWarning extends IErrorBase {
     readonly errorType: ContainerErrorType.throttlingError;
     readonly retryAfterSeconds: number;
