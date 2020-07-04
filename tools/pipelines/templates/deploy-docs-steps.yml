@@ -25,4 +25,4 @@ steps:
     scriptType: pscore
     scriptLocation: inlineScript
     inlineScript: |
-      az storage blob upload-batch -s '$(Pipeline.Workspace)/${{ parameters.artifactName }}' -d '$web' --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }}  --destination-path ${{ parameters.DEST_PATH }}
+      az storage blob upload-batch -s '$(Pipeline.Workspace)/docs/${{ parameters.artifactName }}' -d '$web' --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }}  --destination-path ${{ parameters.DEST_PATH }}
