@@ -87,6 +87,13 @@ stages:
                   STORAGE_KEY: $(STORAGE_KEY)
                   DEST_PATH: '/versions/latest/'
 
+              - template: templates/deploy-docs-steps.yml
+                parameters:
+                  STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+                  STORAGE_KEY: $(STORAGE_KEY)
+                  DEST_PATH: '/versions/$(MASTER_BRANCH_VERSION)/'
+                  artifactName: fluid-docs-version-path
+
       - deployment: latest_release_versioned
         displayName: 'Main branch (/versions/)'
         environment: 'fluid-docs-cdn'
