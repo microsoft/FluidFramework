@@ -5,6 +5,9 @@
 
 name: $(Build.BuildId)
 
+pool:
+  vmImage: 'ubuntu-latest'
+
 variables:
   - group: doc-versions
   - group: storage-vars
@@ -40,7 +43,6 @@ pr: none
 stages:
   - stage: deploy
     displayName: 'Deploy docs'
-    pool: 'Azure Pipelines'
     jobs:
     # current release
     - ${{ if eq(variables.releasePipeline, true) }}:
