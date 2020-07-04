@@ -149,6 +149,11 @@ export interface IComponentRuntimeChannel extends
     readonly id: string;
 
     /**
+     * Indicates the attachment state of the component to a host service.
+     */
+    readonly attachState: AttachState;
+
+    /**
      * Called to bind the runtime to the container.
      * If the container is not attached to storage, then this would also be unknown to other clients.
      */
