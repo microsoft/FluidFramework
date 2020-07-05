@@ -1660,22 +1660,12 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         batch: boolean,
         appData?: any)
     {
-        const legacyFormat = false;
-
-        if (legacyFormat) {
-            return this.context.submitFn(
-                type === ContainerMessageType.ComponentOp ? MessageType.Operation : type as any as MessageType,
-                contents,
-                batch,
-                appData);
-        } else {
-            const payload: ContainerRuntimeMessage = { type, contents };
-            return this.context.submitFn(
-                MessageType.Operation,
-                payload,
-                batch,
-                appData);
-        }
+        const payload: ContainerRuntimeMessage = { type, contents };
+        return this.context.submitFn(
+            MessageType.Operation,
+            payload,
+            batch,
+            appData);
     }
 
     /**

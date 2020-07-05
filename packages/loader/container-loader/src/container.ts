@@ -1345,6 +1345,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             case MessageType.Operation:
             case MessageType.RemoteHelp:
             case MessageType.Summarize:
+            // Back-compat: <= 0.21.0
+            // Legacy, to be removed in next version(s)
+            case "attach":
+            case "chunkedOp":
                 break;
             default:
                 this.close(CreateContainerError(`Runtime can't send arbitrary message type: ${type}`));
