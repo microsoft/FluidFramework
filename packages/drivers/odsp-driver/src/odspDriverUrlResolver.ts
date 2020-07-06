@@ -4,13 +4,15 @@
  */
 
 import assert from "assert";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import {
+    IRequest,
+    DriverHeader,
+} from "@fluidframework/component-core-interfaces";
 import {
     IUrlResolver,
     IResolvedUrl,
     CreateNewHeader,
 } from "@fluidframework/driver-definitions";
-import { summarizerClientType, LoaderHeader } from "@fluidframework/container-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId, INewFileInfoHeader } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
@@ -105,7 +107,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             }
         }
 
-        const clientDetails = request.headers?.[LoaderHeader.clientDetails];
+        const summarizer = request.headers?.[DriverHeader.summarizingClient];
 
         return {
             type: "fluid",
@@ -119,7 +121,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             driveId,
             itemId,
             fileName: "",
-            summarizer: clientDetails?.type === summarizerClientType,
+            summarizer,
         };
     }
 

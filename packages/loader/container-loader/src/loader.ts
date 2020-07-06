@@ -18,13 +18,8 @@ import {
     LoaderHeader,
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import {
-    ChildLogger,
-    DebugLogger,
-    Deferred,
-    PerformanceEvent,
-    performanceNow,
-} from "@fluidframework/common-utils";
+import { Deferred, performanceNow } from "@fluidframework/common-utils";
+import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,

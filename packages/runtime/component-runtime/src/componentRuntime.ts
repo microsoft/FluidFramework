@@ -23,10 +23,12 @@ import {
     AttachState,
 } from "@fluidframework/container-definitions";
 import {
-    ChildLogger,
     Deferred,
-    raiseConnectedEvent,
 } from "@fluidframework/common-utils";
+import {
+    ChildLogger,
+    raiseConnectedEvent,
+} from "@fluidframework/telemetry-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
@@ -127,11 +129,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public get isAttached(): boolean {
-        return this.componentContext.isAttached && this.bindState !== BindState.NotBound;
+        return this.attachState !== AttachState.Detached;
     }
 
-    public get isBoundToContext(): boolean {
-        return this.bindState === BindState.Bound;
+    public get attachState(): AttachState {
+        return this._attachState;
     }
 
     public get path(): string {
@@ -159,7 +161,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     private graphAttachState: AttachState = AttachState.Detached;
     private readonly deferredAttached = new Deferred<void>();
     private readonly localChannelContextQueue = new Map<string, LocalChannelContext>();
+    private readonly notBoundedChannelContextSet = new Set<string>();
     private boundhandles: Set<IComponentHandle> | undefined;
+    private _attachState: AttachState;
 
     private constructor(
         private readonly componentContext: IComponentContext,
@@ -213,6 +217,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
         this.attachListener();
         this.bindState = existing ? BindState.Bound : BindState.NotBound;
+        this._attachState = existing ? AttachState.Attached : AttachState.Detached;
 
         // If it's existing we know it has been attached.
         if (existing) {
@@ -280,7 +285,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), "createChannel() with existing ID");
-
+        this.notBoundedChannelContextSet.add(id);
         const context = new LocalChannelContext(
             id,
             this.sharedObjectRegistry,
@@ -310,6 +315,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      * @param channel - channel to be registered.
      */
     public bindChannel(channel: IChannel): void {
+        assert(this.notBoundedChannelContextSet.has(channel.id), "Channel to be binded should be in not bounded set");
+        this.notBoundedChannelContextSet.delete(channel.id);
         // If our Component is attached, then attach the channel.
         if (this.isAttached) {
             this.attachChannel(channel);
@@ -536,7 +543,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             .filter(([key, value]) =>
                 // If the object is registered - and we have received the sequenced op creating the object
                 // (i.e. it has a base mapping) - then we go ahead and snapshot
-                value.isBoundToContext(),
+                !this.notBoundedChannelContextSet.has(key),
             )
             .map(async ([key, value]) => {
                 const snapshot = await value.snapshot(fullTree);
@@ -554,7 +561,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts)
             .filter(([key, value]) =>
-                value.isBoundToContext(),
+                // If the object is registered - and we have received the sequenced op creating the object
+                // (i.e. it has a base mapping) - then we go ahead and snapshot
+                !this.notBoundedChannelContextSet.has(key),
             )
             .map(async ([key, value]) => {
                 const channelSummary = await value.summarize(fullTree);
@@ -566,6 +575,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     public getAttachSnapshot(): ITreeEntry[] {
         const entries: ITreeEntry[] = [];
+        this._attachState = AttachState.Attached;
         // As the component is attaching, attach the graph too.
         this.attachGraph();
         // Fire this event telling dds that we are going live and they can do any
@@ -578,7 +588,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 throw new Error("Should only be called with local channel handles");
             }
 
-            if (value.isBoundToContext()) {
+            if (!this.notBoundedChannelContextSet.has(objectId)) {
                 const snapshot = value.getAttachSnapshot();
 
                 // And then store the tree

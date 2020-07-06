@@ -19,7 +19,8 @@ export interface IProvideComponentFactory {
 }
 
 /**
- * The interface implemented by a component module.
+ * IComponentFactory create components.  It is associated with an identifier (its `type` member)
+ * and usually provided to consumers using this mapping through a component registry.
  */
 export interface IComponentFactory extends IProvideComponentFactory {
     /**

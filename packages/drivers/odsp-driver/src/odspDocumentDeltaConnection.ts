@@ -8,7 +8,6 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
-import { CriticalContainerError } from "@fluidframework/container-definitions";
 import {
     IClient,
     IConnect,
@@ -20,7 +19,7 @@ import {
 import uuid from "uuid/v4";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
-import { errorObjectFromSocketError } from "./odspUtils";
+import { errorObjectFromSocketError, OdspError } from "./odspError";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -225,7 +224,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     private static removeSocketIoReference(
         key: string,
         isFatalError: boolean,
-        reason: string | CriticalContainerError) {
+        reason: string | OdspError) {
         const socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
         if (!socketReference) {
             // This is expected to happen if we removed the reference due the socket not being connected

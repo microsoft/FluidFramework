@@ -11,11 +11,12 @@ import {
     IDeltaManager,
     IDeltaManagerEvents,
     IDeltaQueue,
-    CriticalContainerError,
+    ICriticalContainerError,
     IThrottlingWarning,
-    ErrorType,
+    ContainerErrorType,
 } from "@fluidframework/container-definitions";
-import { PerformanceEvent, performanceNow, TelemetryLogger, TypedEventEmitter } from "@fluidframework/common-utils";
+import { performanceNow, TypedEventEmitter } from "@fluidframework/common-utils";
+import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -38,10 +39,10 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import {
-    CreateContainerError,
     createWriteError,
     createGenericNetworkError,
 } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
 import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
@@ -65,16 +66,17 @@ const DefaultContentBufferSize = 10;
 const canRetryOnError = (error: any): boolean => error?.canRetry !== false;
 const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds || undefined;
 
-function getNackReconnectInfo(nackContent: INackContent): CriticalContainerError {
+function getNackReconnectInfo(nackContent: INackContent) {
     const reason = `Nack: ${nackContent.message}`;
     const canRetry = ![403, 429].includes(nackContent.code);
     return createGenericNetworkError(reason, canRetry, nackContent.retryAfter);
 }
 
 function createReconnectError(prefix: string, err: any) {
-    const error = CreateContainerError(err, true);
+    const error = CreateContainerError(err);
     const error2 = Object.create(error);
     error2.message = `${prefix}: ${error.message}`;
+    error2.canRetry = true;
     return error2;
 }
 
@@ -101,7 +103,7 @@ export enum ReconnectMode {
  */
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "throttled", listener: (error: IThrottlingWarning) => void);
-    (event: "closed", listener: (error?: CriticalContainerError) => void);
+    (event: "closed", listener: (error?: ICriticalContainerError) => void);
 }
 
 /**
@@ -702,7 +704,7 @@ export class DeltaManager
                 from = lastFetch;
             } catch (origError) {
                 canRetry = canRetry && canRetryOnError(origError);
-                const error = CreateContainerError(origError, canRetry);
+                const error = CreateContainerError(origError);
 
                 logNetworkFailure(
                     this.logger,
@@ -782,7 +784,7 @@ export class DeltaManager
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
-    public close(error?: CriticalContainerError): void {
+    public close(error?: ICriticalContainerError): void {
         if (this.closed) {
             return;
         }
@@ -844,20 +846,19 @@ export class DeltaManager
         }
     }
 
-    private emitDelayInfo(retryEndpoint: number, delay: number, error: CriticalContainerError) {
+    private emitDelayInfo(retryEndpoint: number, delaySeconds: number, error: ICriticalContainerError) {
         if (retryEndpoint === RetryFor.DeltaStorage) {
-            this.deltaStorageDelay = delay;
+            this.deltaStorageDelay = delaySeconds;
         } else if (retryEndpoint === RetryFor.DeltaStream) {
-            this.deltaStreamDelay = delay;
+            this.deltaStreamDelay = delaySeconds;
         }
 
         const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
         if (delayTime > 0) {
             const throttlingError: IThrottlingWarning = {
-                errorType: ErrorType.throttlingError,
-                canRetry: true,
+                errorType: ContainerErrorType.throttlingError,
                 message: `Service busy/throttled: ${error.message}`,
-                retryAfterSeconds: delayTime / 1000,
+                retryAfterSeconds: delayTime,
             };
             this.emit("throttled", throttlingError);
         }
@@ -1034,7 +1035,7 @@ export class DeltaManager
     private async reconnectOnError(
         connection: DeltaConnection,
         requestedMode: ConnectionMode,
-        error: CriticalContainerError,
+        error: ICriticalContainerError,
     ) {
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.

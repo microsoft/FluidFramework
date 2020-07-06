@@ -26,8 +26,6 @@ export interface IChannelContext {
 
     summarize(fullTree?: boolean): Promise<ISummarizeResult>;
 
-    isBoundToContext(): boolean;
-
     reSubmit(content: any, localOpMetadata: unknown): void;
 }
 

@@ -5,7 +5,8 @@
 
 import assert from "assert";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse, CreateContainerError } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
+import { readAndParse } from "@fluidframework/driver-utils";
 import {
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -71,11 +72,6 @@ export class RemoteChannelContext implements IChannelContext {
         }
 
         return this.channelP;
-    }
-
-    public isBoundToContext(): boolean {
-        // A remote channel by definition is bound
-        return true;
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {

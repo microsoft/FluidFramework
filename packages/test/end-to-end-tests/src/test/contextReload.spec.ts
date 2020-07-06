@@ -121,14 +121,19 @@ describe("context reload", function() {
     };
 
     const tests = function() {
-        it("is followed by an immediate summary", async function() {
-            let success = true;
-            // This can be enabled when the old dependencies are updated to 0.21. Before this, Summarizer
-            // generates warnings when it doesn't submit a summary, even after it's been disposed, which
-            // was fixed in 0.21
-            // this.container.on("warning", () => success = false);
-            this.container.on("closed", (error) => success = success && error === undefined);
+        beforeEach(async function() {
+            // make sure container errors fail the test
+            this.containerError = false;
+            this.container.on("warning", () => this.containerError = true);
+            this.container.on("closed", (error) =>
+                this.containerError = this.containerError === true || error !== undefined);
+        });
 
+        afterEach(async function() {
+            assert.strictEqual(this.containerError, false, "container error");
+        });
+
+        it("is followed by an immediate summary", async function() {
             await this.container.getQuorum().propose("code", codeDetails(V2));
 
             // wait for summary ack/nack (non-immediate summary will result in test timeout)
@@ -139,15 +144,9 @@ describe("context reload", function() {
                     reject();
                 }
             }));
-
-            assert.strictEqual(success, true, "container error");
         });
 
         it("retains data", async function() {
-            let success = true;
-            this.container.on("warning", () => success = false);
-            this.container.on("closed", (error) => success = success && error === undefined);
-
             const test = ["fluid", "is great!"];
             this.componentV1._root.set(test[0], test[1]);
 
@@ -156,14 +155,9 @@ describe("context reload", function() {
             const componentV2 = await getComponent<TestComponent>("default", this.container);
 
             assert.strictEqual(await componentV2._root.get(test[0]), test[1]);
-            assert.strictEqual(success, true, "container error");
         });
 
         it("loads version 2", async function() {
-            let success = true;
-            this.container.on("warning", () => success = false);
-            this.container.on("closed", (error) => success = success && error === undefined);
-
             assert.strictEqual(this.componentV1.version, TestComponentV1.version);
 
             await proposeAndWaitForReload(V2, this.container);
@@ -173,7 +167,6 @@ describe("context reload", function() {
             assert.strictEqual(componentV2.version, TestComponentV2.version);
 
             assert(await componentV2._root.wait(TestComponentV2.testKey));
-            assert.strictEqual(success, true, "container error");
         });
     };
 
