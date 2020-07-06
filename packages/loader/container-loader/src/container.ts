@@ -989,10 +989,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             };
         }
 
-        const attributesHash = ".protocol" in tree.trees
-            ? tree.trees[".protocol"].blobs.attributes
-            : tree.blobs[".attributes"];
-
+        const attributesHash = tree.trees[".protocol"].blobs.attributes;
         const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
 
         // Back-compat for older summaries with no term
