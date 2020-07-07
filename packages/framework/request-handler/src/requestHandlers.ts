@@ -4,6 +4,7 @@
  */
 import { IComponent, IComponentLoadable, IResponse } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { SchedulerType } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "./requestParser";
 
 /**
@@ -19,13 +20,13 @@ export const componentRuntimeRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length > 0) {
             let wait: boolean | undefined;
-            if (request.headers && (typeof request.headers.wait) === "boolean") {
-                wait = request.headers.wait as boolean;
+            if (typeof request.headers?.wait === "boolean") {
+                wait = request.headers.wait;
             }
 
             const component = await runtime.getComponentRuntime(request.pathParts[0], wait);
             const subRequest = request.createSubRequest(1);
-            if (subRequest) {
+            if (subRequest !== undefined) {
                 return component.request(subRequest);
             }
         }
@@ -47,3 +48,11 @@ export function createLoadableComponentRuntimeRequestHandler(component: ICompone
         return createComponentResponse(component);
     };
 }
+
+export const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
+    async (request: RequestParser, runtime: IContainerRuntime) => {
+        if (request.pathParts.length > 0 && request.pathParts[0] === SchedulerType) {
+            return componentRuntimeRequestHandler(request, runtime);
+        }
+        return undefined;
+    };
