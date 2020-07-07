@@ -898,7 +898,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             assert(clientId);
             this.summaryManager.setConnected(clientId);
         } else {
-            assert(!this._leader);
             this.summaryManager.setDisconnected();
         }
     }
@@ -1720,9 +1719,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     private updateLeader(leadership: boolean) {
         this._leader = leadership;
-        assert(this.clientId);
         if (this.leader) {
-            assert(this.connected && this.deltaManager && this.deltaManager.active);
+            assert(this.clientId === undefined || this.connected && this.deltaManager && this.deltaManager.active);
             this.emit("leader");
         } else {
             this.emit("notleader");
@@ -1744,10 +1742,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
      */
     private runTaskAnalyzer() {
         // Analyze the current state and ask for local and remote help separately.
-        // called only if a leader, which means we are connected (as leadership is lost on loss of connection).
-        assert(this.clientId !== undefined && this.connected);
+        // If called for detached container, the clientId would not be assigned and it is disconnected. In this
+        // case, all tasks are run by the detached container. Called only if a leader. If we have a clientId,
+        // then we should be connected as leadership is lost on losing connection.
+        const helpTasks = this.clientId === undefined ?
+            { browser: this.tasks, robot: [] } :
+            analyzeTasks(this.clientId, this.getQuorum().getMembers(), this.tasks);
 
-        const helpTasks = analyzeTasks(this.clientId, this.getQuorum().getMembers(), this.tasks);
         if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
             if (helpTasks.browser.length > 0) {
                 const localHelpMessage: IHelpMessage = {
