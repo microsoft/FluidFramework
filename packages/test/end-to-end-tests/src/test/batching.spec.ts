@@ -11,7 +11,7 @@ import { IContainerRuntime } from  "@fluidframework/container-runtime-definition
 import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IEnvelope, SchedulerType } from "@fluidframework/runtime-definitions";
+import { IEnvelope, SchedulerType, FlushMode } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
@@ -214,6 +214,116 @@ describe("Batching", () => {
 
             verifyBatchMetadata(component1BatchMessages);
             verifyBatchMetadata(component2BatchMessages);
+        });
+
+        afterEach(async () => {
+            component1BatchMessages = [];
+            component2BatchMessages = [];
+        });
+    });
+
+    describe("Manually flushed batch ops metadata verification", () => {
+        let component1BatchMessages: ISequencedDocumentMessage[] = [];
+        let component2BatchMessages: ISequencedDocumentMessage[] = [];
+
+        beforeEach(() => {
+            setupBacthMessageListener(component1, component1BatchMessages);
+            setupBacthMessageListener(component2, component2BatchMessages);
+        });
+
+        it("can send and receive mulitple batch ops that are manually flushed", async () => {
+            // Set the FlushMode to Manual.
+            component1.context.containerRuntime.setFlushMode(FlushMode.Manual);
+
+            // Send the ops that are to be batched together.
+            component1map1.set("key1", "value1");
+            component1map2.set("key2", "value2");
+            component1map1.set("key3", "value3");
+            component1map2.set("key4", "value4");
+
+            // Manually flush the batch.
+            (component1.context.containerRuntime as IContainerRuntime).flush();
+
+            // Wait for the ops to get processed by both the containers.
+            await containerDeltaEventManager.process();
+
+            assert.equal(component1BatchMessages.length, 4, "Incorrect number of messages received on local client");
+            assert.equal(component2BatchMessages.length, 4, "Incorrect number of messages received on remote client");
+
+            verifyBatchMetadata(component1BatchMessages);
+            verifyBatchMetadata(component2BatchMessages);
+        });
+
+        it("can send and receive single batch op that is manually flushed", async () => {
+            // Manually flush a single message as a batch.
+            component1.context.containerRuntime.setFlushMode(FlushMode.Manual);
+            component2map1.set("key1", "value1");
+            (component1.context.containerRuntime as IContainerRuntime).flush();
+
+            // Set the FlushMode back to Automatic.
+            component1.context.containerRuntime.setFlushMode(FlushMode.Automatic);
+
+            // Wait for the ops to get processed by both the containers.
+            await containerDeltaEventManager.process();
+
+            assert.equal(component1BatchMessages.length, 1, "Incorrect number of messages received on local client");
+            assert.equal(component2BatchMessages.length, 1, "Incorrect number of messages received on remote client");
+
+            verifyBatchMetadata(component1BatchMessages);
+            verifyBatchMetadata(component2BatchMessages);
+        });
+
+        it("can send and receive consecutive batches that are manually flushed", async () => {
+            /**
+             * This test verifies that among other things, the PendingStateManager's algorithm of handling consecutive
+             * batches is correct.
+             */
+
+            // Set the FlushMode to Manual.
+            component1.context.containerRuntime.setFlushMode(FlushMode.Manual);
+
+            // Send the ops that are to be batched together.
+            component2map1.set("key1", "value1");
+            component2map2.set("key2", "value2");
+
+            // Manually flush the batch.
+            (component1.context.containerRuntime as IContainerRuntime).flush();
+
+            // Send the second set of ops that are to be batched together.
+            component2map1.set("key3", "value3");
+            component2map2.set("key4", "value4");
+
+            // Set the FlushMode back to Automatic so that the batch is sent.
+            component1.context.containerRuntime.setFlushMode(FlushMode.Automatic);
+
+            // Wait for the ops to get processed by both the containers.
+            await containerDeltaEventManager.process();
+
+            assert.equal(component1BatchMessages.length, 4, "Incorrect number of messages received on local client");
+            assert.equal(component2BatchMessages.length, 4, "Incorrect number of messages received on remote client");
+
+            // Verify the first batch.
+            verifyBatchMetadata(component1BatchMessages.slice(0, 2));
+            verifyBatchMetadata(component1BatchMessages.slice(2, 4));
+
+            // Verify the second batch.
+            verifyBatchMetadata(component2BatchMessages.slice(0, 2));
+            verifyBatchMetadata(component2BatchMessages.slice(2, 4));
+        });
+
+        it("can handle calls to orderSequentially with no batch messages", async () => {
+            /**
+             * This test verifies that among other things, the PendingStateManager's algorithm of handling batches with
+             * no messages is correct.
+             */
+            component1.context.containerRuntime.orderSequentially(() => {
+            });
+
+            // Wait for the ops to get processed by both the containers.
+            await containerDeltaEventManager.process();
+
+            assert.equal(component1BatchMessages.length, 0, "Incorrect number of messages received on local client");
+            assert.equal(component2BatchMessages.length, 0, "Incorrect number of messages received on remote client");
         });
 
         afterEach(async () => {

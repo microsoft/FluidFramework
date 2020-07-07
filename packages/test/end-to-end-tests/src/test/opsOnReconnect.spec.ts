@@ -8,10 +8,11 @@ import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqu
 import { IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { DocumentDeltaEventManager, TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { ISequencedDocumentMessage, ConnectionState } from "@fluidframework/protocol-definitions";
-import { IEnvelope, SchedulerType } from "@fluidframework/runtime-definitions";
+import { IEnvelope, SchedulerType, FlushMode } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { SharedString } from "@fluidframework/sequence";
 import {
@@ -439,7 +440,7 @@ describe("Ops on Reconnect", () => {
     });
 
     describe("Op batching on Container reconnect", () => {
-        it("can resend batch ops in a component in right order on attach", async () => {
+        it("can resend batch ops in a component in right order on connect", async () => {
             firstContainerClientId = firstContainer.clientId;
 
             // Create a second container and set up a listener to store the received map / directory values.
@@ -477,6 +478,93 @@ describe("Ops on Reconnect", () => {
                 ["key4", "value4", true /* batch */],
                 ["key5", "value5", undefined /* batch */],
                 ["key6", "value6", false /* batch */],
+            ];
+            assert.deepStrictEqual(
+                expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
+        });
+
+        it("can resend manually flushed batch ops in a component in right order on connect", async () => {
+            firstContainerClientId = firstContainer.clientId;
+
+            // Create a second container and set up a listener to store the received map / directory values.
+            await setupSecondContainersComponent();
+
+            // Disconnect the client.
+            documentServiceFactory.disconnectClient(firstContainerClientId, "Disconnected for testing");
+
+            // The Container should be in disconnected state.
+            assert.equal(firstContainer.connectionState, ConnectionState.Disconnected);
+
+            // Set the FlushMode to Manual to send batch ops by manually flushing them.
+            firstContainerComp1.context.containerRuntime.setFlushMode(FlushMode.Manual);
+
+            // Set values in the DDSes so that they are batched together.
+            firstContainerComp1Map1.set("key1", "value1");
+            firstContainerComp1Map2.set("key2", "value2");
+            firstContainerComp1Directory.set("key3", "value3");
+
+            // Manually flush the ops so that they are sent as a batch.
+            (firstContainerComp1.context.containerRuntime as IContainerRuntime).flush();
+
+            // Set values in the DDSes so that they are batched together in a second batch.
+            firstContainerComp1Map1.set("key4", "value4");
+            firstContainerComp1Map2.set("key5", "value5");
+            firstContainerComp1Directory.set("key6", "value6");
+
+            // Set the FlushMode back to Automatic so that the above batch is sent.
+            firstContainerComp1.context.containerRuntime.setFlushMode(FlushMode.Automatic);
+
+            // Wait for the Container to get reconnected.
+            await waitForContainerReconnection(firstContainer);
+
+            // Wait for the ops to get processed by both the containers.
+            await containerDeltaEventManager.process();
+
+            const expectedValues: [string, string, boolean | undefined][] = [
+                ["key1", "value1", true /* batch */],
+                ["key2", "value2", undefined /* batch */],
+                ["key3", "value3", false /* batch */],
+                ["key4", "value4", true /* batch */],
+                ["key5", "value5", undefined /* batch */],
+                ["key6", "value6", false /* batch */],
+            ];
+            assert.deepStrictEqual(
+                expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
+        });
+
+        it("can resend manually flushed batch ops in a component in right order on connect - 2", async () => {
+            firstContainerClientId = firstContainer.clientId;
+
+            // Create a second container and set up a listener to store the received map / directory values.
+            await setupSecondContainersComponent();
+
+            // Disconnect the client.
+            documentServiceFactory.disconnectClient(firstContainerClientId, "Disconnected for testing");
+
+            // The Container should be in disconnected state.
+            assert.equal(firstContainer.connectionState, ConnectionState.Disconnected);
+
+            // Set the FlushMode to Manual to send batch ops by manually flushing them.
+            firstContainerComp1.context.containerRuntime.setFlushMode(FlushMode.Manual);
+
+            // Set values in the DDSes so that they are batched together.
+            firstContainerComp1Map1.set("key1", "value1");
+            firstContainerComp1Map2.set("key2", "value2");
+            firstContainerComp1Directory.set("key3", "value3");
+
+            // Manually flush the ops so that they are sent as a batch.
+            (firstContainerComp1.context.containerRuntime as IContainerRuntime).flush();
+
+            // Wait for the Container to get reconnected.
+            await waitForContainerReconnection(firstContainer);
+
+            // Wait for the ops to get processed by both the containers.
+            await containerDeltaEventManager.process();
+
+            const expectedValues: [string, string, boolean | undefined][] = [
+                ["key1", "value1", true /* batch */],
+                ["key2", "value2", undefined /* batch */],
+                ["key3", "value3", false /* batch */],
             ];
             assert.deepStrictEqual(
                 expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
