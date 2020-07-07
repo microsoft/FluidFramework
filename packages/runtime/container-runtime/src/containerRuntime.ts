@@ -1720,7 +1720,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     private updateLeader(leadership: boolean) {
         this._leader = leadership;
         if (this.leader) {
-            assert(this.clientId ? this.connected && this.deltaManager && this.deltaManager.active : true);
+            assert(this.clientId === undefined || this.connected && this.deltaManager && this.deltaManager.active);
             this.emit("leader");
         } else {
             this.emit("notleader");
@@ -1745,19 +1745,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // If called for detached container, the clientId would not be assigned and it is disconnected. In this
         // case, all tasks are run by the detached container. Called only if a leader. If we have a clientId,
         // then we should be connected as leadership is lost on losing connection.
-        if (this.clientId === undefined) {
-            const localHelpMessage: IHelpMessage = {
-                tasks: this.tasks,
-                version: this.version,   // Back-compat
-            };
-            debug(`Requesting local help for ${this.tasks}`);
-            this.emit("localHelp", localHelpMessage);
-            return;
-        }
+        const helpTasks = this.clientId === undefined ?
+            { browser: this.tasks, robot: [] } :
+            analyzeTasks(this.clientId, this.getQuorum().getMembers(), this.tasks);
 
-        assert(this.connected);
-
-        const helpTasks = analyzeTasks(this.clientId, this.getQuorum().getMembers(), this.tasks);
         if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
             if (helpTasks.browser.length > 0) {
                 const localHelpMessage: IHelpMessage = {
