@@ -83,13 +83,6 @@ import { ComponentContext, LocalComponentContext, RemotedComponentContext } from
 import { ComponentHandleContext } from "./componentHandleContext";
 import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
-import {
-    componentRuntimeRequestHandler,
-    createLoadableComponentRuntimeRequestHandler,
-    RuntimeRequestHandler,
-} from "./requestHandlers";
-import { RequestParser } from "./requestParser";
-import { RuntimeRequestHandlerBuilder } from "./runtimeRequestHandlerBuilder";
 import { ISummarizerRuntime, Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
@@ -416,13 +409,6 @@ export class ScheduleManager {
 }
 
 export const schedulerId = SchedulerType;
-const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IContainerRuntime) => {
-        if (request.pathParts.length > 0 && request.pathParts[0] === schedulerId) {
-            return componentRuntimeRequestHandler(request, runtime);
-        }
-        return undefined;
-    };
 
 // Wraps the provided list of packages and augments with some system level services.
 class ContainerRuntimeComponentRegistry extends ComponentRegistry {
@@ -453,7 +439,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     public static async load(
         context: IContainerContext,
         registryEntries: NamedComponentRegistryEntries,
-        requestHandlers: RuntimeRequestHandler[] = [],
+        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IComponent = context.scope,
     ): Promise<ContainerRuntime> {
@@ -477,12 +463,8 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             componentRegistry,
             chunks,
             runtimeOptions,
-            containerScope);
-
-        runtime.requestHandler.pushHandler(
-            createLoadableComponentRuntimeRequestHandler(runtime.summarizer),
-            schedulerRuntimeRequestHandler,
-            ...requestHandlers);
+            containerScope,
+            requestHandler);
 
         // Create all internal components in first load.
         if (!context.existing) {
@@ -643,7 +625,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     private readonly summarizer: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
-    private readonly requestHandler = new RuntimeRequestHandlerBuilder();
     private readonly pendingStateManager: PendingStateManager;
 
     // Local copy of incomplete received chunks.
@@ -661,6 +642,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: true, enableWorker: false },
         private readonly containerScope: IComponent,
+        private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
     ) {
         super();
 
@@ -802,8 +784,15 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
-        // Otherwise defer to the app to handle the request
-        return this.requestHandler.handleRequest(request, this);
+        if (this.requestHandler !== undefined) {
+            return this.requestHandler(request, this);
+        }
+
+        return {
+            status: 500,
+            mimeType: "text/plain",
+            value: "requests not supported",
+        };
     }
 
     /**
