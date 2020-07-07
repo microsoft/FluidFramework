@@ -7,13 +7,12 @@
 import cloneDeep from "lodash/cloneDeep";
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { performanceNow, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     PerformanceEvent,
-    performanceNow,
     TelemetryLogger,
-    TelemetryNullLogger,
-} from "@fluidframework/common-utils";
+} from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,

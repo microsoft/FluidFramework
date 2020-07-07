@@ -20,8 +20,9 @@ import {
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
-    CriticalContainerError,
+    ICriticalContainerError,
     ContainerWarning,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -59,7 +60,7 @@ export class ContainerContext implements IContainerContext {
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
-        closeFn: (error?: CriticalContainerError) => void,
+        closeFn: (error?: ICriticalContainerError) => void,
         version: string,
         previousRuntimeState: IRuntimeState,
     ): Promise<ContainerContext> {
@@ -179,7 +180,7 @@ export class ContainerContext implements IContainerContext {
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly snapshotFn: (message: string) => Promise<void>,
-        public readonly closeFn: (error?: CriticalContainerError) => void,
+        public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
     ) {
@@ -217,8 +218,13 @@ export class ContainerContext implements IContainerContext {
         return !this.isAttached();
     }
 
+    // 0.21 back-compat isAttached
     public isAttached(): boolean {
-        return this.container.isAttached();
+        return this.container.attachState !== AttachState.Detached;
+    }
+
+    public get attachState(): AttachState {
+        return this.container.attachState;
     }
 
     public createSummary(): ISummaryTree {

@@ -20,6 +20,7 @@ import {
     IDeltaManager,
     ContainerWarning,
     ILoader,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -149,6 +150,11 @@ export interface IComponentRuntimeChannel extends
     readonly id: string;
 
     /**
+     * Indicates the attachment state of the component to a host service.
+     */
+    readonly attachState: AttachState;
+
+    /**
      * Called to bind the runtime to the container.
      * If the container is not attached to storage, then this would also be unknown to other clients.
      */
@@ -257,6 +263,10 @@ export interface IComponentContext extends EventEmitter {
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
+    /**
+     * Indicates the attachment state of the component to a host service.
+     */
+    readonly attachState: AttachState;
 
     readonly containerRuntime: IContainerRuntimeBase;
     /**
@@ -355,11 +365,6 @@ export interface IComponentContext extends EventEmitter {
      * @param address - The address of the channe that is dirty.
      */
     setChannelDirty(address: string): void;
-
-    /**
-     * It is true if the component is attached or attaching to storage.
-     */
-    isAttached: boolean;
 
     /**
      * Get an absolute url to the containe rbased on the provided relativeUrl.

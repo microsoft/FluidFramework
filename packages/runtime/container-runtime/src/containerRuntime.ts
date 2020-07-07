@@ -25,23 +25,26 @@ import {
     IRuntime,
     IRuntimeState,
     ContainerWarning,
-    CriticalContainerError,
+    ICriticalContainerError,
+    AttachState,
 } from "@fluidframework/container-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
 import {
     Deferred,
     Trace,
     LazyPromise,
+} from "@fluidframework/common-utils";
+import {
     ChildLogger,
     raiseConnectedEvent,
-} from "@fluidframework/common-utils";
+} from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
     BlobCacheStorageService,
-    CreateContainerError,
     buildSnapshotTree,
     readAndParse,
 } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     BlobTreeEntry,
     TreeTreeEntry,
@@ -435,8 +438,10 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime, ISummarizerRuntime {
+export class ContainerRuntime extends EventEmitter
+implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
     public get IContainerRuntime() { return this; }
+    public get IContainerRuntimeDirtyable() { return this; }
 
     /**
      * Load the components from a snapshot and returns the runtime.
@@ -549,7 +554,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.reSubmit;
     }
 
-    public get closeFn(): (error?: CriticalContainerError) => void {
+    public get closeFn(): (error?: ICriticalContainerError) => void {
         return this.context.closeFn;
     }
 
@@ -569,12 +574,19 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.registry;
     }
 
-    public isAttached(): boolean {
-        if (this.context.isAttached !== undefined) {
-            return this.context.isAttached();
+    public get attachState(): AttachState {
+        if (this.context.attachState !== undefined) {
+            return this.context.attachState;
         }
-        // 0.20 back-compat islocal
-        return !((this.context as any).isLocal() as boolean);
+        let isAttached = false;
+        // 0.21 back-compat isAttached
+        if ((this.context as any).isAttached !== undefined) {
+            isAttached = (this.context as any).isAttached();
+        } else {
+            // 0.20 back-compat islocal
+            isAttached = !(this.context as any).isLocal();
+        }
+        return isAttached ? AttachState.Attached : AttachState.Detached;
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
@@ -590,6 +602,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     private readonly summaryTreeConverter: SummaryTreeConverter;
     private latestSummaryAck: ISummaryContext;
     private readonly summaryTracker: SummaryTracker;
+    private readonly notBoundedComponentContexts = new Set<string>();
 
     private tasks: string[] = [];
 
@@ -1092,7 +1105,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), "Creating component with existing ID");
-
+        this.notBoundedComponentContexts.add(id);
         const context = new LocalComponentContext(
             id,
             pkg,
@@ -1118,6 +1131,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         // tslint:disable-next-line: no-unsafe-any
         const id: string = uuid();
+        this.notBoundedComponentContexts.add(id);
         const context = new LocalComponentContext(
             id,
             pkg,
@@ -1186,6 +1200,36 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
      */
     public isDocumentDirty(): boolean {
         return this.dirtyDocument;
+    }
+
+    /**
+     * Will return true for any message that affect the dirty state of this document
+     * This function can be used to filter out any runtime operations that should not be affecting whether or not
+     * the IComponentRuntime.isDocumentDirty call returns true/false
+     * @param type - The type of ContainerRuntime message that is being checked
+     * @param contents - The contents of the message that is being verified
+     */
+    public isMessageDirtyable(message: ISequencedDocumentMessage) {
+        assert(
+            isRuntimeMessage(message) === true,
+            "Message passed for dirtyable check should be a container runtime message",
+        );
+        return this.isContainerMessageDirtyable(message.type as ContainerMessageType, message.contents);
+    }
+
+    private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
+        if (type === ContainerMessageType.Attach) {
+            const attachMessage = contents as IAttachMessage;
+            if (attachMessage.id === SchedulerType) {
+                return false;
+            }
+        } else if (type === ContainerMessageType.ComponentOp) {
+            const envelope = contents as IEnvelope;
+            if (envelope.address === SchedulerType) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -1285,15 +1329,14 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     private bindComponent(componentRuntime: IComponentRuntimeChannel): void {
         this.verifyNotClosed();
-
+        assert(this.notBoundedComponentContexts.has(componentRuntime.id),
+            "Component to be binded should be in not bounded set");
+        this.notBoundedComponentContexts.delete(componentRuntime.id);
         const context = this.getContext(componentRuntime.id);
-        if (context.isBoundToContext) {
-            return;
-        }
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients but we do need to submit op if container forced us to do so.
-        if (this.isAttached()) {
+        if (this.attachState !== AttachState.Detached) {
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
@@ -1345,7 +1388,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         Array.from(this.contexts)
             .filter(([key, value]) =>
                 // Take summary of bounded components.
-                value.isBoundToContext,
+                !this.notBoundedComponentContexts.has(key),
             )
             .map(async ([key, value]) => {
                 const snapshot = value.generateAttachMessage().snapshot;
@@ -1568,8 +1611,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         // Let the PendingStateManager know that a message was submitted.
         this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata);
-
-        this.updateDocumentDirtyState(true);
+        if (this.isContainerMessageDirtyable(type, content)) {
+            this.updateDocumentDirtyState(true);
+        }
 
         return clientSequenceNumber;
     }

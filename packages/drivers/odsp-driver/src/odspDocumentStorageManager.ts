@@ -9,9 +9,11 @@ import {
     fromBase64ToUtf8,
     fromUtf8ToBase64,
     hashFile,
+} from "@fluidframework/common-utils";
+import {
     PerformanceEvent,
     TelemetryLogger,
-} from "@fluidframework/common-utils";
+} from "@fluidframework/telemetry-utils";
 import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy, getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
@@ -46,7 +48,8 @@ import {
     IFileEntry,
     snapshotExpirySummarizerOps,
 } from "./odspCache";
-import { getWithRetryForTokenRefresh, fetchHelper, throwOdspNetworkError } from "./odspUtils";
+import { getWithRetryForTokenRefresh, fetchHelper } from "./odspUtils";
+import { throwOdspNetworkError } from "./odspError";
 
 /* eslint-disable max-len */
 

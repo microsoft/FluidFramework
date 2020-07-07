@@ -4,8 +4,9 @@
  */
 
 import assert from "assert";
-import { ErrorType, IDataCorruptionError } from "@fluidframework/container-definitions";
-import { ErrorWithProps } from "@fluidframework/driver-utils";
+import { IErrorBase } from "@fluidframework/container-definitions";
+import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
@@ -13,18 +14,15 @@ import { FlushMode } from "@fluidframework/runtime-definitions";
 import Deque from "double-ended-queue";
 import { ContainerRuntime, ContainerMessageType } from "./containerRuntime";
 
-export class DataCorruptionError extends ErrorWithProps implements IDataCorruptionError {
-    readonly errorType = ErrorType.dataCorruptionError;
+export class DataCorruptionError extends CustomErrorWithProps implements IErrorBase {
+    readonly errorType = "dataCorruptionError";
     readonly canRetry = false;
 
     constructor(
         errorMessage: string,
-        readonly clientId: string,
-        readonly sequenceNumber: number,
-        readonly clientSequenceNumber: number,
-        readonly expectedClientSequenceNumber?: number,
+        props: ITelemetryProperties,
     ) {
-        super(errorMessage);
+        super(errorMessage, props);
     }
 }
 
@@ -135,10 +133,13 @@ export class PendingStateManager {
             // Close the container because this indicates data corruption.
             const error = new DataCorruptionError(
                 "Unexpected ack received",
-                message.clientId,
-                message.sequenceNumber,
-                message.clientSequenceNumber,
-                pendingState.clientSequenceNumber);
+                {
+                    clientId: message.clientId,
+                    sequenceNumber: message.sequenceNumber,
+                    clientSequenceNumber: message.clientSequenceNumber,
+                    expectedClientSequenceNumber: pendingState.clientSequenceNumber,
+                },
+            );
 
             this.containerRuntime.closeFn(error);
             return;
