@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import { ISerializedHandle } from "@fluidframework/component-core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
@@ -17,7 +18,6 @@ import {
     IComponentRuntime,
     IObjectStorageService,
 } from "@fluidframework/component-runtime-definitions";
-import { strongAssert } from "@fluidframework/runtime-utils";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";
@@ -122,8 +122,8 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
         // Set the value locally.
         this.setCore(value);
 
-        // If we are in local state, don't submit the op.
-        if (this.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.isAttached()) {
             return;
         }
 
@@ -141,8 +141,8 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
         // Delete the value locally.
         this.deleteCore();
 
-        // If we are in local state, don't submit the op.
-        if (this.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.isAttached()) {
             return;
         }
 
@@ -222,7 +222,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      */
     protected registerCore() {
         if (SharedObject.is(this.data)) {
-            this.data.register();
+            this.data.bindToContext();
         }
     }
 
@@ -246,7 +246,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
             // We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
             if (local) {
                 const messageIdReceived = localOpMetadata as number;
-                strongAssert(messageIdReceived !== undefined && messageIdReceived <= this.messageId,
+                assert(messageIdReceived !== undefined && messageIdReceived <= this.messageId,
                     "messageId is incorrect from from the local client's ACK");
 
                 // We got an ACK. Update messageIdObserved.

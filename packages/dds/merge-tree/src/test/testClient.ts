@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { DebugLogger } from "@fluidframework/common-utils";
+import { DebugLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@fluidframework/protocol-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -61,13 +61,14 @@ export class TestClient extends Client {
         const services = new MockStorage(snapshotTree);
 
         const client2 = new TestClient(undefined, specToSeg);
-        await client2.load(
+        const { catchupOpsP } = await client2.load(
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             {
                 logger: client2.logger,
                 clientId: newLongClientId,
             } as IComponentRuntime,
             services);
+        await catchupOpsP;
         return client2;
     }
 

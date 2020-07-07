@@ -24,7 +24,7 @@ import {
     IComponentFactory,
     NamedComponentRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { CreateContainerError } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
 import * as sequence from "@fluidframework/sequence";
 import { Document } from "./document";
 
@@ -70,7 +70,7 @@ export class Chaincode implements IComponentFactory {
         let root: map.ISharedMap;
         if (!runtime.existing) {
             root = map.SharedMap.create(runtime, rootMapId);
-            root.register();
+            root.bindToContext();
 
             const insights = map.SharedMap.create(runtime, insightsMapId);
             root.set(insightsMapId, insights.handle);
@@ -135,7 +135,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
         if (!runtime.existing) {
             runtime.createComponent(rootMapId, "@fluid-internal/client-api")
                 .then((componentRuntime) => {
-                    componentRuntime.attach();
+                    componentRuntime.bindToContext();
                 })
                 .catch((error: any) => {
                     context.closeFn(CreateContainerError(error));

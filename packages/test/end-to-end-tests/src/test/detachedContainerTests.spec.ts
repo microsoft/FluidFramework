@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IRequest } from "@fluidframework/component-core-interfaces";
-import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
@@ -27,6 +27,9 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import { SharedCell } from "@fluidframework/cell";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
+import { MessageType } from "@fluidframework/protocol-definitions";
+import { ComponentMessageType } from "@fluidframework/component-runtime";
+import { ContainerMessageType } from "@fluidframework/container-runtime";
 
 describe("Detached Container", () => {
     const documentId = "detachedContainerTest";
@@ -55,7 +58,7 @@ describe("Detached Container", () => {
         type: string,
     ) => {
         const doc = await componentContext.createComponent(componentId, type);
-        doc.attach();
+        doc.bindToContext();
     });
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
@@ -90,7 +93,7 @@ describe("Detached Container", () => {
 
     it("Create detached container", async () => {
         const container = await loader.createDetachedContainer(pkg);
-        assert.strictEqual(container.isLocal(), true, "Container should be detached");
+        assert.strictEqual(container.attachState, AttachState.Detached, "Container should be detached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
         assert.strictEqual(container.getQuorum().getMembers().size, 0, "Quorum should not contain any memebers");
@@ -106,7 +109,7 @@ describe("Detached Container", () => {
     it("Attach detached container", async () => {
         const container = await loader.createDetachedContainer(pkg);
         await container.attach(request);
-        assert.strictEqual(container.isLocal(), false, "Container should be attached");
+        assert.strictEqual(container.attachState, AttachState.Attached, "Container should be attached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
         assert.strictEqual(container.id, documentId, "Doc id is not matching!!");
@@ -130,13 +133,11 @@ describe("Detached Container", () => {
         }
         const subComponent = subResponse.value as ITestFluidComponent;
         assert.strictEqual(subComponent.context.storage, undefined, "No storage should be there!!");
-        assert.strictEqual(subComponent.runtime.isAttached, true, "Component should be attached!!");
 
         // Get the sub component's root channel and verify that it is attached.
         const testChannel = await subComponent.runtime.getChannel("root");
-        assert.strictEqual(testChannel.isRegistered(), true, "Channel should be registered!!");
-        assert.strictEqual(testChannel.isLocal(), true, "Channel should be local!!");
-        assert.strictEqual(subComponent.context.isLocal(), true, "Component should be local!!");
+        assert.strictEqual(testChannel.isAttached(), false, "Channel should be detached!!");
+        assert.strictEqual(subComponent.context.attachState, AttachState.Detached, "Component should be detached!!");
     });
 
     it("Components in attached container", async () => {
@@ -158,14 +159,14 @@ describe("Detached Container", () => {
             assert.fail("New components should be created in detached container");
         }
         const testComponent = testResponse.value as ITestFluidComponent;
-        assert.strictEqual(testComponent.runtime.isAttached, true, "Component should be attached!!");
+        assert.strictEqual(testComponent.runtime.IComponentHandleContext.isAttached, true,
+            "Component should be attached!!");
 
         // Get the sub component's "root" channel and verify that it is attached.
         const testChannel = await testComponent.runtime.getChannel("root");
-        assert.strictEqual(testChannel.isRegistered(), true, "Channel should be registered!!");
-        assert.strictEqual(testChannel.isLocal(), false, "Channel should not be local!!");
+        assert.strictEqual(testChannel.isAttached(), true, "Channel should be attached!!");
 
-        assert.strictEqual(testComponent.context.isLocal(), false, "Component should not be local!!");
+        assert.strictEqual(testComponent.context.attachState, AttachState.Attached, "Component should be attached!!");
     });
 
     it("Load attached container and check for components", async () => {
@@ -193,16 +194,17 @@ describe("Detached Container", () => {
         // Get the sub component and assert that it is attached.
         const response2 = await container2.request({ url: `/${subCompId}` });
         const subComponent2 = response2.value as ITestFluidComponent;
-        assert.strictEqual(subComponent2.runtime.isAttached, true, "Component should be attached!!");
+        assert.strictEqual(subComponent2.runtime.IComponentHandleContext.isAttached, true,
+            "Component should be attached!!");
 
         // Verify the attributes of the root channel of both sub components.
         const testChannel1 = await subComponent1.runtime.getChannel("root");
         const testChannel2 = await subComponent2.runtime.getChannel("root");
-        assert.strictEqual(testChannel2.isRegistered(), true, "Channel should be registered!!");
-        assert.strictEqual(testChannel2.isLocal(), false, "Channel should be registered!!");
-        assert.strictEqual(testChannel2.isRegistered(), testChannel1.isRegistered(),
-            "Value for registration should be same!!");
-        assert.strictEqual(testChannel2.isLocal(), testChannel1.isLocal(), "Value for isLocal should persist!!");
+        assert.strictEqual(testChannel2.isAttached(), true, "Channel should be attached!!");
+        assert.strictEqual(JSON.stringify(testChannel2.snapshot()), JSON.stringify(testChannel1.snapshot()),
+            "Value for snapshot should be same!!");
+        assert.strictEqual(testChannel2.isAttached(), testChannel1.isAttached(),
+            "Value for isAttached should persist!!");
     });
 
     it("Fire ops during container attach for shared string", async () => {
@@ -211,9 +213,14 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.equal(type, MessageType.Operation);
+            assert.equal(contents.type, ContainerMessageType.ComponentOp);
+
+            assert.equal(contents.contents.contents.type, ComponentMessageType.ChannelOp);
+
+            assert.strictEqual(contents.contents.contents.content.address,
                 sharedStringId, "Address should be shared string");
-            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
                 JSON.stringify(ops), "Ops should be equal");
             defPromise.resolve();
             return 0;
@@ -241,9 +248,9 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.strictEqual(contents.contents.contents.content.address,
                 sharedMapId, "Address should be shared map");
-            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
                 JSON.stringify(ops), "Ops should be equal");
             defPromise.resolve();
             return 0;
@@ -271,11 +278,12 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.id,
+            assert.strictEqual(contents.contents.contents.content.id,
                 testChannelId, "Channel id should match");
-            assert.strictEqual(contents.contents.content.type,
+            assert.strictEqual(contents.contents.contents.content.type,
                 SharedMap.getFactory().type, "Channel type should match");
-            assert.strictEqual(contents.contents.type, "attach", "Op should be an attach op");
+            assert.strictEqual(contents.contents.contents.type, ComponentMessageType.Attach,
+                "Op should be an attach op");
             defPromise.resolve();
             return 0;
         };
@@ -288,7 +296,7 @@ describe("Detached Container", () => {
 
         // Fire attach op
         const testChannel = component.runtime.createChannel(testChannelId, SharedMap.getFactory().type);
-        testChannel.handle.attach();
+        testChannel.handle.attachGraph();
         await containerP;
         await defPromise.promise;
     });
@@ -301,11 +309,12 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.id,
+            assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
+            assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
+            assert.strictEqual(contents.contents.id,
                 peerComponentRuntimeChannel.id, "Component id should match");
-            assert.strictEqual(contents.type,
+            assert.strictEqual(contents.contents.type,
                 testComponentType, "Component type should match");
-            assert.strictEqual(type, "attach", "Op should be an attach op");
             defPromise.resolve();
             return 0;
         };
@@ -318,7 +327,7 @@ describe("Detached Container", () => {
         peerComponentRuntimeChannel = await (component.context.containerRuntime as IContainerRuntime)
             .createComponentWithRealizationFn([testComponentType]);
         // Fire attach op
-        peerComponentRuntimeChannel.attach();
+        peerComponentRuntimeChannel.bindToContext();
         await containerP;
         await defPromise.promise;
     });
@@ -329,9 +338,9 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.strictEqual(contents.contents.contents.content.address,
                 crcId, "Address should be consensus register collection");
-            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
                 JSON.stringify(op), "Op should be same");
             defPromise.resolve();
             return 0;
@@ -364,9 +373,9 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.strictEqual(contents.contents.contents.content.address,
                 sharedDirectoryId, "Address should be shared directory");
-            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
                 JSON.stringify(op), "Op should be same");
             defPromise.resolve();
             return 0;
@@ -393,9 +402,9 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.strictEqual(contents.contents.contents.content.address,
                 sharedCellId, "Address should be shared directory");
-            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
                 JSON.stringify(op), "Op should be same");
             defPromise.resolve();
             return 0;
@@ -421,11 +430,11 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.strictEqual(contents.contents.contents.content.address,
                 sharedInkId, "Address should be ink");
-            assert.strictEqual(contents.contents.content.contents.type,
+            assert.strictEqual(contents.contents.contents.content.contents.type,
                 "createStroke", "Op type should be same");
-            assert.strictEqual(contents.contents.content.contents.pen.thickness,
+            assert.strictEqual(contents.contents.contents.content.contents.pen.thickness,
                 20, "Thickness should be same");
             defPromise.resolve();
             return 0;
@@ -455,9 +464,9 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.strictEqual(contents.contents.contents.content.address,
                 cocId, "Address should be consensus queue");
-            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
                 JSON.stringify(op), "Op should be same");
             defPromise.resolve();
             return 0;
@@ -486,13 +495,13 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.strictEqual(contents.contents.contents.content.address,
                 sparseMatrixId, "Address should be sparse matrix");
-            if (contents.contents.content.contents.ops[0].type === MergeTreeDeltaType.INSERT) {
-                assert.strictEqual(JSON.stringify(contents.contents.content.contents.ops[0].seg),
+            if (contents.contents.contents.content.contents.ops[0].type === MergeTreeDeltaType.INSERT) {
+                assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents.ops[0].seg),
                     JSON.stringify(seg), "Seg should be same");
             } else {
-                assert.strictEqual(JSON.stringify(contents.contents.content.contents.ops[1].seg),
+                assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents.ops[1].seg),
                     JSON.stringify(seg), "Seg should be same");
             }
             defPromise.resolve();
@@ -522,9 +531,9 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.address,
+            assert.strictEqual(contents.contents.contents.content.address,
                 sharedMatrixId, "Address should be shared matrix");
-            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
                 JSON.stringify(op), "Op should be same");
             defPromise.resolve();
             return 0;

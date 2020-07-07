@@ -93,17 +93,11 @@ export class MockDeltaManager extends EventEmitter
         return this._inboundSignal;
     }
 
-    public get minimumSequenceNumber(): number {
-        return 0;
-    }
+    public minimumSequenceNumber = 0;
 
-    public get lastSequenceNumber(): number {
-        return 0;
-    }
+    public lastSequenceNumber = 0;
 
-    public get initialSequenceNumber(): number {
-        return 0;
-    }
+    public initialSequenceNumber = 0;
 
     public get version(): string {
         return undefined;

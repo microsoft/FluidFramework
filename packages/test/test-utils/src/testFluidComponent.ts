@@ -93,7 +93,7 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
                 this.root.set(key, sharedObject.handle);
             });
 
-            this.root.register();
+            this.root.bindToContext();
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;

@@ -18,7 +18,8 @@ import {
     LoaderHeader,
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { ChildLogger, DebugLogger, Deferred, PerformanceEvent } from "@fluidframework/common-utils";
+import { Deferred, performanceNow } from "@fluidframework/common-utils";
+import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -34,9 +35,6 @@ import {
 import { Container } from "./container";
 import { debug } from "./debug";
 import { IParsedUrl, parseUrl } from "./utils";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const now = require("performance-now") as () => number;
 
 function canUseCache(request: IRequest): boolean {
     if (!request.headers) {
@@ -170,7 +168,7 @@ export class Loader extends EventEmitter implements ILoader {
     }
 
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
-        debug(`Container creating in detached state: ${now()} `);
+        debug(`Container creating in detached state: ${performanceNow()} `);
 
         return Container.create(
             this.codeLoader,

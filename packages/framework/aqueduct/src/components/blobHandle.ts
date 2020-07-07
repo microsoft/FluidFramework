@@ -39,7 +39,8 @@ export class BlobHandle implements IComponentHandle {
         return this.directory.get<string>(this.path);
     }
 
-    public attach(): void {
+    public attachGraph(): void {
+        return;
     }
 
     public bind(handle: IComponentHandle) {

@@ -27,12 +27,22 @@ import {
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
 import { IDeltaManager } from "./deltas";
-import { CriticalContainerError, ContainerWarning } from "./error";
+import { ICriticalContainerError, ContainerWarning } from "./error";
 import { ICodeLoader, ILoader } from "./loader";
 
-// Issue #2375
-// TODO: remove, replace all usage with version from protocol-definitions
-export const summarizerClientType = "summarizer";
+// Represents the attachment state of the entity.
+export enum AttachState {
+    Detached = "Detached",
+    Attaching = "Attaching",
+    Attached = "Attached",
+}
+
+// Represents the bind state of the entity.
+export enum BindState {
+    NotBound = "NotBound",
+    Binding = "Binding",
+    Bound = "Bound",
+}
 
 /**
  * Person definition in a npm script
@@ -201,7 +211,7 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly closeFn: (error?: CriticalContainerError) => void;
+    readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
@@ -229,10 +239,9 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
     getAbsoluteUrl?(relativeUrl: string): Promise<string>;
 
     /**
-     * Flag indicating if the given container has been attached to a host service.
-     * False if the container is attached to storage.
+     * Indicates the attachment state of the container to a host service.
      */
-    isLocal(): boolean;
+    readonly attachState: AttachState;
 
     getLoadedFromVersion(): IVersion | undefined;
 

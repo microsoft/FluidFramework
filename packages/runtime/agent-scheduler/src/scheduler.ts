@@ -17,15 +17,14 @@ import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-run
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import {
-    IComponentRuntime,
-} from "@fluidframework/component-runtime-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import {
     IAgentScheduler,
     IComponentContext,
     IComponentFactory,
     ITask,
     ITaskManager,
+    SchedulerType,
 } from "@fluidframework/runtime-definitions";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import debug from "debug";
@@ -40,9 +39,9 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         let scheduler: ConsensusRegisterCollection<string | null>;
         if (!runtime.existing) {
             root = SharedMap.create(runtime, "root");
-            root.register();
+            root.bindToContext();
             scheduler = ConsensusRegisterCollection.create(runtime);
-            scheduler.register();
+            scheduler.bindToContext();
             root.set("scheduler", scheduler.handle);
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
@@ -65,7 +64,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     public get IComponentRouter() { return this; }
 
     private get clientId(): string {
-        if (!this.runtime.isAttached) {
+        if (!this.runtime.IComponentHandleContext.isAttached) {
             return UnattachedClientId;
         }
         const clientId = this.runtime.clientId;
@@ -231,7 +230,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         // Probably okay for now to have every client try to do this.
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         quorum.on("removeMember", async (clientId: string) => {
-            assert(this.runtime.isAttached);
+            assert(this.runtime.IComponentHandleContext.isAttached);
             // Cleanup only if connected. If not, cleanup will happen in initializeCore() that runs on connection.
             if (this.isActive()) {
                 const leftTasks: string[] = [];
@@ -266,7 +265,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             }
         });
 
-        if (!this.runtime.isAttached) {
+        if (!this.runtime.IComponentHandleContext.isAttached) {
             this.runtime.waitAttached().then(() => {
                 this.clearRunningTasks();
             }).catch((error) => {
@@ -275,7 +274,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         }
 
         this.runtime.on("disconnected", () => {
-            if (this.runtime.isAttached) {
+            if (this.runtime.IComponentHandleContext.isAttached) {
                 this.clearRunningTasks();
             }
         });
@@ -321,9 +320,10 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     private isActive() {
-        if (!this.runtime.isAttached) {
-            return true;
-        }
+        // Issue-2720
+        // if (!this.runtime.isBoundToContext) {
+        //     return true;
+        // }
         if (!this.runtime.connected) {
             return false;
         }
@@ -475,7 +475,7 @@ export class TaskManager implements ITaskManager {
 }
 
 export class AgentSchedulerFactory implements IComponentFactory {
-    public static readonly type = "_scheduler";
+    public static readonly type = SchedulerType;
     public readonly type = AgentSchedulerFactory.type;
 
     public get IComponentFactory() { return this; }
