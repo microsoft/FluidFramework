@@ -15,10 +15,16 @@ import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, IRunConfig, fluidExport, ILoadTest } from "./loadTestComponent";
 const packageName = `${pkgName}@${pkgVersion}`;
 
+interface ITestConfigs {
+    full: ITestConfig,
+    mini: ITestConfig,
+}
+
 interface IConfig {
     server: string,
     driveId: string,
-    testConfig: ITestConfig,
+    activeProfile: keyof(ITestConfigs),
+    profiles: ITestConfigs,
 }
 
 const codeDetails: IFluidCodeDetails = {
@@ -112,7 +118,7 @@ async function main() {
         if (process.argv[3] !== undefined && process.argv[4] !== undefined) {
             const runConfig: IRunConfig = {
                 runId: parseInt(process.argv[3], 10),
-                testConfig: config.testConfig,
+                testConfig: config.profiles[config.activeProfile],
             };
             const stressTest = await load(config, process.argv[4]);
             await stressTest.run(runConfig);
@@ -157,7 +163,7 @@ async function main() {
     }
 
     const p: Promise<void>[] = [];
-    for (let i = 0; i < config.testConfig.numClients; i++) {
+    for (let i = 0; i < config.profiles[config.activeProfile].numClients; i++) {
         const process = child_process.spawn(
             "node",
             ["dist\\nodeStressTest.js", "--run", i.toString(), componentUrl],
