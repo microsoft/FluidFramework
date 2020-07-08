@@ -52,6 +52,7 @@
     "@fluidframework/react-inputs": "^0.22.0",
     "@fluidframework/request-handler": "^0.22.0",
     "@fluidframework/runtime-definitions": "^0.22.0",
+    "@fluidframework/runtime-utils": "^0.22.0",
     "@fluidframework/sequence": "^0.22.0",
     "@fluidframework/view-adapters": "^0.22.0",
     "@fluidframework/view-interfaces": "^0.22.0",

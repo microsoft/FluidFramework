@@ -4,7 +4,7 @@
  */
 import { IComponent, IComponentLoadable, IResponse } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { RequestParser } from "./requestParser";
+import { RequestParser } from "@fluidframework/runtime-utils";
 
 /**
  * A request handler for the container runtime. Each handler should handle a specific request, and return undefined

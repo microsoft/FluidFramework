@@ -18,10 +18,7 @@ import {
 } from "@fluid-example/spaces";
 import React from "react";
 import ReactDOM from "react-dom";
-import {
-    RequestParser,
-}
-from "@fluidframework/request-handler";
+import { RequestParser } from "@fluidframework/runtime-utils";
 import { WaterParkToolbar } from "./waterParkToolbar";
 import { ExternalComponentLoader } from "./externalComponentLoader";
 

@@ -5,7 +5,8 @@
 
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IComponentMountableViewClass } from "@fluidframework/view-interfaces";
-import { RuntimeRequestHandler, RequestParser, componentRuntimeRequestHandler } from "@fluidframework/request-handler";
+import { RuntimeRequestHandler, componentRuntimeRequestHandler } from "@fluidframework/request-handler";
+import { RequestParser } from "@fluidframework/runtime-utils";
 
 /**
  * A mountable view is only required if the view needs to be mounted across a bundle boundary.  Mounting across
