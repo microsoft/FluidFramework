@@ -48,7 +48,7 @@ import {
     SchedulerType,
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { unreachableCase, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { generateHandleContextPath, unreachableCase, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
@@ -136,8 +136,15 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this._attachState;
     }
 
+    /**
+     * @deprecated - 0.21 back-compat
+     */
     public get path(): string {
         return this.id;
+    }
+
+    public get absolutePath(): string {
+        return generateHandleContextPath(this.id, this.routeContext);
     }
 
     public get routeContext(): IComponentHandleContext {

@@ -161,9 +161,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             getVersions: async (versionId: string | null, count: number) => {
                 return storage.getVersions(versionId, count);
             },
-            getContent: async (version, path) => {
-                return storage.getContent(version, path);
-            },
             read: async (id) => {
                 return storage.read(id);
             },

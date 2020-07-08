@@ -25,7 +25,6 @@ import {
     fromUtf8ToBase64,
 } from "@fluidframework/common-utils";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
-import * as git from "@fluidframework/gitresources";
 import {
     IBlob,
     ICommittedProposal,
@@ -49,7 +48,6 @@ import {
 } from "@fluidframework/component-runtime-definitions";
 import { ComponentSerializer, getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
 import { IComponentRuntimeChannel, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { IHistorian } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 
@@ -371,7 +369,7 @@ export class MockComponentRuntime extends EventEmitter
     public readonly IComponentSerializer = new ComponentSerializer();
 
     public readonly documentId: string;
-    public readonly id: string;
+    public readonly id: string = uuid();
     public readonly existing: boolean;
     public options: any = {};
     public clientId: string | undefined = uuid();
@@ -384,6 +382,10 @@ export class MockComponentRuntime extends EventEmitter
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockComponentRuntime");
     private readonly activeDeferred = new Deferred<void>();
     public readonly quorum = new MockQuorum();
+
+    public get absolutePath() {
+        return `/${this.id}`;
+    }
 
     private _local = false;
 
@@ -530,137 +532,6 @@ export class MockComponentRuntime extends EventEmitter
 
     public reSubmit(content: any, localOpMetadata: unknown) {
         return;
-    }
-}
-
-/**
- * Mock implementation of IHistorian for testing that keeps the blobs in memory
- */
-export class MockHistorian implements IHistorian {
-    public endpoint: string;
-
-    private idCounter: number = 0;
-    private readonly blobMap = new Map<string, git.ITree | git.IBlob>();
-    private tree: git.ICreateTreeParams;
-
-    public async read(path: string) {
-        const content = await this.read_r(path, this.tree);
-        return fromUtf8ToBase64(content);
-    }
-
-    public async read_r(path: string, baseBlob: git.ITree | git.ICreateTreeParams): Promise<string> {
-        if (!path.includes("/")) {
-            for (const blob of baseBlob.tree) {
-                if (blob.path === path) {
-                    return (this.blobMap.get(blob.sha) as git.IBlob).content;
-                }
-            }
-            assert(false, `historian.read() blob not found (base case): ${path}`);
-        } else {
-            const head = path.substr(0, path.indexOf("/"));
-            const tail = path.substr(path.indexOf("/") + 1);
-
-            for (const blob of baseBlob.tree) {
-                if (blob.path === head) {
-                    return this.read_r(tail, this.blobMap.get(blob.sha) as git.ITree);
-                }
-            }
-            assert(false, `historian.read() blob not found (recursive): ${head}`);
-        }
-    }
-
-    public async getBlob(sha: string): Promise<git.IBlob> {
-        return this.blobMap.get(sha) as git.IBlob;
-    }
-    public async createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
-        const newBlob = {
-            sha: `id${this.idCounter}`,
-            url: `id${this.idCounter}`,
-        };
-        this.blobMap.set(`id${this.idCounter++}`, {
-            content: blob.content,
-            encoding: blob.encoding,
-            sha: newBlob.sha,
-            size: 0,
-            url: newBlob.url,
-        });
-        return newBlob;
-    }
-    public async getContent(path: string, ref: string): Promise<any> {
-        assert(false, "getContent");
-        return null;
-    }
-    public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
-        assert(false);
-        return null;
-    }
-    public async getCommit(sha: string): Promise<git.ICommit> {
-        assert(false);
-        return null;
-    }
-    public async createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
-        assert(false);
-        return null;
-    }
-    public async getRefs(): Promise<git.IRef[]> {
-        assert(false);
-        return null;
-    }
-    public async getRef(ref: string): Promise<git.IRef> {
-        assert(false);
-        return null;
-    }
-    public async createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-        assert(false);
-        return null;
-    }
-    public async updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
-        assert(false);
-        return null;
-    }
-    public async deleteRef(ref: string): Promise<void> {
-        assert(false);
-        return null;
-    }
-    public async createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
-        assert(false);
-        return null;
-    }
-    public async getTag(tag: string): Promise<git.ITag> {
-        assert(false);
-        return null;
-    }
-    public async createTree(tree: git.ICreateTreeParams): Promise<git.ITree> {
-        this.tree = tree;
-        const newTree = {
-            sha: `id${this.idCounter}`,
-            tree: tree.tree.map((treeEntry) => ({
-                mode: treeEntry.mode,
-                path: treeEntry.path,
-                sha: treeEntry.sha,
-                size: 0,
-                type: treeEntry.type,
-                url: "website.com",
-            })),
-            url: `id${this.idCounter}`,
-        };
-        this.blobMap.set(`id${this.idCounter++}`, newTree);
-        return newTree;
-    }
-    public async getTree(sha: string, recursive: boolean): Promise<git.ITree> {
-        return this.blobMap.get(sha) as git.ITree;
-    }
-
-    /**
-     * Retrieves the header for the given document
-     */
-    public async getHeader(sha: string): Promise<git.IHeader> {
-        assert(false, "getHeader");
-        return null;
-    }
-    public async getFullTree(sha: string): Promise<any> {
-        assert(false, "getFullTree");
-        return null;
     }
 }
 

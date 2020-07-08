@@ -40,7 +40,6 @@ import {
     idFromSpoEntry,
 } from "./contracts";
 import { fetchSnapshot } from "./fetchSnapshot";
-import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
     IOdspCache,
@@ -206,22 +205,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
 
         return blob.content;
-    }
-
-    public async getContent(version: api.IVersion, path: string): Promise<string> {
-        this.checkSnapshotUrl();
-
-        return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-            const storageToken = await this.getStorageToken(refresh, "GetContent");
-
-            const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/contents${getQueryString({ ref: version.id, path })}`, storageToken);
-            const response = await PerformanceEvent.timedExecAsync(
-                this.logger,
-                { eventName: "getContent" },
-                async () => fetchHelper<IBlob>(url, { headers }),
-            );
-            return response.content.content;
-        });
     }
 
     public getRawUrl(blobid: string): string {

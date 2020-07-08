@@ -65,11 +65,6 @@ export class DocumentStorageService implements IDocumentStorageService {
         return value.content;
     }
 
-    public async getContent(version: IVersion, path: string): Promise<string> {
-        const value = await this.manager.getContent(version.id, path);
-        return value.content;
-    }
-
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         const branch = ref ? `components/${this.id}/${ref}` : this.id;
         const commit = await this.manager.write(branch, tree, parents, message);

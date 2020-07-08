@@ -12,11 +12,12 @@ import {
 } from "@fluidframework/component-core-interfaces";
 
 /**
- * Handle to a dynamically loaded component
- * This class is used to represent generic IComponent (through request handler on ComponentRuntime),
- * as well as shared objects (see ComponentRuntime.request for details)
+ * Handle to dynamically load a component on a remote client and is created on parsing a seralized ComponentHandle.
+ * This class is used to generate an IComponentHandle when de-serializing Fluid Component and SharedObject handles
+ * that are stored in SharedObjects. The Component or SharedObject corresponding to the IComponentHandle can be
+ * retrieved by calling `get` on it.
  */
-export class ComponentHandle implements IComponentHandle {
+export class RemoteComponentHandle implements IComponentHandle {
     public get IComponentRouter() { return this; }
     public get IComponentHandleContext() { return this; }
     public get IComponentHandle() { return this; }
@@ -24,15 +25,27 @@ export class ComponentHandle implements IComponentHandle {
     public readonly isAttached = true;
     private componentP: Promise<IComponent> | undefined;
 
+    /**
+     * Creates a new RemoteComponentHandle when parsing an IComponentHandle.
+     * @param absolutePath - The absolute path to the handle from the container runtime.
+     * @param routeContext - The root IComponentHandleContext that has a route to this handle.
+     */
     constructor(
-        public readonly path: string,
+        public readonly absolutePath: string,
         public readonly routeContext: IComponentHandleContext,
     ) {
     }
 
+    /**
+     * @deprecated - This returns the absolute path.
+     */
+    public get path() {
+        return this.absolutePath;
+    }
+
     public async get(): Promise<any> {
         if (this.componentP === undefined) {
-            this.componentP = this.routeContext.request({ url: this.path })
+            this.componentP = this.routeContext.request({ url: this.absolutePath })
                 .then<IComponent>((response) =>
                     response.mimeType === "fluid/component"
                         ? response.value as IComponent

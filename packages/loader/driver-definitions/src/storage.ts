@@ -69,11 +69,6 @@ export interface IDocumentStorageService {
     getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
 
     /**
-     * Retrieves the content for the given version at the given path
-     */
-    getContent(version: IVersion, path: string): Promise<string>;
-
-    /**
      * Reads the object with the given ID
      */
     read(id: string): Promise<string>;

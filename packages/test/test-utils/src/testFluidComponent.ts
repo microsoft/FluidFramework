@@ -38,7 +38,7 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
     public get handle(): IComponentHandle<this> { return this.innerHandle; }
 
     public url: string;
-    private root!: ISharedMap;
+    public root!: ISharedMap;
     private readonly innerHandle: IComponentHandle<this>;
 
     /**
@@ -54,7 +54,7 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
         private readonly factoryEntriesMap: Map<string, ISharedObjectFactory>,
     ) {
         this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
+        this.innerHandle = new ComponentHandle(this, "", runtime.IComponentHandleContext);
     }
 
     /**

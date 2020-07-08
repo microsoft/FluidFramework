@@ -4500,7 +4500,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     }, (10000));
                 },
                 () => {
-                    console.log(`Failed to fetch ${commentHandle.path}`);
+                    console.log(`Failed to fetch ${commentHandle.absolutePath}`);
                 });
         }
     }

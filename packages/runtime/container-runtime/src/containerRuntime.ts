@@ -1661,25 +1661,14 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         type: ContainerMessageType,
         contents: any,
         batch: boolean,
-        appData?: any) {
-        // Switch in next release
-        // Note: remove hard-coded cases of legacy op types in Container.submitContainerMessage() when switching it
-        const legacyFormat = true;
-
-        if (legacyFormat) {
-            return this.context.submitFn(
-                type === ContainerMessageType.ComponentOp ? MessageType.Operation : type as any as MessageType,
-                contents,
-                batch,
-                appData);
-        } else {
-            const payload: ContainerRuntimeMessage = { type, contents };
-            return this.context.submitFn(
-                MessageType.Operation,
-                payload,
-                batch,
-                appData);
-        }
+        appData?: any)
+    {
+        const payload: ContainerRuntimeMessage = { type, contents };
+        return this.context.submitFn(
+            MessageType.Operation,
+            payload,
+            batch,
+            appData);
     }
 
     /**

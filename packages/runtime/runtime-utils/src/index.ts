@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./componentHandleContextUtils";
 export * from "./serializer";
 export * from "./summarizerNode";
 export * from "./summaryTracker";

@@ -378,20 +378,6 @@ export class DocumentDeltaConnection
                     return;
                 }
 
-                /* Issue #1566: Backward compat */
-                if (response.initialMessages === undefined) {
-                    response.initialMessages = [];
-                }
-                if (response.initialClients === undefined) {
-                    response.initialClients = [];
-                }
-                if (response.initialContents === undefined) {
-                    response.initialContents = [];
-                }
-                if (response.initialSignals === undefined) {
-                    response.initialSignals = [];
-                }
-
                 this.removeTrackedListeners(true);
                 resolve(response);
             });
