@@ -765,7 +765,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
-
         const requestParser = new RequestParser(request);
 
         if (requestParser.pathParts.length === 1 && requestParser.pathParts[0] === "_summarizer") {
