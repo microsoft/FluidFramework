@@ -77,7 +77,7 @@ import {
     NamedComponentRegistryEntries,
     SchedulerType,
 } from "@fluidframework/runtime-definitions";
-import { ComponentSerializer, SummaryTracker, unreachableCase } from "@fluidframework/runtime-utils";
+import { ComponentSerializer, SummaryTracker, unreachableCase, RequestParser } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
@@ -786,35 +786,25 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         if (this.requestHandler !== undefined) {
             return this.requestHandler(request, this);
         }
-        const queryIndex = request.url.indexOf("?");
-        const pathParts = request.url
-            .substr(0, queryIndex > 0 ? queryIndex : undefined)
-            .split("/")
-            .reduce<string[]>((pv,cv) => {
-                if (cv !== undefined && cv.length > 0)  {
-                    pv.push(cv);
-                }
-                return pv;
-            },
-            []);
-        if (pathParts.length === 1 && pathParts[0] === "_summarizer") {
+
+        const requestParser = new RequestParser(request);
+
+        if (requestParser.pathParts.length === 1 && requestParser.pathParts[0] === "_summarizer") {
             return {
                 status: 200,
                 mimeType: "fluid/component",
                 value: this.summarizer,
             };
-        } else if (pathParts.length > 0 && pathParts[0] === schedulerId) {
+        } else if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === schedulerId) {
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const component = await this.getComponentRuntime(pathParts[0], wait) as IComponent;
+            const component = await this.getComponentRuntime(requestParser.pathParts[0], wait) as IComponent;
             if (component) {
-                if (pathParts.length > 1 || queryIndex > 0) {
+                const subRequest = requestParser.createSubRequest(1);
+                if (subRequest !== undefined) {
                     assert(component.IComponentRouter);
-                    return component.IComponentRouter.request({
-                        url: request.url.substr(request.url.indexOf(schedulerId)),
-                        headers: request.headers,
-                    });
+                    return component.IComponentRouter.request(subRequest);
                 } else {
                     return {
                         status: 200,
@@ -826,15 +816,15 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
                 return {
                     status: 404,
                     mimeType: "text/plain",
-                    value: "component not found",
+                    value: `${schedulerId} not found`,
                 };
             }
         }
 
         return {
-            status: 500,
+            status: 404,
             mimeType: "text/plain",
-            value: "requests not supported",
+            value: "resource not found",
         };
     }
 
