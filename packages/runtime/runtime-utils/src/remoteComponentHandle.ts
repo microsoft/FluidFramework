@@ -12,12 +12,12 @@ import {
 } from "@fluidframework/component-core-interfaces";
 
 /**
- * Handle to dynamically load a component. This is created on parsing a seralized ComponentHandle.
- * This class is used to generate an IComponentHandle when de-serializing Fluid Component and
- * SharedObject handles that are stored in SharedObjects. The Component or SharedObject corresponding
- * to the IComponentHandle can be retrieved by calling `get` on it.
+ * Handle to dynamically load a component on a remote client and is created on parsing a seralized ComponentHandle.
+ * This class is used to generate an IComponentHandle when de-serializing Fluid Component and SharedObject handles
+ * that are stored in SharedObjects. The Component or SharedObject corresponding to the IComponentHandle can be
+ * retrieved by calling `get` on it.
  */
-export class DynamicComponentHandle implements IComponentHandle {
+export class RemoteComponentHandle implements IComponentHandle {
     public get IComponentRouter() { return this; }
     public get IComponentHandleContext() { return this; }
     public get IComponentHandle() { return this; }
@@ -26,7 +26,7 @@ export class DynamicComponentHandle implements IComponentHandle {
     private componentP: Promise<IComponent> | undefined;
 
     /**
-     * Creates a new DynamicComponentHandle when parsing an IComponentHandle.
+     * Creates a new RemoteComponentHandle when parsing an IComponentHandle.
      * @param absolutePath - The absolute path to the handle from the container runtime.
      * @param routeContext - The root IComponentHandleContext that has a route to this handle.
      */

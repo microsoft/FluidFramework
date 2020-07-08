@@ -4,7 +4,7 @@
  */
 
 import { IComponentHandle, IComponentHandleContext } from "@fluidframework/component-core-interfaces";
-import { DynamicComponentHandle } from "../dynamicComponentHandle";
+import { RemoteComponentHandle } from "../remoteComponentHandle";
 
 export const mockHandleContext: IComponentHandleContext = {
     path: "",
@@ -24,7 +24,7 @@ export const mockHandleContext: IComponentHandleContext = {
     },
 };
 
-export const handle: IComponentHandle = new DynamicComponentHandle("", mockHandleContext);
+export const handle: IComponentHandle = new RemoteComponentHandle("", mockHandleContext);
 
 /**
  * Creates a Jsonable object graph of a specified breadth/depth.  The 'createLeaf' callback
