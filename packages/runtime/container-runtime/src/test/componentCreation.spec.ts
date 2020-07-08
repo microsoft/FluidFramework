@@ -90,7 +90,7 @@ describe("Component Creation Tests", () => {
                 IComponentRegistry: globalRegistry,
                 notifyComponentInstantiated: (c) => { },
             } as ContainerRuntime;
-            summaryTracker = new SummaryTracker("", 0, 0, async () => undefined);
+            summaryTracker = new SummaryTracker("", 0, 0);
         });
 
         it("Valid global component", async () => {

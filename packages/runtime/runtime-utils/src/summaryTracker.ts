@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ISummaryTracker } from "@fluidframework/runtime-definitions";
 
 /**
@@ -44,14 +43,12 @@ export class SummaryTracker implements ISummaryTracker {
 
     public refreshLatestSummary(
         referenceSequenceNumber: number,
-        getSnapshot: () => Promise<ISnapshotTree | undefined>,
     ) {
         this._referenceSequenceNumber = referenceSequenceNumber;
-        this._getSnapshotTree = getSnapshot;
 
         // Propagate update to all child nodes
-        for (const [key, value] of this.children.entries()) {
-            value.refreshLatestSummary(referenceSequenceNumber, this.formChildGetSnapshotTree(key));
+        for (const [, value] of this.children.entries()) {
+            value.refreshLatestSummary(referenceSequenceNumber);
         }
     }
 
@@ -68,8 +65,7 @@ export class SummaryTracker implements ISummaryTracker {
         const newChild = new SummaryTracker(
             `${this._fullPath}/${encodeURIComponent(key)}`,
             this._referenceSequenceNumber,
-            latestSequenceNumber,
-            this.formChildGetSnapshotTree(key));
+            latestSequenceNumber);
 
         this.children.set(key, newChild);
         return newChild;
@@ -82,10 +78,5 @@ export class SummaryTracker implements ISummaryTracker {
     public constructor(
         private readonly _fullPath: string,
         private _referenceSequenceNumber: number,
-        private _latestSequenceNumber: number,
-        private _getSnapshotTree: () => Promise<ISnapshotTree | undefined>) { }
-
-    private formChildGetSnapshotTree(key: string): () => Promise<ISnapshotTree | undefined> {
-        return async () => (await this._getSnapshotTree())?.trees[key];
-    }
+        private _latestSequenceNumber: number) { }
 }

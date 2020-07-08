@@ -22,7 +22,7 @@ import { ContainerRuntime } from "../containerRuntime";
 describe("Component Context Tests", () => {
     let summaryTracker: SummaryTracker;
     beforeEach(async () => {
-        summaryTracker = new SummaryTracker("", 0, 0, async () => undefined);
+        summaryTracker = new SummaryTracker("", 0, 0);
     });
 
     describe("LocalComponentContext Initialization", () => {
@@ -86,7 +86,7 @@ describe("Component Context Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
-                new SummaryTracker("", 0, 0, async () => undefined),
+                new SummaryTracker("", 0, 0),
                 attachCb);
 
             await localComponentContext.realize()

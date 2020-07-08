@@ -32,7 +32,6 @@ import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/c
 import {
     Deferred,
     Trace,
-    LazyPromise,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
@@ -676,7 +675,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             "", // fullPath - the root is unnamed
             this.deltaManager.initialSequenceNumber, // referenceSequenceNumber - last acked summary ref seq number
             this.deltaManager.initialSequenceNumber, // latestSequenceNumber - latest sequence number seen
-            async () => undefined, // getSnapshotTree - this will be replaced on summary ack
         );
         this.summaryTreeConverter = new SummaryTreeConverter(true);
 
@@ -1797,51 +1795,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             return;
         }
 
-        const snapshotTree = new LazyPromise(async () => {
-            // We have to call get version to get the treeId for r11s; this isn't needed
-            // for odsp currently, since their treeId is undefined
-            const versionsResult = await this.setOrLogError("FailedToGetVersion",
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                async () => this.storage.getVersions(context.ackHandle!, 1),
-                (versions) => !!(versions && versions.length));
-
-            if (versionsResult.success) {
-                const snapshotResult = await this.setOrLogError("FailedToGetSnapshot",
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    async () => this.storage.getSnapshotTree(versionsResult.result![0]),
-                    (snapshot) => !!snapshot);
-
-                if (snapshotResult.success) {
-                    // Translate null to undefined
-                    return snapshotResult.result ?? undefined;
-                }
-            }
-        });
-
         this.latestSummaryAck = context;
-        this.summaryTracker.refreshLatestSummary(referenceSequenceNumber, async () => snapshotTree);
-    }
-
-    private async setOrLogError<T>(
-        eventName: string,
-        setter: () => Promise<T>,
-        validator: (result: T) => boolean,
-    ): Promise<{ result: T | undefined; success: boolean }> {
-        let result: T;
-        try {
-            result = await setter();
-        } catch (error) {
-            // Send error event for exceptions
-            this.logger.sendErrorEvent({ eventName }, error);
-            return { result: undefined, success: false };
-        }
-
-        const success = validator(result);
-
-        if (!success) {
-            // Send error event when result is invalid
-            this.logger.sendErrorEvent({ eventName });
-        }
-        return { result, success };
+        this.summaryTracker.refreshLatestSummary(referenceSequenceNumber);
     }
 }
