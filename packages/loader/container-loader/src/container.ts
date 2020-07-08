@@ -478,6 +478,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Protocol Handler is undefined");
         }
         const protocolSummary = this.protocolHandler.captureSummary();
+
+        // Back compat / staging - to be removed with next server version bump
+        if (protocolSummary.tree.attributes === undefined) {
+            protocolSummary.tree.attributes = protocolSummary.tree[".attributes"];
+            delete protocolSummary.tree[".attributes"];
+        }
+
         if (!request.headers?.[CreateNewHeader.createNew]) {
             request.headers = {
                 ...request.headers,
@@ -989,7 +996,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             };
         }
 
-        const attributesHash = tree.trees[".protocol"].blobs.attributes;
+        // Back-compat: old docs would have ".attributes" instead of "attributes"
+        const attributesHash = ".protocol" in tree.trees
+            ? tree.trees[".protocol"].blobs.attributes
+            : tree.blobs[".attributes"];
+
         const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
 
         // Back-compat for older summaries with no term
