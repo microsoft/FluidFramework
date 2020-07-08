@@ -66,11 +66,11 @@ export function useReducerFluid<
         syncedStateId,
         syncedState,
     );
-    if (componentSchemaHandles?.storedHandleMapHandle.path === undefined) {
+    if (componentSchemaHandles?.storedHandleMapHandle.absolutePath === undefined) {
         throw Error(`Component schema not initialized prior to render for ${syncedStateId}`);
     }
     const storedHandleMap = dataProps.fluidComponentMap.get(
-        componentSchemaHandles?.storedHandleMapHandle.path,
+        componentSchemaHandles?.storedHandleMapHandle.absolutePath,
     )?.component as SharedMap;
     if (storedHandleMap === undefined) {
         throw Error(`Stored handle map not initialized prior to render for ${syncedStateId}`);
@@ -334,7 +334,7 @@ export function useReducerFluid<
                     handle &&
                     instanceOfComponentSelectorFunction<SV, SF, C>(action) &&
                     combinedFetchDataProps.fluidComponentMap.get(
-                        handle.path,
+                        handle.absolutePath,
                     ) === undefined
                 ) {
                     newHandles.push(handle);

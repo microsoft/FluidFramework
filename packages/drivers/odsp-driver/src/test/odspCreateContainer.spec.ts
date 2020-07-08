@@ -51,7 +51,7 @@ describe("Odsp Create Container Test", () => {
             summary.tree[".protocol"] = {
                 type: SummaryType.Tree,
                 tree: {
-                    ".attributes": {
+                    attributes: {
                         type: SummaryType.Blob,
                         content: JSON.stringify({ branch: "", minimumSequenceNumber: 0, sequenceNumber }),
                     },

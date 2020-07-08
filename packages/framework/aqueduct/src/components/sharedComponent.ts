@@ -80,7 +80,10 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
         this.context = props.context;
         this.providers = props.providers;
 
-        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
+        // Create a ComponentHandle with empty string as `path`. This is because reaching this SharedComponent is the
+        // same as reaching its routeContext (ComponentRuntime) so there is so the relative path to it from the
+        // routeContext is empty.
+        this.innerHandle = new ComponentHandle(this, "", this.runtime.IComponentHandleContext);
 
         // Container event handlers
         this.runtime.once("dispose", () => {
@@ -178,12 +181,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     ): Promise<T> {
         const componentRuntime = await this.context.createComponent(uuid(), pkg, props);
         const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
-        // 0.20 back-compat attach
-        if (componentRuntime.bindToContext !== undefined) {
-            componentRuntime.bindToContext();
-        } else {
-            (componentRuntime as any).attach();
-        }
+        componentRuntime.bindToContext();
         return component;
     }
 

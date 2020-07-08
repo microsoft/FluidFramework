@@ -79,9 +79,9 @@ export function syncState<
         fluidMatchingMapHandle,
     } = componentSchemaHandles;
 
-    const viewMatchingMap = fluidComponentMap.get(viewMatchingMapHandle.path)
+    const viewMatchingMap = fluidComponentMap.get(viewMatchingMapHandle.absolutePath)
         ?.component as ISharedMap;
-    const fluidMatchingMap = fluidComponentMap.get(fluidMatchingMapHandle.path)
+    const fluidMatchingMap = fluidComponentMap.get(fluidMatchingMapHandle.absolutePath)
         ?.component as ISharedMap;
 
     if (viewMatchingMap === undefined || fluidMatchingMap === undefined) {
