@@ -483,7 +483,7 @@ describe("Ops on Reconnect", () => {
                 expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
         });
 
-        it("can resend manually flushed batch ops in a component in right order on connect", async () => {
+        it("can resend consecutive manually flushed batches in right order on connect", async () => {
             firstContainerClientId = firstContainer.clientId;
 
             // Create a second container and set up a listener to store the received map / directory values.
@@ -532,7 +532,7 @@ describe("Ops on Reconnect", () => {
                 expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
         });
 
-        it("can resend manually flushed batch ops in a component in right order on connect - 2", async () => {
+        it("can resend manually flushed batch in right order on connect", async () => {
             firstContainerClientId = firstContainer.clientId;
 
             // Create a second container and set up a listener to store the received map / directory values.
@@ -554,6 +554,9 @@ describe("Ops on Reconnect", () => {
 
             // Manually flush the ops so that they are sent as a batch.
             (firstContainerComp1.context.containerRuntime as IContainerRuntime).flush();
+
+            // Set the FlushMode back to Automatic.
+            firstContainerComp1.context.containerRuntime.setFlushMode(FlushMode.Automatic);
 
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(firstContainer);

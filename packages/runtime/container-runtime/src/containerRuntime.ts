@@ -952,9 +952,9 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
                     localMessageMetadata = this.pendingStateManager.processPendingLocalMessage(message);
                 }
 
-                // If there are no more pending states after processing a local message,
+                // If there are no more pending messages after processing a local message,
                 // the document is no longer dirty.
-                if (!this.pendingStateManager.isPendingState()) {
+                if (!this.pendingStateManager.hasPendingMessages()) {
                     this.updateDocumentDirtyState(false);
                 }
             }
@@ -1050,6 +1050,8 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             debug("DeltaManager does not yet support flush modes");
             return;
         }
+
+        this.pendingStateManager.onFlush();
 
         // If flush has already been called then exit early
         if (!this.needsFlush) {
