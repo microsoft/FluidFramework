@@ -7,10 +7,9 @@ import assert from "assert";
 import { AgentSchedulerFactory, TaskManager } from "@fluidframework/agent-scheduler";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { IAgentScheduler, SchedulerType } from "@fluidframework/runtime-definitions";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
+import { createLocalLoader, DocumentDeltaEventManager, initializeLocalContainer } from "@fluidframework/test-utils";
 
 describe("AgentScheduler", () => {
     const leader = "leader";

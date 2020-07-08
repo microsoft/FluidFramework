@@ -8,13 +8,13 @@ import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from  "@fluidframework/container-runtime-definitions";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IEnvelope, SchedulerType, FlushMode } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
+    DocumentDeltaEventManager,
     initializeLocalContainer,
     ITestFluidComponent,
     TestFluidComponentFactory,

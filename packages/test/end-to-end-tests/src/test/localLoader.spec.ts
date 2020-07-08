@@ -9,13 +9,13 @@ import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { SharedCounter } from "@fluidframework/counter";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
+    DocumentDeltaEventManager,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,

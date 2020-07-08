@@ -9,7 +9,7 @@ import { IComponentHandle, IComponentLoadable } from "@fluidframework/component-
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { DocumentDeltaEventManager, TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { ISequencedDocumentMessage, ConnectionState } from "@fluidframework/protocol-definitions";
 import { IEnvelope, SchedulerType, FlushMode } from "@fluidframework/runtime-definitions";
@@ -17,6 +17,7 @@ import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidf
 import { SharedString } from "@fluidframework/sequence";
 import {
     LocalCodeLoader,
+    DocumentDeltaEventManager,
     initializeLocalContainer,
     ITestFluidComponent,
     TestFluidComponentFactory,
