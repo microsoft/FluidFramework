@@ -40,11 +40,6 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
         return this.internalStorageService.write(tree, parents, message, ref);
     }
 
-    // back-compat: 0.14 uploadSummary
-    public async uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
-        return this.internalStorageService.uploadSummary(commit);
-    }
-
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
         return this.internalStorageService.uploadSummaryWithContext(summary, context);
     }
