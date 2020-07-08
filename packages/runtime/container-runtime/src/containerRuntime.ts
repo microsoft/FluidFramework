@@ -1285,6 +1285,8 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         // The local object has already been attached
         if (local) {
             assert(this.pendingAttach.has(attachMessage.id));
+            assert(this.contexts.has(attachMessage.id));
+            this.contexts.get(attachMessage.id)?.emit("attached");
             this.pendingAttach.delete(attachMessage.id);
             return;
         }
@@ -1341,8 +1343,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
             this.pendingAttach.set(componentRuntime.id, message);
             this.submit(ContainerMessageType.Attach, message);
-            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-            this.attachState === AttachState.Attaching ? context.emit("attaching") : context.emit("attached");
+            context.emit("attaching");
         }
 
         // Resolve the deferred so other local components can access it.

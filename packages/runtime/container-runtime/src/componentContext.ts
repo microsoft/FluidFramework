@@ -160,10 +160,7 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public get attachState(): AttachState {
-        if (this.componentRuntime !== undefined) {
-            return this.componentRuntime.attachState;
-        }
-        return AttachState.Detached;
+        return this._attachState;
     }
 
     // 0.20 back-compat attach
@@ -174,6 +171,7 @@ export abstract class ComponentContext extends EventEmitter implements
     private pending: ISequencedDocumentMessage[] | undefined = [];
     private componentRuntimeDeferred: Deferred<IComponentRuntimeChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
+    protected _attachState: AttachState;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
@@ -188,6 +186,7 @@ export abstract class ComponentContext extends EventEmitter implements
     ) {
         super();
 
+        this._attachState = existing ? AttachState.Attached : AttachState.Detached;
         // 0.20 back-compat attach
         this.attach = (componentRuntime: IComponentRuntimeChannel) => {
             this.bindToContext(componentRuntime);
@@ -693,10 +692,12 @@ export class LocalComponentContext extends ComponentContext {
     }
 
     private attachListeners(): void {
-        this.containerRuntime.on("attaching", () => {
+        this.containerRuntime.once("attaching", () => {
+            this._attachState = AttachState.Attaching;
             this.emit("attaching");
         });
-        this.containerRuntime.on("attached", () => {
+        this.containerRuntime.once("attached", () => {
+            this._attachState = AttachState.Attached;
             this.emit("attached");
         });
     }

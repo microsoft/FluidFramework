@@ -557,7 +557,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         // 0.21 back-compat noAttachEvents
         // Fire this event telling dds that we are going live and they can do any
         // custom processing based on that.
-        this.emit("collaborating");
+        this.emit("attaching");
 
         // Craft the .attributes file for each shared object
         for (const [objectId, value] of this.contexts) {
@@ -699,11 +699,13 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.componentContext.on("notleader", () => {
             this.emit("notleader");
         });
-        this.componentContext.on("attaching", () => {
+        this.componentContext.once("attaching", () => {
+            assert(this.bindState !== BindState.NotBound);
             this._attachState = AttachState.Attaching;
             this.emit("attaching");
         });
-        this.componentContext.on("attached", () => {
+        this.componentContext.once("attached", () => {
+            assert(this.bindState === BindState.Bound);
             this._attachState = AttachState.Attached;
             this.deferredAttached.resolve();
             this.emit("attached");

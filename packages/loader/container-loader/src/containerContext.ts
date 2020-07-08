@@ -189,12 +189,12 @@ export class ContainerContext implements IContainerContext {
     }
 
     private attachListener() {
-        this.container.on("attaching", () => {
+        this.container.once("attaching", () => {
             if (this.runtime?.setAttachState !== undefined) {
                 this.runtime.setAttachState(AttachState.Attaching);
             }
         });
-        this.container.on("attached", () => {
+        this.container.once("attached", () => {
             if (this.runtime?.setAttachState !== undefined) {
                 this.runtime.setAttachState(AttachState.Attached);
             }
