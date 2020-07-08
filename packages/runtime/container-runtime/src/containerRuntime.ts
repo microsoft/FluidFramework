@@ -570,7 +570,8 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     }
 
     public get attachState(): AttachState {
-        return this.context.attachState;
+        // 0.21 back-compat isAttached
+        return this.context.attachState ?? (this.context as any).isAttached();
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
