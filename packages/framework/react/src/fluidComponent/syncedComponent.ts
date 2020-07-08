@@ -165,7 +165,7 @@ export abstract class SyncedComponent<
             const storedFluidState = SharedMap.create(this.runtime);
             // Add it to the fluid component map so that it will have a listener added to it once
             // we enter the render lifecycle
-            this.fluidComponentMap.set(storedFluidState.handle.path, {
+            this.fluidComponentMap.set(storedFluidState.handle.absolutePath, {
                 component: storedFluidState,
                 isRuntimeMap: true,
             });
@@ -182,7 +182,7 @@ export abstract class SyncedComponent<
                 const createCallback = value.sharedObjectCreate;
                 if (createCallback) {
                     const sharedObject = createCallback(this.runtime);
-                    this.fluidComponentMap.set(sharedObject.handle.path, {
+                    this.fluidComponentMap.set(sharedObject.handle.absolutePath, {
                         component: sharedObject,
                         listenedEvents: value.listenedEvents || ["valueChanged"],
                     });
@@ -211,21 +211,21 @@ export abstract class SyncedComponent<
                     .handle as IComponentHandle<SharedMap>,
             };
             this.fluidComponentMap.set(
-                componentSchema.fluidMatchingMap.handle.path,
+                componentSchema.fluidMatchingMap.handle.absolutePath,
                 {
                     component: componentSchema.fluidMatchingMap,
                     isRuntimeMap: true,
                 },
             );
             this.fluidComponentMap.set(
-                componentSchema.viewMatchingMap.handle.path,
+                componentSchema.viewMatchingMap.handle.absolutePath,
                 {
                     component: componentSchema.viewMatchingMap,
                     isRuntimeMap: true,
                 },
             );
             this.fluidComponentMap.set(
-                componentSchema.storedHandleMap.handle.path,
+                componentSchema.storedHandleMap.handle.absolutePath,
                 {
                     component: componentSchema.storedHandleMap,
                     isRuntimeMap: true,
@@ -262,7 +262,7 @@ export abstract class SyncedComponent<
             const storedFluidState = await storedFluidStateHandle.get();
             // Add it to the fluid component map so that it will have a listener added to it once
             // we enter the render lifecycle
-            this.fluidComponentMap.set(storedFluidStateHandle.path, {
+            this.fluidComponentMap.set(storedFluidStateHandle.absolutePath, {
                 component: storedFluidState,
                 isRuntimeMap: true,
             });
@@ -281,7 +281,7 @@ export abstract class SyncedComponent<
                             `Failed to find ${fluidKey} in synced state`,
                         );
                     }
-                    this.fluidComponentMap.set(handle.path, {
+                    this.fluidComponentMap.set(handle.absolutePath, {
                         component: await handle.get(),
                         listenedEvents: value.listenedEvents || ["valueChanged"],
                     });
@@ -291,7 +291,7 @@ export abstract class SyncedComponent<
                         : storedFluidState.get(fluidKey);
                     const handle = storedValue?.IComponentHandle;
                     if (handle) {
-                        this.fluidComponentMap.set(handle.path, {
+                        this.fluidComponentMap.set(handle.absolutePath, {
                             component: await handle.get(),
                             listenedEvents: value.listenedEvents || [
                                 "valueChanged",
@@ -312,21 +312,21 @@ export abstract class SyncedComponent<
                 );
             }
             this.fluidComponentMap.set(
-                componentSchemaHandles.fluidMatchingMapHandle.path,
+                componentSchemaHandles.fluidMatchingMapHandle.absolutePath,
                 {
                     component: await componentSchemaHandles.fluidMatchingMapHandle.get(),
                     isRuntimeMap: true,
                 },
             );
             this.fluidComponentMap.set(
-                componentSchemaHandles.viewMatchingMapHandle.path,
+                componentSchemaHandles.viewMatchingMapHandle.absolutePath,
                 {
                     component: await componentSchemaHandles.viewMatchingMapHandle.get(),
                     isRuntimeMap: true,
                 },
             );
             this.fluidComponentMap.set(
-                componentSchemaHandles.storedHandleMapHandle.path,
+                componentSchemaHandles.storedHandleMapHandle.absolutePath,
                 {
                     component: await componentSchemaHandles.storedHandleMapHandle.get(),
                     isRuntimeMap: true,

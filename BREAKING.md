@@ -1,8 +1,13 @@
 # Breaking changes
 
 ## 0.22 Breaking Changes
-
+- [Deprecated `path` from `IComponentHandleContext`](#Deprecated-`path`-from-`IComponentHandleContext`)
 - [Dynamically loaded components compiled against older versions of runtime](#Dynamically-loaded-components)
+
+### Deprecated `path` from `IComponentHandleContext`
+Deprecated the `path` field from the interface `IComponentHandleContext`. This means that `IComponentHandle` will not have this going forward as well.
+
+Added an `absolutePath` field to `IComponentHandleContext` which is the absolute path to reach it from the container runtime.
 
 ### Dynamically loaded components
 Components that were compiled against Fluid Framework <= 0.19.x releases will fail to load. A bunch of APIs has been deprecated in 0.20 & 0.21 and back compat support is being removed in 0.22. Some of the key APIs are:

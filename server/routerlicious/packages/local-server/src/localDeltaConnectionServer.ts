@@ -181,20 +181,6 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
                 socket.removeListener("op-content", earlyContentHandler);
                 socket.removeListener("signal", earlySignalHandler);
 
-                /* Issue #1566: Backward compat */
-                if (response.initialMessages === undefined) {
-                    response.initialMessages = [];
-                }
-                if (response.initialClients === undefined) {
-                    response.initialClients = [];
-                }
-                if (response.initialContents === undefined) {
-                    response.initialContents = [];
-                }
-                if (response.initialSignals === undefined) {
-                    response.initialSignals = [];
-                }
-
                 if (queuedMessages.length > 0) {
                     // Some messages were queued.
                     // add them to the list of initialMessages to be processed
