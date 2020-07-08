@@ -164,6 +164,8 @@ export interface IComponentRuntimeChannel extends
      */
     getAttachSnapshot(): ITreeEntry[];
 
+    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+
     /**
      * Processes the op.
      */

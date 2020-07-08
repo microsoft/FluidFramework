@@ -105,15 +105,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this.on("error", (error: any) => {
             this.runtime.emit("error", error);
         });
+    }
 
-        // Only listen to these events if not attached.
-        if (!this.isAttached()) {
-            this.runtime.on("collaborating", () => {
-                // Calling this will let the dds to do any custom processing based on attached
-                // like starting generating ops.
-                this.didAttach();
-            });
-        }
+    public setAttachState(): void {
+        this.didAttach();
     }
 
     /**
@@ -330,7 +325,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this.didAttach();
 
         // attachDeltaHandler is only called after services is assigned
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.services.deltaConnection.attach({
             process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
                 this.process(message, local, localOpMetadata);
@@ -345,7 +339,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         // Trigger initial state
         // attachDeltaHandler is only called after services is assigned
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.setConnectionState(this.services.deltaConnection.connected);
     }
 

@@ -227,6 +227,12 @@ export class ContainerContext implements IContainerContext {
         return this.container.attachState;
     }
 
+    public setAttachState(attachState: AttachState.Attaching | AttachState.Attached) {
+        if (this.runtime?.setAttachState !== undefined) {
+            this.runtime.setAttachState(attachState);
+        }
+    }
+
     public createSummary(): ISummaryTree {
         if (!this.runtime) {
             throw new Error("Runtime should be there to take summary");

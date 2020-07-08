@@ -370,7 +370,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         }
 
         this.bindState = BindState.Bound;
-        this.deferredAttached.resolve();
     }
 
     // 0.20 back-compat attach
@@ -549,11 +548,26 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return entries;
     }
 
+    public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+        this._attachState = attachState;
+        if (attachState === AttachState.Attached) {
+            this.deferredAttached.resolve();
+        }
+        for (const value of this.contexts.values()) {
+            if (!(value instanceof LocalChannelContext)) {
+                throw new Error("Should only be called with local channel handles");
+            }
+            value.setAttachState();
+        }
+    }
+
     public getAttachSnapshot(): ITreeEntry[] {
         const entries: ITreeEntry[] = [];
+        // 0.21 back-compat nosetAttachState
         this._attachState = AttachState.Attached;
         // As the component is attaching, attach the graph too.
         this.attachGraph();
+        // 0.21 back-compat nosetAttachState
         // Fire this event telling dds that we are going live and they can do any
         // custom processing based on that.
         this.emit("collaborating");

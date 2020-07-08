@@ -183,6 +183,12 @@ export interface IRuntime extends IDisposable {
     processSignal(message: any, local: boolean);
 
     createSummary(): ISummaryTree;
+
+    /**
+     * Propagate the container state when container is attaching or attached.
+     * @param attachState: State of the container.
+     */
+    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 }
 
 export interface IMessageScheduler {

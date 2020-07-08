@@ -1332,7 +1332,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         assert(this.notBoundedComponentContexts.has(componentRuntime.id),
             "Component to be binded should be in not bounded set");
         this.notBoundedComponentContexts.delete(componentRuntime.id);
-        const context = this.getContext(componentRuntime.id);
+        const context = this.getContext(componentRuntime.id) as LocalComponentContext;
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients but we do need to submit op if container forced us to do so.
@@ -1341,6 +1341,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
             this.pendingAttach.set(componentRuntime.id, message);
             this.submit(ContainerMessageType.Attach, message);
+            context.setAttachState(this.attachState);
         }
 
         // Resolve the deferred so other local components can access it.
@@ -1376,6 +1377,15 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         const context = this.contexts.get(id)!;
         assert(context);
         return context;
+    }
+
+    public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+        for (const context of this.contexts.values()) {
+            if (!(context instanceof LocalComponentContext)) {
+                throw new Error("Should not be called for Remoted Component");
+            }
+            context.setAttachState(attachState);
+        }
     }
 
     public createSummary(): ISummaryTree {

@@ -691,6 +691,12 @@ export class LocalComponentContext extends ComponentContext {
         super(runtime, id, false, storage, scope, summaryTracker, BindState.NotBound, bindComponent, pkg);
     }
 
+    public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+        if (this.componentRuntime?.setAttachState !== undefined) {
+            this.componentRuntime.setAttachState(attachState);
+        }
+    }
+
     public generateAttachMessage(): IAttachMessage {
         const componentAttributes: IComponentAttributes = {
             pkg: JSON.stringify(this.pkg),

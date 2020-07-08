@@ -505,6 +505,10 @@ export class MockComponentRuntime extends EventEmitter
         return [];
     }
 
+    public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+        return;
+    }
+
     public async waitAttached(): Promise<void> {
         return;
     }
