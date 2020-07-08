@@ -809,10 +809,10 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                 };
 
                 await this.refreshLatestAck(context, refSequenceNumber);
-                refSequenceNumber++;
             } catch (error) {
                 this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);
             }
+            refSequenceNumber++;
         }
     }
 }

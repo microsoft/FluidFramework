@@ -172,9 +172,9 @@ export class SummarizerNode implements ITrackingSummarizerNode {
         if (!fullTree && !this.hasChanged()) {
             const latestSummary = this.latestSummary;
             if (latestSummary !== undefined) {
-                this.wipLocalPaths = { forThis: latestSummary.localPath };
                 const stats = mergeStats();
                 stats.handleNodeCount++;
+                this.markReused();
                 return {
                     summary: {
                         type: SummaryType.Handle,
@@ -210,23 +210,35 @@ export class SummarizerNode implements ITrackingSummarizerNode {
         }
     }
 
+    private markReused(): void {
+        const latestSummary = this.latestSummary;
+        assert(latestSummary, "Latest summary should exist if summary of this or parent node is reused");
+        this.wipLocalPaths = {
+            forThis: latestSummary.localPath,
+            forChildren: latestSummary.localPathForChildren,
+        };
+        for (const child of this.children.values()) {
+            child.markReused();
+        }
+    }
+
     public completeSummary(proposalHandle: string) {
         this.completeSummaryCore(proposalHandle);
     }
 
     private completeSummaryCore(proposalHandle: string, parentPath?: EscapedPath, parentIsFailure = false) {
         assert(this.wipReferenceSequenceNumber, "Not tracking a summary");
-        assert(this.wipLocalPaths, "Tracked summary local paths not set");
-
         let localPathsToUse = this.wipLocalPaths;
+
         if (parentIsFailure === true) {
-            if (this.latestSummary !== undefined) {
+            const latestSummary = this.latestSummary;
+            if (latestSummary !== undefined) {
                 // This case the parent node created a failure summary.
                 // This node and all children should only try to reference their last
                 // good state.
                 localPathsToUse = {
-                    forThis: this.latestSummary.localPath,
-                    forChildren: this.latestSummary.localPathForChildren,
+                    forThis: latestSummary.localPath,
+                    forChildren: latestSummary.localPathForChildren,
                 };
             } else {
                 // This case the child is added after the latest non-failure summary.
@@ -236,6 +248,12 @@ export class SummarizerNode implements ITrackingSummarizerNode {
                 return;
             }
         }
+
+        // This should come from wipLocalPaths in normal cases, or from the latestSummary
+        // if parentIsFailure is true. If there is no latestSummary, clearSummary and
+        // return before reaching this code.
+        assert(localPathsToUse, "Tracked summary local paths not set");
+
         const summary: ISummaryNode = {
             referenceSequenceNumber: this.wipReferenceSequenceNumber,
             basePath: parentPath,
