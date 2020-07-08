@@ -662,7 +662,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             async () => undefined, // getSnapshotTree - this will be replaced on summary ack
         );
         this.summaryTreeConverter = new SummaryTreeConverter(true);
-            this.summarizer
         // Extract components stored inside the snapshot
         const components = new Map<string, ISnapshotTree | string>();
         if (context.baseSnapshot) {
@@ -784,17 +783,52 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
-
-        if (request.url === "/_summarizer") {
+        if (this.requestHandler !== undefined) {
+            return this.requestHandler(request, this);
+        }
+        const queryIndex = request.url.indexOf("?");
+        const pathParts = request.url
+            .substr(0, queryIndex > 0 ? queryIndex : undefined)
+            .split("/")
+            .reduce<string[]>((pv,cv) => {
+                if (cv !== undefined && cv.length > 0)  {
+                    pv.push(cv);
+                }
+                return pv;
+            },
+            []);
+        if (pathParts.length === 1 && pathParts[0] === "_summarizer") {
             return {
                 status: 200,
                 mimeType: "fluid/component",
                 value: this.summarizer,
             };
-        }
+        } else if (pathParts.length > 0 && pathParts[0] === schedulerId) {
+            const wait =
+                typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-        if (this.requestHandler !== undefined) {
-            return this.requestHandler(request, this);
+            const component = await this.getComponentRuntime(pathParts[0], wait) as IComponent;
+            if (component) {
+                if (pathParts.length > 1 || queryIndex > 0) {
+                    assert(component.IComponentRouter);
+                    return component.IComponentRouter.request({
+                        url: request.url.substr(request.url.indexOf(schedulerId)),
+                        headers: request.headers,
+                    });
+                } else {
+                    return {
+                        status: 200,
+                        mimeType: "fluid/component",
+                        value: component,
+                    };
+                }
+            } else {
+                return {
+                    status: 404,
+                    mimeType: "text/plain",
+                    value: "component not found",
+                };
+            }
         }
 
         return {
