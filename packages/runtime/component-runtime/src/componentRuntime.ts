@@ -362,48 +362,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         }
         this.bindState = BindState.Binding;
         // Attach the runtime to the container via this callback
-        if (this.componentContext.bindToContext !== undefined) {
-            this.componentContext.bindToContext(this);
-        } else {
-            // 0.20 back-compat attach
-            (this.componentContext as any).attach(this);
-        }
+        this.componentContext.bindToContext(this);
 
         this.bindState = BindState.Bound;
         this.deferredAttached.resolve();
-    }
-
-    // 0.20 back-compat attach
-    public attach() {
-        if (this.bindState !== BindState.NotBound) {
-            return;
-        }
-        this.bindState = BindState.Binding;
-        if (this.boundhandles !== undefined) {
-            this.boundhandles.forEach((handle) => {
-                handle.attachGraph();
-            });
-            this.boundhandles = undefined;
-        }
-
-        // Attach the runtime to the container via this callback
-        if (this.componentContext.bindToContext !== undefined) {
-            this.componentContext.bindToContext(this);
-        } else {
-            // 0.20 back-compat attach
-            (this.componentContext as any).attach(this);
-        }
-
-        // Flush the queue to set any pre-existing channels to local
-        this.localChannelContextQueue.forEach((channel) => {
-            // When we are attaching the component we don't need to send attach for the registered services.
-            // This is because they will be captured as part of the Attach component snapshot
-            channel.attach();
-        });
-
-        this.bindState = BindState.Bound;
-        this.deferredAttached.resolve();
-        this.localChannelContextQueue.clear();
     }
 
     public bind(handle: IComponentHandle): void {

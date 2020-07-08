@@ -74,11 +74,6 @@ export abstract class ComponentContext extends EventEmitter implements
     IComponentContext,
     IComponentContextLegacy,
     IDisposable {
-    // 0.20 back-compat islocal
-    public isLocal(): boolean {
-        return !this.isAttached;
-    }
-
     public get documentId(): string {
         return this._containerRuntime.id;
     }
@@ -154,11 +149,6 @@ export abstract class ComponentContext extends EventEmitter implements
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
-    // 0.21 back-compat isAttached
-    public get isAttached(): boolean {
-        return this.attachState !== AttachState.Detached;
-    }
-
     public get attachState(): AttachState {
         if (this.componentRuntime !== undefined) {
             return this.componentRuntime.attachState;
@@ -166,8 +156,6 @@ export abstract class ComponentContext extends EventEmitter implements
         return AttachState.Detached;
     }
 
-    // 0.20 back-compat attach
-    public readonly attach: (componentRuntime: IComponentRuntimeChannel) => void;
     public readonly bindToContext: (componentRuntime: IComponentRuntimeChannel) => void;
     protected componentRuntime: IComponentRuntimeChannel | undefined;
     private loaded = false;
@@ -188,16 +176,8 @@ export abstract class ComponentContext extends EventEmitter implements
     ) {
         super();
 
-        // 0.20 back-compat attach
-        this.attach = (componentRuntime: IComponentRuntimeChannel) => {
-            this.bindToContext(componentRuntime);
-        };
-
         this.bindToContext = (componentRuntime: IComponentRuntimeChannel) => {
-            // This needs to be there for back compat reasons because the old component runtime does not
-            // have Binding state and it does not stop Binding again while it is Binding.
-            // Previosuly that was prevented my container runtime.
-            // 0.20 back-compat Binding
+            // TODO: should this be an assert?
             if (this.bindState !== BindState.NotBound) {
                 return;
             }
@@ -579,13 +559,8 @@ export abstract class ComponentContext extends EventEmitter implements
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
         assert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
-
         const innerContents = contents as ComponentMessage;
-
-        // back-compat: 0.18 components
-        if (this.componentRuntime.reSubmit) {
-            this.componentRuntime.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
-        }
+        this.componentRuntime.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
 
     private verifyNotClosed() {

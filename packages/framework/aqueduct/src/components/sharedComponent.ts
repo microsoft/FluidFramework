@@ -178,12 +178,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     ): Promise<T> {
         const componentRuntime = await this.context.createComponent(uuid(), pkg, props);
         const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
-        // 0.20 back-compat attach
-        if (componentRuntime.bindToContext !== undefined) {
-            componentRuntime.bindToContext();
-        } else {
-            (componentRuntime as any).attach();
-        }
+        componentRuntime.bindToContext();
         return component;
     }
 

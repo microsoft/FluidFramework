@@ -488,12 +488,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         if (!context.existing) {
             await runtime.createComponent(schedulerId, schedulerId)
                 .then((componentRuntime) => {
-                    // 0.20 back-compat attach
-                    if (componentRuntime.bindToContext !== undefined) {
-                        componentRuntime.bindToContext();
-                    } else {
-                        (componentRuntime as any).attach();
-                    }
+                    componentRuntime.bindToContext();
                 });
         }
 
@@ -575,18 +570,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     }
 
     public get attachState(): AttachState {
-        if (this.context.attachState !== undefined) {
-            return this.context.attachState;
-        }
-        let isAttached = false;
-        // 0.21 back-compat isAttached
-        if ((this.context as any).isAttached !== undefined) {
-            isAttached = (this.context as any).isAttached();
-        } else {
-            // 0.20 back-compat islocal
-            isAttached = !(this.context as any).isLocal();
-        }
-        return isAttached ? AttachState.Attached : AttachState.Detached;
+        return this.context.attachState;
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
@@ -1185,16 +1169,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     }
 
     /**
-     * Called by IComponentRuntime (on behalf of distributed data structure) in disconnected state to notify about
-     * local changes. All pending changes are automatically flushed by shared objects on connection.
-     * back-compat: 0.18 components
-     */
-    public notifyPendingMessages(): void {
-        assert(!this.connected);
-        this.updateDocumentDirtyState(true);
-    }
-
-    /**
      * Returns true of document is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
      */
@@ -1260,9 +1234,11 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts)
-            .filter(([key, value]) =>
-                value.isAttached,
-            )
+            .filter(([key, value]) => {
+                // Summarizer works only with clients with no local changes!
+                assert(value.attachState !== AttachState.Attaching);
+                return value.attachState === AttachState.Attached;
+            })
             .map(async ([key, value]) => {
                 const snapshot = await value.snapshot(fullTree);
                 const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(

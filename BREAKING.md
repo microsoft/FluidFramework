@@ -1,5 +1,16 @@
 # Breaking changes
 
+## 0.22 Breaking Changes
+
+- [Dynamically loaded components compiled against older versions of runtime](#Dynamically-loaded-components)
+
+### Dynamically loaded components
+Components that were compiled against Fluid Framework <= 0.19.x releases will fail to load. A bunch of APIs has been deprecated in 0.20 & 0.21 and back compat support is being removed in 0.22. Some of the key APIs are:
+   - IComponentRuntime.attach
+   - ContainerContext.isAttached
+   - ContainerContext.isLocal
+Such components needs to be compiled against >= 0.21 runtime and can be used in container that is built using >= 0.21 runtime as well.
+
 ## 0.21 Breaking Changes
 - [Removed `@fluidframework/local-test-utils`](#removed-`@fluidframework/local-test-utils`)
 - [IComponentHTMLVisual deprecated](#IComponentHTMLVisual-deprecated)
