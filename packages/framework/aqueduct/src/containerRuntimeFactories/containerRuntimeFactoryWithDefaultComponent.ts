@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-    RuntimeRequestHandler,
-} from "@fluidframework/container-runtime";
 import { IComponentDefaultFactoryName } from "@fluidframework/framework-interfaces";
 import { NamedComponentRegistryEntries } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { DependencyContainerRegistry } from "@fluidframework/synthesize";
 import { MountableView } from "@fluidframework/view-adapters";
+import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { defaultComponentRuntimeRequestHandler, mountableViewRequestHandler } from "../requestHandlers";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 

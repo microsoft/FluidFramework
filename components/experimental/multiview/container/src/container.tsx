@@ -4,7 +4,7 @@
  */
 
 import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
-import { RequestParser, RuntimeRequestHandler } from "@fluidframework/container-runtime";
+import { RequestParser, RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";

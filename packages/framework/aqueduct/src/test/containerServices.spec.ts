@@ -7,8 +7,7 @@
 import assert from "assert";
 import { IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { RequestParser } from "@fluidframework/container-runtime";
-
+import { RequestParser } from "@fluidframework/request-handler";
 import {
     BaseContainerService,
     generateContainerServicesRequestHandler,

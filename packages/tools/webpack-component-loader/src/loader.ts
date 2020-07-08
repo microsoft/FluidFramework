@@ -21,7 +21,7 @@ import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IComponentMountableView } from "@fluidframework/view-interfaces";
 import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";
 import { IComponent } from "@fluidframework/component-core-interfaces";
-import { RequestParser } from "@fluidframework/container-runtime";
+import { RequestParser } from "@fluidframework/request-handler";
 import { MultiUrlResolver } from "./multiResolver";
 import { getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 

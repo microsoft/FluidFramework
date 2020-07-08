@@ -16,9 +16,9 @@ import {
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { AsSerializable } from "@fluidframework/component-runtime-definitions";
-import { RequestParser } from "@fluidframework/container-runtime";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
+import { RequestParser } from "@fluidframework/request-handler";
 import { ISpacesStoredItem, SpacesStorage } from "./storage";
 import { SpacesView } from "./spacesView";
 import {

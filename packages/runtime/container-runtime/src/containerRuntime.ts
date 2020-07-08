@@ -662,7 +662,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             async () => undefined, // getSnapshotTree - this will be replaced on summary ack
         );
         this.summaryTreeConverter = new SummaryTreeConverter(true);
-
+            this.summarizer
         // Extract components stored inside the snapshot
         const components = new Map<string, ISnapshotTree | string>();
         if (context.baseSnapshot) {
@@ -784,6 +784,15 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
+
+        if (request.url === "/_summarizer") {
+            return {
+                status: 200,
+                mimeType: "fluid/component",
+                value: this.summarizer,
+            };
+        }
+
         if (this.requestHandler !== undefined) {
             return this.requestHandler(request, this);
         }

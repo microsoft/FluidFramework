@@ -5,7 +5,7 @@
 
 import { IResponse, IComponent, IComponentRouter, IRequest } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { RequestParser, RuntimeRequestHandler } from "@fluidframework/container-runtime";
+import { RuntimeRequestHandler, RequestParser } from "@fluidframework/request-handler";
 
 // TODO: should this just be "s"?
 export const serviceRoutePathRoot = "_services";

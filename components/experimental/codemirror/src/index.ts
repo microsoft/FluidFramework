@@ -27,23 +27,22 @@ class CodeMirrorFactory implements IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
-            [
-                async (request: IRequest, containerRuntime) => {
-                    console.log(request.url);
+            async (request: IRequest, containerRuntime) => {
+                console.log(request.url);
 
-                    const requestUrl = request.url.length > 0 && request.url.startsWith("/")
-                        ? request.url.substr(1)
-                        : request.url;
-                    const trailingSlash = requestUrl.indexOf("/");
+                const requestUrl = request.url.length > 0 && request.url.startsWith("/")
+                    ? request.url.substr(1)
+                    : request.url;
+                const trailingSlash = requestUrl.indexOf("/");
 
-                    const componentId = requestUrl
-                        ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-                        : defaultComponentId;
-                    const component = await containerRuntime.getComponentRuntime(componentId, true);
+                const componentId = requestUrl
+                    ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
+                    : defaultComponentId;
+                const component = await containerRuntime.getComponentRuntime(componentId, true);
 
-                    return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
-                },
-            ],
+                return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
+            },
+
             { generateSummaries: true });
 
         // Flush mode to manual to batch operations within a turn
