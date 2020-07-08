@@ -81,7 +81,7 @@ describe("Map", () => {
                         assert.equal(parsed[key].value, value);
                     } else {
                         assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value.url, subMap.id);
+                        assert.equal(parsed[key].value.url, subMap.handle.absolutePath);
                     }
                 });
             });
@@ -102,7 +102,7 @@ describe("Map", () => {
                         assert.equal(parsed[key].value, value);
                     } else {
                         assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value.url, subMap.id);
+                        assert.equal(parsed[key].value.url, subMap.handle.absolutePath);
                     }
                 });
             });
@@ -118,9 +118,11 @@ describe("Map", () => {
                 };
                 map.set("object", containingObject);
 
+                const subMapHandleUrl = subMap.handle.absolutePath;
+                const subMap2HandleUrl = subMap2.handle.absolutePath;
                 const serialized = JSON.stringify(map.getSerializableStorage());
                 // eslint-disable-next-line max-len
-                assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"subMap"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"subMap2"}}}}}`);
+                assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}}}}`);
             });
 
             it("can load old serialization format", async () => {
@@ -356,16 +358,15 @@ describe("Map", () => {
                 containerRuntimeFactory.processAllMessages();
 
                 // Verify the local SharedMap
-                assert.equal(
-                    map.get<IComponentHandle>("test").path,
-                    subMap.id,
-                    "could not get the set shared object");
+                const localSubMap = map.get<IComponentHandle>("test");
+                assert.equal(localSubMap.absolutePath, subMap.handle.absolutePath, "could not get the handle's path");
 
                 // Verify the remote SharedMap
+                const remoteSubMap = map2.get<IComponentHandle>("test");
                 assert.equal(
-                    map2.get<IComponentHandle>("test").path,
-                    subMap.id,
-                    "could not get the set shared object from remote map");
+                    remoteSubMap.absolutePath,
+                    subMap.handle.absolutePath,
+                    "could not get the handle's path in remote map");
             });
 
             it("Should be able to set and retrieve a plain object with nested handles", async () => {
