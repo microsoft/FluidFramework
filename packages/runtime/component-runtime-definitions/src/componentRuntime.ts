@@ -66,7 +66,7 @@ export interface IComponentRuntime extends
 
     // 0.21 back-compat collaborating
     on(
-        event: "disconnected" | "dispose" | "leader" | "notleader" | "collaborating",
+        event: "disconnected" | "dispose" | "leader" | "notleader" | "collaborating" | "attaching" | "attached",
         listener: () => void,
     ): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;

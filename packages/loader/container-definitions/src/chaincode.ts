@@ -186,7 +186,7 @@ export interface IRuntime extends IDisposable {
 
     /**
      * Propagate the container state when container is attaching or attached.
-     * @param attachState: State of the container.
+     * @param attachState - State of the container.
      */
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 }

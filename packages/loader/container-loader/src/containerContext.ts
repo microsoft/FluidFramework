@@ -185,6 +185,20 @@ export class ContainerContext implements IContainerContext {
         public readonly previousRuntimeState: IRuntimeState,
     ) {
         this.logger = container.subLogger;
+        this.attachListener();
+    }
+
+    private attachListener() {
+        this.container.on("attaching", () => {
+            if (this.runtime?.setAttachState !== undefined) {
+                this.runtime.setAttachState(AttachState.Attaching);
+            }
+        });
+        this.container.on("attached", () => {
+            if (this.runtime?.setAttachState !== undefined) {
+                this.runtime.setAttachState(AttachState.Attached);
+            }
+        });
     }
 
     public dispose(error?: Error): void {
@@ -225,12 +239,6 @@ export class ContainerContext implements IContainerContext {
 
     public get attachState(): AttachState {
         return this.container.attachState;
-    }
-
-    public setAttachState(attachState: AttachState.Attaching | AttachState.Attached) {
-        if (this.runtime?.setAttachState !== undefined) {
-            this.runtime.setAttachState(attachState);
-        }
     }
 
     public createSummary(): ISummaryTree {

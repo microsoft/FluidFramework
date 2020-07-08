@@ -114,11 +114,12 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
                 // like starting generating ops.
                 this.didAttach();
             });
+            this.runtime.on("attaching", () => {
+                // Calling this will let the dds to do any custom processing based on attached
+                // like starting generating ops.
+                this.didAttach();
+            });
         }
-    }
-
-    public setAttachState(): void {
-        this.didAttach();
     }
 
     /**

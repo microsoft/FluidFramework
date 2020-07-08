@@ -1341,7 +1341,8 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
             this.pendingAttach.set(componentRuntime.id, message);
             this.submit(ContainerMessageType.Attach, message);
-            context.setAttachState(this.attachState);
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+            this.attachState === AttachState.Attaching ? context.emit("attaching") : context.emit("attached");
         }
 
         // Resolve the deferred so other local components can access it.
@@ -1380,12 +1381,8 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
-        for (const context of this.contexts.values()) {
-            if (!(context instanceof LocalComponentContext)) {
-                throw new Error("Should not be called for Remoted Component");
-            }
-            context.setAttachState(attachState);
-        }
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        attachState === AttachState.Attaching ? this.emit("attaching") : this.emit("attached");
     }
 
     public createSummary(): ISummaryTree {

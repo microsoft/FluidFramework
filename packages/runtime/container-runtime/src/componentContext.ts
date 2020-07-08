@@ -689,12 +689,16 @@ export class LocalComponentContext extends ComponentContext {
         public readonly createProps?: any,
     ) {
         super(runtime, id, false, storage, scope, summaryTracker, BindState.NotBound, bindComponent, pkg);
+        this.attachListeners();
     }
 
-    public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
-        if (this.componentRuntime?.setAttachState !== undefined) {
-            this.componentRuntime.setAttachState(attachState);
-        }
+    private attachListeners(): void {
+        this.containerRuntime.on("attaching", () => {
+            this.emit("attaching");
+        });
+        this.containerRuntime.on("attached", () => {
+            this.emit("attached");
+        });
     }
 
     public generateAttachMessage(): IAttachMessage {

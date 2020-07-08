@@ -42,11 +42,6 @@ export interface IChannel extends IProvideChannel, IComponentLoadable {
      * Enables the channel to send and receive ops
      */
     connect(services: ISharedObjectServices): void;
-
-    /**
-     * Propagate the container state when container is attaching or attached.
-     */
-    setAttachState(): void;
 }
 
 /**
