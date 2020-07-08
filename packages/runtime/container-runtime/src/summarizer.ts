@@ -590,7 +590,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         private readonly configurationGetter: () => ISummaryConfiguration,
         // eslint-disable-next-line max-len
         private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
-        private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => Promise<void>,
+        private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => void,
         handleContext: IComponentHandleContext,
         summaryCollection?: SummaryCollection,
     ) {
@@ -808,7 +808,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                     ackHandle: ack.summaryAckNack.contents.handle,
                 };
 
-                await this.refreshLatestAck(context, refSequenceNumber);
+                this.refreshLatestAck(context, refSequenceNumber);
                 refSequenceNumber++;
             } catch (error) {
                 this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);

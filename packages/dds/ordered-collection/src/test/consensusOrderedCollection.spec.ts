@@ -70,7 +70,7 @@ describe("ConsensusOrderedCollection", () => {
                 await addItem(handle);
 
                 const acquiredValue = await removeItem();
-                assert.strictEqual(acquiredValue.path, handle.path);
+                assert.strictEqual(acquiredValue.absolutePath, handle.absolutePath);
                 const component = await handle.get();
                 assert.strictEqual(component.url, testCollection.url);
 

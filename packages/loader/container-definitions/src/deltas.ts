@@ -25,10 +25,10 @@ export interface IConnectionDetails {
     mode: ConnectionMode;
     parentBranch: string | null;
     version: string;
-    initialClients?: ISignalClient[];
-    initialMessages?: ISequencedDocumentMessage[];
-    initialContents?: IContentMessage[];
-    initialSignals?: ISignalMessage[];
+    initialClients: ISignalClient[];
+    initialMessages: ISequencedDocumentMessage[];
+    initialContents: IContentMessage[];
+    initialSignals: ISignalMessage[];
     maxMessageSize: number;
     serviceConfiguration: IServiceConfiguration;
 }
