@@ -166,11 +166,11 @@ export class DocumentStorageService implements IDocumentStorageService {
 
     private async writeSummaryTree(
         summaryTree: ISummaryTree,
-        snapshot: ISnapshotTree | undefined,
+        fullSnapshot: ISnapshotTree | undefined,
     ): Promise<string> {
         const entries = await Promise.all(Object.keys(summaryTree.tree).map(async (key) => {
             const entry = summaryTree.tree[key];
-            const pathHandle = await this.writeSummaryTreeObject(key, entry, snapshot);
+            const pathHandle = await this.writeSummaryTreeObject(key, entry, fullSnapshot);
             const treeEntry: resources.ICreateTreeEntry = {
                 mode: this.getGitMode(entry),
                 path: encodeURIComponent(key),
@@ -187,7 +187,7 @@ export class DocumentStorageService implements IDocumentStorageService {
     private async writeSummaryTreeObject(
         key: string,
         object: SummaryObject,
-        snapshot: ISnapshotTree | undefined,
+        fullSnapshot: ISnapshotTree | undefined,
         currentPath = "",
     ): Promise<string> {
         switch (object.type) {
@@ -195,13 +195,13 @@ export class DocumentStorageService implements IDocumentStorageService {
                 return this.writeSummaryBlob(object.content);
             }
             case SummaryType.Handle: {
-                if (snapshot === undefined) {
+                if (fullSnapshot === undefined) {
                     throw Error("Parent summary does not exist to reference by handle.");
                 }
-                return this.getIdFromPath(object.handleType, object.handle, snapshot);
+                return this.getIdFromPath(object.handleType, object.handle, fullSnapshot);
             }
             case SummaryType.Tree: {
-                return this.writeSummaryTree(object, snapshot?.trees[key]);
+                return this.writeSummaryTree(object, fullSnapshot);
             }
 
             default:
@@ -249,7 +249,7 @@ export class DocumentStorageService implements IDocumentStorageService {
                     throw Error(`Unexpected handle summary object type: "${handleType}".`);
             }
         }
-        return this.getIdFromPathCore(handleType, path.slice(1), snapshot);
+        return this.getIdFromPathCore(handleType, path.slice(1), snapshot.trees[key]);
     }
 
     private async writeSummaryBlob(content: string | Buffer): Promise<string> {
