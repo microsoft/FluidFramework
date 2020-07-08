@@ -10,6 +10,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
+import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { ISharedDirectory } from "@fluidframework/map";
 
 /**
@@ -28,11 +29,14 @@ export class BlobHandle implements IComponentHandle {
         return true;
     }
 
+    public readonly absolutePath: string;
+
     constructor(
         public readonly path: string,
         private readonly directory: ISharedDirectory,
         public readonly routeContext: IComponentHandleContext,
     ) {
+        this.absolutePath = generateHandleContextPath(path, this.routeContext);
     }
 
     public async get(): Promise<any> {

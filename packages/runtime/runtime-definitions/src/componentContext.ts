@@ -213,11 +213,6 @@ export interface ISummaryTracker {
      */
     getId(): Promise<string | undefined>;
     /**
-     * Fetches the snapshot tree of the previously acked summary.
-     * back-compat: 0.14 uploadSummary
-     */
-    getSnapshotTree(): Promise<ISnapshotTree | undefined>;
-    /**
      * Updates the latest sequence number representing change to this node or subtree.
      * @param latestSequenceNumber - new latest sequence number
      */
