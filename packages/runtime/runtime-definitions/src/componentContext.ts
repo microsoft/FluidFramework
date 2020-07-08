@@ -164,6 +164,10 @@ export interface IComponentRuntimeChannel extends
      */
     getAttachSnapshot(): ITreeEntry[];
 
+    /**
+     * Propagate the container state when container is attaching or attached.
+     * @param attachState: State of the container.
+     */
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 
     /**
