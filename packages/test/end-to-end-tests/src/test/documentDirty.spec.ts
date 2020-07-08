@@ -145,8 +145,7 @@ describe("Document Dirty", () => {
                 "Document is cleaned after all ops have been acked");
         });
 
-        // TODO: Enable this test once #2653 is fixed
-        it.skip("marks state as dirty when batch ops are sent and clean when acks are received", async () => {
+        it("marks state as dirty when batch ops are sent and clean when acks are received", async () => {
             containerComp.context.containerRuntime.orderSequentially(() => {
                 containerCompMap.set("key1", "value1");
                 containerCompMap.set("key2", "value2");
