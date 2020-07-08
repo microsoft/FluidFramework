@@ -1,4 +1,4 @@
-# @fluidframework/scheduler
+## @fluid-example/scheduler
 
 **scheduler** is an example demonstration of the capabilities of the **@fluidframeworks/react** library. It is a more involved example than those in **clicker-react**  and consists of multiple different state definitions, a number of different DDS', and a combined application of useReducerFluid and its joint usage with React context providers & consumers.
 
