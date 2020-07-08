@@ -105,6 +105,16 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this.on("error", (error: any) => {
             this.runtime.emit("error", error);
         });
+
+        // Only listen to these events if not attached.
+        if (!this.isAttached()) {
+            // 0.21 back-compat collaborating
+            this.runtime.on("collaborating", () => {
+                // Calling this will let the dds to do any custom processing based on attached
+                // like starting generating ops.
+                this.didAttach();
+            });
+        }
     }
 
     public setAttachState(): void {

@@ -64,8 +64,9 @@ export interface IComponentRuntime extends
      */
     readonly attachState: AttachState;
 
+    // 0.21 back-compat collaborating
     on(
-        event: "disconnected" | "dispose" | "leader" | "notleader",
+        event: "disconnected" | "dispose" | "leader" | "notleader" | "collaborating",
         listener: () => void,
     ): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
