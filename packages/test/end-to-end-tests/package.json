@@ -50,7 +50,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluid-internal/experimental-creation-driver": "^0.22.0",
     "@fluid-internal/test-loader-utils": "^0.22.0",
     "@fluidframework/agent-scheduler": "^0.22.0",
     "@fluidframework/aqueduct": "^0.22.0",
