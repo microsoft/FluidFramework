@@ -149,6 +149,11 @@ export abstract class ComponentContext extends EventEmitter implements
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
+    // 0.21 back-compat isAttached
+    public get isAttached(): boolean {
+        return this.attachState !== AttachState.Detached;
+    }
+
     public get attachState(): AttachState {
         if (this.componentRuntime !== undefined) {
             return this.componentRuntime.attachState;
@@ -177,10 +182,7 @@ export abstract class ComponentContext extends EventEmitter implements
         super();
 
         this.bindToContext = (componentRuntime: IComponentRuntimeChannel) => {
-            // TODO: should this be an assert?
-            if (this.bindState !== BindState.NotBound) {
-                return;
-            }
+            assert(this.bindState === BindState.NotBound);
             this.bindState = BindState.Binding;
             bindComponent(componentRuntime);
             this.bindState = BindState.Bound;
