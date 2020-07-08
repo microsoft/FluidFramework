@@ -7,10 +7,11 @@ import * as assert from "assert";
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager, TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    DocumentDeltaEventManager,
     LocalCodeLoader,
     initializeLocalContainer,
     ITestFluidComponent,

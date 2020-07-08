@@ -6,13 +6,13 @@
 import assert from "assert";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IEnvelope, SchedulerType } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
+    DocumentDeltaEventManager,
     initializeLocalContainer,
     ITestFluidComponent,
     TestFluidComponentFactory,
