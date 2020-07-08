@@ -78,12 +78,7 @@ describe("loader/runtime compatibility", () => {
                 if (!runtime.existing) {
                     const componentRuntime = await runtime.createComponent("default", type);
                     await componentRuntime.request({ url: "/" });
-                    // 0.20 back-compat attach
-                    if (componentRuntime.bindToContext !== undefined) {
-                        componentRuntime.bindToContext();
-                    } else {
-                        (componentRuntime as any).attach();
-                    }
+                    componentRuntime.bindToContext();
                 }
                 return runtime;
             },
@@ -107,12 +102,7 @@ describe("loader/runtime compatibility", () => {
                 if (!runtime.existing) {
                     const componentRuntime = await runtime.createComponent("default", type);
                     await componentRuntime.request({ url: "/" });
-                    // 0.20 back-compat attach
-                    if (componentRuntime.bindToContext !== undefined) {
-                        componentRuntime.bindToContext();
-                    } else {
-                        (componentRuntime as any).attach();
-                    }
+                    componentRuntime.bindToContext();
                 }
                 return runtime;
             },
