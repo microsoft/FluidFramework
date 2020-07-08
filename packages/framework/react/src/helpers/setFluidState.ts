@@ -36,11 +36,11 @@ export function setFluidState<SV, SF>(
     const storedStateHandle = syncedState.get<IComponentHandle>(
         `syncedState-${syncedStateId}`,
     );
-    let storedState = componentMap.get(storedStateHandle?.path)
+    let storedState = componentMap.get(storedStateHandle?.absolutePath)
         ?.component as ISharedMap;
     if (storedStateHandle === undefined || storedState === undefined) {
         const newState = SharedMap.create(runtime);
-        componentMap.set(newState.handle.path, {
+        componentMap.set(newState.handle.absolutePath, {
             component: newState,
             isRuntimeMap: true,
         });
@@ -57,7 +57,7 @@ export function setFluidState<SV, SF>(
         if (createCallback) {
             if (storedState.get(fluidKey) === undefined) {
                 const sharedObject = createCallback(runtime);
-                componentMap.set(sharedObject.handle.path, {
+                componentMap.set(sharedObject.handle.absolutePath, {
                     component: sharedObject,
                     listenedEvents: fluidToView?.get(fluidKey as keyof SF)
                         ?.listenedEvents || ["valueChanged"],

@@ -978,8 +978,7 @@ export class DeltaManager
         // If not, we may not update Container.pendingClientId in time before seeing our own join session op.
         this.emit("connect", connection.details);
 
-        /* Issue #1566: Backward compat */
-        const initialMessages = connection.details.initialMessages ?? [];
+        const initialMessages = connection.details.initialMessages;
         this.processInitialMessages(
             initialMessages,
             connection.details.initialContents ?? [],

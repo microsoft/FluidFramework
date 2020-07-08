@@ -76,7 +76,7 @@ export abstract class SharedComponent<
     /**
      * Absolute URL to the component within the document
      */
-    public get url() { return this.runtime.IComponentHandleContext.path; }
+    public get url() { return this.runtime.IComponentHandleContext.absolutePath; }
 
     // #endregion IComponentLoadable
 

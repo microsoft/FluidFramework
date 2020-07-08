@@ -39,7 +39,7 @@ export function getFluidState<
     if (componentStateHandle === undefined) {
         return;
     }
-    const componentState = componentMap.get(componentStateHandle.path)
+    const componentState = componentMap.get(componentStateHandle.absolutePath)
         ?.component as SharedMap;
     if (componentState === undefined) {
         return;
@@ -50,10 +50,10 @@ export function getFluidState<
             ?.sharedObjectCreate;
         let value = componentState.get(fluidKey);
         if (value && createCallback) {
-            const possibleComponentPath = (value as IComponent)
-                ?.IComponentHandle?.path;
-            if (possibleComponentPath !== undefined) {
-                value = componentMap.get(possibleComponentPath);
+            const possibleComponentId = (value as IComponent)
+                ?.IComponentHandle?.absolutePath;
+            if (possibleComponentId !== undefined) {
+                value = componentMap.get(possibleComponentId);
                 fluidState[fluidKey] = value?.component;
             } else {
                 fluidState[fluidKey] = value;

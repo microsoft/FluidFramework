@@ -479,6 +479,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Protocol Handler is undefined");
         }
         const protocolSummary = this.protocolHandler.captureSummary();
+
+        // Back compat / staging - to be removed with next server version bump
+        if (protocolSummary.tree.attributes === undefined) {
+            protocolSummary.tree.attributes = protocolSummary.tree[".attributes"];
+            delete protocolSummary.tree[".attributes"];
+        }
+
         if (!request.headers?.[CreateNewHeader.createNew]) {
             request.headers = {
                 ...request.headers,
@@ -991,6 +998,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             };
         }
 
+        // Back-compat: old docs would have ".attributes" instead of "attributes"
         const attributesHash = ".protocol" in tree.trees
             ? tree.trees[".protocol"].blobs.attributes
             : tree.blobs[".attributes"];
@@ -1345,8 +1353,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             case MessageType.Operation:
             case MessageType.RemoteHelp:
             case MessageType.Summarize:
-            case "attach": // legacy, to be removed with ContainerRuntime's legacyFormat set to false
-            case "chunkedOp": // legacy, to be removed with ContainerRuntime's legacyFormat set to false
+            // Back-compat: <= 0.21.0
+            // Legacy, to be removed in next version(s)
+            case "attach":
+            case "chunkedOp":
                 break;
             default:
                 this.close(CreateContainerError(`Runtime can't send arbitrary message type: ${type}`));

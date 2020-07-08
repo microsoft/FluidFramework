@@ -16,6 +16,7 @@ import { DependencyContainer } from "..";
 
 const mockHandleContext: IComponentHandleContext = {
     path: "",
+    absolutePath: "",
     isAttached: false,
     IComponentRouter: undefined as any,
     IComponentHandleContext: undefined as any,
