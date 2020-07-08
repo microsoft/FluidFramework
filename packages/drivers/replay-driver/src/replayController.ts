@@ -24,10 +24,6 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
         return Promise.reject("Invalid operation");
     }
 
-    public async getContent(version: api.IVersion, path: string): Promise<string> {
-        return Promise.reject("Invalid operation");
-    }
-
     public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
         return Promise.reject("Invalid operation");
     }

@@ -27,10 +27,6 @@ export class NullBlobStorageService implements IDocumentStorageService {
         return Promise.reject("Invalid operation");
     }
 
-    public async getContent(version: api.IVersion, path: string): Promise<string> {
-        return Promise.reject("Invalid operation");
-    }
-
     public async write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion> {
         return Promise.reject("Null blob storage can not write commit");
     }
