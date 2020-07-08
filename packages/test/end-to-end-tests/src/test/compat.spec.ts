@@ -21,12 +21,11 @@ import {
     ContainerRuntime,
     IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 import { componentRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
+import { createLocalLoader, DocumentDeltaEventManager, initializeLocalContainer } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
 
 class TestComponent extends PrimedComponent {
