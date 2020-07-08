@@ -765,9 +765,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
-        if (this.requestHandler !== undefined) {
-            return this.requestHandler(request, this);
-        }
 
         const requestParser = new RequestParser(request);
 
@@ -801,6 +798,10 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
                     value: `${schedulerId} not found`,
                 };
             }
+        }
+
+        if (this.requestHandler !== undefined) {
+            return this.requestHandler(request, this);
         }
 
         return {
