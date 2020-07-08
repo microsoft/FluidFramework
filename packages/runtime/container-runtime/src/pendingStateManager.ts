@@ -26,6 +26,10 @@ export class DataCorruptionError extends CustomErrorWithProps implements IErrorB
     }
 }
 
+/**
+ * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
+ * ContainerRuntime. This message has either not been ack'd by the server or has not been submitted to the server yet.
+ */
 interface IPendingMessage {
     type: "message";
     messageType: ContainerMessageType;
@@ -34,11 +38,19 @@ interface IPendingMessage {
     localOpMetadata: unknown;
 }
 
+/**
+ * This represents a FlushMode update and is added to the pending queue when `setFlushMode` is called on the
+ * ContainerRuntime and the FlushMode changes.
+ */
 interface IPendingFlushMode {
     type: "flushMode";
     flushMode: FlushMode;
 }
 
+/**
+ * This represents a manual flush and is added to the pending queue when `flush` is called on the ContainerRuntime to
+ * flush any pending messages. This is applicable only when the FlushMode is Manual.
+ */
 interface IPendingFlush {
     type: "flush";
 }

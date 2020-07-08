@@ -173,11 +173,11 @@ describe("Batching", () => {
                 assert.equal(
                     component2BatchMessages.length, 4, "Incorrect number of messages received on remote client");
 
-                // Verify the first batch.
+                // Verify the local client's batches.
                 verifyBatchMetadata(component1BatchMessages.slice(0, 2));
                 verifyBatchMetadata(component1BatchMessages.slice(2, 4));
 
-                // Verify the second batch.
+                // Verify the remote client's batches.
                 verifyBatchMetadata(component2BatchMessages.slice(0, 2));
                 verifyBatchMetadata(component2BatchMessages.slice(2, 4));
             });
@@ -298,6 +298,13 @@ describe("Batching", () => {
                 // Manually flush the batch.
                 (component2.context.containerRuntime as IContainerRuntime).flush();
 
+                // Send a third set of ops that are to be batched together.
+                component2map1.set("key5", "value5");
+                component2map2.set("key6", "value6");
+
+                // Manually flush the batch.
+                (component2.context.containerRuntime as IContainerRuntime).flush();
+
                 // Set the FlushMode back to Automatic.
                 component2.context.containerRuntime.setFlushMode(FlushMode.Automatic);
 
@@ -305,17 +312,19 @@ describe("Batching", () => {
                 await containerDeltaEventManager.process();
 
                 assert.equal(
-                    component1BatchMessages.length, 4, "Incorrect number of messages received on local client");
+                    component1BatchMessages.length, 6, "Incorrect number of messages received on local client");
                 assert.equal(
-                    component2BatchMessages.length, 4, "Incorrect number of messages received on remote client");
+                    component2BatchMessages.length, 6, "Incorrect number of messages received on remote client");
 
-                // Verify the first batch.
+                // Verify the local client's batches.
                 verifyBatchMetadata(component1BatchMessages.slice(0, 2));
                 verifyBatchMetadata(component1BatchMessages.slice(2, 4));
+                verifyBatchMetadata(component1BatchMessages.slice(4, 6));
 
-                // Verify the second batch.
+                // Verify the remote client's batches.
                 verifyBatchMetadata(component2BatchMessages.slice(0, 2));
                 verifyBatchMetadata(component2BatchMessages.slice(2, 4));
+                verifyBatchMetadata(component2BatchMessages.slice(4, 6));
             });
         });
 
