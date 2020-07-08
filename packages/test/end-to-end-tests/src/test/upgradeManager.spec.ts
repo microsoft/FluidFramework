@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { initializeLocalContainer, LocalCodeLoader } from "@fluidframework/test-utils";
+import { DocumentDeltaEventManager, initializeLocalContainer, LocalCodeLoader } from "@fluidframework/test-utils";
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { UpgradeManager } from "@fluidframework/base-host";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
@@ -13,7 +13,6 @@ import { Container, Loader } from "@fluidframework/container-loader";
 import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { DocumentDeltaEventManager } from "@fluidframework/test-utils";
 
 class TestComponent extends PrimedComponent {
     public static readonly type = "@fluid-example/test-component";
