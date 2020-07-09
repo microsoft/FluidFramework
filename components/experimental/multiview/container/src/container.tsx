@@ -126,9 +126,9 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
         const polygonComponent = polygonResult.value as Polygon;
 
         // Add a few coordinates
+        await polygonComponent.addCoordinate(70, 30);
+        await polygonComponent.addCoordinate(85, 85);
+        await polygonComponent.addCoordinate(15, 85);
         await polygonComponent.addCoordinate(30, 30);
-        await polygonComponent.addCoordinate(35, 35);
-        await polygonComponent.addCoordinate(15, 35);
-        await polygonComponent.addCoordinate(20, 30);
     }
 }
