@@ -527,6 +527,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         // 0.21 back-compat noAttachEvents
         // Fire this event telling dds that we are going live and they can do any
         // custom processing based on that.
+        this.emit("collaborating");
         this.emit("attaching");
 
         // Craft the .attributes file for each shared object
