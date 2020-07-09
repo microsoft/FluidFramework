@@ -35,9 +35,8 @@ export const getMicrosoftConfiguration = (): IClientConfig => ({
     },
 });
 
-export interface IPushCacheKey { isPush: true }
-export interface IOdspCacheKey { isPush: false; server: string }
-export type OdspTokenManagerCacheKey = IPushCacheKey | IOdspCacheKey;
+export interface IOdspCacheKey { isPush: boolean; server: string }
+export type OdspTokenManagerCacheKey = IOdspCacheKey;
 
 export class OdspTokenManager {
     constructor(
@@ -93,7 +92,7 @@ export class OdspTokenManager {
         if (this.tokenCache) {
             if (!forceReauth && !forceRefresh) {
                 // check and return if it exists without lock
-                const cacheKey: OdspTokenManagerCacheKey = isPush ? { isPush } : { isPush, server };
+                const cacheKey: OdspTokenManagerCacheKey = { isPush, server };
                 const tokensFromCache = await this.tokenCache.get(cacheKey);
                 if (tokensFromCache?.refreshToken) {
                     if (redirectUriCallback) {
@@ -123,7 +122,7 @@ export class OdspTokenManager {
         forceReauth = false,
     ): Promise<IOdspTokens> {
         const scope = isPush ? pushScope : getOdspScope(server);
-        const cacheKey: OdspTokenManagerCacheKey = isPush ? { isPush } : { isPush, server };
+        const cacheKey: OdspTokenManagerCacheKey = { isPush, server };
         if (!forceReauth && this.tokenCache) {
             const tokensFromCache = await this.tokenCache.get(cacheKey);
             if (tokensFromCache?.refreshToken) {
@@ -217,11 +216,8 @@ export class OdspTokenManager {
 export const odspTokensCache: IAsyncCache<OdspTokenManagerCacheKey, IOdspTokens> = {
     async get(key: OdspTokenManagerCacheKey): Promise<IOdspTokens | undefined> {
         const rc = await loadRC();
-        if (key.isPush) {
-            return rc.pushTokens;
-        } else {
-            return rc.tokens && rc.tokens[key.server];
-        }
+        const tokensEntry = key.isPush ? rc.pushTokens : rc.tokens;
+        return tokensEntry && tokensEntry[key.server];
     },
     async save(key: OdspTokenManagerCacheKey, tokens: IOdspTokens): Promise<void> {
         const rc = await loadRC();
