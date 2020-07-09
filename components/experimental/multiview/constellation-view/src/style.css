@@ -1,14 +1,14 @@
-.plot-view {
+.constellation-view {
     width: 100px;
     height: 100px;
     position: relative;
-    border: 1px solid black;
+    background-color: #000;
 }
 
-.coordinate-dot {
+.star {
     width: 5px;
     height: 5px;
     border-radius: 50%;
     position: absolute;
-    background-color: #f00;
+    background-color: #ee0;
 }

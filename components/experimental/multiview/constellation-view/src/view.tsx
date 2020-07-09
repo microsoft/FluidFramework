@@ -5,20 +5,19 @@
 
 import React from "react";
 
-import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
 
-interface IPlotCoordinateViewProps {
+interface IStarViewProps {
     model: ICoordinate;
 }
 
 /**
- * PlotCoordinateView is a React component that renders the given ICoordinate as a red dot in a rectangle.
- * For now, it only displays the coordinate, but we could enhance it to allow manipulating the coordinate.
+ * StarView is a React component that renders a single coordinate as a dot (representing a star).
  */
-export const PlotCoordinateView: React.FC<IPlotCoordinateViewProps> = (props: IPlotCoordinateViewProps) => {
+const StarView: React.FC<IStarViewProps> = (props: IStarViewProps) => {
     const [x, setX] = React.useState(props.model.x);
     const [y, setY] = React.useState(props.model.y);
 
@@ -34,8 +33,39 @@ export const PlotCoordinateView: React.FC<IPlotCoordinateViewProps> = (props: IP
     }, [props.model]);
 
     return (
-        <div className="plot-view">
-            <div className="coordinate-dot" style={{ left: x - 2.5, top: y - 2.5 }}></div>
+        <div className="star" style={{ left: x - 2.5, top: y - 2.5 }}></div>
+    );
+};
+
+interface IConstellationViewProps {
+    model: IConstellation;
+}
+
+/**
+ * ConstellationView is a React component that renders the given IConstellation's stars as dots.
+ */
+export const ConstellationView: React.FC<IConstellationViewProps> = (props: IConstellationViewProps) => {
+    const [starList, setStarList] = React.useState<ICoordinate[]>(props.model.stars);
+    React.useEffect(() => {
+        const onConstellationChanged = () => {
+            setStarList(props.model.stars);
+        };
+        props.model.on("constellationChanged", onConstellationChanged);
+        return () => {
+            props.model.off("constellationChanged", onConstellationChanged);
+        };
+    }, [props.model]);
+
+    const starElements: JSX.Element[] = [];
+    for (const [index, star] of starList.entries()) {
+        starElements.push(
+            <StarView model={star} key={index} />,
+        );
+    }
+
+    return (
+        <div className="constellation-view">
+            { starElements }
         </div>
     );
 };
