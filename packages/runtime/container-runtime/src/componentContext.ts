@@ -671,9 +671,11 @@ export class LocalComponentContext extends ComponentContext {
 
     private attachListeners(): void {
         this.once("attaching", () => {
+            assert.strictEqual(this.attachState, AttachState.Detached, "Should move from detached to attaching");
             this._attachState = AttachState.Attaching;
         });
         this.once("attached", () => {
+            assert.strictEqual(this.attachState, AttachState.Attaching, "Should move from attaching to attached");
             this._attachState = AttachState.Attached;
         });
     }
