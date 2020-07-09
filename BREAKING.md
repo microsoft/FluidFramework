@@ -5,6 +5,7 @@
 - [Dynamically loaded components compiled against older versions of runtime](#Dynamically-loaded-components)
 - [ContainerRuntime.load Request Handler Changes](#ContainerRuntime.load-Request-Handler-Changes)
 - [IComponentHTMLVisual removed](#IComponentHTMLVisual-removed)
+- [IComponentReactViewable deprecated](#IComponentReactViewable-deprecated)
 
 ### Deprecated `path` from `IComponentHandleContext`
 Deprecated the `path` field from the interface `IComponentHandleContext`. This means that `IComponentHandle` will not have this going forward as well.
@@ -44,6 +45,9 @@ This will allow consumers of our ContainerRuntime to substitute other routing fr
 
 ### IComponentHTMLVisual removed
 The `IComponentHTMLVisual` interface was deprecated in 0.21, and is now removed in 0.22.  To support multiview scenarios, consider split view/model patterns like those demonstrated in the multiview sample.
+
+### IComponentReactViewable deprecated
+The `IComponentReactViewable` interface is deprecated and will be removed in an upcoming release.  For multiview scenarios, instead use a pattern like the one demonstrated in the sample in /components/experimental/multiview.  This sample demonstrates how to create multiple views for a component.
 
 ## 0.21 Breaking Changes
 - [Removed `@fluidframework/local-test-utils`](#removed-`@fluidframework/local-test-utils`)
