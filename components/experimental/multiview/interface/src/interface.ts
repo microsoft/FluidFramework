@@ -19,15 +19,15 @@ export interface ICoordinate extends EventEmitter {
 }
 
 /**
- * IPolygon describes the public API surface for our polygon component.
+ * IConstellation describes the public API surface for our Constellation component.
  */
-export interface IPolygon extends EventEmitter {
-    coordinates: ICoordinate[];
+export interface IConstellation extends EventEmitter {
+    stars: ICoordinate[];
 
-    addCoordinate(x: number, y: number): Promise<void>;
+    addStar(x: number, y: number): Promise<void>;
 
     /**
-     * The polygonChanged event will fire whenever someone changes any coordinate, either locally or remotely.
+     * The constellationChanged event will fire whenever someone changes any star, either locally or remotely.
      */
-    on(event: "polygonChanged", listener: () => void): this;
+    on(event: "constellationChanged", listener: () => void): this;
 }

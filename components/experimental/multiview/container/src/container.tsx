@@ -8,9 +8,9 @@ import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
+import { Constellation } from "@fluid-example/multiview-constellation-model";
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
-import { Polygon } from "@fluid-example/multiview-polygon-model";
 
 import * as React from "react";
 
@@ -23,11 +23,11 @@ const simpleCoordinateComponentId = "simpleCoordinate";
 const triangleCoordinateComponentId1 = "triangle1";
 const triangleCoordinateComponentId2 = "triangle2";
 const triangleCoordinateComponentId3 = "triangle3";
-const polygonComponentId = "polygon";
+const constellationComponentId = "constellation";
 
 const registryEntries = new Map([
     Coordinate.getFactory().registryEntry,
-    Polygon.getFactory().registryEntry,
+    Constellation.getFactory().registryEntry,
 ]);
 
 // Just a little helper, since we're going to create multiple coordinates.
@@ -63,18 +63,18 @@ const defaultViewRequestHandler: RuntimeRequestHandler =
             const triangleCoordinate1 = await requestCoordinateFromId(request, runtime, triangleCoordinateComponentId1);
             const triangleCoordinate2 = await requestCoordinateFromId(request, runtime, triangleCoordinateComponentId2);
             const triangleCoordinate3 = await requestCoordinateFromId(request, runtime, triangleCoordinateComponentId3);
-            const polygonRequest = new RequestParser({
-                url: `${polygonComponentId}`,
+            const constellationRequest = new RequestParser({
+                url: `${constellationComponentId}`,
                 headers: request.headers,
             });
-            const polygon = (await runtime.request(polygonRequest)).value as Polygon;
+            const constellation = (await runtime.request(constellationRequest)).value as Constellation;
             const viewResponse = (
                 <DefaultView
                     simpleCoordinate={simpleCoordinate}
                     triangleCoordinate1={triangleCoordinate1}
                     triangleCoordinate2={triangleCoordinate2}
                     triangleCoordinate3={triangleCoordinate3}
-                    polygon={polygon}
+                    constellation={constellation}
                 />
             );
             return { status: 200, mimeType: "fluid/view", value: viewResponse };
@@ -115,20 +115,20 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
         triangleCoordinate3.x = 70;
         triangleCoordinate3.y = 60;
 
-        // Create the polygon component
-        const polygonComponentRuntime =
-            await runtime.createComponent(polygonComponentId, Polygon.ComponentName);
-        const polygonResult = await polygonComponentRuntime.request({ url: polygonComponentId });
-        if (polygonResult.status !== 200 || polygonResult.mimeType !== "fluid/component") {
-            throw new Error("Error in creating the polygon model.");
+        // Create the constellation component
+        const constellationComponentRuntime =
+            await runtime.createComponent(constellationComponentId, Constellation.ComponentName);
+        const constellationResult = await constellationComponentRuntime.request({ url: constellationComponentId });
+        if (constellationResult.status !== 200 || constellationResult.mimeType !== "fluid/component") {
+            throw new Error("Error in creating the constellation model.");
         }
-        polygonComponentRuntime.bindToContext();
-        const polygonComponent = polygonResult.value as Polygon;
+        constellationComponentRuntime.bindToContext();
+        const constellationComponent = constellationResult.value as Constellation;
 
         // Add a few coordinates
-        await polygonComponent.addCoordinate(70, 30);
-        await polygonComponent.addCoordinate(85, 85);
-        await polygonComponent.addCoordinate(15, 85);
-        await polygonComponent.addCoordinate(30, 30);
+        await constellationComponent.addStar(70, 30);
+        await constellationComponent.addStar(85, 85);
+        await constellationComponent.addStar(15, 85);
+        await constellationComponent.addStar(30, 30);
     }
 }
