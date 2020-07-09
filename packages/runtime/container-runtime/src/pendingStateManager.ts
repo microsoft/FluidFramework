@@ -4,8 +4,9 @@
  */
 
 import assert from "assert";
-import { ErrorType, IDataCorruptionError } from "@fluidframework/container-definitions";
-import { ErrorWithProps } from "@fluidframework/driver-utils";
+import { IErrorBase } from "@fluidframework/container-definitions";
+import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
@@ -13,21 +14,22 @@ import { FlushMode } from "@fluidframework/runtime-definitions";
 import Deque from "double-ended-queue";
 import { ContainerRuntime, ContainerMessageType } from "./containerRuntime";
 
-export class DataCorruptionError extends ErrorWithProps implements IDataCorruptionError {
-    readonly errorType = ErrorType.dataCorruptionError;
+export class DataCorruptionError extends CustomErrorWithProps implements IErrorBase {
+    readonly errorType = "dataCorruptionError";
     readonly canRetry = false;
 
     constructor(
         errorMessage: string,
-        readonly clientId: string,
-        readonly sequenceNumber: number,
-        readonly clientSequenceNumber: number,
-        readonly expectedClientSequenceNumber?: number,
+        props: ITelemetryProperties,
     ) {
-        super(errorMessage);
+        super(errorMessage, props);
     }
 }
 
+/**
+ * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
+ * ContainerRuntime. This message has either not been ack'd by the server or has not been submitted to the server yet.
+ */
 interface IPendingMessage {
     type: "message";
     messageType: ContainerMessageType;
@@ -36,69 +38,83 @@ interface IPendingMessage {
     localOpMetadata: unknown;
 }
 
+/**
+ * This represents a FlushMode update and is added to the pending queue when `setFlushMode` is called on the
+ * ContainerRuntime and the FlushMode changes.
+ */
 interface IPendingFlushMode {
-    type: "flush";
+    type: "flushMode";
     flushMode: FlushMode;
 }
 
-type IPendingState = IPendingMessage | IPendingFlushMode;
+/**
+ * This represents a manual flush and is added to the pending queue when `flush` is called on the ContainerRuntime to
+ * flush any pending messages. This is applicable only when the FlushMode is Manual.
+ */
+interface IPendingFlush {
+    type: "flush";
+}
+
+type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
 
 /**
  * PendingStateManager is responsible for maintaining the messages that have not been sent or have not yet been
- * acknowledged by the server. It also maintains the batch information (FlushMode) along with the messages.
- * When the Container reconnects, it replays the pending state, which includes setting the FlushMode and triggering
- * resubmission of unacked ops.
+ * acknowledged by the server. It also maintains the batch information for both automatically and manually flushed
+ * batches along with the messages.
+ * When the Container reconnects, it replays the pending states, which includes setting the FlushMode, manual flushing
+ * of messages and triggering resubmission of unacked ops.
  *
  * It verifies that all the ops are acked, are received in the right order and batch information is correct.
  */
 export class PendingStateManager {
     private readonly pendingStates = new Deque<IPendingState>();
 
+    // Maintains the count of messages that are currently unacked.
+    private pendingMessagesCount: number = 0;
+
     // Indicates whether we are processing a batch.
     private isProcessingBatch: boolean = false;
-    // This stores all the messages in the batch that we are processing. This is used to verify that we get the
-    // correct batch metadata.
-    private pendingBatchMessages: ISequencedDocumentMessage[] = [];
+
+    // This stores the first message in the batch that we are processing. This is used to verify that we get
+    // the correct batch metadata.
+    private pendingBatchBeginMessage: ISequencedDocumentMessage | undefined;
 
     private get connected(): boolean {
         return this.containerRuntime.connected;
     }
 
+    /**
+     * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
+     * states in its queue.
+     * @param connected - true if we got connected, false if we got disconnected.
+     */
     public setConnectionState(connected: boolean) {
         assert(this.connected === connected, "The connection state is not consistent with the runtime");
 
+        // If we got connected, replay the pending states that have not been ack'd yet.
         if (connected) {
             this.replayPendingStates();
         }
     }
 
-    public isPendingState(): boolean {
-        return !this.pendingStates.isEmpty();
+    /**
+     * Called to check if there are any pending messages in the pending state queue.
+     * @returns A boolean indicating whether there are messages or not.
+     */
+    public hasPendingMessages(): boolean {
+        return this.pendingMessagesCount !== 0;
     }
 
     constructor(private readonly containerRuntime: ContainerRuntime) { }
 
-    public onFlushModeUpdated(flushMode: FlushMode) {
-        // If no messages were sent between FlushMode.Manual and FlushMode.Automatic, then we do not have to track
-        // them. Remove them from the pending queue and return.
-        // This is an important step because if this happens and there are no other messages in the queue,
-        // isPendingState() above will return true but we do not really have a real state that needs tracking.
-        if (flushMode === FlushMode.Automatic) {
-            const pendingState = this.pendingStates.peekBack();
-            if (pendingState?.type === "flush" && pendingState.flushMode === FlushMode.Manual) {
-                this.pendingStates.removeBack();
-                return;
-            }
-        }
-
-        const pendingFlushMode: IPendingFlushMode = {
-            type: "flush",
-            flushMode,
-        };
-
-        this.pendingStates.push(pendingFlushMode);
-    }
-
+    /**
+     * Called when a message is submitted locally. Adds the message and the associated details to the pending state
+     * queue.
+     * @param type - The container message type.
+     * @param clientSequenceNumber - The clientSequenceNumber associated with the message.
+     * @param content - The message content.
+     * @param localOpMetadata - The local metadata associated with the message.
+     */
     public onSubmitMessage(
         type: ContainerMessageType,
         clientSequenceNumber: number,
@@ -113,99 +129,195 @@ export class PendingStateManager {
         };
 
         this.pendingStates.push(pendingMessage);
+
+        this.pendingMessagesCount++;
     }
 
-    public processPendingLocalMessage(message: ISequencedDocumentMessage): unknown {
-        let pendingState = this.pendingStates.peekFront();
-        assert(pendingState, "No pending message found for this remote message");
+    /**
+     * Called when the FlushMode is updated. Adds the FlushMode to the pending state queue.
+     * @param flushMode - The flushMode that was updated.
+     */
+    public onFlushModeUpdated(flushMode: FlushMode) {
+        if (flushMode === FlushMode.Automatic) {
+            const previousState = this.pendingStates.peekBack();
 
-        // Process "flush" type messages first, if any.
-        while (pendingState.type !== "message") {
-            // Process the pending "flush" state and verify that we get correct batch metadata.
-            this.processFlushState(pendingState);
+            // We don't have to track a previous "flush" state because FlushMode.Automatic flushes the messages. So,
+            // just tracking this FlushMode.Automatic is enough.
+            if (previousState?.type === "flush") {
+                this.pendingStates.removeBack();
+            }
 
-            // Get the next message from the pending queue.
-            this.pendingStates.shift();
-            pendingState = this.pendingStates.peekFront();
-            assert(pendingState, "No pending message found for this remote message");
+            // If no messages were sent between FlushMode.Manual and FlushMode.Automatic, then we do not have to track
+            // both these states. Remove FlushMode.Manual from the pending queue and return.
+            if (previousState?.type === "flushMode" && previousState.flushMode === FlushMode.Manual) {
+                this.pendingStates.removeBack();
+                return;
+            }
         }
 
+        const pendingFlushMode: IPendingFlushMode = {
+            type: "flushMode",
+            flushMode,
+        };
+        this.pendingStates.push(pendingFlushMode);
+    }
+
+    /**
+     * Called when flush() is called on the ContainerRuntime to manually flush messages.
+     */
+    public onFlush() {
+        // If the FlushMode is Automatic, we should not track this flush call as it is only applicable when FlushMode
+        // is Manual.
+        if (this.containerRuntime.flushMode === FlushMode.Automatic) {
+            return;
+        }
+
+        // If the previous state is not a message, we don't have to track this flush call as there is nothing to flush.
+        const previousState = this.pendingStates.peekBack();
+        if (previousState?.type !== "message") {
+            return;
+        }
+
+        // Note that because of the checks above and the checks in onFlushModeUpdated(), we can be sure that a "flush"
+        // state always has a "message" before and after it. So, it marks the end of a batch and the beginning of a
+        // new one.
+        const pendingFlush: IPendingFlush = {
+            type: "flush",
+        };
+        this.pendingStates.push(pendingFlush);
+    }
+
+    /**
+     * Processes a local message once its ack'd by the server. It verifies that there was no data corruption and that
+     * the batch information was preserved for batch messages.
+     * @param message - The messsage that got ack'd and needs to be processed.
+     */
+    public processPendingLocalMessage(message: ISequencedDocumentMessage): unknown {
+        // Pre-processing part - This may be the start of a batch.
+        this.maybeProcessBatchBegin(message);
+
+        // Get the next state from the pending queue and verify that it is of type "message".
+        const pendingState = this.peekNextPendingState();
+        assert(pendingState.type === "message", "No pending message found for this remote message");
+        this.pendingStates.shift();
+
+        // Processing part - Verify that there has been no data corruption.
         // The clientSequenceNumber of the incoming message must match that of the pending message.
         if (pendingState.clientSequenceNumber !== message.clientSequenceNumber) {
             // Close the container because this indicates data corruption.
             const error = new DataCorruptionError(
                 "Unexpected ack received",
-                message.clientId,
-                message.sequenceNumber,
-                message.clientSequenceNumber,
-                pendingState.clientSequenceNumber);
+                {
+                    clientId: message.clientId,
+                    sequenceNumber: message.sequenceNumber,
+                    clientSequenceNumber: message.clientSequenceNumber,
+                    expectedClientSequenceNumber: pendingState.clientSequenceNumber,
+                },
+            );
 
             this.containerRuntime.closeFn(error);
             return;
         }
 
-        // If we are processing a batch, add this message to the pending batch queue.
-        if (this.isProcessingBatch) {
-            this.pendingBatchMessages.push(message);
-        }
+        this.pendingMessagesCount--;
 
-        // Remove the first message from the pending list since it has been acknowledged.
-        this.pendingStates.shift();
+        // Post-processing part - If we are processing a batch then this could be the last message in the batch.
+        if (this.isProcessingBatch) {
+            this.maybeProcessBatchEnd(message);
+        }
 
         return pendingState.localOpMetadata;
     }
 
     /**
-     * Verifies that the batch metadata is received as the per the "flush" state.
-     * @param message - The message we are currently processing.
-     * @param pendingState - The "flush" state to process.
+     * This message could be the first message in batch. If so, set batch state marking the beginning of a batch.
+     * @param message - The message that is being processed.
      */
-    private processFlushState(pendingState: IPendingState) {
-        assert(pendingState.type === "flush", "Invalid pending state type");
-
-        const pendingFlushMode = pendingState.flushMode;
-
-        // If FlushMode was set to Manual prior to this message, this is the beginning of a batch.
-        if (pendingFlushMode === FlushMode.Manual) {
-            this.pendingBatchMessages = [];
-            this.isProcessingBatch = true;
+    private maybeProcessBatchBegin(message: ISequencedDocumentMessage) {
+        const pendingState = this.peekNextPendingState();
+        if (pendingState.type !== "flush" && pendingState.type !== "flushMode") {
             return;
         }
 
-        // If FlushMode was set to Automatic, a batch just ended. Verify that we received the correct batch metadata
-        // for this batch.
-        if (pendingFlushMode === FlushMode.Automatic) {
-            // We should have been processing a batch.
-            assert(this.isProcessingBatch, "Did not receive batch messages as expected");
-
-            const batchCount = this.pendingBatchMessages.length;
-            // There should be at least one batch message.
-            assert(batchCount > 0, "Did not receive any batch message in the batch");
-
-            const batchBeginMetadata = this.pendingBatchMessages[0].metadata?.batch;
-            const batchEndMetadata = this.pendingBatchMessages[batchCount - 1].metadata?.batch;
-
-            // If there is a single message in the batch, it should not have any batch metadata.
-            if (batchCount === 1) {
-                assert(batchBeginMetadata === undefined,
-                    "Batch with single message should not have batch metadata");
-                return;
-            }
-
-            // Assert that we got batch begin and end metadata.
-            assert(batchBeginMetadata === true, "Did not receive batch begin metadata");
-            assert(batchEndMetadata === false, "Did not receive batch end metadata");
-
-            this.pendingBatchMessages = [];
-            this.isProcessingBatch = false;
+        // If the pending state is of type "flushMode", it must be Manual since Automatic flush mode is processed
+        // after a message is processed and not before.
+        if (pendingState.type === "flushMode") {
+            assert(pendingState.flushMode === FlushMode.Manual,
+                "Flush mode should be manual when processing batch begin");
         }
+
+        // We should not already be processing a batch and there should be no pending batch begin message.
+        assert(!this.isProcessingBatch && this.pendingBatchBeginMessage === undefined,
+            "The pending batch state indicates we are already processing a batch");
+
+        // Set the pending batch state indicating we have started processing a batch.
+        this.pendingBatchBeginMessage = message;
+        this.isProcessingBatch = true;
+
+        // Remove this pending state from the queue as we have processed it.
+        this.pendingStates.shift();
     }
 
+    private maybeProcessBatchEnd(message: ISequencedDocumentMessage) {
+        const nextPendingState = this.peekNextPendingState();
+        if (nextPendingState.type !== "flush" && nextPendingState.type !== "flushMode") {
+            return;
+        }
+
+        // If the next pending state is of type "flushMode", it must be Automatic and if so, we need to remove it from
+        // the queue.
+        // Note that we do not remove the type "flush" from the queue because it indicates the end of one batch and the
+        // beginning of a new one. So, it will removed when the next batch begin is processed.
+        if (nextPendingState.type === "flushMode") {
+            assert(nextPendingState.flushMode === FlushMode.Automatic,
+                "Flush mode is set to Manual in the middle of processing a batch");
+            this.pendingStates.shift();
+        }
+
+        // There should be a pending batch begin message.
+        assert(this.pendingBatchBeginMessage !== undefined, "There is no pending batch begin message");
+
+        // Get the batch begin metadata from the first message in the batch.
+        const batchBeginMetadata = this.pendingBatchBeginMessage.metadata?.batch;
+
+        // There could be just a single message in the batch. If so, it should not have any batch metadata. If there
+        // are multiple messages in the batch, verify that we got the correct batch begin and end metadata.
+        if (this.pendingBatchBeginMessage === message) {
+            assert(batchBeginMetadata === undefined,
+                "Batch with single message should not have batch metadata");
+        } else {
+            // Get the batch metadata from the last message in the batch.
+            const batchEndMetadata = message.metadata?.batch;
+            assert(batchBeginMetadata === true, "Did not receive batch begin metadata");
+            assert(batchEndMetadata === false, "Did not receive batch end metadata");
+        }
+
+        // Clear the pending batch state now that we have processed the entire batch.
+        this.pendingBatchBeginMessage = undefined;
+        this.isProcessingBatch = false;
+    }
+
+    /**
+     * Returns the next pending state from the pending state queue.
+     */
+    private peekNextPendingState(): IPendingState {
+        const nextPendingState = this.pendingStates.peekFront();
+        assert(nextPendingState, "No pending state found for the remote message");
+        return nextPendingState;
+    }
+
+    /**
+     * Replays all the pending states that are currently in the queue. This includes setting the FlushMode and
+     * trigerring resubmission of unacked ops. This typically happens when we reconnect.
+     */
     private replayPendingStates() {
-        const pendingStatesCount = this.pendingStates.length;
+        let pendingStatesCount = this.pendingStates.length;
         if (pendingStatesCount === 0) {
             return;
         }
+
+        // Reset the pending message count because all these messages will be removed from the queue.
+        this.pendingMessagesCount = 0;
 
         // Save the current FlushMode so that we can revert it back after replaying the states.
         const savedFlushMode = this.containerRuntime.flushMode;
@@ -213,16 +325,10 @@ export class PendingStateManager {
         // Process exactly `pendingStatesCount` items in the queue as it represents the number of states that were
         // pending when we connected. This is important because the `reSubmitFn` might add more items in the queue
         // which must not be replayed.
-        let count = 0;
-        while (count < pendingStatesCount) {
+        while (pendingStatesCount > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const pendingState = this.pendingStates.shift()!;
             switch (pendingState.type) {
-                case "flush":
-                    {
-                        this.containerRuntime.setFlushMode(pendingState.flushMode);
-                    }
-                    break;
                 case "message":
                     {
                         this.containerRuntime.reSubmitFn(
@@ -231,10 +337,20 @@ export class PendingStateManager {
                             pendingState.localOpMetadata);
                     }
                     break;
+                case "flushMode":
+                    {
+                        this.containerRuntime.setFlushMode(pendingState.flushMode);
+                    }
+                    break;
+                case "flush":
+                    {
+                        this.containerRuntime.flush();
+                    }
+                    break;
                 default:
                     break;
             }
-            count++;
+            pendingStatesCount--;
         }
 
         // Revert the FlushMode.

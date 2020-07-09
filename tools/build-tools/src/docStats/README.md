@@ -21,7 +21,6 @@ fluid-doc-stats _api-extractor-temp/doc-models
                        driver-definitions.api.json:   44/  76  57.89%
             component-runtime-definitions.api.json:   41/  71  57.75%
                                  aqueduct.api.json:   45/  80  56.25%
-             experimental-creation-driver.api.json:   32/  58  55.17%
                       runtime-definitions.api.json:   65/ 119  54.62%
                                client-api.api.json:   32/  69  46.38%
                             iframe-driver.api.json:   30/  65  46.15%

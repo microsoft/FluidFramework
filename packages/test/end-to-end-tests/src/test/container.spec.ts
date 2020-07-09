@@ -7,7 +7,7 @@ import assert from "assert";
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
     IGenericError,
-    ErrorType,
+    ContainerErrorType,
     IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
 import { Container, ConnectionState, Loader } from "@fluidframework/container-loader";
@@ -127,7 +127,7 @@ describe("Container", () => {
                 testResolver);
             assert.fail("Error expected");
         } catch (error) {
-            assert.strictEqual(error.errorType, ErrorType.genericError, "Error is not a general error");
+            assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error is not a general error");
             const genericError = error as IGenericError;
             success = genericError.error as boolean;
         }

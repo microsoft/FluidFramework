@@ -213,7 +213,7 @@ export interface ISnapshotOptions {
     channels?: number;
     /*
      * Maximum Data size (in bytes)
-     * If specified, SPO will fail snapshot request with 413 error (see ErrorType.snapshotTooBig)
+     * If specified, SPO will fail snapshot request with 413 error (see OdspErrorType.snapshotTooBig)
      * if snapshot is bigger in size than specified limit.
      */
     mds?: number;

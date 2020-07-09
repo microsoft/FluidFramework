@@ -20,7 +20,7 @@ import { Partition } from "./partition";
  * It will route incoming messages to the appropriate partition for the messages.
  */
 export class PartitionManager extends EventEmitter {
-    private partitions = new Map<number, Partition>();
+    private readonly partitions = new Map<number, Partition>();
     // Start rebalancing until we receive the first rebalanced message
     private isRebalancing = true;
 
@@ -62,6 +62,8 @@ export class PartitionManager extends EventEmitter {
         for (const [, partition] of this.partitions) {
             partition.close();
         }
+
+        this.partitions.clear();
     }
 
     private process(message: IQueuedMessage) {
@@ -89,12 +91,15 @@ export class PartitionManager extends EventEmitter {
             winston.info(`Stopping partition ${id} due to rebalancing`);
             partition.close();
         }
+
+        this.partitions.clear();
     }
 
     private rebalanced(partitions: IPartitionWithEpoch[]) {
         this.isRebalancing = false;
 
-        this.partitions = new Map<number, Partition>();
+        this.partitions.clear();
+
         for (const partition of partitions) {
             // eslint-disable-next-line max-len
             winston.info(`Creating ${partition.topic}: Partition ${partition.partition}, Epoch ${partition.leaderEpoch}, Offset ${partition.offset} due to rebalance`);

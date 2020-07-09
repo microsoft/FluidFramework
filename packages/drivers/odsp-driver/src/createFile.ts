@@ -22,15 +22,17 @@ import { INonPersistentCache } from "./odspCache";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import {
     getWithRetryForTokenRefresh,
-    throwOdspNetworkError,
     fetchHelper,
     INewFileInfo,
-    invalidFileNameStatusCode,
     getOrigin,
-    fetchIncorrectResponse,
 } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
+import {
+    throwOdspNetworkError,
+    invalidFileNameStatusCode,
+    fetchIncorrectResponse,
+} from "./odspError";
 
 export interface IFileCreateResponse {
     siteUrl: string;

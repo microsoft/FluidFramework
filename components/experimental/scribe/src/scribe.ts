@@ -467,7 +467,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
-            [async (request: IRequest, containerRuntime: IContainerRuntime) => {
+            async (request: IRequest, containerRuntime: IContainerRuntime) => {
                 console.log(request.url);
 
                 const requestUrl = request.url.length > 0 && request.url.startsWith("/")
@@ -481,7 +481,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
                 const component = await containerRuntime.getComponentRuntime(componentId, true);
 
                 return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
-            }],
+            },
             { generateSummaries: true });
 
         // On first boot create the base component

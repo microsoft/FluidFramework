@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-    RuntimeRequestHandler,
-} from "@fluidframework/container-runtime";
 import { IComponentDefaultFactoryName } from "@fluidframework/framework-interfaces";
 import { NamedComponentRegistryEntries } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { DependencyContainerRegistry } from "@fluidframework/synthesize";
 import { MountableView } from "@fluidframework/view-adapters";
+import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { defaultComponentRuntimeRequestHandler, mountableViewRequestHandler } from "../requestHandlers";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
@@ -59,11 +57,6 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
         // We need to request the component before attaching to ensure it
         // runs through its entire instantiation flow.
         await componentRuntime.request({ url: "/" });
-        // 0.20 back-compat attach
-        if (componentRuntime.bindToContext !== undefined) {
-            componentRuntime.bindToContext();
-        } else {
-            (componentRuntime as any).attach();
-        }
+        componentRuntime.bindToContext();
     }
 }

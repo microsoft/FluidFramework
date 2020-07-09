@@ -43,6 +43,8 @@
     "@fluidframework/aqueduct": "^0.22.0",
     "@fluidframework/container-runtime": "^0.22.0",
     "@fluidframework/container-runtime-definitions": "^0.22.0",
+    "@fluidframework/request-handler": "^0.22.0",
+    "@fluidframework/runtime-utils": "^0.22.0",
     "@fluidframework/view-adapters": "^0.22.0",
     "react": "^16.10.2"
   },

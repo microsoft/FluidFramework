@@ -155,7 +155,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
         const runtime = await ContainerRuntime.load(
             context,
             new Map([[ComponentName, Promise.resolve(this)]]),
-            [KeyValueFactoryComponent.containerRequestHandler],
+            KeyValueFactoryComponent.containerRequestHandler,
         );
 
         if (!runtime.existing) {
