@@ -4,6 +4,7 @@
 - [Deprecated `path` from `IComponentHandleContext`](#Deprecated-`path`-from-`IComponentHandleContext`)
 - [Dynamically loaded components compiled against older versions of runtime](#Dynamically-loaded-components)
 - [ContainerRuntime.load Request Handler Changes](#ContainerRuntime.load-Request-Handler-Changes)
+- [IComponentHTMLVisual removed](#IComponentHTMLVisual-removed)
 - [IComponentReactViewable deprecated](#IComponentReactViewable-deprecated)
 
 ### Deprecated `path` from `IComponentHandleContext`
@@ -41,6 +42,9 @@ example:
 Additionally the class `RequestParser` has been moved to the `@fluidframework/runtime-utils` package
 
 This will allow consumers of our ContainerRuntime to substitute other routing frameworks more easily.
+
+### IComponentHTMLVisual removed
+The `IComponentHTMLVisual` interface was deprecated in 0.21, and is now removed in 0.22.  To support multiview scenarios, consider split view/model patterns like those demonstrated in the multiview sample.
 
 ### IComponentReactViewable deprecated
 The `IComponentReactViewable` interface is deprecated and will be removed in an upcoming release.  For multiview scenarios, instead use a pattern like the one demonstrated in the sample in /components/experimental/multiview.  This sample demonstrates how to create multiple views for a component.
