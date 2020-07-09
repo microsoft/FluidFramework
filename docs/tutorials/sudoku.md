@@ -123,43 +123,14 @@ The React component described above does not itself represent a Fluid component.
 in `src/fluidSudoku.tsx`.
 
 ```typescript
-export class FluidSudoku extends PrimedComponent
-  implements IComponentHTMLView, IComponentReactViewable {}
+export class FluidSudoku extends PrimedComponent implements IComponentHTMLView {}
 ```
 
 This class extends the [PrimedComponent][] abstract base class. Our component is visual, so we need to implement the
 [IComponentHTMLView][] or [IProvideComponentHTMLView][] interfaces. In our case, we want to handle rendering
 ourselves rather than delegate it to another object, so we implement [IComponentHTMLView][].
 
-Since we are using React, we also implement the [IComponentReactViewable][] interface. This will enable a Fluid host or
-container to use this component both with and without React. A host using React will call the `createJSXElement` method
-and use the JSX directly, while a non-React hot would just give the component a hosting element and let it render
-itself.
-
 #### Implementing interfaces
-
-##### IComponentReactViewable
-
-[IComponentReactViewable][] requires us to implement a method that will return the JSX that represents the component.
-The implementation is as follows:
-
-```typescript
-public createJSXElement(): JSX.Element {
-    if (this.puzzle) {
-        return (
-            <SudokuView
-                puzzle={this.puzzle}
-                clientId={this.runtime.clientId}
-            />
-        );
-    } else {
-        return <div />;
-    }
-}
-```
-
-Notice that we pass the puzzle data, a `SharedMap` distributed data structure that we will discuss more below, to the
-SudokuView React component as props.
 
 ##### IComponentHTMLView
 
@@ -172,12 +143,27 @@ public render(element?: HTMLElement): void {
         this.domElement = element;
     }
     if (this.domElement) {
-        ReactDOM.render(this.createJSXElement(), this.domElement);
+        let view: JSX.Element;
+        if (this.puzzle) {
+            view = (
+                <SudokuView
+                    puzzle={this.puzzle}
+                    clientPresence={this.clientPresence}
+                    clientId={this.runtime.clientId ?? "not connected"}
+                    setPresence={this.presenceSetter}
+                />
+            );
+        } else {
+            view = <div />;
+        }
+        ReactDOM.render(view, this.domElement);
     }
 }
 ```
 
-As you can see, the render method uses React to render the `SudokuView` React component.
+As you can see, the render method uses React to render the `SudokuView` React component.  Notice that we pass the
+puzzle data, a `SharedMap` distributed data structure that we will discuss more below, to the SudokuView React
+component as props.
 
 #### Creating Fluid distributed data structures
 

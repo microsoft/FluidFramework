@@ -3,6 +3,7 @@
 ## 0.22 Breaking Changes
 - [Deprecated `path` from `IComponentHandleContext`](#Deprecated-`path`-from-`IComponentHandleContext`)
 - [Dynamically loaded components compiled against older versions of runtime](#Dynamically-loaded-components)
+- [IComponentReactViewable deprecated](#IComponentReactViewable-deprecated)
 
 ### Deprecated `path` from `IComponentHandleContext`
 Deprecated the `path` field from the interface `IComponentHandleContext`. This means that `IComponentHandle` will not have this going forward as well.
@@ -15,6 +16,9 @@ Components that were compiled against Fluid Framework <= 0.19.x releases will fa
    - ContainerContext.isAttached
    - ContainerContext.isLocal
 Such components needs to be compiled against >= 0.21 runtime and can be used in container that is built using >= 0.21 runtime as well.
+
+### IComponentReactViewable deprecated
+The `IComponentReactViewable` interface is deprecated and will be removed in an upcoming release.  For multiview scenarios, instead use a pattern like the one demonstrated in the sample in /components/experimental/multiview.  This sample demonstrates how to create multiple views for a component.
 
 ## 0.21 Breaking Changes
 - [Removed `@fluidframework/local-test-utils`](#removed-`@fluidframework/local-test-utils`)
