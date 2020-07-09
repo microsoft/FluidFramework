@@ -10,6 +10,7 @@ import {
 import { IValueChanged } from "@fluidframework/map";
 
 import { IPolygon } from "@fluid-example/multiview-coordinate-interface";
+import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 
 const coordinateListKey = "coordinates";
 
@@ -18,6 +19,20 @@ const coordinateListKey = "coordinates";
  */
 export class Polygon extends PrimedComponent implements IPolygon {
     public static get ComponentName() { return "@fluid-example/polygon"; }
+
+    public static getFactory() {
+        return Polygon.factory;
+    }
+
+    private static readonly factory = new PrimedComponentFactory(
+        Polygon.ComponentName,
+        Polygon,
+        [],
+        {},
+        new Map([
+            Coordinate.getFactory().registryEntry,
+        ]),
+    );
 
     protected async componentInitializingFirstTime() {
         this.root.set(coordinateListKey, []);
@@ -34,11 +49,12 @@ export class Polygon extends PrimedComponent implements IPolygon {
     public get coordinates() {
         return this.root.get(coordinateListKey);
     }
-}
 
-export const PolygonInstantiationFactory = new PrimedComponentFactory(
-    Polygon.ComponentName,
-    Polygon,
-    [],
-    {},
-);
+    public async addCoordinate(x: number, y: number) {
+        const newCoordinate: Coordinate = (await Coordinate.getFactory().createComponent(this.context)) as Coordinate;
+        newCoordinate.x = x;
+        newCoordinate.y = y;
+        const newCoordinates = [...this.coordinates, newCoordinate];
+        this.root.set(coordinateListKey, newCoordinates);
+    }
+}

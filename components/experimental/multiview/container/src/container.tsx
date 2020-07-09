@@ -9,7 +9,7 @@ import { RequestParser } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
-import { Coordinate, CoordinateInstantiationFactory } from "@fluid-example/multiview-coordinate-model";
+import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 
 import * as React from "react";
 
@@ -24,7 +24,7 @@ const triangleCoordinateComponentId2 = "triangle2";
 const triangleCoordinateComponentId3 = "triangle3";
 
 const registryEntries = new Map([
-    CoordinateInstantiationFactory.registryEntry,
+    Coordinate.getFactory().registryEntry,
 ]);
 
 // Just a little helper, since we're going to create multiple coordinates.

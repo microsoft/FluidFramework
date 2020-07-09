@@ -20,6 +20,17 @@ const yKey = "y";
 export class Coordinate extends PrimedComponent implements ICoordinate {
     public static get ComponentName() { return "@fluid-example/coordinate"; }
 
+    public static getFactory() {
+        return Coordinate.factory;
+    }
+
+    private static readonly factory = new PrimedComponentFactory(
+        Coordinate.ComponentName,
+        Coordinate,
+        [],
+        {},
+    );
+
     protected async componentInitializingFirstTime() {
         this.root.set(xKey, 0);
         this.root.set(yKey, 0);
@@ -49,10 +60,3 @@ export class Coordinate extends PrimedComponent implements ICoordinate {
         this.root.set(yKey, newY);
     }
 }
-
-export const CoordinateInstantiationFactory = new PrimedComponentFactory(
-    Coordinate.ComponentName,
-    Coordinate,
-    [],
-    {},
-);
