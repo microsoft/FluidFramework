@@ -4,7 +4,7 @@
  */
 import { IComponent, IComponentLoadable, IResponse } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { RequestParser } from "./requestParser";
+import { RequestParser } from "@fluidframework/runtime-utils";
 
 /**
  * A request handler for the container runtime. Each handler should handle a specific request, and return undefined
@@ -19,13 +19,13 @@ export const componentRuntimeRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length > 0) {
             let wait: boolean | undefined;
-            if (request.headers && (typeof request.headers.wait) === "boolean") {
-                wait = request.headers.wait as boolean;
+            if (typeof request.headers?.wait === "boolean") {
+                wait = request.headers.wait;
             }
 
             const component = await runtime.getComponentRuntime(request.pathParts[0], wait);
             const subRequest = request.createSubRequest(1);
-            if (subRequest) {
+            if (subRequest !== undefined) {
                 return component.request(subRequest);
             }
         }
