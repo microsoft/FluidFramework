@@ -128,7 +128,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
                 [chaincode.type, Promise.resolve(chaincode)],
                 ...this.registries,
             ],
-            [ChaincodeFactory.containerRequestHandler],
+            ChaincodeFactory.containerRequestHandler,
             this.runtimeOptions);
 
         // On first boot create the base component

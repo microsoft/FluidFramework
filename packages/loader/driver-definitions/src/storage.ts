@@ -89,14 +89,6 @@ export interface IDocumentStorageService {
     getRawUrl(blobId: string): string;
 
     /**
-     * DEPRECATED: use uploadSummaryWithContext instead.
-     * Generates and uploads a packfile that represents the given commit. A driver generated handle to the packfile
-     * is returned as a result of this call.
-     * back-compat: 0.14 uploadSummary
-     */
-    uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle>;
-
-    /**
      * Uploads a summary tree to storage using the given context for reference of previous summary handle.
      * The ISummaryHandles in the uploaded tree should have paths to indicate which summary object they are
      * referencing from the previously acked summary.

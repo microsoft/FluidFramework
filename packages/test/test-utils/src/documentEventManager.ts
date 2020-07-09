@@ -125,7 +125,7 @@ export class DocumentDeltaEventManager {
     private async pauseAndValidateDocs(...docs: IDocumentDeltaEvent[]): Promise<Iterable<IDocumentDeltaEvent>> {
         await Promise.all(Array.from(this.documents).map(DocumentDeltaEventManager.pauseDocument));
 
-        if (docs && docs.length > 0) {
+        if (docs.length > 0) {
             docs.forEach((doc) => {
                 if (!this.documents.has(doc)) {
                     throw new Error(

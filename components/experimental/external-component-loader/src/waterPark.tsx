@@ -10,7 +10,6 @@ import {
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { IPackage } from "@fluidframework/container-definitions";
-import { RequestParser } from "@fluidframework/container-runtime";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import {
@@ -19,6 +18,7 @@ import {
 } from "@fluid-example/spaces";
 import React from "react";
 import ReactDOM from "react-dom";
+import { RequestParser } from "@fluidframework/runtime-utils";
 import { WaterParkToolbar } from "./waterParkToolbar";
 import { ExternalComponentLoader } from "./externalComponentLoader";
 

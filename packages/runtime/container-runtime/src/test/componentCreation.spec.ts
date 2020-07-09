@@ -91,7 +91,7 @@ describe("Component Creation Tests", () => {
                 notifyComponentInstantiated: (c) => { },
                 on: (event, listener) => {},
             } as ContainerRuntime;
-            summaryTracker = new SummaryTracker(true, "", 0, 0, async () => undefined);
+            summaryTracker = new SummaryTracker("", 0, 0);
         });
 
         it("Valid global component", async () => {
