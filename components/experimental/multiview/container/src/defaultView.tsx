@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import { ICoordinate, IPolygon } from "@fluid-example/multiview-coordinate-interface";
 import { PlotCoordinateView } from "@fluid-example/multiview-plot-coordinate-view";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { TriangleView } from "@fluid-example/multiview-triangle-view";
@@ -21,6 +21,7 @@ interface IDefaultViewProps {
     triangleCoordinate1: ICoordinate;
     triangleCoordinate2: ICoordinate;
     triangleCoordinate3: ICoordinate;
+    polygon: IPolygon;
 }
 
 /**

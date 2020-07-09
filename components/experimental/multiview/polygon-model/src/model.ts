@@ -50,7 +50,7 @@ export class Polygon extends PrimedComponent implements IPolygon {
         return this.root.get(coordinateListKey);
     }
 
-    public async addCoordinate(x: number, y: number) {
+    public async addCoordinate(x: number, y: number): Promise<void> {
         const newCoordinate: Coordinate = (await Coordinate.getFactory().createComponent(this.context)) as Coordinate;
         newCoordinate.x = x;
         newCoordinate.y = y;

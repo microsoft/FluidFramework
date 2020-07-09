@@ -24,6 +24,8 @@ export interface ICoordinate extends EventEmitter {
 export interface IPolygon extends EventEmitter {
     coordinates: ICoordinate[];
 
+    addCoordinate(x: number, y: number): Promise<void>;
+
     /**
      * The polygonChanged event will fire whenever someone changes any coordinate, either locally or remotely.
      */

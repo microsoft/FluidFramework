@@ -10,6 +10,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { MountableView } from "@fluidframework/view-adapters";
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
+import { Polygon } from "@fluid-example/multiview-polygon-model";
 
 import * as React from "react";
 
@@ -22,9 +23,11 @@ const simpleCoordinateComponentId = "simpleCoordinate";
 const triangleCoordinateComponentId1 = "triangle1";
 const triangleCoordinateComponentId2 = "triangle2";
 const triangleCoordinateComponentId3 = "triangle3";
+const polygonComponentId = "polygon";
 
 const registryEntries = new Map([
     Coordinate.getFactory().registryEntry,
+    Polygon.getFactory().registryEntry,
 ]);
 
 // Just a little helper, since we're going to create multiple coordinates.
@@ -33,7 +36,7 @@ const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string)
         await runtime.createComponent(id, Coordinate.ComponentName);
     const simpleResult = await simpleCoordinateComponentRuntime.request({ url: id });
     if (simpleResult.status !== 200 || simpleResult.mimeType !== "fluid/component") {
-        throw new Error("Error in creating the default option picker model.");
+        throw new Error("Error in creating the coordinate model.");
     }
     simpleCoordinateComponentRuntime.bindToContext();
     return simpleResult.value as ICoordinate;
@@ -60,12 +63,18 @@ const defaultViewRequestHandler: RuntimeRequestHandler =
             const triangleCoordinate1 = await requestCoordinateFromId(request, runtime, triangleCoordinateComponentId1);
             const triangleCoordinate2 = await requestCoordinateFromId(request, runtime, triangleCoordinateComponentId2);
             const triangleCoordinate3 = await requestCoordinateFromId(request, runtime, triangleCoordinateComponentId3);
+            const polygonRequest = new RequestParser({
+                url: `${polygonComponentId}`,
+                headers: request.headers,
+            });
+            const polygon = (await runtime.request(polygonRequest)).value as Polygon;
             const viewResponse = (
                 <DefaultView
                     simpleCoordinate={simpleCoordinate}
                     triangleCoordinate1={triangleCoordinate1}
                     triangleCoordinate2={triangleCoordinate2}
                     triangleCoordinate3={triangleCoordinate3}
+                    polygon={polygon}
                 />
             );
             return { status: 200, mimeType: "fluid/view", value: viewResponse };
@@ -105,5 +114,21 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
         triangleCoordinate3.x = 70;
         triangleCoordinate3.y = 60;
+
+        // Create the polygon component
+        const polygonComponentRuntime =
+            await runtime.createComponent(polygonComponentId, Polygon.ComponentName);
+        const polygonResult = await polygonComponentRuntime.request({ url: polygonComponentId });
+        if (polygonResult.status !== 200 || polygonResult.mimeType !== "fluid/component") {
+            throw new Error("Error in creating the polygon model.");
+        }
+        polygonComponentRuntime.bindToContext();
+        const polygonComponent = polygonResult.value as Polygon;
+
+        // Add a few coordinates
+        await polygonComponent.addCoordinate(30, 30);
+        await polygonComponent.addCoordinate(35, 35);
+        await polygonComponent.addCoordinate(15, 35);
+        await polygonComponent.addCoordinate(20, 30);
     }
 }

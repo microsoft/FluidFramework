@@ -38,6 +38,7 @@
     "@fluid-example/multiview-coordinate-interface": "^0.22.0",
     "@fluid-example/multiview-coordinate-model": "^0.22.0",
     "@fluid-example/multiview-plot-coordinate-view": "^0.22.0",
+    "@fluid-example/multiview-polygon-model": "^0.22.0",
     "@fluid-example/multiview-slider-coordinate-view": "^0.22.0",
     "@fluid-example/multiview-triangle-view": "^0.22.0",
     "@fluidframework/aqueduct": "^0.22.0",
