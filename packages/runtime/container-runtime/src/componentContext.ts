@@ -692,11 +692,11 @@ export class LocalComponentContext extends ComponentContext {
     }
 
     private attachListeners(): void {
-        this.containerRuntime.once("attaching", () => {
+        this.once("attaching", () => {
             this._attachState = AttachState.Attaching;
             this.emit("attaching");
         });
-        this.containerRuntime.once("attached", () => {
+        this.once("attached", () => {
             this._attachState = AttachState.Attached;
             this.emit("attached");
         });

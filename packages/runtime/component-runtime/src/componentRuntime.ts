@@ -559,6 +559,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         const entries: ITreeEntry[] = [];
         // 0.21 back-compat noAttachEvents
         this._attachState = AttachState.Attached;
+        this.deferredAttached.resolve();
         // As the component is attaching, attach the graph too.
         this.attachGraph();
         // 0.21 back-compat noAttachEvents
@@ -707,14 +708,13 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             this.emit("notleader");
         });
         this.componentContext.once("attaching", () => {
-            assert(this.bindState !== BindState.NotBound);
+            assert(this.bindState !== BindState.NotBound, "Component attaching should not occur if it is not bound");
             this._attachState = AttachState.Attaching;
             this.emit("attaching");
         });
         this.componentContext.once("attached", () => {
-            assert(this.bindState === BindState.Bound);
+            assert(this.bindState === BindState.Bound, "Component should only be attached after it is bound");
             this._attachState = AttachState.Attached;
-            this.deferredAttached.resolve();
             this.emit("attached");
         });
     }
