@@ -307,9 +307,9 @@ export function configureWebSocketServices(
                     if (hasWriteAccess(scopeMap.get(clientId))) {
                         nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Readonly client");
                     } else if (roomMap.has(clientId)) {
-                        nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
+                        nackMessage = createNackMessage(403, NackErrorType.InvalidScopeError, "Invalid scope");
                     } else {
-                        nackMessage = createNackMessage(403, NackErrorType.InvalidScopeError, "Invalid clientId or Scope");
+                        nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
                     }
 
                     socket.emit("nack", "", [nackMessage]);
@@ -356,9 +356,9 @@ export function configureWebSocketServices(
                 if (hasWriteAccess(scopeMap.get(clientId))) {
                     nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Readonly client");
                 } else if (roomMap.has(clientId)) {
-                    nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
+                    nackMessage = createNackMessage(403, NackErrorType.InvalidScopeError, "Invalid scope");
                 } else {
-                    nackMessage = createNackMessage(403, NackErrorType.InvalidScopeError, "Invalid clientId or Scope");
+                    nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
                 }
 
                 socket.emit("nack", "", [nackMessage]);
