@@ -125,10 +125,13 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
         constellationComponentRuntime.bindToContext();
         const constellationComponent = constellationResult.value as Constellation;
 
-        // Add a few coordinates
-        await constellationComponent.addStar(70, 30);
-        await constellationComponent.addStar(85, 85);
-        await constellationComponent.addStar(15, 85);
-        await constellationComponent.addStar(30, 30);
+        // Add a few stars
+        await constellationComponent.addStar(86, 74);
+        await constellationComponent.addStar(70, 86);
+        await constellationComponent.addStar(44, 72);
+        await constellationComponent.addStar(48, 55);
+        await constellationComponent.addStar(40, 39);
+        await constellationComponent.addStar(29, 27);
+        await constellationComponent.addStar(7, 17);
     }
 }

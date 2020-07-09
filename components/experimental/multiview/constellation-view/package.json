@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@fluid-example/multiview-coordinate-interface": "^0.22.0",
+    "@fluid-example/multiview-slider-coordinate-view": "^0.22.0",
     "react": "^16.10.2"
   },
   "devDependencies": {

@@ -31,8 +31,6 @@ interface IDefaultViewProps {
  * preferred - either works fine.
  */
 export const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProps) => {
-    // MultiCoordinateView (similar to PlotCoordinateView)
-    // ConstellationView (similar to TriangleView)
     return (
         <div>
             <div>

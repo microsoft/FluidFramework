@@ -6,12 +6,16 @@
 import React from "react";
 
 import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
 
 interface IStarViewProps {
     model: ICoordinate;
+    onPointerDown: ((event: React.PointerEvent<HTMLDivElement>) => void);
+    onPointerMove: ((event: React.PointerEvent<HTMLDivElement>) => void);
+    onPointerUp: ((event: React.PointerEvent<HTMLDivElement>) => void);
 }
 
 /**
@@ -33,7 +37,13 @@ const StarView: React.FC<IStarViewProps> = (props: IStarViewProps) => {
     }, [props.model]);
 
     return (
-        <div className="star" style={{ left: x - 2.5, top: y - 2.5 }}></div>
+        <div
+            className="star"
+            style={{ left: x - 2.5, top: y - 2.5 }}
+            onPointerDown={props.onPointerDown}
+            onPointerMove={props.onPointerMove}
+            onPointerUp={props.onPointerUp}
+        ></div>
     );
 };
 
@@ -56,16 +66,41 @@ export const ConstellationView: React.FC<IConstellationViewProps> = (props: ICon
         };
     }, [props.model]);
 
-    const starElements: JSX.Element[] = [];
+    const starViews: JSX.Element[] = [];
+    const sliderViews: JSX.Element[] = [];
     for (const [index, star] of starList.entries()) {
-        starElements.push(
-            <StarView model={star} key={index} />,
+        let dragging: boolean = false;
+        const pointerDownHandler = (event) => {
+            event.target.setPointerCapture(event.pointerId);
+            dragging = true;
+        };
+        const pointerMoveHandler = (event) => {
+            if (dragging) {
+                star.x = Math.min(Math.max(event.pageX - event.target.parentElement.offsetLeft, 0), 100);
+                star.y = Math.min(Math.max(event.pageY - event.target.parentElement.offsetTop, 0), 100);
+            }
+        };
+        const pointerUpHandler = (event) => {
+            dragging = false;
+        };
+        starViews.push(
+            <StarView
+                key={index}
+                model={star}
+                onPointerDown={pointerDownHandler}
+                onPointerMove={pointerMoveHandler}
+                onPointerUp={pointerUpHandler}
+            />,
         );
+        sliderViews.push(<SliderCoordinateView key={index} model={star} label={`Star ${index}`} />);
     }
 
     return (
-        <div className="constellation-view">
-            { starElements }
+        <div>
+            <div className="constellation-view">
+                { starViews }
+            </div>
+            { sliderViews }
         </div>
     );
 };
