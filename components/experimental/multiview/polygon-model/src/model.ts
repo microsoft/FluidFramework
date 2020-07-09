@@ -9,50 +9,36 @@ import {
 } from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
 
-import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import { IPolygon } from "@fluid-example/multiview-coordinate-interface";
 
-const xKey = "x";
-const yKey = "y";
+const coordinateListKey = "coordinates";
 
 /**
- * The Coordinate is our implementation of the ICoordinate interface.
+ * The Polygon is our implementation of the IPolygon interface.
  */
-export class Coordinate extends PrimedComponent implements ICoordinate {
-    public static get ComponentName() { return "@fluid-example/coordinate"; }
+export class Polygon extends PrimedComponent implements IPolygon {
+    public static get ComponentName() { return "@fluid-example/polygon"; }
 
     protected async componentInitializingFirstTime() {
-        this.root.set(xKey, 0);
-        this.root.set(yKey, 0);
+        this.root.set(coordinateListKey, []);
     }
 
     protected async componentHasInitialized() {
         this.root.on("valueChanged", (changed: IValueChanged) => {
-            if (changed.key === xKey || changed.key === yKey) {
-                this.emit("coordinateChanged");
+            if (changed.key === coordinateListKey) {
+                this.emit("polygonChanged");
             }
         });
     }
 
-    public get x() {
-        return this.root.get(xKey);
-    }
-
-    public set x(newX: number) {
-        this.root.set(xKey, newX);
-    }
-
-    public get y() {
-        return this.root.get(yKey);
-    }
-
-    public set y(newY: number) {
-        this.root.set(yKey, newY);
+    public get coordinates() {
+        return this.root.get(coordinateListKey);
     }
 }
 
-export const CoordinateInstantiationFactory = new PrimedComponentFactory(
-    Coordinate.ComponentName,
-    Coordinate,
+export const PolygonInstantiationFactory = new PrimedComponentFactory(
+    Polygon.ComponentName,
+    Polygon,
     [],
     {},
 );

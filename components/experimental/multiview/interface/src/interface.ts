@@ -17,3 +17,15 @@ export interface ICoordinate extends EventEmitter {
      */
     on(event: "coordinateChanged", listener: () => void): this;
 }
+
+/**
+ * IPolygon describes the public API surface for our polygon component.
+ */
+export interface IPolygon extends EventEmitter {
+    coordinates: ICoordinate[];
+
+    /**
+     * The polygonChanged event will fire whenever someone changes any coordinate, either locally or remotely.
+     */
+    on(event: "polygonChanged", listener: () => void): this;
+}
