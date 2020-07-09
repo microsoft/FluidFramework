@@ -48,7 +48,7 @@ class ProxyRuntime implements IRuntime {
     createSummary(): ISummaryTree {
         throw new Error("Method not implemented.");
     }
-    setAttachState(state: AttachState) {
+    setAttachState(state: AttachState.Attaching | AttachState.Attached) {
     }
 }
 
