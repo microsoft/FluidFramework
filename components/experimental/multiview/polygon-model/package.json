@@ -1,7 +1,7 @@
 {
-  "name": "@fluid-example/multiview-coordinate-model",
+  "name": "@fluid-example/multiview-polygon-model",
   "version": "0.22.0",
-  "description": "Coordinate model for multiview sample",
+  "description": "Polygon model for multiview sample",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
