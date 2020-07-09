@@ -8,7 +8,7 @@ First go to the /container directory and `npm run start` to see the demo in acti
 
 ## ICoordinate, IConstellation (/interface)
 
-The first two scenarios only use the `ICoordinate` interface, which is how we'll make clean separation between our view and model.  It defines the full API surface needed to interact with a 2d coordinate.
+The first two scenarios only use the `ICoordinate` interface, which is how we'll make clean separation between our coordinate's view and model.  It defines the full API surface needed to interact with a 2d coordinate.
 
 The third scenario also uses `IConstellation`, which defines an API surface for a model which nests `ICoordinates` (as "stars").
 
@@ -18,15 +18,15 @@ The third scenario also uses `IConstellation`, which defines an API surface for 
 
 ## ICoordinate-based views (/slider-coordinate-view, /plot-coordinate-view, /triangle-view)
 
-These three views in this example utilize `ICoordinate`s in different ways to modify and render the underlying data.  The slider view allows manipulation of a coordinate using sliders.  The plot view can render a coordinate in 2d space, while the triangle view takes three separate `ICoordinate`s to render a triangle.
+These three views utilize `ICoordinate`s in different ways to modify and render the underlying data.  The slider view allows manipulation of a coordinate using sliders.  The plot view can render a coordinate in 2d space, while the triangle view takes three separate `ICoordinate`s to render a triangle.
 
 ## Constellation (/constellation-model)
 
-`Constellation` is a component that implements the `IConstellation` interface, and its purpose is to maintain a collection of `Coordinates` ("stars").  It offers API surface to add coordinates, retrieve them, and observe changes to the set.
+`Constellation` is a component that implements the `IConstellation` interface, and its purpose is to maintain a collection of `Coordinates` ("stars") which are nested components.  It offers API surface to add coordinates, retrieve them, and observe changes to the set.
 
 ## ConstellationView (/constellation-view)
 
-`ConstellationView` is a nested view that pairs with the nested model of an `IConstellation`.  It is able to access the nested `ICoordinate`s via the `IConstellation`'s public API surface.  After retrieving the `ICoordinate`s, it binds them to views.
+`ConstellationView` is a nested view that pairs with the nested model of an `IConstellation`.  It is able to access the nested `ICoordinate`s via the `IConstellation`'s public API surface.  After retrieving the `ICoordinate`s, it binds them to views of its own choosing.
 
 ## The container (/container)
 

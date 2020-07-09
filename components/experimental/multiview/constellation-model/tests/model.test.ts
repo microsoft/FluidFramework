@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// import { Coordinate } from "..";
+// import { Constellation } from "..";
 
-describe("Coordinate", function() {
+describe("Constellation", function() {
     it("Runs this test", function() {
     });
 });

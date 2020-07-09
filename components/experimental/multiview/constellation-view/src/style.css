@@ -12,3 +12,8 @@
     position: absolute;
     background-color: #ee0;
 }
+
+.slider-views {
+    display: grid;
+    grid-template-columns: repeat(3, fit-content(100px));
+}

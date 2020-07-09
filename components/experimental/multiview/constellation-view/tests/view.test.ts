@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// import { PlotCoordinateView } from "..";
+// import { ConstellationView } from "..";
 
-describe("PlotCoordinateView", function() {
+describe("ConstellationView", function() {
     it("Runs this test", function() {
     });
 });

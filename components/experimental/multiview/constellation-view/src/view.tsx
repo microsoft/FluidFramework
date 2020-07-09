@@ -20,6 +20,7 @@ interface IStarViewProps {
 
 /**
  * StarView is a React component that renders a single coordinate as a dot (representing a star).
+ * It also takes event listeners in its props to support drag/drop scenarios, which will be registered on the star.
  */
 const StarView: React.FC<IStarViewProps> = (props: IStarViewProps) => {
     const [x, setX] = React.useState(props.model.x);
@@ -102,7 +103,9 @@ export const ConstellationView: React.FC<IConstellationViewProps> = (props: ICon
             <div className="constellation-view">
                 { starViews }
             </div>
-            { sliderViews }
+            <div className="slider-views">
+                { sliderViews }
+            </div>
         </div>
     );
 };
