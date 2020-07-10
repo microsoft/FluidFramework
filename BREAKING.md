@@ -7,6 +7,7 @@
 - [IComponentHTMLVisual removed](#IComponentHTMLVisual-removed)
 - [IComponentReactViewable deprecated](#IComponentReactViewable-deprecated)
 - [Forward Compat For Loader IComponent Interfaces](#Forward-Compat-For-Loader-IComponent-Interfaces)
+- [Add Undefined to getAbsoluteUrl return type](#Add-Undefined-to-getAbsoluteUrl-return-type)
 
 ### Deprecated `path` from `IComponentHandleContext`
 Deprecated the `path` field from the interface `IComponentHandleContext`. This means that `IComponentHandle` will not have this going forward as well.
@@ -50,6 +51,7 @@ The `IComponentHTMLVisual` interface was deprecated in 0.21, and is now removed 
 ### IComponentReactViewable deprecated
 The `IComponentReactViewable` interface is deprecated and will be removed in an upcoming release.  For multiview scenarios, instead use a pattern like the one demonstrated in the sample in /components/experimental/multiview.  This sample demonstrates how to create multiple views for a component.
 
+
 ### Forward Compat For Loader IComponent Interfaces
 
 As part of the Fluid Data Library (FDL) and Fluid Component Library (FCL) split we will be renaming a significant number of out interfaces. Some of these interfaces are used across the loader -> runtime boundary. For these interfaces we have introduced the newly renamed interfaces in this release. This will allow Host's to implment forward compatbitiy for these interfaces, so they are not broken when the implementations themselves are renamed.
@@ -83,6 +85,24 @@ For example
         const fluidObject = response.value as IComponent & IFluidObject;
         return fluidObject.IComponentHTMLView ?? fluidObject.IFluidHTMLView.
 
+```
+
+### Add Undefined to getAbsoluteUrl return type
+
+getAbsoluteUrl on the container runtime and component context now returns `string | undefined`. `undefined` will be returned if the container or component is not attached. You can determine if  a component is attached and get its url with the below snippit:
+```typescript
+import { waitForAttach } from "@fluidframework/aqueduct";
+
+
+protected async componentHasInitialized() {
+        waitForAttach(this.runtime)
+            .then(async () => {
+                const url = await this.context.getAbsoluteUrl(this.url);
+                this._absoluteUrl = url;
+                this.emit("stateChanged");
+            })
+            .catch(console.error);
+}
 ```
 
 ## 0.21 Breaking Changes
