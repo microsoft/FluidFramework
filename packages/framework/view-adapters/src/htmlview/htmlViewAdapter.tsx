@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
@@ -35,7 +35,7 @@ export class HTMLViewAdapter implements IComponentHTMLView {
     /**
      * @param view - The view to adapt into an IComponentHTMLView
      */
-    constructor(private readonly view: IComponent) { }
+    constructor(private readonly view: IComponent & IFluidObject) { }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions) {
         // Note that if we're already mounted, this can cause multiple rendering with possibly unintended effects.

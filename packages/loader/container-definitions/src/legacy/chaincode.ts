@@ -9,6 +9,7 @@ import {
     IComponentConfiguration,
     IRequest,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -259,7 +260,7 @@ export interface IComponentTokenProvider extends IProvideComponentTokenProvider 
 }
 
 export interface IFluidModule {
-    fluidExport: IComponent;
+    fluidExport: IComponent & IFluidObject;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
@@ -283,5 +284,5 @@ declare module "@fluidframework/component-core-interfaces" {
         IProvideRuntimeFactory &
         IProvideComponentTokenProvider &
         IProvideMessageScheduler>> { }
+/* eslint-enable @typescript-eslint/no-empty-interface */
 }
-    /* eslint-enable @typescript-eslint/no-empty-interface */

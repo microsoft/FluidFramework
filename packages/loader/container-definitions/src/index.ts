@@ -5,7 +5,7 @@
 
 export * from "./audience";
 export * from "./blobs";
-export * from "./chaincode";
+export * from "./legacy/chaincode";
 export * from "./deltas";
 export * from "./error";
 export * from "./loader";
