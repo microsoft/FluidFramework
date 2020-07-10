@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 
