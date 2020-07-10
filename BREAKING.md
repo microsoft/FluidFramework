@@ -91,24 +91,17 @@ For example
 
 getAbsoluteUrl on the container runtime and component context now returns `string | undefined`. `undefined` will be returned if the container or component is not attached. You can determine if  a component is attached and get its url with the below snippit:
 ```typescript
-protected async componentHasInitialized() {
-    if (!this.context.isLocal()) {
-        this._absoluteUrl = await this.context.getAbsoluteUrl(this.url);
-    }
+import { waitForAttach } from "@fluidframework/aqueduct";
 
-    if (this._absoluteUrl === undefined) {
-        this.runtime.on(
-            "collaborating",
-            () => {
-                this.context.getAbsoluteUrl(this.url)
-                    .then((url) => {
-                        this._absoluteUrl = url;
-                        this.emit("stateChanged");
-                        return undefined;
-                    })
-                    .catch(() => { });
-            });
-    }
+
+protected async componentHasInitialized() {
+        waitForAttach(this.runtime)
+            .then(async () => {
+                const url = await this.context.getAbsoluteUrl(this.url);
+                this._absoluteUrl = url;
+                this.emit("stateChanged");
+            })
+            .catch(console.error);
 }
 ```
 
