@@ -1287,6 +1287,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         // The local object has already been attached
         if (local) {
             assert(this.pendingAttach.has(attachMessage.id));
+            this.contexts.get(attachMessage.id)?.emit("attached");
             this.pendingAttach.delete(attachMessage.id);
             return;
         }
@@ -1334,11 +1335,12 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         assert(this.notBoundedComponentContexts.has(componentRuntime.id),
             "Component to be binded should be in not bounded set");
         this.notBoundedComponentContexts.delete(componentRuntime.id);
-        const context = this.getContext(componentRuntime.id);
+        const context = this.getContext(componentRuntime.id) as LocalComponentContext;
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients but we do need to submit op if container forced us to do so.
         if (this.attachState !== AttachState.Detached) {
+            context.emit("attaching");
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
@@ -1378,6 +1380,26 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         const context = this.contexts.get(id)!;
         assert(context);
         return context;
+    }
+
+    public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+        let eventName: string;
+        if (attachState === AttachState.Attaching) {
+            // 0.21 back-compat attachState
+            // Currently the runtime attach state is decided by upper layers, so it already turns to attaching here.
+            // It does not need to depend once we remove the back-compat. We can change the below asserts after that.
+            assert(this.attachState === AttachState.Attaching, "Should move to attaching state from detached only");
+            eventName = "attaching";
+        } else {
+            assert(this.attachState === AttachState.Attached, "Should move to attached state from attaching only");
+            eventName = "attached";
+        }
+        for (const context of this.contexts.values()) {
+            // Fire only for bounded components.
+            if (!this.notBoundedComponentContexts.has(context.id)) {
+                context.emit(eventName);
+            }
+        }
     }
 
     public createSummary(): ISummaryTree {

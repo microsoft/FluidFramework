@@ -14,6 +14,7 @@ import {
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { MultiUrlResolver, MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
 import { IRequest, IResponse, IComponent } from "@fluidframework/component-core-interfaces";
@@ -46,6 +47,8 @@ class ProxyRuntime implements IRuntime {
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     createSummary(): ISummaryTree {
         throw new Error("Method not implemented.");
+    }
+    setAttachState(state: AttachState.Attaching | AttachState.Attached) {
     }
 }
 

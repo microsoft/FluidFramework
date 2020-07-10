@@ -44,6 +44,7 @@ describe("Component Context Tests", () => {
             containerRuntime = {
                 IComponentRegistry: registry,
                 notifyComponentInstantiated: (c) => { },
+                on: (event, listener) => {},
             } as ContainerRuntime;
         });
 
@@ -107,6 +108,7 @@ describe("Component Context Tests", () => {
             containerRuntime = {
                 IComponentRegistry: registryWithSubRegistries,
                 notifyComponentInstantiated: (c) => { },
+                on: (event, listener) => {},
             } as ContainerRuntime;
             localComponentContext = new LocalComponentContext(
                 "Test1",
@@ -157,6 +159,7 @@ describe("Component Context Tests", () => {
             containerRuntime = {
                 IComponentRegistry: registry,
                 notifyComponentInstantiated: (c) => { },
+                on: (event, listener) => {},
             } as ContainerRuntime;
         });
 
