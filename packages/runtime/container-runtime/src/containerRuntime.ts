@@ -1395,7 +1395,10 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             eventName = "attached";
         }
         for (const context of this.contexts.values()) {
-            context.emit(eventName);
+            // Fire only for bounded components.
+            if (!this.notBoundedComponentContexts.has(context.id)) {
+                context.emit(eventName);
+            }
         }
     }
 
