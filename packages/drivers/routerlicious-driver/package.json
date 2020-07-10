@@ -65,7 +65,7 @@
     "eslint-plugin-prefer-arrow": "~1.1.7",
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
-    "mocha": "^5.2.0",
+    "mocha": "^8.0.1",
     "nock": "^10.0.1",
     "rimraf": "^2.6.2",
     "typescript": "~3.7.4",
