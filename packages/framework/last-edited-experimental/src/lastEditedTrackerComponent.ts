@@ -9,7 +9,7 @@ import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
 import {
     IComponentLastEditedTracker,
     IProvideComponentLastEditedTracker,
-} from "./interfaces";
+} from "./legacy";
 import { LastEditedTracker } from "./lastEditedTracker";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires

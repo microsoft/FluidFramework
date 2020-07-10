@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./interfaces";
+export * from "./legacy";
 export * from "./lastEditedTracker";
 export * from "./lastEditedTrackerComponent";
 export * from "./setup";

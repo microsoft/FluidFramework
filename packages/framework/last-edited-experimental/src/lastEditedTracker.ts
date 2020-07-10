@@ -4,7 +4,7 @@
  */
 
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
-import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
+import { IComponentLastEditedTracker, ILastEditDetails } from "./legacy";
 
 /**
  * Tracks the last edit details such as the last edited user details and the last edited timestamp. The last edited
