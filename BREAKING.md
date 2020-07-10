@@ -6,7 +6,9 @@
 - [ContainerRuntime.load Request Handler Changes](#ContainerRuntime.load-Request-Handler-Changes)
 - [IComponentHTMLVisual removed](#IComponentHTMLVisual-removed)
 - [IComponentReactViewable deprecated](#IComponentReactViewable-deprecated)
+- [Forward Compat For Loader IComponent Interfaces](#Forward-Compat-For-Loader-IComponent-Interfaces)
 - [Add Undefined to getAbsoluteUrl return type](#Add-Undefined-to-getAbsoluteUrl-return-type)
+
 ### Deprecated `path` from `IComponentHandleContext`
 Deprecated the `path` field from the interface `IComponentHandleContext`. This means that `IComponentHandle` will not have this going forward as well.
 
@@ -48,6 +50,42 @@ The `IComponentHTMLVisual` interface was deprecated in 0.21, and is now removed 
 
 ### IComponentReactViewable deprecated
 The `IComponentReactViewable` interface is deprecated and will be removed in an upcoming release.  For multiview scenarios, instead use a pattern like the one demonstrated in the sample in /components/experimental/multiview.  This sample demonstrates how to create multiple views for a component.
+
+
+### Forward Compat For Loader IComponent Interfaces
+
+As part of the Fluid Data Library (FDL) and Fluid Component Library (FCL) split we will be renaming a significant number of out interfaces. Some of these interfaces are used across the loader -> runtime boundary. For these interfaces we have introduced the newly renamed interfaces in this release. This will allow Host's to implment forward compatbitiy for these interfaces, so they are not broken when the implementations themselves are renamed.
+
+- `IComponentLastEditedTracker` will become `IFluidLastEditedTracker`
+- `IComponentHTMLView` will become `IFluidHTMLView`
+- `IComponentMountableViewClass` will become `IFluidMountableViewClass`
+- `IComponentLoadable` will become `IFluidLoadable`
+- `IComponentRunnable` will become `IFluidRunnable`
+- `IComponentConfiguration` will become `IFluidConfiguration`
+- `IComponentRouter` will become `IFluidRouter`
+- `IComponentHandleContext` will become `IFluidHandleContext`
+- `IComponentHandle` will become `IFluidHandle`
+- `IComponentSerializer `will become `IFluidSerializer`
+- `IComponentTokenProvider` will become `IFluidTokenProvider`
+
+`IComponent` will also become `IFluidObject`, and the mime type for for requests will change from `fluid/component` to `fluid/object`
+
+To ensure forward compatability when accessing the above interfaces outside the context of a container e.g. from the host, you should use the nullish coalesing operator (??).
+
+For example
+``` typescript
+        if (response.status !== 200 ||
+            !(
+                response.mimeType === "fluid/component" ||
+                response.mimeType === "fluid/object"
+            )) {
+            return undefined;
+        }
+
+        const fluidObject = response.value as IComponent & IFluidObject;
+        return fluidObject.IComponentHTMLView ?? fluidObject.IFluidHTMLView.
+
+```
 
 ### Add Undefined to getAbsoluteUrl return type
 
