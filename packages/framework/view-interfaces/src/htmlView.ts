@@ -30,7 +30,7 @@ export interface IFluidHTMLView extends IProvideFluidHTMLView {
     /**
      * Views which need to perform cleanup (e.g. remove event listeners, timers, etc.) when
      * removed from the DOM should implement remove() and perform that cleanup within.
-     * Fluids which wish to remove views from the DOM should call remove() on the view
+     * Fluid Objects which wish to remove views from the DOM should call remove() on the view
      * before removing it from the DOM.
      */
     remove?(): void;
