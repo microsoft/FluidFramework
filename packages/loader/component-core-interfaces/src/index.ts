@@ -3,6 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import * as Legacy from "./legacy";
+ // keep the old types for back-compat
+ // for those that need to support both
+export { IComponent } from "./legacy/components";
+export * from "./legacy";
 
-export { Legacy };
+// when merging declarations the module path must match exactly. Because of this we need to explicitly export
+// IFluidObject as opposed to an export *
+export { IFluidObject } from "./fluidObject";
+export * from "./fluidLoadable";
+export * from "./fluidRouter";
+export * from "./handles";
+export * from "./serializer";

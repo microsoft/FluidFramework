@@ -4,17 +4,6 @@
  */
 import { IComponentHandle, IComponentHandleContext } from "./handles";
 
-/**
- * JSON serialized form of an IComponentHandle
- */
-export interface ISerializedHandle {
-    // Marker to indicate to JSON.parse that the object is a Fluid handle
-    type: "__fluid_handle__";
-
-    // URL to the object. Relative URLs are relative to the handle context passed to the stringify.
-    url: string;
-}
-
 export const IComponentSerializer: keyof IProvideComponentSerializer = "IComponentSerializer";
 
 export interface IProvideComponentSerializer {
