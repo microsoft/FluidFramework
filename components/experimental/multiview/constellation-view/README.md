@@ -1,3 +1,3 @@
-# @fluid-example/multiview-plot-coordinate-view
+# @fluid-example/multiview-constellation-view
 
-The plot coordinate view is a view onto a single `ICoordinate`, rendering it as a red dot in a square.
+The constellation view is a view onto an `IConstellation`, rendering it visually with a drag and drop interface plus sliders for each star.

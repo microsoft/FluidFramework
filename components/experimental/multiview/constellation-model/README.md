@@ -1,3 +1,3 @@
-# @fluid-example/multiview-coordinate-model
+# @fluid-example/multiview-constellation-model
 
-The coordinate model is our implementation of the `ICoordinate` interface.
+The constellation model is our implementation of the `IConstellation` interface.
