@@ -1432,7 +1432,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         if (this.context.getAbsoluteUrl === undefined) {
             throw new Error("Driver does not implement getAbsoluteUrl");
         }
-        if (!this.isAttached()) {
+        if (this.attachState !== AttachState.Attached) {
             return undefined;
         }
         return this.context.getAbsoluteUrl(relativeUrl);

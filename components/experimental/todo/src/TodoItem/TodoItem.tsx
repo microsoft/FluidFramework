@@ -4,7 +4,7 @@
  */
 
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import { PrimedComponent, PrimedComponentFactory, onAttach } from "@fluidframework/aqueduct";
+import { PrimedComponent, PrimedComponentFactory, waitForAttach } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import {
     IComponentHandle, IComponentLoadable,
@@ -98,14 +98,13 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
             }
         });
 
-        onAttach(this.runtime, ()=>{
-            this.context.getAbsoluteUrl(this.url)
-            .then((url) => {
+        waitForAttach(this.runtime)
+            .then(async () => {
+                const url = await this.context.getAbsoluteUrl(this.url);
                 this._absoluteUrl = url;
                 this.emit("stateChanged");
             })
             .catch(console.error);
-        });
     }
 
     public static getFactory() { return TodoItem.factory; }

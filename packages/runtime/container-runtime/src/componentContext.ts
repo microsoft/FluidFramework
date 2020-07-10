@@ -519,7 +519,7 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
-        if (this.isLocal()) {
+        if (this.attachState !== AttachState.Attached) {
             return undefined;
         }
         return this._containerRuntime.getAbsoluteUrl(relativeUrl);
