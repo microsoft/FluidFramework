@@ -3,4 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./main";
+export * from "./interface";
+export * from "./model";
+export * from "./view";

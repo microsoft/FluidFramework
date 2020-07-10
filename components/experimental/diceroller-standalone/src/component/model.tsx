@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-
 import {
     PrimedComponent,
     PrimedComponentFactory,
@@ -15,55 +13,10 @@ import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 
+import { IDiceRoller } from "./interface";
+import { DiceRollerView } from "./view";
+
 const diceValueKey = "diceValue";
-
-/**
- * IDiceRoller describes the public API surface for our dice roller component.
- */
-interface IDiceRoller extends EventEmitter {
-    /**
-     * Get the dice value as a number.
-     */
-    readonly value: number;
-
-    /**
-     * Roll the dice.  Will cause a "diceRolled" event to be emitted.
-     */
-    roll: () => void;
-
-    /**
-     * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
-     */
-    on(event: "diceRolled", listener: () => void): this;
-}
-
-interface IDiceRollerViewProps {
-    model: IDiceRoller;
-}
-
-const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewProps) => {
-    const [diceValue, setDiceValue] = React.useState(props.model.value);
-
-    React.useEffect(() => {
-        const onDiceRolled = () => {
-            setDiceValue(props.model.value);
-        };
-        props.model.on("diceRolled", onDiceRolled);
-        return () => {
-            props.model.off("diceRolled", onDiceRolled);
-        };
-    }, [props.model]);
-
-    // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-    const diceChar = String.fromCodePoint(0x267F + diceValue);
-
-    return (
-        <div>
-            <span style={{ fontSize: 50 }}>{diceChar}</span>
-            <button onClick={props.model.roll}>Roll</button>
-        </div>
-    );
-};
 
 /**
  * The DiceRoller is our implementation of the IDiceRoller interface.
