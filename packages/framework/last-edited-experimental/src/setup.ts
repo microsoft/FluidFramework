@@ -6,7 +6,9 @@
 import { ISequencedDocumentMessage, IQuorum } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType  } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
+import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
+import { ILastEditDetails, IFluidLastEditedTracker } from "./interfaces";
+import { IComponentLastEditedTracker } from "./legacy";
 
 // Default implementation of the shouldDiscardMessageFn function below that tells that all messages other
 // than "Attach" and "Operation" type messages should be discarded.
@@ -55,7 +57,7 @@ export async function setupLastEditedTrackerForContainer(
     shouldDiscardMessageFn: (message: ISequencedDocumentMessage) => boolean = shouldDiscardMessageDefault,
 ) {
     // eslint-disable-next-line prefer-const
-    let lastEditedTracker: IComponentLastEditedTracker;
+    let lastEditedTracker: IComponentLastEditedTracker | IFluidLastEditedTracker | undefined;
     // Stores the last edit details until the component has loaded.
     let pendingLastEditDetails: ILastEditDetails | undefined;
 
@@ -92,8 +94,8 @@ export async function setupLastEditedTrackerForContainer(
     }
 
     // Get the last edited tracker from the component.
-    const component = response.value;
-    lastEditedTracker = component.IComponentLastEditedTracker;
+    const component = response.value as IComponent & IFluidObject;
+    lastEditedTracker = component.IComponentLastEditedTracker ?? component.IFluidLastEditedTracker;
     if (lastEditedTracker === undefined) {
         throw new Error(`Component with id ${componentId} does not have IComponentLastEditedTracker.`);
     }
