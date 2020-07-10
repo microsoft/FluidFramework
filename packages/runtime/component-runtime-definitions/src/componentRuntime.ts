@@ -65,7 +65,7 @@ export interface IComponentRuntime extends
     readonly attachState: AttachState;
 
     on(
-        event: "disconnected" | "dispose" | "leader" | "notleader" | "collaborating",
+        event: "disconnected" | "dispose" | "leader" | "notleader" | "attaching" | "attached",
         listener: () => void,
     ): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;

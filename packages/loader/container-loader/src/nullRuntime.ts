@@ -15,6 +15,7 @@ import {
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import {
     ISequencedDocumentMessage,
@@ -72,6 +73,10 @@ export class NullRuntime extends EventEmitter implements IRuntime {
             tree: {},
             type: SummaryType.Tree,
         };
+    }
+
+    public setAttachState(attachState: AttachState.Attaching | AttachState.Attached) {
+        throw new Error("Null Runtime should not be attached");
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
