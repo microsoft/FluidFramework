@@ -10,7 +10,7 @@ import * as ReactDOM from "react-dom";
 
 /**
  * Abstracts mounting of views for usage outside of their bundle.  Supports React elements, as well as
- * components that implement IComponentReactViewable or IComponentHTMLView.
+ * components that implement IComponentHTMLView.
  *
  * The MountableView must be applied from within the same bundle that provides the view, and then that MountableView
  * can be used by a separate bundle.  Attempting to apply a MountableView to a view that was retrieved from a separate
@@ -25,7 +25,6 @@ export class MountableView implements IComponentMountableView {
     public static canMount(view: IComponent) {
         return (
             React.isValidElement(view)
-            || view.IComponentReactViewable !== undefined
             || view.IComponentHTMLView !== undefined
         );
     }
@@ -42,8 +41,8 @@ export class MountableView implements IComponentMountableView {
     private htmlView: IComponentHTMLView | undefined;
 
     /**
-     * If the viewProvider is a React component or IComponentReactViewable we will retain a reference to the
-     * React component (creating one if it's a ReactViewable), which we will retain across rendering/removal.
+     * If the viewProvider is a React component we will retain a reference to the React component across
+     * rendering/removal.
      */
     private reactView: JSX.Element | undefined;
 
@@ -76,18 +75,14 @@ export class MountableView implements IComponentMountableView {
             return;
         }
 
-        // The ReactDOM.render calls won't work if the adapted component is from a separate bundle.
+        // The ReactDOM.render call won't work if the adapted component is from a separate bundle.
         // This is the usage scenario in webpack-component-loader currently in the case where the package we're
         // loading exports an IComponentFactory (rather than an IRuntimeFactory) because it will wrap the
-        // component in a factory of its own creation.  So, prioritizing these below IComponentHTMLView
+        // component in a factory of its own creation.  So, prioritizing this below IComponentHTMLView
         // temporarily, so that we have the best chance of cross-bundle adaptation.
         // Try to get a React view if we don't have one already.
-        if (this.reactView === undefined) {
-            if (React.isValidElement(this.view)) {
-                this.reactView = this.view;
-            } else {
-                this.reactView = this.view.IComponentReactViewable?.createJSXElement();
-            }
+        if (this.reactView === undefined && React.isValidElement(this.view)) {
+            this.reactView = this.view;
         }
         // Render with React if possible.
         if (this.reactView !== undefined) {

@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/component-core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { TextBoxInstantiationFactory } from "../TextBox";
@@ -39,16 +39,12 @@ const innerComponentKey = "innerId";
  * - Link to open component in separate tab
  * - Button to remove entry
  */
-export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
-    implements
-    IComponentHTMLView,
-    IComponentReactViewable {
+export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> implements IComponentHTMLView {
     private text: SharedString;
     private innerIdCell: ISharedCell;
     private _absoluteUrl: string | undefined;
 
     public get IComponentHTMLView() { return this; }
-    public get IComponentReactViewable() { return this; }
     public get absoluteUrl() { return this._absoluteUrl; }
 
     /**
@@ -133,28 +129,12 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
 
     public render(div: HTMLElement) {
         ReactDOM.render(
-            this.createJSXElement(),
+            <TodoItemView todoItemModel={this} />,
             div,
         );
     }
 
     // end IComponentHTMLView
-
-    // start IComponentReactViewable
-
-    /**
-     * If our caller supports React they can query against the IComponentReactViewable
-     * Since this returns a JSX.Element it allows for an easier model.
-     */
-    public createJSXElement(): JSX.Element {
-        return (
-            <TodoItemView
-                todoItemModel={this}
-            />
-        );
-    }
-
-    // end IComponentReactViewable
 
     // start public API surface for the TodoItem model, used by the view
 

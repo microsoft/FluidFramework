@@ -5,14 +5,15 @@
 
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
-    componentRuntimeRequestHandler,
     ComponentRegistry,
     ContainerRuntime,
-    RuntimeRequestHandler,
 } from "@fluidframework/container-runtime";
 import {
     IContainerRuntime,
 } from "@fluidframework/container-runtime-definitions";
+import {
+    RuntimeRequestHandler, RuntimeRequestHandlerBuilder, componentRuntimeRequestHandler,
+} from "@fluidframework/request-handler";
 import {
     IComponentRegistry,
     IProvideComponentRegistry,
@@ -62,13 +63,14 @@ export class BaseContainerRuntimeFactory implements
         const scope: any = context.scope;
         scope.IComponentDependencySynthesizer = dc;
 
+        const builder = new RuntimeRequestHandlerBuilder();
+        builder.pushHandler(...this.requestHandlers);
+        builder.pushHandler(componentRuntimeRequestHandler);
+
         const runtime = await ContainerRuntime.load(
             context,
             this.registryEntries,
-            [
-                ...this.requestHandlers,
-                componentRuntimeRequestHandler,
-            ],
+            async (req,rt) => builder.handleRequest(req, rt),
             undefined,
             scope);
 

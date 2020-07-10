@@ -64,8 +64,7 @@
                 "deps": [
                     "Protocol-Utils",
                     "Driver-Definitions",
-                    "Telemetry-Utils",
-                    "@fluidframework/container-definitions"
+                    "Telemetry-Utils"
                 ]
             },
             "Framework-Utils": {
@@ -121,8 +120,7 @@
                 ],
                 "deps": [
                     "Driver-Utils",
-                    "@fluidframework/component-core-interfaces",
-                    "@fluidframework/container-definitions"
+                    "@fluidframework/component-core-interfaces"
                 ]
             },
             "Loader": {
@@ -257,8 +255,7 @@
                 ],
                 "deps": [
                     "Driver",
-                    "Server-Shared-Utils",
-                    "@fluidframework/container-definitions"
+                    "Server-Shared-Utils"
                 ]
             },
             "Routerlicious-Server": {

@@ -471,6 +471,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Set the state as attaching as we are starting the process of attaching container.
         this._attachState = AttachState.Attaching;
+        this.emit("attaching");
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
         const appSummary: ISummaryTree = this.context.createSummary();
@@ -478,6 +479,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Protocol Handler is undefined");
         }
         const protocolSummary = this.protocolHandler.captureSummary();
+
+        // Back compat / staging - to be removed with next server version bump
+        if (protocolSummary.tree.attributes === undefined) {
+            protocolSummary.tree.attributes = protocolSummary.tree[".attributes"];
+            delete protocolSummary.tree[".attributes"];
+        }
+
         if (!request.headers?.[CreateNewHeader.createNew]) {
             request.headers = {
                 ...request.headers,
@@ -513,6 +521,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // there just isn't a blob manager
             this.blobManager = await this.loadBlobManager(this.storageService, undefined);
             this._attachState = AttachState.Attached;
+            this.emit("attached");
             // We know this is create new flow.
             this._existing = false;
             this._parentBranch = this._id;
@@ -989,6 +998,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             };
         }
 
+        // Back-compat: old docs would have ".attributes" instead of "attributes"
         const attributesHash = ".protocol" in tree.trees
             ? tree.trees[".protocol"].blobs.attributes
             : tree.blobs[".attributes"];
@@ -1343,8 +1353,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             case MessageType.Operation:
             case MessageType.RemoteHelp:
             case MessageType.Summarize:
-            case "attach": // legacy, to be removed with ContainerRuntime's legacyFormat set to false
-            case "chunkedOp": // legacy, to be removed with ContainerRuntime's legacyFormat set to false
+            // Back-compat: <= 0.21.0
+            // Legacy, to be removed in next version(s)
+            case "attach":
+            case "chunkedOp":
                 break;
             default:
                 this.close(CreateContainerError(`Runtime can't send arbitrary message type: ${type}`));

@@ -4,13 +4,13 @@
  */
 
 import * as assert from "assert";
-import { initializeLocalContainer, LocalCodeLoader } from "@fluidframework/test-utils";
+import { DocumentDeltaEventManager, initializeLocalContainer, LocalCodeLoader } from "@fluidframework/test-utils";
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { UpgradeManager } from "@fluidframework/base-host";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { ICodeLoader, IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager, TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 

@@ -50,7 +50,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluid-internal/experimental-creation-driver": "^0.22.0",
     "@fluid-internal/test-loader-utils": "^0.22.0",
     "@fluidframework/agent-scheduler": "^0.22.0",
     "@fluidframework/aqueduct": "^0.22.0",
@@ -80,6 +79,7 @@
     "@fluidframework/ordered-collection": "^0.22.0",
     "@fluidframework/protocol-definitions": "^0.1008.0",
     "@fluidframework/register-collection": "^0.22.0",
+    "@fluidframework/request-handler": "^0.22.0",
     "@fluidframework/runtime-definitions": "^0.22.0",
     "@fluidframework/sequence": "^0.22.0",
     "@fluidframework/server-local-server": "^0.1008.0",
@@ -102,7 +102,7 @@
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
     "make-promises-safe": "^5.1.0",
-    "mocha": "^5.2.0",
+    "mocha": "^8.0.1",
     "mocha-junit-reporter": "^1.18.0",
     "nock": "^10.0.1",
     "nyc": "^15.0.0",

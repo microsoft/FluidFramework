@@ -16,7 +16,7 @@ export interface IReactViewAdapterProps {
 
 /**
  * Abstracts rendering of views as a React component.  Supports React elements, as well as
- * components that implement IComponentReactViewable or IComponentHTMLView.
+ * components that implement IComponentHTMLView.
  *
  * If the component is none of these, we render nothing.
  */
@@ -28,7 +28,6 @@ export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
     public static canAdapt(view: IComponent) {
         return (
             React.isValidElement(view)
-            || view.IComponentReactViewable !== undefined
             || view.IComponentHTMLView !== undefined
         );
     }
@@ -43,12 +42,6 @@ export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
 
         if (React.isValidElement(this.props.view)) {
             this.element = this.props.view;
-            return;
-        }
-
-        const reactViewable = this.props.view.IComponentReactViewable;
-        if (reactViewable !== undefined) {
-            this.element = reactViewable.createJSXElement();
             return;
         }
 

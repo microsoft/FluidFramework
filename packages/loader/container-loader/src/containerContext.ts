@@ -185,6 +185,20 @@ export class ContainerContext implements IContainerContext {
         public readonly previousRuntimeState: IRuntimeState,
     ) {
         this.logger = container.subLogger;
+        this.attachListener();
+    }
+
+    private attachListener() {
+        this.container.once("attaching", () => {
+            if (this.runtime?.setAttachState !== undefined) {
+                this.runtime.setAttachState(AttachState.Attaching);
+            }
+        });
+        this.container.once("attached", () => {
+            if (this.runtime?.setAttachState !== undefined) {
+                this.runtime.setAttachState(AttachState.Attached);
+            }
+        });
     }
 
     public dispose(error?: Error): void {
@@ -211,11 +225,6 @@ export class ContainerContext implements IContainerContext {
      */
     public async snapshotRuntimeState(): Promise<IRuntimeState> {
         return this.runtime!.stop();
-    }
-
-    // 0.20 back-compat islocal
-    public isLocal(): boolean {
-        return !this.isAttached();
     }
 
     // 0.21 back-compat isAttached

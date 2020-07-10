@@ -214,11 +214,6 @@ export interface ISummaryTracker {
      */
     getId(): Promise<string | undefined>;
     /**
-     * Fetches the snapshot tree of the previously acked summary.
-     * back-compat: 0.14 uploadSummary
-     */
-    getSnapshotTree(): Promise<ISnapshotTree | undefined>;
-    /**
      * Updates the latest sequence number representing change to this node or subtree.
      * @param latestSequenceNumber - new latest sequence number
      */
@@ -287,7 +282,7 @@ export interface IComponentContext extends EventEmitter {
     readonly scope: IComponent;
     readonly summaryTracker: ISummaryTracker;
 
-    on(event: "leader" | "notleader", listener: () => void): this;
+    on(event: "leader" | "notleader" | "attaching" | "attached", listener: () => void): this;
 
     /**
      * Returns the current quorum.

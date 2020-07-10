@@ -7,12 +7,12 @@ import assert from "assert";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
+    DocumentDeltaEventManager,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,

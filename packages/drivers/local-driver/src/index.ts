@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./documentEventManager";
 export * from "./testDeltaStorageService";
 export * from "./testDocumentDeltaConnection";
 export * from "./testDocumentService";

@@ -7,8 +7,8 @@
 import assert from "assert";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
+import { RequestParser } from "@fluidframework/runtime-utils";
 import { componentRuntimeRequestHandler, createComponentResponse } from "../requestHandlers";
-import { RequestParser } from "../requestParser";
 
 describe("RequestParser", () => {
     describe("componentRuntimeRequestHandler", () => {

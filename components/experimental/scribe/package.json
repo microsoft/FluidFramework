@@ -52,7 +52,7 @@
     "axios": "^0.18.0",
     "bootstrap": "^3.3.7",
     "debug": "^4.1.1",
-    "lodash": "^4.17.11"
+    "lodash": "^4.17.19"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
