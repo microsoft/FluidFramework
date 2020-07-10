@@ -54,8 +54,9 @@ The `IComponentReactViewable` interface is deprecated and will be removed in an 
 - [IComponentHTMLVisual deprecated](#IComponentHTMLVisual-deprecated)
 - [createValueType removed from SharedMap and SharedDirectory](#createValueType-removed-from-SharedMap-and-SharedDirectory)
 - [Sequence snapshot format change](#Sequence-snapshot-format-change)
+- [isLocal api removed](#isLocal-api-removed)
+- [register/attach api renames on handles, components and dds](#register/attach-api-rename-on-handles,-components-and-dds)
 - [Error handling changes](#Error-handling-changes)
-
 
 ### Removed `@fluidframework/local-test-utils`
 Removed this package so classes like `TestHost` are no longer supported. Please contact us if there were dependencies on this or if any assistance in required to get rid of it.
@@ -65,6 +66,12 @@ The `IComponentHTMLVisual` interface is deprecated and will be removed in an upc
 
 ### createValueType removed from SharedMap and SharedDirectory
 The `createValueType()` method on `SharedMap` and `SharedDirectory` was deprecated in 0.20, and is now removed in 0.21.  If `Counter` functionality is required, the `@fluidframework/counter` DDS can be used for counter functionality.
+
+### isLocal api removed
+isLocal api is removed from the repo. It is now replaced with isAttached which tells that the entity is attached or getting attached to storage. So its meaning is opposite to isLocal.
+
+### register/attach api renames on handles, components and dds
+Register on dds and attach on component runtime is renamed to bindToContext(). attach on handles is renamed to attachGraph().
 
 ### Error handling changes
 ErrorType enum has been broken into 3 distinct enums / layers:
