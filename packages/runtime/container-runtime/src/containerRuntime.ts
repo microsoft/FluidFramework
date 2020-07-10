@@ -76,19 +76,12 @@ import {
     NamedComponentRegistryEntries,
     SchedulerType,
 } from "@fluidframework/runtime-definitions";
-import { ComponentSerializer, SummaryTracker, unreachableCase } from "@fluidframework/runtime-utils";
+import { ComponentSerializer, SummaryTracker, unreachableCase, RequestParser } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
 import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
-import {
-    componentRuntimeRequestHandler,
-    createLoadableComponentRuntimeRequestHandler,
-    RuntimeRequestHandler,
-} from "./requestHandlers";
-import { RequestParser } from "./requestParser";
-import { RuntimeRequestHandlerBuilder } from "./runtimeRequestHandlerBuilder";
 import { ISummarizerRuntime, Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
@@ -415,13 +408,6 @@ export class ScheduleManager {
 }
 
 export const schedulerId = SchedulerType;
-const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IContainerRuntime) => {
-        if (request.pathParts.length > 0 && request.pathParts[0] === schedulerId) {
-            return componentRuntimeRequestHandler(request, runtime);
-        }
-        return undefined;
-    };
 
 // Wraps the provided list of packages and augments with some system level services.
 class ContainerRuntimeComponentRegistry extends ComponentRegistry {
@@ -452,7 +438,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     public static async load(
         context: IContainerContext,
         registryEntries: NamedComponentRegistryEntries,
-        requestHandlers: RuntimeRequestHandler[] = [],
+        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IComponent = context.scope,
     ): Promise<ContainerRuntime> {
@@ -476,12 +462,8 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             componentRegistry,
             chunks,
             runtimeOptions,
-            containerScope);
-
-        runtime.requestHandler.pushHandler(
-            createLoadableComponentRuntimeRequestHandler(runtime.summarizer),
-            schedulerRuntimeRequestHandler,
-            ...requestHandlers);
+            containerScope,
+            requestHandler);
 
         // Create all internal components in first load.
         if (!context.existing) {
@@ -627,7 +609,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     private readonly summarizer: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
-    private readonly requestHandler = new RuntimeRequestHandlerBuilder();
     private readonly pendingStateManager: PendingStateManager;
 
     // Local copy of incomplete received chunks.
@@ -645,6 +626,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: true, enableWorker: false },
         private readonly containerScope: IComponent,
+        private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
     ) {
         super();
 
@@ -662,7 +644,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             this.deltaManager.initialSequenceNumber, // latestSequenceNumber - latest sequence number seen
         );
         this.summaryTreeConverter = new SummaryTreeConverter(true);
-
         // Extract components stored inside the snapshot
         const components = new Map<string, ISnapshotTree | string>();
         if (context.baseSnapshot) {
@@ -784,8 +765,49 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
-        // Otherwise defer to the app to handle the request
-        return this.requestHandler.handleRequest(request, this);
+        const requestParser = new RequestParser(request);
+
+        if (requestParser.pathParts.length === 1 && requestParser.pathParts[0] === "_summarizer") {
+            return {
+                status: 200,
+                mimeType: "fluid/component",
+                value: this.summarizer,
+            };
+        } else if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === schedulerId) {
+            const wait =
+                typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+
+            const component = await this.getComponentRuntime(requestParser.pathParts[0], wait) as IComponent;
+            if (component) {
+                const subRequest = requestParser.createSubRequest(1);
+                if (subRequest !== undefined) {
+                    assert(component.IComponentRouter);
+                    return component.IComponentRouter.request(subRequest);
+                } else {
+                    return {
+                        status: 200,
+                        mimeType: "fluid/component",
+                        value: component,
+                    };
+                }
+            } else {
+                return {
+                    status: 404,
+                    mimeType: "text/plain",
+                    value: `${schedulerId} not found`,
+                };
+            }
+        }
+
+        if (this.requestHandler !== undefined) {
+            return this.requestHandler(request, this);
+        }
+
+        return {
+            status: 404,
+            mimeType: "text/plain",
+            value: "resource not found",
+        };
     }
 
     /**
@@ -1265,6 +1287,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         // The local object has already been attached
         if (local) {
             assert(this.pendingAttach.has(attachMessage.id));
+            this.contexts.get(attachMessage.id)?.emit("attached");
             this.pendingAttach.delete(attachMessage.id);
             return;
         }
@@ -1312,11 +1335,12 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         assert(this.notBoundedComponentContexts.has(componentRuntime.id),
             "Component to be binded should be in not bounded set");
         this.notBoundedComponentContexts.delete(componentRuntime.id);
-        const context = this.getContext(componentRuntime.id);
+        const context = this.getContext(componentRuntime.id) as LocalComponentContext;
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients but we do need to submit op if container forced us to do so.
         if (this.attachState !== AttachState.Detached) {
+            context.emit("attaching");
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
@@ -1356,6 +1380,26 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         const context = this.contexts.get(id)!;
         assert(context);
         return context;
+    }
+
+    public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+        let eventName: string;
+        if (attachState === AttachState.Attaching) {
+            // 0.21 back-compat attachState
+            // Currently the runtime attach state is decided by upper layers, so it already turns to attaching here.
+            // It does not need to depend once we remove the back-compat. We can change the below asserts after that.
+            assert(this.attachState === AttachState.Attaching, "Should move to attaching state from detached only");
+            eventName = "attaching";
+        } else {
+            assert(this.attachState === AttachState.Attached, "Should move to attached state from attaching only");
+            eventName = "attached";
+        }
+        for (const context of this.contexts.values()) {
+            // Fire only for bounded components.
+            if (!this.notBoundedComponentContexts.has(context.id)) {
+                context.emit(eventName);
+            }
+        }
     }
 
     public createSummary(): ISummaryTree {

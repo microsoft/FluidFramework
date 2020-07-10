@@ -18,13 +18,13 @@ import {
 } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import {
-    componentRuntimeRequestHandler,
     ContainerRuntime,
     IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { componentRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
 import { createLocalLoader, DocumentDeltaEventManager, initializeLocalContainer } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
 
@@ -65,13 +65,18 @@ describe("loader/runtime compatibility", () => {
         componentFactory: IComponentFactory | old.IComponentFactory,
         runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): IRuntimeFactory => {
+        const builder = new RuntimeRequestHandlerBuilder();
+        builder.pushHandler(
+            componentRuntimeRequestHandler,
+            defaultComponentRuntimeRequestHandler("default"));
+
         return {
             get IRuntimeFactory() { return this; },
             instantiateRuntime: async (context: IContainerContext) => {
                 const runtime = await ContainerRuntime.load(
                     context,
                     [[type, Promise.resolve(componentFactory as IComponentFactory)]],
-                    [componentRuntimeRequestHandler, defaultComponentRuntimeRequestHandler("default")],
+                    async (req,rt) => builder.handleRequest(req,rt),
                     runtimeOptions,
                 );
                 if (!runtime.existing) {

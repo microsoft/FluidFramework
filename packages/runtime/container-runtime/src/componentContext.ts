@@ -155,10 +155,7 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public get attachState(): AttachState {
-        if (this.componentRuntime !== undefined) {
-            return this.componentRuntime.attachState;
-        }
-        return AttachState.Detached;
+        return this._attachState;
     }
 
     public readonly bindToContext: (componentRuntime: IComponentRuntimeChannel) => void;
@@ -167,6 +164,7 @@ export abstract class ComponentContext extends EventEmitter implements
     private pending: ISequencedDocumentMessage[] | undefined = [];
     private componentRuntimeDeferred: Deferred<IComponentRuntimeChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
+    protected _attachState: AttachState;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
@@ -180,6 +178,8 @@ export abstract class ComponentContext extends EventEmitter implements
         protected pkg?: readonly string[],
     ) {
         super();
+
+        this._attachState = existing ? AttachState.Attached : AttachState.Detached;
 
         this.bindToContext = (componentRuntime: IComponentRuntimeChannel) => {
             assert(this.bindState === BindState.NotBound);
@@ -666,6 +666,18 @@ export class LocalComponentContext extends ComponentContext {
         public readonly createProps?: any,
     ) {
         super(runtime, id, false, storage, scope, summaryTracker, BindState.NotBound, bindComponent, pkg);
+        this.attachListeners();
+    }
+
+    private attachListeners(): void {
+        this.once("attaching", () => {
+            assert.strictEqual(this.attachState, AttachState.Detached, "Should move from detached to attaching");
+            this._attachState = AttachState.Attaching;
+        });
+        this.once("attached", () => {
+            assert.strictEqual(this.attachState, AttachState.Attaching, "Should move from attaching to attached");
+            this._attachState = AttachState.Attached;
+        });
     }
 
     public generateAttachMessage(): IAttachMessage {
