@@ -65,7 +65,7 @@ export interface IFluidHandle<
     T = IFluidObject & IFluidLoadable
     > extends IFluidHandleContext, IProvideFluidHandle {
     /**
-     * Returns a promise to the FluidObject referenced by the handle.
+     * Returns a promise to the Fluid Object referenced by the handle.
      */
     get(): Promise<T>;
 }
