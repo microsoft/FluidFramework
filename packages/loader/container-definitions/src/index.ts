@@ -24,4 +24,5 @@ export * from "./loader";
 export * from "./fluidPackage";
 export * from "./fluidModule";
 export * from "./proxyLoader";
+export * from "./messageScheduler";
 export * from "./runtime";
