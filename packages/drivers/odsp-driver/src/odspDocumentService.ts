@@ -75,25 +75,21 @@ export class OdspDocumentService implements IDocumentService {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         const options = odspResolvedUrl.createNewOptions;
         if (options) {
-            const event = PerformanceEvent.start(logger,
+            odspResolvedUrl = await PerformanceEvent.timedExecAsync(
+                logger,
                 {
                     eventName: "CreateNew",
                     isWithSummaryUpload: false,
+                },
+                async (event) => {
+                    odspResolvedUrl = await createNewFluidFile(
+                        getStorageToken,
+                        await options.newFileInfoPromise,
+                        cache,
+                        logger);
+                    event.end({ docId: odspResolvedUrl.hashedDocumentId });
+                    return odspResolvedUrl;
                 });
-            try {
-                odspResolvedUrl = await createNewFluidFile(
-                    getStorageToken,
-                    await options.newFileInfoPromise,
-                    cache,
-                    logger);
-                const props = {
-                    docId: odspResolvedUrl.hashedDocumentId,
-                };
-                event.end(props);
-            } catch (error) {
-                event.cancel(undefined, error);
-                throw error;
-            }
         }
         return new OdspDocumentService(
             odspResolvedUrl,

@@ -61,31 +61,25 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         };
 
         const logger2 = ChildLogger.create(logger, "OdspDriver");
-        const event = PerformanceEvent.start(
+        return PerformanceEvent.timedExecAsync(
             logger2,
             {
                 eventName: "CreateNew",
                 isWithSummaryUpload: true,
+            },
+            async (event) => {
+                odspResolvedUrl = await createNewFluidFile(
+                    this.getStorageToken,
+                    newFileParams,
+                    this.nonPersistentCache,
+                    logger2,
+                    createNewSummary);
+                const docService = this.createDocumentService(odspResolvedUrl, logger);
+                event.end({
+                    docId: odspResolvedUrl.hashedDocumentId,
+                });
+                return docService;
             });
-
-        try {
-            odspResolvedUrl = await createNewFluidFile(
-                this.getStorageToken,
-                newFileParams,
-                this.nonPersistentCache,
-                logger2,
-                createNewSummary);
-            const props = {
-                docId: odspResolvedUrl.hashedDocumentId,
-            };
-
-            const docService = this.createDocumentService(odspResolvedUrl, logger);
-            event.end(props);
-            return docService;
-        } catch (error) {
-            event.cancel(undefined, error);
-            throw error;
-        }
     }
 
     /**

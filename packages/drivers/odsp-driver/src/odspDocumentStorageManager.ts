@@ -71,12 +71,6 @@ function convertOdspTree(tree: ITree) {
     return gitTree;
 }
 
-// Properties to associate with a snapshot fetch
-interface ObtainSnapshotPerfProps {
-    // Did the snapshot come from the cache or network?
-    method: "cache" | "network"
-}
-
 // An implementation of Promise.race that gives you the winner of the promise race
 async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{ index: number, value: T }> {
     return new Promise((resolve, reject) => {
@@ -148,21 +142,17 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
         this.checkSnapshotUrl();
 
-        const event = PerformanceEvent.start(this.logger, {
-            eventName: "createBlob",
-            size: file.length,
-        });
-
-        try {
-            // Future implementation goes here
-            // Need to wrap implementation with getWithRetryForTokenRefresh()
-            throw new Error("StandardDocumentStorageManager.createBlob() not implemented");
-        } catch (error) {
-            event.cancel({}, error);
-            throw error;
-        }
-
-        event.end();
+        return PerformanceEvent.timedExecAsync(
+            this.logger,
+            {
+                eventName: "createBlob",
+                size: file.length,
+            },
+            async () => {
+                // Future implementation goes here
+                // Need to wrap implementation with getWithRetryForTokenRefresh()
+                throw new Error("StandardDocumentStorageManager.createBlob() not implemented");
+            });
     }
 
     public async read(blobid: string): Promise<string> {
@@ -319,46 +309,46 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 if (refresh) {
                     cachedSnapshot = await this.fetchSnapshot(options, refresh);
                 } else {
-                    const obtainSnapshotEvent = PerformanceEvent.start(this.logger, { eventName: "ObtainSnapshot" });
-                    const cachedSnapshotP = this.cache.persistedCache.get(
-                        {
-                            file: this.fileEntry,
-                            type: "snapshot",
-                            key: "",
-                        },
-                        this.hostPolicy.summarizerClient ? snapshotExpirySummarizerOps : undefined,
-                    ) as Promise<IOdspSnapshot | undefined>;
+                    cachedSnapshot = await PerformanceEvent.timedExecAsync(
+                        this.logger,
+                        { eventName: "ObtainSnapshot" },
+                        async (event: PerformanceEvent) => {
+                            const cachedSnapshotP = this.cache.persistedCache.get(
+                                {
+                                    file: this.fileEntry,
+                                    type: "snapshot",
+                                    key: "",
+                                },
+                                this.hostPolicy.summarizerClient ? snapshotExpirySummarizerOps : undefined,
+                            ) as Promise<IOdspSnapshot | undefined>;
 
-                    if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
-                        const snapshotP = this.fetchSnapshot(options, refresh);
+                            let method: string;
+                            if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
+                                const snapshotP = this.fetchSnapshot(options, refresh);
 
-                        const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
-                        cachedSnapshot = promiseRaceWinner.value;
+                                const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
+                                cachedSnapshot = promiseRaceWinner.value;
 
-                        if (cachedSnapshot === undefined) {
-                            cachedSnapshot = await snapshotP;
-                        }
+                                if (cachedSnapshot === undefined) {
+                                    cachedSnapshot = await snapshotP;
+                                }
 
-                        const obtainSnapshotPerfProps: ObtainSnapshotPerfProps = {
-                            method: promiseRaceWinner.index === 0 && promiseRaceWinner.value !== undefined ? "cache" : "network",
-                        };
-                        obtainSnapshotEvent.end(obtainSnapshotPerfProps);
-                    } else {
-                        // Note: There's a race condition here - another caller may come past the undefined check
-                        // while the first caller is awaiting later async code in this block.
+                                method = promiseRaceWinner.index === 0 && promiseRaceWinner.value !== undefined ? "cache" : "network";
+                            } else {
+                                // Note: There's a race condition here - another caller may come past the undefined check
+                                // while the first caller is awaiting later async code in this block.
 
-                        cachedSnapshot = await cachedSnapshotP;
+                                cachedSnapshot = await cachedSnapshotP;
 
-                        const obtainSnapshotPerfProps: ObtainSnapshotPerfProps = {
-                            method: cachedSnapshot !== undefined ? "cache" : "network",
-                        };
+                                method =  cachedSnapshot !== undefined ? "cache" : "network";
 
-                        if (cachedSnapshot === undefined) {
-                            cachedSnapshot = await this.fetchSnapshot(options, refresh);
-                        }
-
-                        obtainSnapshotEvent.end(obtainSnapshotPerfProps);
-                    }
+                                if (cachedSnapshot === undefined) {
+                                    cachedSnapshot = await this.fetchSnapshot(options, refresh);
+                                }
+                            }
+                            event.end({ method });
+                            return cachedSnapshot;
+                        });
                 }
 
                 const odspSnapshot: IOdspSnapshot = cachedSnapshot;
@@ -469,27 +459,21 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${options}`, storageToken);
 
         // This event measures only successful cases of getLatest call (no tokens, no retries).
-        const event = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
-
-        let cachedSnapshot: IOdspSnapshot;
-        try {
+        const snapshot = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest" }, async (event) => {
             const response = await fetchHelper<IOdspSnapshot>(url, { headers });
-            cachedSnapshot = response.content;
-
-            const props = {
-                trees: cachedSnapshot.trees?.length ?? 0,
-                blobs: cachedSnapshot.blobs?.length ?? 0,
-                ops: cachedSnapshot.ops?.length ?? 0,
+            const content = response.content;
+            event.end({
+                trees: content.trees?.length ?? 0,
+                blobs: content.blobs?.length ?? 0,
+                ops: content.ops?.length ?? 0,
                 sprequestguid: response.headers.get("sprequestguid"),
                 sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
                 contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
                 bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
-            };
-            event.end(props);
-        } catch (error) {
-            event.cancel({}, error);
-            throw error;
-        }
+            });
+            return content;
+        });
+
         assert(this._snapshotCacheEntry === undefined);
         this._snapshotCacheEntry = {
             file: this.fileEntry,
@@ -498,18 +482,18 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         };
 
         // There maybe no snapshot - TreesLatest would return just ops.
-        const seqNumber: number = (cachedSnapshot.trees && (cachedSnapshot.trees[0] as any).sequenceNumber) ?? 0;
-        const seqNumberFromOps = cachedSnapshot.ops && cachedSnapshot.ops.length > 0 ?
-            cachedSnapshot.ops[0].sequenceNumber - 1 :
+        const seqNumber: number = (snapshot.trees && (snapshot.trees[0] as any).sequenceNumber) ?? 0;
+        const seqNumberFromOps = snapshot.ops && snapshot.ops.length > 0 ?
+        snapshot.ops[0].sequenceNumber - 1 :
             undefined;
 
         if (!Number.isInteger(seqNumber) || seqNumberFromOps !== undefined && seqNumberFromOps !== seqNumber) {
             this.logger.sendErrorEvent({ eventName: "fetchSnapshotError", seqNumber, seqNumberFromOps });
         } else {
-            this.cache.persistedCache.put(this._snapshotCacheEntry, cachedSnapshot, seqNumber);
+            this.cache.persistedCache.put(this._snapshotCacheEntry, snapshot, seqNumber);
         }
 
-        return cachedSnapshot;
+        return snapshot;
     }
 
     public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
