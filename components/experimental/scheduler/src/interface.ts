@@ -11,7 +11,7 @@ import {
     FluidStateUpdateFunction,
     SyncedComponent,
 } from "@fluidframework/react";
-import { SharedObjectSequence, SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 
@@ -51,18 +51,6 @@ export interface IPersonFluidState extends IFluidFunctionalComponentFluidState {
 
 export interface IComment {
     message: string;
-}
-
-export interface ICommentViewState extends IFluidFunctionalComponentViewState {
-    comments: IComment[];
-}
-
-export interface ICommentFluidState extends IFluidFunctionalComponentFluidState {
-    comments: SharedObjectSequence<IComment>;
-}
-
-export interface ICommentReducer extends IFluidReducer<ICommentViewState, ICommentFluidState, IFluidDataProps> {
-    add: FluidStateUpdateFunction<ICommentViewState,ICommentFluidState,IFluidDataProps>
 }
 
 export interface IPersonReducer extends IFluidReducer<IPersonViewState, IPersonFluidState, IFluidDataProps> {

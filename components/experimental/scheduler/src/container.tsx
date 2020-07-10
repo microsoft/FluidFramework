@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { IFluidDataProps, useReducerFluid } from "@fluidframework/react";
+import { IFluidDataProps, useReducerFluid, usePureSyncedArrayReducerFluid } from "@fluidframework/react";
 
 import { PrimedContext } from "./context";
 import {
@@ -12,11 +12,9 @@ import {
     IPersonViewState,
     IPersonFluidState,
     IPersonReducer,
-    ICommentViewState,
-    ICommentFluidState,
-    ICommentReducer,
+    IComment,
 } from "./interface";
-import { defaultDates, PersonReducer, CommentReducer } from "./data";
+import { defaultDates, PersonReducer } from "./data";
 import { View } from "./view";
 
 export function Container(
@@ -35,18 +33,10 @@ export function Container(
         selector: {},
     }, { people: new Map(), dates: defaultDates });
 
-    const [commentState, commentReducer] = useReducerFluid<
-        ICommentViewState,
-        ICommentFluidState,
-        ICommentReducer,
-        {},
-        IFluidDataProps
-    >({
-        syncedComponent: props.syncedComponent,
-        syncedStateId: "comments",
-        reducer: CommentReducer,
-        selector: {},
-    }, { comments: [] });
+    const [commentState, commentReducer] = usePureSyncedArrayReducerFluid<IComment>(
+        props.syncedComponent,
+        "comments",
+    );
 
     return (
         <PrimedContext.Provider value={{

@@ -143,7 +143,7 @@ export function View() {
                     <PrimaryButton
                         text="Submit"
                         onClick={() => {
-                            commentReducer.add.function(commentState, currentComment);
+                            commentReducer.add({ message: currentComment });
                             setCurrentComment("");
                         }}
                     />
@@ -168,7 +168,7 @@ export function View() {
                     iconProps={{ iconName: "Add" }}
                 />
             </Stack>
-            {onRenderComments(commentState.viewState.comments)}
+            {onRenderComments(commentState)}
         </Stack>
     );
 }

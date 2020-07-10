@@ -6,21 +6,18 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { SyncedComponent } from "@fluidframework/react";
+import { SyncedComponent, setPureSyncedArrayConfig } from "@fluidframework/react";
 import { SharedString, SharedObjectSequence } from "@fluidframework/sequence";
 import { Container } from "./container";
 import {
     peopleFluidToView,
     peopleViewToFluid,
-    commentsFluidToView,
-    commentsViewToFluid,
     defaultDates,
 } from "./data";
 import {
     IPersonViewState,
     IPersonFluidState,
-    ICommentViewState,
-    ICommentFluidState,
+    IComment,
 } from "./interface";
 
 export class Scheduler extends SyncedComponent {
@@ -37,14 +34,9 @@ export class Scheduler extends SyncedComponent {
             },
         );
 
-        this.setFluidConfig<ICommentViewState, ICommentFluidState>(
+        setPureSyncedArrayConfig<IComment>(
+            this,
             "comments",
-            {
-                syncedStateId: "comments",
-                fluidToView:  commentsFluidToView,
-                viewToFluid: commentsViewToFluid,
-                defaultViewState: { comments: [] },
-            },
         );
     }
 

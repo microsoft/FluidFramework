@@ -7,23 +7,7 @@ import { v4 as uuid } from "uuid";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { IPersonReducer, AvailabilityType,  IAvailability, IPersonFluid, ICommentReducer } from "../interface";
-
-export const CommentReducer: ICommentReducer = {
-    add: {
-        function: (state, message: string) => {
-            if (state?.fluidState?.comments === undefined) {
-                throw Error("State was not initialized prior to dispatch call");
-            }
-            state.fluidState.comments.insert(state.fluidState.comments.getLength(), [
-                { message },
-            ]);
-            state.viewState.comments = state.fluidState.comments.getItems(0);
-
-            return { state };
-        },
-    },
-};
+import { IPersonReducer, AvailabilityType,  IAvailability, IPersonFluid } from "../interface";
 
 export const PersonReducer: IPersonReducer = {
     updateAvailability: {
@@ -36,7 +20,7 @@ export const PersonReducer: IPersonReducer = {
                 throw Error(`Failed to find person with id ${personId}`);
             }
             const availabilities = state.dataProps.fluidComponentMap.get(
-                person.availabilitiesHandle.path,
+                person.availabilitiesHandle.absolutePath,
             )?.component as SharedMap;
             if (availabilities === undefined) {
                 throw Error(`Failed to find availabilities for person with id ${personId}`);
@@ -103,10 +87,10 @@ export const PersonReducer: IPersonReducer = {
                 availabilities: availabilitiesView,
             });
 
-            state.dataProps.fluidComponentMap.set(newSharedString.handle.path, {
+            state.dataProps.fluidComponentMap.set(newSharedString.handle.absolutePath, {
                 component: newSharedString,
             });
-            state.dataProps.fluidComponentMap.set(availabilitiesFluid.handle.path, {
+            state.dataProps.fluidComponentMap.set(availabilitiesFluid.handle.absolutePath, {
                 component: availabilitiesFluid,
             });
             return { state, newComponentHandles: [
