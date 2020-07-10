@@ -6,6 +6,7 @@ There are two major interfaces required to implement a Component Handle: `ICompo
 
 
 ## Why use Component Handles?
+
 Component Handle moves the ownership of retrieving a fluid object from the user of the object to the object itself. The handle can be passed around in the system and anyone who has the handle can easily get the underlying object by simply calling `get()`.
 
 The alternative is to get the `url` of the `Component` / `SharedObject` and then calling `request` with it on the right layer (for instance, on the `ContainerRuntime`) that has this object.
@@ -15,6 +16,7 @@ Handles simplify this by encoding the logic within the object itself thereby eli
 A Component developer might not (and need not) care about the underlying `ContainerRuntime`, but has to know about it to load a `Component`. With handles, they don't really have to, since the logic is self contained in the `Component` itself.
 
 ### Basic usage scenario
+
 One of the basic usage of a Component Handle is when a client creates a `Component` or a `SharedObject` and wants it to be available to remote clients. It can store the handle to the object in a DDS and the remote client can retrieve and load the Component.
 
 The following code snippet from the [Pond](../../components/examples/pond/src/index.tsx) Component demonstrates this. It creates a `Clicker` Component during first time initialization and stores its `handle` in the `root` DDS. Remote clients can retrieve the `handle` from the `root` DDS and get the `Clicker` Component by calling `get()` on the handle:
@@ -34,6 +36,7 @@ protected async componentHasInitialized() {
 ```
 
 ### A more complex usage scenario
+
 In simple scenarios where there is only one Container, using the `request` model might be okay because any `Component` that wants to load another `Component` or `SharedObject`, can call `request` with the `url` on its own `ContainerRuntime`.
 
 But consider the scenario where there are multiple `Containers` and a `Component` wants to load another `Component`. In order to `request` the `Component` using its `url`, it has to know which `Container` has this `Component`. It can become real complicated real fast as the number of `Components` and `Containers` grow.
@@ -41,11 +44,18 @@ But consider the scenario where there are multiple `Containers` and a `Component
 This is where Compponent Handles becomes really powerful and make this scenario much simpler. You can pass around the `handle` to a `Component` across `Containers` and to load it from anywhere, you just have to call `get()` on it.
 
 ### Request format
+
 Another advantage of using handles is that the user doesn't have to worry about creating an input with the right format to pass to `request`. This format may vary from one implementation to another. Component Handle takes care of this and the user code can be agnostic to the underlying implementation, thereby making it more flexible and portable.
 
 ## Example implementations
+
 [ComponentHandle](../../packages/runtime/component-runtime/src/componentHandle.ts) is an implementation of `IComponentHandle` for representing a [SharedComponent](../../packages/framework/aqueduct/src/components/sharedComponent.ts).
 
 [SharedObjectComponentHandle](../../packages/dds/shared-object-base/src/handle.ts) is an implementation of `IComponentHandle` for representing a [SharedObject](../../packages/dds/shared-object-base/src/sharedObject.ts).
 
 [RemoteComponentHandle](../../packages/runtime/runtime-utils/src/remoteComponentHandle.ts) is used to represent one of the above Component Handles on a rmeote client when it is stored inside of a DDS.
+
+## Handles vs request model
+
+The advantages of using `handles` over the `request` model has been outlined above. However, there are scenarios where the `request` model is the way to go.
+Basically, if you want to get a fluid object from layers above the runtime, like the loader layer, you should use the `request` model. For runtime and below layers, you should probably use `handles`.
