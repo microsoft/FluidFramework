@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IUser } from "@fluidframework/protocol-definitions";
+import { ILastEditDetails } from "../interfaces";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -26,9 +26,4 @@ export interface IComponentLastEditedTracker extends IProvideComponentLastEdited
      * Updates the details of last edit to the container.
      */
     updateLastEditDetails(lastEditDetails: ILastEditDetails): void;
-}
-
-export interface ILastEditDetails {
-    user: IUser;
-    timestamp: number;
 }
