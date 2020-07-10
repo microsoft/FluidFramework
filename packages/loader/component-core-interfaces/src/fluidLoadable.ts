@@ -11,13 +11,13 @@ export interface IProvideFluidLoadable {
     readonly IFluidLoadable: IFluidLoadable;
 }
 /**
- * A shared Fluid has a URL from which it can be referenced
+ * A shared FluidObject has a URL from which it can be referenced
  */
 export interface IFluidLoadable extends IProvideFluidLoadable {
     // Absolute URL to the Fluid within the document
     readonly url: string;
 
-    // Handle to the loadable Fluid
+    // Handle to the loadable FluidObject
     handle: IFluidHandle;
 }
 

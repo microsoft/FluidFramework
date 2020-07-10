@@ -58,14 +58,14 @@ export interface IProvideFluidHandle {
 }
 
 /**
- * Handle to a shared Fluid
+ * Handle to a shared FluidObject
  */
 export interface IFluidHandle<
-    // REVIEW: Constrain `T` to `IFluid & IFluidLoadable`?
+    // REVIEW: Constrain `T` to `IFluidObject & IFluidLoadable`?
     T = IFluidObject & IFluidLoadable
     > extends IFluidHandleContext, IProvideFluidHandle {
     /**
-     * Returns a promise to the Fluid referenced by the handle.
+     * Returns a promise to the FluidObject referenced by the handle.
      */
     get(): Promise<T>;
 }
