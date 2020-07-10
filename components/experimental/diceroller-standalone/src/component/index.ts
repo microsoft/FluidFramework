@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./container";
-export * from "./component";
+export * from "./main";
