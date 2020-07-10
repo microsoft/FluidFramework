@@ -89,12 +89,12 @@ You can use the `DocumentDeltaEventManager` to wait for all that to happen by ca
 ## Usage
 
 The typical usage for testing a Component / DDS is as follows:
-1. Create an `ILocalDeltaConnectionServer`:
+1. Create a `LocalDeltaConnectionServer`:
     ```typescript
     const deltaConnectionServer: ILocalDeltaConnectionServer = LocalDeltaConnectionServer.create();
     ```
 
-2. Create an `IFluidCodeDetails` and a `TestFluidComponentFactory` which will serve as the fluid entry point:
+2. Create an `IFluidCodeDetails` and a `TestFluidComponentFactory` which will serve as the fluid entry point (code details to factory mapping):
     ```typescript
     const codeDetails: IFluidCodeDetails = {
         package: "sharedStringTestPackage",
@@ -102,7 +102,7 @@ The typical usage for testing a Component / DDS is as follows:
     };
     const entryPoint = new TestFluidComponentFactory([["sharedString", SharedString.getFactory()]]);
     ```
-    >This can replaced by any `IComponentFactory` or `IRuntimeFactory`.
+    >This can replaced by any `IComponentFactory` or `IRuntimeFactory`. When the loader is asked to resolve a Container with the above code details, it will load the above factory.
 
 3. Create a local `Loader`:
     ```typescript
@@ -133,6 +133,12 @@ The typical usage for testing a Component / DDS is as follows:
     const sharedString2 = await component2.getSharedObject<SharedString>("sharedString");
     ```
     >It is important to use the same `ILocalDeltaConnectionServer` to create the `Loader` and the same `id` to create / initialize the `Container`. This will make sure that we load the `Container` that was created earlier and do not create a new one.
+
+These steps are demonstrated in the image below:
+
+![Image 1](./end-to-end-tests.png)
+
+> Note that the LocalDriver is created by the `createLocalLoader` method and does not need to explicitly created.
 
 ## Example
 The above usage is taken from [SharedStringTest](..\end-to-end-tests\src\test\sharedStringEndToEndTests.spec.ts) which is a very basic example of how to use these utils.
