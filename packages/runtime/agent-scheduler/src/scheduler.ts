@@ -320,10 +320,10 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     private isActive() {
-        // Issue-2720
-        // if (!this.runtime.isBoundToContext) {
-        //     return true;
-        // }
+        // Scheduler should be active in detached container.
+        if (!this.runtime.IComponentHandleContext.isAttached) {
+            return true;
+        }
         if (!this.runtime.connected) {
             return false;
         }
