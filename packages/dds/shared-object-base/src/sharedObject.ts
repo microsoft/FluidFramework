@@ -73,7 +73,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * The loadable URL for this SharedObject
      */
     public get url(): string {
-        return this.id;
+        return this.handle.absolutePath;
     }
 
     /**

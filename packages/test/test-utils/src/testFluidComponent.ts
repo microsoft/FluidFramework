@@ -53,8 +53,8 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
         public readonly context: IComponentContext,
         private readonly factoryEntriesMap: Map<string, ISharedObjectFactory>,
     ) {
-        this.url = context.id;
         this.innerHandle = new ComponentHandle(this, "", runtime.IComponentHandleContext);
+        this.url = this.innerHandle.absolutePath;
     }
 
     /**

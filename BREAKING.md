@@ -6,6 +6,8 @@
 - [ContainerRuntime.load Request Handler Changes](#ContainerRuntime.load-Request-Handler-Changes)
 - [IComponentHTMLVisual removed](#IComponentHTMLVisual-removed)
 - [IComponentReactViewable deprecated](#IComponentReactViewable-deprecated)
+- [Deprecated `id` from `SharedComponent`](#Deprecated-`id`-from-`SharedComponent`)
+- [Updated `url` in `SharedComponent` and `SharedObject`](#Updated-`url`-in-`SharedComponent`-and-`SharedObject`)
 
 ### Deprecated `path` from `IComponentHandleContext`
 Deprecated the `path` field from the interface `IComponentHandleContext`. This means that `IComponentHandle` will not have this going forward as well.
@@ -48,6 +50,27 @@ The `IComponentHTMLVisual` interface was deprecated in 0.21, and is now removed 
 
 ### IComponentReactViewable deprecated
 The `IComponentReactViewable` interface is deprecated and will be removed in an upcoming release.  For multiview scenarios, instead use a pattern like the one demonstrated in the sample in /components/experimental/multiview.  This sample demonstrates how to create multiple views for a component.
+
+### Deprecated `id` from `SharedComponent`
+`id` is deprecated from `SharedComponent` and will be removed in an upcoming release.
+
+Use `handle` in `SharedComponent` to retrieve it in local as well as in remote clients.
+
+To get the absolute path to the `SharedComponent` within a document, use `url`.
+
+### Updated `url` in `SharedComponent` and `SharedObject`
+`url` in `SharedComponent` and `SharedObject` now returns the absolute path to it within the document.
+
+Note that, as per `IComponentLoadable`, `url` is supposed to return the absolute path:
+```typescript
+export interface IComponentLoadable extends IProvideComponentLoadable {
+    // Absolute URL to the component within the document
+    readonly url: string;
+
+    // Handle to the loadable component
+    handle: IComponentHandle;
+}
+```
 
 ## 0.21 Breaking Changes
 - [Removed `@fluidframework/local-test-utils`](#removed-`@fluidframework/local-test-utils`)

@@ -64,7 +64,12 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
 
     public get disposed() { return this._disposed; }
 
+    /**
+     * @deprecated - `id` has been depcreated. Use `handle` to get the object. Use `url` for the aboslute
+     * path to this fluid object.
+     */
     public get id() { return this.runtime.id; }
+
     public get IComponentRouter() { return this; }
     public get IComponentLoadable() { return this; }
     public get IComponentHandle() { return this.innerHandle; }
@@ -133,7 +138,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     /**
      * Absolute URL to the component within the document
      */
-    public get url() { return this.context.id; }
+    public get url() { return this.handle.absolutePath; }
 
     // #endregion IComponentLoadable
 

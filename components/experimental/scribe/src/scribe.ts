@@ -405,8 +405,8 @@ export class Scribe
     constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
         super();
 
-        this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
+        this.innerHandle = new ComponentHandle(this, "", this.runtime.IComponentHandleContext);
+        this.url = this.innerHandle.absolutePath;
     }
 
     public async request(request: IRequest): Promise<IResponse> {

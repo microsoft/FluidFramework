@@ -144,8 +144,8 @@ export class ProgressCollection
     constructor(private readonly runtime: IComponentRuntime, context: IComponentContext) {
         super();
 
-        this.url = context.id;
         this.handle = new ComponentHandle(this, "", this.runtime.IComponentHandleContext);
+        this.url = this.handle.absolutePath;
     }
 
     public changeValue(key: string, newValue: number) {

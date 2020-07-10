@@ -127,8 +127,8 @@ export class ProseMirror extends EventEmitter
     ) {
         super();
 
-        this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
+        this.innerHandle = new ComponentHandle(this, "", runtime.IComponentHandleContext);
+        this.url = this.innerHandle.absolutePath;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
