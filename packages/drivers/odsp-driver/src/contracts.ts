@@ -250,3 +250,13 @@ export interface ICreateFileResponse {
     itemUrl: string;
     sequenceNumber: number;
 }
+
+export interface ICreateFileResponseZeroFile {
+    "@odata.context": string;
+    driveId: string;
+    id: string;
+    itemId: string;
+    itemUrl: string;
+    sequenceNumber: number;
+    name: string;
+}

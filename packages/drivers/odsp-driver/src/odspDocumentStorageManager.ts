@@ -167,7 +167,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                 return PerformanceEvent.timedExecAsync(
                     this.logger,
-                    { eventName: "readBlob" },
+                    {
+                        eventName: "readBlob",
+                        headers: Object.keys(headers).length !== 0 ? true : undefined,
+                    },
                     async () => fetchHelper<IBlob>(url, { headers }),
                 );
             });
@@ -422,7 +425,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             // Fetch the latest snapshot versions for the document
             const response = await PerformanceEvent.timedExecAsync(
                 this.logger,
-                { eventName: "getVersions" },
+                {
+                    eventName: "getVersions",
+                    headers: Object.keys(headers).length !== 0 ? true : undefined,
+                },
                 async () => fetchHelper<IDocumentStorageGetVersionsResponse>(url, { headers }),
             );
             const versionsResponse = response.content;
@@ -466,6 +472,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 trees: content.trees?.length ?? 0,
                 blobs: content.blobs?.length ?? 0,
                 ops: content.ops?.length ?? 0,
+                headers: Object.keys(headers).length !== 0 ? true : undefined,
                 sprequestguid: response.headers.get("sprequestguid"),
                 sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
                 contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
@@ -675,7 +682,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const postBody = JSON.stringify(snapshot);
 
             return PerformanceEvent.timedExecAsync(this.logger,
-                { eventName: "uploadSummary", attempt: refresh ? 2 : 1 },
+                {
+                    eventName: "uploadSummary",
+                    attempt: refresh ? 2 : 1,
+                    headers: Object.keys(headers).length !== 0 ? true : undefined,
+                },
                 async () => {
                     const response = await fetchHelper<ISnapshotResponse>(
                         url,

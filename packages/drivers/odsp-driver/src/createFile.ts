@@ -16,6 +16,7 @@ import {
     SnapshotTreeEntry,
     SnapshotType,
     ICreateFileResponse,
+    ICreateFileResponseZeroFile,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { INonPersistentCache } from "./odspCache";
@@ -101,13 +102,14 @@ async function createNewOdspFile(
     logger: ITelemetryLogger,
     createNewSummary?: ISummaryTree,
 ): Promise<IFileCreateResponse> {
-    const fileResponse = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
+    return  getWithRetryForTokenRefresh(async (refresh: boolean) => {
         const storageToken = await getStorageToken(newFileInfo.siteUrl, refresh);
 
-        const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.fluid`);
-
-        let fetchResponse;
         const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
+        const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.fluid`);
+        const baseUrl =
+            `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
+            `${filePath}/${encodedFilename}`;
 
         return PerformanceEvent.timedExecAsync(
             logger,
@@ -115,21 +117,20 @@ async function createNewOdspFile(
                 eventName: "createNewFile",
                 detached: createNewSummary !== undefined,
             },
-            async () => {
+            async (event) => {
+                let response: IFileCreateResponse;
+                let headers: { [index: string]: string };
                 if (createNewSummary) {
                     const containerSnapshot: ISnapshotTree = convertSummaryIntoContainerSnapshot(createNewSummary);
-                    const initialUrl =
-                        `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
-                        `${filePath}/${encodedFilename}` +
-                        `:/opStream/snapshots/snapshot`;
-                    const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
+                    const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot`;
+                    const info = getUrlAndHeadersWithAuth(initialUrl, storageToken);
+                    headers = info.headers;
                     headers["Content-Type"] = "application/json";
 
-                    const postBody = JSON.stringify(containerSnapshot);
-                    fetchResponse = await fetchHelper<ICreateFileResponse>(
-                        url,
+                    const fetchResponse = await fetchHelper<ICreateFileResponse>(
+                        info.url,
                         {
-                            body: postBody,
+                            body: JSON.stringify(containerSnapshot),
                             headers,
                             method: "POST",
                         });
@@ -138,18 +139,19 @@ async function createNewOdspFile(
                     if (!content || !content.itemId) {
                         throwOdspNetworkError("Could not parse item from Vroom response", fetchIncorrectResponse);
                     }
-                    return {
+                    response = {
                         itemId: content.itemId,
                         siteUrl: newFileInfo.siteUrl,
                         driveId: newFileInfo.driveId,
                         filename: newFileInfo.filename,
                     };
                 } else {
-                    // eslint-disable-next-line max-len
-                    const initialUrl = `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
-                    const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
-                    fetchResponse = await fetchHelper<ICreateFileResponse>(
-                        url,
+                    const initialUrl =
+                        `${baseUrl}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
+                    const info = getUrlAndHeadersWithAuth(initialUrl, storageToken);
+                    headers = info.headers;
+                    const fetchResponse = await fetchHelper<ICreateFileResponseZeroFile>(
+                        info.url,
                         {
                             method: "PUT",
                             headers,
@@ -159,16 +161,19 @@ async function createNewOdspFile(
                     if (!content || !content.id) {
                         throwOdspNetworkError("Could not parse drive item from Vroom response", fetchIncorrectResponse);
                     }
-                    return {
+                    response = {
                         itemId: content.id,
                         siteUrl: newFileInfo.siteUrl,
                         driveId: newFileInfo.driveId,
                         filename: content.name,
                     };
                 }
+                event.end({
+                     headers: Object.keys(headers).length !== 0 ? true : undefined,
+                });
+                return response;
             });
     });
-    return fileResponse;
 }
 
 function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
