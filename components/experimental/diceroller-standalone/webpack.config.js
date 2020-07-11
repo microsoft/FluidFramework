@@ -6,13 +6,16 @@
 const fluidRoute = require("@fluidframework/webpack-component-loader");
 const path = require("path");
 const merge = require("webpack-merge");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+// const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 module.exports = env => {
     const isProduction = env && env.production;
 
     return merge({
         entry: {
-            main: "./src/container/index.ts"
+            main: "./src/container/index.ts",
+            app: "./src/app/index.ts"
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
@@ -32,14 +35,12 @@ module.exports = env => {
             devtoolNamespace: "fluid-example/dice-roller",
             libraryTarget: "umd"
         },
-        devServer: {
-            publicPath: '/dist',
-            before: (app, server) => fluidRoute.before(app, server, env),
-            after: (app, server) => fluidRoute.after(app, server, __dirname, env),
-            watchOptions: {
-                ignored: "**/node_modules/**",
-            }
-        }
+        plugins: [
+            new HtmlWebpackPlugin({
+                template: "./src/app/index.html",
+            }),
+            // new CleanWebpackPlugin(),
+        ],
     }, isProduction
         ? require("./webpack.prod")
         : require("./webpack.dev"));

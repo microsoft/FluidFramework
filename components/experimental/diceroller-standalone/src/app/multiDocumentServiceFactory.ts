@@ -6,7 +6,7 @@
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
 import { TestDocumentServiceFactory } from "@fluidframework/local-driver";
-// import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
+import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
 import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
 import { RouteOptions } from "./loader";
 import { LocalSessionStorageDbFactory } from "./localSessionStorageDb";
@@ -20,11 +20,11 @@ export function getDocumentServiceFactory(documentId: string, options: RouteOpti
 
     return MultiDocumentServiceFactory.create([
         new TestDocumentServiceFactory(deltaConn),
-        // // TODO: web socket token
-        // new OdspDocumentServiceFactory(
-        //     async () => options.mode === "spo" || options.mode === "spo-df" ? options.odspAccessToken : undefined,
-        //     async () => options.mode === "spo" || options.mode === "spo-df" ? options.pushAccessToken : undefined,
-        // ),
+        // TODO: web socket token
+        new OdspDocumentServiceFactory(
+            async () => options.mode === "spo" || options.mode === "spo-df" ? options.odspAccessToken! : null,
+            async () => options.mode === "spo" || options.mode === "spo-df" ? options.pushAccessToken! : null,
+        ),
         new RouterliciousDocumentServiceFactory(
             false,
             new DefaultErrorTracking(),
