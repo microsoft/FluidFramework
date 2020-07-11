@@ -618,13 +618,14 @@ export class RemotedComponentContext extends ComponentContext {
             } else {
                 tree = await this.initSnapshotValue;
             }
-
-            if (tree !== null && tree.blobs[".component"] !== undefined) {
+            // .datachannel used to be .component, this should be preserved for back-compat
+            const blob = tree?.blobs[".component"] ?? tree?.blobs[".datachannel"];
+            if (blob !== null && blob !== undefined) {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion } =
                     await readAndParse<IComponentAttributes>(
                         this.storage,
-                        tree.blobs[".component"]);
+                        blob);
 
                 let pkgFromSnapshot: string[];
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.

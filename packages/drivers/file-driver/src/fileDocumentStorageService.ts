@@ -182,7 +182,9 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             let componentName = ref ? ref : "container";
             if (tree && tree.entries) {
                 tree.entries.forEach((entry) => {
-                    if (entry.path === ".component" && entry.type === api.TreeEntry[api.TreeEntry.Blob]) {
+                    // .datachannel used to be .component, this should be preserved for back-compat
+                    if ((entry.path === ".component" || entry.path === ".datachannel")
+                        && entry.type === api.TreeEntry[api.TreeEntry.Blob]) {
                         const blob: api.IBlob = entry.value as api.IBlob;
                         const content = blob.contents.split(":");
                         if (content[0] === `{"pkg"`) {
