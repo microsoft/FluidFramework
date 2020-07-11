@@ -71,7 +71,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 odspResolvedUrl = await createNewFluidFile(
                     this.getStorageToken,
                     newFileParams,
-                    this.nonPersistentCache,
                     logger2,
                     createNewSummary);
                 const docService = this.createDocumentService(odspResolvedUrl, logger);
