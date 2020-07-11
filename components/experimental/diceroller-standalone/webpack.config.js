@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluidframework/webpack-component-loader");
 const path = require("path");
 const merge = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
