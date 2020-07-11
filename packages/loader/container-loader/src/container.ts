@@ -94,7 +94,7 @@ import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
 import { pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
-import { parseUrl } from "./utils";
+import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -459,6 +459,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public get attachState(): AttachState {
         return this._attachState;
+    }
+
+    public dehydrateContainer(): ISnapshotTree {
+        if (!this.context) {
+            throw new Error("Context is undefined");
+        }
+
+        // Inbound queue for ops should be empty
+        assert(!this.deltaManager.inbound.length);
+
+        const appSummary: ISummaryTree = this.context.createSummary();
+        if (!this.protocolHandler) {
+            throw new Error("Protocol Handler is undefined");
+        }
+        const protocolSummary = this.protocolHandler.captureSummary();
+        const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(protocolSummary, appSummary);
+        return snapshotTree;
     }
 
     public async attach(request: IRequest): Promise<void> {
