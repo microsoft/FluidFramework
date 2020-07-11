@@ -4,7 +4,7 @@
  */
 
 import {
-    IComponent,
+    IComponent, IFluidScope,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -64,7 +64,7 @@ export interface IContainerRuntime extends
     readonly loader: ILoader;
     readonly flushMode: FlushMode;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly scope: IComponent;
+    readonly scope: IComponent & IFluidScope;
     /**
      * Indicates the attachment state of the container to a host service.
      */

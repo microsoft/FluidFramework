@@ -11,6 +11,10 @@ export * from "./legacy";
 // when merging declarations the module path must match exactly. Because of this we need to explicitly export
 // IFluidObject as opposed to an export *
 export { IFluidObject } from "./fluidObject";
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface IFluidScope {}
+
 export * from "./fluidLoadable";
 export * from "./fluidRouter";
 export * from "./handles";

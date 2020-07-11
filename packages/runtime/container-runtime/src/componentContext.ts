@@ -6,7 +6,13 @@
 import assert from "assert";
 import EventEmitter from "events";
 import { IDisposable } from "@fluidframework/common-definitions";
-import { IComponent, IComponentLoadable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import {
+    IComponent,
+    IComponentLoadable,
+    IRequest,
+    IResponse,
+    IFluidScope,
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -171,7 +177,7 @@ export abstract class ComponentContext extends EventEmitter implements
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
-        public readonly scope: IComponent,
+        public readonly scope: IComponent & IFluidScope,
         public readonly summaryTracker: SummaryTracker,
         private bindState: BindState,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
@@ -583,7 +589,7 @@ export class RemotedComponentContext extends ComponentContext {
         private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent,
+        scope: IComponent & IFluidScope,
         summaryTracker: SummaryTracker,
         pkg?: string[],
     ) {
@@ -660,7 +666,7 @@ export class LocalComponentContext extends ComponentContext {
         pkg: string[],
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent,
+        scope: IComponent & IFluidScope,
         summaryTracker: SummaryTracker,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
         /**

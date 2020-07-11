@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidScope } from "@fluidframework/component-core-interfaces";
 import { ICodeAllowList, IProxyLoaderFactory, IFluidCodeResolver } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 
@@ -21,7 +21,7 @@ export interface IBaseHostConfig {
 
     // A component that gives host provided capabilities/configurations
     // to the component in the container(such as auth).
-    scope?: IComponent;
+    scope?: IComponent & IFluidScope;
 
     proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
 
