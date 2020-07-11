@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import {
     IComponentLastEditedTracker,
@@ -57,11 +57,11 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
 
     protected async componentHasInitialized() {
         this.defaultComponentInternal =
-            (await this.root.get<IComponentHandle>(this.defaultComponentId).get())
+            (await this.root.get<IFluidHandle>(this.defaultComponentId).get())
                 .IComponentHTMLView;
 
         this.lastEditedComponent =
-            (await this.root.get<IComponentHandle>(this.lastEditedComponentId).get())
+            (await this.root.get<IFluidHandle>(this.lastEditedComponentId).get())
                 .IComponentLastEditedTracker;
     }
 }

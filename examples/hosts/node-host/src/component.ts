@@ -40,7 +40,7 @@ async function fetchCore(loader: Loader, url: string) {
         return;
     }
 
-    const component = response.value as IComponent;
+    const component = response.value as IComponent & IFluidObject;
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     launchCLI(component);

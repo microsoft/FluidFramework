@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
 import { SharedComponentFactory, SharedComponent } from "@fluidframework/component-base";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
@@ -46,7 +46,7 @@ export class WebFlow extends SharedComponent<ISharedDirectory> implements ICompo
     // #region IComponentHTMLView
 
     public render(elm: HTMLElement): void {
-        const view = new WebflowView(this.root.get<IComponentHandle<FlowDocument>>("doc").get());
+        const view = new WebflowView(this.root.get<IFluidHandle<FlowDocument>>("doc").get());
         view.render(elm);
     }
 

@@ -10,21 +10,10 @@ import { IComponentRuntime, IChannelAttributes } from "@fluidframework/component
 import { SharedSegmentSequence } from "./sequence";
 import { SharedStringFactory } from "./sequenceFactory";
 
-declare module "@fluidframework/component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideSharedString>> { }
-}
-
-export const ISharedString: keyof IProvideSharedString = "ISharedString";
-
-export interface IProvideSharedString {
-    readonly ISharedString: ISharedString;
-}
-
 /**
  * Component interface describing access methods on a SharedString
  */
-export interface ISharedString extends SharedSegmentSequence<SharedStringSegment>, IProvideSharedString {
+export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
     insertText(pos: number, text: string, props?: MergeTree.PropertySet);
 
     insertMarker(pos: number, refType: MergeTree.ReferenceType, props?: MergeTree.PropertySet);

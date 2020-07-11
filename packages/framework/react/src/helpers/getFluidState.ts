@@ -5,7 +5,7 @@
 
 import {
     IComponent,
-    IComponentHandle,
+    IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
@@ -33,7 +33,7 @@ export function getFluidState<
     componentMap: FluidComponentMap,
     fluidToView?: Map<keyof SF, IViewConverter<SV, SF>>,
 ): SF | undefined {
-    const componentStateHandle = syncedState.get<IComponentHandle<ISharedMap>>(
+    const componentStateHandle = syncedState.get<IFluidHandle<ISharedMap>>(
         `syncedState-${syncedStateId}`,
     );
     if (componentStateHandle === undefined) {
@@ -51,7 +51,7 @@ export function getFluidState<
         let value = componentState.get(fluidKey);
         if (value && createCallback) {
             const possibleComponentId = (value as IComponent)
-                ?.IComponentHandle?.absolutePath;
+                ?.IFluidHandle?.absolutePath;
             if (possibleComponentId !== undefined) {
                 value = componentMap.get(possibleComponentId);
                 fluidState[fluidKey] = value?.component;

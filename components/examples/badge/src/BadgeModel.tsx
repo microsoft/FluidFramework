@@ -6,7 +6,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { PrimedComponent } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { SharedMap } from "@fluidframework/map";
 import { SharedObjectSequence } from "@fluidframework/sequence";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
@@ -59,9 +59,9 @@ export class Badge extends PrimedComponent implements IBadgeModel, IComponentHTM
      */
     protected async componentHasInitialized() {
         [ this.currentCell, this.optionsMap, this.historySequence ] = await Promise.all([
-            this.root.get<IComponentHandle<SharedCell>>(this.currentId).get(),
-            this.root.get<IComponentHandle<SharedMap>>(this.optionsId).get(),
-            this.root.get<IComponentHandle<SharedObjectSequence<IBadgeHistory>>>(this.historyId).get(),
+            this.root.get<IFluidHandle<SharedCell>>(this.currentId).get(),
+            this.root.get<IFluidHandle<SharedMap>>(this.optionsId).get(),
+            this.root.get<IFluidHandle<SharedObjectSequence<IBadgeHistory>>>(this.historyId).get(),
         ]);
     }
 

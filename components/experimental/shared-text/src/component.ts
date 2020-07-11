@@ -14,8 +14,8 @@ import { SharedCell } from "@fluidframework/cell";
 import { performanceNow } from "@fluidframework/common-utils";
 import {
     IComponent,
-    IComponentHandle,
-    IComponentLoadable,
+    IFluidHandle,
+    IFluidLoadable,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -34,12 +34,12 @@ import {
     SchedulerType,
 } from "@fluidframework/runtime-definitions";
 import {
-    IProvideSharedString,
     SharedNumberSequence,
     SharedObjectSequence,
     SharedString,
 } from "@fluidframework/sequence";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IProvideSharedObject, ISharedObject } from "@fluidframework/shared-object-base";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
 
@@ -48,7 +48,7 @@ const debug = registerDebug("fluid:shared-text");
 /**
  * Helper function to retrieve the handle for the default component route
  */
-async function getHandle(runtimeP: Promise<IComponentRuntimeChannel>): Promise<IComponentHandle> {
+async function getHandle(runtimeP: Promise<IComponentRuntimeChannel>): Promise<IFluidHandle> {
     const runtime = await runtimeP;
     const request = await runtime.request({ url: "" });
 
@@ -56,13 +56,13 @@ async function getHandle(runtimeP: Promise<IComponentRuntimeChannel>): Promise<I
         return Promise.reject("Not found");
     }
 
-    const component = request.value as IComponent;
-    return component.IComponentLoadable.handle;
+    const component = request.value as IComponent & IFluidObject;
+    return component.IFluidLoadable.handle;
 }
 
 export class SharedTextRunner
     extends EventEmitter
-    implements IComponentHTMLView, IComponentLoadable, IProvideSharedString {
+    implements IComponentHTMLView, IFluidLoadable, IProvideSharedObject {
     public static async load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
         await runner.initialize();
@@ -70,14 +70,14 @@ export class SharedTextRunner
         return runner;
     }
 
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
-    public get IComponentHandle() { return this.innerHandle; }
-    public get IComponentLoadable() { return this; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get IFluidHandle() { return this.innerHandle; }
+    public get IFluidLoadable() { return this; }
 
     public get IComponentHTMLView() { return this; }
-    public get ISharedString() { return this.sharedString; }
+    public get ISharedObject() { return this.sharedString as unknown as ISharedObject; }
 
     public readonly url = "/text";
     private sharedString: SharedString;
@@ -89,7 +89,7 @@ export class SharedTextRunner
 
     private constructor(private readonly runtime: ComponentRuntime, private readonly context: IComponentContext) {
         super();
-        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
+        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public render(element: HTMLElement) {
@@ -178,14 +178,14 @@ export class SharedTextRunner
 
         await this.rootView.wait("flowContainerMap");
 
-        this.sharedString = await this.rootView.get<IComponentHandle<SharedString>>("text").get();
-        this.insightsMap = await this.rootView.get<IComponentHandle<ISharedMap>>("insights").get();
+        this.sharedString = await this.rootView.get<IFluidHandle<SharedString>>("text").get();
+        this.insightsMap = await this.rootView.get<IFluidHandle<ISharedMap>>("insights").get();
         debug(`Shared string ready - ${performanceNow()}`);
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performanceNow()}`);
 
         const schedulerResponse = await this.runtime.request({ url: `/${SchedulerType}` });
-        const schedulerComponent = schedulerResponse.value as IComponent;
+        const schedulerComponent = schedulerResponse.value as IComponent & IFluidObject;
         this.taskManager = schedulerComponent.ITaskManager;
 
         const options = parse(window.location.search.substr(1));
@@ -227,9 +227,9 @@ export class SharedTextRunner
             url.resolve(document.baseURI, "/public/images/bindy.svg"));
 
         const overlayMap = await this.rootView
-            .get<IComponentHandle<ISharedMap>>("flowContainerMap")
+            .get<IFluidHandle<ISharedMap>>("flowContainerMap")
             .get();
-        const overlayInkMap = await overlayMap.get<IComponentHandle<ISharedMap>>("overlayInk").get();
+        const overlayInkMap = await overlayMap.get<IFluidHandle<ISharedMap>>("overlayInk").get();
 
         const containerDiv = document.createElement("div");
         containerDiv.id = "flow-container";

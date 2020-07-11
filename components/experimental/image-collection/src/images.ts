@@ -5,9 +5,9 @@
 
 import {
     IComponent,
-    IComponentHandleContext,
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidHandleContext,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -20,10 +20,10 @@ import { SharedComponent, SharedComponentFactory } from "@fluidframework/compone
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 export class ImageComponent implements
-    IComponentLoadable, IComponentHTMLView, IComponentRouter, IComponentLayout {
-    public get IComponentLoadable() { return this; }
+    IFluidLoadable, IComponentHTMLView, IFluidRouter, IComponentLayout {
+    public get IFluidLoadable() { return this; }
     public get IComponentHTMLView() { return this; }
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
     public get IComponentLayout() { return this; }
 
     // Video def has a preferred aspect ratio
@@ -34,7 +34,7 @@ export class ImageComponent implements
     public readonly preferInline = false;
     public handle: ComponentHandle;
 
-    constructor(public imageUrl: string, public url: string, path: string, context: IComponentHandleContext) {
+    constructor(public imageUrl: string, public url: string, path: string, context: IFluidHandleContext) {
         this.handle = new ComponentHandle(this, path, context);
     }
 
@@ -54,7 +54,7 @@ export class ImageComponent implements
 }
 
 export class ImageCollection extends SharedComponent<ISharedDirectory> implements
-    IComponentLoadable, IComponentRouter, IComponentCollection {
+    IFluidLoadable, IFluidRouter, IComponentCollection {
     private static readonly factory = new SharedComponentFactory(
         "@fluid-example/image-collection",
         ImageCollection,
@@ -70,9 +70,9 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
     public create() { this.initialize(); }
     public async load() { this.initialize(); }
 
-    public get IComponentLoadable() { return this; }
+    public get IFluidLoadable() { return this; }
     public get IComponentCollection() { return this; }
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
 
     private readonly images = new Map<string, ImageComponent>();
 
@@ -121,7 +121,7 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
                     this.root.get(key),
                     `${this.url}/${key}`,
                     key,
-                    this.runtime.IComponentHandleContext));
+                    this.runtime.IFluidHandleContext));
         }
 
         this.root.on("valueChanged", (changed) => {
@@ -133,7 +133,7 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
                     this.root.get(changed.key),
                     `${this.url}/${changed.key}`,
                     changed.key,
-                    this.runtime.IComponentHandleContext);
+                    this.runtime.IFluidHandleContext);
                 this.images.set(changed.key, player);
             }
         });

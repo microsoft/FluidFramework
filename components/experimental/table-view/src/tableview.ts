@@ -6,7 +6,7 @@
 import { Template } from "@fluid-example/flow-util-lib";
 import { TableDocument, TableDocumentType } from "@fluid-example/table-document";
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import { GridView } from "./grid";
 import * as styles from "./index.css";
@@ -54,7 +54,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
         elm.append(this.templateRoot);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.root.get<IComponentHandle<TableDocument>>(innerDocKey).get().then((doc) => {
+        this.root.get<IFluidHandle<TableDocument>>(innerDocKey).get().then((doc) => {
             const grid = template.get(this.templateRoot, "grid");
             const gridView = new GridView(doc, this);
             grid.appendChild(gridView.root);

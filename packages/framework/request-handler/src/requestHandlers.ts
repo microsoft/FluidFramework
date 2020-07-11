@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IComponent, IComponentLoadable, IResponse } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidLoadable, IResponse } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
@@ -36,7 +36,7 @@ export const createComponentResponse = (component: IComponent) => {
     return { status: 200, mimeType: "fluid/component", value: component };
 };
 
-export function createLoadableComponentRuntimeRequestHandler(component: IComponentLoadable): RuntimeRequestHandler {
+export function createLoadableComponentRuntimeRequestHandler(component: IFluidLoadable): RuntimeRequestHandler {
     const pathParts = RequestParser.getPathParts(component.url);
     return async (request: RequestParser, runtime: IContainerRuntime) => {
         for (let i = 0; i < pathParts.length; i++) {

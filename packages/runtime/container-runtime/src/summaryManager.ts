@@ -443,7 +443,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             return Promise.reject<ISummarizer>("Invalid summarizer route");
         }
 
-        const rawComponent = response.value as IComponent;
+        const rawComponent = response.value as IComponent & IFluidObject;
         const summarizer = rawComponent.ISummarizer;
 
         if (!summarizer) {

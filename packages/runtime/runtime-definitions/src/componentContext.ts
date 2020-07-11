@@ -7,8 +7,8 @@ import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IComponent,
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidLoadable,
+    IFluidRouter,
     IProvideComponentHandleContext,
     IProvideComponentSerializer,
     IRequest,
@@ -143,7 +143,7 @@ export interface IContainerRuntimeBase extends
  * and connection state notifications
  */
 export interface IComponentRuntimeChannel extends
-    IComponentRouter,
+    IFluidRouter,
     Partial<IProvideComponentRegistry>,
     IDisposable {
 
@@ -342,7 +342,7 @@ export interface IComponentContext extends EventEmitter {
     createComponentWithRealizationFn(
         pkg: string,
         realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponent & IComponentLoadable>;
+    ): Promise<IComponent & IFluidLoadable>;
 
     /**
      * Binds a runtime to the context.

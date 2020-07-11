@@ -8,8 +8,8 @@ import * as api from "@fluid-internal/client-api";
 import { performanceNow } from "@fluidframework/common-utils";
 import {
     IComponent,
-    IComponentHandle,
-    IComponentLoadable,
+    IFluidHandle,
+    IFluidLoadable,
 } from "@fluidframework/component-core-interfaces";
 import { IGenericBlob } from "@fluidframework/container-definitions";
 import {
@@ -65,7 +65,7 @@ interface IComponentViewMarker extends MergeTree.Marker {
     instance?: IComponentHTMLView;
 }
 
-interface IMathCollection extends IComponentLoadable {
+interface IMathCollection extends IFluidLoadable {
     createCollectionItem(options?: IMathOptions): IMathInstance;
     getInstance(id: string, options?: IMathOptions): IMathInstance;
 }
@@ -77,9 +77,9 @@ interface IMathOptions {
     display: string;
 }
 
-export interface IMathInstance extends IComponentLoadable, IComponentHTMLView, IComponentCursor,
+export interface IMathInstance extends IFluidLoadable, IComponentHTMLView, IComponentCursor,
     IComponentKeyHandlers, IComponentLayout, SearchMenu.ISearchMenuClient {
-    IComponentLoadable: IComponentLoadable;
+    IFluidLoadable: IFluidLoadable;
     IComponentCursor: IComponentCursor;
     IComponentKeyHandlers: IComponentKeyHandlers;
     IComponentLayout: IComponentLayout;
@@ -820,7 +820,7 @@ function renderSegmentIntoLine(
                                     return Promise.reject(response);
                                 }
 
-                                const component = response.value as IComponent;
+                                const component = response.value as IComponent & IFluidObject;
                                 if (!HTMLViewAdapter.canAdapt(component)) {
                                     return Promise.reject("component is not viewable");
                                 }
@@ -4490,7 +4490,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         if (overlappingComments && (overlappingComments.length >= 1)) {
             const commentInterval = overlappingComments[0];
 
-            const commentHandle = commentInterval.properties.story as IComponentHandle<Sequence.SharedString>;
+            const commentHandle = commentInterval.properties.story as IFluidHandle<Sequence.SharedString>;
             commentHandle.get().then(
                 (comment) => {
                     const commentText = comment.getText();
@@ -4566,7 +4566,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 } as IReferenceDocType,
                 url: mathInstance.id,
             },
-            // Change this to just use url and IComponentRouter on collection
+            // Change this to just use url and IFluidRouter on collection
             leafId: mathInstance.leafId,
         };
         if (!inline) {
@@ -4587,7 +4587,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public insertNewCollectionComponent(collection: IComponentCollection, inline = false) {
         // TODO - we may want to have a shared component collection?
         const instance = collection.createCollectionItem();
-        const loadable = instance.IComponentLoadable;
+        const loadable = instance.IFluidLoadable;
 
         const props = {
             crefTest: {
@@ -4628,10 +4628,10 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const root = this.collabDocument.getRoot();
 
         const [progressBars, math, videoPlayers, images] = await Promise.all([
-            root.get<IComponentHandle>("progressBars").get(),
-            root.get<IComponentHandle<IMathCollection>>("math").get(),
-            root.get<IComponentHandle>("videoPlayers").get(),
-            root.get<IComponentHandle>("images").get(),
+            root.get<IFluidHandle>("progressBars").get(),
+            root.get<IFluidHandle<IMathCollection>>("math").get(),
+            root.get<IFluidHandle>("videoPlayers").get(),
+            root.get<IFluidHandle>("images").get(),
         ]);
 
         this.math = math;
@@ -5084,7 +5084,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.commentsView = await this.comments.getView();
 
         this.sequenceTest = await this.docRoot
-            .get<IComponentHandle<Sequence.SharedNumberSequence>>("sequence-test")
+            .get<IFluidHandle<Sequence.SharedNumberSequence>>("sequence-test")
             .get();
         this.sequenceTest.on("op", (op) => {
             this.showSequenceEntries();

@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IBlob } from "@fluidframework/protocol-definitions";
 import {
     MockComponentRuntime,
@@ -76,7 +76,7 @@ describe("Map", () => {
                 const parsed = map.getSerializableStorage();
 
                 map.forEach((value, key) => {
-                    if (!value.IComponentHandle) {
+                    if (!value.IFluidHandle) {
                         assert.equal(parsed[key].type, "Plain");
                         assert.equal(parsed[key].value, value);
                     } else {
@@ -97,7 +97,7 @@ describe("Map", () => {
                 const parsed = map.getSerializableStorage();
 
                 map.forEach((value, key) => {
-                    if (!value || !value.IComponentHandle) {
+                    if (!value || !value.IFluidHandle) {
                         assert.equal(parsed[key].type, "Plain");
                         assert.equal(parsed[key].value, value);
                     } else {
@@ -358,11 +358,11 @@ describe("Map", () => {
                 containerRuntimeFactory.processAllMessages();
 
                 // Verify the local SharedMap
-                const localSubMap = map.get<IComponentHandle>("test");
+                const localSubMap = map.get<IFluidHandle>("test");
                 assert.equal(localSubMap.absolutePath, subMap.handle.absolutePath, "could not get the handle's path");
 
                 // Verify the remote SharedMap
-                const remoteSubMap = map2.get<IComponentHandle>("test");
+                const remoteSubMap = map2.get<IFluidHandle>("test");
                 assert.equal(
                     remoteSubMap.absolutePath,
                     subMap.handle.absolutePath,

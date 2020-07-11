@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { SharedComponent, SharedComponentFactory } from "@fluidframework/component-base";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import {
     createInsertSegmentOp,
     createRemoveRangeOp,
@@ -174,7 +174,7 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
         Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
 
-        const handle = await this.root.wait<IComponentHandle<SharedString>>("text");
+        const handle = await this.root.wait<IFluidHandle<SharedString>>("text");
         this.maybeSharedString = await handle.get();
         if (this.maybeSharedString !== undefined) {
             this.forwardEvent(this.maybeSharedString, "sequenceDelta", "maintenance");
@@ -315,7 +315,7 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
         this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakProperties);
     }
 
-    public insertComponent(position: number, handle: IComponentHandle, view: string, componentOptions: object, style?: string, classList?: string[]) {
+    public insertComponent(position: number, handle: IFluidHandle, view: string, componentOptions: object, style?: string, classList?: string[]) {
         this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({
             ...FlowDocument.inclusionProperties,
             componentOptions, handle, style, classList: classList && classList.join(" "), view,

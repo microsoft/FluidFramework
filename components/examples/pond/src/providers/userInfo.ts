@@ -6,8 +6,8 @@
 import { EventEmitter } from "events";
 
 import {
-    IComponentHandleContext,
-    IComponentSerializer,
+    IFluidHandleContext,
+    IFluidSerializer,
 } from "@fluidframework/component-core-interfaces";
 import { IQuorum } from "@fluidframework/protocol-definitions";
 import { DependencyContainer } from "@fluidframework/synthesize";
@@ -69,8 +69,8 @@ export const userInfoFactory = async (dc: DependencyContainer) => {
     const s = dc.synthesize<IContainerRuntime>({
         IContainerRuntime,
         IContainerRuntimeDirtyable,
-        IComponentHandleContext,
-        IComponentSerializer,
+        IFluidHandleContext,
+        IFluidSerializer,
         IComponentRegistry,
     }, {});
     const containerRuntime = await s.IContainerRuntime;

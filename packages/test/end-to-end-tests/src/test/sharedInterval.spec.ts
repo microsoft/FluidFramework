@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -281,9 +281,9 @@ describe("SharedInterval", () => {
             sharedMap1.set("outerString", SharedString.create(component1.runtime).handle);
             await containerDeltaEventManager.process();
 
-            const outerString1 = await sharedMap1.get<IComponentHandle<SharedString>>("outerString").get();
-            const outerString2 = await sharedMap2.get<IComponentHandle<SharedString>>("outerString").get();
-            const outerString3 = await sharedMap3.get<IComponentHandle<SharedString>>("outerString").get();
+            const outerString1 = await sharedMap1.get<IFluidHandle<SharedString>>("outerString").get();
+            const outerString2 = await sharedMap2.get<IFluidHandle<SharedString>>("outerString").get();
+            const outerString3 = await sharedMap3.get<IFluidHandle<SharedString>>("outerString").get();
             assert.ok(outerString1, "String did not correctly set as value in container 1's map");
             assert.ok(outerString2, "String did not correctly set as value in container 2's map");
             assert.ok(outerString3, "String did not correctly set as value in container 3's map");
@@ -318,11 +318,11 @@ describe("SharedInterval", () => {
             assert.equal(serialized3.length, 3, "Incorrect interval collection size in container 3");
 
             const interval1From3 = serialized3[0] as ISerializedInterval;
-            const comment1From3 = await (interval1From3.properties.story as IComponentHandle<SharedString>).get();
+            const comment1From3 = await (interval1From3.properties.story as IFluidHandle<SharedString>).get();
             assert.equal(
                 comment1From3.getText(0, 12), "a comment...", "Incorrect text in interval collection's shared string");
             const interval3From3 = serialized3[2] as ISerializedInterval;
-            const mapFrom3 = await (interval3From3.properties.story as IComponentHandle<SharedMap>).get();
+            const mapFrom3 = await (interval3From3.properties.story as IFluidHandle<SharedMap>).get();
             assert.equal(
                 mapFrom3.get("nestedKey"), "nestedValue", "Incorrect value in interval collection's shared map");
 

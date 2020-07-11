@@ -7,8 +7,8 @@ import assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IComponentHandle,
-    IComponentHandleContext,
+    IFluidHandle,
+    IFluidHandleContext,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -71,7 +71,7 @@ export interface ISharedObjectRegistry {
  * Base component class
  */
 export class ComponentRuntime extends EventEmitter implements IComponentRuntimeChannel,
-    IComponentRuntime, IComponentHandleContext {
+    IComponentRuntime, IFluidHandleContext {
     /**
      * Loads the component runtime
      * @param context - The component context
@@ -105,7 +105,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return runtime;
     }
 
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
 
     public get connected(): boolean {
         return this.componentContext.connected;
@@ -146,13 +146,13 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return generateHandleContextPath(this.id, this.routeContext);
     }
 
-    public get routeContext(): IComponentHandleContext {
-        return this.componentContext.containerRuntime.IComponentHandleContext;
+    public get routeContext(): IFluidHandleContext {
+        return this.componentContext.containerRuntime.IFluidHandleContext;
     }
 
-    public get IComponentSerializer() { return this.componentContext.containerRuntime.IComponentSerializer; }
+    public get IFluidSerializer() { return this.componentContext.containerRuntime.IFluidSerializer; }
 
-    public get IComponentHandleContext() { return this; }
+    public get IFluidHandleContext() { return this; }
     public get IComponentRegistry() { return this.componentRegistry; }
 
     private _disposed = false;
@@ -168,7 +168,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     private readonly deferredAttached = new Deferred<void>();
     private readonly localChannelContextQueue = new Map<string, LocalChannelContext>();
     private readonly notBoundedChannelContextSet = new Set<string>();
-    private boundhandles: Set<IComponentHandle> | undefined;
+    private boundhandles: Set<IFluidHandle> | undefined;
     private _attachState: AttachState;
 
     private constructor(
@@ -374,7 +374,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.bindState = BindState.Bound;
     }
 
-    public bind(handle: IComponentHandle): void {
+    public bind(handle: IFluidHandle): void {
         // If the component is already attached or its graph is already in attaching or attached state,
         // then attach the incoming handle too.
         if (this.isAttached || this.graphAttachState !== AttachState.Detached) {
@@ -382,7 +382,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             return;
         }
         if (this.boundhandles === undefined) {
-            this.boundhandles = new Set<IComponentHandle>();
+            this.boundhandles = new Set<IFluidHandle>();
         }
 
         this.boundhandles.add(handle);

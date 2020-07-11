@@ -44,7 +44,7 @@ async function attachCore(loader: Loader, url: string, div: HTMLDivElement) {
         return;
     }
 
-    const component = response.value as IComponent;
+    const component = response.value as IComponent & IFluidObject;
     // Try to render the component if it is a view
     const view: IComponentHTMLView | undefined = component.IComponentHTMLView;
     if (view !== undefined) {

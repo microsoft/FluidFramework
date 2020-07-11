@@ -7,11 +7,11 @@ import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import {
     IComponent,
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
-    IComponentHandle,
+    IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
 import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -34,8 +34,8 @@ import { Viewer } from "./marked";
 import "simplemde/dist/simplemde.min.css";
 
 export class Smde extends EventEmitter implements
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidLoadable,
+    IFluidRouter,
     IComponentHTMLView {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new Smde(runtime, context);
@@ -44,13 +44,13 @@ export class Smde extends EventEmitter implements
         return collection;
     }
 
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
-    public get IComponentHandle() { return this.innerHandle; }
-    public get IComponentLoadable() { return this; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get IFluidHandle() { return this.innerHandle; }
+    public get IFluidLoadable() { return this; }
 
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
     public get IComponentHTMLView() { return this; }
 
     public url: string;
@@ -67,7 +67,7 @@ export class Smde extends EventEmitter implements
         super();
 
         this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
+        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -94,7 +94,7 @@ export class Smde extends EventEmitter implements
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this._text = await this.root.get<IComponentHandle<SharedString>>("text").get();
+        this._text = await this.root.get<IFluidHandle<SharedString>>("text").get();
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
@@ -207,7 +207,7 @@ export class Smde extends EventEmitter implements
 
     // TODO: this should be an utility.
     private isReadonly() {
-        const runtimeAsComponent = this.context.containerRuntime as IComponent;
+        const runtimeAsComponent = this.context.containerRuntime as IComponent & IFluidObject;
         const scopes = runtimeAsComponent.IComponentConfiguration?.scopes;
         return scopes !== undefined && !scopes.includes("doc:write");
     }

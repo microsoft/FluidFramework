@@ -4,13 +4,13 @@
  */
 
 import * as api from "@fluid-internal/client-api";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 import { ILoader } from "@fluidframework/container-definitions";
 import { ISharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { ISharedString } from "@fluidframework/sequence";
+import { ISharedString, SharedStringFactory } from "@fluidframework/sequence";
 // eslint-disable-next-line import/no-internal-modules
 import queue from "async/queue";
 
@@ -164,8 +164,8 @@ export async function typeFile(
             return Promise.reject("Invalid document");
         }
 
-        const component = response.value as IComponent;
-        if (!component.ISharedString) {
+        const component = response.value as IComponent & IFluidObject;
+        if (component?.ISharedObject?.attributes.type !== SharedStringFactory.Attributes.type) {
             return Promise.reject("Cannot type into document");
         }
 
@@ -174,7 +174,7 @@ export async function typeFile(
             latencyCounter: new Counter(),
             metrics: clone(m),
             pingCounter: new Counter(),
-            ss: component.ISharedString,
+            ss: component?.ISharedObject as unknown as ISharedString,
             typingCounter: new Counter(),
         };
         authors.push(author);

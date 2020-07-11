@@ -5,11 +5,11 @@
 
 import { EventEmitter } from "events";
 import {
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
-    IComponentHandle,
+    IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
 import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -197,12 +197,12 @@ class CodemirrorView implements IComponentHTMLView {
 
 /**
  * CodeMirrorComponent builds a fluid collaborative code editor on top of the open source code editor CodeMirror.
- * It has its own implementation of IComponentLoadable and does not extend SharedComponent / PrimedComponent. This is
- * done intentionally to serve as an example of exposing the URL and handle via IComponentLoadable.
+ * It has its own implementation of IFluidLoadable and does not extend SharedComponent / PrimedComponent. This is
+ * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
 export class CodeMirrorComponent
     extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLView {
+    implements IFluidLoadable, IFluidRouter, IComponentHTMLView {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new CodeMirrorComponent(runtime, context);
         await collection.initialize();
@@ -210,16 +210,16 @@ export class CodeMirrorComponent
         return collection;
     }
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidRouter() { return this; }
     public get IComponentHTMLView() { return this; }
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
     public url: string;
     private text: SharedString | undefined;
     private root: ISharedMap | undefined;
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
     constructor(
         private readonly runtime: IComponentRuntime,
@@ -227,7 +227,7 @@ export class CodeMirrorComponent
     ) {
         super();
         this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
+        this.innerHandle = new ComponentHandle(this, this.url, runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -254,7 +254,7 @@ export class CodeMirrorComponent
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this.text = await this.root.get<IComponentHandle<SharedString>>("text").get();
+        this.text = await this.root.get<IFluidHandle<SharedString>>("text").get();
     }
 
     public render(elm: HTMLElement): void {

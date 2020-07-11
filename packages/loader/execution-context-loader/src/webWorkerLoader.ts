@@ -4,7 +4,7 @@
  */
 
 import {
-    IComponentRouter,
+    IFluidRouter,
     IComponentRunnable,
     IRequest,
     IResponse,
@@ -27,7 +27,7 @@ interface IProxyLoader extends ILoader, IComponentRunnable {
 /**
  * Proxies requests to web worker loader.
  */
-export class WebWorkerLoader implements ILoader, IComponentRunnable, IComponentRouter {
+export class WebWorkerLoader implements ILoader, IComponentRunnable, IFluidRouter {
     public static async load(
         id: string,
         options: any,
@@ -47,7 +47,7 @@ export class WebWorkerLoader implements ILoader, IComponentRunnable, IComponentR
     constructor(private readonly proxy: Comlink.Remote<IProxyLoader>) {
     }
 
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
     public get IComponentRunnable() { return this; }
 
     public async request(request: IRequest): Promise<IResponse> {

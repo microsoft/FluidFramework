@@ -5,7 +5,7 @@
 
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 import { PrimedComponent } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IComponentLayout } from "@fluidframework/framework-experimental";
 import {
     IMergeTreeGroupMsg,
@@ -61,7 +61,7 @@ const defaultCompilerOptions = {
 export class MonacoRunner extends PrimedComponent implements
     IComponentHTMLView, IComponentLayout {
     public get IComponentHTMLView() { return this; }
-    public get IComponentLoadable() { return this; }
+    public get IFluidLoadable() { return this; }
     public get IComponentLayout() { return this; }
 
     /**
@@ -130,7 +130,7 @@ export class MonacoRunner extends PrimedComponent implements
         // outputDiv.style.width = "50%";
         // hostWrapper.appendChild(outputDiv);
 
-        const textHandle = await this.root.wait<IComponentHandle<SharedString>>("text");
+        const textHandle = await this.root.wait<IFluidHandle<SharedString>>("text");
         const text = await textHandle.get();
 
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);

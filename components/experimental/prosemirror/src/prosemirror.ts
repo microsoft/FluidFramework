@@ -5,11 +5,11 @@
 
 import { EventEmitter } from "events";
 import {
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
-    IComponentHandle,
+    IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
 import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -95,11 +95,11 @@ class ProseMirrorView implements IComponentHTMLView {
 
 /**
  * ProseMirror builds a fluid collaborative text editor on top of the open source text editor ProseMirror.
- * It has its own implementation of IComponentLoadable and does not extend SharedComponent / PrimedComponent. This is
- * done intentionally to serve as an example of exposing the URL and handle via IComponentLoadable.
+ * It has its own implementation of IFluidLoadable and does not extend SharedComponent / PrimedComponent. This is
+ * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
 export class ProseMirror extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLView, IProvideRichTextEditor {
+    implements IFluidLoadable, IFluidRouter, IComponentHTMLView, IProvideRichTextEditor {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProseMirror(runtime, context);
         await collection.initialize();
@@ -107,10 +107,10 @@ export class ProseMirror extends EventEmitter
         return collection;
     }
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidRouter() { return this; }
     public get IComponentHTMLView() { return this; }
     public get IRichTextEditor() { return this.collabManager; }
 
@@ -119,7 +119,7 @@ export class ProseMirror extends EventEmitter
     private root: ISharedMap;
     private collabManager: FluidCollabManager;
     private view: ProseMirrorView;
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
     constructor(
         private readonly runtime: IComponentRuntime,
@@ -128,7 +128,7 @@ export class ProseMirror extends EventEmitter
         super();
 
         this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
+        this.innerHandle = new ComponentHandle(this, this.url, runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -153,7 +153,7 @@ export class ProseMirror extends EventEmitter
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this.text = await this.root.get<IComponentHandle<SharedString>>("text").get();
+        this.text = await this.root.get<IFluidHandle<SharedString>>("text").get();
 
         this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
 

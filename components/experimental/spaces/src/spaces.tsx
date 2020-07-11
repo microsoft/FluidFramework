@@ -11,7 +11,7 @@ import {
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import {
-    IComponentHandle,
+    IFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -138,7 +138,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentHasInitialized() {
         this.storageComponent =
-            await this.root.get<IComponentHandle<SpacesStorage<ISpacesItem>>>(SpacesStorageKey)?.get();
+            await this.root.get<IFluidHandle<SpacesStorage<ISpacesItem>>>(SpacesStorageKey)?.get();
 
         // We'll cache this async result on initialization, since we need it synchronously during render.
         this.baseUrl = await this.context.getAbsoluteUrl(this.url);

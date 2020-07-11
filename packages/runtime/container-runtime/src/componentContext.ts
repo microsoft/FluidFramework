@@ -6,7 +6,7 @@
 import assert from "assert";
 import EventEmitter from "events";
 import { IDisposable } from "@fluidframework/common-definitions";
-import { IComponent, IComponentLoadable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidLoadable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -230,7 +230,7 @@ export abstract class ComponentContext extends EventEmitter implements
     public async createComponentWithRealizationFn(
         pkg: string,
         realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponent & IComponentLoadable> {
+    ): Promise<IComponent & IFluidLoadable> {
         const packagePath = await this.composeSubpackagePath(pkg);
 
         const componentRuntime = await this.containerRuntime.createComponentWithRealizationFn(

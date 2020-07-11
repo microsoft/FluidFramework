@@ -5,7 +5,7 @@
 
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import {
-    IComponentHandle,
+    IFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -64,7 +64,7 @@ if (window.location.hostname === "localhost") {
  * can adapt for rendering purposes.
  */
 export interface IWaterparkItem {
-    handle: IComponentHandle;
+    handle: IFluidHandle;
 }
 
 /**
@@ -140,8 +140,8 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentHasInitialized() {
-        this.storage = await this.root.get<IComponentHandle<SpacesStorage<IWaterparkItem>>>(storageKey)?.get();
-        this.loader = await this.root.get<IComponentHandle<ExternalComponentLoader>>(loaderKey)?.get();
+        this.storage = await this.root.get<IFluidHandle<SpacesStorage<IWaterparkItem>>>(storageKey)?.get();
+        this.loader = await this.root.get<IFluidHandle<ExternalComponentLoader>>(loaderKey)?.get();
         // We'll cache this async result on initialization, since we need it synchronously during render.
         this.baseUrl = await this.context.getAbsoluteUrl(this.url);
     }

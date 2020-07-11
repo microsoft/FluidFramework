@@ -258,7 +258,7 @@ async function getComponentAndRender(container: Container, url: string, div: HTM
         return false;
     }
 
-    const component = response.value as IComponent;
+    const component = response.value as IComponent & IFluidObject;
     if (component === undefined) {
         return;
     }

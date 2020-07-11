@@ -5,7 +5,7 @@
 import { PrimedComponent } from "@fluidframework/aqueduct";
 import {
     IComponent,
-    IComponentHandle,
+    IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
@@ -204,11 +204,11 @@ export abstract class SyncedComponent<
             );
             const componentSchemaHandles = {
                 fluidMatchingMapHandle: componentSchema.fluidMatchingMap
-                    .handle as IComponentHandle<SharedMap>,
+                    .handle as IFluidHandle<SharedMap>,
                 viewMatchingMapHandle: componentSchema.viewMatchingMap
-                    .handle as IComponentHandle<SharedMap>,
+                    .handle as IFluidHandle<SharedMap>,
                 storedHandleMapHandle: componentSchema.storedHandleMap
-                    .handle as IComponentHandle<SharedMap>,
+                    .handle as IFluidHandle<SharedMap>,
             };
             this.fluidComponentMap.set(
                 componentSchema.fluidMatchingMap.handle.absolutePath,
@@ -250,7 +250,7 @@ export abstract class SyncedComponent<
             const { syncedStateId, fluidToView } = stateConfig;
             // Fetch this specific view's state using the syncedStateId
             const storedFluidStateHandle = this.syncedState.get<
-                IComponentHandle<ISharedMap>
+                IFluidHandle<ISharedMap>
             >(`syncedState-${syncedStateId}`);
             if (storedFluidStateHandle === undefined) {
                 throw new Error(
@@ -289,7 +289,7 @@ export abstract class SyncedComponent<
                     const storedValue = rootKey
                         ? this.root.get(rootKey)
                         : storedFluidState.get(fluidKey);
-                    const handle = storedValue?.IComponentHandle;
+                    const handle = storedValue?.IFluidHandle;
                     if (handle) {
                         this.fluidComponentMap.set(handle.absolutePath, {
                             component: await handle.get(),

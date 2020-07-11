@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IColor, IInk, Ink, InkCanvas } from "@fluidframework/ink";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-unassigned-import
@@ -44,7 +44,7 @@ export class Canvas extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentHasInitialized() {
         // Wait here for the ink
-        const handle = await this.root.wait<IComponentHandle<IInk>>("pageInk");
+        const handle = await this.root.wait<IFluidHandle<IInk>>("pageInk");
         this.ink = await handle.get();
     }
 

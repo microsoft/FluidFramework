@@ -290,9 +290,9 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
 
         // Stringify to convert to the serialized handle values - and then parse in order to create
         // a POJO for the op
-        const stringified = this.runtime.IComponentSerializer.stringify(
+        const stringified = this.runtime.IFluidSerializer.stringify(
             value,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidHandleContext,
             this.handle);
         return JSON.parse(stringified);
     }
@@ -310,7 +310,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
         }
 
         return value !== undefined
-            ? this.runtime.IComponentSerializer.parse(JSON.stringify(value), this.runtime.IComponentHandleContext)
+            ? this.runtime.IFluidSerializer.parse(JSON.stringify(value), this.runtime.IFluidHandleContext)
             : value;
     }
 }

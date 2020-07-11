@@ -7,8 +7,8 @@ import assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IComponentHandle,
-    IComponentHandleContext,
+    IFluidHandle,
+    IFluidHandleContext,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -361,11 +361,11 @@ export class MockQuorum implements IQuorum, EventEmitter {
  * Mock implementation of IRuntime for testing that does nothing
  */
 export class MockComponentRuntime extends EventEmitter
-    implements IComponentRuntime, IComponentRuntimeChannel, IComponentHandleContext {
-    public get IComponentHandleContext(): IComponentHandleContext { return this; }
-    public get IComponentRouter() { return this; }
+    implements IComponentRuntime, IComponentRuntimeChannel, IFluidHandleContext {
+    public get IFluidHandleContext(): IFluidHandleContext { return this; }
+    public get IFluidRouter() { return this; }
 
-    public readonly IComponentSerializer = new ComponentSerializer();
+    public readonly IFluidSerializer = new ComponentSerializer();
 
     public readonly documentId: string;
     public readonly id: string = uuid();
@@ -435,7 +435,7 @@ export class MockComponentRuntime extends EventEmitter
         return;
     }
 
-    public bind(handle: IComponentHandle): void {
+    public bind(handle: IFluidHandle): void {
         return;
     }
 

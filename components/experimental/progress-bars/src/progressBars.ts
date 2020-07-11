@@ -6,9 +6,9 @@
 import { EventEmitter } from "events";
 import {
     IComponent,
-    IComponentHandleContext,
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidHandleContext,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -78,25 +78,25 @@ class ProgressBarView implements IComponentHTMLView {
 
 // The "model" side of a progress bar
 export class ProgressBar extends EventEmitter implements
-    IComponentLoadable,
+    IFluidLoadable,
     IComponentHTMLView,
-    IComponentRouter {
+    IFluidRouter {
     public handle: ComponentHandle;
 
     constructor(
         public value: number,
         public url: string,
         private readonly keyId: string,
-        context: IComponentHandleContext,
+        context: IFluidHandleContext,
         private readonly collection: ProgressCollection,
     ) {
         super();
         this.handle = new ComponentHandle(this, keyId, context);
     }
 
-    public get IComponentLoadable() { return this; }
+    public get IFluidLoadable() { return this; }
     public get IComponentHTMLView() { return this; }
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
 
     public render(elm: HTMLElement) {
         const view = new ProgressBarView(this);
@@ -123,7 +123,7 @@ export class ProgressBar extends EventEmitter implements
 
 export class ProgressCollection
     extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentCollection {
+    implements IFluidLoadable, IFluidRouter, IComponentCollection {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProgressCollection(runtime, context);
         await collection.initialize();
@@ -131,8 +131,8 @@ export class ProgressCollection
         return collection;
     }
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidRouter() { return this; }
     public get IComponentCollection() { return this; }
 
     public url: string;
@@ -145,7 +145,7 @@ export class ProgressCollection
         super();
 
         this.url = context.id;
-        this.handle = new ComponentHandle(this, "", this.runtime.IComponentHandleContext);
+        this.handle = new ComponentHandle(this, "", this.runtime.IFluidHandleContext);
     }
 
     public changeValue(key: string, newValue: number) {
@@ -203,7 +203,7 @@ export class ProgressCollection
                     this.root.get(key),
                     `${this.url}/${key}`,
                     key,
-                    this.runtime.IComponentHandleContext,
+                    this.runtime.IFluidHandleContext,
                     this));
         }
 
@@ -217,7 +217,7 @@ export class ProgressCollection
                         this.root.get(changed.key),
                         `${this.url}/${changed.key}`,
                         changed.key,
-                        this.runtime.IComponentHandleContext,
+                        this.runtime.IFluidHandleContext,
                         this));
                 this.emit("progressAdded", `/${changed.key}`);
             }

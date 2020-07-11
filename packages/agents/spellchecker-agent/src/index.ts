@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRouter, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IFluidRouter, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import * as MergeTree from "@fluidframework/merge-tree";
 import * as Sequence from "@fluidframework/sequence";
 import { loadDictionary } from "./dictionaryLoader";
@@ -24,8 +24,8 @@ declare module "@fluidframework/component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideSpellChecker>> { }
 }
 
-export class SpellChecker implements IComponentRouter, ISpellChecker {
-    public get IComponentRouter() { return this; }
+export class SpellChecker implements IFluidRouter, ISpellChecker {
+    public get IFluidRouter() { return this; }
     public get ISpellChecker() { return this; }
 
     public run(sharedString: Sequence.SharedString, dictionary?: MergeTree.TST<number>) {

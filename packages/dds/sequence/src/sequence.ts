@@ -323,8 +323,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
         const translated = makeHandlesSerializable(
             message,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidSerializer,
+            this.runtime.IFluidHandleContext,
             this.handle);
         const metadata = this.client.peekPendingSegmentGroups(
             message.type === MergeTree.MergeTreeDeltaType.GROUP ? message.ops.length : 1);
@@ -580,8 +580,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         rawMessage: ISequencedDocumentMessage) {
         const message = parseHandles(
             rawMessage,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext);
+            this.runtime.IFluidSerializer,
+            this.runtime.IFluidHandleContext);
 
         const ops: MergeTree.IMergeTreeDeltaOp[] = [];
         function transfromOps(event: SequenceDeltaEvent) {

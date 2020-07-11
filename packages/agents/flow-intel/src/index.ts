@@ -4,17 +4,17 @@
  */
 
 import { FlowDocument } from "@fluid-example/webflow";
-import { IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IFluidRouter, IComponentRunnable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import { ISharedMap } from "@fluidframework/map";
 import { IntelRunner, ITokenConfig } from "./intelRunner";
 
-export class TextAnalyzer implements IComponentRouter, IComponentRunnable {
+export class TextAnalyzer implements IFluidRouter, IComponentRunnable {
     constructor(
         private readonly document: FlowDocument,
         private readonly insightsMap: ISharedMap,
         private readonly config: ITokenConfig) { }
 
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
     public get IComponentRunnable() { return this; }
 
     private intelRunner: IntelRunner | undefined;

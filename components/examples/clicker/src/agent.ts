@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IFluidRouter, IComponentRunnable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 
 // Sample agent to run.
-export class ClickerAgent implements IComponentRouter, IComponentRunnable {
+export class ClickerAgent implements IFluidRouter, IComponentRunnable {
     constructor(private readonly counter: SharedCounter) { }
 
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
     public get IComponentRunnable() { return this; }
 
     public async run() {

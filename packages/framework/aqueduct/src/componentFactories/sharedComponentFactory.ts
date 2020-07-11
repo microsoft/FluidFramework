@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentLoadable, IRequest } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidLoadable, IRequest } from "@fluidframework/component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
 import { ComponentRegistry } from "@fluidframework/container-runtime";
 import {
@@ -145,7 +145,7 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
     public async createComponent(
         context: IComponentContext,
         initialState?: S,
-    ): Promise<IComponent & IComponentLoadable> {
+    ): Promise<IComponent & IFluidLoadable> {
         if (this.type === "") {
             throw new Error("undefined type member");
         }

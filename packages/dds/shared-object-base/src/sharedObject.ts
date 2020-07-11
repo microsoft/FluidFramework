@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import {
@@ -34,12 +34,12 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     public get ISharedObject() { return this; }
     public get IChannel() { return this; }
-    public get IComponentLoadable() { return this; }
+    public get IFluidLoadable() { return this; }
 
     /**
      * The handle referring to this SharedObject
      */
-    public readonly handle: IComponentHandle;
+    public readonly handle: IFluidHandle;
 
     /**
      * Telemetry logger for the shared object
@@ -90,7 +90,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this.handle = new SharedObjectComponentHandle(
             this,
             id,
-            runtime.IComponentHandleContext);
+            runtime.IFluidHandleContext);
 
         // Runtime could be null since some package hasn't turn on strictNullChecks yet
         // We should remove the null check once that is done

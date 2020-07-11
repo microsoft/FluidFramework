@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidHandle, IFluidLoadable } from "@fluidframework/component-core-interfaces";
 import { AsSerializable, Serializable } from "@fluidframework/component-runtime-definitions";
 import { NamedComponentRegistryEntries } from "@fluidframework/runtime-definitions";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
@@ -18,10 +18,10 @@ import * as React from "react";
 import { Layout } from "react-grid-layout";
 
 export type ICreateAndAttachComponentFunction =
-    <T extends IComponent & IComponentLoadable>(pkg: string, props?: any) => Promise<T>;
+    <T extends IComponent & IFluidLoadable>(pkg: string, props?: any) => Promise<T>;
 
 interface ISingleHandleItem {
-    handle: IComponentHandle;
+    handle: IFluidHandle;
 }
 
 const createSingleHandleItem = (type: string) => {
@@ -40,7 +40,7 @@ const getAdaptedViewForSingleHandleItem = async (serializableObject: ISingleHand
 };
 
 const getSliderCoordinateView = async (serializableObject: ISingleHandleItem) => {
-    const handle = serializableObject.handle as IComponentHandle<Coordinate>;
+    const handle = serializableObject.handle as IFluidHandle<Coordinate>;
     const model = await handle.get();
     return React.createElement(SliderCoordinateView, { label: "Coordinate", model });
 };

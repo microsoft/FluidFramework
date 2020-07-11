@@ -132,8 +132,8 @@ class KeyValueLoader {
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             return;
         }
-        const component = response.value as IComponent;
-        const keyValue = (component.IComponentRouter as unknown) as IKeyValue;
+        const component = response.value as IComponent & IFluidObject;
+        const keyValue = (component.IFluidRouter as unknown) as IKeyValue;
         winston.info(`Resolved key-value component`);
         this.kvDeferred.resolve(keyValue);
     }

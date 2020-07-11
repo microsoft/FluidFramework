@@ -51,7 +51,7 @@ async function conductor(
         return Promise.reject("Invalid document");
     }
 
-    const component = response.value as IComponent;
+    const component = response.value as IComponent & IFluidObject;
     if (!component.ISharedString) {
         return Promise.reject("Cannot type into document");
     }

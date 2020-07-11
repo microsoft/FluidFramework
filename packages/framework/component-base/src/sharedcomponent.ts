@@ -4,9 +4,9 @@
  */
 
 import {
-    IComponentHandle,
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidHandle,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
     IProvideComponentHandle,
@@ -26,12 +26,12 @@ export abstract class SharedComponent<
     TRoot extends ISharedObject = ISharedObject,
     TEvents extends IEvent = IEvent>
     extends EventForwarder<TEvents>
-    implements IComponentLoadable, IProvideComponentHandle, IComponentRouter {
-    private _handle?: IComponentHandle<this>;
+    implements IFluidLoadable, IProvideComponentHandle, IFluidRouter {
+    private _handle?: IFluidHandle<this>;
 
-    public get IComponentRouter() { return this; }
-    public get IComponentLoadable() { return this; }
-    public get IComponentHandle() { return this.handle; }
+    public get IFluidRouter() { return this; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidHandle() { return this.handle; }
     public get IProvideComponentHandle() { return this; }
 
     /**
@@ -49,7 +49,7 @@ export abstract class SharedComponent<
         this.root = root as TRoot;
     }
 
-    // #region IComponentRouter
+    // #region IFluidRouter
 
     public async request({ url }: IRequest): Promise<IResponse> {
         return url === "" || url === "/"
@@ -57,17 +57,17 @@ export abstract class SharedComponent<
             : { status: 404, mimeType: "text/plain", value: `Requested URL '${url}' not found.` };
     }
 
-    // #endregion IComponentRouter
+    // #endregion IFluidRouter
 
-    // #region IComponentLoadable
+    // #region IFluidLoadable
 
-    public get handle(): IComponentHandle<this> {
+    public get handle(): IFluidHandle<this> {
         // Lazily create the ComponentHandle when requested.
         if (!this._handle) {
             this._handle = new ComponentHandle(
                 this,
                 "",
-                this.runtime.IComponentHandleContext);
+                this.runtime.IFluidHandleContext);
         }
 
         return this._handle;
@@ -76,9 +76,9 @@ export abstract class SharedComponent<
     /**
      * Absolute URL to the component within the document
      */
-    public get url() { return this.runtime.IComponentHandleContext.absolutePath; }
+    public get url() { return this.runtime.IFluidHandleContext.absolutePath; }
 
-    // #endregion IComponentLoadable
+    // #endregion IFluidLoadable
 
     public abstract create(props?: any);
     public abstract async load();

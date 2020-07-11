@@ -5,34 +5,35 @@
 
 import {
     IComponent,
-    IComponentHandle,
-    IComponentHandleContext,
+    IFluidHandle,
+    IFluidHandleContext,
     IRequest,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 
 /**
  * Handle to dynamically load a component on a remote client and is created on parsing a seralized ComponentHandle.
- * This class is used to generate an IComponentHandle when de-serializing Fluid Component and SharedObject handles
- * that are stored in SharedObjects. The Component or SharedObject corresponding to the IComponentHandle can be
+ * This class is used to generate an IFluidHandle when de-serializing Fluid Component and SharedObject handles
+ * that are stored in SharedObjects. The Component or SharedObject corresponding to the IFluidHandle can be
  * retrieved by calling `get` on it.
  */
-export class RemoteComponentHandle implements IComponentHandle {
-    public get IComponentRouter() { return this; }
-    public get IComponentHandleContext() { return this; }
-    public get IComponentHandle() { return this; }
+export class RemoteComponentHandle implements IFluidHandle {
+    public get IFluidRouter() { return this; }
+    public get IFluidHandleContext() { return this; }
+    public get IFluidHandle() { return this; }
 
     public readonly isAttached = true;
     private componentP: Promise<IComponent> | undefined;
 
     /**
-     * Creates a new RemoteComponentHandle when parsing an IComponentHandle.
+     * Creates a new RemoteComponentHandle when parsing an IFluidHandle.
      * @param absolutePath - The absolute path to the handle from the container runtime.
-     * @param routeContext - The root IComponentHandleContext that has a route to this handle.
+     * @param routeContext - The root IFluidHandleContext that has a route to this handle.
      */
     constructor(
         public readonly absolutePath: string,
-        public readonly routeContext: IComponentHandleContext,
+        public readonly routeContext: IFluidHandleContext,
     ) {
     }
 
@@ -59,7 +60,7 @@ export class RemoteComponentHandle implements IComponentHandle {
         return;
     }
 
-    public bind(handle: IComponentHandle): void {
+    public bind(handle: IFluidHandle): void {
         if (this.isAttached) {
             handle.attachGraph();
             return;
@@ -68,8 +69,8 @@ export class RemoteComponentHandle implements IComponentHandle {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        const component = await this.get() as IComponent;
-        const router = component.IComponentRouter;
+        const component = await this.get() as IComponent & IFluidObject;
+        const router = component.IFluidRouter;
 
         return router !== undefined
             ? router.request(request)

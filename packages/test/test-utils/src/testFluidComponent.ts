@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
+import { IRequest, IResponse, IFluidHandle, IFluidLoadable } from "@fluidframework/component-core-interfaces";
 import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
@@ -16,7 +16,7 @@ import { ITestFluidComponent } from "./interfaces";
  * The shared objects can be retrieved by passing the key of the entry to getSharedObject.
  * It exposes the IComponentContext and IComponentRuntime.
  */
-export class TestFluidComponent implements ITestFluidComponent, IComponentLoadable {
+export class TestFluidComponent implements ITestFluidComponent, IFluidLoadable {
     public static async load(
         runtime: IComponentRuntime,
         context: IComponentContext,
@@ -31,15 +31,15 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
         return this;
     }
 
-    public get IComponentLoadable() {
+    public get IFluidLoadable() {
         return this;
     }
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
     public url: string;
     public root!: ISharedMap;
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
     /**
      * Creates a new TestFluidComponent.
@@ -54,7 +54,7 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
         private readonly factoryEntriesMap: Map<string, ISharedObjectFactory>,
     ) {
         this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, "", runtime.IComponentHandleContext);
+        this.innerHandle = new ComponentHandle(this, "", runtime.IFluidHandleContext);
     }
 
     /**
@@ -68,7 +68,7 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
 
         for (const key of this.factoryEntriesMap.keys()) {
             if (key === id) {
-                const handle = this.root.get<IComponentHandle>(id);
+                const handle = this.root.get<IFluidHandle>(id);
                 return handle?.get() as unknown as T;
             }
         }

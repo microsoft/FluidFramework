@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IResponse, IComponent, IComponentRouter, IRequest } from "@fluidframework/component-core-interfaces";
+import { IResponse, IComponent, IFluidRouter, IRequest } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { RequestParser } from "@fluidframework/runtime-utils";
@@ -16,8 +16,8 @@ export type ContainerServiceRegistryEntries = Iterable<[string, (runtime: IConta
 /**
  * This class is a simple starter class for building a Container Service. It simply provides routing
  */
-export abstract class BaseContainerService implements IComponentRouter {
-    public get IComponentRouter() { return this; }
+export abstract class BaseContainerService implements IFluidRouter {
+    public get IFluidRouter() { return this; }
 
     constructor(protected readonly runtime: IContainerRuntime) {
     }
@@ -86,7 +86,7 @@ export const generateContainerServicesRequestHandler =
             }
 
             const service = await factory.getService(runtime);
-            const router = service.IComponentRouter;
+            const router = service.IFluidRouter;
             let subRequest = request.createSubRequest(2);
             if (router) {
                 // If the service is also a router then we will route to it

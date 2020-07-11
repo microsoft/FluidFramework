@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import {
     IComponent,
-    IComponentRouter,
+    IFluidRouter,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -52,7 +52,7 @@ declare module "@fluidframework/component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideKeyValue>> { }
 }
 
-class KeyValue implements IKeyValue, IComponent, IComponentRouter {
+class KeyValue implements IKeyValue, IComponent, IFluidRouter {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const kevValue = new KeyValue(runtime);
         await kevValue.initialize();
@@ -60,7 +60,7 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
         return kevValue;
     }
 
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
     public get IKeyValue() { return this; }
 
     private _root: ISharedMap | undefined;

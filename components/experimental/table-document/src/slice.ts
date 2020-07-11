@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
 import { CellRange } from "./cellrange";
 import { ConfigKey } from "./configKey";
@@ -133,7 +133,7 @@ export class TableSlice extends PrimedComponent<{}, ITableSliceConfig> implement
         if (!this.maybeDoc) {
             const docId = this.root.get(ConfigKey.docId);
             // fetch handle from root
-            const handle = this.root.get<IComponentHandle<TableDocument>>(docId);
+            const handle = this.root.get<IFluidHandle<TableDocument>>(docId);
             this.maybeDoc = await handle.get();
         }
     }

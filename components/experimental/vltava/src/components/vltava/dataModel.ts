@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { IComponent, IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IComponentLastEditedTracker } from "@fluidframework/last-edited-experimental";
 import { IComponentContext } from "@fluidframework/runtime-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
@@ -58,7 +58,7 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     }
 
     public async getDefaultComponent(): Promise<IComponent> {
-        return this.root.get<IComponentHandle>("tabs-component-id").get();
+        return this.root.get<IFluidHandle>("tabs-component-id").get();
     }
 
     public getTitle(): string {

@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
@@ -35,7 +35,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLView {
 
     // Would prefer not to hand this out, and instead give back a title component?
     public async getTodoTitleString() {
-        return this.root.get<IComponentHandle<SharedString>>(this.todoTitleKey).get();
+        return this.root.get<IFluidHandle<SharedString>>(this.todoTitleKey).get();
     }
 
     /**
@@ -53,7 +53,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentHasInitialized() {
-        this.todoItemsMap = await this.root.get<IComponentHandle<ISharedMap>>(this.todoItemsKey).get();
+        this.todoItemsMap = await this.root.get<IFluidHandle<ISharedMap>>(this.todoItemsKey).get();
         // Hide the DDS eventing used by the model, expose a model-specific event interface.
         this.todoItemsMap.on("op", (op, local) => {
             if (!local) {

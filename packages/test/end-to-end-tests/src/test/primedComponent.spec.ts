@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { ISharedDirectory } from "@fluidframework/map";
@@ -21,7 +21,7 @@ class Component extends PrimedComponent {
     public get root(): ISharedDirectory {
         return super.root;
     }
-    public async writeBlob(blob: string): Promise<IComponentHandle<string>> {
+    public async writeBlob(blob: string): Promise<IFluidHandle<string>> {
         return super.writeBlob(blob);
     }
 }
@@ -62,13 +62,13 @@ describe("PrimedComponent", () => {
             assert(await handle.get() === "aaaa", "Could not write blob to component");
             component.root.set("key", handle);
 
-            const handle2 = component.root.get<IComponentHandle<string>>("key");
+            const handle2 = component.root.get<IFluidHandle<string>>("key");
             const value2 = await handle2.get();
             assert(value2 === "aaaa", "Could not get blob from shared object in the component");
 
             const container2 = await createContainer();
             const component2 = await getComponent("default", container2);
-            const value = await component2.root.get<IComponentHandle<string>>("key").get();
+            const value = await component2.root.get<IFluidHandle<string>>("key").get();
             assert(value === "aaaa", "Blob value not synced across containers");
         });
 

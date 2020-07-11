@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentLoadable } from "@fluidframework/component-core-interfaces";
+import { IFluidLoadable } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelAttributes } from "./storage";
 
-declare module "@fluidframework/container-definitions" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    interface IComponent extends Readonly<Partial<IProvideChannel>> { }
+    interface IFluidObject extends Readonly<Partial<IProvideChannel>> { }
 }
 
 export const IChannel: keyof IProvideChannel = "IChannel";
@@ -18,7 +18,7 @@ export interface IProvideChannel {
     readonly IChannel: IChannel;
 }
 
-export interface IChannel extends IProvideChannel, IComponentLoadable {
+export interface IChannel extends IProvideChannel, IFluidLoadable {
     /**
      * A readonly identifier for the shared object
      */

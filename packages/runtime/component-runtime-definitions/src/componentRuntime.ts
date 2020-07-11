@@ -6,9 +6,9 @@
 import { EventEmitter } from "events";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IComponentHandleContext,
-    IComponentSerializer,
-    IComponentRouter,
+    IFluidHandleContext,
+    IFluidSerializer,
+    IFluidRouter,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -30,16 +30,16 @@ import { IChannel } from ".";
  * Represents the runtime for the component. Contains helper functions/state of the component.
  */
 export interface IComponentRuntime extends
-    IComponentRouter,
+    IFluidRouter,
     EventEmitter,
     IDisposable,
     Partial<IProvideComponentRegistry> {
 
     readonly id: string;
 
-    readonly IComponentSerializer: IComponentSerializer;
+    readonly IFluidSerializer: IFluidSerializer;
 
-    readonly IComponentHandleContext: IComponentHandleContext;
+    readonly IFluidHandleContext: IFluidHandleContext;
 
     readonly options: any;
 

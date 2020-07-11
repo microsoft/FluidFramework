@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
 import {
     IProvideComponentLastEditedTracker,
@@ -53,7 +53,7 @@ implements IProvideComponentLastEditedTracker, IProvideFluidLastEditedTracker {
 
     protected async componentHasInitialized() {
         const sharedSummaryBlock =
-            await this.root.get<IComponentHandle<SharedSummaryBlock>>(this.sharedSummaryBlockId).get();
+            await this.root.get<IFluidHandle<SharedSummaryBlock>>(this.sharedSummaryBlockId).get();
         this._lastEditedTracker = new LastEditedTracker(sharedSummaryBlock);
     }
 }

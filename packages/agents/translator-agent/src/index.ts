@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IFluidRouter, IComponentRunnable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import { ISharedMap } from "@fluidframework/map";
 import * as Sequence from "@fluidframework/sequence";
 import { SharedStringTranslator } from "./sharedStringTranslator";
@@ -12,13 +12,13 @@ interface ITokenConfig {
     key: string;
 }
 
-export class Translator implements IComponentRouter, IComponentRunnable {
+export class Translator implements IFluidRouter, IComponentRunnable {
     constructor(
         private readonly sharedString: Sequence.SharedString,
         private readonly insightsMap: ISharedMap,
         private readonly config: ITokenConfig) { }
 
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
     public get IComponentRunnable() { return this; }
 
     private translator: SharedStringTranslator | undefined;

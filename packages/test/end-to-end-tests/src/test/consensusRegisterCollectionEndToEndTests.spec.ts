@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -81,8 +81,8 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             await collection1.write("key2", "value2");
 
             const [collection2Handle, collection3Handle] = await Promise.all([
-                sharedMap2.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
-                sharedMap3.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
+                sharedMap2.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
+                sharedMap3.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
             ]);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
@@ -104,8 +104,8 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             sharedMap1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
-                sharedMap2.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
-                sharedMap3.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
+                sharedMap2.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
+                sharedMap3.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
             ]);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
@@ -130,8 +130,8 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             sharedMap1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
-                sharedMap2.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
-                sharedMap3.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
+                sharedMap2.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
+                sharedMap3.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
             ]);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
@@ -184,13 +184,13 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 
             // Pull the collection off of the 2nd container
             const collection2Handle =
-                await sharedMap2.wait<IComponentHandle<IConsensusRegisterCollection>>("collection");
+                await sharedMap2.wait<IFluidHandle<IConsensusRegisterCollection>>("collection");
             const collection2 = await collection2Handle.get();
 
             // acquire one handle in each container
-            const sharedMap1HandleB = collection1.read("handleB") as IComponentHandle<ISharedMap>;
+            const sharedMap1HandleB = collection1.read("handleB") as IFluidHandle<ISharedMap>;
             const sharedMap1Prime = await sharedMap1HandleB.get();
-            const sharedMap2HandleA = collection2.read("handleA") as IComponentHandle<ISharedMap>;
+            const sharedMap2HandleA = collection2.read("handleA") as IFluidHandle<ISharedMap>;
             const sharedMap2Prime = await sharedMap2HandleA.get();
 
             assert.equal(sharedMap1Prime.get("test"), "sampleValue");

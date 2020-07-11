@@ -22,7 +22,7 @@ const getMatchMakerContainerService = async (context: IComponentContext): Promis
         url: `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
     });
     if (response.status === 200 && response.mimeType === "fluid/component") {
-        const value = response.value as IComponent;
+        const value = response.value as IComponent & IFluidObject;
         const matchMaker = value.IComponentInterfacesRegistry;
         if (matchMaker) {
             return matchMaker;

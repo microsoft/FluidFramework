@@ -8,7 +8,7 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { SharedDirectory } from "@fluidframework/map";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
@@ -50,11 +50,11 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentHasInitialized() {
-        const clicker = await this.root.get<IComponentHandle>(Clicker.ComponentName).get();
+        const clicker = await this.root.get<IFluidHandle>(Clicker.ComponentName).get();
         this.clickerView = new HTMLViewAdapter(clicker);
 
         const clickerUsingProviders
-            = await this.root.get<IComponentHandle>(ExampleUsingProviders.ComponentName).get();
+            = await this.root.get<IFluidHandle>(ExampleUsingProviders.ComponentName).get();
         this.clickerUsingProvidersView = new HTMLViewAdapter(clickerUsingProviders);
     }
 

@@ -9,12 +9,12 @@ import { Caret, CaretEventType, Direction, ICaretEvent } from "@fluid-example/fl
 import * as SearchMenu from "@fluid-example/search-menu";
 import {
     IComponent,
-    IComponentHandleContext,
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidHandleContext,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
-    IComponentHandle,
+    IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
 import { ComponentHandle } from "@fluidframework/component-runtime";
 import {
@@ -417,11 +417,11 @@ export class MathView implements IComponentHTMLView, IComponentCursor, IComponen
     }
 }
 
-export class MathInstance extends EventEmitter implements IComponentLoadable, IComponentRouter {
+export class MathInstance extends EventEmitter implements IFluidLoadable, IFluidRouter {
     public static defaultOptions: IMathOptions = { display: "inline" };
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidRouter() { return this; }
 
     public handle: ComponentHandle;
     public endMarker: IMathMarkerInst;
@@ -432,7 +432,7 @@ export class MathInstance extends EventEmitter implements IComponentLoadable, IC
     constructor(
         public url: string,
         public leafId: string,
-        context: IComponentHandleContext,
+        context: IFluidHandleContext,
         public readonly collection: MathCollection,
         public readonly options = MathInstance.defaultOptions,
         inCombinedText = false,
@@ -515,13 +515,13 @@ export class MathCollection extends SharedComponent<ISharedDirectory> implements
     }
 
     public async load() {
-        this.combinedMathText = await (await this.root.wait<IComponentHandle<Sequence.SharedString>>("mathText")).get();
+        this.combinedMathText = await (await this.root.wait<IFluidHandle<Sequence.SharedString>>("mathText")).get();
         this.initialize();
     }
 
-    public get IComponentLoadable() { return this; }
+    public get IFluidLoadable() { return this; }
     public get IComponentCollection() { return this; }
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
 
     private combinedMathText: Sequence.SharedString;
 
@@ -553,7 +553,7 @@ export class MathCollection extends SharedComponent<ISharedDirectory> implements
 
     public createCollectionItem(options?: IMathOptions): MathInstance {
         const leafId = `math-${Date.now()}`;
-        return new MathInstance(`${this.url}/${leafId}`, leafId, this.runtime.IComponentHandleContext, this, options);
+        return new MathInstance(`${this.url}/${leafId}`, leafId, this.runtime.IFluidHandleContext, this, options);
     }
 
     public getText(instance: MathInstance) {
@@ -620,7 +620,7 @@ export class MathCollection extends SharedComponent<ISharedDirectory> implements
                     options = mathMarker.properties.componentOptions;
                 }
                 mathMarker.mathInstance = new MathInstance(
-                    `${this.url}/${id}`, id, this.runtime.IComponentHandleContext, this, options, true);
+                    `${this.url}/${id}`, id, this.runtime.IFluidHandleContext, this, options, true);
             }
             return mathMarker.mathInstance as MathInstance;
         }

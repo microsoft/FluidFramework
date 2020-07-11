@@ -4,7 +4,7 @@
  */
 import { PrimedComponent } from "@fluidframework/aqueduct";
 import { CollaborativeTextArea } from "@fluidframework/react-inputs";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
@@ -37,7 +37,7 @@ export class TextBox extends PrimedComponent<{}, string> implements IComponentHT
     }
 
     protected async componentHasInitialized() {
-        this.text = await this.root.get<IComponentHandle<SharedString>>("text").get();
+        this.text = await this.root.get<IFluidHandle<SharedString>>("text").get();
     }
 
     // start IComponentHTMLView

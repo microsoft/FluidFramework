@@ -9,8 +9,8 @@ import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
-    IComponentHandleContext,
-    IComponentSerializer,
+    IFluidHandleContext,
+    IFluidSerializer,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -558,9 +558,9 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     public nextSummarizerP?: Promise<Summarizer>;
     public nextSummarizerD?: Deferred<Summarizer>;
 
-    public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
+    public readonly IFluidSerializer: IFluidSerializer = new ComponentSerializer();
 
-    public readonly IComponentHandleContext: IComponentHandleContext;
+    public readonly IFluidHandleContext: IFluidHandleContext;
 
     public readonly logger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
@@ -632,7 +632,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         this.chunkMap = new Map<string, string[]>(chunks);
 
-        this.IComponentHandleContext = new ComponentHandleContext("", this);
+        this.IFluidHandleContext = new ComponentHandleContext("", this);
 
         this.latestSummaryAck = {
             proposalHandle: undefined,
@@ -702,7 +702,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             () => this.summaryConfiguration,
             async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
             (summContext, refSeq) => this.refreshLatestSummaryAck(summContext, refSeq),
-            this.IComponentHandleContext,
+            this.IFluidHandleContext,
             this.previousState.summaryCollection);
 
         // Create the SummaryManager and mark the initial state
@@ -777,12 +777,12 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const component = await this.getComponentRuntime(requestParser.pathParts[0], wait) as IComponent;
+            const component = await this.getComponentRuntime(requestParser.pathParts[0], wait) as IComponent & IFluidObject;
             if (component) {
                 const subRequest = requestParser.createSubRequest(1);
                 if (subRequest !== undefined) {
-                    assert(component.IComponentRouter);
-                    return component.IComponentRouter.request(subRequest);
+                    assert(component.IFluidRouter);
+                    return component.IFluidRouter.request(subRequest);
                 } else {
                     return {
                         status: 200,
@@ -1764,7 +1764,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     private async getScheduler() {
         const schedulerRuntime = await this.getComponentRuntime(schedulerId, true);
         const schedulerResponse = await schedulerRuntime.request({ url: "" });
-        const schedulerComponent = schedulerResponse.value as IComponent;
+        const schedulerComponent = schedulerResponse.value as IComponent & IFluidObject;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return schedulerComponent.IAgentScheduler!;
     }

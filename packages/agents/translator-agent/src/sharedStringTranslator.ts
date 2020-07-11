@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ISharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -28,7 +28,7 @@ export class SharedStringTranslator {
     }
 
     public async start(): Promise<void> {
-        const handle = await this.insights.wait<IComponentHandle<ISharedMap>>(this.sharedString.id);
+        const handle = await this.insights.wait<IFluidHandle<ISharedMap>>(this.sharedString.id);
         this.typeInsights = await handle.get();
 
         this.sharedString.on("op", (op: ISequencedDocumentMessage) => {

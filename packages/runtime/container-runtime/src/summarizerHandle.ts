@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { ComponentHandle } from "@fluidframework/component-runtime";
-import { IComponentHandle, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 
 // TODO #2425 Expose Summarizer handle as ComponentHandle w/ tests
 export class SummarizerHandle extends ComponentHandle {
@@ -15,7 +15,7 @@ export class SummarizerHandle extends ComponentHandle {
         return;
     }
 
-    public bind(handle: IComponentHandle) {
+    public bind(handle: IFluidHandle) {
         return;
     }
 

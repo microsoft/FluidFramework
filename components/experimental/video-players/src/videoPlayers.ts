@@ -5,9 +5,9 @@
 
 import {
     IComponent,
-    IComponentHandleContext,
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidHandleContext,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -74,14 +74,14 @@ interface IYouTubePlayer {
 }
 
 export class VideoPlayer implements
-    IComponentLoadable, IComponentHTMLView, IComponentRouter, IComponentLayout {
+    IFluidLoadable, IComponentHTMLView, IFluidRouter, IComponentLayout {
     private player: IYouTubePlayer;
     private playerDiv: HTMLDivElement;
 
     public get IComponentHTMLView() { return this; }
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
     public get IComponentLayout() { return this; }
-    public get IComponentLoadable() { return this; }
+    public get IFluidLoadable() { return this; }
 
     // Video def has a preferred aspect ratio
     public aspectRatio?: number;
@@ -95,7 +95,7 @@ export class VideoPlayer implements
     constructor(
         public videoId: string,
         public url: string,
-        context: IComponentHandleContext,
+        context: IFluidHandleContext,
         private readonly keyId: string,
         private readonly youTubeApi: YouTubeAPI,
         private readonly collection: VideoPlayerCollection,
@@ -165,8 +165,8 @@ export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> imp
     public create() { this.initialize().catch((error) => { console.error(error); }); }
     public async load() { await this.initialize(); }
 
-    public get IComponentRouter() { return this; }
-    public get IComponentLoadable() { return this; }
+    public get IFluidRouter() { return this; }
+    public get IFluidLoadable() { return this; }
     public get IComponentCollection() { return this; }
 
     private readonly videoPlayers = new Map<string, VideoPlayer>();
@@ -222,7 +222,7 @@ export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> imp
                 new VideoPlayer(
                     this.root.get(key),
                     `${this.url}/${key}`,
-                    this.runtime.IComponentHandleContext,
+                    this.runtime.IFluidHandleContext,
                     key,
                     youTubeApi,
                     this));
@@ -236,7 +236,7 @@ export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> imp
                 const player = new VideoPlayer(
                     this.root.get(changed.key),
                     `${this.url}/${changed.key}`,
-                    this.runtime.IComponentHandleContext,
+                    this.runtime.IFluidHandleContext,
                     changed.key,
                     youTubeApi,
                     this);

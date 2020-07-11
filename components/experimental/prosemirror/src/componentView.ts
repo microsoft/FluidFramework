@@ -64,7 +64,7 @@ export class ComponentView implements NodeView {
                     throw new Error("Can't insert a non-fluid component");
                 }
 
-                const component = result.value as IComponent;
+                const component = result.value as IComponent & IFluidObject;
                 if (!HTMLViewAdapter.canAdapt(component)) {
                     throw new Error("Don't know how to render this component");
                 }

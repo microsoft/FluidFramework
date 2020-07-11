@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { SharedMap } from "@fluidframework/map";
 import {
     IFluidFunctionalComponentViewState,
@@ -294,7 +294,7 @@ export function useReducerFluid<
         (
             type: keyof B,
             fetchState?: ICombinedState<SV, SF, C>,
-            handle?: IComponentHandle,
+            handle?: IFluidHandle,
         ) => {
             // Retrieve the current state that is stored on the syncedState for this component ID
             const currentFluidState = getFluidState(
@@ -329,7 +329,7 @@ export function useReducerFluid<
             if (action && instanceOfSelectorFunction<SV, SF, C>(action)) {
                 // Add any new handles that were returned by the selector to our list
                 // to be loaded to the fluid component map
-                let newHandles: IComponentHandle[] = [];
+                let newHandles: IFluidHandle[] = [];
                 if (
                     handle &&
                     instanceOfComponentSelectorFunction<SV, SF, C>(action) &&
@@ -400,7 +400,7 @@ export function useReducerFluid<
         combinedSelector[functionName] = {
             function: (
                 fetchState: ICombinedState<SV, SF, C>,
-                handle?: IComponentHandle,
+                handle?: IFluidHandle,
             ) => fetch(functionName, fetchState, handle),
         };
     });

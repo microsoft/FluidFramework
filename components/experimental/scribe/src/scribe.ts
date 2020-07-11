@@ -6,11 +6,11 @@
 import { EventEmitter } from "events";
 import { resolve } from "url";
 import {
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
-    IComponentHandle,
+    IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
 import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
 import {
@@ -381,7 +381,7 @@ const html =
 
 export class Scribe
     extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLView {
+    implements IFluidLoadable, IFluidRouter, IComponentHTMLView {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new Scribe(runtime, context);
         await collection.initialize();
@@ -389,13 +389,13 @@ export class Scribe
         return collection;
     }
 
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
-    public get IComponentHandle() { return this.innerHandle; }
-    public get IComponentLoadable() { return this; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get IFluidHandle() { return this.innerHandle; }
+    public get IFluidLoadable() { return this; }
 
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
     public get IComponentHTMLView() { return this; }
 
     public url: string;
@@ -406,7 +406,7 @@ export class Scribe
         super();
 
         this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
+        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

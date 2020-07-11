@@ -10,7 +10,7 @@ import { SharedString } from "@fluidframework/sequence";
 
 import React from "react";
 import ReactDOM from "react-dom";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 
 /**
  * CollaborativeText uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
@@ -43,7 +43,7 @@ export class CollaborativeText extends PrimedComponent implements IComponentHTML
 
     protected async componentHasInitialized() {
         // Store the text if we are loading the first time or loading from existing
-        this.text = await this.root.get<IComponentHandle<SharedString>>(this.textKey).get();
+        this.text = await this.root.get<IFluidHandle<SharedString>>(this.textKey).get();
     }
 
     /**

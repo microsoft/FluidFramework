@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
@@ -47,11 +47,11 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentHasInitialized() {
-        const counter1Handle = this.root.get<IComponentHandle<SharedCounter>>(counter1Key);
+        const counter1Handle = this.root.get<IFluidHandle<SharedCounter>>(counter1Key);
         this.counter1 = await counter1Handle.get();
 
-        const storedMap = await this.root.get<IComponentHandle<ISharedMap>>(storedMapKey).get();
-        const counter2Handle = storedMap.get<IComponentHandle<SharedCounter>>(counter2Key);
+        const storedMap = await this.root.get<IFluidHandle<ISharedMap>>(storedMapKey).get();
+        const counter2Handle = storedMap.get<IFluidHandle<SharedCounter>>(counter2Key);
         this.counter2 = await counter2Handle.get();
     }
 

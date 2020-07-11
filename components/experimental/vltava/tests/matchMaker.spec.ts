@@ -34,8 +34,8 @@ class MockComponentDiscoverableInterfaces implements IComponentDiscoverableInter
     public get IComponentDiscoverableInterfaces() { return this; }
 
     // Note these have to exist to hack our way through the type check assert
-    public get IComponentLoadable() { return this; }
-    public get IComponentHandle() { return this; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidHandle() { return this; }
 
     public constructor(
         public readonly discoverableInterfaces: (keyof IComponent)[],
@@ -48,7 +48,7 @@ class MockComponentDiscoverableAndDiscoverInterfaces
     public get IComponentDiscoverableInterfaces() { return this; }
 
     // Note these have to exist to hack our way through the type check assert
-    public get IComponentLoadable() { return this; }
+    public get IFluidLoadable() { return this; }
 
     public constructor(
         public readonly discoverableInterfaces: (keyof IComponent)[],
@@ -63,7 +63,7 @@ describe("Routerlicious", () => {
         describe("MatchMaker", () => {
             it(`MatchMaker register discoverable after discover`, async () => {
                 const matchMaker = new MatchMaker({} as IContainerRuntime);
-                const discoverProvider = new MockComponentDiscoverProvider(["IComponentLoadable"]);
+                const discoverProvider = new MockComponentDiscoverProvider(["IFluidLoadable"]);
                 let discovered = false;
                 discoverProvider.on("discovered", () => {
                     discovered = true;
@@ -71,7 +71,7 @@ describe("Routerlicious", () => {
 
                 matchMaker.registerComponentInterfaces(discoverProvider);
 
-                const discoverableProvider = new MockComponentDiscoverableInterfaces(["IComponentLoadable"]);
+                const discoverableProvider = new MockComponentDiscoverableInterfaces(["IFluidLoadable"]);
                 matchMaker.registerComponentInterfaces(discoverableProvider);
                 assert(discovered, "discovered");
             });
@@ -79,10 +79,10 @@ describe("Routerlicious", () => {
             it(`MatchMaker register discover after discoverable`, async () => {
                 const matchMaker = new MatchMaker({} as IContainerRuntime);
 
-                const discoverableProvider = new MockComponentDiscoverableInterfaces(["IComponentLoadable"]);
+                const discoverableProvider = new MockComponentDiscoverableInterfaces(["IFluidLoadable"]);
                 matchMaker.registerComponentInterfaces(discoverableProvider);
 
-                const discoverProvider = new MockComponentDiscoverProvider(["IComponentLoadable"]);
+                const discoverProvider = new MockComponentDiscoverProvider(["IFluidLoadable"]);
                 let discovered = false;
                 discoverProvider.on("discovered", (name, components) => {
                     if (components[0] === discoverableProvider) {
@@ -98,13 +98,13 @@ describe("Routerlicious", () => {
             it(`MatchMaker register multiple discoverable`, async () => {
                 const matchMaker = new MatchMaker({} as IContainerRuntime);
 
-                const discoverableProvider1 = new MockComponentDiscoverableInterfaces(["IComponentLoadable"]);
+                const discoverableProvider1 = new MockComponentDiscoverableInterfaces(["IFluidLoadable"]);
                 matchMaker.registerComponentInterfaces(discoverableProvider1);
 
-                const discoverableProvider2 = new MockComponentDiscoverableInterfaces(["IComponentLoadable"]);
+                const discoverableProvider2 = new MockComponentDiscoverableInterfaces(["IFluidLoadable"]);
                 matchMaker.registerComponentInterfaces(discoverableProvider2);
 
-                const discoverProvider = new MockComponentDiscoverProvider(["IComponentLoadable"]);
+                const discoverProvider = new MockComponentDiscoverProvider(["IFluidLoadable"]);
                 let discovered = 0;
                 discoverProvider.on("discovered", (interfaceName, components: readonly IComponent[]) => {
                     discovered = components.length;
@@ -119,25 +119,25 @@ describe("Routerlicious", () => {
                 const matchMaker = new MatchMaker({} as IContainerRuntime);
 
                 const discoverableProvider =
-                    new MockComponentDiscoverableInterfaces(["IComponentLoadable", "IComponentHandle"]);
+                    new MockComponentDiscoverableInterfaces(["IFluidLoadable", "IFluidHandle"]);
                 matchMaker.registerComponentInterfaces(discoverableProvider);
 
-                const discoverProvider = new MockComponentDiscoverProvider(["IComponentLoadable", "IComponentHandle"]);
+                const discoverProvider = new MockComponentDiscoverProvider(["IFluidLoadable", "IFluidHandle"]);
 
                 let discoveredLoadable = false;
                 let discoveredHandle = false;
                 discoverProvider.on("discovered", (interfaceName) => {
-                    if (interfaceName === "IComponentLoadable") {
+                    if (interfaceName === "IFluidLoadable") {
                         discoveredLoadable = true;
-                    } else if (interfaceName === "IComponentHandle") {
+                    } else if (interfaceName === "IFluidHandle") {
                         discoveredHandle = true;
                     }
                 });
 
                 matchMaker.registerComponentInterfaces(discoverProvider);
 
-                assert(discoveredLoadable, "discovered IComponentLoadable");
-                assert(discoveredHandle, "discovered IComponentHandle");
+                assert(discoveredLoadable, "discovered IFluidLoadable");
+                assert(discoveredHandle, "discovered IFluidHandle");
             });
 
             it(`Registering interface without implementing throws`, async () => {
@@ -152,25 +152,25 @@ describe("Routerlicious", () => {
             it(`Can register for both Discover and Discoverable`, async () => {
                 const matchMaker = new MatchMaker({} as IContainerRuntime);
 
-                const discoverableProvider = new MockComponentDiscoverableInterfaces(["IComponentHandle"]);
+                const discoverableProvider = new MockComponentDiscoverableInterfaces(["IFluidHandle"]);
                 matchMaker.registerComponentInterfaces(discoverableProvider);
 
                 const discoverableAndDiscoverProvider =
                     new MockComponentDiscoverableAndDiscoverInterfaces(
-                        ["IComponentLoadable"], // discoverable
-                        ["IComponentHandle"], // discover
+                        ["IFluidLoadable"], // discoverable
+                        ["IFluidHandle"], // discover
                     );
 
                 let discovered1 = false;
                 discoverableAndDiscoverProvider.on("discovered", (name, components) => {
-                    if (name === "IComponentHandle" && components[0] === discoverableProvider) {
+                    if (name === "IFluidHandle" && components[0] === discoverableProvider) {
                         discovered1 = true;
                     }
                 });
 
                 matchMaker.registerComponentInterfaces(discoverableAndDiscoverProvider);
 
-                const discoverProvider = new MockComponentDiscoverProvider(["IComponentLoadable"]);
+                const discoverProvider = new MockComponentDiscoverProvider(["IFluidLoadable"]);
                 let discovered2 = false;
                 discoverProvider.on("discovered", (name, components) => {
                     if (components[0] === discoverableAndDiscoverProvider) {
@@ -189,8 +189,8 @@ describe("Routerlicious", () => {
 
                 const discoverableAndDiscoverProvider =
                     new MockComponentDiscoverableAndDiscoverInterfaces(
-                        ["IComponentLoadable"], // discoverable
-                        ["IComponentLoadable"], // discover
+                        ["IFluidLoadable"], // discoverable
+                        ["IFluidLoadable"], // discover
                     );
 
                 let discovered = false;

@@ -6,7 +6,7 @@
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import {
     IComponent,
-    IComponentLoadable,
+    IFluidLoadable,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
@@ -35,14 +35,14 @@ export class ExternalComponentLoader extends PrimedComponent {
      * Creates the component retrieved from the given location.  Adds it to the registry dynamically if needed.
      * @param componentUrl - the URL of the component to create, adding it to the registry if needed.
      */
-    public async createComponentFromUrl(componentUrl: string): Promise<IComponentLoadable> {
+    public async createComponentFromUrl(componentUrl: string): Promise<IFluidLoadable> {
         const urlReg = await this.runtime.IComponentRegistry?.get("url");
         if (urlReg?.IComponentRegistry === undefined) {
             throw new Error("Couldn't get url component registry");
         }
 
         // Calling .get() on the urlReg registry will also add it to the registry if it's not already there.
-        const pkgReg = await urlReg.IComponentRegistry.get(componentUrl) as IComponent;
+        const pkgReg = await urlReg.IComponentRegistry.get(componentUrl) as IComponent & IFluidObject;
         let componentRuntime: IComponentRuntimeChannel;
         const id = uuid();
         if (pkgReg?.IComponentDefaultFactoryName !== undefined) {
@@ -67,18 +67,18 @@ export class ExternalComponentLoader extends PrimedComponent {
         }
 
         const response: IResponse = await componentRuntime.request({ url: "/" });
-        let component: IComponent = response.value as IComponent;
-        if (component.IComponentLoadable === undefined) {
-            throw new Error(`${componentUrl} must implement the IComponentLoadable interface to be loaded here`);
+        let component: IComponent = response.value as IComponent & IFluidObject;
+        if (component.IFluidLoadable === undefined) {
+            throw new Error(`${componentUrl} must implement the IFluidLoadable interface to be loaded here`);
         }
         componentRuntime.bindToContext();
         if (component.IComponentCollection !== undefined) {
             component = component.IComponentCollection.createCollectionItem();
-            if (component.IComponentLoadable === undefined) {
-                throw new Error(`${componentUrl} must implement the IComponentLoadable interface to be loaded here`);
+            if (component.IFluidLoadable === undefined) {
+                throw new Error(`${componentUrl} must implement the IFluidLoadable interface to be loaded here`);
             }
         }
 
-        return component.IComponentLoadable;
+        return component.IFluidLoadable;
     }
 }

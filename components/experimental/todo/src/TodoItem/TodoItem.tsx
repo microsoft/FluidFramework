@@ -7,7 +7,7 @@ import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { PrimedComponent, PrimedComponentFactory, waitForAttach } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import {
-    IComponentHandle, IComponentLoadable,
+    IFluidHandle, IFluidLoadable,
 } from "@fluidframework/component-core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
@@ -70,8 +70,8 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
     }
 
     protected async componentHasInitialized() {
-        const text = this.root.get<IComponentHandle<SharedString>>(textKey).get();
-        const innerIdCell = this.root.get<IComponentHandle<ISharedCell>>(innerComponentKey).get();
+        const text = this.root.get<IFluidHandle<SharedString>>(textKey).get();
+        const innerIdCell = this.root.get<IFluidHandle<ISharedCell>>(innerComponentKey).get();
 
         this.setCheckedState = this.setCheckedState.bind(this);
 
@@ -170,7 +170,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
      * @param props - props to be passed into component creation
      */
     public async createInnerComponent(type: TodoItemSupportedComponents): Promise<void> {
-        let component: IComponentLoadable;
+        let component: IFluidLoadable;
         switch (type) {
             case "todo":
                 component = await TodoItem.getFactory().createComponent(
