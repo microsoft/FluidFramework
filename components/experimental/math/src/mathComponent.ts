@@ -452,7 +452,7 @@ export class MathInstance extends EventEmitter implements IFluidLoadable, IFluid
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "fluid/component",
+            mimeType: "fluid/object",
             status: 200,
             value: this,
         };
@@ -585,7 +585,7 @@ export class MathCollection extends SharedComponent<ISharedDirectory> implements
         // If no instance is requested, then the collection itself is being requested
         if (!instanceId) {
             return {
-                mimeType: "fluid/component",
+                mimeType: "fluid/object",
                 status: 200,
                 value: this,
             };

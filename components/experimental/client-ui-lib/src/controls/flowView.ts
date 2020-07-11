@@ -816,7 +816,7 @@ function renderSegmentIntoLine(
                         componentMarker.instanceP = lineContext.flowView.collabDocument.context.containerRuntime
                             .request({ url: `/${componentMarker.properties.leafId}` })
                             .then(async (response) => {
-                                if (response.status !== 200 || response.mimeType !== "fluid/component") {
+                                if (response.status !== 200 || response.mimeType !== "fluid/object") {
                                     return Promise.reject(response);
                                 }
 

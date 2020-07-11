@@ -94,7 +94,7 @@ describe("Ops on Reconnect", () => {
     async function getComponent(componentId: string, fromContainer: Container):
         Promise<ITestFluidComponent & IFluidLoadable> {
         const response = await fromContainer.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as ITestFluidComponent & IFluidLoadable;

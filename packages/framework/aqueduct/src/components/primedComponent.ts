@@ -44,9 +44,9 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
         } else if (url.startsWith(this.bigBlobs)) {
             const value = this.root.get<string>(url);
             if (value === undefined) {
-                return { mimeType: "fluid/component", status: 404, value: `request ${url} not found` };
+                return { mimeType: "fluid/object", status: 404, value: `request ${url} not found` };
             }
-            return { mimeType: "fluid/component", status: 200, value };
+            return { mimeType: "fluid/object", status: 200, value };
         } else {
             return super.request(request);
         }

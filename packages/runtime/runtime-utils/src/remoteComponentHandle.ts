@@ -48,7 +48,7 @@ export class RemoteComponentHandle implements IFluidHandle {
         if (this.componentP === undefined) {
             this.componentP = this.routeContext.request({ url: this.absolutePath })
                 .then<IComponent>((response) =>
-                    response.mimeType === "fluid/component"
+                    response.mimeType === "fluid/object"
                         ? response.value as IComponent
                         : Promise.reject("Not found"));
         }

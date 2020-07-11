@@ -25,7 +25,7 @@ export abstract class BaseContainerService implements IFluidRouter {
     public async request(request: IRequest): Promise<IResponse> {
         return {
             status: 200,
-            mimeType: "fluid/component",
+            mimeType: "fluid/object",
             value: this,
         };
     }
@@ -108,7 +108,7 @@ export const generateContainerServicesRequestHandler =
             // Otherwise we will just return the service
             return {
                 status: 200,
-                mimeType: "fluid/component",
+                mimeType: "fluid/object",
                 value: service,
             };
         };

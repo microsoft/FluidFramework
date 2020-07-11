@@ -35,7 +35,7 @@ export class TextAnalyzer implements IFluidRouter, IComponentRunnable {
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "fluid/component",
+            mimeType: "fluid/object",
             status: 200,
             value: this,
         };

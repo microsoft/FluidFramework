@@ -40,7 +40,7 @@ export async function initializeChaincode(document: Container, pkg?: IFluidCodeD
 async function attachCore(loader: Loader, url: string, div: HTMLDivElement) {
     const response = await loader.request({ url });
 
-    if (response.status !== 200 || response.mimeType !== "fluid/component") {
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
         return;
     }
 

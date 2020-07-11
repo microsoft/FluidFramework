@@ -160,7 +160,7 @@ export async function typeFile(
 
     for (let i = 1; i < writers; i++) {
         const response = await loader.request({ url: urlBase });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             return Promise.reject("Invalid document");
         }
 

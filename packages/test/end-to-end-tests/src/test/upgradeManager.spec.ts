@@ -56,7 +56,7 @@ describe("UpgradeManager", () => {
 
     async function getComponent<T>(componentId: string, container: Container): Promise<T> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as T;

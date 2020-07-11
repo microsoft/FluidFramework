@@ -99,7 +99,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "fluid/component",
+            mimeType: "fluid/object",
             status: 200,
             value: this,
         };
@@ -411,7 +411,7 @@ export class TaskManager implements ITaskManager {
 
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url === "" || request.url === "/") {
-            return { status: 200, mimeType: "fluid/component", value: this };
+            return { status: 200, mimeType: "fluid/object", value: this };
         } else if (!request.url.startsWith(this.url)) {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         } else {
@@ -422,7 +422,7 @@ export class TaskManager implements ITaskManager {
             if (taskUrl === "" || !this.taskMap.has(taskUrl)) {
                 return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
             } else {
-                return { status: 200, mimeType: "fluid/component", value: this.taskMap.get(taskUrl) };
+                return { status: 200, mimeType: "fluid/object", value: this.taskMap.get(taskUrl) };
             }
         }
     }
@@ -460,7 +460,7 @@ export class TaskManager implements ITaskManager {
             url,
         };
         const response = await this.runtime.loader.request(request);
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             return Promise.reject(`Invalid agent route: ${url}`);
         }
 

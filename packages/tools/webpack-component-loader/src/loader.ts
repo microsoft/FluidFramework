@@ -252,7 +252,7 @@ async function getComponentAndRender(container: Container, url: string, div: HTM
 
     if (response.status !== 200 ||
         !(
-            response.mimeType === "fluid/component" ||
+            response.mimeType === "fluid/object" ||
             response.mimeType === "prague/component"
         )) {
         return false;

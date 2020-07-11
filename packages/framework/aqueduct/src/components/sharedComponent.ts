@@ -117,7 +117,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     public async request(req: IRequest): Promise<IResponse> {
         if (req.url === "/" || req.url === this.url || req.url === "") {
             return {
-                mimeType: "fluid/component",
+                mimeType: "fluid/object",
                 status: 200,
                 value: this,
             };
@@ -143,7 +143,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     protected async asComponent<T extends IComponent>(response: Promise<IResponse>): Promise<T> {
         const result = await response;
 
-        if (result.status === 200 && result.mimeType === "fluid/component") {
+        if (result.status === 200 && result.mimeType === "fluid/object") {
             return result.value as T;
         }
 

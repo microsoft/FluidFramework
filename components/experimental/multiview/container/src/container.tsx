@@ -32,7 +32,7 @@ const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string)
     const simpleCoordinateComponentRuntime =
         await runtime.createComponent(id, Coordinate.ComponentName);
     const simpleResult = await simpleCoordinateComponentRuntime.request({ url: id });
-    if (simpleResult.status !== 200 || simpleResult.mimeType !== "fluid/component") {
+    if (simpleResult.status !== 200 || simpleResult.mimeType !== "fluid/object") {
         throw new Error("Error in creating the default option picker model.");
     }
     simpleCoordinateComponentRuntime.bindToContext();

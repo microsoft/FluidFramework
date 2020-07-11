@@ -74,7 +74,7 @@ export async function renderDefaultComponent(container: Container, div: HTMLElem
 
     if (response.status !== 200 ||
         !(
-            response.mimeType === "fluid/component" ||
+            response.mimeType === "fluid/object" ||
             response.mimeType === "fluid/object"
         )) {
         div.innerText = "Component not found";

@@ -52,7 +52,7 @@ async function getHandle(runtimeP: Promise<IComponentRuntimeChannel>): Promise<I
     const runtime = await runtimeP;
     const request = await runtime.request({ url: "" });
 
-    if (request.status !== 200 || request.mimeType !== "fluid/component") {
+    if (request.status !== 200 || request.mimeType !== "fluid/object") {
         return Promise.reject("Not found");
     }
 
@@ -109,7 +109,7 @@ export class SharedTextRunner
         if (request.url.startsWith(this.taskManager.url)) {
             return this.taskManager.request(request);
         } else if (request.url === "" || request.url === "/") {
-            return { status: 200, mimeType: "fluid/component", value: this };
+            return { status: 200, mimeType: "fluid/object", value: this };
         } else {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }

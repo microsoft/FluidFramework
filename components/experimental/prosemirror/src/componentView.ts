@@ -60,7 +60,7 @@ export class ComponentView implements NodeView {
         const loadP = this.loader.request({ url });
         const componentP = loadP.then(
             (result) => {
-                if (result.mimeType !== "fluid/component") {
+                if (result.mimeType !== "fluid/object") {
                     throw new Error("Can't insert a non-fluid component");
                 }
 

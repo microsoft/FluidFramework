@@ -32,8 +32,8 @@ export const componentRuntimeRequestHandler: RuntimeRequestHandler =
         return undefined;
     };
 
-export const createComponentResponse = (component: IComponent) => {
-    return { status: 200, mimeType: "fluid/component", value: component };
+export const createComponentResponse = (component: IComponent & IFluidObject) => {
+    return { status: 200, mimeType: "fluid/object", value: component };
 };
 
 export function createLoadableComponentRuntimeRequestHandler(component: IFluidLoadable): RuntimeRequestHandler {
