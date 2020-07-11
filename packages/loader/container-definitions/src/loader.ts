@@ -9,6 +9,7 @@ import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
+    ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
@@ -101,6 +102,11 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
      * that allows attachment to a secondary document.
      */
     attach(request: IRequest): Promise<void>;
+
+    /**
+     * Extract the snapshot from the detached container.
+     */
+    dehydrateContainer(): ISnapshotTree;
 
     /**
      * Get an absolute url for a provided container-relative request.
