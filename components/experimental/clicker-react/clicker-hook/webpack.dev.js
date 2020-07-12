@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./syncedArray";
-export * from "./fluidSyncedArray";
-export * from "./interface";
+module.exports = {
+    mode: "development",
+    devtool: "inline-source-map"
+};

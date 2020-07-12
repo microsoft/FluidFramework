@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export * from "./syncedArray";
-export * from "./fluidSyncedArray";
-export * from "./interface";
+module.exports = {
+    "extends": [
+        "@microsoft/eslint-config-fluid"
+    ],
+    "rules": {}
+}

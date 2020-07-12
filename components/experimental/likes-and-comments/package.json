@@ -1,7 +1,7 @@
 {
-  "name": "@fluid-example/views-and-comments",
+  "name": "@fluid-example/likes-and-comments",
   "version": "0.22.0",
-  "description": "A component for storing view counts and comments using pre-build DDS hooks",
+  "description": "A component for storing like counts and comments using pre-build DDS hooks",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -39,7 +39,9 @@
     "@fluidframework/component-runtime-definitions": "^0.22.0",
     "@fluidframework/counter": "^0.22.0",
     "@fluidframework/react": "^0.22.0",
+    "@fluidframework/react-inputs": "^0.22.0",
     "@fluidframework/runtime-definitions": "^0.22.0",
+    "@fluidframework/sequence": "^0.22.0",
     "@fluidframework/view-interfaces": "^0.22.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"

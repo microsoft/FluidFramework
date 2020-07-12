@@ -3,6 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./syncedArray";
-export * from "./fluidSyncedArray";
+export * from "./syncedString";
 export * from "./interface";

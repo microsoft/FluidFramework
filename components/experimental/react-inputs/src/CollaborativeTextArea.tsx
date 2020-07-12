@@ -16,6 +16,7 @@ export interface ICollaborativeTextAreaProps {
     spellCheck?: boolean;
     className?: string;
     style?: React.CSSProperties;
+    onChange?: (sharedString: SharedString) => void
 }
 
 export interface ICollaborativeTextAreaState {
@@ -169,6 +170,9 @@ export class CollaborativeTextArea
         } else {
             // Text was removed
             this.props.sharedString.removeText(newPosition, newPosition + charactersModifiedCount);
+        }
+        if (this.props.onChange !== undefined) {
+            this.props.onChange(this.props.sharedString);
         }
     }
 

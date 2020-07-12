@@ -1,10 +1,9 @@
-# @fluid-example/clicker-reducer
+# @fluid-example/clicker-hook
 
 **Clicker** is a Fluid Component that displays a number with a button. Pressing the button
-increments the counter. This is a basic example component using the interface model and stock
-classes.
+increments the counter. This is a basic example component that uses the synced counter hook.
 
-**Clicker-Reducer** contains an implementation of Clicker using the useReducerFluid hook
+**Clicker-Hook** contains an implementation of Clicker using the useSyncedCounter hook
 
 ## Getting Started
 

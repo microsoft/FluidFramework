@@ -8,8 +8,8 @@ import {
 } from "@fluidframework/aqueduct";
 import {
     SyncedComponent,
-    setPureSyncedCounterConfig,
-    usePureSyncedCounterReducerFluid,
+    setSyncedCounterConfig,
+    useSyncedCounter,
 } from "@fluidframework/react";
 import { SharedCounter } from "@fluidframework/counter";
 import * as React from "react";
@@ -19,7 +19,7 @@ import * as ReactDOM from "react-dom";
 const pkg = require("../package.json");
 export const ClickerHookName = pkg.name as string;
 
-// ---- React Functional Component w/ usePureSyncedCounterReducerFluid ----
+// ---- React Functional Component w/ useSyncedCounter ----
 
 interface ICounterReactHookProps {
     syncedComponent: SyncedComponent,
@@ -29,7 +29,7 @@ interface ICounterReactHookProps {
 function CounterReactHook(
     props: ICounterReactHookProps,
 ) {
-    const [value, reducer] = usePureSyncedCounterReducerFluid(
+    const [value, reducer] = useSyncedCounter(
         props.syncedComponent,
         props.syncedStateId,
     );
@@ -39,35 +39,20 @@ function CounterReactHook(
             <span className="value">
                 {value}
             </span>
-            <button
-                onClick={() => {
-                    reducer.increment(1);
-                }}
-            >
+            <button onClick={() => reducer.increment(1)}>
                 +
-            </button>
-            <button
-                onClick={() => {
-                    reducer.increment(2);
-                }}
-            >
-                ++
             </button>
         </div>
     );
 }
 
 /**
- * ClickerHook example using the usePureSyncedCounterReducerFluid hook
+ * ClickerHook example using the useSyncedCounterFluid hook
  */
 export class ClickerHook extends SyncedComponent {
     constructor(props) {
         super(props);
-
-        setPureSyncedCounterConfig(
-            this,
-            "counter-hook",
-        );
+        setSyncedCounterConfig(this, "counter-hook");
     }
 
     public render(div: HTMLElement) {

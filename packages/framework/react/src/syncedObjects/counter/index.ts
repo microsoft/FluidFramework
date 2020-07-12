@@ -4,5 +4,5 @@
  */
 
 export * from "./syncedCounter";
-export * from "./pureSyncedCounter";
+export * from "./fluidSyncedCounter";
 export * from "./interface";

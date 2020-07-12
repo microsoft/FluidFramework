@@ -7,10 +7,8 @@ import {
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import {
-    IFluidProps,
-    IFluidFunctionalComponentViewState,
-    useStateFluid,
-    IFluidFunctionalComponentFluidState,
+    setSyncedObjectConfig,
+    useSyncedObject,
     SyncedComponent,
 } from "@fluidframework/react";
 import * as React from "react";
@@ -20,42 +18,32 @@ import * as ReactDOM from "react-dom";
 const pkg = require("../package.json");
 export const ClickerFunctionalName = pkg.name as string;
 
-// ----- REACT STUFF -----
+// ---- React Functional Component w/ useSyncedObject ----
 
-interface ICounterState {
-    value: number;
+interface ICounterReactFunctionalProps {
+    syncedComponent: SyncedComponent,
+    syncedStateId: string,
 }
 
-// // ---- React Functional Component w/ useState ----
-
-interface ICounterFunctionalViewState
-    extends IFluidFunctionalComponentViewState,
-    ICounterState {}
-interface ICounterFunctionalFluidState
-    extends IFluidFunctionalComponentFluidState,
-    ICounterState {}
+interface ICounterReactFunctionalState {
+    value: number
+}
 
 function CounterReactFunctional(
-    props: IFluidProps<
-    ICounterFunctionalViewState,
-    ICounterFunctionalFluidState
-    >,
+    props: ICounterReactFunctionalProps,
 ) {
-    const [state, setState] = useStateFluid<
-    ICounterFunctionalViewState,
-    ICounterFunctionalFluidState
-    >(props, { value: 0 });
+    const [state, setState] = useSyncedObject<ICounterReactFunctionalState>(
+        props.syncedComponent,
+        props.syncedStateId,
+        { value: 0 },
+    );
 
     return (
         <div>
             <span className="value">
                 {state.value}
             </span>
-            <button
-                onClick={() => {
-                    setState({ ...state, value: state.value + 1 });
-                }}
-            >
+            <button onClick={() => setState({ value: state.value + 1 })}>
                 +
             </button>
         </div>
@@ -68,22 +56,7 @@ function CounterReactFunctional(
 export class ClickerFunctional extends SyncedComponent {
     constructor(props) {
         super(props);
-
-        this.setConfig<ICounterState>(
-            "counter-functional",
-            {
-                syncedStateId: "counter-functional",
-                fluidToView:  new Map([
-                    [
-                        "value", {
-                            type: "number",
-                            viewKey: "value",
-                        },
-                    ],
-                ]),
-                defaultViewState: { value: 0 },
-            },
-        );
+        setSyncedObjectConfig<number>(this, "counter-functional", 0);
     }
     /**
      * Will return a new ClickerFunctional view
@@ -100,8 +73,6 @@ export class ClickerFunctional extends SyncedComponent {
         );
         return div;
     }
-
-    // #endregion IComponentHTMLView
 }
 
 // ----- FACTORY SETUP -----
