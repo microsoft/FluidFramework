@@ -4,5 +4,4 @@
  */
 
 export * from "./syncedArray";
-export * from "./fluidSyncedArray";
 export * from "./interface";

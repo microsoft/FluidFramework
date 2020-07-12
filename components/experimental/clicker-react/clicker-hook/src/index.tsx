@@ -47,7 +47,7 @@ function CounterReactHook(
 }
 
 /**
- * ClickerHook example using the useSyncedCounterFluid hook
+ * ClickerHook example using the useSyncedCounter hook
  */
 export class ClickerHook extends SyncedComponent {
     constructor(props) {

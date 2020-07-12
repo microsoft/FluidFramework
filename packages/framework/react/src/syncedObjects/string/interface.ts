@@ -6,6 +6,12 @@
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidReactState } from "../..";
 
+/**
+ * The state definition for a synced string
+ * TODO: Add a proper SharedString -> string mapping but, for now, you can pass the pre-initialized SharedString
+ * directly into the CollaborativeTextArea provided by the @fluidframework/react-inputs package from within
+ * the React functional view useSyncedString is called in
+ */
 export interface ISyncedStringState extends IFluidReactState {
     value?: SharedString;
 }
