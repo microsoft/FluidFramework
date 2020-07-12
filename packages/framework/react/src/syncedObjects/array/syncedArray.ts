@@ -4,7 +4,7 @@
  */
 import { SharedObjectSequence } from "@fluidframework/sequence";
 import { SyncedComponent } from "../..";
-import { ISyncedArrayViewState, ISyncedArrayFluidState, IPureSyncedArrayReducer } from "./interface";
+import { ISyncedArrayViewState, ISyncedArrayFluidState, ISyncedArrayReducer } from "./interface";
 import { setFluidSyncedArrayConfig, useSyncedArrayReducerFluid } from "./fluidSyncedArray";
 
 /**
@@ -47,7 +47,7 @@ export function useSyncedArray<T>(
     syncedComponent: SyncedComponent,
     syncedStateId: string,
     defaultValue = [] as T[],
-): [T[], IPureSyncedArrayReducer<T>] {
+): [T[], ISyncedArrayReducer<T>] {
     type viewState = ISyncedArrayViewState<T>;
     type fluidState = ISyncedArrayFluidState<T>;
     const [state, reducer] = useSyncedArrayReducerFluid<viewState, fluidState>(
@@ -57,7 +57,7 @@ export function useSyncedArray<T>(
         "values",
         { values: defaultValue },
     );
-    const pureReducer: IPureSyncedArrayReducer<T> = {
+    const pureReducer: ISyncedArrayReducer<T> = {
         add: (value: T) => reducer.add.function(state, value),
     };
 

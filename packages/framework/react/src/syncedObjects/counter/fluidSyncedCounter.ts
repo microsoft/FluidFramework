@@ -12,7 +12,7 @@ import {
     IFluidDataProps,
     useReducerFluid,
 } from "../..";
-import { ISyncedCounterReducer } from "./interface";
+import { IFluidSyncedCounterReducer } from "./interface";
 
 export function setFluidSyncedCounterConfig<
     SV extends IFluidFunctionalComponentViewState,
@@ -72,7 +72,7 @@ export function setFluidSyncedCounterConfig<
 export function generateSyncedCounterReducer<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
->(viewKey: keyof SV, fluidKey: keyof SF): ISyncedCounterReducer<SV, SF> {
+>(viewKey: keyof SV, fluidKey: keyof SF): IFluidSyncedCounterReducer<SV, SF> {
     const syncedCounterReducer = {
         increment: {
             function: (state, step: number) => {
@@ -100,12 +100,12 @@ export function useSyncedCounterReducerFluid<
     viewKey: keyof SV,
     fluidKey: keyof SF,
     defaultViewState: SV,
-): [ICombinedState<SV, SF, IFluidDataProps>, ISyncedCounterReducer<SV, SF>, {}] {
+): [ICombinedState<SV, SF, IFluidDataProps>, IFluidSyncedCounterReducer<SV, SF>, {}] {
     const syncedCounterReducer = generateSyncedCounterReducer(viewKey, fluidKey);
     return useReducerFluid<
         SV,
         SF,
-        ISyncedCounterReducer<SV, SF>,
+        IFluidSyncedCounterReducer<SV, SF>,
         {},
         IFluidDataProps
     >(

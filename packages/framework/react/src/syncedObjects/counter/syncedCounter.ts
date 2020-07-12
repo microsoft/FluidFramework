@@ -5,7 +5,7 @@
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { SharedCounter } from "@fluidframework/counter";
 import { SyncedComponent } from "../..";
-import { ISyncedCounterViewState, ISyncedCounterFluidState, IPureSyncedCounterReducer } from "./interface";
+import { ISyncedCounterViewState, ISyncedCounterFluidState, ISyncedCounterReducer } from "./interface";
 import { setFluidSyncedCounterConfig, useSyncedCounterReducerFluid } from "./fluidSyncedCounter";
 
 /**
@@ -46,19 +46,19 @@ export function useSyncedCounter(
     syncedComponent: SyncedComponent,
     syncedStateId: string,
     defaultValue: number = 0,
-): [number, IPureSyncedCounterReducer] {
+): [number, ISyncedCounterReducer] {
     type viewState = ISyncedCounterViewState;
     type fluidState = ISyncedCounterFluidState;
-    const [state, reducer] = useSyncedCounterReducerFluid<viewState, fluidState>(
+    const [state, fluidReducer] = useSyncedCounterReducerFluid<viewState, fluidState>(
         syncedComponent,
         syncedStateId,
         "value",
         "counter",
         { value: defaultValue },
     );
-    const pureReducer: IPureSyncedCounterReducer = {
-        increment: (step: number) => reducer.increment.function(state, step),
+    const reducer: ISyncedCounterReducer = {
+        increment: (step: number) => fluidReducer.increment.function(state, step),
     };
 
-    return [state.viewState.value, pureReducer];
+    return [state.viewState.value, reducer];
 }

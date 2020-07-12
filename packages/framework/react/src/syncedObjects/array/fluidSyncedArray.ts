@@ -12,7 +12,7 @@ import {
     IFluidDataProps,
     useReducerFluid,
 } from "../..";
-import { ISyncedArrayReducer } from "./interface";
+import { IFluidSyncedArrayReducer } from "./interface";
 
 export function setFluidSyncedArrayConfig<
     SV extends IFluidFunctionalComponentViewState,
@@ -72,7 +72,7 @@ export function setFluidSyncedArrayConfig<
 export function generateSyncedArrayReducer<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
->(viewKey: keyof SV, fluidKey: keyof SF): ISyncedArrayReducer<SV, SF> {
+>(viewKey: keyof SV, fluidKey: keyof SF): IFluidSyncedArrayReducer<SV, SF> {
     const syncedArrayReducer = {
         add: {
             function: (state, value: any) => {
@@ -104,12 +104,12 @@ export function useSyncedArrayReducerFluid<
     viewKey: keyof SV,
     fluidKey: keyof SF,
     defaultViewState: SV,
-): [ICombinedState<SV, SF, IFluidDataProps>, ISyncedArrayReducer<SV, SF>, {}] {
+): [ICombinedState<SV, SF, IFluidDataProps>, IFluidSyncedArrayReducer<SV, SF>, {}] {
     const syncedArrayReducer = generateSyncedArrayReducer(viewKey, fluidKey);
     return useReducerFluid<
         SV,
         SF,
-        ISyncedArrayReducer<SV, SF>,
+        IFluidSyncedArrayReducer<SV, SF>,
         {},
         IFluidDataProps
     >(

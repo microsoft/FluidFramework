@@ -27,9 +27,9 @@ export interface ISyncedArrayFluidState<T> extends IFluidFunctionalComponentFlui
 
 /**
  * The reducer interface for modifying the synced array
- * TODO: Add more functions that explore more of the SharedObjectSequence interface
+ * TODO: Add more functions that further expose the SharedObjectSequence interface for use
  */
-export interface IPureSyncedArrayReducer<T> {
+export interface ISyncedArrayReducer<T> {
     add: (value: T) => void;
 }
 
@@ -37,7 +37,7 @@ export interface IPureSyncedArrayReducer<T> {
  * The underlying reducer interface passed to the useReducerFluid hook to bind the view and Fluid
  * state definitions together
  */
-export interface ISyncedArrayReducer<
+export interface IFluidSyncedArrayReducer<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
 > extends IFluidReducer<SV, SF, IFluidDataProps> {

@@ -28,7 +28,7 @@ export interface ISyncedCounterFluidState extends IFluidFunctionalComponentFluid
 /**
  * The reducer interface for incrementing the synced counter
  */
-export interface IPureSyncedCounterReducer {
+export interface ISyncedCounterReducer {
     increment: (step: number) => void;
 }
 
@@ -36,7 +36,7 @@ export interface IPureSyncedCounterReducer {
  * The underlying reducer interface passed to the useReducerFluid hook to bind the view and Fluid
  * state definitions together
  */
-export interface ISyncedCounterReducer<
+export interface IFluidSyncedCounterReducer<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
 > extends IFluidReducer<SV, SF, IFluidDataProps> {
