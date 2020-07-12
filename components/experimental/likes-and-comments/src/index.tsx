@@ -40,11 +40,14 @@ interface IComment {
 function LikesAndCommentsView(
     props: ILikesAndCommentsViewProps,
 ) {
+    // Use synced states
     const [likes, likesReducer] = useSyncedCounter(props.syncedComponent, "likes");
     const [comments, commentReducer] = useSyncedArray<IComment>(props.syncedComponent, "comments");
-    const [imageUrl, setImageUrl] = useSyncedString(props.syncedComponent,"imageUrl");
+    const [imgUrl, setImgUrl] = useSyncedString(props.syncedComponent,"imgUrl");
+    // Use local state
     const [currentComment, setCurrentComment] = React.useState("");
 
+    // Convert data to JSX for comments state
     const commentListItems = comments.map((item, key) => {
         return (
             <li key={key}>
@@ -52,15 +55,17 @@ function LikesAndCommentsView(
             </li>
         );
     });
+
+    // Render
     return (
         <div>
             <div>
-                <img width='100%' src={imageUrl?.getText()}/>
-                {imageUrl !== undefined
+                <img width='100%' src={imgUrl?.getText()}/>
+                {imgUrl !== undefined
                     ? <CollaborativeTextArea
                         style={{ height: "5vh" }}
-                        sharedString={imageUrl}
-                        onChange={(value: SharedString) => setImageUrl({ value })}
+                        sharedString={imgUrl}
+                        onChange={(value: SharedString) => setImgUrl({ value })}
                     />
                     : undefined}
             </div>
@@ -100,7 +105,7 @@ function LikesAndCommentsView(
 export class LikesAndComments extends SyncedComponent {
     constructor(props) {
         super(props);
-
+        // Declare configs for each synced state the view will need
         setSyncedCounterConfig(
             this,
             "likes",
@@ -111,7 +116,7 @@ export class LikesAndComments extends SyncedComponent {
         );
         setSyncedStringConfig(
             this,
-            "imageUrl",
+            "imgUrl",
             defaultImgUrl,
         );
     }
