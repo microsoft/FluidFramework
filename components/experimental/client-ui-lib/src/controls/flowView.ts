@@ -10,6 +10,7 @@ import {
     IComponent,
     IFluidHandle,
     IFluidLoadable,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import { IGenericBlob } from "@fluidframework/container-definitions";
 import {

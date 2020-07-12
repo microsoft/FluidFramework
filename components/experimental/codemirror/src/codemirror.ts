@@ -11,7 +11,7 @@ import {
     IResponse,
     IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
+import { FluidObjectHandle, ComponentRuntime } from "@fluidframework/component-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     MergeTreeDeltaType,
@@ -227,7 +227,7 @@ export class CodeMirrorComponent
     ) {
         super();
         this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, this.url, runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, this.url, runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

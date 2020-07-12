@@ -8,6 +8,7 @@ import {
     IComponent,
     IFluidLoadable,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
@@ -67,7 +68,7 @@ export class ExternalComponentLoader extends PrimedComponent {
         }
 
         const response: IResponse = await componentRuntime.request({ url: "/" });
-        let component: IComponent = response.value as IComponent & IFluidObject;
+        let component = response.value as IComponent & IFluidObject;
         if (component.IFluidLoadable === undefined) {
             throw new Error(`${componentUrl} must implement the IFluidLoadable interface to be loaded here`);
         }

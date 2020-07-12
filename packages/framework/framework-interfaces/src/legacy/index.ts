@@ -4,3 +4,6 @@
  */
 
 export * from "./componentLoadable";
+export * from "./componentRouter";
+export * from "./handles";
+export * from "./serializer";

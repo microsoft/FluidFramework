@@ -22,7 +22,7 @@ import {
 } from "@fluidframework/test-utils";
 
 /**
- * Test component that extends PrimedComponent so that we can test the ComponentHandle created by SharedComponent.
+ * Test component that extends PrimedComponent so that we can test the FluidObjectHandle created by SharedComponent.
  */
 class TestSharedComponent extends PrimedComponent {
     public get _root() {
@@ -44,7 +44,7 @@ const TestSharedComponentFactory = new PrimedComponentFactory(
     [SharedMap.getFactory()],
     []);
 
-describe("ComponentHandle", () => {
+describe("FluidObjectHandle", () => {
     const id = "fluid-test://localhost/componentHandleTest";
     const codeDetails: IFluidCodeDetails = {
         package: "componentHandleTestPackage",

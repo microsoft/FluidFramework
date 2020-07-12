@@ -12,8 +12,7 @@ import {
 } from "./types";
 
 declare module "@fluidframework/component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentDependencySynthesizer>> { }
+    export interface IComponent extends IFluidObject, Readonly<Partial<IProvideComponentDependencySynthesizer>> { }
 }
 
 export const IComponentDependencySynthesizer: keyof IProvideComponentDependencySynthesizer

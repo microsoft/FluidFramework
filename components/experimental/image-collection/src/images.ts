@@ -11,7 +11,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentHandle } from "@fluidframework/component-runtime";
+import { FluidObjectHandle } from "@fluidframework/component-runtime";
 import { IComponentLayout } from "@fluidframework/framework-experimental";
 import { IComponentCollection } from "@fluidframework/framework-interfaces";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
@@ -32,10 +32,10 @@ export class ImageComponent implements
     public minimumHeightInline?: number;
     public readonly canInline = true;
     public readonly preferInline = false;
-    public handle: ComponentHandle;
+    public handle: FluidObjectHandle;
 
     constructor(public imageUrl: string, public url: string, path: string, context: IFluidHandleContext) {
-        this.handle = new ComponentHandle(this, path, context);
+        this.handle = new FluidObjectHandle(this, path, context);
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {

@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { BaseContainerService, serviceRoutePathRoot } from "@fluidframework/aqueduct";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 import {
     IComponentInterfacesRegistry,
     IProvideComponentDiscoverableInterfaces,

@@ -4,7 +4,7 @@
  */
 
 import { parse } from "querystring";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";

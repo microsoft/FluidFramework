@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IResponse, IRequest } from "../fluidRouter";
+import { IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 
 export const IComponentRouter: keyof IProvideComponentRouter = "IComponentRouter";
 

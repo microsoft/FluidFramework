@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent } from "@fluidframework/component-core-interfaces";
 import { IComponentRouter } from "./componentRouter";
-import { IComponent } from "./components";
 import { IComponentLoadable } from "./componentLoadable";
 
 export const IComponentHandleContext: keyof IProvideComponentHandleContext = "IComponentHandleContext";

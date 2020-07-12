@@ -6,6 +6,8 @@
 import { IFluidRouter } from "./fluidRouter";
 import { IFluidObject } from "./fluidObject";
 import { IFluidLoadable } from "./fluidLoadable";
+// eslint-disable-next-line import/no-internal-modules
+import { IComponent } from "./legacy/components";
 
 export const IFluidHandleContext: keyof IProvideFluidHandleContext = "IFluidHandleContext";
 
@@ -62,7 +64,7 @@ export interface IProvideFluidHandle {
  */
 export interface IFluidHandle<
     // REVIEW: Constrain `T` to `IFluidObject & IFluidLoadable`?
-    T = IFluidObject & IFluidLoadable
+    T = IComponent & IFluidObject & IFluidLoadable
     > extends IFluidHandleContext, IProvideFluidHandle {
     /**
      * Returns a promise to the Fluid Object referenced by the handle.

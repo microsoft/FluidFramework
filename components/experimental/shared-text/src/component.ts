@@ -18,8 +18,9 @@ import {
     IFluidLoadable,
     IRequest,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
+import { ComponentRuntime, FluidObjectHandle } from "@fluidframework/component-runtime";
 import { Ink } from "@fluidframework/ink";
 import {
     ISharedMap,
@@ -70,9 +71,9 @@ export class SharedTextRunner
         return runner;
     }
 
-    private readonly innerHandle: IFluidHandle<this>;
+    private readonly innerHandle: IFluidHandle;
 
-    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get handle(): IFluidHandle { return this.innerHandle; }
     public get IFluidHandle() { return this.innerHandle; }
     public get IFluidLoadable() { return this; }
 
@@ -89,7 +90,7 @@ export class SharedTextRunner
 
     private constructor(private readonly runtime: ComponentRuntime, private readonly context: IComponentContext) {
         super();
-        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public render(element: HTMLElement) {

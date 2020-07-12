@@ -8,14 +8,14 @@ import {
     IFluidHandle,
     IFluidLoadable,
     IFluidRouter,
-    IProvideComponentHandle,
+    IProvideFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { AsyncComponentProvider, ComponentKey } from "@fluidframework/synthesize";
 import { IComponentContext } from "@fluidframework/runtime-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { ComponentHandle } from "@fluidframework/component-runtime";
+import { FluidObjectHandle } from "@fluidframework/component-runtime";
 import { IDirectory } from "@fluidframework/map";
 import { v4 as uuid } from "uuid";
 import { EventForwarder } from "@fluidframework/common-utils";
@@ -39,7 +39,7 @@ export interface ISharedComponentProps<P extends IComponent = object> {
  */
 export abstract class SharedComponent<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
     extends EventForwarder<E>
-    implements IFluidLoadable, IFluidRouter, IProvideComponentHandle {
+    implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
     private initializeP: Promise<void> | undefined;
     private readonly innerHandle: IFluidHandle<this>;
     private _disposed = false;
@@ -80,10 +80,10 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
         this.context = props.context;
         this.providers = props.providers;
 
-        // Create a ComponentHandle with empty string as `path`. This is because reaching this SharedComponent is the
+        // Create a FluidObjectHandle with empty string as `path`. This is because reaching this SharedComponent is the
         // same as reaching its routeContext (ComponentRuntime) so there is so the relative path to it from the
         // routeContext is empty.
-        this.innerHandle = new ComponentHandle(this, "", this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
 
         // Container event handlers
         this.runtime.once("dispose", () => {

@@ -4,7 +4,7 @@
  */
 
 import { IRequest, IResponse, IFluidHandle, IFluidLoadable } from "@fluidframework/component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
+import { FluidObjectHandle, ComponentRuntime } from "@fluidframework/component-runtime";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
@@ -54,7 +54,7 @@ export class TestFluidComponent implements ITestFluidComponent, IFluidLoadable {
         private readonly factoryEntriesMap: Map<string, ISharedObjectFactory>,
     ) {
         this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, "", runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", runtime.IFluidHandleContext);
     }
 
     /**

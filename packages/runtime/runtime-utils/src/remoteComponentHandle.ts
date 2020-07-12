@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/component-core-interfaces";
 
 /**
- * Handle to dynamically load a component on a remote client and is created on parsing a seralized ComponentHandle.
+ * Handle to dynamically load a component on a remote client and is created on parsing a seralized FluidObjectHandle.
  * This class is used to generate an IFluidHandle when de-serializing Fluid Component and SharedObject handles
  * that are stored in SharedObjects. The Component or SharedObject corresponding to the IFluidHandle can be
  * retrieved by calling `get` on it.

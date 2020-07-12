@@ -12,8 +12,9 @@ import {
     IComponentRunnable,
     IRequest,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
+import { ComponentRuntime, FluidObjectHandle } from "@fluidframework/component-runtime";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
@@ -94,7 +95,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         private readonly context: IComponentContext,
         private readonly scheduler: ConsensusRegisterCollection<string | null>) {
         super();
-        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -406,7 +407,7 @@ export class TaskManager implements ITaskManager {
         private readonly scheduler: IAgentScheduler,
         private readonly runtime: IComponentRuntime,
         private readonly context: IComponentContext) {
-        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

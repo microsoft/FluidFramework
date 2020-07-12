@@ -12,14 +12,14 @@ import {
 import { IRuntime } from "@fluidframework/container-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
-export class ComponentHandleContext implements IFluidHandleContext {
+export class FluidObjectHandleContext implements IFluidHandleContext {
     public get IFluidRouter() { return this; }
     public get IFluidHandleContext() { return this; }
     public readonly isAttached = true;
     public readonly absolutePath: string;
 
     /**
-     * Creates a new ComponentHandleContext.
+     * Creates a new FluidObjectHandleContext.
      * @param path - The path to this handle relative to the routeContext.
      * @param runtime - The IRuntime object this context represents.
      * @param routeContext - The parent IFluidHandleContext that has a route to this handle.

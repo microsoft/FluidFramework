@@ -5,12 +5,12 @@
 
 import childProcess from "child_process";
 import path from "path";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 import { ILoader } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { ISharedString } from "@fluidframework/sequence";
+import { ISharedString, SharedStringFactory } from "@fluidframework/sequence";
 import * as author from "./author";
 
 function setParagraphs(chunks: string[], sharedString: ISharedString) {
@@ -52,14 +52,15 @@ async function conductor(
     }
 
     const component = response.value as IComponent & IFluidObject;
-    if (!component.ISharedString) {
+    if (component?.ISharedObject.attributes.type === SharedStringFactory.Attributes.type) {
         return Promise.reject("Cannot type into document");
     }
+    const sharedString = component.ISharedObject as unknown as ISharedString;
 
     const chunksMap = SharedMap.create(runtime);
     scribeMap.set("chunks", chunksMap.handle);
 
-    setParagraphs(chunks, component.ISharedString);
+    setParagraphs(chunks, sharedString);
 
     chunks.forEach((chunk, index) => {
         const chunkKey = `p-${index}`;
@@ -72,7 +73,7 @@ async function conductor(
             loader,
             url,
             runtime,
-            component.ISharedString,
+            sharedString,
             chunksMap,
             text,
             intervalTime,

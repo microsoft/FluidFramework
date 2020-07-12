@@ -9,7 +9,7 @@ import {
     IFluidRouter,
     IRequest,
     IResponse,
-    IProvideComponentHandle,
+    IProvideFluidHandle,
 } from "@fluidframework/component-core-interfaces";
 import {
     IComponentContext,
@@ -17,7 +17,7 @@ import {
 import {
     IComponentRuntime,
 } from "@fluidframework/component-runtime-definitions";
-import { ComponentHandle } from "@fluidframework/component-runtime";
+import { FluidObjectHandle } from "@fluidframework/component-runtime";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
@@ -26,13 +26,13 @@ export abstract class SharedComponent<
     TRoot extends ISharedObject = ISharedObject,
     TEvents extends IEvent = IEvent>
     extends EventForwarder<TEvents>
-    implements IFluidLoadable, IProvideComponentHandle, IFluidRouter {
+    implements IFluidLoadable, IProvideFluidHandle, IFluidRouter {
     private _handle?: IFluidHandle<this>;
 
     public get IFluidRouter() { return this; }
     public get IFluidLoadable() { return this; }
     public get IFluidHandle() { return this.handle; }
-    public get IProvideComponentHandle() { return this; }
+    public get IProvideFluidHandle() { return this; }
 
     /**
      * Handle to a shared component
@@ -62,9 +62,9 @@ export abstract class SharedComponent<
     // #region IFluidLoadable
 
     public get handle(): IFluidHandle<this> {
-        // Lazily create the ComponentHandle when requested.
+        // Lazily create the FluidObjectHandle when requested.
         if (!this._handle) {
-            this._handle = new ComponentHandle(
+            this._handle = new FluidObjectHandle(
                 this,
                 "",
                 this.runtime.IFluidHandleContext);

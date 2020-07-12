@@ -13,6 +13,7 @@ import {
     IFluidSerializer,
     IRequest,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -79,7 +80,7 @@ import {
 import { ComponentSerializer, SummaryTracker, unreachableCase, RequestParser } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
-import { ComponentHandleContext } from "./componentHandleContext";
+import { FluidObjectHandleContext } from "./componentHandleContext";
 import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
 import { ISummarizerRuntime, Summarizer } from "./summarizer";
@@ -632,7 +633,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         this.chunkMap = new Map<string, string[]>(chunks);
 
-        this.IFluidHandleContext = new ComponentHandleContext("", this);
+        this.IFluidHandleContext = new FluidObjectHandleContext("", this);
 
         this.latestSummaryAck = {
             proposalHandle: undefined,
@@ -777,7 +778,8 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const component = await this.getComponentRuntime(requestParser.pathParts[0], wait) as IComponent & IFluidObject;
+            const component =
+                await this.getComponentRuntime(requestParser.pathParts[0], wait) as IComponent & IFluidObject;
             if (component) {
                 const subRequest = requestParser.createSubRequest(1);
                 if (subRequest !== undefined) {
