@@ -12,7 +12,7 @@ import { ISyncedStringState } from "./interface";
  * Function to set the config for a synced string on a syncedComponent's SharedMap synced state. This
  * will initialize and provide a SharedString for the view to use. This SharedString provided is automatically
  * bound to the state update of the functional view useSyncedString is called in. It can also easily be placed
- * in a CollaborativeTextArea within a React view.
+ * in a CollaborativeInput within a React view.
  * @param syncedComponent - The Fluid component on which the synced state config is being set
  * @param syncedStateId - The ID of the view state that this config schema is being set for
  * @param defaultValue - The default string that the SharedString will be initialized as

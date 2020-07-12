@@ -15,7 +15,7 @@ import {
     setSyncedStringConfig,
     useSyncedString,
 } from "@fluidframework/react";
-import { CollaborativeTextArea } from "@fluidframework/react-inputs";
+import { CollaborativeInput } from "@fluidframework/react-inputs";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedObjectSequence, SharedString } from "@fluidframework/sequence";
 import * as React from "react";
@@ -62,8 +62,8 @@ function LikesAndCommentsView(
             <div>
                 <img width='100%' src={imgUrl?.getText()}/>
                 {imgUrl !== undefined
-                    ? <CollaborativeTextArea
-                        style={{ height: "5vh" }}
+                    ? <CollaborativeInput
+                        style={{ width: "90%" }}
                         sharedString={imgUrl}
                         onChange={(value: SharedString) => setImgUrl({ value })}
                     />
