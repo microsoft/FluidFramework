@@ -10,7 +10,7 @@ import {
     IComponentConfiguration,
     IRequest,
     IResponse,
-    IFluidScope,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -48,7 +48,7 @@ import { NullRuntime } from "./nullRuntime";
 export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
-        scope: IComponent & IFluidScope,
+        scope: IComponent & IFluidObject,
         codeLoader: ICodeLoader,
         runtimeFactory: IRuntimeFactory,
         baseSnapshot: ISnapshotTree | null,
@@ -168,7 +168,7 @@ export class ContainerContext implements IContainerContext {
 
     constructor(
         private readonly container: Container,
-        public readonly scope: IComponent & IFluidScope,
+        public readonly scope: IComponent & IFluidObject,
         public readonly codeLoader: ICodeLoader,
         public readonly runtimeFactory: IRuntimeFactory,
         private readonly _baseSnapshot: ISnapshotTree | null,

@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IComponent, IFluidScope } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
 import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
@@ -28,7 +28,7 @@ describe("Component Context Tests", () => {
     describe("LocalComponentContext Initialization", () => {
         let localComponentContext: LocalComponentContext;
         let storage: IDocumentStorageService;
-        let scope: IComponent & IFluidScope;
+        let scope: IComponent & IFluidObject;
         const attachCb = (mR: IComponentRuntimeChannel) => { };
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
@@ -144,7 +144,7 @@ describe("Component Context Tests", () => {
         let remotedComponentContext: RemotedComponentContext;
         let componentAttributes: IComponentAttributes;
         const storage: Partial<IDocumentStorageService> = {};
-        let scope: IComponent & IFluidScope;
+        let scope: IComponent & IFluidObject;
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
             const factory: { [key: string]: any } = {};

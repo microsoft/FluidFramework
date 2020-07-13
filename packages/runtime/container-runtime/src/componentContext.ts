@@ -11,7 +11,7 @@ import {
     IComponentLoadable,
     IRequest,
     IResponse,
-    IFluidScope,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -177,7 +177,7 @@ export abstract class ComponentContext extends EventEmitter implements
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
-        public readonly scope: IComponent & IFluidScope,
+        public readonly scope: IComponent & IFluidObject,
         public readonly summaryTracker: SummaryTracker,
         private bindState: BindState,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
@@ -589,7 +589,7 @@ export class RemotedComponentContext extends ComponentContext {
         private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent & IFluidScope,
+        scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
         pkg?: string[],
     ) {
@@ -666,7 +666,7 @@ export class LocalComponentContext extends ComponentContext {
         pkg: string[],
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent & IFluidScope,
+        scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
         /**

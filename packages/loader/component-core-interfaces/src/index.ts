@@ -12,9 +12,6 @@ export * from "./legacy";
 // IFluidObject as opposed to an export *
 export { IFluidObject } from "./fluidObject";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IFluidScope {}
-
 export * from "./fluidLoadable";
 export * from "./fluidRouter";
 export * from "./handles";
