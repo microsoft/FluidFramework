@@ -18,7 +18,7 @@ import {
  * that are stored in SharedObjects. The Component or SharedObject corresponding to the IFluidHandle can be
  * retrieved by calling `get` on it.
  */
-export class RemoteComponentHandle implements IFluidHandle {
+export class RemoteFluidObjectHandle implements IFluidHandle {
     public get IFluidRouter() { return this; }
     public get IFluidHandleContext() { return this; }
     public get IFluidHandle() { return this; }
@@ -27,7 +27,7 @@ export class RemoteComponentHandle implements IFluidHandle {
     private componentP: Promise<IComponent> | undefined;
 
     /**
-     * Creates a new RemoteComponentHandle when parsing an IFluidHandle.
+     * Creates a new RemoteFluidObjectHandle when parsing an IFluidHandle.
      * @param absolutePath - The absolute path to the handle from the container runtime.
      * @param routeContext - The root IFluidHandleContext that has a route to this handle.
      */

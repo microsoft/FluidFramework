@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/component-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { v4 as uuid } from "uuid";
-import { SharedObjectComponentHandle } from "./handle";
+import { SharedObjectHandle } from "./handle";
 import { ISharedObject, ISharedObjectEvents } from "./types";
 
 /**
@@ -87,7 +87,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         public readonly attributes: IChannelAttributes) {
         super();
 
-        this.handle = new SharedObjectComponentHandle(
+        this.handle = new SharedObjectHandle(
             this,
             id,
             runtime.IFluidHandleContext);

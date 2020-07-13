@@ -80,7 +80,7 @@ export interface IComponentLoadable extends IProvideComponentLoadable {
     readonly url: string;
 
     // Handle to the loadable component
-    handle: IComponentHandle;
+    handle: IFluidHandle;
 }
 ```
 

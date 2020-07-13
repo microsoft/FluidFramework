@@ -21,7 +21,7 @@ import { ISharedObject } from "./types";
  * ComponentRuntime.request() recognizes requests in the form of '/<shared object id>'
  * and loads shared object.
  */
-export class SharedObjectComponentHandle implements IFluidHandle {
+export class SharedObjectHandle implements IFluidHandle {
     // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
     private graphAttachState: AttachState = AttachState.Detached;
     /**
@@ -42,7 +42,7 @@ export class SharedObjectComponentHandle implements IFluidHandle {
     }
 
     /**
-     * Creates a new SharedObjectComponentHandle.
+     * Creates a new SharedObjectHandle.
      * @param value - The shared object this handle is for.
      * @param path - The id of the shared object. It is also the path to this object relative to the routeContext.
      * @param routeContext - The parent IFluidHandleContext that has a route to this handle.

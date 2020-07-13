@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/component-core-interfaces";
-import { RemoteComponentHandle } from "../remoteComponentHandle";
+import { RemoteFluidObjectHandle } from "../remoteComponentHandle";
 
 export const mockHandleContext: IFluidHandleContext = {
     path: "",
@@ -24,7 +24,7 @@ export const mockHandleContext: IFluidHandleContext = {
     },
 };
 
-export const handle: IFluidHandle = new RemoteComponentHandle("", mockHandleContext);
+export const handle: IFluidHandle = new RemoteFluidObjectHandle("", mockHandleContext);
 
 /**
  * Creates a Jsonable object graph of a specified breadth/depth.  The 'createLeaf' callback

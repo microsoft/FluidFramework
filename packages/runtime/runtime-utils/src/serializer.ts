@@ -8,7 +8,7 @@ import {
     IFluidHandleContext,
     IFluidSerializer,
 } from "@fluidframework/component-core-interfaces";
-import { RemoteComponentHandle } from "./remoteComponentHandle";
+import { RemoteFluidObjectHandle } from "./remoteComponentHandle";
 import { isSerializedHandle } from "./utils";
 
 /**
@@ -75,7 +75,7 @@ export class ComponentSerializer implements IFluidSerializer {
                 }
 
                 // 0.21 back-compat
-                // 0.22 onwards, we always use the routeContext of the root to create the RemoteComponentHandle.
+                // 0.22 onwards, we always use the routeContext of the root to create the RemoteFluidObjectHandle.
                 // We won't need to check for the if condition below once we remove the back-compat code.
                 const absoluteUrl = value.url.startsWith("/");
                 if (absoluteUrl && root === undefined) {
@@ -86,7 +86,7 @@ export class ComponentSerializer implements IFluidSerializer {
                     }
                 }
 
-                const handle = new RemoteComponentHandle(value.url, absoluteUrl ? root : context);
+                const handle = new RemoteFluidObjectHandle(value.url, absoluteUrl ? root : context);
 
                 return handle;
             });

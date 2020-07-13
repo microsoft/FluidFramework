@@ -1,5 +1,31 @@
 # Breaking changes
 
+## 0.23 Breaking Changes
+
+### Request MimeType
+- "fluid/component" -> "fluid/object"
+
+### Handles
+- IProvideComponentHandleContext -> IProvideFluidHandleContext
+- IComponentHandleContext -> IFluidHandleContext
+- IProvideComponentHandle -> IProvideFluidHandle
+- IComponentHandle -> IFluidHandle
+- ComponentHandle -> FluidObjectHandle
+- SharedObjectComponentHandle -> SharedObjectHandle
+- RemoteComponentHandle -> RemoteFluidObjectHandle
+
+### Loadable
+- IProvideComponentLoadable -> IProvideFluidLoadable
+- IComponentLoadable -> IFluidLoadable
+
+### Router
+- IProvideComponentRouter -> IProvideFluidRouter
+- IComponentRouter -> IFluidRouter
+
+### Serializers
+- IProvideComponentSerializer -> IProvideFluidSerializer
+- IComponentSerializer -> IFluidSerializer
+
 ## 0.22 Breaking Changes
 - [Deprecated `path` from `IComponentHandleContext`](#Deprecated-`path`-from-`IComponentHandleContext`)
 - [Dynamically loaded components compiled against older versions of runtime](#Dynamically-loaded-components)

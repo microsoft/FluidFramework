@@ -208,7 +208,7 @@ method. We do that by overloading the `componentHasInitialized` method, then sto
 
 ```typescript
 protected async componentHasInitialized() {
-    this.puzzle = await this.root.get<IComponentHandle>(this.sudokuMapKey).get<ISharedMap>();
+    this.puzzle = await this.root.get<IFluidHandle>(this.sudokuMapKey).get<ISharedMap>();
 }
 ```
 
@@ -226,7 +226,7 @@ DDS, not the DDS itself. Similarly, when loading a DDS that is stored within ano
 handle, then get the full DDS from the handle.**
 
 ```typescript
-await this.root.get<IComponentHandle>(this.sudokuMapKey).get<ISharedMap>();
+await this.root.get<IFluidHandle>(this.sudokuMapKey).get<ISharedMap>();
 ```
 
 #### Handling events from distributed data structures
@@ -342,7 +342,7 @@ First, you need to create a `SharedMap` for your presence data.
 
    ```ts
    this.clientPresence = await this.root
-     .get<IComponentHandle>(this.presenceMapKey)
+     .get<IFluidHandle>(this.presenceMapKey)
      .get<ISharedMap>();
    ```
 

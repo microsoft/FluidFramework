@@ -244,7 +244,7 @@ Now that we have all of our scaffolding ready, we can actually start adding in t
 
 ```typescript
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle} from "@fluidframework/component-core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
@@ -264,7 +264,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentHasInitialized() {
-        const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(counterKey);
+        const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
         this._counter = await counterHandle.get();
     }
 
@@ -339,7 +339,7 @@ look at how to fetch it.
 
 ```typescript
 protected async componentHasInitialized() {
-    const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(counterKey);
+    const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
     this._counter = await counterHandle.get();
 }
 ```
@@ -359,7 +359,7 @@ Alright, now for the moment you've been waiting for, connecting the counter to t
 
 ```typescript
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle} from "@fluidframework/component-core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
@@ -379,7 +379,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentHasInitialized() {
-        const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(counterKey);
+        const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
         this._counter = await counterHandle.get();
     }
 
@@ -719,7 +719,7 @@ We can see that the state is initially empty as it only consists of the `SharedC
 The view itself can now directly use the `this.state.counter.value` and we can update it by simply using
 `this.state.counter.increment(1)`. This will directly update the `this.state.counter.value` without needing any event
 listeners to be additionally set up. And there you have it, a synced clicker with persistent state without needing to
-directly use IComponentHandles or set up event listeners!
+directly use IFluidHandles or set up event listeners!
 
 We can extend this example to other DDS' by passing in their corresponding `create` functions in and listening to their
 respective events.
