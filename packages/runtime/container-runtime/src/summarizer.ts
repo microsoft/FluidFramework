@@ -513,16 +513,17 @@ export class RunningSummarizer implements IDisposable {
         let summaryData: GenerateSummaryData | undefined;
         try {
             summaryData = await this.generateSummary(this.immediateSummary, safe);
-            if (!summaryData) {
-                summarizingEvent.cancel();
-                return;
-            }
         } catch (error) {
             summarizingEvent.cancel({ category: "error" }, error);
             return;
         }
 
         this.summarizeTimer.clear();
+
+        if (!summaryData) {
+            summarizingEvent.cancel();
+            return;
+        }
 
         const telemetryProps: any = {
             ...summaryData,
