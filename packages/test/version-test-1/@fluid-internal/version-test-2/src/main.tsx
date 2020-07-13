@@ -4,20 +4,20 @@
  */
 
 import {
-    PrimedComponent,
-    PrimedComponentFactory,
+    PrimedDataModel,
+    PrimedDataModelFactory,
 } from "@fluidframework/aqueduct";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 import React from "react";
 import ReactDOM from "react-dom";
 
-// tslint:disable-next-line: no-var-requires no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
 const pkgversion = pkg.version as string;
 const versionTest2Name = pkg.name as string;
 
-export class VersionTest extends PrimedComponent implements IComponentHTMLView {
+export class VersionTest extends PrimedDataModel implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
     private upgradeToPkg: string = "@fluid-internal/version-test-3";
     private upgradeToVersion: string = "0.3.x";
@@ -83,4 +83,4 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
     }
 }
 
-export const VersiontestInstantiationFactory = new PrimedComponentFactory(versionTest2Name, VersionTest, [], {});
+export const VersiontestInstantiationFactory = new PrimedDataModelFactory(versionTest2Name, VersionTest, [], {});
