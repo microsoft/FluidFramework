@@ -97,9 +97,9 @@ export class PermutationVector extends Client {
         super(
             PermutationSegment.fromJSONObject,
             ChildLogger.create(logger, `Matrix.${path}.MergeTreeClient`), {
-            ...runtime.options,
-            newMergeTreeSnapshotFormat: true,
-        },
+                ...runtime.options,
+                newMergeTreeSnapshotFormat: true,
+            },
         );
 
         this.mergeTreeDeltaCallback = this.onDelta;
