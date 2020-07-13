@@ -98,8 +98,8 @@ export class PermutationVector extends Client {
             PermutationSegment.fromJSONObject,
             ChildLogger.create(logger, `Matrix.${path}.MergeTreeClient`), {
                 ...runtime.options,
-                newMergeTreeSnapshotFormat: true,
-            },
+                newMergeTreeSnapshotFormat: true,   // Temporarily force new snapshot format until it becomes the default.
+            },                                      // (See https://github.com/microsoft/FluidFramework/issues/84)
         );
 
         this.mergeTreeDeltaCallback = this.onDelta;
