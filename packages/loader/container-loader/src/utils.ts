@@ -89,13 +89,11 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
             },
         },
     };
-    const blobs: {[path: string]: string} = {};
     const snapshotTree = convertProtocolAndAppSummaryToSnapshotTreeUtil(protocolSummaryTreeModified);
     snapshotTree.trees = {
         ...snapshotTree.trees,
         ...convertProtocolAndAppSummaryToSnapshotTreeUtil(appSummaryTree).trees,
     };
-    snapshotTree.blobs = { ...snapshotTree.blobs, ...blobs };
 
     return snapshotTree;
 }
