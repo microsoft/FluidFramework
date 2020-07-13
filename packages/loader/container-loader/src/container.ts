@@ -11,7 +11,7 @@ import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { IComponent, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IComponent, IRequest, IResponse, IFluidObject } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     ICodeLoader,
@@ -133,7 +133,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         serviceFactory: IDocumentServiceFactory,
         codeLoader: ICodeLoader,
         options: any,
-        scope: IComponent,
+        scope: IComponent & IFluidObject,
         loader: Loader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
@@ -191,7 +191,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public static async create(
         codeLoader: ICodeLoader,
         options: any,
-        scope: IComponent,
+        scope: IComponent & IFluidObject,
         loader: Loader,
         source: IFluidCodeDetails,
         serviceFactory: IDocumentServiceFactory,
@@ -356,7 +356,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     constructor(
         public readonly options: any,
-        private readonly scope: IComponent,
+        private readonly scope: IComponent & IFluidObject,
         private readonly codeLoader: ICodeLoader,
         private readonly loader: Loader,
         private readonly serviceFactory: IDocumentServiceFactory,

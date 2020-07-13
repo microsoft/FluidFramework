@@ -13,6 +13,7 @@ import {
     IProvideFluidSerializer,
     IRequest,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -279,7 +280,7 @@ export interface IComponentContext extends EventEmitter {
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IComponent;
+    readonly scope: IComponent & IFluidObject;
     readonly summaryTracker: ISummaryTracker;
 
     on(event: "leader" | "notleader" | "attaching" | "attached", listener: () => void): this;
