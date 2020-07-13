@@ -65,20 +65,21 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
 
         assert.strictEqual(Object.keys(snapshotTree.trees).length, 3,
             "3 trees should be there(protocol, default component, scheduler");
-        assert.strictEqual(Object.keys(snapshotTree.trees[".protocol"].blobs).length, 4,
-            "4 protocol blobs should be there");
+        assert.strictEqual(Object.keys(snapshotTree.trees[".protocol"].blobs).length, 8,
+            "4 protocol blobs should be there(8 mappings)");
 
         // Check for protocol attributes
         const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs[".attributes"];
         const protocolAttributes: IDocumentAttributes =
-            JSON.parse(Buffer.from(snapshotTree.blobs[protocolAttributesBlobId], "base64").toString());
+            JSON.parse(Buffer.from(snapshotTree.trees[".protocol"].blobs[protocolAttributesBlobId],
+            "base64").toString());
         assert.strictEqual(protocolAttributes.sequenceNumber, 0, "Seq number should be 0");
         assert.strictEqual(protocolAttributes.minimumSequenceNumber, 0, "Min Seq number should be 0");
 
         // Check for default component
         const defaultComponentBlobId = snapshotTree.trees.default.blobs[".component"];
         const componentAttributes = JSON.parse(
-            Buffer.from(snapshotTree.blobs[defaultComponentBlobId], "base64").toString());
+            Buffer.from(snapshotTree.trees.default.blobs[defaultComponentBlobId], "base64").toString());
         assert.strictEqual(componentAttributes.pkg, JSON.stringify(["default"]), "Package name should be default");
     });
 });

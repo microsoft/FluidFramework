@@ -41,7 +41,6 @@ const getEmptySnapshotNode = () => {
 
 function convertProtocolAndAppSummaryToSnapshotTreeUtil(
     summary: ISummaryTree,
-    blobs: {[path: string]: string},
 ): ISnapshotTree {
     const treeNode = getEmptySnapshotNode();
     const keys = Object.keys(summary.tree);
@@ -50,7 +49,7 @@ function convertProtocolAndAppSummaryToSnapshotTreeUtil(
 
         switch (summaryObject.type) {
             case SummaryType.Tree: {
-                treeNode.trees[key] = convertProtocolAndAppSummaryToSnapshotTreeUtil(summaryObject, blobs);
+                treeNode.trees[key] = convertProtocolAndAppSummaryToSnapshotTreeUtil(summaryObject);
                 break;
             }
             case SummaryType.Blob: {
@@ -58,7 +57,7 @@ function convertProtocolAndAppSummaryToSnapshotTreeUtil(
                 treeNode.blobs[key] = blobId;
                 const content = typeof summaryObject.content === "string" ?
                     summaryObject.content : summaryObject.content.toString("base64");
-                blobs[blobId] = Buffer.from(content).toString("base64");
+                treeNode.blobs[blobId] = Buffer.from(content).toString("base64");
                 break;
             }
             case SummaryType.Handle:
@@ -91,10 +90,10 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
         },
     };
     const blobs: {[path: string]: string} = {};
-    const snapshotTree = convertProtocolAndAppSummaryToSnapshotTreeUtil(protocolSummaryTreeModified, blobs);
+    const snapshotTree = convertProtocolAndAppSummaryToSnapshotTreeUtil(protocolSummaryTreeModified);
     snapshotTree.trees = {
         ...snapshotTree.trees,
-        ...convertProtocolAndAppSummaryToSnapshotTreeUtil(appSummaryTree, blobs).trees,
+        ...convertProtocolAndAppSummaryToSnapshotTreeUtil(appSummaryTree).trees,
     };
     snapshotTree.blobs = { ...snapshotTree.blobs, ...blobs };
 
