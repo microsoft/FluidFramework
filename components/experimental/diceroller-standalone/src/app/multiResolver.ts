@@ -38,7 +38,9 @@ function getUrlResolver(
                 options.tenantId!,
                 options.tenantSecret!,
                 getUser(),
-                options.bearerSecret!);
+                options.bearerSecret!,
+                documentId,
+            );
 
         case "r11s":
             return new InsecureUrlResolver(
@@ -48,7 +50,9 @@ function getUrlResolver(
                 options.tenantId!,
                 options.tenantSecret!,
                 getUser(),
-                options.bearerSecret!);
+                options.bearerSecret!,
+                documentId,
+            );
         case "tinylicious":
             return new InsecureUrlResolver(
                 tinyliciousUrls.hostUrl,
@@ -57,7 +61,9 @@ function getUrlResolver(
                 "tinylicious",
                 "12345",
                 getUser(),
-                options.bearerSecret!);
+                options.bearerSecret!,
+                documentId,
+            );
 
         case "spo":
         case "spo-df":

@@ -44,6 +44,7 @@ export class InsecureUrlResolver implements IUrlResolver {
         private readonly tenantKey: string,
         private readonly user: IUser,
         private readonly bearer: string,
+        private readonly documentId?: string,
     ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
@@ -62,8 +63,7 @@ export class InsecureUrlResolver implements IUrlResolver {
         // If hosts match then we use the local tenant information. Otherwise we make a REST call out to the hosting
         // service using our bearer token.
         if (parsedUrl.host === window.location.host) {
-            const documentId = parsedUrl.pathname.substr(1).split("/")[0];
-            return this.resolveHelper(documentId);
+            return this.resolveHelper(this.documentId ?? parsedUrl.pathname.substr(1).split("/")[0]);
         } else {
             const maybeResolvedUrl = this.cache.get(request.url);
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
