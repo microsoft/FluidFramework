@@ -56,9 +56,9 @@ export class OdspTokenManager {
             server,
             clientConfig,
             initialNavigator,
-            redirectUriCallback,
             forceRefresh,
             forceReauth,
+            redirectUriCallback,
         );
     }
 
@@ -75,9 +75,9 @@ export class OdspTokenManager {
             server,
             clientConfig,
             initialNavigator,
-            redirectUriCallback,
             forceRefresh,
             forceReauth,
+            redirectUriCallback,
         );
     }
     private async getTokens(
@@ -85,10 +85,20 @@ export class OdspTokenManager {
         server: string,
         clientConfig: IClientConfig,
         initialNavigator: (url: string) => void,
+        forceRefresh: boolean,
+        forceReauth: boolean,
         redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
-        forceRefresh = false,
-        forceReauth = false,
     ): Promise<IOdspTokens> {
+        const getTokensCore = async () => {
+            return this.getTokensCore(
+                isPush,
+                server,
+                clientConfig,
+                initialNavigator,
+                forceRefresh,
+                forceReauth,
+                redirectUriCallback);
+        };
         if (this.tokenCache) {
             if (!forceReauth && !forceRefresh) {
                 // check and return if it exists without lock
@@ -102,14 +112,9 @@ export class OdspTokenManager {
                 }
             }
             // check with lock
-            return this.tokenCache.lock(async () => {
-                return this.getTokensCore(
-                    isPush, server, clientConfig, initialNavigator,
-                    redirectUriCallback, forceRefresh, forceReauth);
-            });
+            return this.tokenCache.lock(getTokensCore);
         }
-        return this.getTokensCore(isPush, server, clientConfig, initialNavigator,
-            redirectUriCallback, forceRefresh, forceReauth);
+        return getTokensCore();
     }
 
     private async getTokensCore(
@@ -117,9 +122,9 @@ export class OdspTokenManager {
         server: string,
         clientConfig: IClientConfig,
         initialNavigator: (url: string) => void,
+        forceRefresh,
+        forceReauth,
         redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
-        forceRefresh = false,
-        forceReauth = false,
     ): Promise<IOdspTokens> {
         const scope = isPush ? pushScope : getOdspScope(server);
         const cacheKey: OdspTokenManagerCacheKey = { isPush, server };
