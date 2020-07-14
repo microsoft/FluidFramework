@@ -94,7 +94,8 @@ describe("Ops on Reconnect", () => {
     async function getComponent(componentId: string, fromContainer: Container):
         Promise<ITestFluidComponent & IFluidLoadable> {
         const response = await fromContainer.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        if (response.status !== 200
+            || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as ITestFluidComponent & IFluidLoadable;
@@ -283,7 +284,7 @@ describe("Ops on Reconnect", () => {
             const firstContainerComp2Map2 = await firstContainerComp2.getSharedObject<SharedMap>(map2Id);
 
             // Set the new component's handle in a map so that a new container has access to it.
-            firstContainerComp1Map1.set("component2Key", firstContainerComp2.handle);
+            firstContainerComp1Map1.set("component2Key", firstContainerComp2.IFluidHandle);
 
             // Create a second container and set up a listener to store the received map / directory values.
             const secondContainerComp1 = await setupSecondContainersComponent();
@@ -388,7 +389,7 @@ describe("Ops on Reconnect", () => {
             const firstContainerComp2Map2 = await firstContainerComp2.getSharedObject<SharedMap>(map2Id);
 
             // Set the new component's handle in a map so that a new container has access to it.
-            firstContainerComp1Map1.set("component2Key", firstContainerComp2.handle);
+            firstContainerComp1Map1.set("component2Key", firstContainerComp2.IFluidHandle);
 
             // Create a second container and set up a listener to store the received map / directory values.
             const secondContainerComp1 = await setupSecondContainersComponent();

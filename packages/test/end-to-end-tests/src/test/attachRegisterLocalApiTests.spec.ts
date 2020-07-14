@@ -99,14 +99,14 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
         // Create a channel
         const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-        assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+        assert.strictEqual(channel.IFluidHandle.isAttached, false, "Channel should be detached");
 
         component2RuntimeChannel.bindToContext();
 
         assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, true,
             createTestStatementForAttachedDetached("Component2", true));
 
-        assert.strictEqual(channel.handle.isAttached, false,
+        assert.strictEqual(channel.IFluidHandle.isAttached, false,
             "Channel should not be attached as it was not registered");
     });
 
@@ -124,17 +124,17 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
         // Create a channel
         const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-        assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+        assert.strictEqual(channel.IFluidHandle.isAttached, false, "Channel should be detached");
 
         // Now register the channel
-        (await channel.handle.get() as SharedObject).bindToContext();
+        (await channel.IFluidHandle.get() as SharedObject).bindToContext();
         component2RuntimeChannel.bindToContext();
 
         assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, true,
             createTestStatementForAttachedDetached("Component2", true));
 
         // Channel should get attached as it was registered to its component
-        assert.strictEqual(channel.handle.isAttached, true,
+        assert.strictEqual(channel.IFluidHandle.isAttached, true,
             createTestStatementForAttachedDetached("Channel", true));
     });
 
@@ -151,12 +151,12 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
         // Create a channel
         const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-        assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+        assert.strictEqual(channel.IFluidHandle.isAttached, false, "Channel should be detached");
 
-        channel.handle.attachGraph();
+        channel.IFluidHandle.attachGraph();
 
         // Channel should get attached as it was registered to its component
-        assert.strictEqual(channel.handle.isAttached, true,
+        assert.strictEqual(channel.IFluidHandle.isAttached, true,
             createTestStatementForAttachedDetached("Channel", true));
 
         assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, true,
@@ -177,7 +177,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
         // Create a channel
         const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-        assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+        assert.strictEqual(channel.IFluidHandle.isAttached, false, "Channel should be detached");
 
         component2RuntimeChannel.bindToContext();
 
@@ -188,7 +188,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             "Root Channel should be attached");
         assert.strictEqual(testChannelOfComponent2.isAttached(), false,
             "Test Channel should not be attached");
-        rootOfComponent2.set("test1handle", channel.handle);
+        rootOfComponent2.set("test1handle", channel.IFluidHandle);
 
         assert.strictEqual(testChannelOfComponent2.isAttached(), true,
             "Test Channel should be bound only in attached container after sticking it in bounded dds");
@@ -209,12 +209,12 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
         // Create a channel
         const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-        assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+        assert.strictEqual(channel.IFluidHandle.isAttached, false, "Channel should be detached");
 
         component2RuntimeChannel.bindToContext();
 
-        (await channel.handle.get() as SharedObject).bindToContext();
-        assert.strictEqual(channel.handle.isAttached, true,
+        (await channel.IFluidHandle.get() as SharedObject).bindToContext();
+        assert.strictEqual(channel.IFluidHandle.isAttached, true,
             createTestStatementForAttachedDetached("Channel", true));
     });
 
@@ -234,10 +234,10 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
         // Create a channel
         const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-        assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+        assert.strictEqual(channel.IFluidHandle.isAttached, false, "Channel should be detached");
 
-        (await channel.handle.get() as SharedObject).bindToContext();
-        assert.strictEqual(channel.handle.isAttached, false,
+        (await channel.IFluidHandle.get() as SharedObject).bindToContext();
+        assert.strictEqual(channel.IFluidHandle.isAttached, false,
             "Channel should not get attached on registering it to unattached component");
     });
 
@@ -259,27 +259,27 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
             // Create first channel
             const channel1 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel1.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel1.IFluidHandle.isAttached, false, "Channel should be detached");
 
             // Create second channel
             const channel2 = component2.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel2.IFluidHandle.isAttached, false, "Channel should be detached");
 
             // Now register both dds to parent component
-            (await channel1.handle.get() as SharedObject).bindToContext();
-            (await channel2.handle.get() as SharedObject).bindToContext();
+            (await channel1.IFluidHandle.get() as SharedObject).bindToContext();
+            (await channel2.IFluidHandle.get() as SharedObject).bindToContext();
 
             const testChannel1OfComponent2 = await component2.runtime.getChannel("test1") as SharedMap;
             const testChannel2OfComponent2 = await component2.runtime.getChannel("test2") as SharedMap;
 
-            testChannel1OfComponent2.set("test2handle", channel2.handle);
-            testChannel2OfComponent2.set("test1handle", channel1.handle);
+            testChannel1OfComponent2.set("test2handle", channel2.IFluidHandle);
+            testChannel2OfComponent2.set("test1handle", channel1.IFluidHandle);
 
             // Now attach the component2. Currently this will end up in infinite loop.
             component2RuntimeChannel.bindToContext();
-            assert.strictEqual(testChannel1OfComponent2.handle.isAttached, true,
+            assert.strictEqual(testChannel1OfComponent2.IFluidHandle.isAttached, true,
                 createTestStatementForAttachedDetached("Test Channel 1", true));
-            assert.strictEqual(testChannel2OfComponent2.handle.isAttached, true,
+            assert.strictEqual(testChannel2OfComponent2.IFluidHandle.isAttached, true,
                 createTestStatementForAttachedDetached("Test Channel 1", true));
         });
 
@@ -300,23 +300,23 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
             // Create first channel
             const channel1 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel1.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel1.IFluidHandle.isAttached, false, "Channel should be detached");
 
             // Create second channel
             const channel2 = component2.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel2.IFluidHandle.isAttached, false, "Channel should be detached");
 
             // Now register both dds to parent component
-            (await channel1.handle.get() as SharedObject).bindToContext();
-            (await channel2.handle.get() as SharedObject).bindToContext();
+            (await channel1.IFluidHandle.get() as SharedObject).bindToContext();
+            (await channel2.IFluidHandle.get() as SharedObject).bindToContext();
 
             const testChannel1OfComponent2 = await component2.runtime.getChannel("test1") as SharedMap;
             const testChannel2OfComponent2 = await component2.runtime.getChannel("test2") as SharedMap;
 
-            testChannel1OfComponent2.set("test2handle", channel2.handle);
-            testChannel2OfComponent2.set("test1handle", channel1.handle);
+            testChannel1OfComponent2.set("test2handle", channel2.IFluidHandle);
+            testChannel2OfComponent2.set("test1handle", channel1.IFluidHandle);
 
-            channel1.handle.attachGraph();
+            channel1.IFluidHandle.attachGraph();
             assert.strictEqual(testChannel1OfComponent2.isAttached(), true,
                 "Test Channel 1 should be bound now after attaching graph it");
             assert.strictEqual(testChannel2OfComponent2.isAttached(), true,
@@ -346,20 +346,20 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
             // Create first channel from component2
             const channel2 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel2.IFluidHandle.isAttached, false, "Channel should be detached");
 
             // Create second channel from component 3
             const channel3 = component3.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel3.IFluidHandle.isAttached, false, "Channel should be detached");
 
             const testChannelOfComponent2 = await component2.runtime.getChannel("test1") as SharedMap;
             const testChannelOfComponent3 = await component3.runtime.getChannel("test2") as SharedMap;
 
-            testChannelOfComponent2.set("channel3handle", channel3.handle);
-            testChannelOfComponent3.set("channel2handle", channel2.handle);
+            testChannelOfComponent2.set("channel3handle", channel3.IFluidHandle);
+            testChannelOfComponent3.set("channel2handle", channel2.IFluidHandle);
 
             // Currently it will go in infinite loop.
-            channel2.handle.attachGraph();
+            channel2.IFluidHandle.attachGraph();
             assert.strictEqual(testChannelOfComponent2.isAttached(), true,
                 "Test Channel 1 should be bound now after attaching it");
             assert.strictEqual(testChannelOfComponent3.isAttached(), true,
@@ -391,31 +391,31 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
             // Create first channel from component2
             const channel2 = await component2.getSharedObject<SharedMap>(mapId1);
-            assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel2.IFluidHandle.isAttached, false, "Channel should be detached");
 
             // Create second channel from component 3
             const channel3 = await component3.getSharedObject<SharedMap>(mapId2);
-            assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel3.IFluidHandle.isAttached, false, "Channel should be detached");
 
             // component2 POINTS TO component3, channel3
             // component3 POINTS TO component2, channel2
             // channel2   POINTS TO component3, channel3
             // channel3   POINTS TO component2, channel2
-            channel2.set("channel3handle", channel3.handle);
-            channel3.set("channel2handle", channel2.handle);
-            channel2.set("component3", component3.handle);
-            channel3.set("component2", component2.handle);
-            component2.handle.bind(component3.handle);
-            component2.handle.bind(channel3.handle);
-            component3.handle.bind(component2.handle);
-            component3.handle.bind(channel2.handle);
+            channel2.set("channel3handle", channel3.IFluidHandle);
+            channel3.set("channel2handle", channel2.IFluidHandle);
+            channel2.set("component3", component3.IFluidHandle);
+            channel3.set("component2", component2.IFluidHandle);
+            component2.IFluidHandle.bind(component3.IFluidHandle);
+            component2.IFluidHandle.bind(channel3.IFluidHandle);
+            component3.IFluidHandle.bind(component2.IFluidHandle);
+            component3.IFluidHandle.bind(channel2.IFluidHandle);
 
-            component2.handle.attachGraph();
+            component2.IFluidHandle.attachGraph();
             assert.strictEqual(channel2.isAttached(), true,
                 "Test Channel 2 should be bound now after attaching it");
             assert.strictEqual(channel3.isAttached(), true,
                 "Test Channel 3 should be bound now after attaching other DDS");
-            assert.strictEqual(component2.handle.isAttached, true,
+            assert.strictEqual(component2.IFluidHandle.isAttached, true,
                 createTestStatementForAttachedDetached("Component2", true));
         });
 
@@ -447,25 +447,25 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
             // Create two channel from component2
             const channel1OfComponent2 = await component2.getSharedObject<SharedMap>(mapId1);
-            assert.strictEqual(channel1OfComponent2.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel1OfComponent2.IFluidHandle.isAttached, false, "Channel should be detached");
 
             const channel2OfComponent2 = await component2.getSharedObject<SharedMap>(mapId2);
-            assert.strictEqual(channel2OfComponent2.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel2OfComponent2.IFluidHandle.isAttached, false, "Channel should be detached");
 
             // Create two channel from component 3
             const channel1OfComponent3 = await component3.getSharedObject<SharedMap>(mapId1);
-            assert.strictEqual(channel1OfComponent3.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel1OfComponent3.IFluidHandle.isAttached, false, "Channel should be detached");
 
             const channel2OfComponent3 = await component3.getSharedObject<SharedMap>(mapId2);
-            assert.strictEqual(channel2OfComponent3.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel2OfComponent3.IFluidHandle.isAttached, false, "Channel should be detached");
 
             // Create one channel from component 4
             const channel1OfComponent4 = await component4.getSharedObject<SharedMap>(mapId1);
-            assert.strictEqual(channel1OfComponent4.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel1OfComponent4.IFluidHandle.isAttached, false, "Channel should be detached");
 
-            channel2OfComponent2.set("componet3Handle", component3.handle);
-            channel1OfComponent3.set("channel23handle", channel2OfComponent3.handle);
-            component3.handle.bind(component4.handle);
+            channel2OfComponent2.set("componet3Handle", component3.IFluidHandle);
+            channel1OfComponent3.set("channel23handle", channel2OfComponent3.IFluidHandle);
+            component3.IFluidHandle.bind(component4.IFluidHandle);
 
             // Channel 1 of component 2 points to its parent component 2.
             // Channel 2 of component 2 points to its parent component 2 and also to component 3.
@@ -473,7 +473,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             // Channel 2 of component 3 points to its parent component 3.
             // Channel 1 of component 4 points to its parent component 4.
             // Component 3 points to component 4.
-            channel1OfComponent2.handle.attachGraph();
+            channel1OfComponent2.IFluidHandle.attachGraph();
 
             // Everything should be attached except channel 1 of component 4
             assert.strictEqual(channel1OfComponent2.isAttached(), true, "Test Channel 12 should be bound");
@@ -605,7 +605,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         const component2 = peerComponent2.peerComponent as TestFluidComponent;
 
         const rootMapOfComponent1 = await component1.getSharedObject<SharedMap>(mapId1);
-        rootMapOfComponent1.set("comp2", component2.handle);
+        rootMapOfComponent1.set("comp2", component2.IFluidHandle);
 
         let component1AttachState = AttachState.Detached;
         let component2AttachState = AttachState.Detached;

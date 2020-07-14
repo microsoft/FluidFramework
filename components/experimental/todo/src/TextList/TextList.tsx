@@ -62,7 +62,7 @@ export class TextList extends PrimedComponent implements IComponentHTMLView {
         const uniqueId = this.createUniqueItemId();
         const initialSharedString = SharedString.create(this.runtime);
         initialSharedString.insertText(0, `item ${[...this.textDirectory.keys()].length + 1}`);
-        this.textDirectory.set(uniqueId, initialSharedString.handle);
+        this.textDirectory.set(uniqueId, initialSharedString.IFluidHandle);
     }
 
     private createUniqueItemId() {

@@ -400,7 +400,7 @@ export class ConsensusOrderedCollection<T = any>
         return this.runtime.IFluidSerializer.stringify(
             value,
             this.runtime.IFluidHandleContext,
-            this.handle);
+            this.IFluidHandle);
     }
 
     private deserializeValue(content: string) {

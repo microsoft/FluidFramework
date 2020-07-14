@@ -88,7 +88,7 @@ export class FlowContainer extends ui.Component {
 
             this.layerCache[model.id] = layer;
             this.activeLayers[model.id] = { layer, active: true, cursorOffset };
-            this.overlayInkMap.set(model.id, model.handle);
+            this.overlayInkMap.set(model.id, model.IFluidHandle);
             // Inserts the marker at the flow view's cursor position
             this.sharedString.insertMarker(
                 position,

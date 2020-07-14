@@ -69,7 +69,7 @@ export class DdsCollectionComponent extends React.Component<IDdsCollectionProps,
             if (newMapName.length > 0 && this.props.mapDir.get(newMapName) === undefined) {
                 const newMap = this.props.mapCreate(newMapName);
                 newMap.bindToContext();
-                this.props.mapDir.set(newMapName, newMap.handle);
+                this.props.mapDir.set(newMapName, newMap.IFluidHandle);
 
                 // clear
                 newMapNameEl.value = "";

@@ -45,7 +45,7 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@fluidframework/component-runtime-definitions";
-import { ComponentSerializer, getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
+import { FluidSerializer, getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
 import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
@@ -363,9 +363,11 @@ export class MockQuorum implements IQuorum, EventEmitter {
 export class MockComponentRuntime extends EventEmitter
     implements IComponentRuntime, IComponentRuntimeChannel, IFluidHandleContext {
     public get IFluidHandleContext(): IFluidHandleContext { return this; }
+    public get IComponentHandleContext(): IFluidHandleContext { return this; }
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
 
-    public readonly IFluidSerializer = new ComponentSerializer();
+    public readonly IFluidSerializer = new FluidSerializer();
 
     public readonly documentId: string;
     public readonly id: string = uuid();

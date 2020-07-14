@@ -31,7 +31,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      */
     protected async componentInitializingFirstTime() {
         const counter = SharedCounter.create(this.runtime);
-        this.root.set(counterKey, counter.handle);
+        this.root.set(counterKey, counter.IFluidHandle);
     }
 
     protected async componentHasInitialized() {

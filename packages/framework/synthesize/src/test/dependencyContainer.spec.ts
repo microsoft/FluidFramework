@@ -9,6 +9,7 @@ import {
     IComponentConfiguration,
     IFluidLoadable,
     IFluidHandleContext,
+    IProvideFluidLoadable,
 } from "@fluidframework/component-core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/component-runtime";
 
@@ -35,7 +36,7 @@ const mockHandleContext: IFluidHandleContext = {
 class MockLoadable implements IFluidLoadable {
     public get IFluidLoadable() { return this; }
     public get url() { return "url123"; }
-    public get handle() { return new FluidObjectHandle(this, "", mockHandleContext); }
+    public get IFluidHandle() { return new FluidObjectHandle(this, "", mockHandleContext); }
 }
 
 class MockComponentConfiguration implements IComponentConfiguration {
@@ -52,7 +53,7 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 dc.register(IFluidLoadable, mock);
 
-                const s = dc.synthesize<IFluidLoadable>({ IFluidLoadable }, {});
+                const s = dc.synthesize<IProvideFluidLoadable>({ IFluidLoadable }, {});
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Optional IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
@@ -64,7 +65,7 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 dc.register(IFluidLoadable, Promise.resolve(mock));
 
-                const s = dc.synthesize<IFluidLoadable>({ IFluidLoadable }, {});
+                const s = dc.synthesize<IProvideFluidLoadable>({ IFluidLoadable }, {});
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Optional IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
@@ -77,7 +78,7 @@ describe("Routerlicious", () => {
                 const factory = () => mock;
                 dc.register(IFluidLoadable, factory);
 
-                const s = dc.synthesize<IFluidLoadable>({ IFluidLoadable }, {});
+                const s = dc.synthesize<IProvideFluidLoadable>({ IFluidLoadable }, {});
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Optional IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
@@ -90,7 +91,7 @@ describe("Routerlicious", () => {
                 const factory = async () => mock;
                 dc.register(IFluidLoadable, factory);
 
-                const s = dc.synthesize<IFluidLoadable>({ IFluidLoadable }, {});
+                const s = dc.synthesize<IProvideFluidLoadable>({ IFluidLoadable }, {});
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Optional IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
@@ -102,7 +103,7 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 dc.register(IFluidLoadable, mock);
 
-                const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
+                const s = dc.synthesize<{}, IProvideFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
@@ -114,7 +115,7 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 dc.register(IFluidLoadable, Promise.resolve(mock));
 
-                const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
+                const s = dc.synthesize<{}, IProvideFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
@@ -127,7 +128,7 @@ describe("Routerlicious", () => {
                 const factory = () => mock;
                 dc.register(IFluidLoadable, factory);
 
-                const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
+                const s = dc.synthesize<{}, IProvideFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
@@ -140,7 +141,7 @@ describe("Routerlicious", () => {
                 const factory = async () => mock;
                 dc.register(IFluidLoadable, factory);
 
-                const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
+                const s = dc.synthesize<{}, IProvideFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
@@ -154,7 +155,7 @@ describe("Routerlicious", () => {
                 const configMock = new MockComponentConfiguration();
                 dc.register(IComponentConfiguration, configMock);
 
-                const s = dc.synthesize<IFluidLoadable & IComponentConfiguration>(
+                const s = dc.synthesize<IProvideFluidLoadable & IComponentConfiguration>(
                     { IFluidLoadable, IComponentConfiguration }, {});
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Optional IFluidLoadable was registered");
@@ -170,7 +171,7 @@ describe("Routerlicious", () => {
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
 
-                const s = dc.synthesize<IFluidLoadable & IComponentConfiguration>(
+                const s = dc.synthesize<IProvideFluidLoadable & IComponentConfiguration>(
                     { IFluidLoadable, IComponentConfiguration }, {});
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Optional IFluidLoadable was registered");
@@ -183,7 +184,7 @@ describe("Routerlicious", () => {
             it(`Two Optional Modules none registered`, async () => {
                 const dc = new DependencyContainer();
 
-                const s = dc.synthesize<IFluidLoadable & IComponentConfiguration>(
+                const s = dc.synthesize<IProvideFluidLoadable & IComponentConfiguration>(
                     { IFluidLoadable, IComponentConfiguration }, {});
                 const loadable = await s.IFluidLoadable;
                 assert(!loadable, "Optional IFluidLoadable was not registered");
@@ -198,7 +199,7 @@ describe("Routerlicious", () => {
                 const configMock = new MockComponentConfiguration();
                 dc.register(IComponentConfiguration, configMock);
 
-                const s = dc.synthesize<{}, IFluidLoadable & IComponentConfiguration>(
+                const s = dc.synthesize<{}, IProvideFluidLoadable & IComponentConfiguration>(
                     {}, { IFluidLoadable, IComponentConfiguration });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
@@ -212,7 +213,7 @@ describe("Routerlicious", () => {
             it(`Required Provider not registered should throw`, async () => {
                 const dc = new DependencyContainer();
 
-                assert.throws(() => dc.synthesize<{}, IFluidLoadable>(
+                assert.throws(() => dc.synthesize<{}, IProvideFluidLoadable>(
                     {},
                     { IFluidLoadable },
                 ), Error);
@@ -224,7 +225,7 @@ describe("Routerlicious", () => {
                 parentDc.register(IFluidLoadable, mock);
                 const dc = new DependencyContainer(parentDc);
 
-                const s = dc.synthesize<IFluidLoadable>({ IFluidLoadable }, {});
+                const s = dc.synthesize<IProvideFluidLoadable>({ IFluidLoadable }, {});
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Optional IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
@@ -239,7 +240,7 @@ describe("Routerlicious", () => {
                 const configMock = new MockComponentConfiguration();
                 dc.register(IComponentConfiguration, configMock);
 
-                const s = dc.synthesize<IFluidLoadable & IComponentConfiguration>(
+                const s = dc.synthesize<IProvideFluidLoadable & IComponentConfiguration>(
                     { IFluidLoadable, IComponentConfiguration }, {});
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Optional IFluidLoadable was registered");
@@ -257,7 +258,7 @@ describe("Routerlicious", () => {
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
 
-                const s = dc.synthesize<IFluidLoadable>({ IFluidLoadable }, {});
+                const s = dc.synthesize<IProvideFluidLoadable>({ IFluidLoadable }, {});
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Optional IFluidLoadable was registered");
                 assert(loadable === loadableMock, "IFluidLoadable is expected");
@@ -269,7 +270,7 @@ describe("Routerlicious", () => {
                 parentDc.register(IFluidLoadable, mock);
                 const dc = new DependencyContainer(parentDc);
 
-                const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
+                const s = dc.synthesize<{}, IProvideFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
                 assert(loadable === mock, "IFluidLoadable is expected");
@@ -284,7 +285,7 @@ describe("Routerlicious", () => {
                 const configMock = new MockComponentConfiguration();
                 dc.register(IComponentConfiguration, configMock);
 
-                const s = dc.synthesize<{}, IFluidLoadable & IComponentConfiguration>(
+                const s = dc.synthesize<{}, IProvideFluidLoadable & IComponentConfiguration>(
                     {}, { IFluidLoadable, IComponentConfiguration });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
@@ -302,7 +303,7 @@ describe("Routerlicious", () => {
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
 
-                const s = dc.synthesize<{}, IFluidLoadable>({}, { IFluidLoadable });
+                const s = dc.synthesize<{}, IProvideFluidLoadable>({}, { IFluidLoadable });
                 const loadable = await s.IFluidLoadable;
                 assert(loadable, "Required IFluidLoadable was registered");
                 assert(loadable === loadableMock, "IFluidLoadable is expected");

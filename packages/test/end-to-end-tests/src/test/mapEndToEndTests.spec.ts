@@ -35,7 +35,8 @@ describe("Map", () => {
 
     async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        if (response.status !== 200
+            || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as ITestFluidComponent;
@@ -298,7 +299,7 @@ describe("Map", () => {
         newSharedMap1.set("newKey", "newValue");
 
         // Now add the handle to an attached map so the new map gets attached too.
-        sharedMap1.set("newSharedMap", newSharedMap1.handle);
+        sharedMap1.set("newSharedMap", newSharedMap1.IFluidHandle);
 
         await containerDeltaEventManager.process();
 

@@ -43,7 +43,8 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 
         async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
             const response = await container.request({ url: componentId });
-            if (response.status !== 200 || response.mimeType !== "fluid/object") {
+            if (response.status !== 200
+                || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
                 throw new Error(`Component with id: ${componentId} not found`);
             }
             return response.value as ITestFluidComponent;
@@ -76,7 +77,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 
         it("Basic functionality", async () => {
             const collection1 = ctor.create(component1.runtime);
-            sharedMap1.set("collection", collection1.handle);
+            sharedMap1.set("collection", collection1.IFluidHandle);
             await collection1.write("key1", "value1");
             await collection1.write("key2", "value2");
 
@@ -101,7 +102,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 
         it("Should store all concurrent writings on a key in sequenced order", async () => {
             const collection1 = ctor.create(component1.runtime);
-            sharedMap1.set("collection", collection1.handle);
+            sharedMap1.set("collection", collection1.IFluidHandle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
                 sharedMap2.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
@@ -127,7 +128,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 
         it("Happened after updates should overwrite previous versions", async () => {
             const collection1 = ctor.create(component1.runtime);
-            sharedMap1.set("collection", collection1.handle);
+            sharedMap1.set("collection", collection1.IFluidHandle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
                 sharedMap2.wait<IFluidHandle<IConsensusRegisterCollection>>("collection"),
@@ -178,9 +179,9 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             // Set up the collection with two handles and add it to the map so other containers can find it
             const collection1 = ctor.create(component1.runtime);
             sharedMap1.set("test", "sampleValue");
-            sharedMap1.set("collection", collection1.handle);
-            await collection1.write("handleA", sharedMap1.handle);
-            await collection1.write("handleB", sharedMap1.handle);
+            sharedMap1.set("collection", collection1.IFluidHandle);
+            await collection1.write("handleA", sharedMap1.IFluidHandle);
+            await collection1.write("handleB", sharedMap1.IFluidHandle);
 
             // Pull the collection off of the 2nd container
             const collection2Handle =

@@ -25,7 +25,7 @@ export class SimpleComponentEmbed extends PrimedComponent implements IComponentH
    */
     protected async componentInitializingFirstTime() {
         const component = await this.createAndAttachComponent(ClickerInstantiationFactory.type);
-        this.root.set("myEmbeddedCounter", component.handle);
+        this.root.set("myEmbeddedCounter", component.IFluidHandle);
     }
 
     /**

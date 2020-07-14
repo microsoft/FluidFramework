@@ -57,7 +57,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
         // The text of the todo item
         const text = SharedString.create(this.runtime);
         text.insertText(0, newItemText);
-        this.root.set(textKey, text.handle);
+        this.root.set(textKey, text.IFluidHandle);
 
         // The state of the checkbox
         this.root.set(checkedKey, false);
@@ -66,7 +66,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
         // user choose the component they want to embed. We store it in a cell for easier event handling.
         const innerIdCell = SharedCell.create(this.runtime);
         innerIdCell.set(undefined);
-        this.root.set(innerComponentKey, innerIdCell.handle);
+        this.root.set(innerComponentKey, innerIdCell.IFluidHandle);
     }
 
     protected async componentHasInitialized() {
@@ -191,7 +191,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
         }
 
         // Update the inner component id
-        this.innerIdCell.set(component.handle);
+        this.innerIdCell.set(component.IFluidHandle);
 
         this.emit("innerComponentChanged");
     }

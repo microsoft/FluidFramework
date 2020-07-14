@@ -89,7 +89,7 @@ export async function initializeState<
         }
         if (value.sharedObjectCreate) {
             const component = currentFluidState[fluidStateKey] as any;
-            unlistenedHandles.push(component.handle);
+            unlistenedHandles.push(component.IFluidHandle);
         }
     }
 

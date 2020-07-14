@@ -119,7 +119,8 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        if (response.mimeType !== "fluid/object" && response.status !== 200) {
+        if ((response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")
+            || response.status !== 200) {
             assert.fail("Root component should be created in detached container");
         }
         const component = response.value as ITestFluidComponent;
@@ -128,8 +129,9 @@ describe("Detached Container", () => {
         const subCompId = uuid();
         await createAndAttachComponent(component.context, subCompId, "default");
         const subResponse = await container.request({ url: `/${subCompId}` });
-        if (subResponse.mimeType !== "fluid/object" && subResponse.status !== 200) {
-            assert.fail("New components should be created in detached container");
+        if ((subResponse.mimeType !== "fluid/component" && subResponse.mimeType !== "fluid/object")
+            || subResponse.status !== 200) {
+                assert.fail("New components should be created in detached container");
         }
         const subComponent = subResponse.value as ITestFluidComponent;
         assert.strictEqual(subComponent.context.storage, undefined, "No storage should be there!!");
@@ -155,7 +157,8 @@ describe("Detached Container", () => {
 
         // Get the sub component and verify that it is attached.
         const testResponse = await container.request({ url: `/${newComponentId}` });
-        if (testResponse.mimeType !== "fluid/object" && testResponse.status !== 200) {
+        if ((testResponse.mimeType !== "fluid/component" && testResponse.mimeType !== "fluid/object")
+            && testResponse.status !== 200) {
             assert.fail("New components should be created in detached container");
         }
         const testComponent = testResponse.value as ITestFluidComponent;
@@ -296,7 +299,7 @@ describe("Detached Container", () => {
 
         // Fire attach op
         const testChannel = component.runtime.createChannel(testChannelId, SharedMap.getFactory().type);
-        testChannel.handle.attachGraph();
+        testChannel.IFluidHandle.attachGraph();
         await containerP;
         await defPromise.promise;
     });

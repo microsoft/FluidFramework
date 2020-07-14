@@ -165,14 +165,14 @@ export abstract class SyncedComponent<
             const storedFluidState = SharedMap.create(this.runtime);
             // Add it to the fluid component map so that it will have a listener added to it once
             // we enter the render lifecycle
-            this.fluidComponentMap.set(storedFluidState.handle.absolutePath, {
+            this.fluidComponentMap.set(storedFluidState.IFluidHandle.absolutePath, {
                 component: storedFluidState,
                 isRuntimeMap: true,
             });
             // Add the state to our map of synced states so that we can load it later for persistence
             this.syncedState.set(
                 `syncedState-${syncedStateId}`,
-                storedFluidState.handle,
+                storedFluidState.IFluidHandle,
             );
             // Initialize any DDS' needed for the state or fetch any values from the root if they are stored
             // on the root under a different key
@@ -182,13 +182,13 @@ export abstract class SyncedComponent<
                 const createCallback = value.sharedObjectCreate;
                 if (createCallback) {
                     const sharedObject = createCallback(this.runtime);
-                    this.fluidComponentMap.set(sharedObject.handle.absolutePath, {
+                    this.fluidComponentMap.set(sharedObject.IFluidHandle.absolutePath, {
                         component: sharedObject,
                         listenedEvents: value.listenedEvents || ["valueChanged"],
                     });
-                    storedFluidState.set(fluidKey, sharedObject.handle);
+                    storedFluidState.set(fluidKey, sharedObject.IFluidHandle);
                     if (rootKey) {
-                        this.root.set(rootKey, sharedObject.handle);
+                        this.root.set(rootKey, sharedObject.IFluidHandle);
                     }
                 } else if (rootKey) {
                     storedFluidState.set(fluidKey, this.root.get(rootKey));
@@ -204,28 +204,28 @@ export abstract class SyncedComponent<
             );
             const componentSchemaHandles = {
                 fluidMatchingMapHandle: componentSchema.fluidMatchingMap
-                    .handle as IFluidHandle<SharedMap>,
+                    .IFluidHandle as IFluidHandle<SharedMap>,
                 viewMatchingMapHandle: componentSchema.viewMatchingMap
-                    .handle as IFluidHandle<SharedMap>,
+                    .IFluidHandle as IFluidHandle<SharedMap>,
                 storedHandleMapHandle: componentSchema.storedHandleMap
-                    .handle as IFluidHandle<SharedMap>,
+                    .IFluidHandle as IFluidHandle<SharedMap>,
             };
             this.fluidComponentMap.set(
-                componentSchema.fluidMatchingMap.handle.absolutePath,
+                componentSchema.fluidMatchingMap.IFluidHandle.absolutePath,
                 {
                     component: componentSchema.fluidMatchingMap,
                     isRuntimeMap: true,
                 },
             );
             this.fluidComponentMap.set(
-                componentSchema.viewMatchingMap.handle.absolutePath,
+                componentSchema.viewMatchingMap.IFluidHandle.absolutePath,
                 {
                     component: componentSchema.viewMatchingMap,
                     isRuntimeMap: true,
                 },
             );
             this.fluidComponentMap.set(
-                componentSchema.storedHandleMap.handle.absolutePath,
+                componentSchema.storedHandleMap.IFluidHandle.absolutePath,
                 {
                     component: componentSchema.storedHandleMap,
                     isRuntimeMap: true,

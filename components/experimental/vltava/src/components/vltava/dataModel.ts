@@ -118,7 +118,8 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
 
     private async setupLastEditedTracker() {
         const response = await this.context.containerRuntime.request({ url: "default" });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        if (response.status !== 200
+            || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             throw new Error("Can't find last edited component");
         }
         this.lastEditedTracker = response.value.IComponentLastEditedTracker;

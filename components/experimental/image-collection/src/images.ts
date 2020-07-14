@@ -22,8 +22,11 @@ import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-
 export class ImageComponent implements
     IFluidLoadable, IComponentHTMLView, IFluidRouter, IComponentLayout {
     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
+    public get IComponentHandle() { return this.IFluidHandle?.IComponentHandle; }
     public get IComponentHTMLView() { return this; }
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get IComponentLayout() { return this; }
 
     // Video def has a preferred aspect ratio
@@ -32,10 +35,10 @@ export class ImageComponent implements
     public minimumHeightInline?: number;
     public readonly canInline = true;
     public readonly preferInline = false;
-    public handle: FluidObjectHandle;
+    public IFluidHandle: FluidObjectHandle;
 
     constructor(public imageUrl: string, public url: string, path: string, context: IFluidHandleContext) {
-        this.handle = new FluidObjectHandle(this, path, context);
+        this.IFluidHandle = new FluidObjectHandle(this, path, context);
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
@@ -70,9 +73,11 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
     public create() { this.initialize(); }
     public async load() { this.initialize(); }
 
-    public get IFluidLoadable() { return this; }
+     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
     public get IComponentCollection() { return this; }
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
 
     private readonly images = new Map<string, ImageComponent>();
 

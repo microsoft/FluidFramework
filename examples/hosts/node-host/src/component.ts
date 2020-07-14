@@ -36,7 +36,8 @@ export async function initializeChaincode(document: Container, pkg?: IFluidCodeD
 async function fetchCore(loader: Loader, url: string) {
     const response = await loader.request({ url });
 
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
+    if (response.status !== 200
+        || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
         return;
     }
 

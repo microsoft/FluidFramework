@@ -393,9 +393,11 @@ export class Scribe
 
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
     public get IFluidHandle() { return this.innerHandle; }
-    public get IFluidLoadable() { return this; }
+     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
 
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get IComponentHTMLView() { return this; }
 
     public url: string;

@@ -39,7 +39,7 @@ export class Canvas extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentInitializingFirstTime() {
-        this.root.set("pageInk", Ink.create(this.runtime).handle);
+        this.root.set("pageInk", Ink.create(this.runtime).IFluidHandle);
     }
 
     protected async componentHasInitialized() {

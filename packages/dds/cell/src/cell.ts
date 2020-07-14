@@ -293,7 +293,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
         const stringified = this.runtime.IFluidSerializer.stringify(
             value,
             this.runtime.IFluidHandleContext,
-            this.handle);
+            this.IFluidHandle);
         return JSON.parse(stringified);
     }
 

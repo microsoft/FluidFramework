@@ -30,9 +30,10 @@ export abstract class SharedComponent<
     private _handle?: IFluidHandle<this>;
 
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get IFluidLoadable() { return this; }
-    public get IFluidHandle() { return this.handle; }
-    public get IProvideFluidHandle() { return this; }
+    public get IComponentLoadable() { return this; }
+    public get IComponentHandle() { return this.IFluidHandle; }
 
     /**
      * Handle to a shared component
@@ -61,7 +62,7 @@ export abstract class SharedComponent<
 
     // #region IFluidLoadable
 
-    public get handle(): IFluidHandle<this> {
+    public get IFluidHandle(): IFluidHandle<this> {
         // Lazily create the FluidObjectHandle when requested.
         if (!this._handle) {
             this._handle = new FluidObjectHandle(

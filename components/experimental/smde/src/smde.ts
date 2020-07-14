@@ -49,9 +49,11 @@ export class Smde extends EventEmitter implements
 
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
     public get IFluidHandle() { return this.innerHandle; }
-    public get IFluidLoadable() { return this; }
+     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
 
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get IComponentHTMLView() { return this; }
 
     public url: string;
@@ -90,7 +92,7 @@ export class Smde extends EventEmitter implements
                 ReferenceType.Tile,
                 { [reservedTileLabelsKey]: ["pg"] });
 
-            this.root.set("text", text.handle);
+            this.root.set("text", text.IFluidHandle);
             this.root.bindToContext();
         }
 

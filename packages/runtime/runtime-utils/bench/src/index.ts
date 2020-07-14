@@ -4,11 +4,11 @@
  */
 
 import { Suite } from "benchmark";
-import { ComponentSerializer } from "../../src";
+import { FluidSerializer } from "../../src";
 import { handle, makeJson, mockHandleContext as context } from "../../src/test/utils";
 import { consume, runSuites } from "./util";
 
-const serializer = new ComponentSerializer();
+const serializer = new FluidSerializer();
 const deepNoHandles = makeJson(/* breadth: */ 8, /* depth: */ 8, () => ({}));
 const deepWithHandles = makeJson(/* breadth: */ 8, /* depth: */ 8, () => handle);
 

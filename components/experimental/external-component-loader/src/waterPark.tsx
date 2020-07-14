@@ -134,9 +134,9 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentInitializingFirstTime() {
         const storage = await this.createAndAttachComponent(SpacesStorage.ComponentName);
-        this.root.set(storageKey, storage.handle);
+        this.root.set(storageKey, storage.IFluidHandle);
         const loader = await this.createAndAttachComponent(ExternalComponentLoader.ComponentName);
-        this.root.set(loaderKey, loader.handle);
+        this.root.set(loaderKey, loader.IFluidHandle);
     }
 
     protected async componentHasInitialized() {
@@ -158,11 +158,11 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
         }
 
         const component = await this.loader.createComponentFromUrl(componentUrl);
-        if (component.handle === undefined) {
+        if (component.IFluidHandle === undefined) {
             throw new Error("Can't add, component must have a handle");
         }
         this.storage.addItem({
-            handle: component.handle,
+            handle: component.IFluidHandle,
         });
     };
 

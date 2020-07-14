@@ -67,12 +67,15 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     public get id() { return this.runtime.id; }
     public get IFluidRouter() { return this; }
     public get IFluidLoadable() { return this; }
-    public get IFluidHandle() { return this.innerHandle; }
+
+    public get IComponentRouter() { return this; }
+    public get IComponentLoadable() { return this; }
+    public get IComponentHandle() { return this.innerHandle; }
 
     /**
      * Handle to a shared component
      */
-    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get IFluidHandle(): IFluidHandle<this> { return this.innerHandle; }
 
     public constructor(props: ISharedComponentProps<P>) {
         super();
@@ -203,8 +206,8 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
             // For backwards compatibility with older stored IDs
             // We update the storage with the handle so that this code path is less and less trafficked
             const component = await this.getComponent_UNSAFE<T>(handleOrId);
-            if (component.IFluidLoadable && component.handle) {
-                directory.set(key, component.handle);
+            if (component.IFluidLoadable && component.IFluidHandle) {
+                directory.set(key, component.IFluidHandle);
             }
             return component;
         } else {

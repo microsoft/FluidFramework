@@ -26,18 +26,20 @@ const mockHandleContext: IFluidHandleContext = {
     request: () => {
         throw new Error("Method not implemented.");
     },
-};
+} as unknown as IFluidHandleContext;
 class MockSummarizer implements IFluidLoadable {
     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
     public get url() { return "url123"; }
-    public get handle() { return new SummarizerHandle(this, "", mockHandleContext); }
+    public get IFluidHandle() { return new SummarizerHandle(this, "", mockHandleContext); }
+    public get IComponentHandle() { return this.IFluidHandle?.IComponentHandle; }
 }
 
 describe("SummarizerHandle", () => {
     let handle: IFluidHandle | undefined;
     beforeEach(async () => {
         const summarizer = new MockSummarizer();
-        handle = summarizer.handle;
+        handle = summarizer.IFluidHandle;
     });
     it("get should fail", async () => {
         try {

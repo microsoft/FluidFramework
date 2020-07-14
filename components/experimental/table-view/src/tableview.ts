@@ -93,7 +93,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
     protected async componentInitializingFirstTime() {
         // Set up internal table doc
         const doc = await TableDocument.getFactory().createComponent(this.context) as TableDocument;
-        this.root.set(innerDocKey, doc.handle);
+        this.root.set(innerDocKey, doc.IFluidHandle);
         doc.insertRows(0, 5);
         doc.insertCols(0, 8);
     }

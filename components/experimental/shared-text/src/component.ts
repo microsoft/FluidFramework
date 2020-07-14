@@ -53,12 +53,13 @@ async function getHandle(runtimeP: Promise<IComponentRuntimeChannel>): Promise<I
     const runtime = await runtimeP;
     const request = await runtime.request({ url: "" });
 
-    if (request.status !== 200 || request.mimeType !== "fluid/object") {
+    if (request.status !== 200
+        || (request.mimeType !== "fluid/component" && request.mimeType !== "fluid/object")) {
         return Promise.reject("Not found");
     }
 
     const component = request.value as IComponent & IFluidObject;
-    return component.IFluidLoadable.handle;
+    return component.IFluidLoadable.IFluidHandle;
 }
 
 export class SharedTextRunner
@@ -75,7 +76,8 @@ export class SharedTextRunner
 
     public get handle(): IFluidHandle { return this.innerHandle; }
     public get IFluidHandle() { return this.innerHandle; }
-    public get IFluidLoadable() { return this; }
+     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
 
     public get IComponentHTMLView() { return this; }
     public get ISharedObject() { return this.sharedString as unknown as ISharedObject; }
@@ -124,12 +126,12 @@ export class SharedTextRunner
             const insightsMapId = "insights";
 
             const insights = this.collabDoc.createMap(insightsMapId);
-            this.rootView.set(insightsMapId, insights.handle);
+            this.rootView.set(insightsMapId, insights.IFluidHandle);
 
             debug(`Not existing ${this.runtime.id} - ${performanceNow()}`);
-            this.rootView.set("users", this.collabDoc.createMap().handle);
+            this.rootView.set("users", this.collabDoc.createMap().IFluidHandle);
             const seq = SharedNumberSequence.create(this.collabDoc.runtime);
-            this.rootView.set("sequence-test", seq.handle);
+            this.rootView.set("sequence-test", seq.IFluidHandle);
             const newString = this.collabDoc.createString();
 
             const template = parse(window.location.search.substr(1)).template;
@@ -148,7 +150,7 @@ export class SharedTextRunner
                     newString.insertMarker(newString.getLength(), marker.refType, marker.properties);
                 }
             }
-            this.rootView.set("text", newString.handle);
+            this.rootView.set("text", newString.IFluidHandle);
 
             const containerRuntime = this.context.containerRuntime;
             const [progressBars, math, videoPlayers, images] = await Promise.all([
@@ -163,15 +165,15 @@ export class SharedTextRunner
             this.rootView.set("videoPlayers", videoPlayers);
             this.rootView.set("images", images);
 
-            insights.set(newString.id, this.collabDoc.createMap().handle);
+            insights.set(newString.id, this.collabDoc.createMap().IFluidHandle);
 
             // The flowContainerMap MUST be set last
 
             const flowContainerMap = this.collabDoc.createMap();
-            flowContainerMap.set("overlayInk", this.collabDoc.createMap().handle);
-            this.rootView.set("flowContainerMap", flowContainerMap.handle);
+            flowContainerMap.set("overlayInk", this.collabDoc.createMap().IFluidHandle);
+            this.rootView.set("flowContainerMap", flowContainerMap.IFluidHandle);
 
-            insights.set(newString.id, this.collabDoc.createMap().handle);
+            insights.set(newString.id, this.collabDoc.createMap().IFluidHandle);
         }
 
         debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);

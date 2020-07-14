@@ -270,15 +270,15 @@ export class SharedMatrix<T extends Serializable = Serializable>
                     mode: FileMode.Directory,
                     path: SnapshotPath.rows,
                     type: TreeEntry[TreeEntry.Tree],
-                    value: this.rows.snapshot(this.runtime, this.handle),
+                    value: this.rows.snapshot(this.runtime, this.IFluidHandle),
                 },
                 {
                     mode: FileMode.Directory,
                     path: SnapshotPath.cols,
                     type: TreeEntry[TreeEntry.Tree],
-                    value: this.cols.snapshot(this.runtime, this.handle),
+                    value: this.cols.snapshot(this.runtime, this.IFluidHandle),
                 },
-                serializeBlob(this.runtime, this.handle, SnapshotPath.cells, [
+                serializeBlob(this.runtime, this.IFluidHandle, SnapshotPath.cells, [
                     this.cells.snapshot(),
                     this.pending.snapshot(),
                 ]),
@@ -313,7 +313,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 message,
                 this.runtime.IFluidSerializer,
                 this.runtime.IFluidHandleContext,
-                this.handle,
+                this.IFluidHandle,
             ),
             localOpMetadata,
         );

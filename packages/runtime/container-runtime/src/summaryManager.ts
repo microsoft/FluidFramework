@@ -439,7 +439,8 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
         const response = await loader.request(request);
 
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        if (response.status !== 200
+            || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             return Promise.reject<ISummarizer>("Invalid summarizer route");
         }
 

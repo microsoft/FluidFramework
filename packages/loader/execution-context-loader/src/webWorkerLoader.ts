@@ -48,12 +48,13 @@ export class WebWorkerLoader implements ILoader, IComponentRunnable, IFluidRoute
     }
 
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
 
     public async request(request: IRequest): Promise<IResponse> {
         const response = await this.proxy.request(request);
         if (response.status !== 200
-            || (response.mimeType !== "fluid/object" && response.mimeType !== "fluid/object")) {
+            || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             return response;
         }
         return { status: 200, mimeType: "fluid/component", value: this };

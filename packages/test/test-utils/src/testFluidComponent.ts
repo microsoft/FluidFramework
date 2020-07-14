@@ -34,8 +34,11 @@ export class TestFluidComponent implements ITestFluidComponent, IFluidLoadable {
     public get IFluidLoadable() {
         return this;
     }
+    public get IComponentLoadable() {
+        return this;
+    }
 
-    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get IFluidHandle(): IFluidHandle<this> { return this.innerHandle; }
 
     public url: string;
     public root!: ISharedMap;
@@ -90,7 +93,7 @@ export class TestFluidComponent implements ITestFluidComponent, IFluidLoadable {
 
             this.factoryEntriesMap.forEach((sharedObjectFactory: ISharedObjectFactory, key: string) => {
                 const sharedObject = this.runtime.createChannel(key, sharedObjectFactory.type);
-                this.root.set(key, sharedObject.handle);
+                this.root.set(key, sharedObject.IFluidHandle);
             });
 
             this.root.bindToContext();

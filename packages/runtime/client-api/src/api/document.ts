@@ -234,7 +234,8 @@ function attach(loader: Loader, url: string, deferred: Deferred<Document>): void
 
     responseP.then(
         (response) => {
-            if (response.status !== 200 || response.mimeType !== "fluid/object") {
+            if (response.status !== 200
+        || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
                 return;
             }
 

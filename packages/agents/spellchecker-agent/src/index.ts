@@ -26,6 +26,7 @@ declare module "@fluidframework/component-core-interfaces" {
 
 export class SpellChecker implements IFluidRouter, ISpellChecker {
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get ISpellChecker() { return this; }
 
     public run(sharedString: Sequence.SharedString, dictionary?: MergeTree.TST<number>) {

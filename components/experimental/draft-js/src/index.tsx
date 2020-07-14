@@ -32,10 +32,10 @@ export class DraftJsExample extends PrimedComponent implements IComponentHTMLVie
         const text = SharedString.create(this.runtime);
         insertBlockStart(text, 0);
         text.insertText(text.getLength(), "starting text");
-        this.root.set("text", text.handle);
+        this.root.set("text", text.IFluidHandle);
 
         const authors = SharedMap.create(this.runtime);
-        this.root.set("authors", authors.handle);
+        this.root.set("authors", authors.IFluidHandle);
     }
 
     /**

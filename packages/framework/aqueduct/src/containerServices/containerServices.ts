@@ -18,6 +18,7 @@ export type ContainerServiceRegistryEntries = Iterable<[string, (runtime: IConta
  */
 export abstract class BaseContainerService implements IFluidRouter {
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
 
     constructor(protected readonly runtime: IContainerRuntime) {
     }

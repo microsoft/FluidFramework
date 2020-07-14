@@ -7,7 +7,7 @@
 // tslint:disable:mocha-no-side-effect-code
 
 import { strict as assert } from "assert";
-import { ComponentSerializer } from "../serializer";
+import { FluidSerializer } from "../serializer";
 import {
     handle,
     makeJson,
@@ -44,9 +44,9 @@ simple.push(
 // Add an array that contains each of our constructed test cases.
 simple.push([...simple]);
 
-const ser = new ComponentSerializer();
+const ser = new FluidSerializer();
 
-describe("ComponentSerializer", () => {
+describe("FluidSerializer", () => {
     describe("vanilla JSON", () => {
         // Verify that `replaceHandles` is a no-op for these simple cases.
         for (const input of simple) {

@@ -164,7 +164,7 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
         Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
 
         this.maybeSharedString = SharedString.create(this.runtime, "text");
-        this.root.set("text", this.maybeSharedString.handle);
+        this.root.set("text", this.maybeSharedString.IFluidHandle);
         if (this.maybeSharedString !== undefined) {
             this.forwardEvent(this.maybeSharedString, "sequenceDelta", "maintenance");
         }
@@ -182,7 +182,7 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
     }
 
     public async getComponentFromMarker(marker: Marker) {
-        return marker.properties.handle.get();
+        return marker.properties.IFluidHandle.get();
     }
 
     public getSegmentAndOffset(position: number) {

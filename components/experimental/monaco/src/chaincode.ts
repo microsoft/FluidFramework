@@ -61,7 +61,8 @@ const defaultCompilerOptions = {
 export class MonacoRunner extends PrimedComponent implements
     IComponentHTMLView, IComponentLayout {
     public get IComponentHTMLView() { return this; }
-    public get IFluidLoadable() { return this; }
+     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
     public get IComponentLayout() { return this; }
 
     /**
@@ -112,7 +113,7 @@ export class MonacoRunner extends PrimedComponent implements
     protected async componentInitializingFirstTime() {
         const codeString = SharedString.create(this.runtime);
         codeString.insertText(0, 'console.log("Hello, world!");');
-        this.root.set("text", codeString.handle);
+        this.root.set("text", codeString.IFluidHandle);
     }
 
     /**

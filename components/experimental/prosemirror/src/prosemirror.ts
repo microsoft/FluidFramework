@@ -110,7 +110,10 @@ export class ProseMirror extends EventEmitter
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
     public get IFluidLoadable() { return this; }
+    public get IFluidHandle() { return this.innerHandle; }
+    public get IComponentLoadable() { return this; }
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get IComponentHTMLView() { return this; }
     public get IRichTextEditor() { return this.collabManager; }
 
@@ -148,7 +151,7 @@ export class ProseMirror extends EventEmitter
             text.groupOperation({ ops, type: MergeTreeDeltaType.GROUP });
             text.insertText(1, "Hello, world!");
 
-            this.root.set("text", text.handle);
+            this.root.set("text", text.IFluidHandle);
             this.root.bindToContext();
         }
 

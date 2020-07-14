@@ -80,7 +80,7 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
             this.context,
             { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol },
         ) as TableSlice;
-        this.root.set(sliceId, component.handle);
+        this.root.set(sliceId, component.IFluidHandle);
         return component;
     }
 
@@ -139,13 +139,13 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
 
     protected async componentInitializingFirstTime() {
         const rows = SharedNumberSequence.create(this.runtime, "rows");
-        this.root.set("rows", rows.handle);
+        this.root.set("rows", rows.IFluidHandle);
 
         const cols = SharedNumberSequence.create(this.runtime, "cols");
-        this.root.set("cols", cols.handle);
+        this.root.set("cols", cols.IFluidHandle);
 
         const matrix = SparseMatrix.create(this.runtime, "matrix");
-        this.root.set("matrix", matrix.handle);
+        this.root.set("matrix", matrix.IFluidHandle);
 
         this.root.set(ConfigKey.docId, this.runtime.id);
     }

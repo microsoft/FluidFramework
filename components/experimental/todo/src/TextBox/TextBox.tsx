@@ -33,7 +33,7 @@ export class TextBox extends PrimedComponent<{}, string> implements IComponentHT
         // Create a SharedString that will be use for the text entry
         const text = SharedString.create(this.runtime);
         text.insertText(0, newItemText);
-        this.root.set("text", text.handle);
+        this.root.set("text", text.IFluidHandle);
     }
 
     protected async componentHasInitialized() {

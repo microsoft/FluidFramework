@@ -38,7 +38,7 @@ export class CollaborativeText extends PrimedComponent implements IComponentHTML
     protected async componentInitializingFirstTime() {
         // Create the SharedString and store the handle in our root SharedDirectory
         const text = SharedString.create(this.runtime);
-        this.root.set(this.textKey, text.handle);
+        this.root.set(this.textKey, text.IFluidHandle);
     }
 
     protected async componentHasInitialized() {

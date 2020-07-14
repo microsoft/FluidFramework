@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "./handles";
+import { IProvideFluidHandle } from "./handles";
 
 export const IFluidLoadable: keyof IProvideFluidLoadable = "IFluidLoadable";
 
@@ -13,12 +13,9 @@ export interface IProvideFluidLoadable {
 /**
  * A shared FluidObject has a URL from which it can be referenced
  */
-export interface IFluidLoadable extends IProvideFluidLoadable {
+export interface IFluidLoadable extends IProvideFluidLoadable, IProvideFluidHandle {
     // Absolute URL to the Fluid within the document
     readonly url: string;
-
-    // Handle to the loadable FluidObject
-    handle: IFluidHandle;
 }
 
 export const IFluidRunnable: keyof IProvideFluidRunnable = "IFluidRunnable";

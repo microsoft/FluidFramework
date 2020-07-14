@@ -33,8 +33,9 @@ function toAbsoluteUrl(handle: IFluidHandle): string {
 /**
  * Component serializer implementation
  */
-export class ComponentSerializer implements IFluidSerializer {
+export class FluidSerializer implements IFluidSerializer {
     public get IFluidSerializer() { return this; }
+    public get IComponentSerializer() { return this; }
 
     public replaceHandles(
         input: any,

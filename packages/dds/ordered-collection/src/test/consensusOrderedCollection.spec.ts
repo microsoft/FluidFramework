@@ -65,7 +65,7 @@ describe("ConsensusOrderedCollection", () => {
 
             it("Can add and remove a handle", async () => {
                 assert.strictEqual(await removeItem(), undefined);
-                const handle = testCollection.handle;
+                const handle = testCollection.IFluidHandle;
                 assert(handle, "Need an actual handle to test this case");
                 await addItem(handle);
 

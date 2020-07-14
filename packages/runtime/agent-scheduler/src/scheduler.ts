@@ -43,7 +43,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             root.bindToContext();
             scheduler = ConsensusRegisterCollection.create(runtime);
             scheduler.bindToContext();
-            root.set("scheduler", scheduler.handle);
+            root.set("scheduler", scheduler.IFluidHandle);
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
             const handle = await root.wait<IFluidHandle<ConsensusRegisterCollection<string | null>>>("scheduler");
@@ -57,12 +57,14 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     private readonly innerHandle: IFluidHandle<this>;
 
-    public get handle(): IFluidHandle<this> { return this.innerHandle; }
-    public get IFluidHandle() { return this.innerHandle; }
+    public get IFluidHandle(): IFluidHandle<this> { return this.innerHandle; }
+    public get IComponentHandle(): IFluidHandle<this> { return this.innerHandle; }
     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
 
     public get IAgentScheduler() { return this; }
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
 
     private get clientId(): string {
         if (!this.runtime.IFluidHandleContext.isAttached) {
@@ -394,10 +396,12 @@ export class TaskManager implements ITaskManager {
     private readonly innerHandle: IFluidHandle<this>;
 
     public get IAgentScheduler() { return this.scheduler; }
-    public get handle(): IFluidHandle<this> { return this.innerHandle; }
-    public get IFluidHandle() { return this.innerHandle; }
+    public get IFluidHandle(): IFluidHandle<this> { return this.innerHandle; }
+    public get IComponentHandle(): IFluidHandle<this> { return this.innerHandle; }
     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get ITaskManager() { return this; }
 
     public get url() { return this.scheduler.url; }
@@ -461,7 +465,8 @@ export class TaskManager implements ITaskManager {
             url,
         };
         const response = await this.runtime.loader.request(request);
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        if (response.status !== 200
+        || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             return Promise.reject(`Invalid agent route: ${url}`);
         }
 

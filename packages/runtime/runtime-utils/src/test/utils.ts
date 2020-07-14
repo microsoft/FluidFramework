@@ -22,7 +22,7 @@ export const mockHandleContext: IFluidHandleContext = {
     request: () => {
         throw new Error("Method not implemented.");
     },
-};
+} as unknown as IFluidHandleContext;
 
 export const handle: IFluidHandle = new RemoteFluidObjectHandle("", mockHandleContext);
 

@@ -15,6 +15,7 @@ export class TextAnalyzer implements IFluidRouter, IComponentRunnable {
         private readonly config: ITokenConfig) { }
 
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
 
     private intelRunner: IntelRunner | undefined;

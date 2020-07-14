@@ -40,7 +40,7 @@ export function setFluidState<SV, SF>(
         ?.component as ISharedMap;
     if (storedStateHandle === undefined || storedState === undefined) {
         const newState = SharedMap.create(runtime);
-        componentMap.set(newState.handle.absolutePath, {
+        componentMap.set(newState.IFluidHandle.absolutePath, {
             component: newState,
             isRuntimeMap: true,
         });
@@ -57,14 +57,14 @@ export function setFluidState<SV, SF>(
         if (createCallback) {
             if (storedState.get(fluidKey) === undefined) {
                 const sharedObject = createCallback(runtime);
-                componentMap.set(sharedObject.handle.absolutePath, {
+                componentMap.set(sharedObject.IFluidHandle.absolutePath, {
                     component: sharedObject,
                     listenedEvents: fluidToView?.get(fluidKey as keyof SF)
                         ?.listenedEvents || ["valueChanged"],
                 });
-                storedState.set(fluidKey, sharedObject.handle);
+                storedState.set(fluidKey, sharedObject.IFluidHandle);
                 if (syncedStateKey) {
-                    syncedState.set(syncedStateKey, sharedObject.handle);
+                    syncedState.set(syncedStateKey, sharedObject.IFluidHandle);
                 }
             } else {
                 storedState.set(fluidKey, storedState.get(fluidKey));
@@ -105,6 +105,6 @@ export function setFluidState<SV, SF>(
             }
         }
     }
-    syncedState.set(`syncedState-${syncedStateId}`, storedState.handle);
-    return storedState.handle;
+    syncedState.set(`syncedState-${syncedStateId}`, storedState.IFluidHandle);
+    return storedState.IFluidHandle;
 }

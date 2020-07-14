@@ -66,7 +66,7 @@ describe("ConsensusRegisterCollection", () => {
 
             it("Can add and remove a handle", async () => {
                 assert.strictEqual(crc.read("key1"), undefined);
-                const handle = crc.handle;
+                const handle = crc.IFluidHandle;
                 if (handle === undefined) { assert.fail("Need an actual handle to test this case"); }
                 const writeResult = await writeAndProcessMsg("key1", handle);
                 const readValue = crc.read("key1");

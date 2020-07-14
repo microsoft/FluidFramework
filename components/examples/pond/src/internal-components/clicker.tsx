@@ -34,16 +34,16 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      */
     protected async componentInitializingFirstTime() {
         const counter = SharedCounter.create(this.runtime);
-        this.root.set(counter1Key, counter.handle);
+        this.root.set(counter1Key, counter.IFluidHandle);
         counter.increment(5);
 
         // Create a map on the root.
         const storedMap = SharedMap.create(this.runtime);
-        this.root.set(storedMapKey, storedMap.handle);
+        this.root.set(storedMapKey, storedMap.IFluidHandle);
 
         // Add another clicker to the map
         const counter2 = SharedCounter.create(this.runtime);
-        storedMap.set(counter2Key, counter2.handle);
+        storedMap.set(counter2Key, counter2.IFluidHandle);
     }
 
     protected async componentHasInitialized() {

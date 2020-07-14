@@ -71,7 +71,7 @@ describe("Map", () => {
                 map.set("third", "fourth");
                 map.set("fifth", "sixth");
                 const subMap = factory.create(componentRuntime, "subMap");
-                map.set("object", subMap.handle);
+                map.set("object", subMap.IFluidHandle);
 
                 const parsed = map.getSerializableStorage();
 
@@ -81,7 +81,7 @@ describe("Map", () => {
                         assert.equal(parsed[key].value, value);
                     } else {
                         assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value.url, subMap.handle.absolutePath);
+                        assert.equal(parsed[key].value.url, subMap.IFluidHandle.absolutePath);
                     }
                 });
             });
@@ -92,7 +92,7 @@ describe("Map", () => {
                 map.set("fifth", undefined);
                 assert.ok(map.has("fifth"));
                 const subMap = factory.create(componentRuntime, "subMap");
-                map.set("object", subMap.handle);
+                map.set("object", subMap.IFluidHandle);
 
                 const parsed = map.getSerializableStorage();
 
@@ -102,7 +102,7 @@ describe("Map", () => {
                         assert.equal(parsed[key].value, value);
                     } else {
                         assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value.url, subMap.handle.absolutePath);
+                        assert.equal(parsed[key].value.url, subMap.IFluidHandle.absolutePath);
                     }
                 });
             });
@@ -111,15 +111,15 @@ describe("Map", () => {
                 const subMap = factory.create(componentRuntime, "subMap");
                 const subMap2 = factory.create(componentRuntime, "subMap2");
                 const containingObject = {
-                    subMapHandle: subMap.handle,
+                    subMapHandle: subMap.IFluidHandle,
                     nestedObj: {
-                        subMap2Handle: subMap2.handle,
+                        subMap2Handle: subMap2.IFluidHandle,
                     },
                 };
                 map.set("object", containingObject);
 
-                const subMapHandleUrl = subMap.handle.absolutePath;
-                const subMap2HandleUrl = subMap2.handle.absolutePath;
+                const subMapHandleUrl = subMap.IFluidHandle.absolutePath;
+                const subMap2HandleUrl = subMap2.IFluidHandle.absolutePath;
                 const serialized = JSON.stringify(map.getSerializableStorage());
                 // eslint-disable-next-line max-len
                 assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}}}}`);
@@ -353,19 +353,19 @@ describe("Map", () => {
 
             it("Should be able to set a shared object handle as a key", () => {
                 const subMap = factory.create(componentRuntime, "subMap");
-                map.set("test", subMap.handle);
+                map.set("test", subMap.IFluidHandle);
 
                 containerRuntimeFactory.processAllMessages();
 
                 // Verify the local SharedMap
                 const localSubMap = map.get<IFluidHandle>("test");
-                assert.equal(localSubMap.absolutePath, subMap.handle.absolutePath, "could not get the handle's path");
+                assert.equal(localSubMap.absolutePath, subMap.IFluidHandle.absolutePath, "could not get the handle's path");
 
                 // Verify the remote SharedMap
                 const remoteSubMap = map2.get<IFluidHandle>("test");
                 assert.equal(
                     remoteSubMap.absolutePath,
-                    subMap.handle.absolutePath,
+                    subMap.IFluidHandle.absolutePath,
                     "could not get the handle's path in remote map");
             });
 
@@ -373,9 +373,9 @@ describe("Map", () => {
                 const subMap = factory.create(componentRuntime, "subMap");
                 const subMap2 = factory.create(componentRuntime, "subMap2");
                 const containingObject = {
-                    subMapHandle: subMap.handle,
+                    subMapHandle: subMap.IFluidHandle,
                     nestedObj: {
-                        subMap2Handle: subMap2.handle,
+                        subMap2Handle: subMap2.IFluidHandle,
                     },
                 };
                 map.set("object", containingObject);

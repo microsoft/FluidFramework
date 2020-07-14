@@ -43,10 +43,10 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
    */
     protected async componentInitializingFirstTime() {
         const clickerComponent = await Clicker.getFactory().createComponent(this.context);
-        this.root.set(Clicker.ComponentName, clickerComponent.handle);
+        this.root.set(Clicker.ComponentName, clickerComponent.IFluidHandle);
 
         const clickerComponentUsingProvider = await ExampleUsingProviders.getFactory().createComponent(this.context);
-        this.root.set(ExampleUsingProviders.ComponentName, clickerComponentUsingProvider.handle);
+        this.root.set(ExampleUsingProviders.ComponentName, clickerComponentUsingProvider.IFluidHandle);
     }
 
     protected async componentHasInitialized() {

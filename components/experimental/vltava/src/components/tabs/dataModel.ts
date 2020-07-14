@@ -78,7 +78,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         const component = await this.createAndAttachComponent<IComponent & IFluidLoadable>(type);
         this.tabs.set(newKey, {
             type,
-            handleOrId: component.handle,
+            handleOrId: component.IFluidHandle,
         });
 
         this.emit("newTab", true);

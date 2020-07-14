@@ -44,7 +44,8 @@ describe("PrimedComponent", () => {
 
         async function getComponent(componentId: string, container: Container): Promise<Component> {
             const response = await container.request({ url: componentId });
-            if (response.status !== 200 || response.mimeType !== "fluid/object") {
+            if (response.status !== 200
+                || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
                 throw new Error(`Component with id: ${componentId} not found`);
             }
             return response.value as Component;

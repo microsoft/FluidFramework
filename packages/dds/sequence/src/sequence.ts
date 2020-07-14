@@ -171,7 +171,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
         this.intervalMapKernel = new MapKernel(
             this.runtime,
-            this.handle,
+            this.IFluidHandle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             () => this.isAttached(),
             [new SequenceIntervalCollectionValueType()]);
@@ -325,7 +325,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             message,
             this.runtime.IFluidSerializer,
             this.runtime.IFluidHandleContext,
-            this.handle);
+            this.IFluidHandle);
         const metadata = this.client.peekPendingSegmentGroups(
             message.type === MergeTree.MergeTreeDeltaType.GROUP ? message.ops.length : 1);
 
@@ -573,7 +573,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
         this.messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
 
-        return this.client.snapshot(this.runtime, this.handle, this.messagesSinceMSNChange);
+        return this.client.snapshot(this.runtime, this.IFluidHandle, this.messagesSinceMSNChange);
     }
 
     private processMergeTreeMsg(

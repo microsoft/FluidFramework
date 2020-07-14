@@ -564,7 +564,9 @@ export class RunningSummarizer implements IDisposable {
  */
 export class Summarizer extends EventEmitter implements ISummarizer {
     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
     public get ISummarizer() { return this; }
 
@@ -582,7 +584,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     private readonly innerHandle: IFluidHandle<this>;
 
-    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get IFluidHandle(): IFluidHandle<this> { return this.innerHandle; }
+    public get IComponentHandle() { return this.innerHandle; }
 
     constructor(
         public readonly url: string,

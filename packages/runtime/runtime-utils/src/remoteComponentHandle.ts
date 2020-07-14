@@ -20,9 +20,12 @@ import {
  */
 export class RemoteFluidObjectHandle implements IFluidHandle {
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get IFluidHandleContext() { return this; }
+    public get IComponentHandleContext() { return this; }
     public get IFluidHandle() { return this; }
-
+    public get IComponentHandle() { return this; }
+    public get handle() { return this; }
     public readonly isAttached = true;
     private componentP: Promise<IComponent> | undefined;
 
@@ -48,7 +51,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
         if (this.componentP === undefined) {
             this.componentP = this.routeContext.request({ url: this.absolutePath })
                 .then<IComponent>((response) =>
-                    response.mimeType === "fluid/object"
+                    response.mimeType === "fluid/component" || response.mimeType === "fluid/object"
                         ? response.value as IComponent
                         : Promise.reject("Not found"));
         }

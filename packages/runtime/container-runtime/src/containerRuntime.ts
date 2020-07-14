@@ -77,7 +77,7 @@ import {
     NamedComponentRegistryEntries,
     SchedulerType,
 } from "@fluidframework/runtime-definitions";
-import { ComponentSerializer, SummaryTracker, unreachableCase, RequestParser } from "@fluidframework/runtime-utils";
+import { FluidSerializer, SummaryTracker, unreachableCase, RequestParser } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { FluidObjectHandleContext } from "./componentHandleContext";
@@ -559,9 +559,11 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     public nextSummarizerP?: Promise<Summarizer>;
     public nextSummarizerD?: Deferred<Summarizer>;
 
-    public readonly IFluidSerializer: IFluidSerializer = new ComponentSerializer();
+    public readonly IFluidSerializer: IFluidSerializer = new FluidSerializer();
+    public get IComponentSerializer() { return this.IFluidSerializer; }
 
     public readonly IFluidHandleContext: IFluidHandleContext;
+    public get IComponentHandleContext() { return this.IFluidHandleContext; }
 
     public readonly logger: ITelemetryLogger;
     public readonly previousState: IPreviousState;

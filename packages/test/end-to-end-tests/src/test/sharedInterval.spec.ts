@@ -65,7 +65,8 @@ describe("SharedInterval", () => {
 
     async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        if (response.status !== 200
+            || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as ITestFluidComponent;
@@ -278,7 +279,7 @@ describe("SharedInterval", () => {
 
         // This functionality is used in Word and FlowView's "add comment" functionality.
         it("Can store shared objects in a shared string's interval collection via properties", async () => {
-            sharedMap1.set("outerString", SharedString.create(component1.runtime).handle);
+            sharedMap1.set("outerString", SharedString.create(component1.runtime).IFluidHandle);
             await containerDeltaEventManager.process();
 
             const outerString1 = await sharedMap1.get<IFluidHandle<SharedString>>("outerString").get();
@@ -301,13 +302,13 @@ describe("SharedInterval", () => {
 
             const comment1Text = SharedString.create(component1.runtime);
             comment1Text.insertText(0, "a comment...");
-            intervalCollection1.add(0, 3, IntervalType.SlideOnRemove, { story: comment1Text.handle });
+            intervalCollection1.add(0, 3, IntervalType.SlideOnRemove, { story: comment1Text.IFluidHandle });
             const comment2Text = SharedString.create(component1.runtime);
             comment2Text.insertText(0, "another comment...");
-            intervalCollection1.add(5, 7, IntervalType.SlideOnRemove, { story: comment2Text.handle });
+            intervalCollection1.add(5, 7, IntervalType.SlideOnRemove, { story: comment2Text.IFluidHandle });
             const nestedMap = SharedMap.create(component1.runtime);
             nestedMap.set("nestedKey", "nestedValue");
-            intervalCollection1.add(8, 9, IntervalType.SlideOnRemove, { story: nestedMap.handle });
+            intervalCollection1.add(8, 9, IntervalType.SlideOnRemove, { story: nestedMap.IFluidHandle });
             await containerDeltaEventManager.process();
 
             const serialized1 = intervalCollection1.serializeInternal();

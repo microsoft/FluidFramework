@@ -73,7 +73,7 @@ export class Chaincode implements IComponentFactory {
             root.bindToContext();
 
             const insights = map.SharedMap.create(runtime, insightsMapId);
-            root.set(insightsMapId, insights.handle);
+            root.set(insightsMapId, insights.IFluidHandle);
         }
 
         // Create the underlying Document

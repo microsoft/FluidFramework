@@ -183,7 +183,7 @@ protected async componentInitializingFirstTime() {
     loadPuzzle(0, map);
 
     // Store the new map under the sudokuMapKey key in the root SharedDirectory
-    this.root.set(this.sudokuMapKey, map.handle);
+    this.root.set(this.sudokuMapKey, map.IFluidHandle);
 }
 ```
 
@@ -332,7 +332,7 @@ First, you need to create a `SharedMap` for your presence data.
    ```ts
    // Create a SharedMap to store presence data
    const clientPresence = SharedMap.create(this.runtime);
-   this.root.set(this.presenceMapKey, clientPresence.handle);
+   this.root.set(this.presenceMapKey, clientPresence.IFluidHandle);
    ```
 
    Notice that the Fluid runtime is exposed via the `this.runtime` property provided by [PrimedComponent][].

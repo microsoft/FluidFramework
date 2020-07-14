@@ -1019,7 +1019,7 @@ class SubDirectory implements IDirectory {
             localValue,
             this.runtime.IFluidSerializer,
             this.runtime.IFluidHandleContext,
-            this.directory.handle);
+            this.directory.IFluidHandle);
 
         // Set the value locally.
         this.setCore(
@@ -1405,7 +1405,7 @@ class SubDirectory implements IDirectory {
             const value = localValue.makeSerialized(
                 this.runtime.IFluidSerializer,
                 this.runtime.IFluidHandleContext,
-                this.directory.handle);
+                this.directory.IFluidHandle);
             const res: [string, ISerializedValue] = [key, value];
             yield res;
         }

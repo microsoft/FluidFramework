@@ -22,8 +22,12 @@ export class FluidObjectHandle implements IFluidHandle {
     public readonly absolutePath: string;
 
     public get IFluidRouter(): IFluidRouter { return this; }
+    public get IComponentRouter(): IFluidRouter { return this; }
     public get IFluidHandleContext(): IFluidHandleContext { return this; }
+    public get IComponentHandleContext(): IFluidHandleContext { return this; }
     public get IFluidHandle(): IFluidHandle { return this; }
+    public get IComponentHandle() { return this; }
+    public get handle(): IFluidHandle { return this; }
 
     public get isAttached(): boolean {
         return this.routeContext.isAttached;

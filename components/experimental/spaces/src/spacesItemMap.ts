@@ -28,7 +28,7 @@ const createSingleHandleItem = (type: string) => {
     return async (createAndAttachComponent: ICreateAndAttachComponentFunction): Promise<ISingleHandleItem> => {
         const component = await createAndAttachComponent(type);
         return {
-            handle: component.handle,
+            handle: component.IFluidHandle,
         };
     };
 };

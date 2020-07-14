@@ -93,7 +93,7 @@ export class BaseHost {
 
         if (response.status !== 200 ||
             !(
-                response.mimeType === "fluid/object" ||
+                response.mimeType === "fluid/component" ||
                 response.mimeType === "fluid/object"
             )) {
             return undefined;

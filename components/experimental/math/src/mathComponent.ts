@@ -420,10 +420,12 @@ export class MathView implements IComponentHTMLView, IComponentCursor, IComponen
 export class MathInstance extends EventEmitter implements IFluidLoadable, IFluidRouter {
     public static defaultOptions: IMathOptions = { display: "inline" };
 
-    public get IFluidLoadable() { return this; }
+     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
 
-    public handle: FluidObjectHandle;
+    public IFluidHandle: FluidObjectHandle;
     public endMarker: IMathMarkerInst;
     public startMarker: MergeTree.Marker;
     public solnText = "x=0";
@@ -438,7 +440,7 @@ export class MathInstance extends EventEmitter implements IFluidLoadable, IFluid
         inCombinedText = false,
     ) {
         super();
-        this.handle = new FluidObjectHandle(this, leafId, context);
+        this.IFluidHandle = new FluidObjectHandle(this, leafId, context);
         this.initialize(inCombinedText);
     }
 
@@ -510,7 +512,7 @@ export class MathCollection extends SharedComponent<ISharedDirectory> implements
 
     public create() {
         this.combinedMathText = Sequence.SharedString.create(this.runtime, "mathText");
-        this.root.set("mathText", this.combinedMathText.handle);
+        this.root.set("mathText", this.combinedMathText.IFluidHandle);
         this.initialize();
     }
 
@@ -519,9 +521,11 @@ export class MathCollection extends SharedComponent<ISharedDirectory> implements
         this.initialize();
     }
 
-    public get IFluidLoadable() { return this; }
+     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
     public get IComponentCollection() { return this; }
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
 
     private combinedMathText: Sequence.SharedString;
 

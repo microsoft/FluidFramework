@@ -260,7 +260,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentInitializingFirstTime() {
         const counter = SharedCounter.create(this.runtime);
-        this.root.set(counterKey, counter.handle);
+        this.root.set(counterKey, counter.IFluidHandle);
     }
 
     protected async componentHasInitialized() {
@@ -311,7 +311,7 @@ private _counter: SharedCounter | undefined;
 
 protected async componentInitializingFirstTime() {
     const counter = SharedCounter.create(this.runtime);
-    this.root.set(counterKey, counter.handle);
+    this.root.set(counterKey, counter.IFluidHandle);
 }
 ```
 
@@ -327,11 +327,11 @@ However, it's not enough to just get an instance of `SharedCounter` ourselves! W
 client that renders this also gets the same `SharedCounter`. Well, we know that we all share the same `root`, so we can
 simply set it on a key there.
 
-While `counter` itself cannot be directly stored, it provides a `counter.handle` that can be. We store it in the root
+While `counter` itself cannot be directly stored, it provides a `counter.IFluidHandle` that can be. We store it in the root
 under a key string `counterKey` using
 
 ```typescript
-this.root.set(counterKey, counter.handle);
+this.root.set(counterKey, counter.IFluidHandle);
 ```
 
 So, this will ensure that there is always a `Counter` handle available in the root under that key. Now, let's take a
@@ -375,7 +375,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentInitializingFirstTime() {
         const counter = SharedCounter.create(this.runtime);
-        this.root.set(counterKey, counter.handle);
+        this.root.set(counterKey, counter.IFluidHandle);
     }
 
     protected async componentHasInitialized() {

@@ -10,6 +10,7 @@ import { IntelRunner, ITokenConfig } from "./intelRunner";
 
 export class TextAnalyzer implements IFluidRouter, IComponentRunnable {
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
 
     private intelRunner: IntelRunner | undefined;

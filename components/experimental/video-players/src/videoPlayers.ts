@@ -80,8 +80,10 @@ export class VideoPlayer implements
 
     public get IComponentHTMLView() { return this; }
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get IComponentLayout() { return this; }
-    public get IFluidLoadable() { return this; }
+     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
 
     // Video def has a preferred aspect ratio
     public aspectRatio?: number;
@@ -90,7 +92,7 @@ export class VideoPlayer implements
     public readonly canInline = true;
     public readonly preferInline = false;
     public readonly preferPersistentElement = true;
-    public handle: FluidObjectHandle;
+    public IFluidHandle: FluidObjectHandle;
 
     constructor(
         public videoId: string,
@@ -100,7 +102,7 @@ export class VideoPlayer implements
         private readonly youTubeApi: YouTubeAPI,
         private readonly collection: VideoPlayerCollection,
     ) {
-        this.handle = new FluidObjectHandle(this, keyId, context);
+        this.IFluidHandle = new FluidObjectHandle(this, keyId, context);
     }
 
     public heightInLines() {
@@ -166,7 +168,9 @@ export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> imp
     public async load() { await this.initialize(); }
 
     public get IFluidRouter() { return this; }
-    public get IFluidLoadable() { return this; }
+    public get IComponentRouter() { return this; }
+     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
     public get IComponentCollection() { return this; }
 
     private readonly videoPlayers = new Map<string, VideoPlayer>();

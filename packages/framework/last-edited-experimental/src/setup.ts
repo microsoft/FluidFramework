@@ -89,7 +89,8 @@ export async function setupLastEditedTrackerForContainer(
     });
 
     const response = await runtime.request({ url: componentId });
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
+    if (response.status !== 200
+        || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
         throw new Error(`Component with id ${componentId} does not exist.`);
     }
 

@@ -19,6 +19,7 @@ export class Translator implements IFluidRouter, IComponentRunnable {
         private readonly config: ITokenConfig) { }
 
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
 
     private translator: SharedStringTranslator | undefined;

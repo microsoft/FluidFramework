@@ -58,11 +58,11 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLView {
         loadPuzzle(0, map);
 
         // Store the new map under the sudokuMapKey key in the root SharedDirectory
-        this.root.set(this.sudokuMapKey, map.handle);
+        this.root.set(this.sudokuMapKey, map.IFluidHandle);
 
         // Create a SharedMap to store presence data
         const clientPresence = SharedMap.create(this.runtime);
-        this.root.set(this.presenceMapKey, clientPresence.handle);
+        this.root.set(this.presenceMapKey, clientPresence.IFluidHandle);
     }
 
     /**

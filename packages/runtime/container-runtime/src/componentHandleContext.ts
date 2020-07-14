@@ -14,7 +14,9 @@ import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
 export class FluidObjectHandleContext implements IFluidHandleContext {
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get IFluidHandleContext() { return this; }
+    public get IComponentHandleContext() { return this; }
     public readonly isAttached = true;
     public readonly absolutePath: string;
 

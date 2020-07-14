@@ -29,7 +29,7 @@ export class WebFlow extends SharedComponent<ISharedDirectory> implements ICompo
 
     public create() {
         const doc = FlowDocument.create(this.context);
-        this.root.set("doc", doc.handle);
+        this.root.set("doc", doc.IFluidHandle);
 
         const url = new URL(window.location.href);
         const template = url.searchParams.get("template");

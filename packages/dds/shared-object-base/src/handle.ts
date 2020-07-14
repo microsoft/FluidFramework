@@ -31,8 +31,12 @@ export class SharedObjectHandle implements IFluidHandle {
     public readonly absolutePath: string;
 
     public get IFluidHandle() { return this; }
+    public get IComponentHandle() { return this; }
+    public get handle() { return this; }
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get IFluidHandleContext() { return this; }
+    public get IComponentHandleContext() { return this; }
 
     /**
      * Whether services have been attached for the associated shared object.

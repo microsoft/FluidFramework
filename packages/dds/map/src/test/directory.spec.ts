@@ -107,9 +107,9 @@ describe("Directory", () => {
                 directory.set("third", "fourth");
                 directory.set("fifth", "sixth");
                 const subMap = mapFactory.create(componentRuntime, "subMap");
-                directory.set("object", subMap.handle);
+                directory.set("object", subMap.IFluidHandle);
 
-                const subMapHandleUrl = subMap.handle.absolutePath;
+                const subMapHandleUrl = subMap.IFluidHandle.absolutePath;
 
                 const serialized = serialize(directory);
                 // eslint-disable-next-line max-len
@@ -122,14 +122,14 @@ describe("Directory", () => {
                 directory.set("third", "fourth");
                 directory.set("fifth", "sixth");
                 const subMap = mapFactory.create(componentRuntime, "subMap");
-                directory.set("object", subMap.handle);
+                directory.set("object", subMap.IFluidHandle);
                 const nestedDirectory = directory.createSubDirectory("nested");
                 nestedDirectory.set("deepKey1", "deepValue1");
                 nestedDirectory.createSubDirectory("nested2")
                     .createSubDirectory("nested3")
                     .set("deepKey2", "deepValue2");
 
-                const subMapHandleUrl = subMap.handle.absolutePath;
+                const subMapHandleUrl = subMap.IFluidHandle.absolutePath;
                 const serialized = serialize(directory);
                 // eslint-disable-next-line max-len
                 const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}},"subdirectories":{"nested":{"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"}},"subdirectories":{"nested2":{"subdirectories":{"nested3":{"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
@@ -142,7 +142,7 @@ describe("Directory", () => {
                 directory.set("fifth", undefined);
                 assert.ok(directory.has("fifth"));
                 const subMap = mapFactory.create(componentRuntime, "subMap");
-                directory.set("object", subMap.handle);
+                directory.set("object", subMap.IFluidHandle);
                 const nestedDirectory = directory.createSubDirectory("nested");
                 nestedDirectory.set("deepKey1", "deepValue1");
                 nestedDirectory.set("deepKeyUndefined", undefined);
@@ -151,7 +151,7 @@ describe("Directory", () => {
                     .createSubDirectory("nested3")
                     .set("deepKey2", "deepValue2");
 
-                const subMapHandleUrl = subMap.handle.absolutePath;
+                const subMapHandleUrl = subMap.IFluidHandle.absolutePath;
                 const serialized = serialize(directory);
                 // eslint-disable-next-line max-len
                 const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}},"subdirectories":{"nested":{"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"},"deepKeyUndefined":{"type":"Plain"}},"subdirectories":{"nested2":{"subdirectories":{"nested3":{"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;

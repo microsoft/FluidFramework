@@ -59,7 +59,8 @@ describe("FluidObjectHandle", () => {
 
     async function getComponent(componentId: string, container: Container): Promise<TestSharedComponent> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        if (response.status !== 200
+            || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as TestSharedComponent;
@@ -128,7 +129,7 @@ describe("FluidObjectHandle", () => {
         const sharedMap = SharedMap.create(firstContainerComponent1._runtime);
         sharedMap.set("key1", "value1");
 
-        const sharedMapHandle = sharedMap.handle;
+        const sharedMapHandle = sharedMap.IFluidHandle;
 
         // The expected absolute path.
         const absolutePath = `/default/${sharedMap.id}`;
@@ -158,7 +159,7 @@ describe("FluidObjectHandle", () => {
         const sharedMap = SharedMap.create(firstContainerComponent2._runtime);
         sharedMap.set("key1", "value1");
 
-        const sharedMapHandle = sharedMap.handle;
+        const sharedMapHandle = sharedMap.IFluidHandle;
 
         // The expected absolute path.
         const absolutePath = `/${firstContainerComponent2._runtime.id}/${sharedMap.id}`;
@@ -167,7 +168,7 @@ describe("FluidObjectHandle", () => {
         assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");
 
         // Add the handle to the root DDS of `firstContainerComponent1` so that the ComponentRuntime is different.
-        firstContainerComponent1._root.set("sharedMap", sharedMap.handle);
+        firstContainerComponent1._root.set("sharedMap", sharedMap.IFluidHandle);
 
         await containerDeltaEventManager.process();
 
@@ -187,14 +188,14 @@ describe("FluidObjectHandle", () => {
         // The expected absolute path.
         const absolutePath = `/${firstContainerComponent2._runtime.id}`;
 
-        const componentHandle = firstContainerComponent2.handle;
+        const componentHandle = firstContainerComponent2.IFluidHandle;
 
         // Verify that the local client's handle has the correct absolute path.
         assert.equal(componentHandle.absolutePath, absolutePath, "The handle's absolutepath is not correct");
 
         // Add `firstContainerComponent2's` handle to the root DDS of `firstContainerComponent1` so that the
         // ComponentRuntime is different.
-        firstContainerComponent1._root.set("component2", firstContainerComponent2.handle);
+        firstContainerComponent1._root.set("component2", firstContainerComponent2.IFluidHandle);
 
         await containerDeltaEventManager.process();
 

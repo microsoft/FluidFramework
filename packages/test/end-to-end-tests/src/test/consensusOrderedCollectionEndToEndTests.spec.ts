@@ -50,7 +50,8 @@ function generate(
 
         async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
             const response = await container.request({ url: componentId });
-            if (response.status !== 200 || response.mimeType !== "fluid/object") {
+            if (response.status !== 200
+                || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
                 throw new Error(`Component with id: ${componentId} not found`);
             }
             return response.value as ITestFluidComponent;
@@ -89,7 +90,7 @@ function generate(
             for (const item of input) {
                 await collection1.add(item);
             }
-            sharedMap1.set("collection", collection1.handle);
+            sharedMap1.set("collection", collection1.IFluidHandle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
                 sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
@@ -119,7 +120,7 @@ function generate(
 
         it("Simultaneous add and remove should be ordered and value return to only one client", async () => {
             const collection1 = ctor.create(component1.runtime);
-            sharedMap1.set("collection", collection1.handle);
+            sharedMap1.set("collection", collection1.IFluidHandle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
                 sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
@@ -159,7 +160,7 @@ function generate(
 
         it("Wait resolves", async () => {
             const collection1 = ctor.create(component1.runtime);
-            sharedMap1.set("collection", collection1.handle);
+            sharedMap1.set("collection", collection1.IFluidHandle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
                 sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
@@ -214,9 +215,9 @@ function generate(
             // Set up the collection with two handles and add it to the map so other containers can find it
             const collection1 = ctor.create(component1.runtime);
             sharedMap1.set("test", "sampleValue");
-            sharedMap1.set("collection", collection1.handle);
-            await collection1.add(sharedMap1.handle);
-            await collection1.add(sharedMap1.handle);
+            sharedMap1.set("collection", collection1.IFluidHandle);
+            await collection1.add(sharedMap1.IFluidHandle);
+            await collection1.add(sharedMap1.IFluidHandle);
 
             // Pull the collection off of the 2nd container
             const collection2Handle =
@@ -235,7 +236,7 @@ function generate(
 
         it("Can add and release data", async () => {
             const collection1 = ctor.create(component1.runtime);
-            sharedMap1.set("collection", collection1.handle);
+            sharedMap1.set("collection", collection1.IFluidHandle);
 
             const collection2Handle =
                 await sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection");
@@ -256,7 +257,7 @@ function generate(
 
         it("cancel on close", async () => {
             const collection1 = ctor.create(component1.runtime);
-            sharedMap1.set("collection", collection1.handle);
+            sharedMap1.set("collection", collection1.IFluidHandle);
 
             const collection2Handle =
                 await sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection");
@@ -277,7 +278,7 @@ function generate(
 
         it("Events", async () => {
             const collection1 = ctor.create(component1.runtime);
-            sharedMap1.set("collection", collection1.handle);
+            sharedMap1.set("collection", collection1.IFluidHandle);
             const [collection2Handle, collection3Handle] = await Promise.all([
                 sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
                 sharedMap3.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),

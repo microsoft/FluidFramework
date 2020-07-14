@@ -25,6 +25,10 @@ export class BlobHandle implements IFluidHandle {
     public get IFluidHandleContext(): IFluidHandleContext { return this; }
     public get IFluidHandle(): IFluidHandle { return this; }
 
+    public get IComponentRouter(): IFluidRouter { return this; }
+    public get IComponentHandleContext(): IFluidHandleContext { return this; }
+    public get IComponentHandle(): IFluidHandle { return this; }
+
     public get isAttached(): boolean {
         return true;
     }

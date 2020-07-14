@@ -14,6 +14,7 @@
 ### Loadable
 - IProvideComponentLoadable -> IProvideFluidLoadable
 - IComponentLoadable -> IFluidLoadable
+  - handle -> IFluidHandle
 
 ### Router
 - IProvideComponentRouter -> IProvideFluidRouter
@@ -22,6 +23,7 @@
 ### Serializers
 - IProvideComponentSerializer -> IProvideFluidSerializer
 - IComponentSerializer -> IFluidSerializer
+- ComponentSerializer -> FluidSerializer
 
 ## 0.22 Breaking Changes
 - [Deprecated `path` from `IComponentHandleContext`](#Deprecated-`path`-from-`IComponentHandleContext`)

@@ -45,11 +45,11 @@ export class Todo extends PrimedComponent implements IComponentHTMLView {
         // Create a list for of all inner todo item components.
         // We will use this to know what components to load.
         const map = SharedMap.create(this.runtime);
-        this.root.set(this.todoItemsKey, map.handle);
+        this.root.set(this.todoItemsKey, map.IFluidHandle);
 
         const text = SharedString.create(this.runtime);
         text.insertText(0, "Title");
-        this.root.set(this.todoTitleKey, text.handle);
+        this.root.set(this.todoTitleKey, text.IFluidHandle);
     }
 
     protected async componentHasInitialized() {
@@ -85,7 +85,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLView {
         const component = await TodoItem.getFactory().createComponent(this.context, props);
 
         // Store the id of the component in our ids map so we can reference it later
-        this.todoItemsMap.set(component.url, component.handle);
+        this.todoItemsMap.set(component.url, component.IFluidHandle);
 
         this.emit("todoItemsChanged");
     }

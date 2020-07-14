@@ -106,6 +106,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
 
     public get connected(): boolean {
         return this.componentContext.connected;
@@ -153,6 +154,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     public get IFluidSerializer() { return this.componentContext.containerRuntime.IFluidSerializer; }
 
     public get IFluidHandleContext() { return this; }
+    public get IComponentHandleContext() { return this; }
     public get IComponentRegistry() { return this.componentRegistry; }
 
     private _disposed = false;
@@ -324,7 +326,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             this.attachChannel(channel);
             return;
         } else {
-            this.bind(channel.handle);
+            this.bind(channel.IFluidHandle);
 
             // If our Component is local then add the channel to the queue
             if (!this.localChannelContextQueue.has(channel.id)) {
@@ -573,11 +575,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     private attachChannel(channel: IChannel): void {
         this.verifyNotClosed();
         // If this handle is already attached no need to attach again.
-        if (channel.handle.isAttached) {
+        if (channel.IFluidHandle.isAttached) {
             return;
         }
 
-        channel.handle.attachGraph();
+        channel.IFluidHandle.attachGraph();
 
         assert(this.isAttached, "Component should be attached to attach the channel.");
         // Get the object snapshot only if the component is Bound and its graph is attached too,

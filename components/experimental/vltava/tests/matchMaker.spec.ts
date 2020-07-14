@@ -34,9 +34,10 @@ class MockComponentDiscoverableInterfaces implements IComponentDiscoverableInter
     public get IComponentDiscoverableInterfaces() { return this; }
 
     // Note these have to exist to hack our way through the type check assert
-    public get IFluidLoadable() { return this; }
+     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
     public get IFluidHandle() { return this; }
-
+    public get IComponentHandle() { return this; }
     public constructor(
         public readonly discoverableInterfaces: (keyof IComponent)[],
     ) {}
@@ -48,7 +49,8 @@ class MockComponentDiscoverableAndDiscoverInterfaces
     public get IComponentDiscoverableInterfaces() { return this; }
 
     // Note these have to exist to hack our way through the type check assert
-    public get IFluidLoadable() { return this; }
+     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
 
     public constructor(
         public readonly discoverableInterfaces: (keyof IComponent)[],

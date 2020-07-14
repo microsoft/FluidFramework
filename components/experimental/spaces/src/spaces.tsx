@@ -128,7 +128,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     protected async componentInitializingFirstTime() {
         const storageComponent =
             await this.createAndAttachComponent<SpacesStorage<ISpacesItem>>(SpacesStorage.ComponentName);
-        this.root.set(SpacesStorageKey, storageComponent.handle);
+        this.root.set(SpacesStorageKey, storageComponent.IFluidHandle);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {

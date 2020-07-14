@@ -81,7 +81,7 @@ export class ProgressBar extends EventEmitter implements
     IFluidLoadable,
     IComponentHTMLView,
     IFluidRouter {
-    public handle: FluidObjectHandle;
+    public readonly IFluidHandle: FluidObjectHandle;
 
     constructor(
         public value: number,
@@ -91,12 +91,15 @@ export class ProgressBar extends EventEmitter implements
         private readonly collection: ProgressCollection,
     ) {
         super();
-        this.handle = new FluidObjectHandle(this, keyId, context);
+        this.IFluidHandle = new FluidObjectHandle(this, keyId, context);
     }
 
+    public get IComponentHandle() { return this.IFluidHandle?.IComponentHandle; }
     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
     public get IComponentHTMLView() { return this; }
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
 
     public render(elm: HTMLElement) {
         const view = new ProgressBarView(this);
@@ -132,11 +135,14 @@ export class ProgressCollection
     }
 
     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get IComponentCollection() { return this; }
+    public get IComponentHandle() { return this.IFluidHandle?.IComponentHandle; }
 
     public url: string;
-    public handle: FluidObjectHandle;
+    public readonly IFluidHandle: FluidObjectHandle;
 
     private readonly progressBars = new Map<string, ProgressBar>();
     private root: ISharedMap;
@@ -145,7 +151,7 @@ export class ProgressCollection
         super();
 
         this.url = context.id;
-        this.handle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
+        this.IFluidHandle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
     }
 
     public changeValue(key: string, newValue: number) {

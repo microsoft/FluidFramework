@@ -35,7 +35,8 @@ describe("Directory", () => {
 
     async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        if (response.status !== 200
+            || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as ITestFluidComponent;
@@ -308,7 +309,7 @@ describe("Directory", () => {
         describe("Nested map support", () => {
             it("supports setting a map as a value", async () => {
                 const newMap = SharedMap.create(component1.runtime);
-                sharedDirectory1.set("mapKey", newMap.handle);
+                sharedDirectory1.set("mapKey", newMap.IFluidHandle);
 
                 await containerDeltaEventManager.process();
 
@@ -576,7 +577,7 @@ describe("Directory", () => {
                 newDirectory1.set("newKey", "newValue");
 
                 // Now add the handle to an attached directory so the new directory gets attached too.
-                sharedDirectory1.set("newSharedDirectory", newDirectory1.handle);
+                sharedDirectory1.set("newSharedDirectory", newDirectory1.IFluidHandle);
 
                 await containerDeltaEventManager.process();
 
@@ -614,7 +615,7 @@ describe("Directory", () => {
                 newDirectory1.createSubDirectory(subDirName);
 
                 // Now add the handle to an attached directory so the new directory gets attached too.
-                sharedDirectory1.set("newSharedDirectory", newDirectory1.handle);
+                sharedDirectory1.set("newSharedDirectory", newDirectory1.IFluidHandle);
 
                 await containerDeltaEventManager.process();
 

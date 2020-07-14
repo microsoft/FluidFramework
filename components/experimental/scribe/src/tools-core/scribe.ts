@@ -47,7 +47,8 @@ async function conductor(
     const chunks = author.normalizeText(text).split("\n");
 
     const response = await loader.request({ url });
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
+    if (response.status !== 200
+        || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
         return Promise.reject("Invalid document");
     }
 
@@ -58,7 +59,7 @@ async function conductor(
     const sharedString = component.ISharedObject as unknown as ISharedString;
 
     const chunksMap = SharedMap.create(runtime);
-    scribeMap.set("chunks", chunksMap.handle);
+    scribeMap.set("chunks", chunksMap.IFluidHandle);
 
     setParagraphs(chunks, sharedString);
 

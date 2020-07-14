@@ -21,7 +21,7 @@ const getMatchMakerContainerService = async (context: IComponentContext): Promis
     const response = await context.containerRuntime.request({
         url: `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
     });
-    if (response.status === 200 && response.mimeType === "fluid/object") {
+    if (response.status === 200 && (response.mimeType === "fluid/component" || response.mimeType === "fluid/object")) {
         const value = response.value as IComponent & IFluidObject;
         const matchMaker = value.IComponentInterfacesRegistry;
         if (matchMaker) {

@@ -11,6 +11,7 @@ export class ClickerAgent implements IFluidRouter, IComponentRunnable {
     constructor(private readonly counter: SharedCounter) { }
 
     public get IFluidRouter() { return this; }
+    public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
 
     public async run() {

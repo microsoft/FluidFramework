@@ -42,7 +42,8 @@ describe("Cell", () => {
 
     async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        if (response.status !== 200
+            || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as ITestFluidComponent;
@@ -214,8 +215,8 @@ describe("Cell", () => {
         const detachedCell2: ISharedCell = SharedCell.create(component1.runtime);
         const cellValue = "cell cell cell cell";
         detachedCell2.set(cellValue);
-        detachedCell1.set(detachedCell2.handle);
-        sharedCell1.set(detachedCell1.handle);
+        detachedCell1.set(detachedCell2.IFluidHandle);
+        sharedCell1.set(detachedCell1.IFluidHandle);
 
         await containerDeltaEventManager.process();
 

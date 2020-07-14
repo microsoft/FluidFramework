@@ -35,11 +35,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     public get ISharedObject() { return this; }
     public get IChannel() { return this; }
     public get IFluidLoadable() { return this; }
+    public get IComponentLoadable() { return this; }
 
     /**
      * The handle referring to this SharedObject
      */
-    public readonly handle: IFluidHandle;
+    public readonly IFluidHandle: IFluidHandle;
+    public get IComponentHandle() { return this.IFluidHandle; }
 
     /**
      * Telemetry logger for the shared object
@@ -87,7 +89,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         public readonly attributes: IChannelAttributes) {
         super();
 
-        this.handle = new SharedObjectHandle(
+        this.IFluidHandle = new SharedObjectHandle(
             this,
             id,
             runtime.IFluidHandleContext);

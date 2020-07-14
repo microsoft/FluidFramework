@@ -817,7 +817,9 @@ function renderSegmentIntoLine(
                         componentMarker.instanceP = lineContext.flowView.collabDocument.context.containerRuntime
                             .request({ url: `/${componentMarker.properties.leafId}` })
                             .then(async (response) => {
-                                if (response.status !== 200 || response.mimeType !== "fluid/object") {
+                                if (response.status !== 200
+                                    || (response.mimeType !== "fluid/component"
+                                    && response.mimeType !== "fluid/object")) {
                                     return Promise.reject(response);
                                 }
 
@@ -4515,7 +4517,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 sel.start,
                 sel.end,
                 MergeTree.IntervalType.SlideOnRemove,
-                { story: commentStory.handle });
+                { story: commentStory.IFluidHandle });
             this.cursor.clearSelection();
             this.hostSearchMenu(this.cursor.pos);
         }
@@ -4596,9 +4598,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 type: {
                     name: "component",
                 } as IReferenceDocType,
-                url: loadable.handle,
+                url: loadable.IFluidHandle,
             },
-            leafId: loadable.handle,
+            leafId: loadable.IFluidHandle,
         };
 
         if (!inline) {

@@ -35,12 +35,12 @@ export class Badge extends PrimedComponent implements IBadgeModel, IComponentHTM
         // Create a cell to represent the Badge's current state
         const current = SharedCell.create(this.runtime);
         current.set(defaultItems[0]);
-        this.root.set(this.currentId, current.handle);
+        this.root.set(this.currentId, current.IFluidHandle);
 
         // Create a map to represent the options for the Badge
         const options = SharedMap.create(this.runtime);
         defaultItems.forEach((v) => options.set(v.key, v));
-        this.root.set(this.optionsId, options.handle);
+        this.root.set(this.optionsId, options.IFluidHandle);
 
         // Create a sequence to store the badge's history
         const badgeHistory = SharedObjectSequence.create<IBadgeHistory>(this.runtime);
@@ -48,7 +48,7 @@ export class Badge extends PrimedComponent implements IBadgeModel, IComponentHTM
             value: current.get(),
             timestamp: new Date(),
         }]);
-        this.root.set(this.historyId, badgeHistory.handle);
+        this.root.set(this.historyId, badgeHistory.IFluidHandle);
     }
 
     /**

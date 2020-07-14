@@ -48,7 +48,7 @@ implements IProvideComponentLastEditedTracker, IProvideFluidLastEditedTracker {
 
     protected async componentInitializingFirstTime() {
         const sharedSummaryBlock = SharedSummaryBlock.create(this.runtime);
-        this.root.set(this.sharedSummaryBlockId, sharedSummaryBlock.handle);
+        this.root.set(this.sharedSummaryBlockId, sharedSummaryBlock.IFluidHandle);
     }
 
     protected async componentHasInitialized() {

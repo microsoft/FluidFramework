@@ -108,7 +108,7 @@ export class TableSlice extends PrimedComponent<{}, ITableSliceConfig> implement
         this.root.set(ConfigKey.docId, initialState.docId);
         this.root.set(ConfigKey.name, initialState.name);
         this.maybeDoc = await this.getComponent_UNSAFE(initialState.docId);
-        this.root.set(initialState.docId, this.maybeDoc.handle);
+        this.root.set(initialState.docId, this.maybeDoc.IFluidHandle);
         await this.ensureDoc();
         this.createValuesRange(
             initialState.minCol,

@@ -345,7 +345,7 @@ export class ConsensusRegisterCollection<T>
         return this.runtime.IFluidSerializer.stringify(
             value,
             this.runtime.IFluidHandleContext,
-            this.handle);
+            this.IFluidHandle);
     }
 
     private parse(content: string): any {
