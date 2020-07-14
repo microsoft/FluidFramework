@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { Container } from "@fluidframework/container-loader";
+import { RequestParser } from "@fluidframework/runtime-utils";
+import { HTMLViewAdapter } from "@fluidframework/view-adapters";
+import { IComponentMountableView } from "@fluidframework/view-interfaces";
 import { start } from "./loader";
 
 // I'm choosing to put the docId in the hash just for my own convenience
@@ -14,15 +19,63 @@ document.title = documentId;
 
 export const packageJson = require("../../package.json");
 
-let fluidStarted = false;
 start(
     documentId,
     packageJson,
     window["main"], // Entrypoint to the fluidExport
     parseInt(window.location.port), // port
-    document.getElementById("content") as HTMLDivElement)
-.then(() => fluidStarted = true)
-.catch((error) => console.error(error));
+)
+    .then(doStuffWithContainer)
+    .catch((error) => console.error(error));
 
-// remove later
-console.log(fluidStarted);
+async function doStuffWithContainer(container: Container) {
+    const div = document.getElementById("content") as HTMLDivElement;
+
+    // Needs updating if the doc id is in the hash
+    const reqParser = new RequestParser({ url: window.location.href });
+    const componentUrl = `/${reqParser.createSubRequest(3)!.url}`;
+
+    await getComponentAndRender(container, componentUrl, div);
+    // Handle the code upgrade scenario (which fires contextChanged)
+    container.on("contextChanged", () => {
+        getComponentAndRender(container, componentUrl, div).catch(() => { });
+    });
+}
+
+async function getComponentAndRender(container: Container, url: string, div: HTMLDivElement) {
+    const response = await container.request({
+        headers: {
+            mountableView: true,
+        },
+        url,
+    });
+
+    if (response.status !== 200 ||
+        !(
+            response.mimeType === "fluid/component" ||
+            response.mimeType === "prague/component"
+        )) {
+        return false;
+    }
+
+    const component = response.value as IComponent;
+    if (component === undefined) {
+        return;
+    }
+
+    // We should be retaining a reference to mountableView long-term, so we can call unmount() on it to correctly
+    // remove it from the DOM if needed.
+    const mountableView: IComponentMountableView | undefined = component.IComponentMountableView;
+    if (mountableView !== undefined) {
+        mountableView.mount(div);
+        return;
+    }
+
+    // If we don't get a mountable view back, we can still try to use a view adapter.  This won't always work (e.g.
+    // if the response is a React-based component using hooks) and is not the preferred path, but sometimes it
+    // can work.
+    console.warn(`Container returned a non-IComponentMountableView.  This can cause errors when mounting components `
+        + `with React hooks across bundle boundaries.  URL: ${url}`);
+    const view = new HTMLViewAdapter(component);
+    view.render(div, { display: "block" });
+}
