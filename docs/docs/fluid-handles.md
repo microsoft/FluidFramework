@@ -5,9 +5,9 @@ Handles move the ownership of retrieving a `fluid object` from the user of the o
 
 ## Why use Fluid Handles?
 
-- You should **always** use handles to represent and retrieve `fluid objects` as this tells the runtime and the storage about the usage of the object. The runtime / storage can then manage the lifetime of the object and perform important operations such as garbage collection. Otherwise, the responsibility of managing the lifetime of the object lies with the creator.
+- You should **always** use handles to represent and retrieve `fluid objects` as this tells the runtime, and the storage, about the usage of the object. The runtime / storage can then manage the lifetime of the object, and perform important operations such as garbage collection. Otherwise, the responsibility of managing the lifetime of the object lies with the creator.
 
-    The exception to this when the object has to be handed off to an external entity. For example, when copy / pasting an object, the `url` of the object should be handed off to the destination so that it can request the object from the Loader or the Container. In this case, it is the responsiblity of the code doing so to manage the lifetime to this object / url so that the object is not garbage collected.
+    The exception to this is when the object has to be handed off to an external entity. For example, when copy / pasting an object, the `url` of the object should be handed off to the destination so that it can request the object from the Loader or the Container. In this case, it is the responsiblity of the code doing so to manage the lifetime to this object / url so that the object is not garbage collected.
 
 - With handles, the user doesn't have to worry about how to get the underlying object since that itself can differ in different scenarios. It is the responsibility of the handle to retrieve the object and return it.
 
