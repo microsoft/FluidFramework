@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { BaseHost, IBaseHostConfig } from "@fluidframework/base-host";
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
     IFluidModule,
@@ -28,6 +27,8 @@ import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader
 import jwt from "jsonwebtoken";
 // eslint-disable-next-line import/no-internal-modules
 import uuid from "uuid/v4";
+import { BaseHost } from "./host";
+import { IBaseHostConfig } from "./hostConfig";
 
 class InsecureUrlResolver implements IUrlResolver {
     constructor(
