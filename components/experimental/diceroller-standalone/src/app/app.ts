@@ -17,31 +17,6 @@ if (window.location.hash.length === 0) {
 const documentId = window.location.hash.substring(1);
 document.title = documentId;
 
-export const packageJson = require("../../package.json");
-
-start(
-    documentId,
-    packageJson,
-    window["main"], // Entrypoint to the fluidExport
-    parseInt(window.location.port), // port
-)
-    .then(doStuffWithContainer)
-    .catch((error) => console.error(error));
-
-async function doStuffWithContainer(container: Container) {
-    const div = document.getElementById("content") as HTMLDivElement;
-
-    // Needs updating if the doc id is in the hash
-    const reqParser = new RequestParser({ url: window.location.href });
-    const componentUrl = `/${reqParser.createSubRequest(3)!.url}`;
-
-    await getComponentAndRender(container, componentUrl, div);
-    // Handle the code upgrade scenario (which fires contextChanged)
-    container.on("contextChanged", () => {
-        getComponentAndRender(container, componentUrl, div).catch(() => { });
-    });
-}
-
 async function getComponentAndRender(container: Container, url: string, div: HTMLDivElement) {
     const response = await container.request({
         headers: {
@@ -79,3 +54,31 @@ async function getComponentAndRender(container: Container, url: string, div: HTM
     const view = new HTMLViewAdapter(component);
     view.render(div, { display: "block" });
 }
+
+async function doStuffWithContainer(container: Container) {
+    const div = document.getElementById("content") as HTMLDivElement;
+
+    // Needs updating if the doc id is in the hash
+    const reqParser = new RequestParser({ url: window.location.href });
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const componentUrl = `/${reqParser.createSubRequest(3)!.url}`;
+
+    await getComponentAndRender(container, componentUrl, div);
+    // Handle the code upgrade scenario (which fires contextChanged)
+    container.on("contextChanged", () => {
+        getComponentAndRender(container, componentUrl, div).catch(() => { });
+    });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+export const packageJson = require("../../package.json");
+
+start(
+    documentId,
+    packageJson,
+    // eslint-disable-next-line dot-notation
+    window["main"], // Entrypoint to the fluidExport
+    parseInt(window.location.port, 10), // port
+)
+    .then(doStuffWithContainer)
+    .catch((error) => console.error(error));
