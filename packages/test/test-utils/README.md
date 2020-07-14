@@ -1,6 +1,6 @@
 # @fluidframework/test-utils
 
-This package contains utilities for writing end-to-end tests in Fluid Framework. It helps in the creation of a simple hosting application to test components, DDSs and other functionalities of the system.
+This package contains utilities for writing end-to-end tests in Fluid Framework. It helps in the creation of a simple hosting application to test fluid objects and other functionalities of the system.
 
 ## Local Code Loader
 
@@ -21,7 +21,7 @@ On load, it retrieves the `fluidEntryPoint` matching the package in the `IFluidC
 
 ### `createLocalLoader`
 
-This method creates a simple `Loader` that can be used to resolve a Container or request a Component.
+This method creates a simple `Loader` that can be used to resolve a Container or request a fluid object.
 
 It should be created with a list of source to entry point mappings (of type `fluidEntryPoint` as explained in [LocalCodeLoader](#Local-Code-Loader) section above) and an `ILocalDeltaConnectionServer`:
 ```typeScript
@@ -55,9 +55,9 @@ The usual flow is to create a `LocalLoader` by calling `createLocalLoader` and t
 ## Test Fluid Component
 
 `testFluidComponent.ts` provides `TestFluidComponent` and `TestFluidComponentFactory` that help in the testing of Distributed Data Structures (DDS).
-It can be used to create a component with a given set of DDSs which can then be retrieved later as required.
+It can be used to create a fluid object (TestFluidComponent) with a given set of DDSs which can then be retrieved later as required.
 
-For example, if you need a component with couple of SharedStrings, a SharedDirectory and a SparseMatrix, create a `TestFluidComponentFactory` as follows and use this factory to create a component:
+For example, if you need a fluid object with couple of SharedStrings, a SharedDirectory and a SparseMatrix, create a `TestFluidComponentFactory` as follows and use this factory to create the fluid object:
 ```typeScript
 new TestFluidComponentFactory([
     [ "sharedString1" /* id */, SharedString.getFactory() ],
@@ -75,12 +75,12 @@ const directory = testFluidComponent.getSharedObject<SharedDirectory>("directory
 const matrix = testFluidComponent.getSharedObject<SparseMatrix>("matrix");
 ```
 
->If you want a DDS to be part of the registry so that it can be created later but don't want `TestFluidComponent` to create it during initialization, use `id` as `undefined` in the `TestFluidComponentFactory` creation.
+> If you want a DDS to be part of the registry so that it can be created later but don't want `TestFluidComponent` to create it during initialization, use `id` as `undefined` in the `TestFluidComponentFactory` creation.
 
 ## Document Delta Event Manager
-`DocumentDeltaEventManager` provides control over op processing in the tests. It lets you pause and resume the op processing in the containers / components. It also lets you wait until the ops have been processed by them and the server.
+`DocumentDeltaEventManager` provides control over op processing in the tests. It lets you pause and resume the op processing in the containers / fluid objects. It also lets you wait until the ops have been processed by them and the server.
 
-`DocumentDeltaEventManager` should be created by passing in the `ILocalDeltaConnectionServer` that is used in the test. You can then register the components / containers whose ops you want to control with it.
+`DocumentDeltaEventManager` should be created by passing in the `ILocalDeltaConnectionServer` that is used in the test. You can then register the fluid objects / containers whose ops you want to control with it.
 
 For example, consider the scenario where you perform some operations on a DDS and want to verify that the remote client's DDS have applied the operations. You have to wait until the op is sent to the server, the server processes the op, sends it to the remote client and the remote client processes the op.
 
@@ -88,7 +88,7 @@ You can use the `DocumentDeltaEventManager` to wait for all that to happen by ca
 
 ## Usage
 
-The typical usage for testing a Component / DDS is as follows:
+The typical usage for testing a fluid object is as follows:
 1. Create a `LocalDeltaConnectionServer`:
     ```typescript
     const deltaConnectionServer: ILocalDeltaConnectionServer = LocalDeltaConnectionServer.create();
@@ -102,7 +102,7 @@ The typical usage for testing a Component / DDS is as follows:
     };
     const entryPoint = new TestFluidComponentFactory([["sharedString", SharedString.getFactory()]]);
     ```
-    >This can replaced by any `IComponentFactory` or `IRuntimeFactory`. When the loader is asked to resolve a Container with the above code details, it will load the above factory.
+    > This can replaced by any `IComponentFactory` or `IRuntimeFactory`. When the loader is asked to resolve a Container with the above code details, it will load the above factory.
 
 3. Create a local `Loader`:
     ```typescript
@@ -114,25 +114,25 @@ The typical usage for testing a Component / DDS is as follows:
     const id = "fluid-test://localhost/sharedStringTest";
     const container = await initializeLocalContainer(id, loader, codeDetails);
     ```
-    >We used the same `IFludCodeDetails` that was used to create the `Loader` in step 3.
+    > We used the same `IFludCodeDetails` that was used to create the `Loader` in step 3.
 
-5. Create a `Component` and get the `SharedString`:
+5. Create a `fluid object (TestFluidComponent)` and get the `SharedString`:
     ```typescript
-    const response = await container.request({ url: "default" }); // "default" represent the default component.
-    const component = response.value as ITestFluidComponent;
-    const sharedString = await component.getSharedObject<SharedString>("sharedString");
+    const response = await container.request({ url: "default" }); // "default" represent the default fluid object.
+    const fluidObject = response.value as ITestFluidComponent;
+    const sharedString = await fluidObject.getSharedObject<SharedString>("sharedString");
     ```
-    >The `ITestFluidComponent` would have already created a `SharedString` based off the parameters we provided when creating the `TestFluidComponentFactory` in step 2.
+    > The `ITestFluidComponent` would have already created a `SharedString` based off the parameters we provided when creating the `TestFluidComponentFactory` in step 2.
 
-6. To truly test collaboration, create a second `Loader`, `Container`, `Component` and `DDS` which will serve as a remote client:
+6. To truly test collaboration, create a second `Loader`, `Container`, `fluid object` and `DDS` which will serve as a remote client:
     ```typescript
     const loader2: ILoader = createLocalLoader([[codeDetails, entryPoint]], deltaConnectionServer);
     const container2 = await initializeLocalContainer(id, loader2, codeDetails);
     const response2 = await container2.request({ url: "default" });
-    const component2 = response2.value as ITestFluidComponent;
-    const sharedString2 = await component2.getSharedObject<SharedString>("sharedString");
+    const fluidObject2 = response2.value as ITestFluidComponent;
+    const sharedString2 = await fluidObject2.getSharedObject<SharedString>("sharedString");
     ```
-    >It is important to use the same `ILocalDeltaConnectionServer` to create the `Loader` and the same `id` to create / initialize the `Container`. This will make sure that we load the `Container` that was created earlier and do not create a new one.
+    > It is important to use the same `ILocalDeltaConnectionServer` to create the `Loader` and the same `id` to create / initialize the `Container`. This will make sure that we load the `Container` that was created earlier and do not create a new one.
 
 These steps are demonstrated in the image below:
 
