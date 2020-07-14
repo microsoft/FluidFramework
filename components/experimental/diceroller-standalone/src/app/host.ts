@@ -8,7 +8,6 @@ import { IComponent } from "@fluidframework/component-core-interfaces";
 import {
     IFluidCodeDetails,
     IProxyLoaderFactory,
-    IFluidModule,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { WebCodeLoader } from "@fluidframework/web-code-loader";
@@ -22,16 +21,8 @@ import { IBaseHostConfig } from "./hostConfig";
  */
 async function createWebLoader(
     hostConfig: IBaseHostConfig,
-    seedPackages?: Iterable<[IFluidCodeDetails, Promise<IFluidModule> | IFluidModule | undefined]>): Promise<Loader> {
-    // Create the web loader and prefetch the chaincode we will need
-    const codeLoader = new WebCodeLoader(hostConfig.codeResolver, hostConfig.allowList);
-
-    if (seedPackages !== undefined) {
-        for (const [codeDetails, maybeModule] of seedPackages) {
-            await codeLoader.seedModule(codeDetails, maybeModule);
-        }
-    }
-
+    codeLoader: WebCodeLoader,
+): Promise<Loader> {
     const config = hostConfig.config ?? {};
 
     // We need to extend options, otherwise we nest properties, like client, too deeply
@@ -54,11 +45,11 @@ export class BaseHost {
     private readonly loaderP: Promise<Loader>;
     public constructor(
         hostConfig: IBaseHostConfig,
-        seedPackages?: Iterable<[IFluidCodeDetails, Promise<IFluidModule> | IFluidModule | undefined]>,
+        codeLoader: WebCodeLoader,
     ) {
         this.loaderP = createWebLoader(
             hostConfig,
-            seedPackages,
+            codeLoader,
         );
     }
 

@@ -23,7 +23,7 @@ import {
     IUser,
 } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
-import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";
+import { extractPackageIdentifierDetails, WebCodeLoader } from "@fluidframework/web-code-loader";
 import jwt from "jsonwebtoken";
 // eslint-disable-next-line import/no-internal-modules
 import uuid from "uuid/v4";
@@ -129,22 +129,24 @@ export async function getTinyliciousContainer(
         documentId,
     );
 
+    const codeResolver = new WebpackCodeResolver(port);
+    const codeLoader = new WebCodeLoader(codeResolver);
+
+    const codeDetails: IFluidCodeDetails = {
+        package: packageJson,
+        config: {},
+    };
+    await codeLoader.seedModule(codeDetails, fluidModule);
+
     const hostConf: IBaseHostConfig = {
         codeResolver: new WebpackCodeResolver(port),
         documentServiceFactory,
         urlResolver,
     };
 
-    const codeDetails: IFluidCodeDetails = {
-        package: packageJson,
-        config: {},
-    };
-    const packageSeed: [IFluidCodeDetails, IFluidModule] =
-        [codeDetails, fluidModule];
-
     const baseHost = new BaseHost(
         hostConf,
-        [packageSeed],
+        codeLoader,
     );
 
     return baseHost.initializeContainer(
