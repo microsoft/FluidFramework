@@ -5,13 +5,11 @@
 
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/component-core-interfaces";
-import { TestResolver } from "@fluidframework/local-driver";
 // eslint-disable-next-line import/no-internal-modules
 import uuid from "uuid/v4";
 import { getRandomName } from "@fluidframework/server-services-client";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
-import { RouteOptions, IDevServerUser } from "./loader";
-import { OdspUrlResolver } from "./odspUrlResolver";
+import { IDevServerUser, ITinyliciousRouteOptions } from "./loader";
 
 export const dockerUrls = {
     hostUrl: "http://localhost:3000",
@@ -25,57 +23,6 @@ export const tinyliciousUrls = {
     storageUrl: "http://localhost:3000",
 };
 
-function getUrlResolver(
-    documentId: string,
-    options: RouteOptions,
-): IUrlResolver {
-    switch (options.mode) {
-        case "docker":
-            return new InsecureUrlResolver(
-                dockerUrls.hostUrl,
-                dockerUrls.ordererUrl,
-                dockerUrls.storageUrl,
-                options.tenantId!,
-                options.tenantSecret!,
-                getUser(),
-                options.bearerSecret!,
-                documentId,
-            );
-
-        case "r11s":
-            return new InsecureUrlResolver(
-                options.fluidHost!,
-                options.fluidHost!.replace("www", "alfred"),
-                options.fluidHost!.replace("www", "historian"),
-                options.tenantId!,
-                options.tenantSecret!,
-                getUser(),
-                options.bearerSecret!,
-                documentId,
-            );
-        case "tinylicious":
-            return new InsecureUrlResolver(
-                tinyliciousUrls.hostUrl,
-                tinyliciousUrls.ordererUrl,
-                tinyliciousUrls.storageUrl,
-                "tinylicious",
-                "12345",
-                getUser(),
-                options.bearerSecret!,
-                documentId,
-            );
-
-        case "spo":
-        case "spo-df":
-            return new OdspUrlResolver(
-                options.server!,
-                { accessToken: options.odspAccessToken! });
-
-        default: // Local
-            return new TestResolver();
-    }
-}
-
 const getUser = (): IDevServerUser => ({
     id: uuid(),
     name: getRandomName(),
@@ -86,8 +33,17 @@ export class MultiUrlResolver implements IUrlResolver {
     constructor(
         private readonly rawUrl: string,
         private readonly documentId: string,
-        private readonly options: RouteOptions) {
-        this.urlResolver = getUrlResolver(documentId, options);
+        options: ITinyliciousRouteOptions) {
+        this.urlResolver = new InsecureUrlResolver(
+            tinyliciousUrls.hostUrl,
+            tinyliciousUrls.ordererUrl,
+            tinyliciousUrls.storageUrl,
+            "tinylicious",
+            "12345",
+            getUser(),
+            options.bearerSecret!,
+            documentId,
+        );
     }
 
     async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
@@ -105,22 +61,6 @@ export class MultiUrlResolver implements IUrlResolver {
     public createRequestForCreateNew(
         fileName: string,
     ): IRequest {
-        switch (this.options.mode) {
-            case "r11s":
-            case "docker":
-            case "tinylicious":
-                return (this.urlResolver as InsecureUrlResolver).createCreateNewRequest(fileName);
-
-            case "spo":
-            case "spo-df":
-                return (this.urlResolver as OdspUrlResolver).createCreateNewRequest(
-                    `https://${this.options.server}`,
-                    this.options.driveId!,
-                    "/r11s/",
-                    fileName);
-
-            default: // Local
-                return (this.urlResolver as TestResolver).createCreateNewRequest(fileName);
-        }
+        return (this.urlResolver as InsecureUrlResolver).createCreateNewRequest(fileName);
     }
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { RouteOptions, start } from "./loader";
+import { ITinyliciousRouteOptions, start } from "./loader";
 
 // I'm choosing to put the docId in the hash just for my own convenience
 if (window.location.hash.length === 0) {
@@ -15,7 +15,7 @@ document.title = documentId;
 export const packageJson = require("../../package.json");
 
 // Support other modes in the future
-const options: RouteOptions = { mode: "tinylicious", port: parseInt(window.location.port) };
+const options: ITinyliciousRouteOptions = { mode: "tinylicious", port: parseInt(window.location.port) };
 
 let fluidStarted = false;
 start(

@@ -14,7 +14,6 @@ import {
     isFluidPackage,
 } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { Deferred } from "@fluidframework/common-utils";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
@@ -34,46 +33,10 @@ export interface IBaseRouteOptions {
     npm?: string;
 }
 
-export interface ILocalRouteOptions extends IBaseRouteOptions {
-    mode: "local";
-    single?: boolean;
-}
-
-export interface IDockerRouteOptions extends IBaseRouteOptions {
-    mode: "docker";
-    tenantId?: string;
-    tenantSecret?: string;
-    bearerSecret?: string;
-}
-
-export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
-    mode: "r11s";
-    fluidHost?: string;
-    tenantId?: string;
-    tenantSecret?: string;
-    bearerSecret?: string;
-}
-
 export interface ITinyliciousRouteOptions extends IBaseRouteOptions {
     mode: "tinylicious";
     bearerSecret?: string;
 }
-
-export interface IOdspRouteOptions extends IBaseRouteOptions {
-    mode: "spo" | "spo-df";
-    server?: string;
-    odspAccessToken?: string;
-    pushAccessToken?: string;
-    forceReauth?: boolean;
-    driveId?: string;
-}
-
-export type RouteOptions =
-    | ILocalRouteOptions
-    | IDockerRouteOptions
-    | IRouterliciousRouteOptions
-    | ITinyliciousRouteOptions
-    | IOdspRouteOptions;
 
 function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
     if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
@@ -93,18 +56,6 @@ function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidM
         };
     }
     return fluidModule;
-}
-
-// Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
-function makeSideBySideDiv(divId: string) {
-    const div = document.createElement("div");
-    div.style.flexGrow = "1";
-    div.style.width = "50%"; // ensure the divs don't encroach on each other
-    div.style.border = "1px solid lightgray";
-    div.style.boxSizing = "border-box";
-    div.style.position = "relative"; // Make the new <div> a CSS containing block.
-    div.id = divId;
-    return div;
 }
 
 class WebpackCodeResolver implements IFluidCodeResolver {
@@ -139,7 +90,7 @@ export async function start(
     documentId: string,
     packageJson: IFluidPackage,
     fluidModule: IFluidModule,
-    options: RouteOptions,
+    options: ITinyliciousRouteOptions,
     div: HTMLDivElement,
 ): Promise<void> {
     const documentServiceFactory = getDocumentServiceFactory(documentId, options);
@@ -198,49 +149,11 @@ export async function start(
     const reqParser = new RequestParser({ url });
     const componentUrl = `/${reqParser.createSubRequest(3)!.url}`;
 
-    // Side-by-side mode
-    if (options.mode === "local" && !options.single) {
-        div.style.display = "flex";
-        const leftDiv = makeSideBySideDiv("sbs-left");
-        const rightDiv = makeSideBySideDiv("sbs-right");
-        div.append(leftDiv, rightDiv);
-        await getComponentAndRender(container1, componentUrl, leftDiv);
-        // Handle the code upgrade scenario (which fires contextChanged)
-        container1.on("contextChanged", () => {
-            getComponentAndRender(container1, componentUrl, leftDiv).catch(() => { });
-        });
-        if (!container1Attached.isCompleted) {
-            rightDiv.innerText = "Waiting for container attach";
-        }
-        await container1Attached.promise;
-        // New documentServiceFactory for right div, same everything else
-        const docServFac2: IDocumentServiceFactory = getDocumentServiceFactory(documentId, options);
-        const hostConf2 =
-            { codeResolver: new WebpackCodeResolver(options), documentServiceFactory: docServFac2, urlResolver };
-
-        // This will create a new Loader/Container/Component from the BaseHost above. This is
-        // intentional because we want to emulate two clients collaborating with each other.
-        const baseHost2 = new BaseHost(
-            hostConf2,
-            [packageSeed],
-        );
-        const container2 = await baseHost2.initializeContainer(
-            url,
-            codeDetails,
-        );
-
-        await getComponentAndRender(container2, componentUrl, rightDiv);
-        // Handle the code upgrade scenario (which fires contextChanged)
-        container2.on("contextChanged", () => {
-            getComponentAndRender(container2, componentUrl, rightDiv).catch(() => { });
-        });
-    } else {
-        await getComponentAndRender(container1, componentUrl, div);
-        // Handle the code upgrade scenario (which fires contextChanged)
-        container1.on("contextChanged", () => {
-            getComponentAndRender(container1, componentUrl, div).catch(() => { });
-        });
-    }
+    await getComponentAndRender(container1, componentUrl, div);
+    // Handle the code upgrade scenario (which fires contextChanged)
+    container1.on("contextChanged", () => {
+        getComponentAndRender(container1, componentUrl, div).catch(() => { });
+    });
 }
 
 async function getComponentAndRender(container: Container, url: string, div: HTMLDivElement) {
