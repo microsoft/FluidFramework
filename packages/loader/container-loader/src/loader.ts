@@ -324,11 +324,11 @@ export class Loader extends EventEmitter implements ILoader {
         resolved: IFluidResolvedUrl,
     ): Promise<Container> {
         return Container.load(
-            id,
+            id, // tenantId/documentId -- will be split on '/' in load
             this.documentServiceFactory,
             this.codeLoader,
-            this.options,
-            this.scope,
+            this.options, // maybe doesn't matter
+            this.scope, // doesn't matter
             this,
             request,
             resolved,

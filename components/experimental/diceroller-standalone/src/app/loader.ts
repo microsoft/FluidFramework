@@ -104,7 +104,7 @@ class WebpackCodeResolver implements IFluidCodeResolver {
     }
 }
 
-export async function start(
+export async function getTinyliciousContainer(
     documentId: string,
     packageJson: IFluidPackage,
     fluidModule: IFluidModule,
@@ -128,6 +128,12 @@ export async function start(
         documentId,
     );
 
+    const hostConf: IBaseHostConfig = {
+        codeResolver: new WebpackCodeResolver(port),
+        documentServiceFactory,
+        urlResolver,
+    };
+
     const codeDetails: IFluidCodeDetails = {
         package: packageJson,
         config: {},
@@ -135,8 +141,6 @@ export async function start(
     const packageSeed: [IFluidCodeDetails, IFluidModule] =
         [codeDetails, fluidModule];
 
-    const hostConf: IBaseHostConfig =
-        { codeResolver: new WebpackCodeResolver(port), documentServiceFactory, urlResolver };
     const baseHost = new BaseHost(
         hostConf,
         [packageSeed],

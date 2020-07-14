@@ -8,7 +8,7 @@ import { Container } from "@fluidframework/container-loader";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IComponentMountableView } from "@fluidframework/view-interfaces";
-import { start } from "./loader";
+import { getTinyliciousContainer } from "./loader";
 
 // I'm choosing to put the docId in the hash just for my own convenience
 if (window.location.hash.length === 0) {
@@ -73,7 +73,7 @@ async function doStuffWithContainer(container: Container) {
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 export const packageJson = require("../../package.json");
 
-start(
+getTinyliciousContainer(
     documentId,
     packageJson,
     // eslint-disable-next-line dot-notation
