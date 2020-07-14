@@ -8,6 +8,7 @@
 - [IComponentReactViewable deprecated](#IComponentReactViewable-deprecated)
 - [Forward Compat For Loader IComponent Interfaces](#Forward-Compat-For-Loader-IComponent-Interfaces)
 - [Add Undefined to getAbsoluteUrl return type](#Add-Undefined-to-getAbsoluteUrl-return-type)
+- [Renamed TestDeltaStorageService, TestDocumentDeltaConnection, TestDocumentService, TestDocumentServiceFactory and TestResolver](#Renamed-TestDeltaStorageService,-TestDocumentDeltaConnection,-TestDocumentService,-TestDocumentServiceFactory-and-TestResolver)
 
 ### Deprecated `path` from `IComponentHandleContext`
 Deprecated the `path` field from the interface `IComponentHandleContext`. This means that `IComponentHandle` will not have this going forward as well.
@@ -104,6 +105,14 @@ protected async componentHasInitialized() {
             .catch(console.error);
 }
 ```
+
+### Renamed TestDeltaStorageService, TestDocumentDeltaConnection, TestDocumentService, TestDocumentServiceFactory and TestResolver
+Renamed the following in "@fluidframework/local-driver" since these are used beyond testing:
+- `TestDeltaStorageService` -> `LocalDeltaStorageService`
+- `TestDocumentDeltaConnection` -> `LocalDocumentDeltaConnection`
+- `TestDocumentService` -> `LocalDocumentService`
+- `TestDocumentServiceFactory` -> `LocalDocumentServiceFactory`
+- `TestResolver` -> `LocalResolver`
 
 ## 0.21 Breaking Changes
 - [Removed `@fluidframework/local-test-utils`](#removed-`@fluidframework/local-test-utils`)

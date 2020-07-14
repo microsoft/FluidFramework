@@ -25,7 +25,7 @@ import { TestWebSocketServer } from "@fluidframework/server-test-utils";
 import { debug } from "./debug";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
-export class TestDocumentDeltaConnection
+export class LocalDocumentDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
     implements IDocumentDeltaConnection {
     public static async create(
@@ -33,7 +33,7 @@ export class TestDocumentDeltaConnection
         id: string,
         token: string,
         client: IClient,
-        webSocketServer: core.IWebSocketServer): Promise<TestDocumentDeltaConnection> {
+        webSocketServer: core.IWebSocketServer): Promise<LocalDocumentDeltaConnection> {
         const socket = (webSocketServer as TestWebSocketServer).createConnection();
 
         const connectMessage: IConnect = {
@@ -109,7 +109,7 @@ export class TestDocumentDeltaConnection
             socket.emit("connect_document", connectMessage);
         });
 
-        const deltaConnection = new TestDocumentDeltaConnection(socket, id, connection);
+        const deltaConnection = new LocalDocumentDeltaConnection(socket, id, connection);
 
         return Promise.resolve(deltaConnection);
     }
