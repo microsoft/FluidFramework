@@ -70,7 +70,6 @@ export async function start(
         "tinylicious", // tenantId
         "12345", // tenantKey
         { id: uuid() }, // user
-        "", // bearerSecret
         documentId,
     );
 
@@ -88,7 +87,7 @@ export async function start(
         [packageSeed],
     );
 
-    return await baseHost.initializeContainer(
+    return baseHost.initializeContainer(
         url,
         codeDetails,
     );

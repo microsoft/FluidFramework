@@ -16,7 +16,6 @@ import {
     ITokenClaims,
     IUser,
 } from "@fluidframework/protocol-definitions";
-import Axios from "axios";
 import jwt from "jsonwebtoken";
 
 /**
@@ -34,8 +33,6 @@ import jwt from "jsonwebtoken";
  * works or a router inside of a single page app framework.
  */
 export class InsecureUrlResolver implements IUrlResolver {
-    private readonly cache = new Map<string, Promise<IResolvedUrl>>();
-
     constructor(
         private readonly hostUrl: string,
         private readonly ordererUrl: string,
@@ -43,55 +40,12 @@ export class InsecureUrlResolver implements IUrlResolver {
         private readonly tenantId: string,
         private readonly tenantKey: string,
         private readonly user: IUser,
-        private readonly bearer: string,
-        private readonly documentId?: string,
+        private readonly documentId: string,
     ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        if (request.headers?.[CreateNewHeader.createNew]) {
-            const [, queryString] = request.url.split("?");
-
-            const searchParams = new URLSearchParams(queryString);
-            const fileName = searchParams.get("fileName");
-            if (!fileName) {
-                throw new Error("FileName should be there!!");
-            }
-            return this.resolveHelper(fileName);
-        }
-        const parsedUrl = new URL(request.url);
-
-        // If hosts match then we use the local tenant information. Otherwise we make a REST call out to the hosting
-        // service using our bearer token.
-        if (parsedUrl.host === window.location.host) {
-            return this.resolveHelper(this.documentId ?? parsedUrl.pathname.substr(1).split("/")[0]);
-        } else {
-            const maybeResolvedUrl = this.cache.get(request.url);
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            if (maybeResolvedUrl) {
-                return maybeResolvedUrl;
-            }
-
-            const headers = {
-                Authorization: `Bearer ${this.bearer}`,
-            };
-            const resolvedP = Axios.post<IResolvedUrl>(
-                `${this.hostUrl}/api/v1/load`,
-                {
-                    url: request.url,
-                },
-                {
-                    headers,
-                });
-            const cachedP = resolvedP.then((resolved) => resolved.data);
-            this.cache.set(request.url, cachedP);
-
-            return cachedP;
-        }
-    }
-
-    private resolveHelper(documentId: string) {
         const encodedTenantId = encodeURIComponent(this.tenantId);
-        const encodedDocId = encodeURIComponent(documentId);
+        const encodedDocId = encodeURIComponent(this.documentId);
 
         const documentUrl = `fluid://${new URL(this.ordererUrl).host}/${encodedTenantId}/${encodedDocId}`;
         const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodedTenantId}/${encodedDocId}`;
@@ -103,7 +57,7 @@ export class InsecureUrlResolver implements IUrlResolver {
                 ordererUrl: this.ordererUrl,
                 storageUrl,
             },
-            tokens: { jwt: this.auth(this.tenantId, documentId) },
+            tokens: { jwt: this.auth(this.tenantId, this.documentId) },
             type: "fluid",
             url: documentUrl,
         };
