@@ -22,7 +22,10 @@ import { IComponentMountableView } from "@fluidframework/view-interfaces";
 import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { RequestParser } from "@fluidframework/runtime-utils";
-import { MultiUrlResolver } from "./multiResolver";
+import { getRandomName } from "@fluidframework/server-services-client";
+// eslint-disable-next-line import/no-internal-modules
+import uuid from "uuid/v4";
+import { InsecureUrlResolver } from "./insecureUrlResolver";
 
 export interface IDevServerUser extends IUser {
     name: string;
@@ -103,7 +106,19 @@ export async function start(
 
     // Construct a request
     const url = window.location.href;
-    const urlResolver = new MultiUrlResolver(window.location.origin, documentId, options);
+    const urlResolver = new InsecureUrlResolver(
+        "http://localhost:3000", // hostUrl
+        "http://localhost:3000", // ordererUrl
+        "http://localhost:3000", // storageUrl
+        "tinylicious",
+        "12345",
+        {
+            id: uuid(),
+            name: getRandomName(),
+        } as IUser,
+        options.bearerSecret!,
+        documentId,
+    );
 
     const codeDetails: IFluidCodeDetails = {
         package: packageJson,
@@ -134,7 +149,7 @@ export async function start(
         attachDiv.append(attachButton);
         document.body.prepend(attachDiv);
         attachButton.onclick = () => {
-            container1.attach(urlResolver.createRequestForCreateNew(documentId))
+            container1.attach(urlResolver.createCreateNewRequest(documentId))
                 .then(() => {
                     container1Attached.resolve();
                     attachDiv.remove();
