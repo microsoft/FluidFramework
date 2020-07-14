@@ -5,16 +5,24 @@ Handles move the ownership of retrieving a `fluid object` from the user of the o
 
 ## Why use Fluid Handles?
 
-- You should **always** use handles to represent and retrieve `fluid objects` as this tells the runtime, and the storage, about the usage of the object. The runtime / storage can then manage the lifetime of the object, and perform important operations such as garbage collection. Otherwise, the responsibility of managing the lifetime of the object lies with the creator.
+- You should **always** use handles to represent and retrieve `fluid objects` as this tells the runtime, and the storage, about the usage of the object. The runtime / storage can then manage the lifetime of the object, and perform important operations such as garbage collection. Otherwise, if the object is not referenced by a handle (say by storing it in a DDS), it will be garbage collected.
 
-    The exception to this is when the object has to be handed off to an external entity. For example, when copy / pasting an object, the `url` of the object should be handed off to the destination so that it can request the object from the Loader or the Container. In this case, it is the responsiblity of the code doing so to manage the lifetime to this object / url so that the object is not garbage collected.
+    The exception to this is when the object has to be handed off to an external entity. For example, when copy / pasting an object, the `url` of the object should be handed off to the destination so that it can request the object from the Loader or the Container. In this case, it is the responsiblity of the code doing so to manage the lifetime to this object / url by storing the handle somewhere, so that the object is not garbage collected.
 
 - With handles, the user doesn't have to worry about how to get the underlying object since that itself can differ in different scenarios. It is the responsibility of the handle to retrieve the object and return it.
 
     For example, the [handle](../../packages/runtime/component-runtime/src/componentHandle.ts) for a `SharedComponent` simply returns the underlying object. But when this handle is stored in a DDS so that it is serialized and then de-seriazlied in a remote client, it is represented by a [remote handle](../../packages/runtime/runtime-utils/src/remoteComponentHandle.ts). The remote handle just has the absolute url to the object and requests the object from the root and returns it.
 
+## How to create a handle?
+
+A handle's primary job is to be able to return the `fluid object` it is representing when `get` is called. So, it needs to have access to the object either by directly storing it or by having a mechanism to retrieve it when asked. The creation depends on the usage and the implementation.
+
+For example, it can be created with the absolute `url` of the object and a `routeContext` which knows how to get the object via the `url`. When `get` is called, it can request the object from the `routeContext` by providing the `url`. This is how the [remote handle](../../packages/runtime/runtime-utils/src/remoteComponentHandle.ts) retrieves the underlying object.
 
 ## Usage
+
+A handle should always be used to represent a fluid object. Following are couple of examples that outline the usage of handles to retrieve the underlying object in different scenarios.
+
 ### Basic usage scenario
 
 One of the basic usage of a Fluid Handle is when a client creates a `fluid object` and wants remote clients to be able to retrieve and load it. It can store the handle to the object in a DDS and the remote client can retrieve the handle and `get` the object.
