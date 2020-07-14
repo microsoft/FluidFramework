@@ -30,20 +30,10 @@ export interface IDevServerUser extends IUser {
     name: string;
 }
 
-export interface IBaseRouteOptions {
-    port: number;
-    npm?: string;
-}
-
-export interface ITinyliciousRouteOptions extends IBaseRouteOptions {
-    mode: "tinylicious";
-    bearerSecret?: string;
-}
-
 class WebpackCodeResolver implements IFluidCodeResolver {
-    constructor(private readonly options: IBaseRouteOptions) { }
+    constructor(private readonly port: number) { }
     async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
-        const baseUrl = details.config.cdn ?? `http://localhost:${this.options.port}`;
+        const baseUrl = details.config.cdn ?? `http://localhost:${this.port}`;
         let pkg = details.package;
         if (typeof pkg === "string") {
             const resp = await fetch(`${baseUrl}/package.json`);
@@ -72,7 +62,7 @@ export async function start(
     documentId: string,
     packageJson: IFluidPackage,
     fluidModule: IFluidModule,
-    options: ITinyliciousRouteOptions,
+    port: number,
     div: HTMLDivElement,
 ): Promise<void> {
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(
@@ -107,7 +97,7 @@ export async function start(
         [codeDetails, fluidModule];
 
     const hostConf: IBaseHostConfig =
-        { codeResolver: new WebpackCodeResolver(options), documentServiceFactory, urlResolver };
+        { codeResolver: new WebpackCodeResolver(port), documentServiceFactory, urlResolver };
     const baseHost = new BaseHost(
         hostConf,
         [packageSeed],
