@@ -17,57 +17,47 @@ import {
     initializeLocalContainer,
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
+import { compatTest } from "./compatUtils";
 
-describe("Map", () => {
-    const id = "fluid-test://localhost/mapTest";
-    const mapId = "mapKey";
-    const codeDetails: IFluidCodeDetails = {
-        package: "sharedMapTestPackage",
-        config: {},
-    };
+const id = "fluid-test://localhost/mapTest";
+const mapId = "mapKey";
+const codeDetails: IFluidCodeDetails = {
+    package: "sharedMapTestPackage",
+    config: {},
+};
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
+async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
+    const response = await container.request({ url: componentId });
+    if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        throw new Error(`Component with id: ${componentId} not found`);
+    }
+    return response.value as ITestFluidComponent;
+}
+
+const tests = (makeTestContainer: () => Promise<Container>) => {
     let component1: ITestFluidComponent;
     let sharedMap1: ISharedMap;
     let sharedMap2: ISharedMap;
     let sharedMap3: ISharedMap;
 
-    async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
-        const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            throw new Error(`Component with id: ${componentId} not found`);
-        }
-        return response.value as ITestFluidComponent;
-    }
-
-    async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([[mapId, SharedMap.getFactory()]]);
-        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-        return initializeLocalContainer(id, loader, codeDetails);
-    }
-
-    beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
-
-        const container1 = await createContainer();
+    beforeEach(async function() {
+        const container1 = await makeTestContainer();
         component1 = await getComponent("default", container1);
         sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
 
-        const container2 = await createContainer();
+        const container2 = await makeTestContainer();
         const component2 = await getComponent("default", container2);
         sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
 
-        const container3 = await createContainer();
+        const container3 = await makeTestContainer();
         const component3 = await getComponent("default", container3);
         sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
 
-        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-        containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime, component3.runtime);
+        this.containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime, component3.runtime);
 
         sharedMap1.set("testKey1", "testValue");
 
-        await containerDeltaEventManager.process();
+        await this.containerDeltaEventManager.process();
     });
 
     function expectAllValues(msg, key, value1, value2, value3) {
@@ -104,20 +94,20 @@ describe("Map", () => {
         expectAllAfterValues("testKey1", "testValue");
     });
 
-    it("should set key value to undefined in three containers correctly", async () => {
+    it("should set key value to undefined in three containers correctly", async function() {
         sharedMap2.set("testKey1", undefined);
         sharedMap2.set("testKey2", undefined);
 
-        await containerDeltaEventManager.process();
+        await this.containerDeltaEventManager.process();
 
         expectAllAfterValues("testKey1", undefined);
         expectAllAfterValues("testKey2", undefined);
     });
 
-    it("Should delete values in 3 containers correctly", async () => {
+    it("Should delete values in 3 containers correctly", async function() {
         sharedMap2.delete("testKey1");
 
-        await containerDeltaEventManager.process();
+        await this.containerDeltaEventManager.process();
 
         const hasKey1 = sharedMap1.has("testKey1");
         assert.equal(hasKey1, false, "testKey1 not deleted in container 1");
@@ -129,15 +119,15 @@ describe("Map", () => {
         assert.equal(hasKey3, false, "testKey1 not deleted in container 1");
     });
 
-    it("Should check if three containers has same number of keys", async () => {
+    it("Should check if three containers has same number of keys", async function() {
         sharedMap3.set("testKey3", true);
 
-        await containerDeltaEventManager.process();
+        await this.containerDeltaEventManager.process();
 
         expectAllSize(2);
     });
 
-    it("Should update value and trigger onValueChanged on other two containers", async () => {
+    it("Should update value and trigger onValueChanged on other two containers", async function() {
         let user1ValueChangedCount: number = 0;
         let user2ValueChangedCount: number = 0;
         let user3ValueChangedCount: number = 0;
@@ -168,7 +158,7 @@ describe("Map", () => {
 
         sharedMap1.set("testKey1", "updatedValue");
 
-        await containerDeltaEventManager.process();
+        await this.containerDeltaEventManager.process();
 
         assert.equal(user1ValueChangedCount, 0, "Incorrect number of valueChanged op received in container 1");
         assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 2");
@@ -177,7 +167,7 @@ describe("Map", () => {
         expectAllAfterValues("testKey1", "updatedValue");
     });
 
-    it("Simultaneous set should reach eventual consistency with the same value", async () => {
+    it("Simultaneous set should reach eventual consistency with the same value", async function() {
         sharedMap1.set("testKey1", "value1");
         sharedMap2.set("testKey1", "value2");
         sharedMap3.set("testKey1", "value0");
@@ -185,12 +175,12 @@ describe("Map", () => {
 
         expectAllBeforeValues("testKey1", "value1", "value2", "value3");
 
-        await containerDeltaEventManager.process();
+        await this.containerDeltaEventManager.process();
 
         expectAllAfterValues("testKey1", "value3");
     });
 
-    it("Simultaneous delete/set should reach eventual consistency with the same value", async () => {
+    it("Simultaneous delete/set should reach eventual consistency with the same value", async function() {
         // set after delete
         sharedMap1.set("testKey1", "value1.1");
         sharedMap2.delete("testKey1");
@@ -198,29 +188,29 @@ describe("Map", () => {
 
         expectAllBeforeValues("testKey1", "value1.1", undefined, "value1.3");
 
-        await containerDeltaEventManager.process();
+        await this.containerDeltaEventManager.process();
 
         expectAllAfterValues("testKey1", "value1.3");
     });
 
-    it("Simultaneous delete/set on same map should reach eventual consistency with the same value", async () => {
+    it("Simultaneous delete/set on same map should reach eventual consistency with the same value", async function() {
         // delete and then set on the same map
         sharedMap1.set("testKey2", "value2.1");
         sharedMap2.delete("testKey2");
         sharedMap3.set("testKey2", "value2.3");
 
         // drain the outgoing so that the next set will come after
-        await containerDeltaEventManager.processOutgoing();
+        await this.containerDeltaEventManager.processOutgoing();
 
         sharedMap2.set("testKey2", "value2.2");
         expectAllBeforeValues("testKey2", "value2.1", "value2.2", "value2.3");
 
-        await containerDeltaEventManager.process();
+        await this.containerDeltaEventManager.process();
 
         expectAllAfterValues("testKey2", "value2.2");
     });
 
-    it("Simultaneous set/delete should reach eventual consistency with the same value", async () => {
+    it("Simultaneous set/delete should reach eventual consistency with the same value", async function() {
         // delete after set
         sharedMap1.set("testKey3", "value3.1");
         sharedMap2.set("testKey3", "value3.2");
@@ -228,12 +218,12 @@ describe("Map", () => {
 
         expectAllBeforeValues("testKey3", "value3.1", "value3.2", undefined);
 
-        await containerDeltaEventManager.process();
+        await this.containerDeltaEventManager.process();
 
         expectAllAfterValues("testKey3", undefined);
     });
 
-    it("Simultaneous set/clear on a key should reach eventual consistency with the same value", async () => {
+    it("Simultaneous set/clear on a key should reach eventual consistency with the same value", async function() {
         // clear after set
         sharedMap1.set("testKey1", "value1.1");
         sharedMap2.set("testKey1", "value1.2");
@@ -241,44 +231,44 @@ describe("Map", () => {
         expectAllBeforeValues("testKey1", "value1.1", "value1.2", undefined);
         assert.equal(sharedMap3.size, 0, "Incorrect map size after clear");
 
-        await containerDeltaEventManager.process();
+        await this.containerDeltaEventManager.process();
 
         expectAllAfterValues("testKey1", undefined);
         expectAllSize(0);
     });
 
-    it("Simultaneous clear/set on same map should reach eventual consistency with the same value", async () => {
+    it("Simultaneous clear/set on same map should reach eventual consistency with the same value", async function() {
         // set after clear on the same map
         sharedMap1.set("testKey2", "value2.1");
         sharedMap2.clear();
         sharedMap3.set("testKey2", "value2.3");
 
         // drain the outgoing so that the next set will come after
-        await containerDeltaEventManager.processOutgoing();
+        await this.containerDeltaEventManager.processOutgoing();
 
         sharedMap2.set("testKey2", "value2.2");
         expectAllBeforeValues("testKey2", "value2.1", "value2.2", "value2.3");
 
-        await containerDeltaEventManager.process();
+        await this.containerDeltaEventManager.process();
 
         expectAllAfterValues("testKey2", "value2.2");
         expectAllSize(1);
     });
 
-    it("Simultaneous clear/set should reach eventual consistency and resolve to the same value", async () => {
+    it("Simultaneous clear/set should reach eventual consistency and resolve to the same value", async function() {
         // set after clear
         sharedMap1.set("testKey3", "value3.1");
         sharedMap2.clear();
         sharedMap3.set("testKey3", "value3.3");
         expectAllBeforeValues("testKey3", "value3.1", undefined, "value3.3");
 
-        await containerDeltaEventManager.process();
+        await this.containerDeltaEventManager.process();
 
         expectAllAfterValues("testKey3", "value3.3");
         expectAllSize(1);
     });
 
-    it("should load new map with data from local state and can then process ops", async () => {
+    it("should load new map with data from local state and can then process ops", async function() {
         /**
          * This tests test the scenario found in the following bug:
          * https://github.com/microsoft/FluidFramework/issues/2400
@@ -300,7 +290,7 @@ describe("Map", () => {
         // Now add the handle to an attached map so the new map gets attached too.
         sharedMap1.set("newSharedMap", newSharedMap1.handle);
 
-        await containerDeltaEventManager.process();
+        await this.containerDeltaEventManager.process();
 
         // The new map should be availble in the remote client and it should contain that key that was
         // set in local state.
@@ -310,14 +300,34 @@ describe("Map", () => {
         // Set a new value for the same key in the remote map.
         newSharedMap2.set("newKey", "anotherNewValue");
 
-        await containerDeltaEventManager.process();
+        await this.containerDeltaEventManager.process();
 
         // Verify that the new value is updated in both the maps.
         assert.equal(newSharedMap2.get("newKey"), "anotherNewValue", "The new value is not updated in map 2");
         assert.equal(newSharedMap1.get("newKey"), "anotherNewValue", "The new value is not updated in map 1");
     });
+};
 
-    afterEach(async () => {
+describe("Map", function() {
+    let deltaConnectionServer: ILocalDeltaConnectionServer;
+    const makeTestContainer = async () => {
+        const factory = new TestFluidComponentFactory([[mapId, SharedMap.getFactory()]]);
+        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
+        return initializeLocalContainer(id, loader, codeDetails);
+    };
+
+    beforeEach(async function() {
+        deltaConnectionServer = LocalDeltaConnectionServer.create();
+        this.containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+    });
+
+    tests(makeTestContainer);
+
+    afterEach(async function() {
         await deltaConnectionServer.webSocketServer.close();
+    });
+
+    describe("compatibility", function() {
+        compatTest(tests as any, true);
     });
 });

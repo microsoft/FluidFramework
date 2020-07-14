@@ -14,5 +14,6 @@ export { IContainerContext, IFluidModule, IRuntimeFactory } from "old-container-
 export { Container } from "old-container-loader";
 export { componentRuntimeRequestHandler, ContainerRuntime, IContainerRuntimeOptions } from "old-container-runtime";
 export { IComponentFactory } from "old-runtime-definitions";
-export { createLocalLoader, initializeLocalContainer } from "old-test-utils";
+export { createLocalLoader, initializeLocalContainer, TestFluidComponentFactory } from "old-test-utils";
+export { SharedMap } from "old-map";
 /* eslint-enable import/no-extraneous-dependencies */
