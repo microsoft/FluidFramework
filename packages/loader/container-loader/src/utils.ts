@@ -30,26 +30,22 @@ export function parseUrl(url: string): IParsedUrl | undefined {
         : undefined;
 }
 
-const getEmptySnapshotNode = () => {
-    return {
+function convertProtocolAndAppSummaryToSnapshotTreeCore(
+    summary: ISummaryTree,
+): ISnapshotTree {
+    const treeNode = {
         blobs: {},
         trees: {},
         commits: {},
         id: uuid(),
     };
-};
-
-function convertProtocolAndAppSummaryToSnapshotTreeUtil(
-    summary: ISummaryTree,
-): ISnapshotTree {
-    const treeNode = getEmptySnapshotNode();
     const keys = Object.keys(summary.tree);
     for (const key of keys) {
         const summaryObject = summary.tree[key];
 
         switch (summaryObject.type) {
             case SummaryType.Tree: {
-                treeNode.trees[key] = convertProtocolAndAppSummaryToSnapshotTreeUtil(summaryObject);
+                treeNode.trees[key] = convertProtocolAndAppSummaryToSnapshotTreeCore(summaryObject);
                 break;
             }
             case SummaryType.Blob: {
@@ -89,10 +85,10 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
             },
         },
     };
-    const snapshotTree = convertProtocolAndAppSummaryToSnapshotTreeUtil(protocolSummaryTreeModified);
+    const snapshotTree = convertProtocolAndAppSummaryToSnapshotTreeCore(protocolSummaryTreeModified);
     snapshotTree.trees = {
         ...snapshotTree.trees,
-        ...convertProtocolAndAppSummaryToSnapshotTreeUtil(appSummaryTree).trees,
+        ...convertProtocolAndAppSummaryToSnapshotTreeCore(appSummaryTree).trees,
     };
 
     return snapshotTree;

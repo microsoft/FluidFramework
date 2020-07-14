@@ -61,7 +61,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     it("Dehydrated container snapshot", async () => {
         const { container } =
             await createDetachedContainerAndGetRootComponent();
-        const snapshotTree = container.dehydrateContainer();
+        const snapshotTree = JSON.parse(container.serialize());
 
         assert.strictEqual(Object.keys(snapshotTree.trees).length, 3,
             "3 trees should be there(protocol, default component, scheduler");
