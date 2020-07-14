@@ -11,17 +11,18 @@ import {
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { WebCodeLoader } from "@fluidframework/web-code-loader";
-import { IBaseHostConfig } from "./hostConfig";
+import { IUrlResolver, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 
 export class BaseHost {
     private readonly loader: Loader;
     public constructor(
-        hostConfig: IBaseHostConfig,
+        urlResolver: IUrlResolver,
+        documentServiceFactory: IDocumentServiceFactory,
         codeLoader: WebCodeLoader,
     ) {
         this.loader = new Loader(
-            hostConfig.urlResolver,
-            hostConfig.documentServiceFactory,
+            urlResolver,
+            documentServiceFactory,
             codeLoader,
             { blockUpdateMarkers: true },
             {},

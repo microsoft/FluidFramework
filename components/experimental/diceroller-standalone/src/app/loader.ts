@@ -28,7 +28,6 @@ import jwt from "jsonwebtoken";
 // eslint-disable-next-line import/no-internal-modules
 import uuid from "uuid/v4";
 import { BaseHost } from "./host";
-import { IBaseHostConfig } from "./hostConfig";
 
 class InsecureUrlResolver implements IUrlResolver {
     constructor(
@@ -138,14 +137,9 @@ export async function getTinyliciousContainer(
     };
     await codeLoader.seedModule(codeDetails, fluidModule);
 
-    const hostConf: IBaseHostConfig = {
-        codeResolver: new WebpackCodeResolver(port),
-        documentServiceFactory,
-        urlResolver,
-    };
-
     const baseHost = new BaseHost(
-        hostConf,
+        urlResolver,
+        documentServiceFactory,
         codeLoader,
     );
 
