@@ -16,13 +16,13 @@ import {
 import { Container } from "@fluidframework/container-loader";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { Deferred } from "@fluidframework/common-utils";
+import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IComponentMountableView } from "@fluidframework/view-interfaces";
 import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { MultiUrlResolver } from "./multiResolver";
-import { getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 
 export interface IDevServerUser extends IUser {
     name: string;
@@ -93,7 +93,13 @@ export async function start(
     options: ITinyliciousRouteOptions,
     div: HTMLDivElement,
 ): Promise<void> {
-    const documentServiceFactory = getDocumentServiceFactory(documentId, options);
+    const documentServiceFactory = new RouterliciousDocumentServiceFactory(
+        false,
+        new DefaultErrorTracking(),
+        false,
+        true,
+        undefined,
+    );
 
     // Construct a request
     const url = window.location.href;
