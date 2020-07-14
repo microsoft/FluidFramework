@@ -15,10 +15,6 @@ import { SharedCounter } from "@fluidframework/counter";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const ClickerHookName = pkg.name as string;
-
 // ---- React Functional Component w/ useSyncedCounter ----
 
 interface ICounterReactHookProps {
@@ -26,7 +22,7 @@ interface ICounterReactHookProps {
     syncedStateId: string,
 }
 
-function CounterReactHook(
+function CounterWithHook(
     props: ICounterReactHookProps,
 ) {
     const [value, reducer] = useSyncedCounter(
@@ -47,20 +43,20 @@ function CounterReactHook(
 }
 
 /**
- * ClickerHook example using the useSyncedCounter hook
+ * ClickerWithHook example using the useSyncedCounter hook
  */
-export class ClickerHook extends SyncedComponent {
+export class ClickerWithHook extends SyncedComponent {
     constructor(props) {
         super(props);
-        setSyncedCounterConfig(this, "counter-hook");
+        setSyncedCounterConfig(this, "counter-with-hook");
     }
 
     public render(div: HTMLElement) {
         ReactDOM.render(
             <div>
-                <CounterReactHook
+                <CounterWithHook
                     syncedComponent={this}
-                    syncedStateId={"counter-hook"}
+                    syncedStateId={"counter-with-hook"}
                 />
             </div>,
             div,
@@ -70,10 +66,10 @@ export class ClickerHook extends SyncedComponent {
 }
 
 // ----- FACTORY SETUP -----
-export const ClickerHookInstantiationFactory = new PrimedComponentFactory(
-    ClickerHookName,
-    ClickerHook,
+export const ClickerWithHookInstantiationFactory = new PrimedComponentFactory(
+    "clicker-with-hook",
+    ClickerWithHook,
     [SharedCounter.getFactory()],
     {},
 );
-export const fluidExport = ClickerHookInstantiationFactory;
+export const fluidExport = ClickerWithHookInstantiationFactory;

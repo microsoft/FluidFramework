@@ -48,13 +48,11 @@ function LikesAndCommentsView(
     const [currentComment, setCurrentComment] = React.useState("");
 
     // Convert data to JSX for comments state
-    const commentListItems = comments.map((item, key) => {
-        return (
-            <li key={key}>
-                {`${item.author}: ${item.message}`}
-            </li>
-        );
-    });
+    const commentListItems = comments.map((item, key) => (
+        <li key={key}>
+            {`${item.author}: ${item.message}`}
+        </li>
+    ));
 
     // Render
     return (

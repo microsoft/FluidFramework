@@ -14,10 +14,6 @@ import {
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const ClickerFunctionalName = pkg.name as string;
-
 // ---- React Functional Component w/ useSyncedObject ----
 
 interface ICounterReactFunctionalProps {
@@ -77,7 +73,7 @@ export class ClickerFunctional extends SyncedComponent {
 
 // ----- FACTORY SETUP -----
 export const ClickerFunctionalInstantiationFactory = new PrimedComponentFactory(
-    ClickerFunctionalName,
+    "clicker-functional",
     ClickerFunctional,
     [],
     {},
