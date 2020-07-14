@@ -69,14 +69,14 @@ export class SharedMatrix<T extends Serializable = Serializable>
         this.rows = new PermutationVector(
             SnapshotPath.rows,
             this.logger,
-            runtime.options,
+            runtime,
             this.onRowDelta,
             this.onRowHandlesRecycled);
 
         this.cols = new PermutationVector(
             SnapshotPath.cols,
             this.logger,
-            runtime.options,
+            runtime,
             this.onColDelta,
             this.onColHandlesRecycled);
     }
