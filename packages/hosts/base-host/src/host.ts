@@ -24,7 +24,7 @@ async function createWebLoader(
     hostConfig: IBaseHostConfig,
     seedPackages?: Iterable<[IFluidCodeDetails, Promise<IFluidModule> | IFluidModule | undefined]>): Promise<Loader> {
     // Create the web loader and prefetch the chaincode we will need
-    const codeLoader = new WebCodeLoader(hostConfig.codeResolver);
+    const codeLoader = new WebCodeLoader(hostConfig.codeResolver, hostConfig.allowList);
 
     if (seedPackages !== undefined) {
         for (const [codeDetails, maybeModule] of seedPackages) {
@@ -32,13 +32,23 @@ async function createWebLoader(
         }
     }
 
+    const config = hostConfig.config ? hostConfig.config : {};
+
+    // We need to extend options, otherwise we nest properties, like client, too deeply
+    //
+    config.blockUpdateMarkers = true;
+
+    const scope = hostConfig.scope ? hostConfig.scope : {};
+    const proxyLoaderFactories = hostConfig.proxyLoaderFactories ?
+        hostConfig.proxyLoaderFactories : new Map<string, IProxyLoaderFactory>();
+
     return new Loader(
         hostConfig.urlResolver,
         hostConfig.documentServiceFactory,
         codeLoader,
-        { blockUpdateMarkers: true },
-        {},
-        new Map<string, IProxyLoaderFactory>());
+        config,
+        scope,
+        proxyLoaderFactories);
 }
 
 export class BaseHost {
@@ -81,7 +91,11 @@ export class BaseHost {
         const loader = await this.getLoader();
         const response = await loader.request({ url });
 
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 ||
+            !(
+                response.mimeType === "fluid/component" ||
+                response.mimeType === "prague/component"
+            )) {
             return undefined;
         }
 

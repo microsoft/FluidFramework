@@ -23,22 +23,13 @@ async function createWebLoader(
     hostConfig: IBaseHostConfig,
     codeLoader: WebCodeLoader,
 ): Promise<Loader> {
-    const config = hostConfig.config ?? {};
-
-    // We need to extend options, otherwise we nest properties, like client, too deeply
-    //
-    config.blockUpdateMarkers = true;
-
-    const scope = hostConfig.scope ?? {};
-    const proxyLoaderFactories = hostConfig.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>();
-
     return new Loader(
         hostConfig.urlResolver,
         hostConfig.documentServiceFactory,
         codeLoader,
-        config,
-        scope,
-        proxyLoaderFactories);
+        { blockUpdateMarkers: true },
+        {},
+        new Map<string, IProxyLoaderFactory>());
 }
 
 export class BaseHost {
@@ -81,11 +72,7 @@ export class BaseHost {
         const loader = await this.getLoader();
         const response = await loader.request({ url });
 
-        if (response.status !== 200 ||
-            !(
-                response.mimeType === "fluid/component" ||
-                response.mimeType === "prague/component"
-            )) {
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
             return undefined;
         }
 
