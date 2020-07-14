@@ -56,7 +56,7 @@ export class WebWorkerLoader implements ILoader, IComponentRunnable, IFluidRoute
             || (response.mimeType !== "fluid/object" && response.mimeType !== "fluid/object")) {
             return response;
         }
-        return { status: 200, mimeType: "fluid/object", value: this };
+        return { status: 200, mimeType: "fluid/component", value: this };
     }
 
     public async run(...args: any[]): Promise<void> {

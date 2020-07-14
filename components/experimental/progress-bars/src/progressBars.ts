@@ -114,7 +114,7 @@ export class ProgressBar extends EventEmitter implements
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "fluid/object",
+            mimeType: "fluid/component",
             status: 200,
             value: this,
         };
@@ -175,7 +175,7 @@ export class ProgressCollection
 
         if (!trimmed) {
             return {
-                mimeType: "fluid/object",
+                mimeType: "fluid/component",
                 status: 200,
                 value: this,
             };

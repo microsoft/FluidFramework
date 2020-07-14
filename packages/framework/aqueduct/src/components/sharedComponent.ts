@@ -117,7 +117,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     public async request(req: IRequest): Promise<IResponse> {
         if (req.url === "/" || req.url === this.url || req.url === "") {
             return {
-                mimeType: "fluid/object",
+                mimeType: "fluid/component",
                 status: 200,
                 value: this,
             };

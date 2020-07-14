@@ -36,7 +36,7 @@ export const mountableViewRequestHandler: (MountableViewClass: IComponentMountab
                 if (response.status === 200 && MountableViewClass.canMount(response.value)) {
                     return {
                         status: 200,
-                        mimeType: "fluid/object",
+                        mimeType: "fluid/component",
                         value: new MountableViewClass(response.value),
                     };
                 }

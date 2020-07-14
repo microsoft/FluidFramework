@@ -771,7 +771,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         if (requestParser.pathParts.length === 1 && requestParser.pathParts[0] === "_summarizer") {
             return {
                 status: 200,
-                mimeType: "fluid/object",
+                mimeType: "fluid/component",
                 value: this.summarizer,
             };
         } else if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === schedulerId) {
@@ -788,7 +788,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
                 } else {
                     return {
                         status: 200,
-                        mimeType: "fluid/object",
+                        mimeType: "fluid/component",
                         value: component,
                     };
                 }

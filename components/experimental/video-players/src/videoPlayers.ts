@@ -140,7 +140,7 @@ export class VideoPlayer implements
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "fluid/object",
+            mimeType: "fluid/component",
             status: 200,
             value: this,
         };
@@ -198,7 +198,7 @@ export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> imp
 
         if (!trimmed) {
             return {
-                mimeType: "fluid/object",
+                mimeType: "fluid/component",
                 status: 200,
                 value: this,
             };

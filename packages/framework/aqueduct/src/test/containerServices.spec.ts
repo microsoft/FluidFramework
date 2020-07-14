@@ -21,7 +21,7 @@ class ContainerServiceMock extends BaseContainerService {
         this.route = request.url;
         return {
             status: 200,
-            mimeType: "fluid/object",
+            mimeType: "fluid/component",
             value: this,
         };
     }

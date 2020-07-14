@@ -46,7 +46,7 @@ export class ImageComponent implements
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "fluid/object",
+            mimeType: "fluid/component",
             status: 200,
             value: this,
         };
@@ -100,7 +100,7 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!trimmed) {
             return {
-                mimeType: "fluid/object",
+                mimeType: "fluid/component",
                 status: 200,
                 value: this,
             };

@@ -2,9 +2,6 @@
 
 ## 0.23 Breaking Changes
 
-### Request MimeType
-- "fluid/component" -> "fluid/object"
-
 ### Handles
 - IProvideComponentHandleContext -> IProvideFluidHandleContext
 - IComponentHandleContext -> IFluidHandleContext

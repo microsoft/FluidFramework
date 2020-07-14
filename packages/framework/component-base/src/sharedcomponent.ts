@@ -53,7 +53,7 @@ export abstract class SharedComponent<
 
     public async request({ url }: IRequest): Promise<IResponse> {
         return url === "" || url === "/"
-            ? { status: 200, mimeType: "fluid/object", value: this }
+            ? { status: 200, mimeType: "fluid/component", value: this }
             : { status: 404, mimeType: "text/plain", value: `Requested URL '${url}' not found.` };
     }
 
