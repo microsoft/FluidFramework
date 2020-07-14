@@ -23,9 +23,6 @@ const codeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-let component1: ITestFluidComponent;
-let component2: ITestFluidComponent;
-
 async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
     const response = await container.request({ url: componentId });
     if (response.status !== 200 || response.mimeType !== "fluid/component") {
@@ -35,6 +32,9 @@ async function getComponent(componentId: string, container: Container): Promise<
 }
 
 const tests = (makeTestContainer: () => Promise<Container>) => {
+    let component1: ITestFluidComponent;
+    let component2: ITestFluidComponent;
+
     beforeEach(async function() {
         const container1 = await makeTestContainer();
         component1 = await getComponent("default", container1);
@@ -163,7 +163,6 @@ describe("TestSignals", () => {
 
     beforeEach(async function() {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-
         this.containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
     });
 
@@ -174,6 +173,6 @@ describe("TestSignals", () => {
     });
 
     describe("compatibility", function() {
-        compatTest(tests as any);
+        compatTest(tests as any, true);
     });
 });
