@@ -5,8 +5,8 @@
 
 import { IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { RequestParser } from "@fluidframework/runtime-utils";
 import { RuntimeRequestHandler } from "./requestHandlers";
-import { RequestParser } from "./requestParser";
 
 /**
   * The RuntimeRequestHandlerBuilder creates a runtime request handler based on request handlers.

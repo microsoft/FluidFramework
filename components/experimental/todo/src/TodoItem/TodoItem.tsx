@@ -4,14 +4,14 @@
  */
 
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { PrimedComponent, PrimedComponentFactory, waitForAttach } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import {
     IComponentHandle, IComponentLoadable,
 } from "@fluidframework/component-core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { TextBoxInstantiationFactory } from "../TextBox";
@@ -39,16 +39,12 @@ const innerComponentKey = "innerId";
  * - Link to open component in separate tab
  * - Button to remove entry
  */
-export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
-    implements
-    IComponentHTMLView,
-    IComponentReactViewable {
+export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> implements IComponentHTMLView {
     private text: SharedString;
     private innerIdCell: ISharedCell;
     private _absoluteUrl: string | undefined;
 
     public get IComponentHTMLView() { return this; }
-    public get IComponentReactViewable() { return this; }
     public get absoluteUrl() { return this._absoluteUrl; }
 
     /**
@@ -97,24 +93,18 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
             if (!local) {
                 if (changed.key === checkedKey) {
                     this.emit("checkedStateChanged");
+                    this.emit("stateChanged");
                 }
             }
         });
 
-        if (this.context.connected) {
-            this._absoluteUrl = await this.context.getAbsoluteUrl(this.url);
-        } else {
-            this.context.deltaManager.on(
-                "connect",
-                () => {
-                    this.context.getAbsoluteUrl(this.url)
-                        .then((url) => {
-                            this._absoluteUrl = url;
-                            return undefined;
-                        })
-                        .catch(() => { });
-                });
-        }
+        waitForAttach(this.runtime)
+            .then(async () => {
+                const url = await this.context.getAbsoluteUrl(this.url);
+                this._absoluteUrl = url;
+                this.emit("stateChanged");
+            })
+            .catch(console.error);
     }
 
     public static getFactory() { return TodoItem.factory; }
@@ -138,28 +128,12 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
 
     public render(div: HTMLElement) {
         ReactDOM.render(
-            this.createJSXElement(),
+            <TodoItemView todoItemModel={this} />,
             div,
         );
     }
 
     // end IComponentHTMLView
-
-    // start IComponentReactViewable
-
-    /**
-     * If our caller supports React they can query against the IComponentReactViewable
-     * Since this returns a JSX.Element it allows for an easier model.
-     */
-    public createJSXElement(): JSX.Element {
-        return (
-            <TodoItemView
-                todoItemModel={this}
-            />
-        );
-    }
-
-    // end IComponentReactViewable
 
     // start public API surface for the TodoItem model, used by the view
 
@@ -170,7 +144,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
 
     public setCheckedState(newState: boolean): void {
         this.root.set(checkedKey, newState);
-        this.emit("checkedStateChanged");
+        this.emit("stateChanged");
     }
 
     public getCheckedState(): boolean {

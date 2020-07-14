@@ -6,7 +6,13 @@
 import assert from "assert";
 import EventEmitter from "events";
 import { IDisposable } from "@fluidframework/common-definitions";
-import { IComponent, IComponentLoadable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import {
+    IComponent,
+    IComponentLoadable,
+    IRequest,
+    IResponse,
+    IFluidObject,
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -155,10 +161,7 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public get attachState(): AttachState {
-        if (this.componentRuntime !== undefined) {
-            return this.componentRuntime.attachState;
-        }
-        return AttachState.Detached;
+        return this._attachState;
     }
 
     public readonly bindToContext: (componentRuntime: IComponentRuntimeChannel) => void;
@@ -167,19 +170,22 @@ export abstract class ComponentContext extends EventEmitter implements
     private pending: ISequencedDocumentMessage[] | undefined = [];
     private componentRuntimeDeferred: Deferred<IComponentRuntimeChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
+    protected _attachState: AttachState;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
-        public readonly scope: IComponent,
+        public readonly scope: IComponent & IFluidObject,
         public readonly summaryTracker: SummaryTracker,
         private bindState: BindState,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
+
+        this._attachState = existing ? AttachState.Attached : AttachState.Detached;
 
         this.bindToContext = (componentRuntime: IComponentRuntimeChannel) => {
             assert(this.bindState === BindState.NotBound);
@@ -518,7 +524,10 @@ export abstract class ComponentContext extends EventEmitter implements
         this.containerRuntime.notifyComponentInstantiated(this);
     }
 
-    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
+        if (this.attachState !== AttachState.Attached) {
+            return undefined;
+        }
         return this._containerRuntime.getAbsoluteUrl(relativeUrl);
     }
 
@@ -580,7 +589,7 @@ export class RemotedComponentContext extends ComponentContext {
         private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent,
+        scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
         pkg?: string[],
     ) {
@@ -657,7 +666,7 @@ export class LocalComponentContext extends ComponentContext {
         pkg: string[],
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent,
+        scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
         /**
@@ -666,6 +675,18 @@ export class LocalComponentContext extends ComponentContext {
         public readonly createProps?: any,
     ) {
         super(runtime, id, false, storage, scope, summaryTracker, BindState.NotBound, bindComponent, pkg);
+        this.attachListeners();
+    }
+
+    private attachListeners(): void {
+        this.once("attaching", () => {
+            assert.strictEqual(this.attachState, AttachState.Detached, "Should move from detached to attaching");
+            this._attachState = AttachState.Attaching;
+        });
+        this.once("attached", () => {
+            assert.strictEqual(this.attachState, AttachState.Attaching, "Should move from attaching to attached");
+            this._attachState = AttachState.Attached;
+        });
     }
 
     public generateAttachMessage(): IAttachMessage {

@@ -372,7 +372,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.componentContext.bindToContext(this);
 
         this.bindState = BindState.Bound;
-        this.deferredAttached.resolve();
     }
 
     public bind(handle: IComponentHandle): void {
@@ -520,12 +519,16 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     public getAttachSnapshot(): ITreeEntry[] {
         const entries: ITreeEntry[] = [];
+        // 0.21 back-compat noAttachEvents
         this._attachState = AttachState.Attached;
+        this.deferredAttached.resolve();
         // As the component is attaching, attach the graph too.
         this.attachGraph();
+        // 0.21 back-compat noAttachEvents
         // Fire this event telling dds that we are going live and they can do any
         // custom processing based on that.
         this.emit("collaborating");
+        this.emit("attaching");
 
         // Craft the .attributes file for each shared object
         for (const [objectId, value] of this.contexts) {
@@ -666,6 +669,16 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         });
         this.componentContext.on("notleader", () => {
             this.emit("notleader");
+        });
+        this.componentContext.once("attaching", () => {
+            assert(this.bindState !== BindState.NotBound, "Component attaching should not occur if it is not bound");
+            this._attachState = AttachState.Attaching;
+            this.emit("attaching");
+        });
+        this.componentContext.once("attached", () => {
+            assert(this.bindState === BindState.Bound, "Component should only be attached after it is bound");
+            this._attachState = AttachState.Attached;
+            this.emit("attached");
         });
     }
 
