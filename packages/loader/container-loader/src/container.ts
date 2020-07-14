@@ -663,7 +663,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.context!.hasNullRuntime();
     }
 
-    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
+        if (this.attachState !== AttachState.Attached) {
+            return undefined;
+        }
+
         if (this.resolvedUrl === undefined) {
             throw new Error("Container not attached to storage");
         }
