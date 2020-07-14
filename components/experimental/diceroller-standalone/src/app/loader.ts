@@ -110,13 +110,13 @@ export async function start(
         "http://localhost:3000", // hostUrl
         "http://localhost:3000", // ordererUrl
         "http://localhost:3000", // storageUrl
-        "tinylicious",
-        "12345",
+        "tinylicious", // tenantId
+        "12345", // tenantKey
         {
             id: uuid(),
             name: getRandomName(),
         } as IUser,
-        options.bearerSecret!,
+        "", // bearerSecret
         documentId,
     );
 
@@ -127,21 +127,21 @@ export async function start(
     const packageSeed: [IFluidCodeDetails, IFluidModule] =
         [codeDetails, wrapIfComponentPackage(packageJson, fluidModule)];
 
-    const host1Conf: IBaseHostConfig =
+    const hostConf: IBaseHostConfig =
         { codeResolver: new WebpackCodeResolver(options), documentServiceFactory, urlResolver };
-    const baseHost1 = new BaseHost(
-        host1Conf,
+    const baseHost = new BaseHost(
+        hostConf,
         [packageSeed],
     );
-    let container1: Container;
-    const container1Attached = new Deferred();
+    let container: Container;
+    const containerAttached = new Deferred();
 
     if (window.location.hash.toLocaleLowerCase().includes("manualattach")) {
         if (!codeDetails) {
             throw new Error("Code details must be defined for detached mode!!");
         }
-        const loader = await baseHost1.getLoader();
-        container1 = await loader.createDetachedContainer(codeDetails);
+        const loader = await baseHost.getLoader();
+        container = await loader.createDetachedContainer(codeDetails);
 
         const attachDiv = document.createElement("div");
         const attachButton = document.createElement("button");
@@ -149,9 +149,9 @@ export async function start(
         attachDiv.append(attachButton);
         document.body.prepend(attachDiv);
         attachButton.onclick = () => {
-            container1.attach(urlResolver.createCreateNewRequest(documentId))
+            container.attach(urlResolver.createCreateNewRequest(documentId))
                 .then(() => {
-                    container1Attached.resolve();
+                    containerAttached.resolve();
                     attachDiv.remove();
                     window.location.hash = "";
                 }, (error) => {
@@ -159,21 +159,21 @@ export async function start(
                 });
         };
     } else {
-        container1 = await baseHost1.initializeContainer(
+        container = await baseHost.initializeContainer(
             url,
             codeDetails,
         );
-        container1Attached.resolve();
+        containerAttached.resolve();
     }
 
     // Needs updating if the doc id is in the hash
     const reqParser = new RequestParser({ url });
     const componentUrl = `/${reqParser.createSubRequest(3)!.url}`;
 
-    await getComponentAndRender(container1, componentUrl, div);
+    await getComponentAndRender(container, componentUrl, div);
     // Handle the code upgrade scenario (which fires contextChanged)
-    container1.on("contextChanged", () => {
-        getComponentAndRender(container1, componentUrl, div).catch(() => { });
+    container.on("contextChanged", () => {
+        getComponentAndRender(container, componentUrl, div).catch(() => { });
     });
 }
 
