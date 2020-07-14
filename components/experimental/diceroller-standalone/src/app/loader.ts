@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
 import { BaseHost, IBaseHostConfig } from "@fluidframework/base-host";
 import {
     IFluidModule,
@@ -39,26 +38,6 @@ export interface IBaseRouteOptions {
 export interface ITinyliciousRouteOptions extends IBaseRouteOptions {
     mode: "tinylicious";
     bearerSecret?: string;
-}
-
-function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
-    if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
-        const componentFactory = fluidModule.fluidExport.IComponentFactory;
-
-        const runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
-            packageJson.name,
-            new Map([
-                [packageJson.name, Promise.resolve(componentFactory!)],
-            ]),
-        );
-        return {
-            fluidExport: {
-                IRuntimeFactory: runtimeFactory,
-                IComponentFactory: componentFactory,
-            },
-        };
-    }
-    return fluidModule;
 }
 
 class WebpackCodeResolver implements IFluidCodeResolver {
@@ -125,7 +104,7 @@ export async function start(
         config: {},
     };
     const packageSeed: [IFluidCodeDetails, IFluidModule] =
-        [codeDetails, wrapIfComponentPackage(packageJson, fluidModule)];
+        [codeDetails, fluidModule];
 
     const hostConf: IBaseHostConfig =
         { codeResolver: new WebpackCodeResolver(options), documentServiceFactory, urlResolver };
