@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IUser } from "@fluidframework/protocol-definitions";
-import { Deferred } from "@fluidframework/common-utils";
 import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IComponentMountableView } from "@fluidframework/view-interfaces";
@@ -103,37 +102,11 @@ export async function start(
         [packageSeed],
     );
     let container: Container;
-    const containerAttached = new Deferred();
 
-    if (window.location.hash.toLocaleLowerCase().includes("manualattach")) {
-        if (!codeDetails) {
-            throw new Error("Code details must be defined for detached mode!!");
-        }
-        const loader = await baseHost.getLoader();
-        container = await loader.createDetachedContainer(codeDetails);
-
-        const attachDiv = document.createElement("div");
-        const attachButton = document.createElement("button");
-        attachButton.innerText = "Attach Container";
-        attachDiv.append(attachButton);
-        document.body.prepend(attachDiv);
-        attachButton.onclick = () => {
-            container.attach(urlResolver.createCreateNewRequest(documentId))
-                .then(() => {
-                    containerAttached.resolve();
-                    attachDiv.remove();
-                    window.location.hash = "";
-                }, (error) => {
-                    console.error(error);
-                });
-        };
-    } else {
-        container = await baseHost.initializeContainer(
-            url,
-            codeDetails,
-        );
-        containerAttached.resolve();
-    }
+    container = await baseHost.initializeContainer(
+        url,
+        codeDetails,
+    );
 
     // Needs updating if the doc id is in the hash
     const reqParser = new RequestParser({ url });
