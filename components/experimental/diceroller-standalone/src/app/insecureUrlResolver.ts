@@ -3,14 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import { parse } from "url";
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-    CreateNewHeader,
 } from "@fluidframework/driver-definitions";
 import {
     ITokenClaims,
@@ -34,7 +31,6 @@ import jwt from "jsonwebtoken";
  */
 export class InsecureUrlResolver implements IUrlResolver {
     constructor(
-        private readonly hostUrl: string,
         private readonly ordererUrl: string,
         private readonly storageUrl: string,
         private readonly tenantId: string,
@@ -65,29 +61,7 @@ export class InsecureUrlResolver implements IUrlResolver {
     }
 
     public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
-        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
-
-        const parsedUrl = parse(fluidResolvedUrl.url);
-        const documentId = parsedUrl.pathname?.split("/")[2];
-        assert(documentId);
-
-        let url = relativeUrl;
-        if (url.startsWith("/")) {
-            url = url.substr(1);
-        }
-
-        return `${this.hostUrl}/${encodeURIComponent(
-            this.tenantId)}/${encodeURIComponent(documentId)}/${url}`;
-    }
-
-    public createCreateNewRequest(fileName: string): IRequest {
-        const createNewRequest: IRequest = {
-            url: `${this.hostUrl}?fileName=${fileName}`,
-            headers: {
-                [CreateNewHeader.createNew]: true,
-            },
-        };
-        return createNewRequest;
+        throw new Error("getAbsoluteUrl not implemented");
     }
 
     private auth(tenantId: string, documentId: string) {
