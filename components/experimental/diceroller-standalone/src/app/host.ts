@@ -13,44 +13,23 @@ import { Loader } from "@fluidframework/container-loader";
 import { WebCodeLoader } from "@fluidframework/web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
 
-/**
- * Create a loader and return it.
- * @param hostConfig - Config specifying the resolver/factory to be used.
- * @param pkg - A resolved package with cdn links.
- * @param scriptIds - The script tags the chaincode are attached to the view with.
- */
-async function createWebLoader(
-    hostConfig: IBaseHostConfig,
-    codeLoader: WebCodeLoader,
-): Promise<Loader> {
-    return new Loader(
-        hostConfig.urlResolver,
-        hostConfig.documentServiceFactory,
-        codeLoader,
-        { blockUpdateMarkers: true },
-        {},
-        new Map<string, IProxyLoaderFactory>());
-}
-
 export class BaseHost {
-    private readonly loaderP: Promise<Loader>;
+    private readonly loader: Loader;
     public constructor(
         hostConfig: IBaseHostConfig,
         codeLoader: WebCodeLoader,
     ) {
-        this.loaderP = createWebLoader(
-            hostConfig,
+        this.loader = new Loader(
+            hostConfig.urlResolver,
+            hostConfig.documentServiceFactory,
             codeLoader,
-        );
-    }
-
-    public async getLoader() {
-        return this.loaderP;
+            { blockUpdateMarkers: true },
+            {},
+            new Map<string, IProxyLoaderFactory>());
     }
 
     public async initializeContainer(url: string, codeDetails?: IFluidCodeDetails) {
-        const loader = await this.getLoader();
-        const container = await loader.resolve({ url });
+        const container = await this.loader.resolve({ url });
 
         // if a package is provided, try to initialize the code proposal with it
         // if not we assume the container already has a code proposal
@@ -69,8 +48,7 @@ export class BaseHost {
     }
 
     public async getComponent(url: string) {
-        const loader = await this.getLoader();
-        const response = await loader.request({ url });
+        const response = await this.loader.request({ url });
 
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             return undefined;
