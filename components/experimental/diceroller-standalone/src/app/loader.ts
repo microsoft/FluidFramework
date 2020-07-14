@@ -13,17 +13,11 @@ import {
     isFluidPackage,
 } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { IUser } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
 import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";
-import { getRandomName } from "@fluidframework/server-services-client";
 // eslint-disable-next-line import/no-internal-modules
 import uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
-
-export interface IDevServerUser extends IUser {
-    name: string;
-}
 
 class WebpackCodeResolver implements IFluidCodeResolver {
     constructor(private readonly port: number) { }
@@ -75,10 +69,7 @@ export async function start(
         "http://localhost:3000", // storageUrl
         "tinylicious", // tenantId
         "12345", // tenantKey
-        {
-            id: uuid(),
-            name: getRandomName(),
-        } as IUser,
+        { id: uuid() }, // user
         "", // bearerSecret
         documentId,
     );
