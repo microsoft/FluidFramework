@@ -506,7 +506,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
             const url = await this.getAbsoluteUrl("");
-            assert(url, "Container url undefined");
+            assert(url !== undefined, "Container url undefined");
             this.originalRequest = { url };
             this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
             const parsedUrl = parseUrl(resolvedUrl.url);
@@ -665,13 +665,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
-        if (this.attachState !== AttachState.Attached) {
+        if (this.resolvedUrl === undefined) {
             return undefined;
         }
 
-        if (this.resolvedUrl === undefined) {
-            throw new Error("Container not attached to storage");
-        }
         // TODO: Remove support for legacy requestUrl in 0.20
         const legacyResolver = this.urlResolver as {
             requestUrl?(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse>;
