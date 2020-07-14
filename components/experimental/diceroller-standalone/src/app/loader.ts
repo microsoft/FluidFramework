@@ -119,7 +119,6 @@ export async function start(
     );
 
     // Construct a request
-    const url = window.location.href;
     const urlResolver = new InsecureUrlResolver(
         "http://localhost:3000", // ordererUrl
         "http://localhost:3000", // storageUrl
@@ -144,7 +143,7 @@ export async function start(
     );
 
     return baseHost.initializeContainer(
-        url,
+        window.location.href,
         codeDetails,
     );
 }
