@@ -8,13 +8,14 @@ import { FluidReactComponent, getFluidState } from "@fluidframework/react";
 // that we have already developed and easily extend it to other frameworks such as Vue & Angular
 // Reasons that I have picked React as the common HoC renderer to start with:
 // 1) It is *very* efficient at calculating prop differences, allowing DDS changes to be quickly diffed before
-// being passed as props to other view frameworks.
+// being passed as props to other view frameworks. We are also not copying the DDS again but instead passing its
+// reference from the Fluid state is returned by getFluidState, so we shouldn't be increasing memory usage.
 // 2) React is the smallest library of the three major UI frameworks by a good margin, and its package footprint is
 // much smaller than Fluid itself
 // 3) While it is still additional code over vanilla JS, the React view framework also provides view lifecycle methods
 // which make it easier to build additional wrappers for other frameworks while providing appropriate initializing and
-// cleanup. We would need to write a common library for doing this if dealing with vanilla JS and React already gives
-// this to us through methods such as componentWillUnmount.
+// cleanup support. We would need to write a common library for doing this if dealing with vanilla JS,
+// and React already gives this to us through methods such as componentWillUnmount.
 // 4) The JSX entry syntax of just passing the framework specific component as a React prop, i.e. vueComponent, is
 // easy-to-understand and allows users to "drop-in" their framework specific component into the renderVue function.
 // They then automatically see their DDS available to them in their component through the component's props.
@@ -44,11 +45,11 @@ export class FluidVueComponent extends FluidReactComponent {
 
         this.vueInstance = new Vue({
             el: targetElement,
-            data: { ...currentFluidState },
+            data: currentFluidState,
             render: (createElement) => createElement(
                 "internal_vue_component",
                 {
-                    props: { ...currentFluidState },
+                    props: currentFluidState,
                     on,
                 },
                 <div/>,
