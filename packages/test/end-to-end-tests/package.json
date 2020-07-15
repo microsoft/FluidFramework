@@ -110,6 +110,7 @@
     "old-container-definitions": "npm:@fluidframework/container-definitions@^0.22.0",
     "old-container-loader": "npm:@fluidframework/container-loader@^0.22.0",
     "old-container-runtime": "npm:@fluidframework/container-runtime@^0.22.0",
+    "old-request-handler": "npm:@fluidframework/request-handler@^0.22.0",
     "old-runtime-definitions": "npm:@fluidframework/runtime-definitions@^0.22.0",
     "old-test-utils": "npm:@fluidframework/test-utils@^0.22.0",
     "rimraf": "^2.6.2",
