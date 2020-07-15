@@ -37,7 +37,7 @@
     "@fluidframework/container-runtime": "^0.21.0",
     "@fluidframework/driver-definitions": "^0.21.0",
     "@fluidframework/file-driver": "^0.21.0",
-    "@fluidframework/protocol-definitions": "^0.1008.0",
+    "@fluidframework/protocol-definitions": "^0.1009.0-0",
     "@fluidframework/replay-driver": "^0.21.0",
     "@fluidframework/common-utils": "^0.20.0",
     "@fluidframework/component-core-interfaces": "^0.22.0",
@@ -46,7 +46,7 @@
     "@fluidframework/container-runtime": "^0.22.0",
     "@fluidframework/driver-definitions": "^0.22.0",
     "@fluidframework/file-driver": "^0.22.0",
-    "@fluidframework/protocol-definitions": "^0.1008.0",
+    "@fluidframework/protocol-definitions": "^0.1009.0-0",
     "@fluidframework/replay-driver": "^0.22.0",
     "@fluidframework/telemetry-utils": "^0.22.0"
   },
