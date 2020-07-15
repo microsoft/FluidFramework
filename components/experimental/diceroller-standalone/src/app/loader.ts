@@ -18,9 +18,7 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import {
-    ITokenClaims,
-} from "@fluidframework/protocol-definitions";
+import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
 import { extractPackageIdentifierDetails, WebCodeLoader } from "@fluidframework/web-code-loader";
 import jwt from "jsonwebtoken";
@@ -28,10 +26,11 @@ import jwt from "jsonwebtoken";
 import uuid from "uuid/v4";
 import { BaseHost } from "./host";
 
+// URLResolver knows how to get the URLs to the service to use for a given request, in this case Tinylicious.
+// Since we're passing the documentId in the constructor it can't be reused for multiple documents, but this way it
+// doesn't impose any requirements on the URL shape of the request (e.g. if the documentId is not encoded in the URL).
 class InsecureTinyliciousUrlResolver implements IUrlResolver {
-    constructor(
-        private readonly documentId: string,
-    ) { }
+    constructor(private readonly documentId: string) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const encodedDocId = encodeURIComponent(this.documentId);
@@ -69,32 +68,21 @@ class InsecureTinyliciousUrlResolver implements IUrlResolver {
     }
 }
 
-// The code resolver's job is basically to take a list of relative URLs and convert them URLs that will find the
-// correct scripts.  So maybe they can stay relative, or maybe they'll be converted to absolute URLs against a
-// base URL (like a CDN or something)
+// The code resolver's job is basically to take a list of relative URLs (embedded in the IFluidCodeDetails) and
+// convert them URLs that will find the correct scripts relative to the app (which is the context in which the code
+// will be loaded).  So maybe the URLs can stay relative, or maybe they'll be converted to absolute URLs against a
+// base URL (like a CDN or something).  In this case, we assume they're all hosted from the same server running
+// the app, and as a result none of the relative URLs need to be converted.
 class WebpackCodeResolver implements IFluidCodeResolver {
-    constructor(private readonly port: number) { }
     async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
-        const baseUrl = `http://localhost:${this.port}`;
-        let pkg = details.package;
-        if (typeof pkg === "string") {
-            const resp = await fetch(`${baseUrl}/package.json`);
-            pkg = await resp.json() as IFluidPackage;
-        }
-        if (!isFluidPackage(pkg)) {
+        if (typeof details.package === "string" || !isFluidPackage(details.package)) {
             throw new Error("Not a fluid package");
-        }
-        const files = pkg.fluid.browser.umd.files;
-        for (let i = 0; i < pkg.fluid.browser.umd.files.length; i++) {
-            if (!files[i].startsWith("http")) {
-                files[i] = `${baseUrl}/${files[i]}`;
-            }
         }
         const parse = extractPackageIdentifierDetails(details.package);
         return {
             config: details.config,
             package: details.package,
-            resolvedPackage: pkg,
+            resolvedPackage: details.package,
             resolvedPackageCacheId: parse.fullId,
         };
     }
@@ -104,7 +92,6 @@ export async function getTinyliciousContainer(
     documentId: string,
     packageJson: IFluidPackage,
     fluidModule: IFluidModule,
-    port: number,
 ): Promise<Container> {
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(
         false,
@@ -117,7 +104,7 @@ export async function getTinyliciousContainer(
     // Construct a request
     const urlResolver = new InsecureTinyliciousUrlResolver(documentId);
 
-    const codeResolver = new WebpackCodeResolver(port);
+    const codeResolver = new WebpackCodeResolver();
     const codeLoader = new WebCodeLoader(codeResolver);
 
     const codeDetails: IFluidCodeDetails = {

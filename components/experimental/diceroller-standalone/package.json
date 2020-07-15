@@ -104,7 +104,7 @@
     "browser": {
       "umd": {
         "files": [
-          "dist/main.bundle.js"
+          "main.bundle.js"
         ],
         "library": "main"
       }

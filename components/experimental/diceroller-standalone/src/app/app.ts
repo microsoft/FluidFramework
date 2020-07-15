@@ -74,7 +74,6 @@ getTinyliciousContainer(
     packageJson,
     // eslint-disable-next-line dot-notation
     window["main"], // Entrypoint to the fluidExport
-    parseInt(window.location.port, 10), // port
 )
     .then(doStuffWithContainer)
     .catch((error) => console.error(error));
