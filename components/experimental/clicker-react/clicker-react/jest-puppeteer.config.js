@@ -8,7 +8,6 @@ module.exports = {
     command: `npm run start -- --no-live-reload --port ${process.env["PORT"]}`,
     port: process.env["PORT"],
     launchTimeout: 12000,
-    usedPortAction: 'error'
   },
   launch: {
     args: ['--no-sandbox', '--disable-setuid-sandbox'], // https://github.com/puppeteer/puppeteer/blob/master/docs/troubleshooting.md#setting-up-chrome-linux-sandbox
