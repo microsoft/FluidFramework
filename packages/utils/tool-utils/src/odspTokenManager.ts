@@ -11,6 +11,7 @@ import {
     pushScope,
     refreshAccessToken,
     getSharepointTenant,
+    AuthParams,
 } from "@fluidframework/odsp-utils";
 import { IAsyncCache, loadRC, saveRC, lockRC } from "./fluidToolRC";
 import { serverListenAndHandle, endResponse } from "./httpHelpers";
@@ -185,7 +186,17 @@ export class OdspTokenManager {
             const code = this.getAuthorizationCode(req.url);
 
             // get tokens
-            const tokens = await fetchTokens(server, clientConfig, scope, code, odspAuthRedirectUri);
+            //* Better not to crack over clientConfig yet?
+            const authParams: AuthParams = {
+                scope,
+                client_id: clientConfig.clientId,
+                client_secret: clientConfig.clientSecret,
+                grant_type: "authorization_code",
+                code,
+                redirect_uri: odspAuthRedirectUri,
+            };
+        
+            const tokens = await fetchTokens(server, authParams);
 
             // redirect
             if (redirectUriCallback) {

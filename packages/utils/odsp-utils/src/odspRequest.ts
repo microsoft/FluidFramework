@@ -54,7 +54,17 @@ export const getPushRefreshTokenFn = (server: string, clientConfig: IClientConfi
     getRefreshTokenFn(pushScope, server, clientConfig, tokens);
 export const getRefreshTokenFn = (scope: string, server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
     async () => {
-        await refreshAccessToken(scope, server, clientConfig, tokens);
+        tokens.accessToken = "";  //* Copied from below; seems unnecessary
+        const authParams: AuthParams = {
+            scope,
+            client_id: clientConfig.clientId,
+            client_secret: clientConfig.clientSecret,
+            grant_type: "refresh_token",
+            refresh_token: tokens.refreshToken,
+        };
+        const newTokens = await refreshAccessToken(server, authParams);
+        tokens.accessToken = newTokens.accessToken;
+        tokens.refreshToken = newTokens.refreshToken;
         return tokens.accessToken;
     };
 
@@ -87,34 +97,25 @@ export async function postAsync(
 
 export async function fetchTokens(
     server: string,
-    clientConfig: IClientConfig,
-    scope: string,
-    authorizationCode: string,
-    redirectUri: string,
+    authParams: AuthParams,
 ): Promise<IOdspTokens> {
     const result = await unauthPostAsync(
         getFetchTokenUrl(server),
-        getFetchTokenBody(clientConfig, scope, authorizationCode, redirectUri),
+        new URLSearchParams(authParams),
     );
     return getTokensFromResponse(result);
 }
 
+//* Dupe of fetchTokens now - delete
 export async function refreshAccessToken(
-    scope: string,
     server: string,
-    clientConfig: IClientConfig,
-    tokens: IOdspTokens,
-): Promise<void> {
-    tokens.accessToken = "";
-
+    authParams: AuthParams,
+): Promise<IOdspTokens> {
     const result = await unauthPostAsync(
         getFetchTokenUrl(server),
-        getRefreshTokenBody(scope, clientConfig, tokens.refreshToken),
+        new URLSearchParams(authParams),
     );
-    const newTokens = getTokensFromResponse(result);
-
-    tokens.accessToken = newTokens.accessToken;
-    tokens.refreshToken = newTokens.refreshToken;
+    return getTokensFromResponse(result);
 }
 
 async function unauthPostAsync(url: string, body: any): Promise<IRequestResult> {
@@ -158,34 +159,6 @@ async function safeRequestCore(requestCallback: () => Promise<AxiosResponse>): P
 
 function getFetchTokenUrl(server: string): string {
     return `https://login.microsoftonline.com/${getSharepointTenant(server)}/oauth2/v2.0/token`;
-}
-
-function getFetchTokenBody(
-    clientConfig: IClientConfig,
-    scope: string,
-    authorizationCode: string,
-    redirectUri: string,
-) {
-    const authParams: AuthParams = {
-        scope,
-        client_id: clientConfig.clientId,
-        client_secret: clientConfig.clientSecret,
-        grant_type: "authorization_code",
-        code: authorizationCode,
-        redirect_uri: redirectUri,
-    };
-    return authParams;
-}
-
-function getRefreshTokenBody(scope: string, clientConfig: IClientConfig, refreshToken: string) {
-    const authParams: AuthParams = {
-        scope,
-        client_id: clientConfig.clientId,
-        client_secret: clientConfig.clientSecret,
-        grant_type: "refresh_token",
-        refresh_token: refreshToken,
-    };
-    return authParams;
 }
 
 function getTokensFromResponse(result: IRequestResult): IOdspTokens {
