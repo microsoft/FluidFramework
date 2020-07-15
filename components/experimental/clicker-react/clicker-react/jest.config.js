@@ -8,7 +8,7 @@ const testTools = require("@fluidframework/test-tools");
 const { name } = require("./package.json");
 
 mappedPort = testTools.getTestPort(name);
-process.env["PORT"] = 8085;
+process.env["PORT"] = mappedPort;
 
 module.exports = {
   preset: "jest-puppeteer",
