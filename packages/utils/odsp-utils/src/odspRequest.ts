@@ -22,6 +22,27 @@ export interface IClientConfig {
     clientSecret: string;
 }
 
+export type AuthGrant = {
+    grant_type: "authorization_code";
+    code: string;
+    redirect_uri: string;
+} | {
+    grant_type: "refresh_token";
+    refresh_token: string;
+} | {
+    grant_type: "password";
+    username: string;
+    password: string;
+};
+
+//* Rename? and AuthGrant
+export type AuthParams =
+    AuthGrant & {
+        client_id: string,
+        client_secret: string,
+        scope: string,
+    };
+
 export type RequestResultError = Error & { requestResult?: IRequestResult };
 
 export const getOdspScope = (server: string) => `offline_access https://${server}/AllSites.Write`;
@@ -144,21 +165,27 @@ function getFetchTokenBody(
     scope: string,
     authorizationCode: string,
     redirectUri: string,
-): string {
-    return `scope=${scope}`
-        + `&client_id=${clientConfig.clientId}`
-        + `&client_secret=${clientConfig.clientSecret}`
-        + `&grant_type=authorization_code`
-        + `&code=${authorizationCode}`
-        + `&redirect_uri=${redirectUri}`;
+) {
+    const authParams: AuthParams = {
+        scope,
+        client_id: clientConfig.clientId,
+        client_secret: clientConfig.clientSecret,
+        grant_type: "authorization_code",
+        code: authorizationCode,
+        redirect_uri: redirectUri,
+    };
+    return authParams;
 }
 
-function getRefreshTokenBody(scope: string, clientConfig: IClientConfig, refreshToken: string): string {
-    return `scope=${scope}`
-        + `&client_id=${clientConfig.clientId}`
-        + `&client_secret=${clientConfig.clientSecret}`
-        + `&grant_type=refresh_token`
-        + `&refresh_token=${refreshToken}`;
+function getRefreshTokenBody(scope: string, clientConfig: IClientConfig, refreshToken: string) {
+    const authParams: AuthParams = {
+        scope,
+        client_id: clientConfig.clientId,
+        client_secret: clientConfig.clientSecret,
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+    };
+    return authParams;
 }
 
 function getTokensFromResponse(result: IRequestResult): IOdspTokens {
