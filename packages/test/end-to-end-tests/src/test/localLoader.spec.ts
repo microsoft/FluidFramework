@@ -15,7 +15,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
-    DocumentDeltaEventManager,
+    TestDeltaProcessingManager,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
@@ -92,7 +92,7 @@ describe("LocalLoader", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let deltaProcessingManager: TestDeltaProcessingManager;
 
     async function createContainer(factory: IComponentFactory): Promise<Container> {
         const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
@@ -128,7 +128,7 @@ describe("LocalLoader", () => {
     describe("2 components", () => {
         beforeEach(async () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
-            containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+            deltaProcessingManager = new TestDeltaProcessingManager(deltaConnectionServer);
         });
 
         afterEach(async () => {
@@ -145,19 +145,21 @@ describe("LocalLoader", () => {
 
             assert(component1 !== component2, "Each container must return a separate TestComponent instance.");
 
-            containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime);
+            deltaProcessingManager.registerDeltaManagers(
+                component1.runtime.deltaManager,
+                component2.runtime.deltaManager);
 
             component1.increment();
             assert.equal(component1.value, 1, "Local update by 'component1' must be promptly observable");
 
-            await containerDeltaEventManager.process();
+            await deltaProcessingManager.process();
             assert.equal(
                 component2.value, 1, "Remote update by 'component1' must be observable to 'component2' after sync.");
 
             component2.increment();
             assert.equal(component2.value, 2, "Local update by 'component2' must be promptly observable");
 
-            await containerDeltaEventManager.process();
+            await deltaProcessingManager.process();
             assert.equal(
                 component1.value, 2, "Remote update by 'component2' must be observable to 'component1' after sync.");
 
@@ -176,16 +178,18 @@ describe("LocalLoader", () => {
             const component2 = await getComponent<TestComponent>("default", container2);
             assert(component1 !== component2, "Each container must return a separate TestComponent instance.");
 
-            containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime);
+            deltaProcessingManager.registerDeltaManagers(
+                component1.runtime.deltaManager,
+                component2.runtime.deltaManager);
 
-            await containerDeltaEventManager.process();
+            await deltaProcessingManager.process();
             assert.equal(
                 component2.value, 1, "Remote update by 'component1' must be observable to 'component2' after sync.");
 
             component2.increment();
             assert.equal(component2.value, 2, "Local update by 'component2' must be promptly observable");
 
-            await containerDeltaEventManager.process();
+            await deltaProcessingManager.process();
 
             // Close the server instance as soon as we're finished with it.
             await deltaConnectionServer.webSocketServer.close();
@@ -225,7 +229,7 @@ describe("LocalLoader", () => {
 
             beforeEach(async () => {
                 deltaConnectionServer = LocalDeltaConnectionServer.create();
-                containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+                deltaProcessingManager = new TestDeltaProcessingManager(deltaConnectionServer);
 
                 const factory = new TestFluidComponentFactory([["text", SharedString.getFactory()]]);
 
@@ -237,7 +241,9 @@ describe("LocalLoader", () => {
                 component2 = await getComponent<ITestFluidComponent>("default", container2);
                 text2 = await component2.getSharedObject<SharedString>("text");
 
-                containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime);
+                deltaProcessingManager.registerDeltaManagers(
+                    component1.runtime.deltaManager,
+                    component2.runtime.deltaManager);
             });
 
             it("edits propagate", async () => {
@@ -246,7 +252,7 @@ describe("LocalLoader", () => {
 
                 text1.insertText(0, "1");
                 text2.insertText(0, "2");
-                await containerDeltaEventManager.process();
+                await deltaProcessingManager.process();
 
                 assert.strictEqual(text1.getLength(), 2, "The SharedString in component1 is has incorrect length.");
                 assert.strictEqual(text2.getLength(), 2, "The SharedString in component2 is has incorrect length.");
@@ -257,7 +263,7 @@ describe("LocalLoader", () => {
             });
         });
 
-        describe("Controlling component coauth via DocumentDeltaEventManager", () => {
+        describe("Controlling component coauth via TestDeltaProcessingManager", () => {
             let component1: TestComponent;
             let component2: TestComponent;
 
@@ -272,29 +278,31 @@ describe("LocalLoader", () => {
             });
 
             it("Controlled inbounds and outbounds", async () => {
-                containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-                containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime);
+                deltaProcessingManager = new TestDeltaProcessingManager(deltaConnectionServer);
+                deltaProcessingManager.registerDeltaManagers(
+                    component1.runtime.deltaManager,
+                    component2.runtime.deltaManager);
 
-                await containerDeltaEventManager.pauseProcessing();
+                await deltaProcessingManager.pauseProcessing();
 
                 component1.increment();
                 assert.equal(component1.value, 1, "Expected user1 to see the local increment");
                 assert.equal(component2.value, 0,
                     "Expected user 2 NOT to see the increment due to pauseProcessing call");
-                await containerDeltaEventManager.processOutgoing(component1.runtime);
+                await deltaProcessingManager.processOutgoing(component1.runtime.deltaManager);
                 assert.equal(component2.value, 0,
                     "Expected user 2 NOT to see the increment due to no processIncoming call yet");
-                await containerDeltaEventManager.processIncoming(component2.runtime);
+                await deltaProcessingManager.processIncoming(component2.runtime.deltaManager);
                 assert.equal(component2.value, 1, "Expected user 2 to see the increment now");
 
                 component2.increment();
                 assert.equal(component2.value, 2, "Expected user 2 to see the local increment");
                 assert.equal(component1.value, 1,
                     "Expected user 1 NOT to see the increment due to pauseProcessing call");
-                await containerDeltaEventManager.processOutgoing(component2.runtime);
+                await deltaProcessingManager.processOutgoing(component2.runtime.deltaManager);
                 assert.equal(component1.value, 1,
                     "Expected user 1 NOT to see the increment due to no processIncoming call yet");
-                await containerDeltaEventManager.processIncoming(component1.runtime);
+                await deltaProcessingManager.processIncoming(component1.runtime.deltaManager);
                 assert.equal(component1.value, 2, "Expected user 1 to see the increment now");
             });
 

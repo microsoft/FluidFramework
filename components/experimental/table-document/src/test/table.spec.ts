@@ -7,7 +7,7 @@
 
 import assert from "assert";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, DocumentDeltaEventManager, initializeLocalContainer } from "@fluidframework/test-utils";
+import { createLocalLoader, TestDeltaProcessingManager, initializeLocalContainer } from "@fluidframework/test-utils";
 import { TableDocument } from "../document";
 import { TableSlice } from "../slice";
 import { TableDocumentItem } from "../table";
@@ -19,7 +19,7 @@ describe("TableDocument", () => {
         config: {},
     };
     let table: TableDocument;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let deltaProcessingManager: TestDeltaProcessingManager;
 
     function makeId(type: string) {
         const id = Math.random().toString(36).substr(2);
@@ -38,8 +38,8 @@ describe("TableDocument", () => {
         }
         table = response.value;
 
-        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-        containerDeltaEventManager.registerDocuments(container);
+        deltaProcessingManager = new TestDeltaProcessingManager(deltaConnectionServer);
+        deltaProcessingManager.registerDeltaManagers(container.deltaManager);
     });
 
     const extract = (table: TableDocument) => {
@@ -59,7 +59,7 @@ describe("TableDocument", () => {
         assert.deepStrictEqual(extract(table), expected);
 
         // Paranoid check that awaiting incoming messages does not change test results.
-        await containerDeltaEventManager.process();
+        await deltaProcessingManager.process();
         assert.strictEqual(table.numRows, expected.length);
         assert.deepStrictEqual(extract(table), expected);
     };

@@ -11,7 +11,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
-    DocumentDeltaEventManager,
+    TestDeltaProcessingManager,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
@@ -26,7 +26,7 @@ describe("LocalTestServer", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let deltaProcessingManager: TestDeltaProcessingManager;
     let component1: ITestFluidComponent;
     let component2: ITestFluidComponent;
     let sharedString1: SharedString;
@@ -57,8 +57,8 @@ describe("LocalTestServer", () => {
         component2 = await getComponent("default", container2);
         sharedString2 = await component2.getSharedObject<SharedString>(stringId);
 
-        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-        containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime);
+        deltaProcessingManager = new TestDeltaProcessingManager(deltaConnectionServer);
+        deltaProcessingManager.registerDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
     });
 
     describe("Document.existing", () => {
@@ -90,27 +90,27 @@ describe("LocalTestServer", () => {
                 }
             });
 
-            await containerDeltaEventManager.pauseProcessing();
+            await deltaProcessingManager.pauseProcessing();
 
             sharedString1.insertText(0, "A");
             sharedString2.insertText(0, "C");
             assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
 
-            await containerDeltaEventManager.processOutgoing(component1.runtime);
+            await deltaProcessingManager.processOutgoing(component1.runtime.deltaManager);
             assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
 
-            await containerDeltaEventManager.process(component2.runtime);
+            await deltaProcessingManager.process(component2.runtime.deltaManager);
             assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
 
-            await containerDeltaEventManager.processIncoming(component1.runtime);
+            await deltaProcessingManager.processIncoming(component1.runtime.deltaManager);
             assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
 
             sharedString1.insertText(0, "B");
-            await containerDeltaEventManager.process();
+            await deltaProcessingManager.process();
 
             assert.equal(sharedString1.getText(), sharedString2.getText(), "Shared string not synced");
             assert.equal(sharedString1.getText().length, 3, sharedString1.getText());

@@ -19,7 +19,7 @@ import { IComponentRuntime } from "@fluidframework/component-runtime-definitions
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
-    DocumentDeltaEventManager,
+    TestDeltaProcessingManager,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
@@ -41,7 +41,7 @@ function generate(
         };
 
         let deltaConnectionServer: ILocalDeltaConnectionServer;
-        let containerDeltaEventManager: DocumentDeltaEventManager;
+        let deltaProcessingManager: TestDeltaProcessingManager;
         let component1: ITestFluidComponent;
         let component2: ITestFluidComponent;
         let sharedMap1: ISharedMap;
@@ -80,8 +80,10 @@ function generate(
             const component3 = await getComponent("default", container3);
             sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
 
-            containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-            containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime);
+            deltaProcessingManager = new TestDeltaProcessingManager(deltaConnectionServer);
+            deltaProcessingManager.registerDeltaManagers(
+                component1.runtime.deltaManager,
+                component2.runtime.deltaManager);
         });
 
         it("Should initialize after attach", async () => {
@@ -128,27 +130,27 @@ function generate(
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
 
-            await containerDeltaEventManager.pauseProcessing();
+            await deltaProcessingManager.pauseProcessing();
 
             const addP = [];
             for (const item of input) {
                 addP.push(collection1.add(item));
             }
-            await containerDeltaEventManager.process();
+            await deltaProcessingManager.process();
             await Promise.all(addP);
 
             const removeP1 = acquireAndComplete(collection3);
             // drain the outgoing so that the next set will come after
-            await containerDeltaEventManager.processOutgoing();
+            await deltaProcessingManager.processOutgoing();
             const removeP2 = acquireAndComplete(collection2);
             // drain the outgoing so that the next set will come after
-            await containerDeltaEventManager.processOutgoing();
+            await deltaProcessingManager.processOutgoing();
             const removeP3 = acquireAndComplete(collection1);
 
             const removeEmptyP = acquireAndComplete(collection1);
 
             // Now process all the incoming and outgoing
-            await containerDeltaEventManager.process();
+            await deltaProcessingManager.process();
 
             // Verify the value is in the correct order
             assert.strictEqual(await removeP1, output[0], "Unexpected value in document 1");
@@ -168,10 +170,10 @@ function generate(
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
 
-            await containerDeltaEventManager.pauseProcessing();
+            await deltaProcessingManager.pauseProcessing();
 
             const waitOn2P = waitAcquireAndComplete(collection2);
-            await containerDeltaEventManager.process();
+            await deltaProcessingManager.process();
             let added = false;
             waitOn2P.then(
                 (value) => {
@@ -184,28 +186,28 @@ function generate(
 
             const addP1 = collection1.add(input[0]);
             // drain the outgoing so that the next set will come after
-            await containerDeltaEventManager.processOutgoing();
+            await deltaProcessingManager.processOutgoing();
             const addP2 = collection3.add(input[1]);
             // drain the outgoing so that the next set will come after
-            await containerDeltaEventManager.processOutgoing();
+            await deltaProcessingManager.processOutgoing();
             const addP3 = collection2.add(input[2]);
             // drain the outgoing so that the next set will come after
-            await containerDeltaEventManager.processOutgoing();
+            await deltaProcessingManager.processOutgoing();
             added = true;
 
             // Now process the incoming
-            await containerDeltaEventManager.process();
+            await deltaProcessingManager.process();
             await Promise.all([addP1, addP2, addP3]);
             assert.strictEqual(await waitOn2P, output[0],
                 "Unexpected wait before add resolved value in document 2 added in document 1");
 
             const waitOn1P = waitAcquireAndComplete(collection1);
-            await containerDeltaEventManager.process();
+            await deltaProcessingManager.process();
             assert.strictEqual(await waitOn1P, output[1],
                 "Unexpected wait after add resolved value in document 1 added in document 3");
 
             const waitOn3P = waitAcquireAndComplete(collection3);
-            await containerDeltaEventManager.process();
+            await deltaProcessingManager.process();
             assert.strictEqual(await waitOn3P, output[2],
                 "Unexpected wait after add resolved value in document 13added in document 2");
         });
@@ -284,7 +286,7 @@ function generate(
             ]);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
-            await containerDeltaEventManager.pauseProcessing();
+            await deltaProcessingManager.pauseProcessing();
 
             let addCount1 = 0;
             let addCount2 = 0;
@@ -322,26 +324,26 @@ function generate(
             const p = [];
             p.push(collection1.add(input[0]));
             // drain the outgoing so that the next set will come after
-            await containerDeltaEventManager.processOutgoing();
+            await deltaProcessingManager.processOutgoing();
             p.push(collection2.add(input[1]));
             // drain the outgoing so that the next set will come after
-            await containerDeltaEventManager.processOutgoing();
+            await deltaProcessingManager.processOutgoing();
             p.push(collection3.add(input[2]));
             // drain the outgoing so that the next set will come after
-            await containerDeltaEventManager.processOutgoing();
+            await deltaProcessingManager.processOutgoing();
             p.push(acquireAndComplete(collection2));
             // drain the outgoing so that the next set will come after
-            await containerDeltaEventManager.processOutgoing();
+            await deltaProcessingManager.processOutgoing();
             p.push(acquireAndComplete(collection3));
             // drain the outgoing so that the next set will come after
-            await containerDeltaEventManager.processOutgoing();
+            await deltaProcessingManager.processOutgoing();
             p.push(acquireAndComplete(collection1));
             // drain the outgoing so that the next set will come after
-            await containerDeltaEventManager.processOutgoing();
+            await deltaProcessingManager.processOutgoing();
             const removeEmptyP = acquireAndComplete(collection1);
 
             // Now process all
-            await containerDeltaEventManager.process();
+            await deltaProcessingManager.process();
             await Promise.all(p);
             assert.strictEqual(await removeEmptyP, undefined, "Remove of empty collection should be undefined");
             assert.strictEqual(addCount1, 3, "Incorrect number add events in document 1");

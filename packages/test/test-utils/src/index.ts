@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./documentEventManager";
+export * from "./testDeltaProcessingManager";
 export * from "./interfaces";
 export * from "./localLoader";
 export * from "./localCodeLoader";
