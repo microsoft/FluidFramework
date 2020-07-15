@@ -5,7 +5,7 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid"
+        "@microsoft/eslint-config-fluid"
     ],
     "rules": {}
 }

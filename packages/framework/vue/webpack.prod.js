@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./constants";
-export * from "./maps";
-export * from "./reducers";
+module.exports = {
+    mode: "production",
+    devtool: "source-map"
+};

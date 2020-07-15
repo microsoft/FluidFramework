@@ -3,4 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./component";
+export * from "./fluidVueComponent";
+export * from "./renderVue";
