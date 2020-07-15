@@ -13,6 +13,7 @@ import {
     IContentMessage,
     IDocumentMessage,
     IDocumentSystemMessage,
+    INack,
     IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
@@ -301,9 +302,16 @@ export function configureWebSocketServices(
             (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[], response) => {
                 // Verify the user has an orderer connection.
                 if (!connectionsMap.has(clientId)) {
-                    const nackMessage = hasWriteAccess(scopeMap.get(clientId)) ?
-                        createNackMessage(400, NackErrorType.BadRequestError, "Readonly client") :
-                        createNackMessage(403, NackErrorType.InvalidScopeError, "Invalid clientId or Scope");
+                    let nackMessage: INack;
+
+                    if (hasWriteAccess(scopeMap.get(clientId))) {
+                        nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Readonly client");
+                    } else if (roomMap.has(clientId)) {
+                        nackMessage = createNackMessage(403, NackErrorType.InvalidScopeError, "Invalid scope");
+                    } else {
+                        nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
+                    }
+
                     socket.emit("nack", "", [nackMessage]);
                 } else {
                     const connection = connectionsMap.get(clientId);
@@ -343,9 +351,16 @@ export function configureWebSocketServices(
         socket.on("submitContent", (clientId: string, message: IDocumentMessage, response) => {
             // Verify the user has an orderer connection.
             if (!connectionsMap.has(clientId)) {
-                const nackMessage = hasWriteAccess(scopeMap.get(clientId)) ?
-                    createNackMessage(400, NackErrorType.BadRequestError, "Readonly client") :
-                    createNackMessage(403, NackErrorType.InvalidScopeError, "Invalid clientId or Scope");
+                let nackMessage: INack;
+
+                if (hasWriteAccess(scopeMap.get(clientId))) {
+                    nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Readonly client");
+                } else if (roomMap.has(clientId)) {
+                    nackMessage = createNackMessage(403, NackErrorType.InvalidScopeError, "Invalid scope");
+                } else {
+                    nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
+                }
+
                 socket.emit("nack", "", [nackMessage]);
             } else {
                 const broadCastMessage: IContentMessage = {

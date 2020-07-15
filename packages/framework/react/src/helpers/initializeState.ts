@@ -58,11 +58,11 @@ export async function initializeState<
         syncedStateId,
         syncedState,
     );
-    if (componentSchemaHandles?.storedHandleMapHandle.path === undefined) {
+    if (componentSchemaHandles?.storedHandleMapHandle.absolutePath === undefined) {
         throw Error(`Component schema not initialized prior to render for ${syncedStateId}`);
     }
     const storedHandleMap = dataProps.fluidComponentMap.get(
-        componentSchemaHandles?.storedHandleMapHandle.path,
+        componentSchemaHandles?.storedHandleMapHandle.absolutePath,
     )?.component as SharedMap;
     if (storedHandleMap === undefined) {
         throw Error(`Stored handle map not initialized prior to render for ${syncedStateId}`);
@@ -122,8 +122,8 @@ export async function initializeState<
         local: boolean,
     ) => {
         const handle = storedHandleMap.get<IComponentHandle>(change.key);
-        if (handle !== undefined && !state.fluidComponentMap?.has(handle.path)) {
-            state.fluidComponentMap?.set(handle.path, {
+        if (handle !== undefined && !state.fluidComponentMap?.has(handle.absolutePath)) {
+            state.fluidComponentMap?.set(handle.absolutePath, {
                 isListened: false,
             });
             // eslint-disable-next-line @typescript-eslint/no-floating-promises

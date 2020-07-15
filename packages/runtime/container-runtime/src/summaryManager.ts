@@ -309,13 +309,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     }
 
     private raiseContainerWarning(warning: ISummarizingWarning) {
-        // back-compat: <= 0.18 loader:
-        const errorFn = (this.context as any).error;
-        if (errorFn !== undefined) {
-            errorFn(warning);
-        } else {
-            this.context.raiseContainerWarning(warning);
-        }
+        this.context.raiseContainerWarning(warning);
     }
 
     private start() {

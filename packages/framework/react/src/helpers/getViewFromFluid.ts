@@ -61,7 +61,7 @@ export function getViewFromFluid<
         const partialViewState: Partial<SV> = {};
         const valueAsIComponentHandle = (value as IComponent).IComponentHandle;
         const convertedValue = valueAsIComponentHandle
-            ? fluidComponentMap.get(valueAsIComponentHandle.path)
+            ? fluidComponentMap.get(valueAsIComponentHandle.absolutePath)
             : value;
         partialViewState[fluidKey as string] = convertedValue;
         return partialViewState;

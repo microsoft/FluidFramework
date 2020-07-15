@@ -198,7 +198,7 @@ public render(div: HTMLElement) {
 }
 ```
 
-The `render(...)` function is responsible for all of our view logic. While it may seem pretty it's really
+The `render(...)` function is responsible for all of our view logic. While it may seem pretty complicated, it's really
 simple and we will break it down below.
 
 The caller of this function is required to provide a `div` that we can use as the basis to

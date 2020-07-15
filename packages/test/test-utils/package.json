@@ -57,6 +57,7 @@
     "@fluidframework/container-loader": "^0.22.0",
     "@fluidframework/local-driver": "^0.22.0",
     "@fluidframework/map": "^0.22.0",
+    "@fluidframework/protocol-definitions": "^0.1008.0",
     "@fluidframework/runtime-definitions": "^0.22.0",
     "@fluidframework/server-local-server": "^0.1008.0",
     "@fluidframework/shared-object-base": "^0.22.0"
@@ -83,7 +84,7 @@
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
     "make-promises-safe": "^5.1.0",
-    "mocha": "^5.2.0",
+    "mocha": "^8.0.1",
     "mocha-junit-reporter": "^1.18.0",
     "nyc": "^15.0.0",
     "random-js": "^1.0.8",

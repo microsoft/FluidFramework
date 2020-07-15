@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { Loader, Container } from "@fluidframework/container-loader";
 import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
 import { initializeContainerCode } from "@fluidframework/base-host";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
@@ -75,14 +75,14 @@ export async function renderDefaultComponent(container: Container, div: HTMLElem
     if (response.status !== 200 ||
         !(
             response.mimeType === "fluid/component" ||
-            response.mimeType === "prague/component"
+            response.mimeType === "fluid/object"
         )) {
         div.innerText = "Component not found";
         return;
     }
 
     // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
-    const component = response.value as IComponent;
+    const component = response.value as IComponent & IFluidObject;
     const embed = new HTMLViewAdapter(component);
     embed.render(div, { display: "block" });
 }

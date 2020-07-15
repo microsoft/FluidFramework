@@ -7,7 +7,6 @@ import assert from "assert";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IntervalType, LocalReference } from "@fluidframework/merge-tree";
 import { IBlob } from "@fluidframework/protocol-definitions";
@@ -21,6 +20,7 @@ import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidf
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import {
     createLocalLoader,
+    DocumentDeltaEventManager,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,

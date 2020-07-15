@@ -31,7 +31,7 @@
     "@fluidframework/server-services-core": "^0.1009.0",
     "axios": "^0.18.0",
     "debug": "^4.1.1",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.19",
     "moniker": "^0.1.2",
     "redis": "^2.8.0",
     "socket.io": "^2.2.0",

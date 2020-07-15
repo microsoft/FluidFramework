@@ -42,6 +42,7 @@
     "@fluidframework/container-runtime": "^0.22.0",
     "@fluidframework/container-runtime-definitions": "^0.22.0",
     "@fluidframework/runtime-definitions": "^0.22.0",
+    "@fluidframework/runtime-utils": "^0.22.0",
     "@fluidframework/view-adapters": "^0.22.0",
     "@fluidframework/view-interfaces": "^0.22.0",
     "@fluidframework/web-code-loader": "^0.22.0",
