@@ -8,7 +8,7 @@ import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/pro
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 // An IDeltaManager alias to be used within this class.
-type DeltaManager = IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+export type DeltaManager = IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
 /**
  * Class with access to the local delta connection server and delta managers that can control op processing.
