@@ -8,11 +8,8 @@
 - [IComponentReactViewable deprecated](#IComponentReactViewable-deprecated)
 - [Forward Compat For Loader IComponent Interfaces](#Forward-Compat-For-Loader-IComponent-Interfaces)
 - [Add Undefined to getAbsoluteUrl return type](#Add-Undefined-to-getAbsoluteUrl-return-type)
-<<<<<<< HEAD
 - [Renamed TestDeltaStorageService, TestDocumentDeltaConnection, TestDocumentService, TestDocumentServiceFactory and TestResolver](#Renamed-TestDeltaStorageService,-TestDocumentDeltaConnection,-TestDocumentService,-TestDocumentServiceFactory-and-TestResolver)
-=======
 - [DocumentDeltaEventManager has been renamed and moved to "@fluidframework/test-utils"](#DocumentDeltaEventManager-has-been-renamed-and-moved-to-"@fluidframework/test-utils")
->>>>>>> Renamed DocumentDeltaEventManager to TestDeltaProcessingManager
 
 ### Deprecated `path` from `IComponentHandleContext`
 Deprecated the `path` field from the interface `IComponentHandleContext`. This means that `IComponentHandle` will not have this going forward as well.
@@ -110,15 +107,15 @@ protected async componentHasInitialized() {
 }
 ```
 
-<<<<<<< HEAD
 ### Renamed TestDeltaStorageService, TestDocumentDeltaConnection, TestDocumentService, TestDocumentServiceFactory and TestResolver
+
 Renamed the following in "@fluidframework/local-driver" since these are used beyond testing:
 - `TestDeltaStorageService` -> `LocalDeltaStorageService`
 - `TestDocumentDeltaConnection` -> `LocalDocumentDeltaConnection`
 - `TestDocumentService` -> `LocalDocumentService`
 - `TestDocumentServiceFactory` -> `LocalDocumentServiceFactory`
 - `TestResolver` -> `LocalResolver`
-=======
+
 ### DocumentDeltaEventManager has been renamed and moved to "@fluidframework/test-utils"
 
 `DocumentDeltaEventManager` has moved to "@fluidframework/test-utils" and renamed to `OpProcessingController`.
@@ -136,7 +133,6 @@ containerDeltaEventManager.registerDocuments(component1.runtime, component2.runt
 opProcessingController = new OpProcessingController(deltaConnectionServer);
 opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
 ```
->>>>>>> Renamed DocumentDeltaEventManager to TestDeltaProcessingManager
 
 ## 0.21 Breaking Changes
 - [Removed `@fluidframework/local-test-utils`](#removed-`@fluidframework/local-test-utils`)
