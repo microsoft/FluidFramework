@@ -11,7 +11,7 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { SharedMap } from "@fluidframework/map";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
-    TestDeltaProcessingManager,
+    OpProcessingController,
     LocalCodeLoader,
     initializeLocalContainer,
     ITestFluidComponent,
@@ -29,7 +29,7 @@ describe("Document Dirty", () => {
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let documentServiceFactory: LocalDocumentServiceFactory;
-    let deltaProcessingManager: TestDeltaProcessingManager;
+    let opProcessingController: OpProcessingController;
     let container: Container;
     let containerComp: ITestFluidComponent;
     let containerCompContainerRuntime: IContainerRuntime;
@@ -112,10 +112,10 @@ describe("Document Dirty", () => {
         containerComp = await getComponent("default", container);
         containerCompContainerRuntime = containerComp.context.containerRuntime as IContainerRuntime;
         containerCompMap = await containerComp.getSharedObject<SharedMap>(mapId);
-        deltaProcessingManager = new TestDeltaProcessingManager(deltaConnectionServer);
-        deltaProcessingManager.registerDeltaManagers(containerComp.runtime.deltaManager);
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController.addDeltaManagers(containerComp.runtime.deltaManager);
 
-        await deltaProcessingManager.process();
+        await opProcessingController.process();
 
         wasMarkedDirtyCount = 0;
         wasMarkedCleanCount = 0;
@@ -135,7 +135,7 @@ describe("Document Dirty", () => {
                 "Document is dirty after value set");
 
             // Wait for the ops to get processed which should mark the document clean after processing
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             // Document will have been marked clean on reconnection
             assert.equal(wasMarkedCleanCount, 1,
@@ -158,7 +158,7 @@ describe("Document Dirty", () => {
                 "Document is dirty after value set");
 
             // Wait for the ops to get processed which should mark the document clean after processing
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), false,
                 "Document is cleaned after all ops have been acked");
@@ -210,7 +210,7 @@ describe("Document Dirty", () => {
                 "Document should have been marked dirty to overwrite the clean value,"
                 + "so that the final state is dirty");
 
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), false,
                 "Document is cleaned after all ops have been acked");
@@ -259,7 +259,7 @@ describe("Document Dirty", () => {
                 + "state is dirty");
 
             // Wait for the ops to get processed.
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             assert.equal(wasMarkedDirtyCount, 2,
                 `Document will have incremented the dirty count`);
@@ -310,7 +310,7 @@ describe("Document Dirty", () => {
                 "Document should have been marked dirty after to overwrite the clean value,"
                 + "so that the final state is dirty");
 
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), false,
                 "Document is cleaned after all ops have been acked");
@@ -362,7 +362,7 @@ describe("Document Dirty", () => {
                 + "state is dirty");
 
             // Wait for the ops to get processed.
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             assert.equal(wasMarkedDirtyCount, 2,
                 `Document will have incremented the dirty count`);

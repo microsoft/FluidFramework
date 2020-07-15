@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { TestDeltaProcessingManager, initializeLocalContainer, LocalCodeLoader } from "@fluidframework/test-utils";
+import { OpProcessingController, initializeLocalContainer, LocalCodeLoader } from "@fluidframework/test-utils";
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { UpgradeManager } from "@fluidframework/base-host";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
@@ -38,7 +38,7 @@ describe("UpgradeManager", () => {
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let documentServiceFactory: LocalDocumentServiceFactory;
-    let deltaProcessingManager: TestDeltaProcessingManager;
+    let opProcessingController: OpProcessingController;
 
     async function createContainer(factory: IComponentFactory): Promise<Container> {
         const urlResolver = new LocalResolver();
@@ -65,7 +65,7 @@ describe("UpgradeManager", () => {
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
         documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
-        deltaProcessingManager = new TestDeltaProcessingManager(deltaConnectionServer);
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
     });
 
     afterEach(async () => {
@@ -83,7 +83,7 @@ describe("UpgradeManager", () => {
                 async (container) => getComponent<TestComponent>("default", container))));
 
         const containers = await Promise.all(containersP);
-        deltaProcessingManager.registerDeltaManagers(...components.map((c) => c._runtime.deltaManager));
+        opProcessingController.addDeltaManagers(...components.map((c) => c._runtime.deltaManager));
 
         components.map((c, i) => {
             c._runtime.getQuorum().on("addProposal", () => { ++addCounts[i]; });
@@ -112,7 +112,7 @@ describe("UpgradeManager", () => {
         const container = await createContainer(TestComponent.getFactory());
         const component = await getComponent<TestComponent>("default", container);
 
-        deltaProcessingManager.registerDeltaManagers(component._runtime.deltaManager);
+        opProcessingController.addDeltaManagers(component._runtime.deltaManager);
         const upgradeManager = new UpgradeManager((container as any).context.runtime);
 
         const upgradeP = new Promise<void>((resolve) => {
@@ -121,7 +121,7 @@ describe("UpgradeManager", () => {
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         upgradeManager.upgrade(codeDetails);
-        await deltaProcessingManager.process();
+        await opProcessingController.process();
         await upgradeP;
     });
 

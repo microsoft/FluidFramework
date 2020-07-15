@@ -77,14 +77,14 @@ const matrix = testFluidComponent.getSharedObject<SparseMatrix>("matrix");
 
 > If you want a DDS to be part of the registry so that it can be created later but don't want `TestFluidComponent` to create it during initialization, use `id` as `undefined` in the `TestFluidComponentFactory` creation.
 
-## Document Delta Event Manager
-`TestDeltaProcessingManager` provides control over op processing in the tests. It lets you pause and resume the op processing in the containers / fluid objects. It also lets you wait until the ops have been processed by them and the server.
+## Op Processing Controller
+`OpProcessingController` provides control over op processing in the tests. It lets you pause and resume the op processing in the containers / fluid objects. It also lets you wait until the ops have been processed by them and the server.
 
-`TestDeltaProcessingManager` should be created by passing in the `ILocalDeltaConnectionServer` that is used in the test. You can then register the fluid objects / containers whose ops you want to control with it.
+`OpProcessingController` should be created by passing in the `ILocalDeltaConnectionServer` that is used in the test. You can then register the fluid objects / containers whose ops you want to control with it.
 
 For example, consider the scenario where you perform some operations on a DDS and want to verify that the remote client's DDS have applied the operations. You have to wait until the op is sent to the server, the server processes the op, sends it to the remote client and the remote client processes the op.
 
-You can use the `TestDeltaProcessingManager` to wait for all that to happen by calling `process` on it. Check how [SharedStringTest](..\end-to-end-tests\src\test\sharedStringEndToEndTests.spec.ts) does that.
+You can use the `OpProcessingController` to wait for all that to happen by calling `process` on it. Check how [SharedStringTest](..\end-to-end-tests\src\test\sharedStringEndToEndTests.spec.ts) does that.
 
 ## Usage
 

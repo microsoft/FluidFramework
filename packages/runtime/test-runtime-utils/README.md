@@ -39,4 +39,4 @@ To write a unit test for these scenarios, follow these steps:
 - To disconnect the client, set `connected = false` on the `MockContainerRuntimeForReconnection`. This will trigger a delete of outstanding messages for this client on the `MockContainerRuntimeFactoryForReconnection`.
 - To reconnect the client, set `connection = true` on the `MockContainerRuntimeForReconnection`. This will trigger a `reSubmit` call on the DDS to resubmit unack'd / unsent ops.
 
-Examples - [sharedString](..\sequence\src\test\sharedString.spec.ts), [consensusOrderedCollection](../consensus-ordered-collection/src/test/consensusOrderedCollection.spec.ts), [consensusRegsiterCollection](../consensus-register-collection\src\test\consensusRegisterCollection.spec.ts).
+Examples - [sharedString](..\sequence\src\test\sharedString.spec.ts), [consensusOrderedCollection](../consensus-ordered-collection/src/test/consensusOrderedCollection.spec.ts), [consensusRegisterCollection](../consensus-register-collection\src\test\consensusRegisterCollection.spec.ts).

@@ -10,7 +10,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
-    TestDeltaProcessingManager,
+    OpProcessingController,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
@@ -25,7 +25,7 @@ describe("SharedString", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let deltaProcessingManager: TestDeltaProcessingManager;
+    let opProcessingController: OpProcessingController;
     let sharedString1: SharedString;
     let sharedString2: SharedString;
 
@@ -54,8 +54,8 @@ describe("SharedString", () => {
         const component2 = await getComponent("default", container2);
         sharedString2 = await component2.getSharedObject<SharedString>(stringId);
 
-        deltaProcessingManager = new TestDeltaProcessingManager(deltaConnectionServer);
-        deltaProcessingManager.registerDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
     });
 
     it("can sync SharedString across multiple containers", async () => {
@@ -64,7 +64,7 @@ describe("SharedString", () => {
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
 
         // Wait for the ops to to be submitted and processed across the containers.
-        await deltaProcessingManager.process();
+        await opProcessingController.process();
 
         assert.equal(sharedString2.getText(), text, "The inserted text should have synced across the containers");
     });
@@ -75,7 +75,7 @@ describe("SharedString", () => {
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
 
         // Wait for the ops to to be submitted and processed across the containers.
-        await deltaProcessingManager.process();
+        await opProcessingController.process();
 
         // Create a initialize a new container with the same id.
         const newContainer = await createContainer();

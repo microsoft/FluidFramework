@@ -16,7 +16,7 @@ import { SharedMap } from "@fluidframework/map";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
-    TestDeltaProcessingManager,
+    OpProcessingController,
     initializeLocalContainer,
     TestFluidComponent,
 } from "@fluidframework/test-utils";
@@ -52,7 +52,7 @@ describe("ComponentHandle", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let deltaProcessingManager: TestDeltaProcessingManager;
+    let opProcessingController: OpProcessingController;
     let firstContainerComponent1: TestSharedComponent;
     let firstContainerComponent2: TestSharedComponent;
     let secondContainerComponent1: TestSharedComponent;
@@ -90,11 +90,11 @@ describe("ComponentHandle", () => {
         const secondContainer = await createContainer();
         secondContainerComponent1 = await getComponent("default", secondContainer);
 
-        deltaProcessingManager = new TestDeltaProcessingManager(deltaConnectionServer);
-        deltaProcessingManager.registerDeltaManagers(
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController.addDeltaManagers(
             firstContainerComponent1._runtime.deltaManager, secondContainerComponent1._runtime.deltaManager);
 
-        await deltaProcessingManager.process();
+        await opProcessingController.process();
     });
 
     it("should generate the absolute path for ContainerRuntime correctly", () => {
@@ -139,7 +139,7 @@ describe("ComponentHandle", () => {
         // Add the handle to the root DDS of `firstContainerComponent1`.
         firstContainerComponent1._root.set("sharedMap", sharedMapHandle);
 
-        await deltaProcessingManager.process();
+        await opProcessingController.process();
 
         // Get the handle in the remote client.
         const remoteSharedMapHandle = secondContainerComponent1._root.get<IComponentHandle<SharedMap>>("sharedMap");
@@ -169,7 +169,7 @@ describe("ComponentHandle", () => {
         // Add the handle to the root DDS of `firstContainerComponent1` so that the ComponentRuntime is different.
         firstContainerComponent1._root.set("sharedMap", sharedMap.handle);
 
-        await deltaProcessingManager.process();
+        await opProcessingController.process();
 
         // Get the handle in the remote client.
         const remoteSharedMapHandle = secondContainerComponent1._root.get<IComponentHandle<SharedMap>>("sharedMap");
@@ -196,7 +196,7 @@ describe("ComponentHandle", () => {
         // ComponentRuntime is different.
         firstContainerComponent1._root.set("component2", firstContainerComponent2.handle);
 
-        await deltaProcessingManager.process();
+        await opProcessingController.process();
 
         // Get the handle in the remote client.
         const remoteComponentHandle =

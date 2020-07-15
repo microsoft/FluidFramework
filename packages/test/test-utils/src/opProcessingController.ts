@@ -11,13 +11,13 @@ import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server
 type DeltaManager = IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
 /**
- * Class with access to the local delta connection server and delta managers that can handle delta processing.
+ * Class with access to the local delta connection server and delta managers that can control op processing.
  */
-export class TestDeltaProcessingManager {
+export class OpProcessingController {
     /**
      * Yields control in the JavaScript event loop.
      */
-    public static async yieldEventLoop(): Promise<void> {
+    public static async yield(): Promise<void> {
         await new Promise<void>((resolve) => {
             setTimeout(resolve, 0);
         });
@@ -40,22 +40,22 @@ export class TestDeltaProcessingManager {
     public constructor(private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer) { }
 
     /**
-     * Registers a collection of delta managers by adding them to the local collection.
-     * @param deltaManagers - Array of deltaManagers to register
+     * Add a collection of delta managers by adding them to the local collection.
+     * @param deltaManagers - Array of deltaManagers to add
      */
-    public registerDeltaManagers(...deltaManagers: DeltaManager[]) {
+    public addDeltaManagers(...deltaManagers: DeltaManager[]) {
         deltaManagers.forEach((doc) => {
             this.deltaManagers.add(doc);
         });
     }
 
     /**
-     * Processes incoming and outgoing deltas (ops) of the given delta managers.
+     * Processes incoming and outgoing op) of the given delta managers.
      * It validates the delta managers and resumes its inbound and outbound queues. It then keeps yielding
      * the JS event loop until all the ops have been processed by the server and by the delta managers.
      *
-     * @param deltaMgrs - Array of delta managers whose deltas to process. If no delta manager is provided, it
-     * processes the deltas for all the delta managers in our collection.
+     * @param deltaMgrs - Array of delta managers whose ops to process. If no delta manager is provided, it
+     * processes the ops for all the delta managers in our collection.
      */
     public async process(...deltaMgrs: DeltaManager[]): Promise<void> {
         this.validateDeltaManagers(deltaMgrs);
@@ -80,12 +80,12 @@ export class TestDeltaProcessingManager {
     }
 
     /**
-     * Processes incoming deltas (ops) of the given delta managers.
+     * Processes incoming ops of the given delta managers.
      * It validates the delta managers and resumes its inbound queue. It then keeps yielding the JS event loop until
      * all the ops have been processed by the server and by the delta managers.
      *
-     * @param deltaMgrs - Array of delta managers whose incoming deltas to process. If no delta manager is provided, it
-     * processes the deltas for all the delta managers in our collection.
+     * @param deltaMgrs - Array of delta managers whose incoming ops to process. If no delta manager is provided, it
+     * processes the ops for all the delta managers in our collection.
      */
     public async processIncoming(...deltaMgrs: DeltaManager[]): Promise<void> {
         this.validateDeltaManagers(deltaMgrs);
@@ -109,12 +109,12 @@ export class TestDeltaProcessingManager {
     }
 
     /**
-     * Processes outgoing deltas (ops) of the given delta managers.
+     * Processes outgoing ops of the given delta managers.
      * It validates the delta managers and resumes its outbound queue. It then keeps yielding the JS event loop until
      * all the ops have been processed by the server and by the delta managers.
      *
-     * @param deltaMgrs - Array of delta managers whose outgoing deltas to process. If no delta manager is provided, it
-     * processes the deltas for all the delta managers in our collection.
+     * @param deltaMgrs - Array of delta managers whose outgoing ops to process. If no delta manager is provided, it
+     * processes the ops for all the delta managers in our collection.
      */
     public async processOutgoing(...deltaMgrs: DeltaManager[]): Promise<void> {
         this.validateDeltaManagers(deltaMgrs);
@@ -182,14 +182,14 @@ export class TestDeltaProcessingManager {
     }
 
     /**
-     * Validates that the passed delta managers are registered.
+     * Validates that the passed delta managers are added.
      * @param deltaManagers - The delta managers to be validated.
      */
     private validateDeltaManagers(deltaManagers: DeltaManager[]) {
         deltaManagers.forEach((deltaManager) => {
             if (!this.deltaManagers.has(deltaManager)) {
                 throw new Error(
-                    "All delta managers must be registered to deterministically control processing");
+                    "All delta managers must be added to deterministically control processing");
             }
         });
     }
@@ -206,7 +206,7 @@ export class TestDeltaProcessingManager {
     ): Promise<void> {
         let working: boolean;
         do {
-            await TestDeltaProcessingManager.yieldEventLoop();
+            await OpProcessingController.yield();
             working = await this.localDeltaConnectionServer.hasPendingWork();
             if (!working) {
                 for (const deltaManager of deltaManagers) {

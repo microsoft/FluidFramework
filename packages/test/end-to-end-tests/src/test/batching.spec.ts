@@ -14,7 +14,7 @@ import { IEnvelope, SchedulerType, FlushMode } from "@fluidframework/runtime-def
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
-    TestDeltaProcessingManager,
+    OpProcessingController,
     initializeLocalContainer,
     ITestFluidComponent,
     TestFluidComponentFactory,
@@ -30,7 +30,7 @@ describe("Batching", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let deltaProcessingManager: TestDeltaProcessingManager;
+    let opProcessingController: OpProcessingController;
     let component1: ITestFluidComponent;
     let component2: ITestFluidComponent;
     let component1map1: SharedMap;
@@ -96,10 +96,10 @@ describe("Batching", () => {
         component2map1 = await component2.getSharedObject<SharedMap>(map1Id);
         component2map2 = await component2.getSharedObject<SharedMap>(map2Id);
 
-        deltaProcessingManager = new TestDeltaProcessingManager(deltaConnectionServer);
-        deltaProcessingManager.registerDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
 
-        await deltaProcessingManager.process();
+        await opProcessingController.process();
     });
 
     describe("Local ops batch metadata verification", () => {
@@ -122,7 +122,7 @@ describe("Batching", () => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 assert.equal(
                     component1BatchMessages.length, 4, "Incorrect number of messages received on local client");
@@ -139,7 +139,7 @@ describe("Batching", () => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 assert.equal(
                     component1BatchMessages.length, 1, "Incorrect number of messages received on local client");
@@ -166,7 +166,7 @@ describe("Batching", () => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 assert.equal(
                     component1BatchMessages.length, 4, "Incorrect number of messages received on local client");
@@ -191,7 +191,7 @@ describe("Batching", () => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 assert.equal(
                     component1BatchMessages.length, 0, "Incorrect number of messages received on local client");
@@ -216,7 +216,7 @@ describe("Batching", () => {
                 });
 
                 // Wait for the ops to get processed by both the containers.
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 assert.equal(
                     component1BatchMessages.length, 4, "Incorrect number of messages received on local client");
@@ -243,7 +243,7 @@ describe("Batching", () => {
                 (component1.context.containerRuntime as IContainerRuntime).flush();
 
                 // Wait for the ops to get processed by both the containers.
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 assert.equal(
                     component1BatchMessages.length, 4, "Incorrect number of messages received on local client");
@@ -264,7 +264,7 @@ describe("Batching", () => {
                 component2.context.containerRuntime.setFlushMode(FlushMode.Automatic);
 
                 // Wait for the ops to get processed by both the containers.
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 assert.equal(
                     component1BatchMessages.length, 1, "Incorrect number of messages received on local client");
@@ -309,7 +309,7 @@ describe("Batching", () => {
                 component2.context.containerRuntime.setFlushMode(FlushMode.Automatic);
 
                 // Wait for the ops to get processed by both the containers.
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 assert.equal(
                     component1BatchMessages.length, 6, "Incorrect number of messages received on local client");
@@ -352,7 +352,7 @@ describe("Batching", () => {
                 verifyDocumentDirtyState(component1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(component1, false);
@@ -370,7 +370,7 @@ describe("Batching", () => {
                 verifyDocumentDirtyState(component1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(component1, false);
@@ -392,7 +392,7 @@ describe("Batching", () => {
                 verifyDocumentDirtyState(component1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 // Check that the document dirty state is cleaned after the ops are processed.
                 // Verify that the document dirty state is cleaned after the ops are processed.
@@ -421,7 +421,7 @@ describe("Batching", () => {
                 verifyDocumentDirtyState(component1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(component1, false);
@@ -439,7 +439,7 @@ describe("Batching", () => {
                 verifyDocumentDirtyState(component1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(component1, false);
@@ -458,7 +458,7 @@ describe("Batching", () => {
                 verifyDocumentDirtyState(component1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(component1, false);
@@ -479,7 +479,7 @@ describe("Batching", () => {
                 verifyDocumentDirtyState(component1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 // Check that the document dirty state is cleaned after the ops are processed.
                 // Verify that the document dirty state is cleaned after the ops are processed.
@@ -510,7 +510,7 @@ describe("Batching", () => {
                 verifyDocumentDirtyState(component1, true);
 
                 // Wait for the ops to get processed by both the containers.
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(component1, false);

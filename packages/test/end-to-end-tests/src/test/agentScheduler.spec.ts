@@ -9,7 +9,7 @@ import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definition
 import { Container } from "@fluidframework/container-loader";
 import { IAgentScheduler, SchedulerType } from "@fluidframework/runtime-definitions";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, TestDeltaProcessingManager, initializeLocalContainer } from "@fluidframework/test-utils";
+import { createLocalLoader, OpProcessingController, initializeLocalContainer } from "@fluidframework/test-utils";
 
 describe("AgentScheduler", () => {
     const leader = "leader";
@@ -20,7 +20,7 @@ describe("AgentScheduler", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let deltaProcessingManager: TestDeltaProcessingManager;
+    let opProcessingController: OpProcessingController;
 
     async function createContainer(): Promise<Container> {
         const loader: ILoader = createLocalLoader([
@@ -51,10 +51,10 @@ describe("AgentScheduler", () => {
             // Make sure all initial ops (around leadership) are processed.
             // It takes a while because we start in unattached mode, and attach scheduler,
             // which causes loss of all tasks and reassignment.
-            deltaProcessingManager = new TestDeltaProcessingManager(deltaConnectionServer);
-            deltaProcessingManager.registerDeltaManagers(container.deltaManager);
-            await deltaProcessingManager.process();
-            deltaProcessingManager.resumeProcessing(container.deltaManager);
+            opProcessingController = new OpProcessingController(deltaConnectionServer);
+            opProcessingController.addDeltaManagers(container.deltaManager);
+            await opProcessingController.process();
+            opProcessingController.resumeProcessing(container.deltaManager);
         });
 
         it("No tasks initially", async () => {
@@ -123,9 +123,9 @@ describe("AgentScheduler", () => {
         async function syncContainers() {
             // Pauses the deltaQueues of the containers. Waits until all pending ops in the container
             // and the server are processed.
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
             // Resume the containes because they would have been paused by the above process call.
-            deltaProcessingManager.resumeProcessing(container1.deltaManager, container2.deltaManager);
+            opProcessingController.resumeProcessing(container1.deltaManager, container2.deltaManager);
         }
 
         beforeEach(async () => {
@@ -142,8 +142,8 @@ describe("AgentScheduler", () => {
             // Make sure all initial ops (around leadership) are processed.
             // It takes a while because we start in unattached mode, and attach scheduler,
             // which causes loss of all tasks and reassignment.
-            deltaProcessingManager = new TestDeltaProcessingManager(deltaConnectionServer);
-            deltaProcessingManager.registerDeltaManagers(container1.deltaManager, container2.deltaManager);
+            opProcessingController = new OpProcessingController(deltaConnectionServer);
+            opProcessingController.addDeltaManagers(container1.deltaManager, container2.deltaManager);
             await syncContainers();
         });
 

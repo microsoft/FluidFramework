@@ -12,7 +12,7 @@ import { MessageType } from "@fluidframework/protocol-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
-    TestDeltaProcessingManager,
+    OpProcessingController,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
@@ -27,7 +27,7 @@ describe("Directory", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let deltaProcessingManager: TestDeltaProcessingManager;
+    let opProcessingController: OpProcessingController;
     let component1: ITestFluidComponent;
     let sharedDirectory1: ISharedDirectory;
     let sharedDirectory2: ISharedDirectory;
@@ -62,13 +62,13 @@ describe("Directory", () => {
         const component3 = await getComponent("default", container3);
         sharedDirectory3 = await component3.getSharedObject<SharedDirectory>(directoryId);
 
-        deltaProcessingManager = new TestDeltaProcessingManager(deltaConnectionServer);
-        deltaProcessingManager.registerDeltaManagers(
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController.addDeltaManagers(
             component1.runtime.deltaManager,
             component2.runtime.deltaManager,
             component3.runtime.deltaManager);
 
-        await deltaProcessingManager.process();
+        await opProcessingController.process();
     });
 
     function expectAllValues(msg, key, path, value1, value2, value3) {
@@ -117,7 +117,7 @@ describe("Directory", () => {
 
         it("should set a key in the directory in three containers correctly", async () => {
             sharedDirectory1.set("testKey1", "testValue1");
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
             expectAllAfterValues("testKey1", "/", "testValue1");
         });
     });
@@ -125,13 +125,13 @@ describe("Directory", () => {
     describe("Root operations", () => {
         beforeEach("Populate with a value under the root", async () => {
             sharedDirectory1.set("testKey1", "testValue1");
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
             expectAllAfterValues("testKey1", "/", "testValue1");
         });
 
         it("should delete a value in 3 containers correctly", async () => {
             sharedDirectory2.delete("testKey1");
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             const hasKey1 = sharedDirectory1.has("testKey1");
             assert.equal(hasKey1, false, "testKey1 not deleted in container 1");
@@ -146,7 +146,7 @@ describe("Directory", () => {
         it("should have the correct size in three containers", async () => {
             sharedDirectory3.set("testKey3", true);
 
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             // check the number of keys in the map (2 keys set)
             expectAllSize(2);
@@ -156,7 +156,7 @@ describe("Directory", () => {
             sharedDirectory2.set("testKey1", undefined);
             sharedDirectory2.set("testKey2", undefined);
 
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             expectAllAfterValues("testKey1", "/", undefined);
             expectAllAfterValues("testKey2", "/", undefined);
@@ -193,7 +193,7 @@ describe("Directory", () => {
 
             sharedDirectory1.set("testKey1", "updatedValue");
 
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             assert.equal(user1ValueChangedCount, 0, "Incorrect number of valueChanged op received in container 1");
             assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 2");
@@ -211,7 +211,7 @@ describe("Directory", () => {
 
                 expectAllBeforeValues("testKey1", "/", "value1", "value2", "value3");
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 expectAllAfterValues("testKey1", "/", "value3");
             });
@@ -224,7 +224,7 @@ describe("Directory", () => {
 
                 expectAllBeforeValues("testKey1", "/", "value1.1", undefined, "value1.3");
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 expectAllAfterValues("testKey1", "/", "value1.3");
             });
@@ -236,13 +236,13 @@ describe("Directory", () => {
                 sharedDirectory3.set("testKey2", "value2.3");
 
                 // drain the outgoing so that the next set will come after
-                await deltaProcessingManager.processOutgoing();
+                await opProcessingController.processOutgoing();
 
                 sharedDirectory2.set("testKey2", "value2.2");
 
                 expectAllBeforeValues("testKey2", "/", "value2.1", "value2.2", "value2.3");
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 expectAllAfterValues("testKey2", "/", "value2.2");
             });
@@ -255,7 +255,7 @@ describe("Directory", () => {
 
                 expectAllBeforeValues("testKey3", "/", "value3.1", "value3.2", undefined);
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 expectAllAfterValues("testKey3", "/", undefined);
             });
@@ -270,7 +270,7 @@ describe("Directory", () => {
 
                 assert.equal(sharedDirectory3.size, 0, "Incorrect map size after clear");
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 expectAllAfterValues("testKey1", "/", undefined);
                 expectAllSize(0);
@@ -283,12 +283,12 @@ describe("Directory", () => {
                 sharedDirectory3.set("testKey2", "value2.3");
 
                 // drain the outgoing so that the next set will come after
-                await deltaProcessingManager.processOutgoing();
+                await opProcessingController.processOutgoing();
 
                 sharedDirectory2.set("testKey2", "value2.2");
                 expectAllBeforeValues("testKey2", "/", "value2.1", "value2.2", "value2.3");
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 expectAllAfterValues("testKey2", "/", "value2.2");
                 expectAllSize(1);
@@ -301,7 +301,7 @@ describe("Directory", () => {
                 sharedDirectory3.set("testKey3", "value3.3");
                 expectAllBeforeValues("testKey3", "/", "value3.1", undefined, "value3.3");
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 expectAllAfterValues("testKey3", "/", "value3.3");
                 expectAllSize(1);
@@ -313,7 +313,7 @@ describe("Directory", () => {
                 const newMap = SharedMap.create(component1.runtime);
                 sharedDirectory1.set("mapKey", newMap.handle);
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 const [map1, map2, map3] = await Promise.all([
                     sharedDirectory1.get<IComponentHandle<ISharedMap>>("mapKey").get(),
@@ -327,7 +327,7 @@ describe("Directory", () => {
 
                 map2.set("testMapKey", "testMapValue");
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 assert.equal(map3.get("testMapKey"), "testMapValue", "Wrong values in map in container 3");
             });
@@ -338,7 +338,7 @@ describe("Directory", () => {
         it("should set a key in a SubDirectory in three containers correctly", async () => {
             sharedDirectory1.createSubDirectory("testSubDir1").set("testKey1", "testValue1");
 
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             expectAllAfterValues("testKey1", "testSubDir1", "testValue1");
         });
@@ -346,13 +346,13 @@ describe("Directory", () => {
         it("should delete a key in a SubDirectory in three containers correctly", async () => {
             sharedDirectory2.createSubDirectory("testSubDir1").set("testKey1", "testValue1");
 
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             expectAllAfterValues("testKey1", "testSubDir1", "testValue1");
             const subDir1 = sharedDirectory3.getWorkingDirectory("testSubDir1");
             subDir1.delete("testKey1");
 
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             expectAllAfterValues("testKey1", "testSubDir1", undefined);
         });
@@ -360,12 +360,12 @@ describe("Directory", () => {
         it("should delete a child SubDirectory in a SubDirectory in three containers correctly", async () => {
             sharedDirectory2.createSubDirectory("testSubDir1").set("testKey1", "testValue1");
 
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             expectAllAfterValues("testKey1", "testSubDir1", "testValue1");
             sharedDirectory3.deleteSubDirectory("testSubDir1");
 
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             assert.equal(
                 sharedDirectory1.getWorkingDirectory("testSubDir1"),
@@ -386,12 +386,12 @@ describe("Directory", () => {
             sharedDirectory2.createSubDirectory("testSubDir1").set("testKey2", "testValue2");
             sharedDirectory3.createSubDirectory("otherSubDir2").set("testKey3", "testValue3");
 
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             expectAllSize(2, "testSubDir1");
             sharedDirectory3.getWorkingDirectory("testSubDir1").clear();
 
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             expectAllSize(0, "testSubDir1");
         });
@@ -430,7 +430,7 @@ describe("Directory", () => {
 
             sharedDirectory1.createSubDirectory("testSubDir1").set("testKey1", "updatedValue");
 
-            await deltaProcessingManager.process();
+            await opProcessingController.process();
 
             assert.equal(user1ValueChangedCount, 0, "Incorrect number of valueChanged op received in container 1");
             assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 2");
@@ -446,7 +446,7 @@ describe("Directory", () => {
             beforeEach(async () => {
                 sharedDirectory1.createSubDirectory("testSubDir").set("dummyKey", "dummyValue");
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 root1SubDir = sharedDirectory1.getWorkingDirectory("testSubDir");
                 root2SubDir = sharedDirectory2.getWorkingDirectory("testSubDir");
@@ -461,7 +461,7 @@ describe("Directory", () => {
 
                 expectAllBeforeValues("testKey1", "/testSubDir", "value1", "value2", "value3");
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 expectAllAfterValues("testKey1", "/testSubDir", "value3");
             });
@@ -474,7 +474,7 @@ describe("Directory", () => {
 
                 expectAllBeforeValues("testKey1", "/testSubDir", "value1.1", undefined, "value1.3");
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 expectAllAfterValues("testKey1", "/testSubDir", "value1.3");
             });
@@ -486,12 +486,12 @@ describe("Directory", () => {
                 root3SubDir.set("testKey2", "value2.3");
 
                 // drain the outgoing so that the next set will come after
-                await deltaProcessingManager.processOutgoing();
+                await opProcessingController.processOutgoing();
 
                 root2SubDir.set("testKey2", "value2.2");
                 expectAllBeforeValues("testKey2", "/testSubDir", "value2.1", "value2.2", "value2.3");
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 expectAllAfterValues("testKey2", "/testSubDir", "value2.2");
             });
@@ -504,7 +504,7 @@ describe("Directory", () => {
 
                 expectAllBeforeValues("testKey3", "/testSubDir", "value3.1", "value3.2", undefined);
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 expectAllAfterValues("testKey3", "/testSubDir", undefined);
             });
@@ -517,7 +517,7 @@ describe("Directory", () => {
                 expectAllBeforeValues("testKey1", "/testSubDir", "value1.1", "value1.2", undefined);
                 assert.equal(root3SubDir.size, 0, "Incorrect map size after clear");
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 expectAllAfterValues("testKey1", "/testSubDir", undefined);
                 expectAllSize(0, "/testSubDir");
@@ -530,12 +530,12 @@ describe("Directory", () => {
                 root3SubDir.set("testKey2", "value2.3");
 
                 // drain the outgoing so that the next set will come after
-                await deltaProcessingManager.processOutgoing();
+                await opProcessingController.processOutgoing();
 
                 root2SubDir.set("testKey2", "value2.2");
                 expectAllBeforeValues("testKey2", "/testSubDir", "value2.1", "value2.2", "value2.3");
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 expectAllAfterValues("testKey2", "/testSubDir", "value2.2");
                 expectAllSize(1, "/testSubDir");
@@ -548,7 +548,7 @@ describe("Directory", () => {
                 root3SubDir.set("testKey3", "value3.3");
                 expectAllBeforeValues("testKey3", "/testSubDir", "value3.1", undefined, "value3.3");
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 expectAllAfterValues("testKey3", "/testSubDir", "value3.3");
                 expectAllSize(1, "/testSubDir");
@@ -581,7 +581,7 @@ describe("Directory", () => {
                 // Now add the handle to an attached directory so the new directory gets attached too.
                 sharedDirectory1.set("newSharedDirectory", newDirectory1.handle);
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 // The new directory should be availble in the remote client and it should contain that key that was
                 // set in local state.
@@ -595,7 +595,7 @@ describe("Directory", () => {
                 // Set a new value for the same key in the remote directory.
                 newDirectory2.set("newKey", "anotherNewValue");
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 // Verify that the new value is updated in both the directories.
                 assert.equal(
@@ -619,7 +619,7 @@ describe("Directory", () => {
                 // Now add the handle to an attached directory so the new directory gets attached too.
                 sharedDirectory1.set("newSharedDirectory", newDirectory1.handle);
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 // The new directory should be availble in the remote client and it should contain that key that was
                 // set in local state.
@@ -632,7 +632,7 @@ describe("Directory", () => {
                 // Delete the sub directory from the remote client.
                 newDirectory2.deleteSubDirectory(subDirName);
 
-                await deltaProcessingManager.process();
+                await opProcessingController.process();
 
                 // Verify that the sub directory is deleted from both the directories.
                 assert.equal(
