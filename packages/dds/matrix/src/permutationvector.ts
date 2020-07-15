@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ChildLogger } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
@@ -97,9 +97,9 @@ export class PermutationVector extends Client {
         super(
             PermutationSegment.fromJSONObject,
             ChildLogger.create(logger, `Matrix.${path}.MergeTreeClient`), {
-            ...runtime.options,
-            newMergeTreeSnapshotFormat: true,
-        },
+                ...runtime.options,
+                newMergeTreeSnapshotFormat: true,   // Temporarily force new snapshot format until it is the default.
+            },                                      // (See https://github.com/microsoft/FluidFramework/issues/84)
         );
 
         this.mergeTreeDeltaCallback = this.onDelta;

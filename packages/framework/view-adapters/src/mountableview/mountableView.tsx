@@ -3,30 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
-import { IComponentHTMLView, IComponentMountableView } from "@fluidframework/view-interfaces";
+import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
+import {
+    IComponentHTMLView,
+    IComponentMountableView,
+    IFluidHTMLView,
+    IFluidMountableView,
+ } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 /**
  * Abstracts mounting of views for usage outside of their bundle.  Supports React elements, as well as
- * components that implement IComponentReactViewable or IComponentHTMLView.
+ * components that implement IComponentHTMLView.
  *
  * The MountableView must be applied from within the same bundle that provides the view, and then that MountableView
  * can be used by a separate bundle.  Attempting to apply a MountableView to a view that was retrieved from a separate
  * bundle is not supported.
  */
-export class MountableView implements IComponentMountableView {
+export class MountableView implements IComponentMountableView, IFluidMountableView {
     public get IComponentMountableView() { return this; }
+    public get IFluidMountableView() { return this; }
 
     /**
      * {@inheritDoc @fluidframework/view-interfaces#IComponentMountableViewClass.canMount}
      */
-    public static canMount(view: IComponent) {
+    public static canMount(view: IComponent & IFluidObject) {
         return (
             React.isValidElement(view)
-            || view.IComponentReactViewable !== undefined
             || view.IComponentHTMLView !== undefined
+            || view.IFluidHTMLView !== undefined
         );
     }
 
@@ -39,18 +45,18 @@ export class MountableView implements IComponentMountableView {
     /**
      * If the view is an IComponentHTMLView we will retain a reference to it across rendering/removal.
      */
-    private htmlView: IComponentHTMLView | undefined;
+    private htmlView: IComponentHTMLView | IFluidHTMLView | undefined;
 
     /**
-     * If the viewProvider is a React component or IComponentReactViewable we will retain a reference to the
-     * React component (creating one if it's a ReactViewable), which we will retain across rendering/removal.
+     * If the viewProvider is a React component we will retain a reference to the React component across
+     * rendering/removal.
      */
     private reactView: JSX.Element | undefined;
 
     /**
      * {@inheritDoc @fluidframework/view-interfaces#IComponentMountableViewClass.new}
      */
-    constructor(private readonly view: IComponent) {
+    constructor(private readonly view: IComponent & IFluidObject) {
         if (!MountableView.canMount(this.view)) {
             throw new Error("Unmountable view type");
         }
@@ -68,7 +74,7 @@ export class MountableView implements IComponentMountableView {
 
         // Try to get an IComponentHTMLView if we don't have one already.
         if (this.htmlView === undefined) {
-            this.htmlView = this.view.IComponentHTMLView;
+            this.htmlView = this.view.IComponentHTMLView ?? this.view.IFluidHTMLView;
         }
         // Render with IComponentHTMLView if possible.
         if (this.htmlView !== undefined) {
@@ -76,18 +82,14 @@ export class MountableView implements IComponentMountableView {
             return;
         }
 
-        // The ReactDOM.render calls won't work if the adapted component is from a separate bundle.
+        // The ReactDOM.render call won't work if the adapted component is from a separate bundle.
         // This is the usage scenario in webpack-component-loader currently in the case where the package we're
         // loading exports an IComponentFactory (rather than an IRuntimeFactory) because it will wrap the
-        // component in a factory of its own creation.  So, prioritizing these below IComponentHTMLView
+        // component in a factory of its own creation.  So, prioritizing this below IComponentHTMLView
         // temporarily, so that we have the best chance of cross-bundle adaptation.
         // Try to get a React view if we don't have one already.
-        if (this.reactView === undefined) {
-            if (React.isValidElement(this.view)) {
-                this.reactView = this.view;
-            } else {
-                this.reactView = this.view.IComponentReactViewable?.createJSXElement();
-            }
+        if (this.reactView === undefined && React.isValidElement(this.view)) {
+            this.reactView = this.view;
         }
         // Render with React if possible.
         if (this.reactView !== undefined) {

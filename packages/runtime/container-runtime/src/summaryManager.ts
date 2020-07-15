@@ -6,23 +6,22 @@
 import { EventEmitter } from "events";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    ChildLogger,
     Heap,
     IComparer,
     IHeapNode,
-    PerformanceEvent,
     PromiseTimer,
     IPromiseTimerResult,
 } from "@fluidframework/common-utils";
-import { IComponent, IRequest } from "@fluidframework/component-core-interfaces";
+import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { IComponent, IRequest, DriverHeader } from "@fluidframework/component-core-interfaces";
 import {
     IContainerContext,
     LoaderHeader,
-    ISummarizingWarning,
-    summarizerClientType,
 } from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
-import { ISummarizer, Summarizer, createSummarizingWarning } from "./summarizer";
+import { ISummarizer, Summarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
+
+const summarizerClientType = "summarizer";
 
 interface ITrackedClient {
     clientId: string;
@@ -310,13 +309,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     }
 
     private raiseContainerWarning(warning: ISummarizingWarning) {
-        // back-compat: <= 0.18 loader:
-        const errorFn = (this.context as any).error;
-        if (errorFn !== undefined) {
-            errorFn(warning);
-        } else {
-            this.context.raiseContainerWarning(warning);
-        }
+        this.context.raiseContainerWarning(warning);
     }
 
     private start() {
@@ -436,6 +429,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                     capabilities: { interactive: false },
                     type: summarizerClientType,
                 },
+                [DriverHeader.summarizingClient]: true,
                 [LoaderHeader.reconnect]: false,
                 [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,
                 [LoaderHeader.executionContext]: this.enableWorker ? "worker" : undefined,

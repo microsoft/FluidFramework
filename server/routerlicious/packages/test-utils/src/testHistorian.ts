@@ -73,9 +73,13 @@ export class TestHistorian implements IHistorian {
         };
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getContent(path: string, ref: string): Promise<any> {
-        throw new Error("Not Supported");
+    public async getContent(path: string, ref: string): Promise<any> {
+        const tree = await this.getTree(ref, true);
+        for (const entry of tree.tree) {
+            if (entry.path === path) {
+                return this.getBlob(entry.sha);
+            }
+        }
     }
 
     public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {

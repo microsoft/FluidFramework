@@ -9,9 +9,11 @@ import {
     fromBase64ToUtf8,
     fromUtf8ToBase64,
     hashFile,
+} from "@fluidframework/common-utils";
+import {
     PerformanceEvent,
     TelemetryLogger,
-} from "@fluidframework/common-utils";
+} from "@fluidframework/telemetry-utils";
 import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy, getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
@@ -38,7 +40,6 @@ import {
     idFromSpoEntry,
 } from "./contracts";
 import { fetchSnapshot } from "./fetchSnapshot";
-import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
     IOdspCache,
@@ -46,19 +47,10 @@ import {
     IFileEntry,
     snapshotExpirySummarizerOps,
 } from "./odspCache";
-import { getWithRetryForTokenRefresh, fetchHelper, throwOdspNetworkError } from "./odspUtils";
+import { getWithRetryForTokenRefresh, fetchHelper } from "./odspUtils";
+import { throwOdspNetworkError } from "./odspError";
 
 /* eslint-disable max-len */
-
-// back-compat: 0.14 uploadSummary
-type ConditionallyContextedSummary = {
-    useContext: true,
-    parentHandle: string | undefined,
-    tree: api.ISummaryTree,
-} | {
-    useContext: false,
-    tree: api.ISummaryTree,
-};
 
 function convertOdspTree(tree: ITree) {
     const gitTree: resources.ITree = {
@@ -203,22 +195,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
 
         return blob.content;
-    }
-
-    public async getContent(version: api.IVersion, path: string): Promise<string> {
-        this.checkSnapshotUrl();
-
-        return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-            const storageToken = await this.getStorageToken(refresh, "GetContent");
-
-            const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/contents${getQueryString({ ref: version.id, path })}`, storageToken);
-            const response = await PerformanceEvent.timedExecAsync(
-                this.logger,
-                { eventName: "getContent" },
-                async () => fetchHelper<IBlob>(url, { headers }),
-            );
-            return response.content.content;
-        });
     }
 
     public getRawUrl(blobid: string): string {
@@ -542,32 +518,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         throw new Error("Not supported");
     }
 
-    // back-compat: 0.14 uploadSummary
-    public async uploadSummary(tree: api.ISummaryTree): Promise<api.ISummaryHandle> {
-        assert(this.hostPolicy.summarizerClient);
-
-        this.checkSnapshotUrl();
-
-        const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree({
-            useContext: false,
-            tree,
-        });
-
-        if (!result || !idFromSpoEntry(result)) {
-            throw new Error(`Failed to write summary tree`);
-        }
-        if (blobsShaToPathCacheLatest) {
-            this.blobsShaToPathCache = blobsShaToPathCacheLatest;
-        }
-
-        this.lastSummaryHandle = idFromSpoEntry(result);
-        return {
-            handle: this.lastSummaryHandle,
-            handleType: api.SummaryType.Tree,
-            type: api.SummaryType.Handle,
-        };
-    }
-
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 
@@ -580,11 +530,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         const { result, blobsShaToPathCacheLatest } = await PerformanceEvent.timedExecAsync(this.logger,
             { eventName: "uploadSummaryWithContext" },
-            async () => this.writeSummaryTree({
-                useContext: true,
-                parentHandle: this.lastSummaryHandle,
-                tree: summary,
-            }));
+            async () => this.writeSummaryTree(this.lastSummaryHandle, summary));
         const id = result ? idFromSpoEntry(result) : undefined;
         if (!result || !id) {
             throw new Error(`Failed to write summary tree`);
@@ -718,12 +664,16 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return summarySnapshotTree;
     }
 
-    private async writeSummaryTree(summary: ConditionallyContextedSummary, depth: number = 0): Promise<{ result: ISnapshotResponse, blobsShaToPathCacheLatest?: Map<string, string> }> {
+    private async writeSummaryTree(
+        parentHandle: string | undefined,
+        tree: api.ISummaryTree,
+        depth: number = 0): Promise<{ result: ISnapshotResponse, blobsShaToPathCacheLatest?: Map<string, string> }>
+    {
         // Wait for all pending hashes to complete before using them in convertSummaryToSnapshotTree
         await Promise.all(this.blobsCachePendingHashes.values());
         // This cache is associated with mapping sha to path for currently generated summary.
         const blobsShaToPathCacheLatest: Map<string, string> = new Map();
-        const snapshotTree = await this.convertSummaryToSnapshotTree(summary, blobsShaToPathCacheLatest);
+        const snapshotTree = await this.convertSummaryToSnapshotTree(parentHandle, tree, blobsShaToPathCacheLatest);
 
         const snapshot: ISnapshotRequest = {
             entries: snapshotTree.entries!,
@@ -759,7 +709,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
      * Converts a summary tree to ODSP tree
      */
     private async convertSummaryToSnapshotTree(
-        summary: ConditionallyContextedSummary,
+        parentHandle: string | undefined,
+        tree: api.ISummaryTree,
         blobsShaToPathCacheLatest: Map<string, string>,
         depth: number = 0,
         path: string = "",
@@ -768,26 +719,18 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             entries: [],
         }!;
 
-        const keys = Object.keys(summary.tree.tree);
+        const keys = Object.keys(tree.tree);
         for (const key of keys) {
-            const summaryObject = summary.tree.tree[key];
+            const summaryObject = tree.tree[key];
 
             let id: string | undefined;
             let value: SnapshotTreeValue | undefined;
 
             switch (summaryObject.type) {
                 case api.SummaryType.Tree: {
-                    const subtree: ConditionallyContextedSummary = summary.useContext === true ? {
-                        useContext: true,
-                        parentHandle: summary.parentHandle,
-                        tree: summaryObject,
-                    } : {
-                            useContext: false,
-                            tree: summaryObject,
-                        };
-
                     value = await this.convertSummaryToSnapshotTree(
-                        subtree,
+                        parentHandle,
+                        summaryObject,
                         blobsShaToPathCacheLatest,
                         depth + 1,
                         `${path}/${key}`);
@@ -816,19 +759,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     break;
                 }
                 case api.SummaryType.Handle: {
-                    if (summary.useContext === true) {
-                        if (!summary.parentHandle) {
-                            throw Error("Parent summary does not exist to reference by handle.");
-                        }
-                        let handlePath = summaryObject.handle;
-                        if (handlePath.length > 0 && !handlePath.startsWith("/")) {
-                            handlePath = `/${handlePath}`;
-                        }
-                        id = `${summary.parentHandle}/.app${handlePath}`;
-                    } else {
-                        // back-compat: 0.14 uploadSummary
-                        id = summaryObject.handle;
+                    if (!parentHandle) {
+                        throw Error("Parent summary does not exist to reference by handle.");
                     }
+                    let handlePath = summaryObject.handle;
+                    if (handlePath.length > 0 && !handlePath.startsWith("/")) {
+                        handlePath = `/${handlePath}`;
+                    }
+                    id = `${parentHandle}/.app${handlePath}`;
 
                     // TODO: SPO will deprecate this soon
                     if (summaryObject.handleType === api.SummaryType.Commit) {

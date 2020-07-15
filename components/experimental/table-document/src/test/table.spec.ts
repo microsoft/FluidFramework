@@ -6,9 +6,8 @@
 /* eslint-disable no-shadow */
 
 import assert from "assert";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
+import { createLocalLoader, OpProcessingController, initializeLocalContainer } from "@fluidframework/test-utils";
 import { TableDocument } from "../document";
 import { TableSlice } from "../slice";
 import { TableDocumentItem } from "../table";
@@ -20,7 +19,7 @@ describe("TableDocument", () => {
         config: {},
     };
     let table: TableDocument;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let opProcessingController: OpProcessingController;
 
     function makeId(type: string) {
         const id = Math.random().toString(36).substr(2);
@@ -39,8 +38,8 @@ describe("TableDocument", () => {
         }
         table = response.value;
 
-        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-        containerDeltaEventManager.registerDocuments(container);
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController.addDeltaManagers(container.deltaManager);
     });
 
     const extract = (table: TableDocument) => {
@@ -60,7 +59,7 @@ describe("TableDocument", () => {
         assert.deepStrictEqual(extract(table), expected);
 
         // Paranoid check that awaiting incoming messages does not change test results.
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
         assert.strictEqual(table.numRows, expected.length);
         assert.deepStrictEqual(extract(table), expected);
     };

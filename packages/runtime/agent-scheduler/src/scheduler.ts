@@ -14,7 +14,7 @@ import {
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
-import { LoaderHeader } from "@fluidframework/container-definitions";
+import { LoaderHeader, AttachState } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
@@ -64,7 +64,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     public get IComponentRouter() { return this; }
 
     private get clientId(): string {
-        if (!this.runtime.isAttached) {
+        if (!this.runtime.IComponentHandleContext.isAttached) {
             return UnattachedClientId;
         }
         const clientId = this.runtime.clientId;
@@ -230,7 +230,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         // Probably okay for now to have every client try to do this.
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         quorum.on("removeMember", async (clientId: string) => {
-            assert(this.runtime.isAttached);
+            assert(this.runtime.IComponentHandleContext.isAttached);
             // Cleanup only if connected. If not, cleanup will happen in initializeCore() that runs on connection.
             if (this.isActive()) {
                 const leftTasks: string[] = [];
@@ -265,7 +265,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             }
         });
 
-        if (!this.runtime.isBoundToContext) {
+        if (!this.runtime.IComponentHandleContext.isAttached) {
             this.runtime.waitAttached().then(() => {
                 this.clearRunningTasks();
             }).catch((error) => {
@@ -274,7 +274,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         }
 
         this.runtime.on("disconnected", () => {
-            if (this.runtime.isAttached) {
+            if (this.runtime.IComponentHandleContext.isAttached) {
                 this.clearRunningTasks();
             }
         });
@@ -320,7 +320,8 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     private isActive() {
-        if (!this.runtime.isBoundToContext) {
+        // Scheduler should be active in detached container.
+        if (!this.runtime.IComponentHandleContext.isAttached) {
             return true;
         }
         if (!this.runtime.connected) {
@@ -435,6 +436,8 @@ export class TaskManager implements ITaskManager {
     public async pick(componentUrl: string, taskId: string, worker?: boolean): Promise<void> {
         if (!this.context.deltaManager.clientDetails.capabilities.interactive) {
             return Promise.reject("Picking not allowed on secondary copy");
+        } else if (this.runtime.attachState !== AttachState.Attached) {
+            return Promise.reject("Picking not allowed in detached container in task manager");
         } else {
             const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
             const fullUrl = `${urlWithSlash}/${this.url}/${taskId}`;

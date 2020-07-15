@@ -6,7 +6,7 @@
 import assert from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/common-utils";
+import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
@@ -14,6 +14,7 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@fluidframework/component-runtime-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { v4 as uuid } from "uuid";
 import { SharedObjectComponentHandle } from "./handle";
 import { ISharedObject, ISharedObjectEvents } from "./types";
@@ -58,7 +59,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * True if the dds is bound to its parent.
      */
-    private boundToComponent: boolean = false;
+    private _isBoundToContext: boolean = false;
 
     /**
      * Gets the connection state
@@ -72,7 +73,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * The loadable URL for this SharedObject
      */
     public get url(): string {
-        return this.handle.path;
+        return this.id;
     }
 
     /**
@@ -107,7 +108,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         // Only listen to these events if not attached.
         if (!this.isAttached()) {
-            this.runtime.on("collaborating", () => {
+            this.runtime.once("attaching", () => {
                 // Calling this will let the dds to do any custom processing based on attached
                 // like starting generating ops.
                 this.didAttach();
@@ -151,11 +152,11 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).bindToContext}
      */
     public bindToContext(): void {
-        if (this.isBoundToContext()) {
+        if (this._isBoundToContext) {
             return;
         }
 
-        this.boundToComponent = true;
+        this._isBoundToContext = true;
 
         this.setOwner();
 
@@ -174,23 +175,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).isBoundToContext}
-     */
-    public isBoundToContext(): boolean {
-        // If the dds is attached to the component then it should be registered irrespective of
-        // whether the container is attached/detached. If it is attached to its component, it will
-        // have its services. This will lead to get the dds summarized. It should also be registered
-        // if somebody called register on dds explicitly without attaching it which will set
-        // this.registered to be true.
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        return this.boundToComponent;
-    }
-
-    /**
      * {@inheritDoc (ISharedObject:interface).isAttached}
      */
     public isAttached(): boolean {
-        return this.services !== undefined && this.runtime.isAttached;
+        return this.services !== undefined && this.runtime.attachState !== AttachState.Detached;
     }
 
     /**
@@ -337,12 +325,11 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     private attachDeltaHandler() {
         // Services should already be there in case we are attaching delta handler.
         assert(this.services !== undefined, "Services should be there to attach delta handler");
-        this.boundToComponent = true;
+        this._isBoundToContext = true;
         // Allows objects to do any custom processing if it is attached.
         this.didAttach();
 
         // attachDeltaHandler is only called after services is assigned
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.services.deltaConnection.attach({
             process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
                 this.process(message, local, localOpMetadata);
@@ -357,7 +344,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         // Trigger initial state
         // attachDeltaHandler is only called after services is assigned
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.setConnectionState(this.services.deltaConnection.connected);
     }
 

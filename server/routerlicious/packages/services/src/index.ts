@@ -13,6 +13,8 @@ export * from "./messageSender";
 export * from "./metricClient";
 export * from "./mongodb";
 export * from "./nodeCodeLoader";
+export * from "./rdkafkaConsumer";
+export * from "./rdkafkaProducer";
 export * from "./redis";
 export * from "./redisClientManager";
 export * from "./socketIoRedisPublisher";

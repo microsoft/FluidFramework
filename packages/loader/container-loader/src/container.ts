@@ -11,7 +11,7 @@ import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { IComponent, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IComponent, IRequest, IResponse, IFluidObject } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     ICodeLoader,
@@ -21,22 +21,23 @@ import {
     IDeltaManager,
     IFluidCodeDetails,
     IGenericBlob,
+    ILoader,
     IRuntimeFactory,
     LoaderHeader,
     IRuntimeState,
-    CriticalContainerError,
+    ICriticalContainerError,
     ContainerWarning,
     IThrottlingWarning,
     AttachState,
 } from "@fluidframework/container-definitions";
+import { performanceNow } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     EventEmitterWithErrorHandling,
     PerformanceEvent,
-    performanceNow,
     raiseConnectedEvent,
     TelemetryLogger,
-} from "@fluidframework/common-utils";
+} from "@fluidframework/telemetry-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -49,13 +50,13 @@ import {
 import {
     BlobCacheStorageService,
     buildSnapshotTree,
-    CreateContainerError,
     readAndParse,
     OnlineStatus,
     isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     isSystemMessage,
     ProtocolOpHandler,
@@ -96,8 +97,6 @@ import { pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { parseUrl } from "./utils";
 
-export { ErrorWithProps, CreateContainerError } from "@fluidframework/driver-utils";
-
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 export interface IContainerConfig {
@@ -135,8 +134,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         serviceFactory: IDocumentServiceFactory,
         codeLoader: ICodeLoader,
         options: any,
-        scope: IComponent,
-        loader: Loader,
+        scope: IComponent & IFluidObject,
+        loader: ILoader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
         urlResolver: IUrlResolver,
@@ -164,7 +163,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             const perfEvent = PerformanceEvent.start(container.logger, { eventName: "Load" });
 
-            const onClosed = (err?: CriticalContainerError) => {
+            const onClosed = (err?: ICriticalContainerError) => {
                 // Depending where error happens, we can be attempting to connect to web socket
                 // and continuously retrying (consider offline mode)
                 // Host has no container to close, so it's prudent to do it here
@@ -193,7 +192,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public static async create(
         codeLoader: ICodeLoader,
         options: any,
-        scope: IComponent,
+        scope: IComponent & IFluidObject,
         loader: Loader,
         source: IFluidCodeDetails,
         serviceFactory: IDocumentServiceFactory,
@@ -220,7 +219,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private pendingClientId: string | undefined;
     private loaded = false;
-    private attachState = AttachState.Detached;
+    private _attachState = AttachState.Detached;
     private blobManager: BlobManager | undefined;
 
     // Active chaincode and associated runtime
@@ -358,9 +357,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     constructor(
         public readonly options: any,
-        private readonly scope: IComponent,
+        private readonly scope: IComponent & IFluidObject,
         private readonly codeLoader: ICodeLoader,
-        private readonly loader: Loader,
+        private readonly loader: ILoader,
         private readonly serviceFactory: IDocumentServiceFactory,
         private readonly urlResolver: IUrlResolver,
         config: IContainerConfig,
@@ -393,7 +392,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             },
             {
                 docId: () => this.id,
-                containerAttachState: () => this.attachState,
+                containerAttachState: () => this._attachState,
             });
 
         // Prefix all events in this file with container-loader
@@ -422,7 +421,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.protocolHandler!.quorum;
     }
 
-    public close(error?: CriticalContainerError) {
+    public close(error?: ICriticalContainerError) {
         if (this._closed) {
             return;
         }
@@ -434,7 +433,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.protocolHandler.close();
         }
 
-        this.context?.dispose(error ? new Error(error.errorType.toString()) : undefined);
+        this.context?.dispose(error ? new Error(error.message) : undefined);
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
@@ -459,8 +458,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.removeAllListeners();
     }
 
-    public isAttached(): boolean {
-        return this.attachState !== AttachState.Detached;
+    public get attachState(): AttachState {
+        return this._attachState;
     }
 
     public async attach(request: IRequest): Promise<void> {
@@ -472,7 +471,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(!this.deltaManager.inbound.length);
 
         // Set the state as attaching as we are starting the process of attaching container.
-        this.attachState = AttachState.Attaching;
+        this._attachState = AttachState.Attaching;
+        this.emit("attaching");
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
         const appSummary: ISummaryTree = this.context.createSummary();
@@ -480,6 +480,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Protocol Handler is undefined");
         }
         const protocolSummary = this.protocolHandler.captureSummary();
+
+        // Back compat / staging - to be removed with next server version bump
+        if (protocolSummary.tree.attributes === undefined) {
+            protocolSummary.tree.attributes = protocolSummary.tree[".attributes"];
+            delete protocolSummary.tree[".attributes"];
+        }
+
         if (!request.headers?.[CreateNewHeader.createNew]) {
             request.headers = {
                 ...request.headers,
@@ -500,6 +507,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
             const url = await this.getAbsoluteUrl("");
+            assert(url !== undefined, "Container url undefined");
             this.originalRequest = { url };
             this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
             const parsedUrl = parseUrl(resolvedUrl.url);
@@ -514,7 +522,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // This we can probably just pass the storage service to the blob manager - although ideally
             // there just isn't a blob manager
             this.blobManager = await this.loadBlobManager(this.storageService, undefined);
-            this.attachState = AttachState.Attached;
+            this._attachState = AttachState.Attached;
+            this.emit("attached");
             // We know this is create new flow.
             this._existing = false;
             this._parentBranch = this._id;
@@ -656,10 +665,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.context!.hasNullRuntime();
     }
 
-    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
         if (this.resolvedUrl === undefined) {
-            throw new Error("Container not attached to storage");
+            return undefined;
         }
+
         // TODO: Remove support for legacy requestUrl in 0.20
         const legacyResolver = this.urlResolver as {
             requestUrl?(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse>;
@@ -870,7 +880,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this.storageService = await this.getDocumentStorageService();
-        this.attachState = AttachState.Attached;
+        this._attachState = AttachState.Attached;
 
         // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
         const maybeSnapshotTree = specifiedVersion === null ? undefined
@@ -991,6 +1001,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             };
         }
 
+        // Back-compat: old docs would have ".attributes" instead of "attributes"
         const attributesHash = ".protocol" in tree.trees
             ? tree.trees[".protocol"].blobs.attributes
             : tree.blobs[".attributes"];
@@ -1220,7 +1231,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
-        this._deltaManager.on("closed", (error?: CriticalContainerError) => {
+        this._deltaManager.on("closed", (error?: ICriticalContainerError) => {
             this.close(error);
         });
 
@@ -1345,8 +1356,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             case MessageType.Operation:
             case MessageType.RemoteHelp:
             case MessageType.Summarize:
-            case "attach": // legacy, to be removed with ContainerRuntime's legacyFormat set to false
-            case "chunkedOp": // legacy, to be removed with ContainerRuntime's legacyFormat set to false
+            // Back-compat: <= 0.21.0
+            // Legacy, to be removed in next version(s)
+            case "attach":
+            case "chunkedOp":
                 break;
             default:
                 this.close(CreateContainerError(`Runtime can't send arbitrary message type: ${type}`));
@@ -1448,7 +1461,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
-            (error?: CriticalContainerError) => this.close(error),
+            (error?: ICriticalContainerError) => this.close(error),
             Container.version,
             previousRuntimeState,
         );
@@ -1486,7 +1499,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
-            (error?: CriticalContainerError) => this.close(error),
+            (error?: ICriticalContainerError) => this.close(error),
             Container.version,
             {},
         );

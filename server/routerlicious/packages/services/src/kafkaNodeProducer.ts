@@ -5,25 +5,14 @@
 
 import { EventEmitter } from "events";
 import * as util from "util";
-import { Deferred } from "@fluidframework/common-utils";
 import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@fluidframework/server-services-core";
 import * as kafka from "kafka-node";
 import { debug } from "./debug";
 import { ensureTopics } from "./kafkaTopics";
-
-// 1MB batch size / (16KB max message size + overhead)
-const MaxBatchSize = 32;
-
-class PendingBoxcar implements IPendingBoxcar {
-    public deferred = new Deferred<void>();
-    public messages = [];
-
-    constructor(public tenantId: string, public documentId: string) {
-    }
-}
+import { PendingBoxcar, MaxBatchSize } from "./pendingBoxcar";
 
 /**
- * Kafka-Node Producer.
+ * Kafka producer using the kafka-node library
  */
 export class KafkaNodeProducer implements IProducer {
     private readonly messages = new Map<string, IPendingBoxcar[]>();

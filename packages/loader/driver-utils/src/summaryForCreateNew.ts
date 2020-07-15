@@ -37,7 +37,7 @@ export function combineAppAndProtocolSummary(
 export function getDocAttributesFromProtocolSummary(
     protocolSummary: ISummaryTree,
 ): IDocumentAttributes {
-    const attributesBlob = protocolSummary.tree[".attributes"] as ISummaryBlob;
+    const attributesBlob = protocolSummary.tree.attributes as ISummaryBlob;
     const documentAttributes = JSON.parse(attributesBlob.content as string) as IDocumentAttributes;
     documentAttributes.term = documentAttributes.term ?? 1;
     return documentAttributes;

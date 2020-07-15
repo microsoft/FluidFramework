@@ -7,7 +7,7 @@ import assert from "assert";
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
     IGenericError,
-    ErrorType,
+    ContainerErrorType,
     IProxyLoaderFactory,
 } from "@fluidframework/container-definitions";
 import { Container, ConnectionState, Loader } from "@fluidframework/container-loader";
@@ -15,7 +15,7 @@ import {
     IFluidResolvedUrl,
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
-import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
@@ -25,7 +25,7 @@ describe("Container", () => {
     const testRequest: IRequest = { url: id };
 
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
-    let testResolver: TestResolver;
+    let localResolver: LocalResolver;
     let testResolved: IFluidResolvedUrl;
     let deltaConnection: MockDocumentDeltaConnection;
     let serviceFactory: Readonly<IDocumentServiceFactory>;
@@ -34,14 +34,14 @@ describe("Container", () => {
 
     beforeEach(async () => {
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        testResolver = new TestResolver();
-        testResolved = await testResolver.resolve(testRequest) as IFluidResolvedUrl;
-        serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
+        localResolver = new LocalResolver();
+        testResolved = await localResolver.resolve(testRequest) as IFluidResolvedUrl;
+        serviceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
         codeLoader = new LocalCodeLoader([]);
         const options = {};
 
         loader = new Loader(
-            testResolver,
+            localResolver,
             serviceFactory,
             codeLoader,
             options,
@@ -62,7 +62,7 @@ describe("Container", () => {
                 loader,
                 testRequest,
                 testResolved,
-                testResolver);
+                localResolver);
             success = true;
         } catch (error) {
             success = false;
@@ -93,7 +93,7 @@ describe("Container", () => {
                 loader,
                 testRequest,
                 testResolved,
-                testResolver);
+                localResolver);
             assert.fail("Error expected");
         } catch (error) {
             const err = error as IGenericError;
@@ -124,10 +124,10 @@ describe("Container", () => {
                 loader,
                 testRequest,
                 testResolved,
-                testResolver);
+                localResolver);
             assert.fail("Error expected");
         } catch (error) {
-            assert.strictEqual(error.errorType, ErrorType.genericError, "Error is not a general error");
+            assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error is not a general error");
             const genericError = error as IGenericError;
             success = genericError.error as boolean;
         }
@@ -158,7 +158,7 @@ describe("Container", () => {
             loader,
             testRequest,
             testResolved,
-            testResolver);
+            localResolver);
         assert.strictEqual(container.connectionState, ConnectionState.Connecting,
             "Container should be in Connecting state");
         deltaConnection.disconnect();
@@ -191,7 +191,7 @@ describe("Container", () => {
             loader,
             testRequest,
             testResolved,
-            testResolver);
+            localResolver);
         container.on("error", () => {
             errorRaised = true;
         });
@@ -233,7 +233,7 @@ describe("Container", () => {
             loader,
             testRequest,
             testResolved,
-            testResolver);
+            localResolver);
         container.on("error", () => {
             assert.ok(false, "Error event should not be raised.");
         });
@@ -256,7 +256,7 @@ describe("Container", () => {
             loader,
             testRequest,
             testResolved,
-            testResolver);
+            localResolver);
         assert.strictEqual(container.id, "documentId", "Container's id should be set");
         assert.strictEqual(container.clientDetails.capabilities.interactive, true,
             "Client details should be set with interactive as true");

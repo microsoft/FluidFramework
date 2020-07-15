@@ -18,14 +18,14 @@ import {
 } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import {
-    componentRuntimeRequestHandler,
     ContainerRuntime,
     IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
+import { componentRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
+import { createLocalLoader, OpProcessingController, initializeLocalContainer } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
 
 class TestComponent extends PrimedComponent {
@@ -65,24 +65,24 @@ describe("loader/runtime compatibility", () => {
         componentFactory: IComponentFactory | old.IComponentFactory,
         runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): IRuntimeFactory => {
+        const builder = new RuntimeRequestHandlerBuilder();
+        builder.pushHandler(
+            componentRuntimeRequestHandler,
+            defaultComponentRuntimeRequestHandler("default"));
+
         return {
             get IRuntimeFactory() { return this; },
             instantiateRuntime: async (context: IContainerContext) => {
                 const runtime = await ContainerRuntime.load(
                     context,
                     [[type, Promise.resolve(componentFactory as IComponentFactory)]],
-                    [componentRuntimeRequestHandler, defaultComponentRuntimeRequestHandler("default")],
+                    async (req,rt) => builder.handleRequest(req,rt),
                     runtimeOptions,
                 );
                 if (!runtime.existing) {
                     const componentRuntime = await runtime.createComponent("default", type);
                     await componentRuntime.request({ url: "/" });
-                    // 0.20 back-compat attach
-                    if (componentRuntime.bindToContext !== undefined) {
-                        componentRuntime.bindToContext();
-                    } else {
-                        (componentRuntime as any).attach();
-                    }
+                    componentRuntime.bindToContext();
                 }
                 return runtime;
             },
@@ -92,7 +92,7 @@ describe("loader/runtime compatibility", () => {
     const createOldRuntimeFactory = (
         type: string,
         componentFactory: IComponentFactory | old.IComponentFactory,
-        runtimeOptions: old.IContainerRuntimeOptions = {},
+        runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): old.IRuntimeFactory => {
         return {
             get IRuntimeFactory() { return this; },
@@ -106,7 +106,7 @@ describe("loader/runtime compatibility", () => {
                 if (!runtime.existing) {
                     const componentRuntime = await runtime.createComponent("default", type);
                     await componentRuntime.request({ url: "/" });
-                    componentRuntime.attach();
+                    componentRuntime.bindToContext();
                 }
                 return runtime;
             },
@@ -141,7 +141,7 @@ describe("loader/runtime compatibility", () => {
 
     const tests = function() {
         it("loads", async function() {
-            await this.containerDeltaEventManager.process();
+            await this.opProcessingController.process();
         });
 
         it("can set/get on root directory", async function() {
@@ -151,14 +151,6 @@ describe("loader/runtime compatibility", () => {
         });
 
         it("can summarize", async function() {
-            if (this.container.context.runtime.runtimeOptions.initialSummarizerDelayMs === undefined) {
-                // default initial delay will cause test to time out, so just skip
-                return this.skip();
-            }
-
-            // this will cause summarizer to summarize immediately
-            this.container.serviceConfiguration.summary.maxOps = 1;
-
             let success = true;
             this.container.on("error", () => success = false);
             this.container.on("warning", () => success = false);
@@ -220,13 +212,17 @@ describe("loader/runtime compatibility", () => {
 
     describe("old loader, new runtime", function() {
         beforeEach(async function() {
-            this.deltaConnectionServer = LocalDeltaConnectionServer.create();
-            this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
+            this.deltaConnectionServer = LocalDeltaConnectionServer.create(
+                undefined,
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                { summary: { maxOps: 1 } as ISummaryConfiguration },
+            );
+            this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
             this.container = await createContainerWithOldLoader(
                 { fluidExport: createRuntimeFactory(TestComponent.type, createComponentFactory()) },
                 this.deltaConnectionServer);
             this.component = await getComponent<TestComponent>("default", this.container);
-            this.containerDeltaEventManager.registerDocuments(this.component._runtime);
+            this.opProcessingController.addDeltaManagers(this.component._runtime.deltaManager);
         });
 
         tests();
@@ -238,15 +234,19 @@ describe("loader/runtime compatibility", () => {
 
     describe("new loader, old runtime", function() {
         beforeEach(async function() {
-            this.deltaConnectionServer = LocalDeltaConnectionServer.create();
-            this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
+            this.deltaConnectionServer = LocalDeltaConnectionServer.create(
+                undefined,
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                { summary: { maxOps: 1 } as ISummaryConfiguration },
+            );
+            this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
             this.container = await createContainer(
                 { fluidExport: createOldRuntimeFactory(OldTestComponent.type, createOldComponentFactory()) },
                 this.deltaConnectionServer,
             );
 
             this.component = await getComponent<OldTestComponent>("default", this.container);
-            this.containerDeltaEventManager.registerDocuments(this.component._runtime);
+            this.opProcessingController.addDeltaManagers(this.component._runtime.deltaManager);
         });
 
         tests();
@@ -258,15 +258,19 @@ describe("loader/runtime compatibility", () => {
 
     describe("new ContainerRuntime, old ComponentRuntime", function() {
         beforeEach(async function() {
-            this.deltaConnectionServer = LocalDeltaConnectionServer.create();
-            this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
+            this.deltaConnectionServer = LocalDeltaConnectionServer.create(
+                undefined,
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                { summary: { maxOps: 1 } as ISummaryConfiguration },
+            );
+            this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
             this.container = await createContainer(
                 { fluidExport: createRuntimeFactory(OldTestComponent.type, createOldComponentFactory()) },
                 this.deltaConnectionServer,
             );
 
             this.component = await getComponent<OldTestComponent>("default", this.container);
-            this.containerDeltaEventManager.registerDocuments(this.component._runtime);
+            this.opProcessingController.addDeltaManagers(this.component._runtime.deltaManager);
         });
 
         tests();

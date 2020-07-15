@@ -6,7 +6,7 @@
 import assert from "assert";
 import { IDocumentService } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/component-core-interfaces";
-import { DebugLogger } from "@fluidframework/common-utils";
+import { DebugLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
@@ -51,7 +51,7 @@ describe("Odsp Create Container Test", () => {
             summary.tree[".protocol"] = {
                 type: SummaryType.Tree,
                 tree: {
-                    ".attributes": {
+                    attributes: {
                         type: SummaryType.Blob,
                         content: JSON.stringify({ branch: "", minimumSequenceNumber: 0, sequenceNumber }),
                     },

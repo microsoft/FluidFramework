@@ -12,9 +12,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IFluidCodeDetails, IFluidModule, IFluidPackage } from "./chaincode";
 import { IDeltaManager } from "./deltas";
-import { CriticalContainerError, ContainerWarning } from "./error";
+import { ICriticalContainerError, ContainerWarning } from "./error";
+import { IFluidModule } from "./fluidModule";
+import { IFluidCodeDetails, IFluidPackage } from "./fluidPackage";
+import { AttachState } from "./runtime";
 
 /**
  * Code loading interface
@@ -71,8 +73,8 @@ export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
     (event: "connected", listener: (clientId: string) => void);
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
-    (event: "disconnected" | "joining", listener: () => void);
-    (event: "closed", listener: (error?: CriticalContainerError) => void);
+    (event: "disconnected" | "joining" | "attaching" | "attached", listener: () => void);
+    (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
     (event: "pong" | "processTime", listener: (latency: number) => void);
@@ -90,9 +92,9 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     resolvedUrl: IResolvedUrl | undefined;
 
     /**
-     * Flag indicating if the given container has been attached to a host service.
+     * Indicates the attachment state of the container to a host service.
      */
-    isAttached(): boolean;
+    readonly attachState: AttachState;
 
     /**
      * Attaches the container to the provided host.
@@ -104,10 +106,17 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 
     /**
      * Get an absolute url for a provided container-relative request.
-     * @param relativeUrl - A relative request within the container
+     * If the container is not attached, this will return undefined.
      *
+     * @param relativeUrl - A relative request within the container
      */
-    getAbsoluteUrl(relativeUrl: string): Promise<string>;
+    getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+
+    /**
+     * Issue a request against the container for a resource.
+     * @param request - The request to be issued against the container
+     */
+    request(request: IRequest): Promise<IResponse>;
 }
 
 export interface ILoader {

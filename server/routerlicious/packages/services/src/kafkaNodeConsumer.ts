@@ -20,6 +20,9 @@ import { ZookeeperClient } from "./zookeeperClient";
 // time before reconnecting after an error occurs
 const defaultReconnectDelay = 5000;
 
+/**
+ * Kafka consumer using the kafka-node library
+ */
 export class KafkaNodeConsumer implements IConsumer {
     private client: kafka.KafkaClient;
     private consumerGroup: kafka.ConsumerGroup;

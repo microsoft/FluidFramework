@@ -5,7 +5,7 @@
 import { PrimedComponent } from "@fluidframework/aqueduct";
 import { IDirectory } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { TextListView } from "./TextListView";
@@ -18,11 +18,8 @@ export const TextListName = `${pkg.name as string}-textlist`;
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
  * collaborative textarea.
  */
-export class TextList extends PrimedComponent implements
-    IComponentHTMLView,
-    IComponentReactViewable {
+export class TextList extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
-    public get IComponentReactViewable() { return this; }
 
     private textDirectory: IDirectory;
 
@@ -51,29 +48,15 @@ export class TextList extends PrimedComponent implements
 
     public render(div: HTMLElement) {
         ReactDOM.render(
-            this.createJSXElement(),
+            <TextListView
+                textDirectory={this.textDirectory}
+                root={this.root}
+                createNewItem={this.createNewItem.bind(this)} />,
             div,
         );
     }
 
     // end IComponentHTMLView
-
-    // start IComponentReactViewable
-
-    /**
-     * If our caller supports React they can query against the IComponentReactViewable
-     * Since this returns a JSX.Element it allows for an easier model.
-     */
-    public createJSXElement(): JSX.Element {
-        return (
-            <TextListView
-                textDirectory={this.textDirectory}
-                root={this.root}
-                createNewItem={this.createNewItem.bind(this)} />
-        );
-    }
-
-    // end IComponentReactViewable
 
     private createNewItem() {
         const uniqueId = this.createUniqueItemId();

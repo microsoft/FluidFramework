@@ -8,10 +8,11 @@ import {
     IComponentHandleContext,
     IComponentSerializer,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentHandle } from "./componentHandle";
+import { RemoteComponentHandle } from "./remoteComponentHandle";
 import { isSerializedHandle } from "./utils";
 
 /**
+ * 0.21 back-compat
  * Retrieves the absolute URL for a handle
  */
 function toAbsoluteUrl(handle: IComponentHandle): string {
@@ -73,9 +74,9 @@ export class ComponentSerializer implements IComponentSerializer {
                     return value;
                 }
 
-                // If the stored URL is absolute then we need to adjust the context from which we load. For
-                // absolute URLs we load from the root context. Given this is not always needed we delay looking
-                // up the root component until needed.
+                // 0.21 back-compat
+                // 0.22 onwards, we always use the routeContext of the root to create the RemoteComponentHandle.
+                // We won't need to check for the if condition below once we remove the back-compat code.
                 const absoluteUrl = value.url.startsWith("/");
                 if (absoluteUrl && root === undefined) {
                     // Find the root context to use for absolute requests
@@ -85,9 +86,7 @@ export class ComponentSerializer implements IComponentSerializer {
                     }
                 }
 
-                const handle = new ComponentHandle(
-                    absoluteUrl ? value.url.substr(1) : value.url,
-                    absoluteUrl ? root : context);
+                const handle = new RemoteComponentHandle(value.url, absoluteUrl ? root : context);
 
                 return handle;
             });
@@ -139,12 +138,16 @@ export class ComponentSerializer implements IComponentSerializer {
 
     private serializeHandle(handle: IComponentHandle, context: IComponentHandleContext, bind: IComponentHandle) {
         bind.bind(handle);
+        let url: string;
 
-        // If the handle contexts match then we can store a relative path. Otherwise we convert to an
-        // absolute path.
-        const url = context === handle.routeContext
-            ? handle.path
-            : toAbsoluteUrl(handle);
+        if ("absolutePath" in handle) {
+            url = handle.absolutePath;
+        } else {
+            // 0.21 back-compat
+            // 0.21 and earlier version do not have `absolutePath` so we genrate the absolute path from the
+            // routeContext's `path`.
+            url = toAbsoluteUrl(handle);
+        }
 
         return {
             type: "__fluid_handle__",
