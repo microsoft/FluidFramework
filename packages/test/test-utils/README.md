@@ -34,7 +34,7 @@ export function createLocalLoader(
 ): ILoader;
 ```
 
-- It creates a `TestResolver` that it uses to resolve requests.
+- It creates a `LocalResolver` that it uses to resolve requests.
 - It creates a `LocalCodeLoader` using the `fluidEntryPoint` list to load Container code.
 - It creates a `DocumentServiceFactory` which serves as the driver layer between the container and the server.
 

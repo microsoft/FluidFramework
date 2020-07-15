@@ -7,7 +7,7 @@ import * as assert from "assert";
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
@@ -28,7 +28,7 @@ describe("Document Dirty", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let documentServiceFactory: TestDocumentServiceFactory;
+    let documentServiceFactory: LocalDocumentServiceFactory;
     let containerDeltaEventManager: DocumentDeltaEventManager;
     let container: Container;
     let containerComp: ITestFluidComponent;
@@ -80,7 +80,7 @@ describe("Document Dirty", () => {
                 ],
             );
 
-        const urlResolver = new TestResolver();
+        const urlResolver = new LocalResolver();
         const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
         const loader = new Loader(
@@ -105,7 +105,7 @@ describe("Document Dirty", () => {
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-        documentServiceFactory = new TestDocumentServiceFactory(deltaConnectionServer);
+        documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 
         // Create the first container, component and DDSes.
         container = await createContainer();

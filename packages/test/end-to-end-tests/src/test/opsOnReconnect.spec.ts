@@ -9,7 +9,7 @@ import { IComponentHandle, IComponentLoadable } from "@fluidframework/component-
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { ISequencedDocumentMessage, ConnectionState } from "@fluidframework/protocol-definitions";
 import { IEnvelope, SchedulerType, FlushMode } from "@fluidframework/runtime-definitions";
@@ -40,7 +40,7 @@ describe("Ops on Reconnect", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let documentServiceFactory: TestDocumentServiceFactory;
+    let documentServiceFactory: LocalDocumentServiceFactory;
     let containerDeltaEventManager: DocumentDeltaEventManager;
     let firstContainer: Container;
     let firstContainerClientId: string;
@@ -77,7 +77,7 @@ describe("Ops on Reconnect", () => {
                 ],
             );
 
-        const urlResolver = new TestResolver();
+        const urlResolver = new LocalResolver();
         const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
         const loader = new Loader(
@@ -141,7 +141,7 @@ describe("Ops on Reconnect", () => {
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-        documentServiceFactory = new TestDocumentServiceFactory(deltaConnectionServer);
+        documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 
         // Create the first container, component and DDSes.
         firstContainer = await createContainer();

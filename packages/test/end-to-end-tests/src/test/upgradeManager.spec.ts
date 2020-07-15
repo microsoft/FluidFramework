@@ -10,7 +10,7 @@ import { UpgradeManager } from "@fluidframework/base-host";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { ICodeLoader, IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
@@ -37,11 +37,11 @@ describe("UpgradeManager", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let documentServiceFactory: TestDocumentServiceFactory;
+    let documentServiceFactory: LocalDocumentServiceFactory;
     let containerDeltaEventManager: DocumentDeltaEventManager;
 
     async function createContainer(factory: IComponentFactory): Promise<Container> {
-        const urlResolver = new TestResolver();
+        const urlResolver = new LocalResolver();
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const loader = new Loader(
             urlResolver,
@@ -64,7 +64,7 @@ describe("UpgradeManager", () => {
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-        documentServiceFactory = new TestDocumentServiceFactory(deltaConnectionServer);
+        documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
         containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
     });
 

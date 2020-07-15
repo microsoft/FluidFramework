@@ -6,17 +6,17 @@
 import assert from "assert";
 import { CreateNewHeader, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/component-core-interfaces";
-import { TestResolver } from "../testResolver";
+import { LocalResolver } from "../localResolver";
 
 describe("Local Driver Resolver", () => {
-    const documentId = "testResolverTest";
-    let resolver: TestResolver;
+    const documentId = "localResolverTest";
+    let resolver: LocalResolver;
 
     describe("CreateNew Flow", () => {
         let request: IRequest;
 
         beforeEach(() => {
-            resolver = new TestResolver();
+            resolver = new LocalResolver();
             request = resolver.createCreateNewRequest(documentId);
         });
 
@@ -44,7 +44,7 @@ describe("Local Driver Resolver", () => {
 
     describe("Container Request Resolution", () => {
         beforeEach(() => {
-            resolver = new TestResolver();
+            resolver = new LocalResolver();
         });
 
         it("should successfully resolve request for a container url", async () => {
