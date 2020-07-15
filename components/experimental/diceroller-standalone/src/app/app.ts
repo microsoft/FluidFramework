@@ -69,11 +69,6 @@ async function doStuffWithContainer(container: Container) {
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 const packageJson = require("../../package.json");
 
-getTinyliciousContainer(
-    documentId,
-    packageJson,
-    // eslint-disable-next-line dot-notation
-    window["main"], // Entrypoint to the fluidExport
-)
+getTinyliciousContainer(documentId, packageJson) // include window["main"] as the seed if the other chunk is loaded
     .then(doStuffWithContainer)
     .catch((error) => console.error(error));

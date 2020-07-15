@@ -91,7 +91,7 @@ class WebpackCodeResolver implements IFluidCodeResolver {
 export async function getTinyliciousContainer(
     documentId: string,
     packageJson: IFluidPackage,
-    fluidModule: IFluidModule,
+    fluidModule?: IFluidModule,
 ): Promise<Container> {
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(
         false,
@@ -111,7 +111,8 @@ export async function getTinyliciousContainer(
         package: packageJson,
         config: {},
     };
-    // maybe don't seed?  then initializeContainer happens outside of this function in the app
+    // Optionally, we could seed the codeLoader with a module we loaded ourselves.  I'm choosing not to here to verify
+    // that dynamic code loading works as expected.
     // await codeLoader.seedModule(codeDetails, fluidModule);
 
     const baseHost = new BaseHost(
