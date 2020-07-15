@@ -67,7 +67,7 @@ async function doStuffWithContainer(container: Container) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-export const packageJson = require("../../package.json");
+const packageJson = require("../../package.json");
 
 getTinyliciousContainer(
     documentId,

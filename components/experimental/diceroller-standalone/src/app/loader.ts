@@ -20,7 +20,6 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
     ITokenClaims,
-    IUser,
 } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
 import { extractPackageIdentifierDetails, WebCodeLoader } from "@fluidframework/web-code-loader";
@@ -29,31 +28,25 @@ import jwt from "jsonwebtoken";
 import uuid from "uuid/v4";
 import { BaseHost } from "./host";
 
-class InsecureUrlResolver implements IUrlResolver {
+class InsecureTinyliciousUrlResolver implements IUrlResolver {
     constructor(
-        private readonly ordererUrl: string,
-        private readonly storageUrl: string,
-        private readonly tenantId: string,
-        private readonly tenantKey: string,
-        private readonly user: IUser,
         private readonly documentId: string,
     ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const encodedTenantId = encodeURIComponent(this.tenantId);
         const encodedDocId = encodeURIComponent(this.documentId);
 
-        const documentUrl = `fluid://${new URL(this.ordererUrl).host}/${encodedTenantId}/${encodedDocId}`;
-        const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodedTenantId}/${encodedDocId}`;
-        const storageUrl = `${this.storageUrl}/repos/${encodedTenantId}`;
+        const documentUrl = `fluid://localhost:3000/tinylicious/${encodedDocId}`;
+        const deltaStorageUrl = `http://localhost:3000/deltas/tinylicious/${encodedDocId}`;
+        const storageUrl = `http://localhost:3000/repos/tinylicious`;
 
         const response: IFluidResolvedUrl = {
             endpoints: {
                 deltaStorageUrl,
-                ordererUrl: this.ordererUrl,
+                ordererUrl: "http://localhost:3000",
                 storageUrl,
             },
-            tokens: { jwt: this.auth(this.tenantId, this.documentId) },
+            tokens: { jwt: this.auth(this.documentId) },
             type: "fluid",
             url: documentUrl,
         };
@@ -64,18 +57,21 @@ class InsecureUrlResolver implements IUrlResolver {
         throw new Error("getAbsoluteUrl not implemented");
     }
 
-    private auth(tenantId: string, documentId: string) {
+    private auth(documentId: string) {
         const claims: ITokenClaims = {
             documentId,
             scopes: ["doc:read", "doc:write", "summary:write"],
-            tenantId,
-            user: this.user,
+            tenantId: "tinylicious",
+            user: { id: uuid() },
         };
 
-        return jwt.sign(claims, this.tenantKey);
+        return jwt.sign(claims, "12345");
     }
 }
 
+// The code resolver's job is basically to take a list of relative URLs and convert them URLs that will find the
+// correct scripts.  So maybe they can stay relative, or maybe they'll be converted to absolute URLs against a
+// base URL (like a CDN or something)
 class WebpackCodeResolver implements IFluidCodeResolver {
     constructor(private readonly port: number) { }
     async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
@@ -119,14 +115,7 @@ export async function getTinyliciousContainer(
     );
 
     // Construct a request
-    const urlResolver = new InsecureUrlResolver(
-        "http://localhost:3000", // ordererUrl
-        "http://localhost:3000", // storageUrl
-        "tinylicious", // tenantId
-        "12345", // tenantKey
-        { id: uuid() }, // user
-        documentId,
-    );
+    const urlResolver = new InsecureTinyliciousUrlResolver(documentId);
 
     const codeResolver = new WebpackCodeResolver(port);
     const codeLoader = new WebCodeLoader(codeResolver);
@@ -135,6 +124,7 @@ export async function getTinyliciousContainer(
         package: packageJson,
         config: {},
     };
+    // maybe don't seed?  then initializeContainer happens outside of this function in the app
     await codeLoader.seedModule(codeDetails, fluidModule);
 
     const baseHost = new BaseHost(
