@@ -18,6 +18,7 @@
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "debug": "node --inspect-brk ./dist/nodeStressTest.js",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",

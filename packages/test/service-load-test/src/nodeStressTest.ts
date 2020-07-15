@@ -68,7 +68,7 @@ function createLoader(config: IConfig, reauth: boolean) {
                     fluidFetchWebNavigator,
                     undefined,
                     refresh,
-                    reauth,
+                    reauth,  //* There may be a bug when this is true for push tokens.
                 );
                 return tokens.accessToken;
             },
