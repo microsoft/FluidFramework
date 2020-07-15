@@ -5,7 +5,7 @@
 
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/component-core-interfaces";
-import { TestResolver } from "@fluidframework/local-driver";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
 import uuid from "uuid/v4";
@@ -66,7 +66,7 @@ function getUrlResolver(
                 { accessToken: options.odspAccessToken });
 
         default: // Local
-            return new TestResolver();
+            return new LocalResolver();
     }
 }
 
@@ -114,7 +114,7 @@ export class MultiUrlResolver implements IUrlResolver {
                     fileName);
 
             default: // Local
-                return (this.urlResolver as TestResolver).createCreateNewRequest(fileName);
+                return (this.urlResolver as LocalResolver).createCreateNewRequest(fileName);
         }
     }
 }

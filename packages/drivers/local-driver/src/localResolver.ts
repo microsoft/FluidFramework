@@ -17,9 +17,9 @@ import { generateToken } from "@fluidframework/server-services-client";
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
- * related test classes.
+ * related local classes.
  */
-export class TestResolver implements IUrlResolver {
+export class LocalResolver implements IUrlResolver {
     private readonly tenantId = "tenantId";
     private readonly tokenKey = "tokenKey";
 

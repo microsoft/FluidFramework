@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { v4 as uuid } from "uuid";
 import {
@@ -23,10 +23,10 @@ import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 export async function createLocalContainerFactory(
     entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>,
 ): Promise<() => Promise<Container>> {
-    const urlResolver = new TestResolver();
+    const urlResolver = new LocalResolver();
 
     const deltaConn = LocalDeltaConnectionServer.create();
-    const documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
+    const documentServiceFactory = new LocalDocumentServiceFactory(deltaConn);
 
     const factory: Partial<IProvideRuntimeFactory & IProvideComponentFactory> =
         entryPoint.fluidExport ? entryPoint.fluidExport : entryPoint;
