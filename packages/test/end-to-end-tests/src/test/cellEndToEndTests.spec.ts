@@ -11,7 +11,7 @@ import { Container } from "@fluidframework/container-loader";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
-    DocumentDeltaEventManager,
+    OpProcessingController,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
@@ -28,7 +28,7 @@ describe("Cell", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let opProcessingController: OpProcessingController;
     let component1: ITestFluidComponent;
     let sharedCell1: ISharedCell;
     let sharedCell2: ISharedCell;
@@ -63,13 +63,16 @@ describe("Cell", () => {
         const component3 = await getComponent("default", container3);
         sharedCell3 = await component3.getSharedObject<SharedCell>(cellId);
 
-        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-        containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime, component3.runtime);
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController.addDeltaManagers(
+            component1.runtime.deltaManager,
+            component2.runtime.deltaManager,
+            component3.runtime.deltaManager);
 
         // Set a starting value in the cell
         sharedCell1.set(initialCellValue);
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
     });
 
     function verifyCellValue(cell: ISharedCell, expectedValue, index: number) {
@@ -108,7 +111,7 @@ describe("Cell", () => {
     it("can set and get cell data in 3 containers correctly", async () => {
         sharedCell2.set(newCellValue);
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         verifyCellValues(newCellValue, newCellValue, newCellValue);
     });
@@ -116,7 +119,7 @@ describe("Cell", () => {
     it("can delete cell data in 3 containers correctly", async () => {
         sharedCell3.delete();
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         verifyCellEmpty(true, true, true);
     });
@@ -142,7 +145,7 @@ describe("Cell", () => {
 
         sharedCell1.set(newCellValue);
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         assert.equal(user1ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 1");
         assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 2");
@@ -159,7 +162,7 @@ describe("Cell", () => {
 
         verifyCellValues("value1", "value2", "value3");
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         verifyCellValues("value3", "value3", "value3");
     });
@@ -172,7 +175,7 @@ describe("Cell", () => {
 
         verifyCellValues("value1.1", undefined, "value1.3");
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         verifyCellValues("value1.3", "value1.3", "value1.3");
     });
@@ -184,12 +187,12 @@ describe("Cell", () => {
         sharedCell3.set("value2.3");
 
         // drain the outgoing so that the next set will come after
-        await containerDeltaEventManager.processOutgoing();
+        await opProcessingController.processOutgoing();
 
         sharedCell2.set("value2.2");
         verifyCellValues("value2.1", "value2.2", "value2.3");
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         verifyCellValues("value2.2", "value2.2", "value2.2");
     });
@@ -203,7 +206,7 @@ describe("Cell", () => {
         verifyCellValues("value3.1", "value3.2", undefined);
         verifyCellEmpty(false, false, true);
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         verifyCellValues(undefined, undefined, undefined);
         verifyCellEmpty(true, true, true);
@@ -217,7 +220,7 @@ describe("Cell", () => {
         detachedCell1.set(detachedCell2.handle);
         sharedCell1.set(detachedCell1.handle);
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         async function getCellComponent(cellP: Promise<ISharedCell>): Promise<ISharedCell> {
             const cell = await cellP;
