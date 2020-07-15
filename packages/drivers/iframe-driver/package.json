@@ -32,7 +32,7 @@
     "@fluidframework/component-core-interfaces": "^0.22.0",
     "@fluidframework/driver-definitions": "^0.22.0",
     "@fluidframework/driver-utils": "^0.22.0",
-    "@fluidframework/protocol-definitions": "^0.1008.0",
+    "@fluidframework/protocol-definitions": "^0.1009.0-0",
     "comlink": "^4.0.2",
     "debug": "^4.1.1"
   },

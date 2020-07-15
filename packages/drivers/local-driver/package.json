@@ -54,12 +54,12 @@
     "@fluidframework/component-core-interfaces": "^0.22.0",
     "@fluidframework/driver-definitions": "^0.22.0",
     "@fluidframework/driver-utils": "^0.22.0",
-    "@fluidframework/protocol-definitions": "^0.1008.0",
+    "@fluidframework/protocol-definitions": "^0.1009.0-0",
     "@fluidframework/routerlicious-driver": "^0.22.0",
-    "@fluidframework/server-local-server": "^0.1008.0",
-    "@fluidframework/server-services-client": "^0.1008.0",
-    "@fluidframework/server-services-core": "^0.1008.0",
-    "@fluidframework/server-test-utils": "^0.1008.0",
+    "@fluidframework/server-local-server": "^0.1009.0-0",
+    "@fluidframework/server-services-client": "^0.1009.0-0",
+    "@fluidframework/server-services-core": "^0.1009.0-0",
+    "@fluidframework/server-test-utils": "^0.1009.0-0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
