@@ -112,7 +112,7 @@ export async function getTinyliciousContainer(
         config: {},
     };
     // maybe don't seed?  then initializeContainer happens outside of this function in the app
-    await codeLoader.seedModule(codeDetails, fluidModule);
+    // await codeLoader.seedModule(codeDetails, fluidModule);
 
     const baseHost = new BaseHost(
         urlResolver,

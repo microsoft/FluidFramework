@@ -37,6 +37,7 @@ module.exports = env => {
         plugins: [
             new HtmlWebpackPlugin({
                 template: "./src/app/index.html",
+                chunks: ["app"],
             }),
             // new CleanWebpackPlugin(),
         ],

@@ -8,7 +8,7 @@ import { Container } from "@fluidframework/container-loader";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IComponentMountableView } from "@fluidframework/view-interfaces";
-import { getTinyliciousContainer } from "./loader";
+import { getTinyliciousContainer } from "./tinyliciousContainer";
 
 // I'm choosing to put the docId in the hash just for my own convenience
 if (window.location.hash.length === 0) {
