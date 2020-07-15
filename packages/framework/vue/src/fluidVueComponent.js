@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import React from "react";
 import Vue from "vue";
 import PropTypes from "prop-types";
@@ -11,7 +16,7 @@ import { FluidReactComponent, getFluidState } from "@fluidframework/react";
 // being passed as props to other view frameworks. We are also not copying the DDS again but instead passing its
 // reference from the Fluid state is returned by getFluidState, so we shouldn't be increasing memory usage.
 // 2) React is the smallest library of the three major UI frameworks by a good margin, and its package footprint is
-// much smaller than Fluid itself
+// much smaller than Fluid itself. Ref: https://bit.ly/3fuA0bF
 // 3) While it is still additional code over vanilla JS, the React view framework also provides view lifecycle methods
 // which make it easier to build additional wrappers for other frameworks while providing appropriate initializing and
 // cleanup support. We would need to write a common library for doing this if dealing with vanilla JS,
