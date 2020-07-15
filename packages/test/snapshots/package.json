@@ -50,7 +50,7 @@
   "dependencies": {
     "@fluid-internal/replay-tool": "^0.22.0",
     "@fluidframework/common-utils": "^0.20.0",
-    "@fluidframework/protocol-definitions": "^0.1009.0-0"
+    "@fluidframework/protocol-definitions": "^0.1009.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",

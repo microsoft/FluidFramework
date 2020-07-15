@@ -59,7 +59,7 @@
     "@fluidframework/ink": "^0.22.0",
     "@fluidframework/map": "^0.22.0",
     "@fluidframework/ordered-collection": "^0.22.0",
-    "@fluidframework/protocol-definitions": "^0.1009.0-0",
+    "@fluidframework/protocol-definitions": "^0.1009.0",
     "@fluidframework/runtime-definitions": "^0.22.0",
     "@fluidframework/sequence": "^0.22.0",
     "@fluidframework/shared-object-base": "^0.22.0",
