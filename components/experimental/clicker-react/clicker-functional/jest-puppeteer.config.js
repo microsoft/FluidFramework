@@ -7,7 +7,7 @@ module.exports = {
   server: {
     command: "npm run start",
     port: 8084,
-    launchTimeout:10000,
+    launchTimeout: 12000,
     usedPortAction: 'error'
   },
   launch: {
