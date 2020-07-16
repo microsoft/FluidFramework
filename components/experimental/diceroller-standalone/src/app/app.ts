@@ -59,6 +59,8 @@ async function mountDefaultComponentFromContainer(container: Container): Promise
     view.render(div, { display: "block" });
 }
 
+// The format of the code proposal will be the contents of our package.json, which has a special "fluid" section
+// describing the code to load.
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 const packageJson = require("../../package.json");
 
