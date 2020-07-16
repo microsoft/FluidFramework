@@ -10,7 +10,7 @@ import {
     getOdspScope,
     pushScope,
     refreshAccessToken,
-    getSharepointTenant,
+    getAuthorizePageUrl,
     AuthParams,
 } from "@fluidframework/odsp-utils";
 import { IAsyncCache, loadRC, saveRC, lockRC } from "./fluidToolRC";
@@ -18,8 +18,7 @@ import { serverListenAndHandle, endResponse } from "./httpHelpers";
 
 const odspAuthRedirectPort = 7000;
 const odspAuthRedirectOrigin = `http://localhost:${odspAuthRedirectPort}`;
-const odspAuthRedirectPath = "/auth/callback";
-const odspAuthRedirectUri = `${odspAuthRedirectOrigin}${odspAuthRedirectPath}`;
+const odspAuthRedirectUri = new URL("/auth/callback", odspAuthRedirectOrigin).href;
 
 export const getMicrosoftConfiguration = (): IClientConfig => ({
     get clientId() {
@@ -105,6 +104,7 @@ export class OdspTokenManager {
                 // check and return if it exists without lock
                 const cacheKey: OdspTokenManagerCacheKey = { isPush, server };
                 const tokensFromCache = await this.tokenCache.get(cacheKey);
+                //* Why are we refreshing every time?
                 if (tokensFromCache?.refreshToken) {
                     if (redirectUriCallback) {
                         initialNavigator(await redirectUriCallback(tokensFromCache));
@@ -169,15 +169,8 @@ export class OdspTokenManager {
             );
         }
         else {
-            const tenant = isPush ? "organizations" : getSharepointTenant(server);
-            const authUrl = `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize?`
-                + `client_id=${clientConfig.clientId}`
-                + `&scope=${scope}`
-                + `&response_type=code`
-                + `&redirect_uri=${odspAuthRedirectUri}`;
-
             tokens = await this.acquireTokens(
-                authUrl,
+                getAuthorizePageUrl(isPush, server, clientConfig, scope, odspAuthRedirectUri),
                 server,
                 clientConfig,
                 scope,
@@ -221,7 +214,7 @@ export class OdspTokenManager {
     ): Promise<IOdspTokens> {
         const tokenGetter = await serverListenAndHandle(odspAuthRedirectPort, async (req, res) => {
             // get auth code
-            const code = this.getAuthorizationCode(req.url);
+            const code = this.extractAuthorizationCode(req.url);
 
             // get tokens
             //* Better not to crack over clientConfig yet?
@@ -255,11 +248,11 @@ export class OdspTokenManager {
         return odspTokens;
     }
 
-    private getAuthorizationCode(url: string | undefined): string {
-        if (url === undefined) {
+    private extractAuthorizationCode(relativeUrl: string | undefined): string {
+        if (relativeUrl === undefined) {
             throw Error("Failed to get authorization");
         }
-        const parsedUrl = new URL(`${odspAuthRedirectOrigin}/${url}`);
+        const parsedUrl = new URL(relativeUrl, odspAuthRedirectOrigin);
         const code = parsedUrl.searchParams.get("code");
         if (!code) {
             throw Error("Failed to get authorization");
