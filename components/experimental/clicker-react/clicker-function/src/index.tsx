@@ -14,7 +14,7 @@ import {
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-// ---- React Functional Component w/ useSyncedObject ----
+// ---- React Function Component w/ useSyncedObject ----
 
 interface ICounterReactFunctionalProps {
     syncedComponent: SyncedComponent,
@@ -25,7 +25,7 @@ interface ICounterReactFunctionalState {
     value: number
 }
 
-function CounterReactFunctional(
+function CounterReactFunction(
     props: ICounterReactFunctionalProps,
 ) {
     const [state, setState] = useSyncedObject<ICounterReactFunctionalState>(
@@ -47,21 +47,21 @@ function CounterReactFunctional(
 }
 
 /**
- * Basic ClickerFunctional example showing Clicker as a React Functional component
+ * Basic ClickerFunction example showing Clicker as a React Function component
  */
-export class ClickerFunctional extends SyncedComponent {
+export class ClickerFunction extends SyncedComponent {
     constructor(props) {
         super(props);
-        setSyncedObjectConfig<number>(this, "counter-functional", 0);
+        setSyncedObjectConfig<number>(this, "counter-function", 0);
     }
     /**
-     * Will return a new ClickerFunctional view
+     * Will return a new ClickerFunction view
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
             <div>
-                <CounterReactFunctional
-                    syncedStateId={"counter-functional"}
+                <CounterReactFunction
+                    syncedStateId={"counter-function"}
                     syncedComponent={this}
                 />
             </div>,
@@ -72,10 +72,10 @@ export class ClickerFunctional extends SyncedComponent {
 }
 
 // ----- FACTORY SETUP -----
-export const ClickerFunctionalInstantiationFactory = new PrimedComponentFactory(
-    "clicker-functional",
-    ClickerFunctional,
+export const ClickerFunctionInstantiationFactory = new PrimedComponentFactory(
+    "clicker-function",
+    ClickerFunction,
     [],
     {},
 );
-export const fluidExport = ClickerFunctionalInstantiationFactory;
+export const fluidExport = ClickerFunctionInstantiationFactory;

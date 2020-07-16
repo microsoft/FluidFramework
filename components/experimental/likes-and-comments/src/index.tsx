@@ -63,7 +63,7 @@ function LikesAndCommentsView(
                     ? <CollaborativeInput
                         style={{ width: "90%" }}
                         sharedString={imgUrl}
-                        onChange={(value: SharedString) => setImgUrl({ value })}
+                        onInput={(value: SharedString) => setImgUrl({ value })}
                     />
                     : undefined}
             </div>

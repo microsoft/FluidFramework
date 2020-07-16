@@ -28,7 +28,7 @@ export function setSyncedObjectConfig<T>(
                     viewKey: "value",
                 },
             ],
-        ]) as any,
+        ]),
         defaultViewState: { value: defaultValue },
     });
 }

@@ -16,7 +16,7 @@ export interface ICollaborativeInputProps {
     spellCheck?: boolean;
     className?: string;
     style?: React.CSSProperties;
-    onChange?: (sharedString: SharedString) => void
+    onInput?: (sharedString: SharedString) => void
 }
 
 export interface ICollaborativeInputState {
@@ -106,9 +106,7 @@ export class CollaborativeInput
         } else {
             this.props.sharedString.removeText(newPosition, this.state.selectionEnd);
         }
-        if (this.props.onChange !== undefined) {
-            this.props.onChange(this.props.sharedString);
-        }
+        this.props.onInput?.(this.props.sharedString);
     }
 
     /**

@@ -2,7 +2,7 @@
 
 **Clicker-React** contains two Fluid components that use the new experimental Fluid React component and hooks. These can be found in the @fluidframeworks/react package.
 
-**clicker-functional** shows how to create a simple Clicker example using no DDS' by just calling the useSyncedObject hook.
+**clicker-function** shows how to create a simple Clicker example using no DDS' by just calling the useSyncedObject hook.
 
 The **clicker-react** example uses the FluidReactComponent which is a wrapper around the traditional ReactComponent that allows you to use synced state updates the same way you would use local state updates in React.
 
