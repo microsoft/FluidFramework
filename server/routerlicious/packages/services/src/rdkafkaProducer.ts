@@ -197,14 +197,12 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 							// eslint-disable-next-line @typescript-eslint/no-floating-promises
 							this.handleError(err);
-
 						} else {
 							boxcar.deferred.resolve();
 							this.emit("produced", boxcarMessage, offset);
 						}
 					},
 				);
-
 			} catch (ex) {
 				// produce can throw if the outgoing message queue is full
 				boxcar.deferred.reject(ex);
