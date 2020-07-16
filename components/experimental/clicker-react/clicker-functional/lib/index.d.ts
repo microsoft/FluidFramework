@@ -1,7 +1,3 @@
-/*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License.
- */
 import { PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { SyncedComponent } from "@fluidframework/react";
 export declare const ClickerFunctionalName: string;
