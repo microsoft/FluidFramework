@@ -7,7 +7,7 @@ import assert from "assert";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
@@ -42,7 +42,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             [mapId1, SharedMap.getFactory()],
         ]);
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const documentServiceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
+        const documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
         return new Loader(
             urlResolver,
             documentServiceFactory,
@@ -54,7 +54,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
 
     beforeEach(async () => {
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        const urlResolver = new TestResolver();
+        const urlResolver = new LocalResolver();
         loader = createTestLoader(urlResolver);
     });
 
