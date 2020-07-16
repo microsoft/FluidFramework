@@ -35,8 +35,6 @@ import OrderedMap = require("orderedmap");
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideRichTextEditor>> { }
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideRichTextEditor>> { }
 }
 
 export const IRichTextEditor: keyof IProvideRichTextEditor = "IRichTextEditor";
