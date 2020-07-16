@@ -13,6 +13,7 @@ import {
     IComponentSerializer,
     IRequest,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -440,7 +441,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         registryEntries: NamedComponentRegistryEntries,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
-        containerScope: IComponent = context.scope,
+        containerScope: IComponent & IFluidObject = context.scope,
     ): Promise<ContainerRuntime> {
         // Back-compat: <= 0.18 loader
         if (context.deltaManager.lastSequenceNumber === undefined) {
@@ -542,7 +543,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         return this._flushMode;
     }
 
-    public get scope(): IComponent {
+    public get scope(): IComponent & IFluidObject {
         return this.containerScope;
     }
 
@@ -625,7 +626,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         private readonly registry: IComponentRegistry,
         chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: true, enableWorker: false },
-        private readonly containerScope: IComponent,
+        private readonly containerScope: IComponent & IFluidObject,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
     ) {
         super();
@@ -915,7 +916,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             assert(clientId);
             this.summaryManager.setConnected(clientId);
         } else {
-            assert(!this._leader);
             this.summaryManager.setDisconnected();
         }
     }
@@ -1429,9 +1429,12 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         return summaryTree;
     }
 
-    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
         if (this.context.getAbsoluteUrl === undefined) {
             throw new Error("Driver does not implement getAbsoluteUrl");
+        }
+        if (this.attachState !== AttachState.Attached) {
+            return undefined;
         }
         return this.context.getAbsoluteUrl(relativeUrl);
     }
@@ -1769,9 +1772,8 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
     private updateLeader(leadership: boolean) {
         this._leader = leadership;
-        assert(this.clientId);
         if (this.leader) {
-            assert(this.connected && this.deltaManager && this.deltaManager.active);
+            assert(this.clientId === undefined || this.connected && this.deltaManager && this.deltaManager.active);
             this.emit("leader");
         } else {
             this.emit("notleader");
@@ -1793,10 +1795,13 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
      */
     private runTaskAnalyzer() {
         // Analyze the current state and ask for local and remote help separately.
-        // called only if a leader, which means we are connected (as leadership is lost on loss of connection).
-        assert(this.clientId !== undefined && this.connected);
+        // If called for detached container, the clientId would not be assigned and it is disconnected. In this
+        // case, all tasks are run by the detached container. Called only if a leader. If we have a clientId,
+        // then we should be connected as leadership is lost on losing connection.
+        const helpTasks = this.clientId === undefined ?
+            { browser: this.tasks, robot: [] } :
+            analyzeTasks(this.clientId, this.getQuorum().getMembers(), this.tasks);
 
-        const helpTasks = analyzeTasks(this.clientId, this.getQuorum().getMembers(), this.tasks);
         if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
             if (helpTasks.browser.length > 0) {
                 const localHelpMessage: IHelpMessage = {

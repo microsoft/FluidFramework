@@ -3,29 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export interface IRequestHeader {
-    [index: string]: any;
-}
-
-export interface IRequest {
-    url: string;
-    headers?: IRequestHeader;
-}
-
-export interface IResponse {
-    mimeType: string;
-    status: number;
-    value: any;
-    headers?: { [key: string]: any };
-}
-
-export enum DriverHeader {
-    summarizingClient = "fluid-client-summarizer",
-}
-
-export interface IDriverHeader {
-    [DriverHeader.summarizingClient]: boolean;
-}
+import { IResponse, IRequest } from "../fluidRouter";
 
 export const IComponentRouter: keyof IProvideComponentRouter = "IComponentRouter";
 

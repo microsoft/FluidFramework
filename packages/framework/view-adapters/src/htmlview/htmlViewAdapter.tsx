@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
+import {
+    IComponentHTMLOptions,
+    IComponentHTMLView,
+    IFluidHTMLView,
+    IFluidHTMLOptions,
+} from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -12,17 +17,19 @@ import ReactDOM from "react-dom";
  * Abstracts rendering of views via the IComponentHTMLView interface.  Supports React elements, as well as
  * components that implement IComponentHTMLView.
  */
-export class HTMLViewAdapter implements IComponentHTMLView {
+export class HTMLViewAdapter implements IComponentHTMLView, IFluidHTMLView {
     public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     /**
      * Test whether the given view can be successfully adapted by an HTMLViewAdapter.
      * @param view - the view to test if it is adaptable.
      */
-    public static canAdapt(view: IComponent) {
+    public static canAdapt(view: IComponent & IFluidObject) {
         return (
             React.isValidElement(view)
             || view.IComponentHTMLView !== undefined
+            || view.IFluidHTMLView !== undefined
         );
     }
 
@@ -35,14 +42,14 @@ export class HTMLViewAdapter implements IComponentHTMLView {
     /**
      * @param view - The view to adapt into an IComponentHTMLView
      */
-    constructor(private readonly view: IComponent) { }
+    constructor(private readonly view: IComponent & IFluidObject) { }
 
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions) {
+    public render(elm: HTMLElement, options?: IComponentHTMLOptions | IFluidHTMLOptions) {
         // Note that if we're already mounted, this can cause multiple rendering with possibly unintended effects.
         // Probably try to avoid doing this.
         this.containerNode = elm;
 
-        const htmlView = this.view.IComponentHTMLView;
+        const htmlView = this.view.IComponentHTMLView ?? this.view.IFluidHTMLView;
         if (htmlView !== undefined) {
             htmlView.render(elm, options);
             return;
@@ -77,7 +84,7 @@ export class HTMLViewAdapter implements IComponentHTMLView {
             return;
         }
 
-        const htmlView = this.view.IComponentHTMLView;
+        const htmlView = this.view.IComponentHTMLView ?? this.view.IFluidHTMLView;
         if (htmlView !== undefined && htmlView.remove !== undefined) {
             htmlView.remove();
             this.containerNode = undefined;
