@@ -130,12 +130,19 @@ export class OdspTokenManager {
         const scope = isPush ? pushScope : getOdspScope(server);
         const cacheKey: OdspTokenManagerCacheKey = { isPush, server };
         if (!forceReauth && this.tokenCache) {
-            const tokensFromCache = await this.tokenCache.get(cacheKey);
+            let tokensFromCache = await this.tokenCache.get(cacheKey);
             if (tokensFromCache?.refreshToken) {
                 let canReturn = true;
                 if (forceRefresh) {
                     try {
-                        await refreshAccessToken(scope, server, clientConfig, tokensFromCache);
+                        const authParams: AuthParams = {
+                            scope,
+                            client_id: clientConfig.clientId,
+                            client_secret: clientConfig.clientSecret,
+                            grant_type: "refresh_token",
+                            refresh_token: tokensFromCache.refreshToken,
+                        };
+                        tokensFromCache = await refreshAccessToken(server, authParams);
                     } catch (error) {
                         canReturn = false;
                     }
@@ -195,7 +202,7 @@ export class OdspTokenManager {
                 code,
                 redirect_uri: odspAuthRedirectUri,
             };
-        
+
             const tokens = await fetchTokens(server, authParams);
 
             // redirect
