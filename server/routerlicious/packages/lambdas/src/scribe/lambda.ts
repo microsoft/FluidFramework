@@ -155,6 +155,10 @@ export class ScribeLambda extends SequencedLambda {
                     this.processFromPending(this.minSequenceNumber);
                 }
 
+                const metaData = {
+                    documentId: this.documentId,
+                    tenantId: this.tenantId,
+                };
                 this.clearCache = false;
                 if (value.operation.type === MessageType.Summarize) {
                     const summarySequenceNumber = value.operation.sequenceNumber;
@@ -183,8 +187,8 @@ export class ScribeLambda extends SequencedLambda {
                             this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                         } else {
                             this.protocolHead = this.protocolHandler.sequenceNumber;
-                            this.context.log.info(
-                                `Client summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`);
+                            // eslint-disable-next-line max-len
+                            this.context.log.info(`Client summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`, metaData);
                         }
                     } catch (ex) {
                         this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
@@ -218,8 +222,8 @@ export class ScribeLambda extends SequencedLambda {
 
                         if (success) {
                             this.clearCache = true;
-                            this.context.log.info(
-                                `Service summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`);
+                            // eslint-disable-next-line max-len
+                            this.context.log.info(`Service summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`, metaData);
                         }
                     }
                 } else if (value.operation.type === MessageType.SummaryAck) {
@@ -322,7 +326,11 @@ export class ScribeLambda extends SequencedLambda {
                 "operation.sequenceNumber": lte ? { $lte: sequenceNumber } : { $gte: sequenceNumber },
                 "tenantId": this.tenantId,
             });
-        this.context.log.info(`Scribe cache is cleared for ${this.tenantId}/${this.documentId}`);
+            const metaData = {
+                documentId: this.documentId,
+                tenantId: this.tenantId,
+            };
+            this.context.log.info(`Scribe cache is cleared for ${this.tenantId}/${this.documentId}`, metaData);
     }
 
     /**

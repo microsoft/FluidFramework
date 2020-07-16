@@ -89,7 +89,11 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary
         // eslint-disable-next-line no-null/no-null
         if (dbObject.deli === undefined || dbObject.deli === null) {
-            context.log.info(`New document. Setting empty deli checkpoint for ${tenantId}/${documentId}`);
+            const metaData = {
+                documentId,
+                tenantId,
+            };
+            context.log.info(`New document. Setting empty deli checkpoint for ${tenantId}/${documentId}`, metaData);
             lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
         } else {
             if (dbObject.deli === "") {
@@ -158,8 +162,12 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     this.summaryCheckpoint = JSON.parse(
                         Buffer.from(content.content, content.encoding).toString()) as IDeliCheckpoint;
                 } catch (exception) {
-                    logger.error(`Error fetching deli state from summary: ${tenantId}/${documentId}`);
-                    logger.error(JSON.stringify(exception));
+                    const metaData = {
+                        documentId,
+                        tenantId,
+                    };
+                    logger.error(`Error fetching deli state from summary: ${tenantId}/${documentId}`, metaData);
+                    logger.error(JSON.stringify(exception), metaData);
                     return undefined;
                 }
             }
@@ -197,7 +205,11 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 newCheckpoint.logOffset = logOffset;
                 // Now create the summary.
                 await this.createSummaryWithLatestTerm(gitManager, newCheckpoint, documentId);
-                logger.info(`Created a summary on epoch tick`);
+                const metaData = {
+                    documentId,
+                    tenantId,
+                };
+                logger.info(`Created a summary on epoch tick`, metaData);
             }
         }
         return newCheckpoint;

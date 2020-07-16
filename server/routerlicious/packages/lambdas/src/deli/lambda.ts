@@ -228,7 +228,11 @@ export class DeliLambda implements IPartitionLambda {
                 this.checkpointContext.checkpoint(checkpoint);
             },
             (error) => {
-                this.context.log.error(`Could not send message to scriptorium: ${JSON.stringify(error)}`);
+                const metaData = {
+                    documentId: this.documentId,
+                    tenantId: this.tenantId,
+                };
+                this.context.log.error(`Could not send message to scriptorium: ${JSON.stringify(error)}`, metaData);
                 this.context.error(error, true);
             });
 
@@ -291,7 +295,11 @@ export class DeliLambda implements IPartitionLambda {
                     }
                     this.canClose = false;
                 } else if (message.operation.type === MessageType.Fork) {
-                    this.context.log.info(`Fork ${message.documentId} -> ${systemContent.name}`);
+                    const metaData = {
+                        documentId: this.documentId,
+                        tenantId: this.tenantId,
+                    };
+                    this.context.log.info(`Fork ${message.documentId} -> ${systemContent.name}`, metaData);
                 }
             } else {
                 // Nack inexistent client.
@@ -480,8 +488,12 @@ export class DeliLambda implements IPartitionLambda {
             sendType = SendType.Never;
             const controlMessage = systemContent as IControlMessage;
             if (controlMessage.type === ControlMessageType.UpdateDSN) {
+                const metaData = {
+                    documentId: this.documentId,
+                    tenantId: this.tenantId,
+                };
                 this.context.log.info(
-                    `Update DSN for ${this.tenantId}/${this.documentId}: ${JSON.stringify(controlMessage)}`);
+                    `Update DSN for ${this.tenantId}/${this.documentId}: ${JSON.stringify(controlMessage)}`, metaData);
                 // TODO: Make specific interface type for controlContents. The schema should be more clear
                 // as we introduce more of these.
                 const controlContent = controlMessage.contents as
@@ -493,7 +505,8 @@ export class DeliLambda implements IPartitionLambda {
                 if (controlContent.clearCache && this.noActiveClients) {
                     instruction = InstructionType.ClearCache;
                     this.canClose = true;
-                    this.context.log.info(`Deli cache will be cleared for ${this.tenantId}/${this.documentId}`);
+                    this.context.log.info(
+                        `Deli cache will be cleared for ${this.tenantId}/${this.documentId}`, metaData);
                 }
                 const dsn = controlContent.durableSequenceNumber;
                 assert(dsn >= this.durableSequenceNumber,
@@ -592,18 +605,21 @@ export class DeliLambda implements IPartitionLambda {
         if (!client) {
             return IncomingMessageOrder.ConsecutiveOrSystem;
         }
-
+        const metaData = {
+            documentId: this.documentId,
+            tenantId: this.tenantId,
+        };
         // Perform duplicate and gap detection - Check that we have a monotonically increasing CID
         const expectedClientSequenceNumber = client.clientSequenceNumber + 1;
         if (clientSequenceNumber === expectedClientSequenceNumber) {
             return IncomingMessageOrder.ConsecutiveOrSystem;
         } else if (clientSequenceNumber > expectedClientSequenceNumber) {
             this.context.log.info(
-                `Gap ${clientId}:${expectedClientSequenceNumber} > ${clientSequenceNumber}`);
+                `Gap ${clientId}:${expectedClientSequenceNumber} > ${clientSequenceNumber}`, metaData);
             return IncomingMessageOrder.Gap;
         } else {
             this.context.log.info(
-                `Duplicate ${clientId}:${expectedClientSequenceNumber} < ${clientSequenceNumber}`);
+                `Duplicate ${clientId}:${expectedClientSequenceNumber} < ${clientSequenceNumber}`, metaData);
             return IncomingMessageOrder.Duplicate;
         }
     }
@@ -615,7 +631,11 @@ export class DeliLambda implements IPartitionLambda {
 
     private sendToAlfred(message: IRawOperationMessage) {
         this.reverseProducer.send([message], message.tenantId, message.documentId).catch((error) => {
-            this.context.log.error(`Could not send message to alfred: ${JSON.stringify(error)}`);
+            const metaData = {
+                documentId: this.documentId,
+                tenantId: this.tenantId,
+            };
+            this.context.log.error(`Could not send message to alfred: ${JSON.stringify(error)}`, metaData);
             this.context.error(error, true);
         });
     }
