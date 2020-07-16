@@ -157,27 +157,58 @@ export class OdspTokenManager {
             }
         }
 
-        const tenant = isPush ? "organizations" : getSharepointTenant(server);
-        const authUrl = `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize?`
-            + `client_id=${clientConfig.clientId}`
-            + `&scope=${scope}`
-            + `&response_type=code`
-            + `&redirect_uri=${odspAuthRedirectUri}`;
+        let tokens: IOdspTokens | undefined;
+        //* Do an actual condition here... and refactor anyway, pull from config, etc.
+        if (tokens === undefined) {
+            tokens = await this.acquireTokensWithPassword(
+                server,
+                scope,
+                clientConfig,
+                "user0@a830edad9050849829E20060408.onmicrosoft.com",
+                "Duga4880",
+            );
+        }
+        else {
+            const tenant = isPush ? "organizations" : getSharepointTenant(server);
+            const authUrl = `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize?`
+                + `client_id=${clientConfig.clientId}`
+                + `&scope=${scope}`
+                + `&response_type=code`
+                + `&redirect_uri=${odspAuthRedirectUri}`;
 
-        const tokens = await this.acquireTokens(
-            authUrl,
-            server,
-            clientConfig,
-            scope,
-            initialNavigator,
-            redirectUriCallback,
-        );
+            tokens = await this.acquireTokens(
+                authUrl,
+                server,
+                clientConfig,
+                scope,
+                initialNavigator,
+                redirectUriCallback,
+            );
+        }
 
         if (this.tokenCache) {
             await this.tokenCache.save(cacheKey, tokens);
         }
 
         return tokens;
+    }
+
+    private async acquireTokensWithPassword(
+        server: string,
+        scope: string,
+        clientConfig: IClientConfig,
+        username: string,
+        password: string,
+    ): Promise<IOdspTokens> {
+        const authParams: AuthParams = {
+            scope,
+            client_id: clientConfig.clientId,
+            client_secret: clientConfig.clientSecret,
+            grant_type: "password",
+            username,
+            password,
+        };
+        return fetchTokens(server, authParams);
     }
 
     private async acquireTokens(
@@ -194,6 +225,7 @@ export class OdspTokenManager {
 
             // get tokens
             //* Better not to crack over clientConfig yet?
+            //* Yeah I think this schema of object belongs only in odspRequest.
             const authParams: AuthParams = {
                 scope,
                 client_id: clientConfig.clientId,
