@@ -80,7 +80,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		});
 
 		this.producer.on("event.throttle", (event) => {
-			this.emit("throttle", event);
+			this.emit("throttled", event);
 		});
 
 		this.producer.connect();

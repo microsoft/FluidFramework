@@ -141,7 +141,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		});
 
 		this.consumer.on("event.throttle", (event) => {
-			this.emit("throttle", event);
+			this.emit("throttled", event);
 		});
 
 		this.consumer.connect();
