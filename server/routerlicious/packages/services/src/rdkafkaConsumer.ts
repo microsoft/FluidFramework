@@ -16,7 +16,7 @@ import { IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private consumer?: kafka.KafkaConsumer;
 	private zooKeeperClient?: ZookeeperClient;
-
+	private closed = false;
 	private isRebalancing = true;
 	private assignedPartitions: Set<number> = new Set();
 	private readonly pendingCommits: Map<number, Deferred<void>> = new Map();
@@ -32,6 +32,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	}
 
 	protected connect() {
+		if (this.closed) {
+			return;
+		}
+
 		const zookeeperEndpoints = this.endpoints.zooKeeper;
 		if (zookeeperEndpoints && zookeeperEndpoints.length > 0) {
 			const zooKeeperEndpoint = zookeeperEndpoints[Math.floor(Math.random() % zookeeperEndpoints.length)];
@@ -66,8 +70,13 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			this.emit("disconnected");
 		});
 
-		this.consumer.on("connection.failure", (error) => {
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		this.consumer.on("connection.failure", async (error) => {
+			await this.close(true);
+
 			this.emit("error", error);
+
+			this.connect();
 		});
 
 		this.consumer.on("data", (message: kafka.Message) => {
@@ -147,11 +156,17 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		this.consumer.connect();
 	}
 
-	public async close(): Promise<void> {
+	public async close(reconnecting: boolean = false): Promise<void> {
+		if (!reconnecting) {
+			// when closed outside of this class, disable reconnecting
+			this.closed = true;
+		}
+
 		await new Promise((resolve) => {
-			if (this.consumer && this.consumer.isConnected()) {
-				this.consumer.disconnect(resolve);
-				this.consumer = undefined;
+			const consumer = this.consumer;
+			this.consumer = undefined;
+			if (consumer && consumer.isConnected()) {
+				consumer.disconnect(resolve);
 			} else {
 				resolve();
 			}

@@ -19,6 +19,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	private sendPending?: NodeJS.Immediate;
 	private connecting = false;
 	private connected = false;
+	private closed = false;
 
 	constructor(
 		endpoints: IKafkaEndpoints,
@@ -35,8 +36,8 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	 * Creates a connection to Kafka. Will reconnect on failure.
 	 */
 	protected connect() {
-		// Exit out if we are already connected or are in the process of connecting
-		if (this.connected || this.connecting) {
+		// Exit out if we are already connected, are in the process of connecting, or closed
+		if (this.connected || this.connecting || this.closed) {
 			return;
 		}
 
@@ -88,11 +89,19 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		this.producer.setPollInterval(this.pollIntervalMs);
 	}
 
-	public async close(): Promise<void> {
+	public async close(reconnecting: boolean = false): Promise<void> {
+		if (!reconnecting) {
+			// when closed outside of this class, disable reconnecting
+			this.closed = true;
+		}
+
+		this.connecting = this.connected = false;
+
 		await new Promise((resolve) => {
-			if (this.producer && this.producer.isConnected()) {
-				this.producer.disconnect(resolve);
-				this.producer = undefined;
+			const producer = this.producer;
+			this.producer = undefined;
+			if (producer && producer.isConnected()) {
+				producer.disconnect(resolve);
 			} else {
 				resolve();
 			}
@@ -217,10 +226,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	 * Handles an error that requires a reconnect to Kafka
 	 */
 	private async handleError(error: any) {
-		// Close the client if it exists
-		await this.close();
-
-		this.connecting = this.connected = false;
+		await this.close(true);
 
 		this.emit("error", error);
 
