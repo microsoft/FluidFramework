@@ -82,4 +82,37 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             Buffer.from(snapshotTree.trees.default.blobs[defaultComponentBlobId], "base64").toString());
         assert.strictEqual(componentAttributes.pkg, JSON.stringify(["default"]), "Package name should be default");
     });
+
+    it("Dehydrated container snapshot 2 times with changes in between", async () => {
+        const { container, defaultComponent } =
+            await createDetachedContainerAndGetRootComponent();
+        const snapshotTree1 = JSON.parse(container.serialize());
+        // Create a channel
+        const channel = defaultComponent.runtime.createChannel("test1",
+            "https://graph.microsoft.com/types/map") as SharedMap;
+        channel.bindToContext();
+        const snapshotTree2 = JSON.parse(container.serialize());
+
+        assert.strictEqual(JSON.stringify(Object.keys(snapshotTree1.trees)),
+            JSON.stringify(Object.keys(snapshotTree2.trees)),
+            "3 trees should be there(protocol, default component, scheduler");
+
+        // Check for protocol attributes
+        const protocolAttributesBlobId1 = snapshotTree1.trees[".protocol"].blobs[".attributes"];
+        const protocolAttributesBlobId2 = snapshotTree2.trees[".protocol"].blobs[".attributes"];
+        const protocolAttributes1: IDocumentAttributes =
+            JSON.parse(Buffer.from(snapshotTree1.trees[".protocol"].blobs[protocolAttributesBlobId1],
+            "base64").toString());
+        const protocolAttributes2: IDocumentAttributes =
+            JSON.parse(Buffer.from(snapshotTree2.trees[".protocol"].blobs[protocolAttributesBlobId2],
+            "base64").toString());
+        assert.strictEqual(JSON.stringify(protocolAttributes1), JSON.stringify(protocolAttributes2),
+            "Protocol attributes should be same as no change happened");
+
+        // Check for newly create channel
+        assert.strictEqual(snapshotTree1.trees.default.trees.test1, undefined,
+            "Test channel 1 should not be present in snapshot 1");
+        assert(snapshotTree2.trees.default.trees.test1,
+            "Test channel 1 should be present in snapshot 2");
+    });
 });
