@@ -15,7 +15,7 @@ import { PendingBoxcar, MaxBatchSize } from "./pendingBoxcar";
  */
 export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	private readonly messages = new Map<string, IPendingBoxcar[]>();
-	private producer?: kafka.Producer;
+	private producer?: kafka.HighLevelProducer;
 	private sendPending?: NodeJS.Immediate;
 	private connecting = false;
 	private connected = false;
@@ -42,7 +42,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		this.connecting = true;
 
-		this.producer = new kafka.Producer({
+		this.producer = new kafka.HighLevelProducer({
 			"metadata.broker.list": this.endpoints.kafka.join(","),
 			"socket.keepalive.enable": true,
 			"socket.nagle.disable": true,
@@ -51,7 +51,6 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			"queue.buffering.max.messages": 100000,
 			"queue.buffering.max.ms": 0.5,
 			"batch.num.messages": 10000,
-			"dr_cb": true,
 		});
 
 		this.producer.on("ready", () => {
@@ -70,9 +69,18 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			this.emit("disconnected");
 		});
 
+		this.producer.on("connection.failure", (error) => {
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this.handleError(error);
+		});
+
 		this.producer.on("event.error", (error) => {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.handleError(error);
+		});
+
+		this.producer.on("event.throttle", (event) => {
+			this.emit("throttle", event);
 		});
 
 		this.producer.connect();
@@ -182,12 +190,23 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 					null, // partition - consistent random for keyed messages
 					message, // message
 					boxcar.documentId, // key
+					undefined, // timestamp
+					(err: any, offset?: number) => {
+						if (err) {
+							boxcar.deferred.reject(err);
+
+							// eslint-disable-next-line @typescript-eslint/no-floating-promises
+							this.handleError(err);
+
+						} else {
+							boxcar.deferred.resolve();
+							this.emit("produced", boxcarMessage, offset);
+						}
+					},
 				);
 
-				boxcar.deferred.resolve();
-
-				this.emit("produced", boxcarMessage);
 			} catch (ex) {
+				// produce can throw if the outgoing message queue is full
 				boxcar.deferred.reject(ex);
 
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises

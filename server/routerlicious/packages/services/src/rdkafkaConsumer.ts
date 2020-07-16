@@ -66,6 +66,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			this.emit("disconnected");
 		});
 
+		this.consumer.on("connection.failure", (error) => {
+			this.emit("error", error);
+		});
+
 		this.consumer.on("data", (message: kafka.Message) => {
 			this.emit("data", message as IQueuedMessage);
 		});
@@ -134,6 +138,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 		this.consumer.on("event.error", (error) => {
 			this.emit("error", error);
+		});
+
+		this.consumer.on("event.throttle", (event) => {
+			this.emit("throttle", event);
 		});
 
 		this.consumer.connect();
