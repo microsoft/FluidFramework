@@ -10,6 +10,10 @@ This is the base level FluidReactComponent that offers a synced view state and a
 
 This is analagous to the React component but as a functional hook. Users can similarly use the returned setState callback to perform synced updates to both their local and synced states.
 
+## syncedObject
+
+This folder contains DDS specific hooks for setting state on a SharedMap and powering views using a the SharedMap to generate a synced state that can be powered by DDS' such as SharedCounters, SharedObjectSequences, and SharedStrings.
+
 ## useReducerFluid
 
 This is the hook of choice for larger-scale applications that require more complex mutations, need to work with multiple Fluid components, and need to have a division between data and view models. Here, instead of having only the view state to manipulate, users have both the view state and the fluid state, with the former containing primitives used for rendering and the latter containing Fluid components to manipulate data in a synced manner. This hook also introduces the concept of a local FluidComponentMap that stores and listens to changes on already fetched components.

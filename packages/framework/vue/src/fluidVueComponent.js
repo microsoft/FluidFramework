@@ -15,6 +15,7 @@ import { FluidReactComponent, getFluidState } from "@fluidframework/react";
 // 1) It is *very* efficient at calculating prop differences, allowing DDS changes to be quickly diffed before
 // being passed as props to other view frameworks. We are also not copying the DDS again but instead passing its
 // reference from the Fluid state is returned by getFluidState, so we shouldn't be increasing memory usage.
+// 2) ReactDOM.render handles dependency installation. One of the biggest roadblocks I faced was how to
 // 2) React is the smallest library of the three major UI frameworks by a good margin, and its package footprint is
 // much smaller than Fluid itself. Ref: https://bit.ly/3fuA0bF
 // 3) While it is still additional code over vanilla JS, the React view framework also provides view lifecycle methods

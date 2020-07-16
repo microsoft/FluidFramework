@@ -9,7 +9,7 @@ import {
 } from "@fluidframework/aqueduct";
 // TODO: Move SyncedComponent to its own package to avoid a dependency on the ff/react package
 // This is the only remaining mention of "react" in here
-import { SyncedComponent } from "@fluidframework/react";
+import { SyncedComponent, setSyncedCounterConfig } from "@fluidframework/react";
 import { SharedCounter } from "@fluidframework/counter";
 import { renderVue } from "@fluidframework/vue";
 import Component from "vue-class-component";
@@ -43,35 +43,13 @@ export class CounterVue extends VueProps {
     }
 }
 
-// The state definition powering the Vue view component. This is defined in SyncedComponent
-// by the setConfig call in the constructor
-interface ICounterState {
-    counter?: SharedCounter;
-}
-
 /**
  * Basic ClickerVue example showing Clicker as a React Vue component
  */
 export class ClickerVue extends SyncedComponent {
     constructor(props) {
         super(props);
-        this.setConfig<ICounterState>(
-            "clicker-vue",
-            {
-                syncedStateId: "clicker-vue",
-                fluidToView:  new Map([
-                    [
-                        "counter", {
-                            type: SharedCounter.name,
-                            viewKey: "counter",
-                            sharedObjectCreate: SharedCounter.create,
-                            listenedEvents: ["incremented"],
-                        },
-                    ],
-                ]),
-                defaultViewState: {},
-            },
-        );
+        setSyncedCounterConfig(this, "clicker-vue", 0);
     }
 
     /**

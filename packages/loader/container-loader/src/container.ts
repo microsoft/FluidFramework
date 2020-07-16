@@ -21,6 +21,7 @@ import {
     IDeltaManager,
     IFluidCodeDetails,
     IGenericBlob,
+    ILoader,
     IRuntimeFactory,
     LoaderHeader,
     IRuntimeState,
@@ -94,7 +95,7 @@ import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
 import { pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
-import { parseUrl } from "./utils";
+import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -134,7 +135,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         codeLoader: ICodeLoader,
         options: any,
         scope: IComponent & IFluidObject,
-        loader: Loader,
+        loader: ILoader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
         urlResolver: IUrlResolver,
@@ -358,7 +359,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         public readonly options: any,
         private readonly scope: IComponent & IFluidObject,
         private readonly codeLoader: ICodeLoader,
-        private readonly loader: Loader,
+        private readonly loader: ILoader,
         private readonly serviceFactory: IDocumentServiceFactory,
         private readonly urlResolver: IUrlResolver,
         config: IContainerConfig,
@@ -459,6 +460,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public get attachState(): AttachState {
         return this._attachState;
+    }
+
+    public serialize(): string {
+        if (!this.context) {
+            throw new Error("Context is undefined");
+        }
+
+        assert(this.attachState === AttachState.Detached, "Should only be called in detached container");
+
+        const appSummary: ISummaryTree = this.context.createSummary();
+        if (!this.protocolHandler) {
+            throw new Error("Protocol Handler is undefined");
+        }
+        const protocolSummary = this.protocolHandler.captureSummary();
+        const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(protocolSummary, appSummary);
+        return JSON.stringify(snapshotTree);
     }
 
     public async attach(request: IRequest): Promise<void> {

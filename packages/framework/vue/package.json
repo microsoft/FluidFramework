@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/vue",
-  "version": "0.22.0",
+  "version": "0.23.0",
   "description": "Base components and hooks for building Fluid Vue components",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -34,7 +34,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/react": "^0.22.0",
+    "@fluidframework/react": "^0.23.0",
     "prop-types": "^15.7.2",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
@@ -47,7 +47,7 @@
     "@babel/preset-react": "^7.10.4",
     "@babel/runtime": "^7.10.4",
     "@fluidframework/build-common": "^0.18.0",
-    "@fluidframework/webpack-component-loader": "^0.22.0",
+    "@fluidframework/webpack-component-loader": "^0.23.0",
     "@microsoft/eslint-config-fluid": "^0.16.0",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",

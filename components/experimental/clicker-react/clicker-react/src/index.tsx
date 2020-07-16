@@ -88,7 +88,7 @@ class CounterReactView extends FluidReactComponent<CounterViewState, CounterFlui
 
 // ----- FACTORY SETUP -----
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
-    "clicker-react",
+    "clicker",
     Clicker,
     [SharedCounter.getFactory()],
     {},

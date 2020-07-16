@@ -10,3 +10,4 @@ export * from "./createContextFluid";
 export * from "./interface";
 export * from "./fluidComponent";
 export { getFluidState } from "./helpers";
+export * from "./syncedObjects";
