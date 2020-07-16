@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export * from "./documentEventManager";
 export * from "./interfaces";
 export * from "./localLoader";
 export * from "./localCodeLoader";
+export * from "./opProcessingController";
 export * from "./testFluidComponent";

@@ -7,7 +7,7 @@ import * as api from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDatabaseManager } from "@fluidframework/server-services-core";
 
-export class TestDeltaStorageService implements api.IDocumentDeltaStorageService {
+export class LocalDeltaStorageService implements api.IDocumentDeltaStorageService {
     constructor(
         private readonly tenantId: string,
         private readonly id: string,

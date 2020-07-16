@@ -5,11 +5,11 @@
 
 import assert from "assert";
 import { IRequest } from "@fluidframework/component-core-interfaces";
-import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
@@ -67,7 +67,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             [mapId2, SharedMap.getFactory()],
         ]);
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-        const documentServiceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
+        const documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
         return new Loader(
             urlResolver,
             documentServiceFactory,
@@ -79,7 +79,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
     beforeEach(async () => {
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        const urlResolver = new TestResolver();
+        const urlResolver = new LocalResolver();
         request = urlResolver.createCreateNewRequest(documentId);
         loader = createTestLoader(urlResolver);
     });
@@ -488,6 +488,164 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
                 "Component 4 should have get bound");
             assert.strictEqual(channel1OfComponent4.isAttached(), true, "Test Channel 14 should be bound");
         });
+
+    it("Attach events on container", async () => {
+        const { container } =
+            await createDetachedContainerAndGetRootComponent();
+        let containerAttachState = AttachState.Detached;
+        container.on("attaching", () => {
+            assert.strictEqual(containerAttachState, AttachState.Detached, "Should be fire from Detached state");
+            assert.strictEqual(container.attachState, AttachState.Attaching,
+                "Container should be attaching at this stage");
+            containerAttachState = AttachState.Attaching;
+        });
+        container.on("attached", () => {
+            assert.strictEqual(containerAttachState, AttachState.Attaching, "Should be fire from attaching state");
+            assert.strictEqual(container.attachState, AttachState.Attached,
+                "Container should be attached at this stage");
+            containerAttachState = AttachState.Attached;
+        });
+        await container.attach(request);
+        assert.strictEqual(containerAttachState, AttachState.Attached,"Container should end up in attached state");
+    });
+
+    it("Attach events on components", async () => {
+        const { container, defaultComponent } =
+            await createDetachedContainerAndGetRootComponent();
+        let componentContextAttachState = AttachState.Detached;
+        let componentRuntimeAttachState = AttachState.Detached;
+        defaultComponent.context.on("attaching", () => {
+            assert.strictEqual(componentContextAttachState, AttachState.Detached,
+                "Should be fire from Detached state for context");
+            assert.strictEqual(defaultComponent.context.attachState, AttachState.Attaching,
+                "Component context should be attaching at this stage");
+            componentContextAttachState = AttachState.Attaching;
+        });
+
+        defaultComponent.context.on("attached", () => {
+            assert.strictEqual(componentContextAttachState, AttachState.Attaching,
+                "Should be fire from attaching state for context");
+            assert.strictEqual(defaultComponent.context.attachState, AttachState.Attached,
+                "Component context should be attached at this stage");
+            componentContextAttachState = AttachState.Attached;
+        });
+
+        defaultComponent.runtime.on("attaching", () => {
+            // This should be true after back-compat removal related to "attaching" event in component runtime
+            // assert.strictEqual(componentRuntimeAttachState, AttachState.Detached,
+            //     "Should be fire from Detached state for runtime");
+            // assert.strictEqual(defaultComponent.runtime.attachState, AttachState.Attaching,
+            //     "Component runtime should be attaching at this stage");
+            componentRuntimeAttachState = AttachState.Attaching;
+        });
+
+        defaultComponent.runtime.on("attached", () => {
+            assert.strictEqual(componentRuntimeAttachState, AttachState.Attaching,
+                "Should be fire from attaching state for runtime");
+            assert.strictEqual(defaultComponent.runtime.attachState, AttachState.Attached,
+                "Component runtime should be attached at this stage");
+            componentRuntimeAttachState = AttachState.Attached;
+        });
+        await container.attach(request);
+        assert.strictEqual(componentContextAttachState, AttachState.Attached,
+            "Component context should end up in attached state");
+        assert.strictEqual(componentRuntimeAttachState, AttachState.Attached,
+            "Component runtime should end up in attached state");
+    });
+
+    it("Attach events on not bounded components", async () => {
+        const { container, defaultComponent } =
+            await createDetachedContainerAndGetRootComponent();
+        const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
+        const component1 = peerComponent1.peerComponent as TestFluidComponent;
+        peerComponent1.peerComponentRuntimeChannel.bindToContext();
+
+        const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
+        const component2 = peerComponent2.peerComponent as TestFluidComponent;
+
+        let component1AttachState = AttachState.Detached;
+        component1.context.on("attaching", () => {
+            assert.strictEqual(component1AttachState, AttachState.Detached,
+                "Should be fire from Detached state for context");
+            assert.strictEqual(component1.context.attachState, AttachState.Attaching,
+                "Component context should be attaching at this stage");
+            component1AttachState = AttachState.Attaching;
+        });
+
+        component1.context.on("attached", () => {
+            assert.strictEqual(component1AttachState, AttachState.Attaching,
+                "Should be fire from attaching state for context");
+            assert.strictEqual(component1.context.attachState, AttachState.Attached,
+                "Component context should be attached at this stage");
+            component1AttachState = AttachState.Attached;
+        });
+
+        component2.context.on("attaching", () => {
+            assert.fail("Attaching event should not be fired for not bounded context");
+        });
+
+        component2.context.on("attached", () => {
+            assert.fail("Attached event should not be fired for not bounded context");
+        });
+        await container.attach(request);
+        assert.strictEqual(component1.runtime.attachState, AttachState.Attached,
+            "Component 1 should end up in attached state");
+        assert.strictEqual(component2.runtime.attachState, AttachState.Detached,
+            "Component 2 should end up in detached state as it was not bound");
+    });
+
+    it("Attach events on handle bounded components", async () => {
+        const { container, defaultComponent } =
+            await createDetachedContainerAndGetRootComponent();
+        const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
+        const component1 = peerComponent1.peerComponent as TestFluidComponent;
+        peerComponent1.peerComponentRuntimeChannel.bindToContext();
+
+        const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
+        const component2 = peerComponent2.peerComponent as TestFluidComponent;
+
+        const rootMapOfComponent1 = await component1.getSharedObject<SharedMap>(mapId1);
+        rootMapOfComponent1.set("comp2", component2.handle);
+
+        let component1AttachState = AttachState.Detached;
+        let component2AttachState = AttachState.Detached;
+        component1.context.on("attaching", () => {
+            assert.strictEqual(component1AttachState, AttachState.Detached,
+                "Should be fire from Detached state for context");
+            assert.strictEqual(component1.context.attachState, AttachState.Attaching,
+                "Component context should be attaching at this stage");
+            component1AttachState = AttachState.Attaching;
+        });
+
+        component1.context.on("attached", () => {
+            assert.strictEqual(component1AttachState, AttachState.Attaching,
+                "Should be fire from attaching state for context");
+            assert.strictEqual(component1.context.attachState, AttachState.Attached,
+                "Component context should be attached at this stage");
+            component1AttachState = AttachState.Attached;
+        });
+
+        component2.context.on("attaching", () => {
+            assert.strictEqual(component2AttachState, AttachState.Detached,
+                "Should be fire from Detached state for context");
+            assert.strictEqual(component2.context.attachState, AttachState.Attaching,
+                "Component context should be attaching at this stage");
+            component2AttachState = AttachState.Attaching;
+        });
+
+        component2.context.on("attached", () => {
+            assert.strictEqual(component2AttachState, AttachState.Attaching,
+                "Should be fire from attaching state for context");
+            assert.strictEqual(component2.context.attachState, AttachState.Attached,
+                "Component context should be attached at this stage");
+            component2AttachState = AttachState.Attached;
+        });
+        await container.attach(request);
+        assert.strictEqual(component1.runtime.attachState, AttachState.Attached,
+            "Component 1 should end up in attached state");
+        assert.strictEqual(component2.runtime.attachState, AttachState.Attached,
+            "Component 2 should end up in attached state as its handle was stored in map of bound component");
+    });
 
     afterEach(async () => {
         await testDeltaConnectionServer.webSocketServer.close();

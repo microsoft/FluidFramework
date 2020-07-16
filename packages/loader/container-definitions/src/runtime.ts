@@ -9,12 +9,12 @@ import {
     IComponentConfiguration,
     IRequest,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     ConnectionState,
     IClientDetails,
-    IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -26,9 +26,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
-import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { ICodeLoader, ILoader } from "./loader";
+import { IMessageScheduler } from "./messageScheduler";
 
 // Represents the attachment state of the entity.
 export enum AttachState {
@@ -42,97 +42,6 @@ export enum BindState {
     NotBound = "NotBound",
     Binding = "Binding",
     Bound = "Bound",
-}
-
-/**
- * Person definition in a npm script
- */
-export interface IPerson {
-    name: string;
-    email: string;
-    url: string;
-}
-
-/**
- * Typescript interface definition for fields within a npm module's package.json.
- */
-export interface IPackage {
-    // General access for extended fields
-    [key: string]: any;
-    name: string;
-    version: string;
-    description?: string;
-    keywords?: string[];
-    homepage?: string;
-    bugs?: { url: string; email: string };
-    license?: string;
-    author?: IPerson;
-    contributors?: IPerson[];
-    files?: string[];
-    main?: string;
-    // Same as main but for browser based clients (check if webpack supports this)
-    browser?: string;
-    bin?: { [key: string]: string };
-    man?: string | string[];
-    repository?: string | { type: string; url: string };
-    scripts?: { [key: string]: string };
-    config?: { [key: string]: string };
-    dependencies?: { [key: string]: string };
-    devDependencies?: { [key: string]: string };
-    peerDependencies?: { [key: string]: string };
-    bundledDependencies?: { [key: string]: string };
-    optionalDependencies?: { [key: string]: string };
-    engines?: { node: string; npm: string };
-    os?: string[];
-    cpu?: string[];
-    private?: boolean;
-}
-
-export interface IFluidPackage extends IPackage {
-    // https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid
-    fluid: {
-        browser: {
-            [libraryTarget: string]: {
-                // List of bundled JS files. Absolute URLs will be loaded directly. Relative paths will be specific
-                // to the CDN location
-                files: string[];
-
-                // If libraryTarget is umd then library is the global name that the script entry points will be exposed
-                // under. Other target formats may choose to reinterpret this value.
-                library: string;
-            };
-        };
-    };
-}
-
-/**
- * Check if the package.json defines a fluid module, which requires a `fluid` entry
- * @param pkg - the package json data to check if it is a fluid package.
- */
-export const isFluidPackage = (pkg: IPackage): pkg is IFluidPackage =>
-    pkg.fluid?.browser?.umd !== undefined;
-
-/**
- * Package manager configuration. Provides a key value mapping of config values
- */
-export interface IPackageConfig {
-    [key: string]: string;
-}
-
-/**
- * Data structure used to describe the code to load on the Fluid document
- */
-export interface IFluidCodeDetails {
-    /**
-     * The code package to be used on the Fluid document. This is either the package name which will be loaded
-     * from a package manager. Or the expanded fluid package.
-     */
-    package: string | IFluidPackage;
-
-    /**
-     * Configuration details. This includes links to the package manager and base CDNs.
-     */
-    config: IPackageConfig;
 }
 
 export interface IRuntimeState {
@@ -183,19 +92,15 @@ export interface IRuntime extends IDisposable {
     processSignal(message: any, local: boolean);
 
     createSummary(): ISummaryTree;
+
+    /**
+     * Propagate the container state when container is attaching or attached.
+     * @param attachState - State of the container.
+     */
+    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 }
 
-export interface IMessageScheduler {
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-}
-
-export const IMessageScheduler: keyof IProvideMessageScheduler = "IMessageScheduler";
-
-export interface IProvideMessageScheduler {
-    readonly IMessageScheduler: IMessageScheduler;
-}
-
-export interface IContainerContext extends IMessageScheduler, IProvideMessageScheduler, IDisposable {
+export interface IContainerContext extends IMessageScheduler, IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;
@@ -224,7 +129,7 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IComponent;
+    readonly scope: IComponent & IFluidObject;
 
     raiseContainerWarning(warning: ContainerWarning): void;
     requestSnapshot(tagMessage: string): Promise<void>;
@@ -236,7 +141,7 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
      *
      * TODO: Optional for backwards compatibility. Make non-optional in version 0.19
      */
-    getAbsoluteUrl?(relativeUrl: string): Promise<string>;
+    getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
 
     /**
      * Indicates the attachment state of the container to a host service.
@@ -246,20 +151,6 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
     getLoadedFromVersion(): IVersion | undefined;
 
     createSummary(): ISummaryTree;
-}
-
-export const IComponentTokenProvider: keyof IProvideComponentTokenProvider = "IComponentTokenProvider";
-
-export interface IProvideComponentTokenProvider {
-    readonly IComponentTokenProvider: IComponentTokenProvider;
-}
-
-export interface IComponentTokenProvider extends IProvideComponentTokenProvider {
-    intelligence: { [service: string]: any };
-}
-
-export interface IFluidModule {
-    fluidExport: IComponent;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
@@ -276,12 +167,3 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
      */
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 }
-
-declare module "@fluidframework/component-core-interfaces" {
-    /* eslint-disable @typescript-eslint/no-empty-interface */
-    export interface IComponent extends Readonly<Partial<
-        IProvideRuntimeFactory &
-        IProvideComponentTokenProvider &
-        IProvideMessageScheduler>> { }
-}
-    /* eslint-enable @typescript-eslint/no-empty-interface */

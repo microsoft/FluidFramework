@@ -9,12 +9,12 @@ import * as socketStorage from "@fluidframework/routerlicious-driver";
 import { GitManager } from "@fluidframework/server-services-client";
 import { TestHistorian } from "@fluidframework/server-test-utils";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { TestDeltaStorageService, TestDocumentDeltaConnection } from "./";
+import { LocalDeltaStorageService, LocalDocumentDeltaConnection } from ".";
 
 /**
- * Basic implementation of a document service for testing.
+ * Basic implementation of a document service for local use.
  */
-export class TestDocumentService implements api.IDocumentService {
+export class LocalDocumentService implements api.IDocumentService {
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
      * @param tokenProvider - token provider with a single token
@@ -27,11 +27,11 @@ export class TestDocumentService implements api.IDocumentService {
         private readonly tokenProvider: socketStorage.TokenProvider,
         private readonly tenantId: string,
         private readonly documentId: string,
-        private readonly documentDeltaConnectionsMap: Map<string, TestDocumentDeltaConnection>,
+        private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
     ) { }
 
     /**
-     * Creates and returns a document storage service for testing.
+     * Creates and returns a document storage service for local use.
      */
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
         return new socketStorage.DocumentStorageService(this.documentId,
@@ -39,22 +39,22 @@ export class TestDocumentService implements api.IDocumentService {
     }
 
     /**
-     * Creates and returns a delta storage service for testing.
+     * Creates and returns a delta storage service for local use.
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
-        return new TestDeltaStorageService(
+        return new LocalDeltaStorageService(
             this.tenantId,
             this.documentId,
             this.localDeltaConnectionServer.databaseManager);
     }
 
     /**
-     * Creates and returns a delta stream for testing.
+     * Creates and returns a delta stream for local use.
      * @param client - client data
      */
     public async connectToDeltaStream(
         client: IClient): Promise<api.IDocumentDeltaConnection> {
-        const documentDeltaConnection = await TestDocumentDeltaConnection.create(
+        const documentDeltaConnection = await LocalDocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,
             this.tokenProvider.token,
@@ -91,20 +91,20 @@ export class TestDocumentService implements api.IDocumentService {
 }
 
 /**
- * Creates and returns a document service for testing.
+ * Creates and returns a document service for local use.
  * @param localDeltaConnectionServer - delta connection server for ops
  * @param tokenProvider - token provider with a single token
  * @param tenantId - ID of tenant
  * @param documentId - ID of document
  */
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function createTestDocumentService(
+export function createLocalDocumentService(
     resolvedUrl: api.IResolvedUrl,
     localDeltaConnectionServer: ILocalDeltaConnectionServer,
     tokenProvider: socketStorage.TokenProvider,
     tenantId: string,
     documentId: string,
-    documentDeltaConnectionsMap: Map<string, TestDocumentDeltaConnection>): api.IDocumentService {
-    return new TestDocumentService(
+    documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>): api.IDocumentService {
+    return new LocalDocumentService(
         resolvedUrl, localDeltaConnectionServer, tokenProvider, tenantId, documentId, documentDeltaConnectionsMap);
 }

@@ -4,14 +4,15 @@
  */
 
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
-import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
+import { IComponentLastEditedTracker } from "./legacy";
+import { IFluidLastEditedTracker, ILastEditDetails } from "./interfaces";
 
 /**
  * Tracks the last edit details such as the last edited user details and the last edited timestamp. The last edited
  * details should be updated (via updateLastEditDetails) in response to a remote op since it uses shared summary block
  * as storage.
  */
-export class LastEditedTracker implements IComponentLastEditedTracker {
+export class LastEditedTracker implements IComponentLastEditedTracker, IFluidLastEditedTracker {
     private readonly lastEditedDetailsKey = "lastEditDetailsKey";
 
     /**
@@ -21,6 +22,10 @@ export class LastEditedTracker implements IComponentLastEditedTracker {
     constructor(private readonly sharedSummaryBlock: SharedSummaryBlock) { }
 
     public get IComponentLastEditedTracker() {
+        return this;
+    }
+
+    public get IFluidLastEditedTracker() {
         return this;
     }
 
