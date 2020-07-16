@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { initializeContainerCode } from "@fluidframework/base-host";
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
     IFluidModule,
@@ -12,8 +13,9 @@ import {
     IResolvedFluidCodeDetails,
     isFluidPackage,
 } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { Container, Loader } from "@fluidframework/container-loader";
 import {
+    IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
@@ -24,7 +26,6 @@ import { extractPackageIdentifierDetails, WebCodeLoader } from "@fluidframework/
 import jwt from "jsonwebtoken";
 // eslint-disable-next-line import/no-internal-modules
 import uuid from "uuid/v4";
-import { BaseHost } from "./host";
 
 // URLResolver knows how to get the URLs to the service to use for a given request, in this case Tinylicious.
 // Since we're passing the documentId in the constructor it can't be reused for multiple documents, but this way it
@@ -88,6 +89,42 @@ class WebpackCodeResolver implements IFluidCodeResolver {
     }
 }
 
+class BaseHost {
+    private readonly loader: Loader;
+    public constructor(
+        urlResolver: IUrlResolver,
+        documentServiceFactory: IDocumentServiceFactory,
+        codeLoader: WebCodeLoader,
+    ) {
+        this.loader = new Loader(
+            urlResolver,
+            documentServiceFactory,
+            codeLoader,
+            { blockUpdateMarkers: true },
+            {},
+            new Map());
+    }
+
+    public async initializeContainer(url: string, codeDetails?: IFluidCodeDetails) {
+        const container = await this.loader.resolve({ url });
+
+        // if a package is provided, try to initialize the code proposal with it
+        // if not we assume the container already has a code proposal
+        if (codeDetails !== undefined) {
+            await initializeContainerCode(container, codeDetails)
+                .catch((error) => console.error("code proposal error", error));
+        }
+
+        // If we're loading from ops, the context might be in the middle of reloading.  Check for that case and wait
+        // for the contextChanged event to avoid returning before that reload completes.
+        if (container.hasNullRuntime()) {
+            await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
+        }
+
+        return container;
+    }
+}
+
 export async function getTinyliciousContainer(
     documentId: string,
     packageJson: IFluidPackage,
@@ -101,7 +138,6 @@ export async function getTinyliciousContainer(
         undefined,
     );
 
-    // Construct a request
     const urlResolver = new InsecureTinyliciousUrlResolver(documentId);
 
     const codeResolver = new WebpackCodeResolver();
@@ -111,9 +147,11 @@ export async function getTinyliciousContainer(
         package: packageJson,
         config: {},
     };
-    // Optionally, we could seed the codeLoader with a module we loaded ourselves.  I'm choosing not to here to verify
-    // that dynamic code loading works as expected.
-    // await codeLoader.seedModule(codeDetails, fluidModule);
+    // Optionally, we can seed the codeLoader with a module we loaded ourselves.  If we don't seed, the codeLoader
+    // is supposed to bring it in.
+    if (fluidModule !== undefined) {
+        await codeLoader.seedModule(codeDetails, fluidModule);
+    }
 
     const baseHost = new BaseHost(
         urlResolver,
