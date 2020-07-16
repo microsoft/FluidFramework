@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { globals } from "../jest.config";
+// import { globals } from "../jest.config";
 
 // Tests disabled -- requires Tinylicious to be running, which our test environment doesn't do.
 describe("diceRoller", () => {
+    it("Runs this test", () => {});
     // beforeAll(async () => {
     //     // Wait for the page to load first before running any tests
     //     // so this time isn't attributed to the first test
