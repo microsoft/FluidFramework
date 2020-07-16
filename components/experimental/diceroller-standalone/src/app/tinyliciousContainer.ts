@@ -23,8 +23,7 @@ import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
 import { extractPackageIdentifierDetails, WebCodeLoader } from "@fluidframework/web-code-loader";
 import jwt from "jsonwebtoken";
-// eslint-disable-next-line import/no-internal-modules
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 
 // URLResolver knows how to get the URLs to the service to use for a given request, in this case Tinylicious.
 // Since we're passing the documentId in the constructor it can't be reused for multiple documents, but this way it
@@ -69,7 +68,7 @@ class InsecureTinyliciousUrlResolver implements IUrlResolver {
 }
 
 // The code resolver's job is basically to take a list of relative URLs (embedded in the IFluidCodeDetails) and
-// convert them URLs that will find the correct scripts relative to the app (which is the context in which the code
+// convert them to URLs that will find the correct scripts relative to the app (which is the context in which the code
 // will be loaded).  So maybe the URLs can stay relative, or maybe they'll be converted to absolute URLs against a
 // base URL (like a CDN or something).  In this case, we assume any relative URLs are hosted from the same server
 // running the app, and as a result none of the relative URLs need to be converted.
@@ -135,8 +134,7 @@ export async function getTinyliciousContainer(
     const url = window.location.href;
     const container = await loader.resolve({ url });
 
-    await initializeContainerCode(container, codeDetails)
-        .catch((error) => console.error("code proposal error", error));
+    await initializeContainerCode(container, codeDetails);
 
     // If we're loading from ops, the context might be in the middle of reloading.  Check for that case and wait
     // for the contextChanged event to avoid returning before that reload completes.

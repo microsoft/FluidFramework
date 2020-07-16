@@ -10,11 +10,11 @@ If you want to run this container follow the following steps:
 
 ### Start Tinylicious
 
-Go to /server/tinylicious and follow the instructions there to start the Tinylicious server.
+Go to [/server/tinylicious](/server/tinylicious) and follow the instructions there to start the Tinylicious server.
 
 ### Start the app server
 
-1. Run `npm install` from the `FluidFramework` root directory
+1. Run `npm install` and `npm run build:fast` from the `FluidFramework` root directory
 2. Navigate to this directory
 3. Run `npm run start`
 
