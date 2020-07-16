@@ -5,12 +5,8 @@
 
 import Axios, { AxiosResponse, AxiosRequestConfig } from "axios";
 import {
-    IClientConfig,
-    IOdspTokens,
-    AuthParams,
-    getOdspScope,
-    pushScope,
-    getFetchTokenUrl,
+    IOdspAuthRequestInfo,
+    authRequestWithRetry,
 } from "./odspAuth";
 
 export interface IRequestResult {
@@ -20,45 +16,6 @@ export interface IRequestResult {
 }
 
 export type RequestResultError = Error & { requestResult?: IRequestResult };
-
-// Note: This may be renamed back to getOdspRefreshTokenFn once Gateway updates to 0.23 or later
-// and imports getOdspRefreshTokenWithSideEffectFn instead of getOdspRefreshTokenFn
-export const getOdspRefreshTokenNoSideEffectFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
-    getRefreshTokenFn(getOdspScope(server), server, clientConfig, tokens);
-export const getPushRefreshTokenFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
-    getRefreshTokenFn(pushScope, server, clientConfig, tokens);
-export const getRefreshTokenFn = (scope: string, server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
-    async () => {
-        const authParams: AuthParams = {
-            scope,
-            client_id: clientConfig.clientId,
-            client_secret: clientConfig.clientSecret,
-            grant_type: "refresh_token",
-            refresh_token: tokens.refreshToken,
-        };
-        const newTokens = await refreshAccessToken(server, authParams);
-        return newTokens.accessToken;
-    };
-// Maintains former behavior of getOdspRefreshTokenFn, by modifying the passed in tokens object with refreshed tokens
-export const getOdspRefreshTokenWithSideEffectFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
-    async () => {
-        const authParams: AuthParams = {
-            scope: getOdspScope(server),
-            client_id: clientConfig.clientId,
-            client_secret: clientConfig.clientSecret,
-            grant_type: "refresh_token",
-            refresh_token: tokens.refreshToken,
-        };
-        const newTokens = await refreshAccessToken(server, authParams);
-        tokens.accessToken = newTokens.accessToken;
-        tokens.refreshToken = newTokens.refreshToken;
-        return tokens.accessToken;
-    };
-
-export interface IOdspAuthRequestInfo {
-    accessToken: string;
-    refreshTokenFn?: () => Promise<string>,
-}
 
 export async function getAsync(
     url: string,
@@ -82,30 +39,7 @@ export async function postAsync(
     return authRequest(authRequestInfo, async (config) => Axios.post(url, body, config));
 }
 
-export async function fetchTokens(
-    server: string,
-    authParams: AuthParams,
-): Promise<IOdspTokens> {
-    const result = await unauthPostAsync(
-        getFetchTokenUrl(server),
-        new URLSearchParams(authParams),
-    );
-    return getTokensFromResponse(result);
-}
-
-//* Dupe of fetchTokens now - delete
-export async function refreshAccessToken(
-    server: string,
-    authParams: AuthParams,
-): Promise<IOdspTokens> {
-    const result = await unauthPostAsync(
-        getFetchTokenUrl(server),
-        new URLSearchParams(authParams),
-    );
-    return getTokensFromResponse(result);
-}
-
-async function unauthPostAsync(url: string, body: any): Promise<IRequestResult> {
+export async function unauthPostAsync(url: string, body: any): Promise<IRequestResult> {
     return safeRequestCore(async () => Axios.post(url, body));
 }
 
@@ -113,21 +47,10 @@ async function authRequest(
     authRequestInfo: IOdspAuthRequestInfo,
     requestCallback: (config: AxiosRequestConfig) => Promise<any>,
 ): Promise<IRequestResult> {
-    const request = async (token: string) => {
-        const config: AxiosRequestConfig = { headers: { Authorization: `Bearer ${token}` } };
-        return safeRequestCore(async () => requestCallback(config));
-    };
-
-    const result = await request(authRequestInfo.accessToken);
-
-    if (!authRequestInfo.refreshTokenFn || (result.status !== 401 && result.status !== 403)) {
-        return result;
-    }
-
-    // Unauthorized, try to refresh the token
-    const refreshedAccessToken = await authRequestInfo.refreshTokenFn();
-
-    return request(refreshedAccessToken);
+    return authRequestWithRetry(
+        authRequestInfo,
+        async (config) => safeRequestCore(async () => requestCallback(config)),
+    );
 }
 
 async function safeRequestCore(requestCallback: () => Promise<AxiosResponse>): Promise<IRequestResult> {
@@ -142,15 +65,6 @@ async function safeRequestCore(requestCallback: () => Promise<AxiosResponse>): P
         }
     }
     return { href: response.config.url, status: response.status, data: response.data };
-}
-
-function getTokensFromResponse(result: IRequestResult): IOdspTokens {
-    const accessToken = result.data.access_token;
-    const refreshToken = result.data.refresh_token;
-    if (accessToken === undefined || refreshToken === undefined) {
-        throw createErrorFromResponse("Unable to get access token.", result);
-    }
-    return { accessToken, refreshToken };
 }
 
 export function createErrorFromResponse(message: string, requestResult: IRequestResult): RequestResultError {

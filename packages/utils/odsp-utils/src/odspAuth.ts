@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { AxiosRequestConfig } from "axios";
+import { IRequestResult, createErrorFromResponse, unauthPostAsync } from "./odspRequest";
 import { getSharepointTenant } from "./odspUtils";
 
 export interface IOdspTokens {
@@ -15,7 +17,12 @@ export interface IClientConfig {
     clientSecret: string;
 }
 
-export type AuthGrant = {
+export interface IOdspAuthRequestInfo {
+    accessToken: string;
+    refreshTokenFn?: () => Promise<string>,
+}
+
+export type TokenRequestCredentials = {
     grant_type: "authorization_code";
     code: string;
     redirect_uri: string;
@@ -28,9 +35,8 @@ export type AuthGrant = {
     password: string;
 };
 
-//* Rename? and AuthGrant
-export type AuthParams =
-    AuthGrant & {
+type TokenRequestBody =
+    TokenRequestCredentials & {
         client_id: string,
         client_secret: string,
         scope: string,
@@ -56,4 +62,97 @@ export function getAuthorizePageUrl(
         + `&scope=${scope}`
         + `&response_type=code`
         + `&redirect_uri=${odspAuthRedirectUri}`;
+}
+
+// Note: This may be renamed back to getOdspRefreshTokenFn once Gateway updates to 0.23 or later
+// and imports getOdspRefreshTokenWithSideEffectFn instead of getOdspRefreshTokenFn
+export const getOdspRefreshTokenNoSideEffectFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
+    getRefreshTokenFn(getOdspScope(server), server, clientConfig, tokens);
+export const getPushRefreshTokenFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
+    getRefreshTokenFn(pushScope, server, clientConfig, tokens);
+export const getRefreshTokenFn = (scope: string, server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
+    async () => {
+        const credentials: TokenRequestCredentials = {
+            grant_type: "refresh_token",
+            refresh_token: tokens.refreshToken,
+        };
+        const newTokens = await fetchTokens(server, scope, clientConfig, credentials);
+        return newTokens.accessToken;
+    };
+
+/**
+ * Fetches new tokens using the refreshToken provided, and also updates the tokens object that's passed in,
+ * which is the former behavior of getOdspRefreshTokenFn pre-0.23.
+ * @param server - Server to auth against
+ * @param clientConfig - Info about this client's identity
+ * @param tokens - Contains the refreshToken to use, and will be updated (both access and refresh) upon returning.
+ */
+export const getOdspRefreshTokenWithSideEffectFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
+    async () => {
+        // Clear out the old tokens while awaiting the new tokens
+        const refresh_token = tokens.refreshToken;
+        tokens.accessToken = "";
+        tokens.refreshToken = "";
+
+        const credentials: TokenRequestCredentials = {
+            grant_type: "refresh_token",
+            refresh_token,
+        };
+        const newTokens = await fetchTokens(server, getOdspScope(server), clientConfig, credentials);
+        tokens.accessToken = newTokens.accessToken;
+        tokens.refreshToken = newTokens.refreshToken;
+        return tokens.accessToken;
+    };
+
+/**
+ * Fetch an access token and refresh token from AAD
+ * @param server - The server to auth against
+ * @param scope - The desired oauth scope
+ * @param clientConfig - Info about this client's identity
+ * @param credentials - Credentials authorizing the client for the requested token
+ */
+export async function fetchTokens(
+    server: string,
+    scope: string,
+    clientConfig: IClientConfig,
+    credentials: TokenRequestCredentials,
+): Promise<IOdspTokens> {
+    const body: TokenRequestBody = {
+        scope,
+        client_id: clientConfig.clientId,
+        client_secret: clientConfig.clientSecret,
+        ...credentials,
+    };
+    const result = await unauthPostAsync(
+        getFetchTokenUrl(server),
+        new URLSearchParams(body), // This formats the body like a query string which is the expected format
+    );
+    const accessToken = result.data.access_token;
+    const refreshToken = result.data.refresh_token;
+
+    if (accessToken === undefined || refreshToken === undefined) {
+        throw createErrorFromResponse("Unable to get access token.", result);
+    }
+    return { accessToken, refreshToken };
+}
+
+/**
+ * Issue the requestCallback, providing the proper auth header based on authRequestInfo,
+ * and retrying with a refreshed token if necessary.
+ */
+export async function authRequestWithRetry(
+    authRequestInfo: IOdspAuthRequestInfo,
+    requestCallback: (config: AxiosRequestConfig) => Promise<any>,
+): Promise<IRequestResult> {
+    const createConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
+
+    const result = await requestCallback(createConfig(authRequestInfo.accessToken));
+
+    if (authRequestInfo.refreshTokenFn && (result.status === 401 || result.status === 403)) {
+        // Unauthorized, try to refresh the token
+        const refreshedAccessToken = await authRequestInfo.refreshTokenFn();
+        return requestCallback(createConfig(refreshedAccessToken));
+    }
+
+    return result;
 }

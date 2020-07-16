@@ -9,9 +9,8 @@ import {
     fetchTokens,
     getOdspScope,
     pushScope,
-    refreshAccessToken,
     getAuthorizePageUrl,
-    AuthParams,
+    TokenRequestCredentials,
 } from "@fluidframework/odsp-utils";
 import { IAsyncCache, loadRC, saveRC, lockRC } from "./fluidToolRC";
 import { serverListenAndHandle, endResponse } from "./httpHelpers";
@@ -135,14 +134,11 @@ export class OdspTokenManager {
                 let canReturn = true;
                 if (forceRefresh) {
                     try {
-                        const authParams: AuthParams = {
-                            scope,
-                            client_id: clientConfig.clientId,
-                            client_secret: clientConfig.clientSecret,
+                        const credentials: TokenRequestCredentials = {
                             grant_type: "refresh_token",
                             refresh_token: tokensFromCache.refreshToken,
                         };
-                        tokensFromCache = await refreshAccessToken(server, authParams);
+                        tokensFromCache = await fetchTokens(server, scope, clientConfig, credentials);
                     } catch (error) {
                         canReturn = false;
                     }
@@ -193,15 +189,12 @@ export class OdspTokenManager {
         username: string,
         password: string,
     ): Promise<IOdspTokens> {
-        const authParams: AuthParams = {
-            scope,
-            client_id: clientConfig.clientId,
-            client_secret: clientConfig.clientSecret,
+        const credentials: TokenRequestCredentials = {
             grant_type: "password",
             username,
             password,
         };
-        return fetchTokens(server, authParams);
+        return fetchTokens(server, scope, clientConfig, credentials);
     }
 
     private async acquireTokens(
@@ -213,22 +206,13 @@ export class OdspTokenManager {
         redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
     ): Promise<IOdspTokens> {
         const tokenGetter = await serverListenAndHandle(odspAuthRedirectPort, async (req, res) => {
-            // get auth code
-            const code = this.extractAuthorizationCode(req.url);
-
-            // get tokens
-            //* Better not to crack over clientConfig yet?
-            //* Yeah I think this schema of object belongs only in odspRequest.
-            const authParams: AuthParams = {
-                scope,
-                client_id: clientConfig.clientId,
-                client_secret: clientConfig.clientSecret,
+            // extract code from request URL and fetch the tokens
+            const credentials: TokenRequestCredentials = {
                 grant_type: "authorization_code",
-                code,
+                code: this.extractAuthorizationCode(req.url),
                 redirect_uri: odspAuthRedirectUri,
             };
-
-            const tokens = await fetchTokens(server, authParams);
+            const tokens = await fetchTokens(server, scope, clientConfig, credentials);
 
             // redirect
             if (redirectUriCallback) {
