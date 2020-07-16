@@ -26,13 +26,12 @@ import jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 
 // URLResolver knows how to get the URLs to the service to use for a given request, in this case Tinylicious.
-// Since we're passing the documentId in the constructor it can't be reused for multiple documents, but this way it
-// doesn't impose any requirements on the URL shape of the request (e.g. if the documentId is not encoded in the URL).
+// In order to avoid imposing requirements on the app's URL shapes, we'll expect our requests to simply include the
+// documentId for the URL (as opposed to a more traditional URL).
 class InsecureTinyliciousUrlResolver implements IUrlResolver {
-    constructor(private readonly documentId: string) { }
-
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const encodedDocId = encodeURIComponent(this.documentId);
+        const documentId = request.url;
+        const encodedDocId = encodeURIComponent(documentId);
 
         const documentUrl = `fluid://localhost:3000/tinylicious/${encodedDocId}`;
         const deltaStorageUrl = `http://localhost:3000/deltas/tinylicious/${encodedDocId}`;
@@ -44,7 +43,7 @@ class InsecureTinyliciousUrlResolver implements IUrlResolver {
                 ordererUrl: "http://localhost:3000",
                 storageUrl,
             },
-            tokens: { jwt: this.auth(this.documentId) },
+            tokens: { jwt: this.auth(documentId) },
             type: "fluid",
             url: documentUrl,
         };
@@ -107,7 +106,7 @@ export async function getTinyliciousContainer(
         undefined,
     );
 
-    const urlResolver = new InsecureTinyliciousUrlResolver(documentId);
+    const urlResolver = new InsecureTinyliciousUrlResolver();
 
     const codeResolver = new WebpackCodeResolver();
     const codeLoader = new WebCodeLoader(codeResolver);
@@ -131,8 +130,8 @@ export async function getTinyliciousContainer(
         new Map(),
     );
 
-    const url = window.location.href;
-    const container = await loader.resolve({ url });
+    // The InsecureTinyliciousUrlResolver expects the url of the request to be the documentId.
+    const container = await loader.resolve({ url: documentId });
 
     await initializeContainerCode(container, codeDetails);
 
