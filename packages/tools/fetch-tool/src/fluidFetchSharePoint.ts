@@ -8,7 +8,7 @@ import {
     getDriveItemByServerRelativePath,
     IClientConfig,
     IOdspDriveItem,
-    getOdspRefreshTokenFn,
+    getOdspRefreshTokenNoSideEffectFn as getOdspRefreshTokenFn,
     IOdspAuthRequestInfo,
 } from "@fluidframework/odsp-utils";
 import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@fluidframework/tool-utils";

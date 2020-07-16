@@ -48,15 +48,29 @@ export type RequestResultError = Error & { requestResult?: IRequestResult };
 export const getOdspScope = (server: string) => `offline_access https://${server}/AllSites.Write`;
 export const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
 
-export const getOdspRefreshTokenFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
+// Note: This may be renamed back to getOdspRefreshTokenFn once Gateway updates to 0.23 or later
+// and imports getOdspRefreshTokenWithSideEffectFn instead of getOdspRefreshTokenFn
+export const getOdspRefreshTokenNoSideEffectFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
     getRefreshTokenFn(getOdspScope(server), server, clientConfig, tokens);
 export const getPushRefreshTokenFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
     getRefreshTokenFn(pushScope, server, clientConfig, tokens);
 export const getRefreshTokenFn = (scope: string, server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
     async () => {
-        tokens.accessToken = "";  //* Copied from below; seems unnecessary
         const authParams: AuthParams = {
             scope,
+            client_id: clientConfig.clientId,
+            client_secret: clientConfig.clientSecret,
+            grant_type: "refresh_token",
+            refresh_token: tokens.refreshToken,
+        };
+        const newTokens = await refreshAccessToken(server, authParams);
+        return newTokens.accessToken;
+    };
+// Maintains former behavior of getOdspRefreshTokenFn, by modifying the passed in tokens object with refreshed tokens
+export const getOdspRefreshTokenWithSideEffectFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
+    async () => {
+        const authParams: AuthParams = {
+            scope: getOdspScope(server),
             client_id: clientConfig.clientId,
             client_secret: clientConfig.clientSecret,
             grant_type: "refresh_token",
