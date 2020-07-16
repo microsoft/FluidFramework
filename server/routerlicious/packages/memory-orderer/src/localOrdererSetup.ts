@@ -56,7 +56,7 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
         }
 
         const content = await this.gitManager.getContent(existingRef.object.sha, ".protocol/attributes");
-        const attributes = JSON.parse(Buffer.from(content.content, content.encoding).toString()) as IDocumentAttributes;
+        const attributes = JSON.parse(Buffer.from(content.content, "base64").toString()) as IDocumentAttributes;
 
         return attributes.sequenceNumber;
     }

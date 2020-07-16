@@ -18,17 +18,17 @@ import {
     getQuorumValuesFromProtocolSummary,
 } from "@fluidframework/driver-utils";
 import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
-import { TestDocumentDeltaConnection } from "./testDocumentDeltaConnection";
-import { createTestDocumentService } from "./testDocumentService";
+import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
+import { createLocalDocumentService } from "./localDocumentService";
 
 /**
- * Implementation of document service factory for testing.
+ * Implementation of document service factory for local use.
  */
-export class TestDocumentServiceFactory implements IDocumentServiceFactory {
+export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-test:";
 
-    // A map of clientId to TestDocumentService.
-    private readonly documentDeltaConnectionsMap: Map<string, TestDocumentDeltaConnection> = new Map();
+    // A map of clientId to LocalDocumentService.
+    private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection> = new Map();
 
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
@@ -94,7 +94,7 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
 
         const tokenProvider = new TokenProvider(jwtToken);
 
-        return createTestDocumentService(
+        return createLocalDocumentService(
             resolvedUrl,
             this.localDeltaConnectionServer,
             tokenProvider,

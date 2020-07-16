@@ -16,6 +16,7 @@ interface TodoItemViewProps {
 interface TodoItemViewState {
     checked: boolean;
     innerComponentVisible: boolean;
+    absoluteUrl: string | undefined;
 }
 
 export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemViewState> {
@@ -35,14 +36,18 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
         this.state = {
             checked: this.props.todoItemModel.getCheckedState(),
             innerComponentVisible: false,
+            absoluteUrl: this.props.todoItemModel.absoluteUrl,
         };
 
         this.setCheckedState = this.setCheckedState.bind(this);
     }
 
     public componentDidMount() {
-        this.props.todoItemModel.on("checkedStateChanged", () => {
-            this.setState({ checked: this.props.todoItemModel.getCheckedState() });
+        this.props.todoItemModel.on("stateChanged", () => {
+            this.setState({
+                checked: this.props.todoItemModel.getCheckedState(),
+                absoluteUrl: this.props.todoItemModel.absoluteUrl,
+            });
         });
     }
 
@@ -80,10 +85,10 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
                     </button>
                     <button
                         name="OpenSubComponent"
-                        id={this.props.todoItemModel.absoluteUrl}
+                        id={this.state.absoluteUrl}
                         style={this.buttonStyle}
-                        onClick={() => window.open(this.props.todoItemModel.absoluteUrl, "_blank")}
-                        hidden={this.props.todoItemModel.absoluteUrl === undefined}>↗
+                        onClick={() => window.open(this.state.absoluteUrl, "_blank")}
+                        disabled={this.state.absoluteUrl === undefined}>↗
                     </button>
                     <button
                         style={this.buttonStyle}
