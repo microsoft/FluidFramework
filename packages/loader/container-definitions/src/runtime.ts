@@ -9,6 +9,7 @@ import {
     IComponentConfiguration,
     IRequest,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -128,7 +129,7 @@ export interface IContainerContext extends IMessageScheduler, IDisposable {
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IComponent;
+    readonly scope: IComponent & IFluidObject;
 
     raiseContainerWarning(warning: ContainerWarning): void;
     requestSnapshot(tagMessage: string): Promise<void>;
@@ -140,7 +141,7 @@ export interface IContainerContext extends IMessageScheduler, IDisposable {
      *
      * TODO: Optional for backwards compatibility. Make non-optional in version 0.19
      */
-    getAbsoluteUrl?(relativeUrl: string): Promise<string>;
+    getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
 
     /**
      * Indicates the attachment state of the container to a host service.

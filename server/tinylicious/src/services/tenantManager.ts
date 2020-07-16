@@ -3,11 +3,51 @@
  * Licensed under the MIT License.
  */
 
-import { ITenant, ITenantManager } from "@fluidframework/server-services-core";
+import { ITenant, ITenantManager, ITenantOrderer, ITenantStorage } from "@fluidframework/server-services-core";
+import { GitManager, Historian } from "@fluidframework/server-services-client";
+
+export class TinyliciousTenant implements ITenant {
+    private readonly owner = "tinylicious";
+    private readonly repository = "tinylicious";
+    private readonly manager: GitManager;
+
+    constructor(
+        private readonly url: string,
+        private readonly historianUrl: string) {
+        const historian = new Historian(historianUrl, false, false);
+        this.manager = new GitManager(historian);
+    }
+
+    public get gitManager(): GitManager {
+        return this.manager;
+    }
+
+    public get storage(): ITenantStorage {
+        return {
+            historianUrl: this.historianUrl,
+            internalHistorianUrl: this.historianUrl,
+            credentials: null,
+            owner: this.owner,
+            repository: this.repository,
+            url: this.url,
+        };
+    }
+
+    public get orderer(): ITenantOrderer {
+        return {
+            type: "kafka",
+            url: this.url,
+        };
+    }
+}
 
 export class TenantManager implements ITenantManager {
+    constructor(private readonly url: string) {
+    }
+
     public getTenant(tenantId: string): Promise<ITenant> {
-        throw new Error("Method not implemented.");
+        return Promise.resolve(
+            new TinyliciousTenant(this.url, `${this.url}/repos/${encodeURIComponent(tenantId)}`));
     }
 
     public async verifyToken(tenantId: string, token: string): Promise<void> {

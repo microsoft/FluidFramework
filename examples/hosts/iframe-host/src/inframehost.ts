@@ -17,7 +17,7 @@ import {
     AttachState,
 } from "@fluidframework/container-definitions";
 import { MultiUrlResolver, MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
-import { IRequest, IResponse, IComponent } from "@fluidframework/component-core-interfaces";
+import { IRequest, IResponse, IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ITree, ISummaryTree } from "@fluidframework/protocol-definitions";
 
@@ -77,7 +77,7 @@ export interface IFrameOuterHostConfig {
 
     // A component that gives host provided capabilities/configurations
     // to the component in the container(such as auth).
-    scope?: IComponent;
+    scope?: IComponent & IFluidObject;
 
     proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
 }

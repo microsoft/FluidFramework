@@ -8,6 +8,8 @@
 - [IComponentReactViewable deprecated](#IComponentReactViewable-deprecated)
 - [Forward Compat For Loader IComponent Interfaces](#Forward-Compat-For-Loader-IComponent-Interfaces)
 - [Add Undefined to getAbsoluteUrl return type](#Add-Undefined-to-getAbsoluteUrl-return-type)
+- [Renamed TestDeltaStorageService, TestDocumentDeltaConnection, TestDocumentService, TestDocumentServiceFactory and TestResolver](#Renamed-TestDeltaStorageService,-TestDocumentDeltaConnection,-TestDocumentService,-TestDocumentServiceFactory-and-TestResolver)
+- [DocumentDeltaEventManager has been renamed and moved to "@fluidframework/test-utils"](#DocumentDeltaEventManager-has-been-renamed-and-moved-to-"@fluidframework/test-utils")
 
 ### Deprecated `path` from `IComponentHandleContext`
 Deprecated the `path` field from the interface `IComponentHandleContext`. This means that `IComponentHandle` will not have this going forward as well.
@@ -103,6 +105,33 @@ protected async componentHasInitialized() {
             })
             .catch(console.error);
 }
+```
+
+### Renamed TestDeltaStorageService, TestDocumentDeltaConnection, TestDocumentService, TestDocumentServiceFactory and TestResolver
+
+Renamed the following in "@fluidframework/local-driver" since these are used beyond testing:
+- `TestDeltaStorageService` -> `LocalDeltaStorageService`
+- `TestDocumentDeltaConnection` -> `LocalDocumentDeltaConnection`
+- `TestDocumentService` -> `LocalDocumentService`
+- `TestDocumentServiceFactory` -> `LocalDocumentServiceFactory`
+- `TestResolver` -> `LocalResolver`
+
+### DocumentDeltaEventManager has been renamed and moved to "@fluidframework/test-utils"
+
+`DocumentDeltaEventManager` has moved to "@fluidframework/test-utils" and renamed to `OpProcessingController`.
+
+The `registerDocuments` method has been renamed to `addDeltaManagers` and should be called with a list of delta managers. Similarly, all the other methods have been updated to be called with delta managers.
+
+So, the usage has now changed to pass in the deltaManager from the object that was passed earlier. For example:
+
+```typescript
+// Old usage
+containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime);
+
+// New usage
+opProcessingController = new OpProcessingController(deltaConnectionServer);
+opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
 ```
 
 ## 0.21 Breaking Changes
