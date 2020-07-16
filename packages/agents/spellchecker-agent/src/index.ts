@@ -22,6 +22,8 @@ export interface ISpellChecker extends IProvideSpellChecker {
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideSpellChecker>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideSpellChecker>> { }
 }
 
 export class SpellChecker implements IComponentRouter, ISpellChecker {
