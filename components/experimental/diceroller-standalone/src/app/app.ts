@@ -5,37 +5,43 @@
 
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { Container } from "@fluidframework/container-loader";
-import { RequestParser } from "@fluidframework/runtime-utils";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IComponentMountableView } from "@fluidframework/view-interfaces";
 import { getTinyliciousContainer } from "./tinyliciousContainer";
 
-// I'm choosing to put the docId in the hash just for my own convenience
+// I'm choosing to put the docId in the hash just for my own convenience.  There should be no requirements on the
+// page's URL format deeper in the system.
 if (window.location.hash.length === 0) {
     window.location.hash = Date.now().toString();
 }
 const documentId = window.location.hash.substring(1);
 document.title = documentId;
 
-async function getComponentAndRender(container: Container, url: string, div: HTMLDivElement) {
+async function mountDefaultComponentFromContainer(container: Container): Promise<void> {
+    const div = document.getElementById("content") as HTMLDivElement;
+    // For this basic scenario, I'm just requesting the default component.  Nothing stopping me from issuing alternate
+    // requests (e.g. for other components) if I wished.
+    const url = "/";
     const response = await container.request({
+        // We request with a mountableView since we intend to get this view from across the bundle boundary.
         headers: {
             mountableView: true,
         },
         url,
     });
 
+    // Verify the response
     if (response.status !== 200 || response.mimeType !== "fluid/component") {
-        return false;
+        throw new Error(`Unable to retrieve component at URL: "${url}"`);
+    } else if (response.value === undefined) {
+        throw new Error(`Empty response from URL: "${url}"`);
     }
 
+    // Now we know we got the component back, time to start mounting it.
     const component = response.value as IComponent;
-    if (component === undefined) {
-        return;
-    }
 
-    // We should be retaining a reference to mountableView long-term, so we can call unmount() on it to correctly
-    // remove it from the DOM if needed.
+    // In a production app, we should probably be retaining a reference to mountableView long-term so we can call
+    // unmount() on it to correctly remove it from the DOM if needed.
     const mountableView: IComponentMountableView | undefined = component.IComponentMountableView;
     if (mountableView !== undefined) {
         mountableView.mount(div);
@@ -51,24 +57,11 @@ async function getComponentAndRender(container: Container, url: string, div: HTM
     view.render(div, { display: "block" });
 }
 
-async function doStuffWithContainer(container: Container) {
-    const div = document.getElementById("content") as HTMLDivElement;
-
-    // Needs updating if the doc id is in the hash
-    const reqParser = new RequestParser({ url: window.location.href });
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const componentUrl = `/${reqParser.createSubRequest(3)!.url}`;
-
-    await getComponentAndRender(container, componentUrl, div);
-    // Handle the code upgrade scenario (which fires contextChanged)
-    container.on("contextChanged", () => {
-        getComponentAndRender(container, componentUrl, div).catch(() => { });
-    });
-}
-
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 const packageJson = require("../../package.json");
 
-getTinyliciousContainer(documentId, packageJson) // include window["main"] as the seed if the other chunk is loaded
-    .then(doStuffWithContainer)
+// If you'd prefer to load the bundle yourself (rather than relying on the codeLoader), pass the entrypoint to the
+// module as the third param below (e.g. window["main"]).
+getTinyliciousContainer(documentId, packageJson)
+    .then(mountDefaultComponentFromContainer)
     .catch((error) => console.error(error));
