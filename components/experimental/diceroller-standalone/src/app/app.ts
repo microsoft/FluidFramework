@@ -17,10 +17,12 @@ if (window.location.hash.length === 0) {
 const documentId = window.location.hash.substring(1);
 document.title = documentId;
 
+// In this app, we are assuming our container code is capable of providing a default mountable view.  This is up to
+// how the container code is authored though (e.g. if the container code is data-only and does not bundle views).
 async function mountDefaultComponentFromContainer(container: Container): Promise<void> {
     const div = document.getElementById("content") as HTMLDivElement;
-    // For this basic scenario, I'm just requesting the default component.  Nothing stopping me from issuing alternate
-    // requests (e.g. for other components) if I wished.
+    // For this basic scenario, I'm just requesting the default view.  Nothing stopping me from issuing alternate
+    // requests (e.g. for other components or views) if I wished.
     const url = "/";
     const response = await container.request({
         // We request with a mountableView since we intend to get this view from across the bundle boundary.
@@ -60,8 +62,11 @@ async function mountDefaultComponentFromContainer(container: Container): Promise
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 const packageJson = require("../../package.json");
 
-// If you'd prefer to load the bundle yourself (rather than relying on the codeLoader), pass the entrypoint to the
-// module as the third param below (e.g. window["main"]).
+// If you'd prefer to load the container bundle yourself (rather than relying on the codeLoader), pass the entrypoint
+// to the module as the third param below (e.g. window["main"]).
 getTinyliciousContainer(documentId, packageJson)
     .then(mountDefaultComponentFromContainer)
+    // Setting "fluidStarted" is just for our test automation
+    // eslint-disable-next-line dot-notation
+    .then(() => { window["fluidStarted"] = true; })
     .catch((error) => console.error(error));

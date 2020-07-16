@@ -15,7 +15,6 @@ import {
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
-    IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
@@ -72,8 +71,8 @@ class InsecureTinyliciousUrlResolver implements IUrlResolver {
 // The code resolver's job is basically to take a list of relative URLs (embedded in the IFluidCodeDetails) and
 // convert them URLs that will find the correct scripts relative to the app (which is the context in which the code
 // will be loaded).  So maybe the URLs can stay relative, or maybe they'll be converted to absolute URLs against a
-// base URL (like a CDN or something).  In this case, we assume they're all hosted from the same server running
-// the app, and as a result none of the relative URLs need to be converted.
+// base URL (like a CDN or something).  In this case, we assume any relative URLs are hosted from the same server
+// running the app, and as a result none of the relative URLs need to be converted.
 class WebpackCodeResolver implements IFluidCodeResolver {
     async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
         if (typeof details.package === "string" || !isFluidPackage(details.package)) {
@@ -89,42 +88,13 @@ class WebpackCodeResolver implements IFluidCodeResolver {
     }
 }
 
-class BaseHost {
-    private readonly loader: Loader;
-    public constructor(
-        urlResolver: IUrlResolver,
-        documentServiceFactory: IDocumentServiceFactory,
-        codeLoader: WebCodeLoader,
-    ) {
-        this.loader = new Loader(
-            urlResolver,
-            documentServiceFactory,
-            codeLoader,
-            { blockUpdateMarkers: true },
-            {},
-            new Map());
-    }
-
-    public async initializeContainer(url: string, codeDetails?: IFluidCodeDetails) {
-        const container = await this.loader.resolve({ url });
-
-        // if a package is provided, try to initialize the code proposal with it
-        // if not we assume the container already has a code proposal
-        if (codeDetails !== undefined) {
-            await initializeContainerCode(container, codeDetails)
-                .catch((error) => console.error("code proposal error", error));
-        }
-
-        // If we're loading from ops, the context might be in the middle of reloading.  Check for that case and wait
-        // for the contextChanged event to avoid returning before that reload completes.
-        if (container.hasNullRuntime()) {
-            await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
-        }
-
-        return container;
-    }
-}
-
+/**
+ * Connect to the Tinylicious service and retrieve a Container, or if it does not already exist then create a new
+ * Container and propose the given code.
+ * @param documentId - The document id to retrieve or create
+ * @param packageJson - The package that will be proposed as the code proposal
+ * @param fluidModule - Optionally, seed the codeLoader with an in-memory entrypoint for that proposal
+ */
 export async function getTinyliciousContainer(
     documentId: string,
     packageJson: IFluidPackage,
@@ -153,14 +123,26 @@ export async function getTinyliciousContainer(
         await codeLoader.seedModule(codeDetails, fluidModule);
     }
 
-    const baseHost = new BaseHost(
+    const loader = new Loader(
         urlResolver,
         documentServiceFactory,
         codeLoader,
+        { blockUpdateMarkers: true },
+        {},
+        new Map(),
     );
 
-    return baseHost.initializeContainer(
-        window.location.href,
-        codeDetails,
-    );
+    const url = window.location.href;
+    const container = await loader.resolve({ url });
+
+    await initializeContainerCode(container, codeDetails)
+        .catch((error) => console.error("code proposal error", error));
+
+    // If we're loading from ops, the context might be in the middle of reloading.  Check for that case and wait
+    // for the contextChanged event to avoid returning before that reload completes.
+    if (container.hasNullRuntime()) {
+        await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
+    }
+
+    return container;
 }
