@@ -69,7 +69,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             "4 protocol blobs should be there(8 mappings)");
 
         // Check for protocol attributes
-        const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs[".attributes"];
+        const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
         const protocolAttributes: IDocumentAttributes =
             JSON.parse(Buffer.from(snapshotTree.trees[".protocol"].blobs[protocolAttributesBlobId],
             "base64").toString());
@@ -98,8 +98,8 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             "3 trees should be there(protocol, default component, scheduler");
 
         // Check for protocol attributes
-        const protocolAttributesBlobId1 = snapshotTree1.trees[".protocol"].blobs[".attributes"];
-        const protocolAttributesBlobId2 = snapshotTree2.trees[".protocol"].blobs[".attributes"];
+        const protocolAttributesBlobId1 = snapshotTree1.trees[".protocol"].blobs.attributes;
+        const protocolAttributesBlobId2 = snapshotTree2.trees[".protocol"].blobs.attributes;
         const protocolAttributes1: IDocumentAttributes =
             JSON.parse(Buffer.from(snapshotTree1.trees[".protocol"].blobs[protocolAttributesBlobId1],
             "base64").toString());
