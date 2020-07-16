@@ -34,8 +34,23 @@ export const getMicrosoftConfiguration = (): IClientConfig => ({
     },
 });
 
+export type OdspTokenConfig = {
+    type: "password";
+    username: string;
+    password: string;
+} | {
+    type: "browserLogin";
+    navigator: (url: string) => void;
+    redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>;
+};
+
 export interface IOdspCacheKey { isPush: boolean; server: string }
 export type OdspTokenManagerCacheKey = IOdspCacheKey;
+
+//* Put it somewhere
+function unreachableCase(value: never): never {
+    throw new Error(`Unreachable Case: Type of ${value} is never`);
+}
 
 export class OdspTokenManager {
     constructor(
@@ -45,8 +60,8 @@ export class OdspTokenManager {
     public async getOdspTokens(
         server: string,
         clientConfig: IClientConfig,
-        initialNavigator: (url: string) => void,
-        redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
+        tokenConfig: OdspTokenConfig,
+        onAfterTokenRetrieval?: (tokens: IOdspTokens) => Promise<void>,
         forceRefresh = false,
         forceReauth = false,
     ): Promise<IOdspTokens> {
@@ -54,18 +69,18 @@ export class OdspTokenManager {
             false,
             server,
             clientConfig,
-            initialNavigator,
+            tokenConfig,
             forceRefresh,
             forceReauth,
-            redirectUriCallback,
+            onAfterTokenRetrieval,
         );
     }
 
     public async getPushTokens(
         server: string,
         clientConfig: IClientConfig,
-        initialNavigator: (url: string) => void,
-        redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
+        tokenConfig: OdspTokenConfig,
+        onAfterTokenRetrieval?: (tokens: IOdspTokens) => Promise<void>,
         forceRefresh = false,
         forceReauth = false,
     ): Promise<IOdspTokens> {
@@ -73,58 +88,57 @@ export class OdspTokenManager {
             true,
             server,
             clientConfig,
-            initialNavigator,
+            tokenConfig,
             forceRefresh,
             forceReauth,
-            redirectUriCallback,
+            onAfterTokenRetrieval,
         );
     }
     private async getTokens(
         isPush: boolean,
         server: string,
         clientConfig: IClientConfig,
-        initialNavigator: (url: string) => void,
+        tokenConfig: OdspTokenConfig,
         forceRefresh: boolean,
         forceReauth: boolean,
-        redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
+        onAfterTokenRetrieval?: (tokens: IOdspTokens) => Promise<void>,
     ): Promise<IOdspTokens> {
-        const getTokensCore = async () => {
+        const invokeGetTokensCore = async () => {
             return this.getTokensCore(
                 isPush,
                 server,
                 clientConfig,
-                initialNavigator,
+                tokenConfig,
                 forceRefresh,
                 forceReauth,
-                redirectUriCallback);
+                onAfterTokenRetrieval);
         };
         if (this.tokenCache) {
             if (!forceReauth && !forceRefresh) {
                 // check and return if it exists without lock
                 const cacheKey: OdspTokenManagerCacheKey = { isPush, server };
                 const tokensFromCache = await this.tokenCache.get(cacheKey);
-                //* Why are we refreshing every time?
-                if (tokensFromCache?.refreshToken) {
-                    if (redirectUriCallback) {
-                        initialNavigator(await redirectUriCallback(tokensFromCache));
+                if (tokensFromCache?.refreshToken) { //* or just if (tokensFromCache) ?
+                    if (onAfterTokenRetrieval) {
+                        await onAfterTokenRetrieval(tokensFromCache);
                     }
                     return tokensFromCache;
                 }
             }
             // check with lock
-            return this.tokenCache.lock(getTokensCore);
+            return this.tokenCache.lock(invokeGetTokensCore);
         }
-        return getTokensCore();
+        return invokeGetTokensCore();
     }
 
     private async getTokensCore(
         isPush: boolean,
         server: string,
         clientConfig: IClientConfig,
-        initialNavigator: (url: string) => void,
+        tokenConfig: OdspTokenConfig,
         forceRefresh,
         forceReauth,
-        redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
+        onAfterTokenRetrieval?: (tokens: IOdspTokens) => Promise<void>,
     ): Promise<IOdspTokens> {
         const scope = isPush ? pushScope : getOdspScope(server);
         const cacheKey: OdspTokenManagerCacheKey = { isPush, server };
@@ -145,8 +159,8 @@ export class OdspTokenManager {
                     await this.tokenCache.save(cacheKey, tokensFromCache);
                 }
                 if (canReturn === true) {
-                    if (redirectUriCallback) {
-                        initialNavigator(await redirectUriCallback(tokensFromCache));
+                    if (onAfterTokenRetrieval) {
+                        await onAfterTokenRetrieval(tokensFromCache);
                     }
                     return tokensFromCache;
                 }
@@ -154,25 +168,29 @@ export class OdspTokenManager {
         }
 
         let tokens: IOdspTokens | undefined;
-        //* Do an actual condition here... and refactor anyway, pull from config, etc.
-        if (tokens === undefined) {
-            tokens = await this.acquireTokensWithPassword(
-                server,
-                scope,
-                clientConfig,
-                "user0@a830edad9050849829E20060408.onmicrosoft.com",
-                "Duga4880",
-            );
-        }
-        else {
-            tokens = await this.acquireTokens(
-                getAuthorizePageUrl(isPush, server, clientConfig, scope, odspAuthRedirectUri),
-                server,
-                clientConfig,
-                scope,
-                initialNavigator,
-                redirectUriCallback,
-            );
+        switch (tokenConfig.type) {
+            case "password":
+                tokens = await this.acquireTokensWithPassword(
+                    server,
+                    scope,
+                    clientConfig,
+                    tokenConfig.username,
+                    tokenConfig.password,
+                    onAfterTokenRetrieval,
+                );
+                break;
+            case "browserLogin":
+                tokens = await this.acquireTokensViaBrowserLogin(
+                    getAuthorizePageUrl(isPush, server, clientConfig, scope, odspAuthRedirectUri),
+                    server,
+                    clientConfig,
+                    scope,
+                    tokenConfig.navigator,
+                    tokenConfig.redirectUriCallback,
+                );
+                break;
+            default:
+                unreachableCase(tokenConfig);
         }
 
         if (this.tokenCache) {
@@ -188,21 +206,26 @@ export class OdspTokenManager {
         clientConfig: IClientConfig,
         username: string,
         password: string,
+        onAfterTokenRetrieval?: (tokens: IOdspTokens) => Promise<void>,
     ): Promise<IOdspTokens> {
         const credentials: TokenRequestCredentials = {
             grant_type: "password",
             username,
             password,
         };
-        return fetchTokens(server, scope, clientConfig, credentials);
+        const tokens = await fetchTokens(server, scope, clientConfig, credentials);
+        if (onAfterTokenRetrieval) {
+            await onAfterTokenRetrieval(tokens);
+        }
+        return tokens;
     }
 
-    private async acquireTokens(
+    private async acquireTokensViaBrowserLogin(
         authUrl: string,
         server: string,
         clientConfig: IClientConfig,
         scope: string,
-        initialNavigator: (url: string) => void,
+        navigator: (url: string) => void,
         redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
     ): Promise<IOdspTokens> {
         const tokenGetter = await serverListenAndHandle(odspAuthRedirectPort, async (req, res) => {
@@ -226,9 +249,12 @@ export class OdspTokenManager {
             return tokens;
         });
 
-        initialNavigator(authUrl);
+        navigator(authUrl);
 
         const odspTokens = await tokenGetter();
+
+        //* Is this ok?
+        // NOTE: We don't use onAfterTokenRetrieval here because we did the redirect above instead
         return odspTokens;
     }
 

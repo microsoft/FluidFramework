@@ -10,7 +10,12 @@ import { Loader } from "@fluidframework/container-loader";
 import { OdspDocumentServiceFactory, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 
-import { OdspTokenManager, odspTokensCache, getMicrosoftConfiguration } from "@fluidframework/tool-utils";
+import {
+    OdspTokenManager,
+    odspTokensCache,
+    getMicrosoftConfiguration,
+    OdspTokenConfig,
+} from "@fluidframework/tool-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ITestConfig, IRunConfig, fluidExport, ILoadTest } from "./loadTestComponent";
 const packageName = `${pkgName}@${pkgVersion}`;
@@ -23,6 +28,8 @@ interface ITestConfigs {
 interface IConfig {
     server: string,
     driveId: string,
+    username: string,
+    password: string,
     activeProfile: keyof(ITestConfigs),
     profiles: ITestConfigs,
 }
@@ -36,14 +43,11 @@ const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 const urlResolver = new OdspDriverUrlResolver();
 const odspTokenManager = new OdspTokenManager(odspTokensCache);
 
-const fluidFetchWebNavigator = (url: string) => {
-    let message = "Please open browser and navigate to this URL:";
-    if (process.platform === "win32") {
-        child_process.exec(`start "fluid-fetch" /B "${url}"`);
-        message = "Opening browser to get authorization code.  If that doesn't open, please go to this URL manually";
-    }
-    console.log(`${message}\n  ${url}`);
-};
+const passwordTokenConfig = (config): OdspTokenConfig => ({
+    type: "password",
+    username: config.username,
+    password: config.password,
+});
 
 function createLoader(config: IConfig, reauth: boolean) {
     // Construct the loader
@@ -54,7 +58,7 @@ function createLoader(config: IConfig, reauth: boolean) {
                 const tokens = await odspTokenManager.getOdspTokens(
                     config.server,
                     getMicrosoftConfiguration(),
-                    fluidFetchWebNavigator,
+                    passwordTokenConfig(config),
                     undefined,
                     refresh,
                     reauth,
@@ -65,7 +69,7 @@ function createLoader(config: IConfig, reauth: boolean) {
                 const tokens = await odspTokenManager.getPushTokens(
                     config.server,
                     getMicrosoftConfiguration(),
-                    fluidFetchWebNavigator,
+                    passwordTokenConfig(config),
                     undefined,
                     refresh,
                     reauth,  //* There may be a bug when this is true for push tokens.
@@ -144,7 +148,7 @@ async function main() {
         await odspTokenManager.getOdspTokens(
             config.server,
             getMicrosoftConfiguration(),
-            fluidFetchWebNavigator,
+            passwordTokenConfig(config),
             undefined,
             undefined,
             true,
@@ -153,7 +157,7 @@ async function main() {
         await odspTokenManager.getPushTokens(
             config.server,
             getMicrosoftConfiguration(),
-            fluidFetchWebNavigator,
+            passwordTokenConfig(config),
             undefined,
             undefined,
             true,
