@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IComponent } from "@fluidframework/component-core-interfaces";
 import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
 
 declare module "@fluidframework/component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentInternalRegistry>> { }
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideComponentInternalRegistry>> { }
 }
@@ -23,8 +21,8 @@ export interface IProvideComponentInternalRegistry {
  * Provides functionality to retrieve subsets of an internal registry.
  */
 export interface IComponentInternalRegistry extends IProvideComponentInternalRegistry {
-    getFromCapability(type: keyof IComponent): IInternalRegistryEntry[];
-    hasCapability(type: string, capability: keyof IComponent): boolean;
+    getFromCapability(type: keyof (IFluidObject & IComponent)): IInternalRegistryEntry[];
+    hasCapability(type: string, capability: keyof (IFluidObject & IComponent)): boolean;
 }
 
 /**
@@ -33,7 +31,7 @@ export interface IComponentInternalRegistry extends IProvideComponentInternalReg
 export interface IInternalRegistryEntry {
     type: string;
     factory: Promise<IProvideComponentFactory>;
-    capabilities: (keyof IComponent)[];
+    capabilities: (keyof (IFluidObject & IComponent))[];
     friendlyName: string;
     fabricIconName: string;
 }

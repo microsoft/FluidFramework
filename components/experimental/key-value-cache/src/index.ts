@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
-    IComponent,
+    IFluidObject,
     IComponentRouter,
     IRequest,
     IResponse,
@@ -49,12 +49,12 @@ export interface IKeyValue extends IProvideKeyValue {
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideKeyValue>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideKeyValue>> { }
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideKeyValue>> { }
 }
 
-class KeyValue implements IKeyValue, IComponent, IComponentRouter {
+class KeyValue implements IKeyValue, IFluidObject, IComponentRouter {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const kevValue = new KeyValue(runtime);
         await kevValue.initialize();

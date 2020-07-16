@@ -7,7 +7,7 @@
 import assert from "assert";
 import { EventEmitter } from "events";
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import {
     IComponentDiscoverableInterfaces,
     IComponentDiscoverInterfaces,
@@ -20,12 +20,12 @@ class MockComponentDiscoverProvider extends EventEmitter implements IComponentDi
     public get IComponentDiscoverInterfaces() { return this; }
 
     public constructor(
-        public readonly interfacesToDiscover: (keyof IComponent)[],
+        public readonly interfacesToDiscover: (keyof IFluidObject)[],
     ) {
         super();
     }
 
-    public notifyComponentsDiscovered(interfaceName: keyof IComponent, components: readonly IComponent[]) {
+    public notifyComponentsDiscovered(interfaceName: keyof IFluidObject, components: readonly IFluidObject[]) {
         this.emit("discovered", interfaceName, components);
     }
 }
@@ -38,7 +38,7 @@ class MockComponentDiscoverableInterfaces implements IComponentDiscoverableInter
     public get IComponentHandle() { return this; }
 
     public constructor(
-        public readonly discoverableInterfaces: (keyof IComponent)[],
+        public readonly discoverableInterfaces: (keyof IFluidObject)[],
     ) {}
 }
 
@@ -51,8 +51,8 @@ class MockComponentDiscoverableAndDiscoverInterfaces
     public get IComponentLoadable() { return this; }
 
     public constructor(
-        public readonly discoverableInterfaces: (keyof IComponent)[],
-        public readonly interfacesToDiscover: (keyof IComponent)[],
+        public readonly discoverableInterfaces: (keyof IFluidObject)[],
+        public readonly interfacesToDiscover: (keyof IFluidObject)[],
     ) {
         super(interfacesToDiscover);
     }
@@ -106,7 +106,7 @@ describe("Routerlicious", () => {
 
                 const discoverProvider = new MockComponentDiscoverProvider(["IComponentLoadable"]);
                 let discovered = 0;
-                discoverProvider.on("discovered", (interfaceName, components: readonly IComponent[]) => {
+                discoverProvider.on("discovered", (interfaceName, components: readonly IFluidObject[]) => {
                     discovered = components.length;
                 });
 
