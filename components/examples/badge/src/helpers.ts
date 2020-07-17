@@ -75,8 +75,8 @@ export const getItemsFromOptionsMap = (options: IContextualMenuItem[]) => {
 };
 
 export const getTextColor = (c: IColor) => {
-    // https://stackoverflow.com/questions/3942878
-    //                                      /how-to-decide-font-color-in-white-or-black-depending-on-background-color
+    // eslint-disable-next-line max-len
+    // https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
     return c.r * 0.299 + c.g * 0.587 + c.b * 0.114 > 186
         ? "#000000"
         : "#ffffff";
