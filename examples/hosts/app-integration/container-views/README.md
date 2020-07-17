@@ -1,4 +1,4 @@
-# @fluid-example/diceroller-standalone
+# @fluid-example/app-integration-container-views
 
 **Dice Roller** is a basic example that has a die and a button. Clicking the button re-rolls the die and persists the value in the root SharedDirectory. The Fluid Container is defined in container/, the component is defined in component/.
 

@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-example/diceroller-standalone",
+  "name": "@fluid-example/app-integration-container-views",
   "version": "0.23.0",
   "description": "Minimal Fluid Container & Component sample to implement a collaborative dice roller as a standalone app.",
   "repository": "microsoft/FluidFramework",
