@@ -552,8 +552,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     }
 
     public get attachState(): AttachState {
-        // 0.21 back-compat isAttached
-        return this.context.attachState ?? (this.context as any).isAttached();
+        return this.context.attachState;
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
@@ -1385,13 +1384,11 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
         let eventName: string;
         if (attachState === AttachState.Attaching) {
-            // 0.21 back-compat attachState
-            // Currently the runtime attach state is decided by upper layers, so it already turns to attaching here.
-            // It does not need to depend once we remove the back-compat. We can change the below asserts after that.
-            assert(this.attachState === AttachState.Attaching, "Should move to attaching state from detached only");
+            assert(this.attachState === AttachState.Attaching,
+                "Container Context should already be in attaching state");
             eventName = "attaching";
         } else {
-            assert(this.attachState === AttachState.Attached, "Should move to attached state from attaching only");
+            assert(this.attachState === AttachState.Attached, "Container Context should already be in attached state");
             eventName = "attached";
         }
         for (const context of this.contexts.values()) {
