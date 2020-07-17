@@ -17,7 +17,7 @@ import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-run
 import { LoaderHeader, AttachState } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import {
     IAgentScheduler,
     IComponentContext,
@@ -26,7 +26,6 @@ import {
     ITaskManager,
     SchedulerType,
 } from "@fluidframework/runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import debug from "debug";
 import { v4 as uuid } from "uuid";
 
@@ -485,7 +484,7 @@ export class AgentSchedulerFactory implements IComponentFactory {
     public instantiateComponent(context: IComponentContext): void {
         const mapFactory = SharedMap.getFactory();
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
-        const dataTypes = new Map<string, ISharedObjectFactory>();
+        const dataTypes = new Map<string, IChannelFactory>();
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
 

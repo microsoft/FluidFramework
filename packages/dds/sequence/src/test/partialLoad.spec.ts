@@ -6,7 +6,7 @@
 import assert from "assert";
 import { MockComponentRuntime, MockContainerRuntimeFactory, MockStorage } from "@fluidframework/test-runtime-utils";
 import {  ReferenceType } from "@fluidframework/merge-tree";
-import { ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { IChannelServices } from "@fluidframework/component-runtime-definitions";
 import { ITree } from "@fluidframework/protocol-definitions";
 import { SharedStringFactory, SharedString } from "..";
 
@@ -46,7 +46,7 @@ function generateSnapshotTree(
     componentRuntime1.options = options;
     // Connect the first SharedString.
     const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
-    const services1: ISharedObjectServices = {
+    const services1: IChannelServices = {
         deltaConnection: containerRuntime1.createDeltaConnection(),
         objectStorage: new MockStorage(),
     };
@@ -59,7 +59,7 @@ function generateSnapshotTree(
     componentRuntime2.options = options;
     const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
     const sharedString2 = new SharedString(componentRuntime2, "shared-string", SharedStringFactory.Attributes);
-    const services2: ISharedObjectServices = {
+    const services2: IChannelServices = {
         deltaConnection: containerRuntime2.createDeltaConnection(),
         objectStorage: new MockStorage(),
     };
