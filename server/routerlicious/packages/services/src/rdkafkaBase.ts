@@ -28,6 +28,10 @@ export abstract class RdkafkaBase extends EventEmitter {
 		private readonly replicationFactor: number = 3) {
 		super();
 
+		if (!kafka) {
+			throw new Error("Invalid node-rdkafka package");
+		}
+
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this.initialize();
 	}
