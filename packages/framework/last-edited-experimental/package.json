@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/last-edited-experimental",
-  "version": "0.22.1",
+  "version": "0.22.2",
   "description": "Tracks the last edited information in the Container.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -48,12 +48,12 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.22.1",
-    "@fluidframework/component-core-interfaces": "^0.22.1",
-    "@fluidframework/container-runtime": "^0.22.1",
-    "@fluidframework/container-runtime-definitions": "^0.22.1",
+    "@fluidframework/aqueduct": "^0.22.2",
+    "@fluidframework/component-core-interfaces": "^0.22.2",
+    "@fluidframework/container-runtime": "^0.22.2",
+    "@fluidframework/container-runtime-definitions": "^0.22.2",
     "@fluidframework/protocol-definitions": "^0.1009.0",
-    "@fluidframework/shared-summary-block": "^0.22.1"
+    "@fluidframework/shared-summary-block": "^0.22.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
