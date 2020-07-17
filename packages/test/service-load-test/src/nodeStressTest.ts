@@ -119,7 +119,7 @@ async function main() {
         .option("-u, --url <url>", "Connect to an existing url rather than creating new")
         .option("-r, --runId <runId>", "run a child process with the given id. Requires --url option.")
         .option("-f, --refresh", "Refresh auth tokens")
-        .option("-d, --debug", "Debug orchestrator and child processes")
+        .option("-d, --debug", "Debug child processes via --inspect-brk")
         .parse(process.argv);
 
     const profile: string | undefined = commander.profile;
@@ -172,15 +172,12 @@ async function main() {
         // Create a new file
         url = await initialize(config);
     }
-    else {
-        //* Fetch fresh tokens and cache them since child processes depend on the cache
-    }
 
     const p: Promise<void>[] = [];
     for (let i = 0; i < config.profiles[profile].numClients; i++) {
         const args = ["dist\\nodeStressTest.js", "--profile", profile, "--runId", i.toString(), "--url", url];
         if (debug) {
-            args.unshift(`--inspect-brk=${9230 + i}`); // 9229 is the default and will be used for the root test process
+            args.unshift(`--inspect-brk=${9230 + i}`); // 9229 is the default and will be used for the root orchestrator process
         }
         const process = child_process.spawn(
             "node",
