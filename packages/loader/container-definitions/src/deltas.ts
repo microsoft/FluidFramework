@@ -51,6 +51,8 @@ export interface IDeltaHandlerStrategy {
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IComponent extends Readonly<Partial<IProvideDeltaSender>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface IFluidObject extends Readonly<Partial<IProvideDeltaSender>> { }
 }
 
 export const IDeltaSender: keyof IProvideDeltaSender = "IDeltaSender";
