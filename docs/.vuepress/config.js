@@ -21,7 +21,6 @@ const MASTER_BRANCH_URL = `${BASE_URL}/versions/latest/`;
 
 const packagesToExclude = [
     "client-api",
-    "experimental-creation-driver",
     "host-service-interfaces",
     "iframe-host",
     "index",

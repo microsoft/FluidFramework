@@ -1,156 +1,163 @@
-# All Packages
+# Package Layers
 
 [//]: <> (This file is generated, please don't edit it manually!)
 
-| Package Name | Published? |
+_These are the logical layers into which our packages are grouped.
+The dependencies between layers are enforced by the layer-check command._
+
+### Base-Definitions
+
+| Packages | Layer Dependencies |
 | --- | --- |
-| [@fluidframework/build-common](/common/build/build-common) | published |
-| [@fluidframework/eslint-config-fluid](/common/build/eslint-config-fluid) | published |
-| [@fluidframework/common-definitions](/common/lib/common-definitions) | published |
-| [@fluidframework/common-utils](/common/lib/common-utils) | published |
-| [@fluid-example/badge](/components/examples/badge) | published |
-| [@fluid-example/clicker](/components/examples/clicker) | published |
-| [@fluid-example/collaborative-textarea](/components/examples/collaborative-textarea) | published |
-| [@fluid-example/diceroller](/components/examples/dice-roller) | published |
-| [@fluid-example/pond](/components/examples/pond) | published |
-| [@fluid-example/primitives](/components/examples/primitives) | published |
-| [@fluid-example/simple-component-embed](/components/examples/simple-component-embed) | published |
-| [@fluid-example/canvas](/components/experimental/canvas) | published |
-| [@fluid-example/clicker-react](/components/experimental/clicker-react/clicker-react) | published |
-| [@fluid-example/clicker-with-hooks](/components/experimental/clicker-react/clicker-with-hooks) | published |
-| [@fluid-example/client-ui-lib](/components/experimental/client-ui-lib) | published |
-| [@fluid-example/codemirror](/components/experimental/codemirror) | published |
-| [@fluid-example/draft-js](/components/experimental/draft-js) | published |
-| [@fluidframework/external-component-loader](/components/experimental/external-component-loader) | published |
-| [@fluid-example/flow-util-lib](/components/experimental/flow-util-lib) | published |
-| [@fluid-example/image-collection](/components/experimental/image-collection) | published |
-| [@fluid-example/image-gallery](/components/experimental/image-gallery) | published |
-| [@fluid-example/key-value-cache](/components/experimental/key-value-cache) | published |
-| [@fluid-example/math](/components/experimental/math) | published |
-| [@fluid-example/monaco](/components/experimental/monaco) | published |
-| [@fluid-example/multiview-container](/components/experimental/multiview/container) | published |
-| [@fluid-example/multiview-coordinate-interface](/components/experimental/multiview/interface) | published |
-| [@fluid-example/multiview-coordinate-model](/components/experimental/multiview/model) | published |
-| [@fluid-example/multiview-plot-coordinate-view](/components/experimental/multiview/plotview) | published |
-| [@fluid-example/multiview-slider-coordinate-view](/components/experimental/multiview/sliderview) | published |
-| [@fluid-example/multiview-triangle-view](/components/experimental/multiview/triangleview) | published |
-| [@fluid-example/musica](/components/experimental/musica) | published |
-| [@fluid-example/progress-bars](/components/experimental/progress-bars) | published |
-| [@fluid-example/prosemirror](/components/experimental/prosemirror) | published |
-| [@fluidframework/react-inputs](/components/experimental/react-inputs) | published |
-| [@fluid-example/scribe](/components/experimental/scribe) | published |
-| [@fluid-example/search-menu](/components/experimental/search-menu) | published |
-| [@fluid-example/shared-text](/components/experimental/shared-text) | published |
-| [@fluid-example/smde](/components/experimental/smde) | published |
-| [@fluid-example/spaces](/components/experimental/spaces) | published |
-| [@fluid-example/sudoku](/components/experimental/sudoku) | published |
-| [@fluid-example/table-document](/components/experimental/table-document) | published |
-| [@fluid-example/table-view](/components/experimental/table-view) | published |
-| [@fluid-example/todo](/components/experimental/todo) | published |
-| [@fluid-example/video-players](/components/experimental/video-players) | published |
-| [@fluid-example/vltava](/components/experimental/vltava) | published |
-| [@fluid-example/webflow](/components/experimental/webflow) | published |
-| [@fluid-example/iframe-host](/examples/hosts/iframe-host) | published |
-| [@fluid-internal/hosts-sample](/examples/hosts/literate) | private |
-| [@fluid-internal/node-host](/examples/hosts/node) | private |
-| [@fluid-example/flow-intel](/packages/agents/flow-intel) | published |
-| [@fluid-example/flow-intel-viewer](/packages/agents/flow-intel-viewer) | published |
-| [@fluid-example/intelligence-runner-agent](/packages/agents/intelligence-runner) | published |
-| [@fluid-example/snapshotter-agent](/packages/agents/snapshotter) | published |
-| [@fluid-example/spellchecker-agent](/packages/agents/spellchecker) | published |
-| [@fluid-example/translator-agent](/packages/agents/translator) | published |
-| [@fluidframework/cell](/packages/dds/cell) | published |
-| [@fluidframework/ordered-collection](/packages/dds/consensus-ordered-collection) | published |
-| [@fluidframework/register-collection](/packages/dds/consensus-register-collection) | published |
-| [@fluidframework/counter](/packages/dds/counter) | published |
-| [@fluidframework/ink](/packages/dds/ink) | published |
-| [@fluidframework/map](/packages/dds/map) | published |
-| [@fluidframework/matrix](/packages/dds/matrix) | published |
-| [@fluidframework/merge-tree](/packages/dds/merge-tree) | published |
-| [@fluidframework/sequence](/packages/dds/sequence) | published |
-| [@fluidframework/shared-object-base](/packages/dds/shared-object-common) | published |
-| [@fluidframework/shared-summary-block](/packages/dds/shared-summary-block) | published |
-| [@fluid-internal/experimental-creation-driver](/packages/drivers/experimental-creation-driver) | private |
-| [@fluidframework/file-driver](/packages/drivers/file-socket-storage) | published |
-| [@fluidframework/debugger](/packages/drivers/fluid-debugger) | published |
-| [@fluidframework/fluidapp-odsp-urlresolver](/packages/drivers/fluidapp-odsp-urlResolver) | published |
-| [@fluidframework/iframe-driver](/packages/drivers/iframe-socket-storage) | published |
-| [@fluidframework/local-driver](/packages/drivers/local-driver) | published |
-| [@fluidframework/odsp-driver](/packages/drivers/odsp-socket-storage) | published |
-| [@fluidframework/odsp-urlresolver](/packages/drivers/odsp-urlResolver) | published |
-| [@fluidframework/replay-driver](/packages/drivers/replay-socket-storage) | published |
-| [@fluidframework/routerlicious-host](/packages/drivers/routerlicious-host) | published |
-| [@fluidframework/routerlicious-driver](/packages/drivers/routerlicious-socket-storage) | published |
-| [@fluidframework/routerlicious-urlresolver](/packages/drivers/routerlicious-urlResolver) | published |
-| [@fluidframework/driver-base](/packages/drivers/socket-storage-shared) | published |
-| [@fluidframework/aqueduct](/packages/framework/aqueduct) | published |
-| [@fluidframework/component-base](/packages/framework/component-base) | published |
-| [@fluidframework/dds-interceptions](/packages/framework/dds-interceptions) | published |
-| [@fluidframework/framework-experimental](/packages/framework/experimental) | published |
-| [@fluidframework/framework-interfaces](/packages/framework/framework-definitions) | published |
-| [@fluidframework/last-edited-experimental](/packages/framework/last-edited) | published |
-| [@fluidframework/react](/packages/framework/react) | published |
-| [@fluidframework/synthesize](/packages/framework/synthesize) | published |
-| [@fluidframework/undo-redo](/packages/framework/undo-redo) | published |
-| [@fluidframework/view-adapters](/packages/framework/view-adapters) | published |
-| [@fluidframework/view-interfaces](/packages/framework/view-interfaces) | published |
-| [@fluidframework/base-host](/packages/hosts/base-host) | published |
-| [@fluidframework/host-service-interfaces](/packages/hosts/host-service-interfaces) | published |
-| [@fluidframework/local-web-host](/packages/hosts/local-web-host) | published |
-| [@fluidframework/component-core-interfaces](/packages/loader/component-core-interfaces) | published |
-| [@fluidframework/container-definitions](/packages/loader/container-definitions) | published |
-| [@fluidframework/container-loader](/packages/loader/container-loader) | published |
-| [@fluidframework/driver-definitions](/packages/loader/driver-definitions) | published |
-| [@fluidframework/driver-utils](/packages/loader/driver-utils) | published |
-| [@fluidframework/execution-context-loader](/packages/loader/execution-context-loader) | published |
-| [@fluidframework/web-code-loader](/packages/loader/loader-web) | published |
-| [@fluid-internal/test-loader-utils](/packages/loader/test-loader-utils) | private |
-| [@fluidframework/agent-scheduler](/packages/runtime/agent-scheduler) | published |
-| [@fluid-internal/client-api](/packages/runtime/client-api) | published |
-| [@fluidframework/component-runtime](/packages/runtime/component-runtime) | published |
-| [@fluidframework/component-runtime-definitions](/packages/runtime/component-runtime-definitions) | published |
-| [@fluidframework/container-runtime](/packages/runtime/container-runtime) | published |
-| [@fluidframework/container-runtime-definitions](/packages/runtime/container-runtime-definitions) | published |
-| [@fluidframework/runtime-definitions](/packages/runtime/runtime-definitions) | published |
-| [@fluidframework/test-runtime-utils](/packages/runtime/runtime-test-utils) | published |
-| [@fluidframework/runtime-utils](/packages/runtime/runtime-utils) | published |
-| [@fluid-internal/version-test-1](/packages/test/context-reload) | private |
-| [@fluid-internal/version-test-2](/packages/test/context-reload/@fluid-internal/version-test-2) | private |
-| [@fluid-internal/end-to-end-tests](/packages/test/end-to-end) | private |
-| [@fluid-internal/functional-tests](/packages/test/functional) | private |
-| [@fluid-internal/test-snapshots](/packages/test/snapshots) | private |
-| [@fluid-internal/test-utils](/packages/test/test-utils) | private |
-| [@fluid-internal/fetch-tool](/packages/tools/fluid-fetch) | private |
-| [@fluid-internal/merge-tree-client-replay](/packages/tools/merge-tree-client-replay) | private |
-| [@fluid-internal/replay-tool](/packages/tools/replay-tool) | private |
-| [@fluidframework/webpack-component-loader](/packages/tools/webpack-component-loader) | published |
-| [@fluidframework/tool-utils](/packages/utils/fluid-tool-utils) | published |
-| [@fluidframework/odsp-utils](/packages/utils/odsp-utils) | published |
-| [adminportal](/server/admin) | private |
-| [chaincode-loader](/server/admin/chaincode) | published |
-| [@fluid-internal/auspkn](/server/auspkn) | private |
-| [@fluidframework/server-gateway](/server/gateway) | private |
-| [gitrest](/server/gitrest) | private |
-| [headless-agent](/server/headless-agent) | private |
-| [historian](/server/historian) | private |
-| [@fluid-internal/service-monitor](/server/monitoring) | private |
-| [@fluidframework/gitresources](/server/routerlicious/packages/gitresources) | published |
-| [@fluidframework/server-kafka-orderer](/server/routerlicious/packages/kafka-orderer) | published |
-| [@fluidframework/server-lambdas](/server/routerlicious/packages/lambdas) | published |
-| [@fluidframework/server-lambdas-driver](/server/routerlicious/packages/lambdas-driver) | published |
-| [@fluidframework/server-local-server](/server/routerlicious/packages/local-server) | published |
-| [@fluidframework/server-memory-orderer](/server/routerlicious/packages/memory-orderer) | published |
-| [@fluidframework/protocol-base](/server/routerlicious/packages/protocol-base) | published |
-| [@fluidframework/protocol-definitions](/server/routerlicious/packages/protocol-definitions) | published |
-| [@fluidframework/server-routerlicious](/server/routerlicious/packages/routerlicious) | published |
-| [@fluidframework/server-services](/server/routerlicious/packages/services) | published |
-| [@fluidframework/server-services-client](/server/routerlicious/packages/services-client) | published |
-| [@fluidframework/server-services-core](/server/routerlicious/packages/services-core) | published |
-| [@fluidframework/server-services-shared](/server/routerlicious/packages/services-shared) | published |
-| [@fluidframework/server-services-utils](/server/routerlicious/packages/services-utils) | published |
-| [@fluidframework/server-test-utils](/server/routerlicious/packages/test-utils) | published |
-| [tinylicious](/server/tinylicious) | published |
-| [@fluidframework/build-tools](/tools/fluid-build-tools) | published |
-| [generator-fluid](/tools/generator-fluid) | published |
-| [@fluid-internal/getkeys](/tools/getkeys) | private |
-| [@fluidframework/test-tools](/tools/test-tools) | published |
+| - [@fluidframework/common-definitions](/common/lib/common-definitions)</br>- [@fluidframework/component-core-interfaces](/packages/loader/component-core-interfaces)</br>- [@fluidframework/gitresources](/server/routerlicious/packages/gitresources) | &nbsp;</br>&nbsp;</br>&nbsp; |
+
+### Protocol-Definitions
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/protocol-definitions](/server/routerlicious/packages/protocol-definitions) | - [Base-Definitions](#Base-Definitions) |
+
+### Driver-Definitions
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/driver-definitions](/packages/loader/driver-definitions)</br>&nbsp; | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions) |
+
+### Container-Definitions
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/container-definitions](/packages/loader/container-definitions)</br>&nbsp;</br>&nbsp; | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Driver-Definitions](#Driver-Definitions) |
+
+### Base-Utils
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/common-utils](/common/lib/common-utils) | - [Base-Definitions](#Base-Definitions) |
+
+### Protocol-Utils
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/protocol-base](/server/routerlicious/packages/protocol-base)</br>&nbsp;</br>&nbsp; | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Base-Utils](#Base-Utils) |
+
+### Framework-Utils
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/view-adapters](/packages/framework/view-adapters)</br>- [@fluidframework/view-interfaces](/packages/framework/view-interfaces) | - [Base-Definitions](#Base-Definitions)</br>&nbsp; |
+
+### Other-Utils
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/odsp-utils](/packages/utils/odsp-utils) | &nbsp; |
+
+### Tool-Utils
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/tool-utils](/packages/utils/tool-utils) | - [Other-Utils](#Other-Utils) |
+
+### Telemetry-Utils
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/telemetry-utils](/packages/utils/telemetry-utils)</br>&nbsp; | - [Base-Definitions](#Base-Definitions)</br>- [Base-Utils](#Base-Utils) |
+
+### Driver-Utils
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/driver-utils](/packages/loader/driver-utils)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Base-Utils](#Base-Utils)</br>- [Protocol-Utils](#Protocol-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils) |
+
+### Container-Utils
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/container-utils](/packages/loader/container-utils)</br>&nbsp; | - [Container-Definitions](#Container-Definitions)</br>- [Telemetry-Utils](#Telemetry-Utils) |
+
+### Driver
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/debugger](/packages/drivers/debugger)</br>- [@fluidframework/driver-base](/packages/drivers/driver-base)</br>- [@fluidframework/file-driver](/packages/drivers/file-driver)</br>- [@fluidframework/fluidapp-odsp-urlresolver](/packages/drivers/fluidapp-odsp-urlResolver)</br>- [@fluidframework/iframe-driver](/packages/drivers/iframe-driver)</br>- [@fluidframework/odsp-driver](/packages/drivers/odsp-driver)</br>- [@fluidframework/odsp-urlresolver](/packages/drivers/odsp-urlResolver)</br>- [@fluidframework/replay-driver](/packages/drivers/replay-driver)</br>- [@fluidframework/routerlicious-host](/packages/drivers/routerlicious-host) | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Base-Utils](#Base-Utils)</br>- [Protocol-Utils](#Protocol-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Driver-Utils](#Driver-Utils)</br>&nbsp;</br>&nbsp; |
+
+### Loader
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/container-loader](/packages/loader/container-loader)</br>- [@fluidframework/execution-context-loader](/packages/loader/execution-context-loader)</br>- [@fluid-internal/test-loader-utils](/packages/loader/test-loader-utils) (private)</br>- [@fluidframework/web-code-loader](/packages/loader/web-code-loader)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Container-Definitions](#Container-Definitions)</br>- [Base-Utils](#Base-Utils)</br>- [Protocol-Utils](#Protocol-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Driver-Utils](#Driver-Utils)</br>- [Container-Utils](#Container-Utils) |
+
+### Hosts
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/base-host](/packages/hosts/base-host)</br>- [@fluidframework/host-service-interfaces](/packages/hosts/host-service-interfaces)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Container-Definitions](#Container-Definitions)</br>- [Base-Utils](#Base-Utils)</br>- [Protocol-Utils](#Protocol-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Loader](#Loader) |
+
+### Runtime
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/agent-scheduler](/packages/runtime/agent-scheduler)</br>- [@fluidframework/cell](/packages/dds/cell)</br>- [@fluidframework/counter](/packages/dds/counter)</br>- [@fluidframework/ink](/packages/dds/ink)</br>- [@fluidframework/map](/packages/dds/map)</br>- [@fluidframework/matrix](/packages/dds/matrix)</br>- [@fluidframework/merge-tree](/packages/dds/merge-tree)</br>- [@fluidframework/ordered-collection](/packages/dds/ordered-collection)</br>- [@fluidframework/register-collection](/packages/dds/register-collection)</br>- [@fluidframework/sequence](/packages/dds/sequence)</br>- [@fluidframework/shared-object-base](/packages/dds/shared-object-base)</br>- [@fluidframework/shared-summary-block](/packages/dds/shared-summary-block)</br>- [@fluidframework/component-runtime](/packages/runtime/component-runtime)</br>- [@fluidframework/component-runtime-definitions](/packages/runtime/component-runtime-definitions)</br>- [@fluidframework/container-runtime](/packages/runtime/container-runtime)</br>- [@fluidframework/container-runtime-definitions](/packages/runtime/container-runtime-definitions)</br>- [@fluidframework/runtime-definitions](/packages/runtime/runtime-definitions)</br>- [@fluidframework/runtime-utils](/packages/runtime/runtime-utils) | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Container-Definitions](#Container-Definitions)</br>- [Base-Utils](#Base-Utils)</br>- [Protocol-Utils](#Protocol-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Driver-Utils](#Driver-Utils)</br>- [Container-Utils](#Container-Utils)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; |
+
+### Framework
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluid-internal/client-api](/packages/runtime/client-api)</br>- [@fluidframework/aqueduct](/packages/framework/aqueduct)</br>- [@fluidframework/component-base](/packages/framework/component-base)</br>- [@fluidframework/dds-interceptions](/packages/framework/dds-interceptions)</br>- [@fluidframework/framework-experimental](/packages/framework/framework-experimental)</br>- [@fluidframework/framework-interfaces](/packages/framework/framework-interfaces)</br>- [@fluidframework/last-edited-experimental](/packages/framework/last-edited-experimental)</br>- [@fluidframework/react](/packages/framework/react)</br>- [@fluidframework/request-handler](/packages/framework/request-handler)</br>- [@fluidframework/synthesize](/packages/framework/synthesize)</br>- [@fluidframework/undo-redo](/packages/framework/undo-redo) | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Container-Definitions](#Container-Definitions)</br>- [Base-Utils](#Base-Utils)</br>- [Framework-Utils](#Framework-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Driver-Utils](#Driver-Utils)</br>- [Container-Utils](#Container-Utils)</br>- [Loader](#Loader)</br>- [Runtime](#Runtime) |
+
+### Component
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluid-example/badge](/components/examples/badge)</br>- [@fluid-example/clicker](/components/examples/clicker)</br>- [@fluid-example/collaborative-textarea](/components/examples/collaborative-textarea)</br>- [@fluid-example/diceroller](/components/examples/diceroller)</br>- [@fluid-example/pond](/components/examples/pond)</br>- [@fluid-example/primitives](/components/examples/primitives)</br>- [@fluid-example/simple-component-embed](/components/examples/simple-component-embed)</br>- [@fluid-example/canvas](/components/experimental/canvas)</br>- [@fluid-example/clicker-context](/components/experimental/clicker-react/clicker-context)</br>- [@fluid-example/clicker-functional](/components/experimental/clicker-react/clicker-functional)</br>- [@fluid-example/clicker-react](/components/experimental/clicker-react/clicker-react)</br>- [@fluid-example/clicker-reducer](/components/experimental/clicker-react/clicker-reducer)</br>- [@fluid-example/client-ui-lib](/components/experimental/client-ui-lib)</br>- [@fluid-example/codemirror](/components/experimental/codemirror)</br>- [@fluid-example/draft-js](/components/experimental/draft-js)</br>- [@fluidframework/external-component-loader](/components/experimental/external-component-loader)</br>- [@fluid-example/flow-util-lib](/components/experimental/flow-util-lib)</br>- [@fluid-example/image-collection](/components/experimental/image-collection)</br>- [@fluid-example/image-gallery](/components/experimental/image-gallery)</br>- [@fluid-example/key-value-cache](/components/experimental/key-value-cache)</br>- [@fluid-example/math](/components/experimental/math)</br>- [@fluid-example/monaco](/components/experimental/monaco)</br>- [@fluid-example/multiview-container](/components/experimental/multiview/container)</br>- [@fluid-example/multiview-coordinate-interface](/components/experimental/multiview/interface)</br>- [@fluid-example/multiview-coordinate-model](/components/experimental/multiview/model)</br>- [@fluid-example/multiview-plot-coordinate-view](/components/experimental/multiview/plot-coordinate-view)</br>- [@fluid-example/multiview-slider-coordinate-view](/components/experimental/multiview/slider-coordinate-view)</br>- [@fluid-example/multiview-triangle-view](/components/experimental/multiview/triangle-view)</br>- [@fluid-example/musica](/components/experimental/musica)</br>- [@fluid-example/progress-bars](/components/experimental/progress-bars)</br>- [@fluid-example/prosemirror](/components/experimental/prosemirror)</br>- [@fluidframework/react-inputs](/components/experimental/react-inputs)</br>- [@fluid-example/scribe](/components/experimental/scribe)</br>- [@fluid-example/search-menu](/components/experimental/search-menu)</br>- [@fluid-example/shared-text](/components/experimental/shared-text)</br>- [@fluid-example/smde](/components/experimental/smde)</br>- [@fluid-example/spaces](/components/experimental/spaces)</br>- [@fluid-example/sudoku](/components/experimental/sudoku)</br>- [@fluid-example/table-document](/components/experimental/table-document)</br>- [@fluid-example/table-view](/components/experimental/table-view)</br>- [@fluid-example/todo](/components/experimental/todo)</br>- [@fluid-example/video-players](/components/experimental/video-players)</br>- [@fluid-example/vltava](/components/experimental/vltava)</br>- [@fluid-example/webflow](/components/experimental/webflow)</br>- [@fluid-example/intelligence-runner-agent](/packages/agents/intelligence-runner-agent) | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Container-Definitions](#Container-Definitions)</br>- [Base-Utils](#Base-Utils)</br>- [Framework-Utils](#Framework-Utils)</br>- [Loader](#Loader)</br>- [Hosts](#Hosts)</br>- [Runtime](#Runtime)</br>- [Framework](#Framework)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; |
+
+### Build
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/build-common](/common/build/build-common)</br>- [@fluidframework/eslint-config-fluid](/common/build/eslint-config-fluid) | &nbsp;</br>&nbsp; |
+
+### Server-Shared-Utils
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/server-services-client](/server/routerlicious/packages/services-client)</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Base-Utils](#Base-Utils)</br>- [Protocol-Utils](#Protocol-Utils) |
+
+### Server-Libs
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/server-kafka-orderer](/server/routerlicious/packages/kafka-orderer)</br>- [@fluidframework/server-lambdas](/server/routerlicious/packages/lambdas)</br>- [@fluidframework/server-lambdas-driver](/server/routerlicious/packages/lambdas-driver)</br>- [@fluidframework/server-local-server](/server/routerlicious/packages/local-server)</br>- [@fluidframework/server-memory-orderer](/server/routerlicious/packages/memory-orderer)</br>- [@fluidframework/server-services](/server/routerlicious/packages/services)</br>- [@fluidframework/server-services-core](/server/routerlicious/packages/services-core)</br>- [@fluidframework/server-services-shared](/server/routerlicious/packages/services-shared)</br>- [@fluidframework/server-services-utils](/server/routerlicious/packages/services-utils)</br>- [@fluidframework/server-test-utils](/server/routerlicious/packages/test-utils) | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Base-Utils](#Base-Utils)</br>- [Protocol-Utils](#Protocol-Utils)</br>- [Server-Shared-Utils](#Server-Shared-Utils)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; |
+
+### Server-Tools
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [tinylicious](/server/tinylicious)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Base-Utils](#Base-Utils)</br>- [Protocol-Utils](#Protocol-Utils)</br>- [Server-Shared-Utils](#Server-Shared-Utils)</br>- [Server-Libs](#Server-Libs) |
+
+### Routerlicious-Driver
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/routerlicious-driver](/packages/drivers/routerlicious-driver)</br>- [@fluidframework/routerlicious-urlresolver](/packages/drivers/routerlicious-urlResolver)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Base-Utils](#Base-Utils)</br>- [Protocol-Utils](#Protocol-Utils)</br>- [Driver-Utils](#Driver-Utils)</br>- [Driver](#Driver)</br>- [Server-Shared-Utils](#Server-Shared-Utils) |
+
+### Tools
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluid-internal/fetch-tool](/packages/tools/fetch-tool) (private)</br>- [@fluid-internal/merge-tree-client-replay](/packages/tools/merge-tree-client-replay) (private)</br>- [@fluid-internal/replay-tool](/packages/tools/replay-tool) (private)</br>- [generator-fluid](/tools/generator-fluid)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Container-Definitions](#Container-Definitions)</br>- [Base-Utils](#Base-Utils)</br>- [Other-Utils](#Other-Utils)</br>- [Tool-Utils](#Tool-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Driver-Utils](#Driver-Utils)</br>- [Driver](#Driver)</br>- [Loader](#Loader)</br>- [Runtime](#Runtime)</br>- [Framework](#Framework)</br>- [Routerlicious-Driver](#Routerlicious-Driver) |
+
+### Test
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/local-web-host](/packages/hosts/local-web-host)</br>- [@fluidframework/local-driver](/packages/drivers/local-driver)</br>- [@fluidframework/test-runtime-utils](/packages/runtime/test-runtime-utils)</br>- [@fluidframework/webpack-component-loader](/packages/tools/webpack-component-loader)</br>- [@fluid-internal/hosts-sample](/examples/hosts/hosts-sample) (private)</br>- [@fluid-example/iframe-host](/examples/hosts/iframe-host)</br>- [@fluid-internal/node-host](/examples/hosts/node-host) (private)</br>- [@fluid-internal/end-to-end-tests](/packages/test/end-to-end-tests) (private)</br>- [@fluid-internal/functional-tests](/packages/test/functional-tests) (private)</br>- [@fluid-internal/service-load-test](/packages/test/service-load-test) (private)</br>- [@fluid-internal/test-snapshots](/packages/test/snapshots) (private)</br>- [@fluidframework/test-utils](/packages/test/test-utils)</br>- [@fluid-internal/version-test-1](/packages/test/version-test-1) (private)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Container-Definitions](#Container-Definitions)</br>- [Base-Utils](#Base-Utils)</br>- [Framework-Utils](#Framework-Utils)</br>- [Other-Utils](#Other-Utils)</br>- [Tool-Utils](#Tool-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Driver-Utils](#Driver-Utils)</br>- [Driver](#Driver)</br>- [Loader](#Loader)</br>- [Hosts](#Hosts)</br>- [Runtime](#Runtime)</br>- [Framework](#Framework)</br>- [Component](#Component)</br>- [Server-Shared-Utils](#Server-Shared-Utils)</br>- [Server-Libs](#Server-Libs)</br>- [Routerlicious-Driver](#Routerlicious-Driver)</br>- [Tools](#Tools) |
+
+### Routerlicious-Server
+
+| Packages | Layer Dependencies |
+| --- | --- |
+| - [@fluidframework/server-routerlicious](/server/routerlicious/packages/routerlicious)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Base-Definitions](#Base-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Base-Utils](#Base-Utils)</br>- [Server-Shared-Utils](#Server-Shared-Utils)</br>- [Server-Libs](#Server-Libs) |
+

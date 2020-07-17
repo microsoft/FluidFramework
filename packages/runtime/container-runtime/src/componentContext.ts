@@ -6,7 +6,13 @@
 import assert from "assert";
 import EventEmitter from "events";
 import { IDisposable } from "@fluidframework/common-definitions";
-import { IComponent, IComponentLoadable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import {
+    IComponent,
+    IComponentLoadable,
+    IRequest,
+    IResponse,
+    IFluidObject,
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -14,6 +20,8 @@ import {
     IGenericBlob,
     ContainerWarning,
     ILoader,
+    BindState,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { Deferred } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -38,7 +46,7 @@ import {
     IComponentRegistry,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker, strongAssert } from "@fluidframework/runtime-utils";
+import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerRuntime } from "./containerRuntime";
 
@@ -72,10 +80,6 @@ export abstract class ComponentContext extends EventEmitter implements
     IComponentContext,
     IComponentContextLegacy,
     IDisposable {
-    public isLocal(): boolean {
-        return this.containerRuntime.isLocal() || !this.isAttached;
-    }
-
     public get documentId(): string {
         return this._containerRuntime.id;
     }
@@ -151,33 +155,38 @@ export abstract class ComponentContext extends EventEmitter implements
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
-    public get isAttached(): boolean {
-        return this._isAttached;
+    public get attachState(): AttachState {
+        return this._attachState;
     }
 
-    public readonly attach: (componentRuntime: IComponentRuntimeChannel) => void;
+    public readonly bindToContext: (componentRuntime: IComponentRuntimeChannel) => void;
     protected componentRuntime: IComponentRuntimeChannel | undefined;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
     private componentRuntimeDeferred: Deferred<IComponentRuntimeChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
+    protected _attachState: AttachState;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
-        public readonly scope: IComponent,
+        public readonly scope: IComponent & IFluidObject,
         public readonly summaryTracker: SummaryTracker,
-        private _isAttached: boolean,
-        attach: (componentRuntime: IComponentRuntimeChannel) => void,
+        private bindState: BindState,
+        bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
-        this.attach = (componentRuntime: IComponentRuntimeChannel) => {
-            attach(componentRuntime);
-            this._isAttached = true;
+        this._attachState = existing ? AttachState.Attached : AttachState.Detached;
+
+        this.bindToContext = (componentRuntime: IComponentRuntimeChannel) => {
+            assert(this.bindState === BindState.NotBound);
+            this.bindState = BindState.Binding;
+            bindComponent(componentRuntime);
+            this.bindState = BindState.Bound;
         };
     }
 
@@ -510,7 +519,10 @@ export abstract class ComponentContext extends EventEmitter implements
         this.containerRuntime.notifyComponentInstantiated(this);
     }
 
-    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
+        if (this.attachState !== AttachState.Attached) {
+            return undefined;
+        }
         return this._containerRuntime.getAbsoluteUrl(relativeUrl);
     }
 
@@ -552,14 +564,9 @@ export abstract class ComponentContext extends EventEmitter implements
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
-        strongAssert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
-
+        assert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
         const innerContents = contents as ComponentMessage;
-
-        // back-compat: 0.18 components
-        if (this.componentRuntime.reSubmit) {
-            this.componentRuntime.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
-        }
+        this.componentRuntime.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
 
     private verifyNotClosed() {
@@ -577,7 +584,7 @@ export class RemotedComponentContext extends ComponentContext {
         private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent,
+        scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
         pkg?: string[],
     ) {
@@ -588,7 +595,7 @@ export class RemotedComponentContext extends ComponentContext {
             storage,
             scope,
             summaryTracker,
-            true,
+            BindState.Bound,
             () => {
                 throw new Error("Already attached");
             },
@@ -654,15 +661,27 @@ export class LocalComponentContext extends ComponentContext {
         pkg: string[],
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent,
+        scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
-        attachCb: (componentRuntime: IComponentRuntimeChannel) => void,
+        bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
         /**
          * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
          */
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);
+        super(runtime, id, false, storage, scope, summaryTracker, BindState.NotBound, bindComponent, pkg);
+        this.attachListeners();
+    }
+
+    private attachListeners(): void {
+        this.once("attaching", () => {
+            assert.strictEqual(this.attachState, AttachState.Detached, "Should move from detached to attaching");
+            this._attachState = AttachState.Attaching;
+        });
+        this.once("attached", () => {
+            assert.strictEqual(this.attachState, AttachState.Attaching, "Should move from attaching to attached");
+            this._attachState = AttachState.Attached;
+        });
     }
 
     public generateAttachMessage(): IAttachMessage {

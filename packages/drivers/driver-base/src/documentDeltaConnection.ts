@@ -30,7 +30,7 @@ const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 function createErrorObject(handler: string, error: any, canRetry = true) {
     // Note: we suspect the incoming error object is either:
     // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
-    // - a socketError: add it to the CriticalContainerError object for driver to be able to parse it and reason
+    // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
     //   over it.
     const errorObj = createGenericNetworkError(
         `socket.io error: ${handler}: ${error}`,
@@ -378,20 +378,6 @@ export class DocumentDeltaConnection
                     response.nonce !== undefined &&
                     response.nonce !== connectMessage.nonce) {
                     return;
-                }
-
-                /* Issue #1566: Backward compat */
-                if (response.initialMessages === undefined) {
-                    response.initialMessages = [];
-                }
-                if (response.initialClients === undefined) {
-                    response.initialClients = [];
-                }
-                if (response.initialContents === undefined) {
-                    response.initialContents = [];
-                }
-                if (response.initialSignals === undefined) {
-                    response.initialSignals = [];
                 }
 
                 this.checkpointSequenceNumber = response.checkpointSequenceNumber;

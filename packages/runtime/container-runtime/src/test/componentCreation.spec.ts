@@ -11,7 +11,7 @@ import {
     ComponentRegistryEntry,
     NamedComponentRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker } from "@fluidframework/runtime-utils";
@@ -34,7 +34,7 @@ describe("Component Creation Tests", () => {
          */
 
         let storage: IDocumentStorageService;
-        let scope: IComponent;
+        let scope: IComponent & IFluidObject;
         const attachCb = (mR: IComponentRuntimeChannel) => { };
         let containerRuntime: ContainerRuntime;
         const defaultName = "default";
@@ -89,10 +89,9 @@ describe("Component Creation Tests", () => {
             containerRuntime = {
                 IComponentRegistry: globalRegistry,
                 notifyComponentInstantiated: (c) => { },
-                isLocal: () => false,
-                on: (event, listener) => { },
+                on: (event, listener) => {},
             } as ContainerRuntime;
-            summaryTracker = new SummaryTracker(true, "", 0, 0, async () => undefined);
+            summaryTracker = new SummaryTracker("", 0, 0);
         });
 
         it("Valid global component", async () => {

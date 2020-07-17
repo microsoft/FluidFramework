@@ -15,11 +15,11 @@ import {
 import {
     IChannelAttributes,
     IComponentRuntime,
-    IObjectStorageService,
-    ISharedObjectServices,
+    IChannelStorageService,
+    IChannelServices,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
-import { strongAssert } from "@fluidframework/runtime-utils";
-import { ISharedObjectFactory, SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { debug } from "./debug";
 import {
     IDirectory,
@@ -301,12 +301,12 @@ function serializeDirectory(root: SubDirectory): ITree {
  */
 export class DirectoryFactory {
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
      */
     public static readonly Type = "https://graph.microsoft.com/types/directory";
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
      */
     public static readonly Attributes: IChannelAttributes = {
         type: DirectoryFactory.Type,
@@ -315,26 +315,26 @@ export class DirectoryFactory {
     };
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
      */
     public get type() {
         return DirectoryFactory.Type;
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
      */
     public get attributes() {
         return DirectoryFactory.Attributes;
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.load}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.load}
      */
     public async load(
         runtime: IComponentRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedDirectory> {
         const directory = new SharedDirectory(id, runtime, attributes);
@@ -344,7 +344,7 @@ export class DirectoryFactory {
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.create}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
      */
     public create(runtime: IComponentRuntime, id: string): ISharedDirectory {
         const directory = new SharedDirectory(id, runtime, DirectoryFactory.Attributes);
@@ -385,7 +385,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      *
      * @returns A factory that creates and load SharedDirectory
      */
-    public static getFactory(): ISharedObjectFactory {
+    public static getFactory(): IChannelFactory {
         return new DirectoryFactory();
     }
 
@@ -654,7 +654,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      */
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService) {
+        storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
         const data = JSON.parse(fromBase64ToUtf8(header));
         const newFormat = data as IDirectoryNewStorageFormat;
@@ -720,7 +720,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         for (const currentSubDir of subdirsToRegisterFrom) {
             for (const value of currentSubDir.values()) {
                 if (SharedObject.is(value)) {
-                    value.register();
+                    value.bindToContext();
                 }
             }
 
@@ -1030,8 +1030,8 @@ class SubDirectory implements IDirectory {
             null,
         );
 
-        // If we are in local state, don't submit the op.
-        if (this.directory.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.directory.isAttached()) {
             return this;
         }
 
@@ -1063,8 +1063,8 @@ class SubDirectory implements IDirectory {
 
         const subDir: IDirectory = this._subdirectories.get(subdirName);
 
-        // If we are in local state, don't submit the op.
-        if (this.directory.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.directory.isAttached()) {
             return subDir;
         }
 
@@ -1099,8 +1099,8 @@ class SubDirectory implements IDirectory {
         // Delete the sub directory locally first.
         const successfullyRemoved = this.deleteSubDirectoryCore(subdirName, true, null);
 
-        // If we are in local state, don't submit the op.
-        if (this.directory.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.directory.isAttached()) {
             return successfullyRemoved;
         }
 
@@ -1137,8 +1137,8 @@ class SubDirectory implements IDirectory {
         // Delete the key locally first.
         const successfullyRemoved = this.deleteCore(key, true, null);
 
-        // If we are in local state, don't submit the op.
-        if (this.directory.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.directory.isAttached()) {
             return successfullyRemoved;
         }
 
@@ -1159,8 +1159,8 @@ class SubDirectory implements IDirectory {
         // Clear the data locally first.
         this.clearCore(true, null);
 
-        // If we are in local state, don't submit the op.
-        if (this.directory.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.directory.isAttached()) {
             return;
         }
 
@@ -1266,7 +1266,7 @@ class SubDirectory implements IDirectory {
         localOpMetadata: unknown,
     ): void {
         if (local) {
-            strongAssert(localOpMetadata !== undefined,
+            assert(localOpMetadata !== undefined,
                 `pendingMessageId is missing from the local client's ${op.type} operation`);
             const pendingMessageId = localOpMetadata as number;
             if (this.pendingClearMessageId === pendingMessageId) {
@@ -1470,7 +1470,7 @@ class SubDirectory implements IDirectory {
     ): boolean {
         if (this.pendingClearMessageId !== -1) {
             if (local) {
-                strongAssert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
+                assert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
                     "Received out of order storage op when there is an unackd clear message");
             }
             // If I have a NACK clear, we can ignore all ops.
@@ -1481,7 +1481,7 @@ class SubDirectory implements IDirectory {
             // Found an NACK op, clear it from the directory if the latest sequence number in the directory
             // match the message's and don't process the op.
             if (local) {
-                strongAssert(localOpMetadata !== undefined,
+                assert(localOpMetadata !== undefined,
                     `pendingMessageId is missing from the local client's ${op.type} operation`);
                 const pendingMessageId = localOpMetadata as number;
                 const pendingKeyMessageId = this.pendingKeys.get(op.key);
@@ -1514,7 +1514,7 @@ class SubDirectory implements IDirectory {
     ): boolean {
         if (this.pendingSubDirectories.has(op.subdirName)) {
             if (local) {
-                strongAssert(localOpMetadata !== undefined,
+                assert(localOpMetadata !== undefined,
                     `pendingMessageId is missing from the local client's ${op.type} operation`);
                 const pendingMessageId = localOpMetadata as number;
                 const pendingSubDirectoryMessageId = this.pendingSubDirectories.get(op.subdirName);

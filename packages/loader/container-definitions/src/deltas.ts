@@ -25,10 +25,10 @@ export interface IConnectionDetails {
     mode: ConnectionMode;
     parentBranch: string | null;
     version: string;
-    initialClients?: ISignalClient[];
-    initialMessages?: ISequencedDocumentMessage[];
-    initialContents?: IContentMessage[];
-    initialSignals?: ISignalMessage[];
+    initialClients: ISignalClient[];
+    initialMessages: ISequencedDocumentMessage[];
+    initialContents: IContentMessage[];
+    initialSignals: ISignalMessage[];
     maxMessageSize: number;
     serviceConfiguration: IServiceConfiguration;
 }
@@ -51,6 +51,8 @@ export interface IDeltaHandlerStrategy {
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IComponent extends Readonly<Partial<IProvideDeltaSender>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface IFluidObject extends Readonly<Partial<IProvideDeltaSender>> { }
 }
 
 export const IDeltaSender: keyof IProvideDeltaSender = "IDeltaSender";

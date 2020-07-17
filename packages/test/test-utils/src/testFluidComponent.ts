@@ -7,8 +7,7 @@ import { IRequest, IResponse, IComponentHandle, IComponentLoadable } from "@flui
 import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { ITestFluidComponent } from "./interfaces";
 
 /**
@@ -20,7 +19,7 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
     public static async load(
         runtime: IComponentRuntime,
         context: IComponentContext,
-        factoryEntries: Map<string, ISharedObjectFactory>) {
+        factoryEntries: Map<string, IChannelFactory>) {
         const component = new TestFluidComponent(runtime, context, factoryEntries);
         await component.initialize();
 
@@ -38,23 +37,23 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
     public get handle(): IComponentHandle<this> { return this.innerHandle; }
 
     public url: string;
-    private root!: ISharedMap;
+    public root!: ISharedMap;
     private readonly innerHandle: IComponentHandle<this>;
 
     /**
      * Creates a new TestFluidComponent.
      * @param runtime - The component runtime.
      * @param context - The componet context.
-     * @param factoryEntries - A list of id to ISharedObjectFactory mapping. For each item in the list,
+     * @param factoryEntries - A list of id to IChannelFactory mapping. For each item in the list,
      * a shared object is created which can be retrieved by calling getSharedObject() with the id;
      */
     constructor(
         public readonly runtime: IComponentRuntime,
         public readonly context: IComponentContext,
-        private readonly factoryEntriesMap: Map<string, ISharedObjectFactory>,
+        private readonly factoryEntriesMap: Map<string, IChannelFactory>,
     ) {
         this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
+        this.innerHandle = new ComponentHandle(this, "", runtime.IComponentHandleContext);
     }
 
     /**
@@ -88,12 +87,12 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
         if (!this.runtime.existing) {
             this.root = SharedMap.create(this.runtime, "root");
 
-            this.factoryEntriesMap.forEach((sharedObjectFactory: ISharedObjectFactory, key: string) => {
+            this.factoryEntriesMap.forEach((sharedObjectFactory: IChannelFactory, key: string) => {
                 const sharedObject = this.runtime.createChannel(key, sharedObjectFactory.type);
                 this.root.set(key, sharedObject.handle);
             });
 
-            this.root.register();
+            this.root.bindToContext();
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
@@ -125,14 +124,14 @@ export class TestFluidComponentFactory implements IComponentFactory {
 
     /**
      * Creates a new TestFluidComponentFactory.
-     * @param factoryEntries - A list of id to ISharedObjectFactory mapping. It creates a component runtime with each
-     * ISharedObjectFactory. Entries with string ids are passed to the component so that it can create a shared object
+     * @param factoryEntries - A list of id to IChannelFactory mapping. It creates a component runtime with each
+     * IChannelFactory. Entries with string ids are passed to the component so that it can create a shared object
      * for it.
      */
-    constructor(private readonly factoryEntries: Iterable<[string | undefined, ISharedObjectFactory]>) { }
+    constructor(private readonly factoryEntries: Iterable<[string | undefined, IChannelFactory]>) { }
 
     public instantiateComponent(context: IComponentContext): void {
-        const dataTypes = new Map<string, ISharedObjectFactory>();
+        const dataTypes = new Map<string, IChannelFactory>();
 
         // Add SharedMap's factory which will be used to create the root map.
         const sharedMapFactory = SharedMap.getFactory();
@@ -151,7 +150,7 @@ export class TestFluidComponentFactory implements IComponentFactory {
 
         // Create a map from the factory entries with entries that don't have the id as undefined. This will be
         // passed to the component.
-        const factoryEntriesMapForComponent = new Map<string, ISharedObjectFactory>();
+        const factoryEntriesMapForComponent = new Map<string, IChannelFactory>();
         for (const entry of this.factoryEntries) {
             const id = entry[0];
             if (id !== undefined) {

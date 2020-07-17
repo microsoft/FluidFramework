@@ -4,7 +4,8 @@
  */
 
 import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
-import { RequestParser, RuntimeRequestHandler } from "@fluidframework/container-runtime";
+import { RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { RequestParser } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
@@ -34,7 +35,7 @@ const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string)
     if (simpleResult.status !== 200 || simpleResult.mimeType !== "fluid/component") {
         throw new Error("Error in creating the default option picker model.");
     }
-    simpleCoordinateComponentRuntime.attach();
+    simpleCoordinateComponentRuntime.bindToContext();
     return simpleResult.value as ICoordinate;
 };
 

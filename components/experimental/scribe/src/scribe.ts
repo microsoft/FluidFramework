@@ -24,6 +24,7 @@ import { IDocumentFactory } from "@fluidframework/host-service-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IComponentRuntime,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
 import {
     IComponentContext,
@@ -32,7 +33,6 @@ import {
 import {
     IContainerRuntime,
 } from "@fluidframework/container-runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import Axios from "axios";
 
@@ -443,7 +443,7 @@ export class Scribe
     private async initialize() {
         if (!this.runtime.existing) {
             this.root = SharedMap.create(this.runtime, "root");
-            this.root.register();
+            this.root.bindToContext();
         } else {
             this.root = await this.runtime.getChannel("root") as ISharedMap;
         }
@@ -467,7 +467,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
-            [async (request: IRequest, containerRuntime: IContainerRuntime) => {
+            async (request: IRequest, containerRuntime: IContainerRuntime) => {
                 console.log(request.url);
 
                 const requestUrl = request.url.length > 0 && request.url.startsWith("/")
@@ -481,14 +481,14 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
                 const component = await containerRuntime.getComponentRuntime(componentId, true);
 
                 return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
-            }],
+            },
             { generateSummaries: true });
 
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
                 runtime.createComponent(defaultComponentId, ScribeFactory.type).then((componentRuntime) => {
-                    componentRuntime.attach();
+                    componentRuntime.bindToContext();
                 }),
             ]);
         }
@@ -497,7 +497,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
     }
 
     public instantiateComponent(context: IComponentContext): void {
-        const dataTypes = new Map<string, ISharedObjectFactory>();
+        const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 

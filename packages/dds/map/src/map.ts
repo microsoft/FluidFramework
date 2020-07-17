@@ -13,11 +13,11 @@ import {
 import {
     IChannelAttributes,
     IComponentRuntime,
-    IObjectStorageService,
-    ISharedObjectServices,
+    IChannelStorageService,
+    IChannelServices,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
 import {
-    ISharedObjectFactory,
     SharedObject,
 } from "@fluidframework/shared-object-base";
 import { debug } from "./debug";
@@ -42,14 +42,14 @@ const snapshotFileName = "header";
  * The factory that defines the map.
  * @sealed
  */
-export class MapFactory implements ISharedObjectFactory {
+export class MapFactory implements IChannelFactory {
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
+   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
    */
     public static readonly Type = "https://graph.microsoft.com/types/map";
 
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
+   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
    */
     public static readonly Attributes: IChannelAttributes = {
         type: MapFactory.Type,
@@ -58,26 +58,26 @@ export class MapFactory implements ISharedObjectFactory {
     };
 
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
+   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
    */
     public get type() {
         return MapFactory.Type;
     }
 
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
+   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
    */
     public get attributes() {
         return MapFactory.Attributes;
     }
 
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.load}
+   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.load}
    */
     public async load(
         runtime: IComponentRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedMap> {
         const map = new SharedMap(id, runtime, attributes);
@@ -87,7 +87,7 @@ export class MapFactory implements ISharedObjectFactory {
     }
 
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.create}
+   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
    */
     public create(runtime: IComponentRuntime, id: string): ISharedMap {
         const map = new SharedMap(id, runtime, MapFactory.Attributes);
@@ -115,7 +115,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
    * Get a factory for SharedMap to register with the component.
    * @returns A factory that creates and load SharedMap
    */
-    public static getFactory(): ISharedObjectFactory {
+    public static getFactory(): IChannelFactory {
         return new MapFactory();
     }
 
@@ -145,7 +145,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             runtime,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-            () => this.isLocal(),
+            () => this.isAttached(),
             valueTypes,
             this,
         );
@@ -322,7 +322,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
    */
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService) {
+        storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
 
         const data = fromBase64ToUtf8(header);
@@ -369,7 +369,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     protected registerCore() {
         for (const value of this.values()) {
             if (SharedObject.is(value)) {
-                value.register();
+                value.bindToContext();
             }
         }
     }

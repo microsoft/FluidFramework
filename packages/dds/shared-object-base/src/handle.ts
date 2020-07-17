@@ -4,11 +4,11 @@
  */
 
 import {
-    IComponentHandle,
     IComponentHandleContext,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
+import { ComponentHandle } from "@fluidframework/component-runtime";
 import { ISharedObject } from "./types";
 
 /**
@@ -19,82 +19,35 @@ import { ISharedObject } from "./types";
  * ComponentRuntime.request() recognizes requests in the form of '/<shared object id>'
  * and loads shared object.
  */
-export class SharedObjectComponentHandle implements IComponentHandle {
-    private isHandleAttached: boolean = false;
-    /**
-     * The set of handles to other shared objects that should be registered before this one.
-     */
-    private bound: Set<IComponentHandle> | undefined;
-
-    public get IComponentHandle() { return this; }
-    public get IComponentRouter() { return this; }
-    public get IComponentHandleContext() { return this; }
-
+export class SharedObjectComponentHandle extends ComponentHandle<ISharedObject> {
     /**
      * Whether services have been attached for the associated shared object.
      */
     public get isAttached(): boolean {
-        // Attached tells if the shared object is attached to parent component. Parent component should also be
-        // attached. It does not matter if the container is live or local.
-        // If the dds was registered to attached component, it should have get attached and isAttached should
-        // be true in that case.
         return this.value.isAttached();
     }
 
     /**
-     * @param value - The shared object this handle is for
-     * @param path - An id for the shared object
-     * @param routeContext - Component handle context for the container, used to provide request services
+     * Creates a new SharedObjectComponentHandle.
+     * @param value - The shared object this handle is for.
+     * @param path - The id of the shared object. It is also the path to this object relative to the routeContext.
+     * @param routeContext - The parent IComponentHandleContext that has a route to this handle.
      */
     constructor(
-        private readonly value: ISharedObject,
-        public readonly path: string,
-        public readonly routeContext: IComponentHandleContext,
+        value: ISharedObject,
+        path: string,
+        routeContext: IComponentHandleContext,
     ) {
-    }
-
-    /**
-     * Gets the shared object for this handle.
-     */
-    public async get(): Promise<any> {
-        return this.value;
+        super(value, path, routeContext);
     }
 
     /**
      * Attaches all bound handles first (which may in turn attach further handles), then attaches this handle.
      * When attaching the handle, it registers the associated shared object.
      */
-    public attach(): void {
-        // If this handle is already in attaching state in the graph or marked as attached, no need to attach again.
-        if (this.isHandleAttached) {
-            return;
-        }
-        this.isHandleAttached = true;
-        if (this.bound !== undefined) {
-            for (const handle of this.bound) {
-                handle.attach();
-            }
-
-            this.bound = undefined;
-        }
-        this.routeContext.attach();
-        this.value.register();
-    }
-
-    /**
-     * Add a handle to the list of handles to attach before this one when attach is called.
-     * @param handle - The handle to bind
-     */
-    public bind(handle: IComponentHandle): void {
-        if (this.isAttached) {
-            handle.attach();
-            return;
-        }
-        if (this.bound === undefined) {
-            this.bound = new Set<IComponentHandle>();
-        }
-
-        this.bound.add(handle);
+    public attachGraph(): void {
+        this.value.bindToContext();
+        super.attachGraph();
     }
 
     /**

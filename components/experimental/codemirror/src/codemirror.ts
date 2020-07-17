@@ -21,9 +21,8 @@ import {
     Marker,
 } from "@fluidframework/merge-tree";
 import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { SharedString, SequenceDeltaEvent } from "@fluidframework/sequence";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import CodeMirror from "codemirror";
 
@@ -250,7 +249,7 @@ export class CodeMirrorComponent
                 { [reservedTileLabelsKey]: ["pg"] });
 
             this.root.set("text", text.handle);
-            this.root.register();
+            this.root.bindToContext();
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
@@ -271,7 +270,7 @@ class SmdeFactory implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
-        const dataTypes = new Map<string, ISharedObjectFactory>();
+        const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         const sequenceFactory = SharedString.getFactory();
 

@@ -133,13 +133,13 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
                     Promise.resolve(new MyRegistry(context, "https://pragueauspkn.azureedge.net")),
                 ],
             ],
-            [SharedTextFactoryComponent.containerRequestHandler]);
+            SharedTextFactoryComponent.containerRequestHandler);
 
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
                 runtime.createComponent(DefaultComponentName, SharedTextFactoryComponent.type)
-                    .then((componentRuntime) => componentRuntime.attach()),
+                    .then((componentRuntime) => componentRuntime.bindToContext()),
             ]);
         }
 

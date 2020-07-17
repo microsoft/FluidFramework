@@ -48,6 +48,7 @@ export interface ITaskManager extends IProvideTaskManager, IComponentLoadable, I
 }
 
 export const IAgentScheduler: keyof IProvideAgentScheduler = "IAgentScheduler";
+export const SchedulerType = "_scheduler";
 
 export interface IProvideAgentScheduler {
     readonly IAgentScheduler: IAgentScheduler;
@@ -111,5 +112,9 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRoute
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends
+        Readonly<Partial<IProvideTaskManager & IProvideAgentScheduler>> { }
+
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends
         Readonly<Partial<IProvideTaskManager & IProvideAgentScheduler>> { }
 }

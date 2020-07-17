@@ -7,16 +7,17 @@ import * as MergeTree from "@fluidframework/merge-tree";
 import {
     IChannelAttributes,
     IComponentRuntime,
-    ISharedObjectServices,
+    IChannelServices,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { ISharedObject } from "@fluidframework/shared-object-base";
 import { pkgVersion } from "./packageVersion";
 import { SharedNumberSequence } from "./sharedNumberSequence";
 import { SharedObjectSequence } from "./sharedObjectSequence";
 import { IJSONRunSegment, SubSequence } from "./sharedSequence";
 import { SharedString } from "./sharedString";
 
-export class SharedStringFactory implements ISharedObjectFactory {
+export class SharedStringFactory implements IChannelFactory {
     // TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
     // load code
     public static Type = "https://graph.microsoft.com/types/mergeTree";
@@ -46,22 +47,22 @@ export class SharedStringFactory implements ISharedObjectFactory {
     public async load(
         runtime: IComponentRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
-        attributes: IChannelAttributes): Promise<ISharedObject> {
+        attributes: IChannelAttributes): Promise<SharedString> {
         const sharedString = new SharedString(runtime, id, attributes);
         await sharedString.load(branchId, services);
         return sharedString;
     }
 
-    public create(document: IComponentRuntime, id: string): ISharedObject {
+    public create(document: IComponentRuntime, id: string): SharedString {
         const sharedString = new SharedString(document, id, this.attributes);
         sharedString.initializeLocal();
         return sharedString;
     }
 }
 
-export class SharedObjectSequenceFactory implements ISharedObjectFactory {
+export class SharedObjectSequenceFactory implements IChannelFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/object-sequence";
 
     public static readonly Attributes: IChannelAttributes = {
@@ -92,7 +93,7 @@ export class SharedObjectSequenceFactory implements ISharedObjectFactory {
     public async load(
         runtime: IComponentRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedObject> {
         const sharedSeq = new SharedObjectSequence<object>(runtime, id, attributes);
@@ -107,7 +108,7 @@ export class SharedObjectSequenceFactory implements ISharedObjectFactory {
     }
 }
 
-export class SharedNumberSequenceFactory implements ISharedObjectFactory {
+export class SharedNumberSequenceFactory implements IChannelFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/number-sequence";
 
     public static readonly Attributes: IChannelAttributes = {
@@ -138,7 +139,7 @@ export class SharedNumberSequenceFactory implements ISharedObjectFactory {
     public async load(
         runtime: IComponentRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedObject> {
         const sharedSeq = new SharedNumberSequence(runtime, id, attributes);

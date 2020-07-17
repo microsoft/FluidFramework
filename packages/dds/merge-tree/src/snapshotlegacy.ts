@@ -9,7 +9,7 @@ import {
     IComponentHandleContext,
     IComponentSerializer,
 } from "@fluidframework/component-core-interfaces";
-import { ChildLogger } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
@@ -62,10 +62,12 @@ export class SnapshotLegacy {
     segments: ops.IJSONSegment[];
     segmentLengths: number[];
     logger: ITelemetryLogger;
+    private readonly chunkSize: number;
 
     constructor(public mergeTree: MergeTree.MergeTree, logger: ITelemetryLogger, public filename?: string,
         public onCompletion?: () => void) {
         this.logger = ChildLogger.create(logger, "Snapshot");
+        this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotLegacy.sizeOfFirstChunk;
     }
 
     getSeqLengthSegs(
@@ -104,7 +106,7 @@ export class SnapshotLegacy {
         context?: IComponentHandleContext,
         bind?: IComponentHandle,
     ): ITree {
-        const chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, SnapshotLegacy.sizeOfFirstChunk);
+        const chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.chunkSize);
         let length: number = chunk1.chunkLengthChars;
         let segments: number = chunk1.chunkSegmentCount;
         const tree: ITree = {

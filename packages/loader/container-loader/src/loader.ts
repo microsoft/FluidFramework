@@ -10,15 +10,18 @@ import {
     IComponent,
     IRequest,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     ICodeLoader,
+    IContainer,
     ILoader,
     IProxyLoaderFactory,
     LoaderHeader,
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { ChildLogger, DebugLogger, Deferred, PerformanceEvent } from "@fluidframework/common-utils";
+import { Deferred, performanceNow } from "@fluidframework/common-utils";
+import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -34,9 +37,6 @@ import {
 import { Container } from "./container";
 import { debug } from "./debug";
 import { IParsedUrl, parseUrl } from "./utils";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const now = require("performance-now") as () => number;
 
 function canUseCache(request: IRequest): boolean {
     if (!request.headers) {
@@ -60,13 +60,13 @@ export class RelativeLoader extends EventEmitter implements ILoader {
      * to be fetched again.
      */
     constructor(
-        private readonly loader: Loader,
+        private readonly loader: ILoader,
         private readonly baseRequest: () => IRequest | undefined,
     ) {
         super();
     }
 
-    public async resolve(request: IRequest): Promise<Container> {
+    public async resolve(request: IRequest): Promise<IContainer> {
         if (request.url.startsWith("/")) {
             // If no headers are set that require a reload make use of the same object
             const container = await this.containerDeferred.promise;
@@ -83,9 +83,9 @@ export class RelativeLoader extends EventEmitter implements ILoader {
                 if (!baseRequest) {
                     throw new Error("Base Request is not provided");
                 }
-                return this.loader.requestWorker(baseRequest.url, request);
+                return (this.loader as Loader).requestWorker(baseRequest.url, request);
             } else {
-                let container: Container;
+                let container: IContainer;
                 if (canUseCache(request)) {
                     container = await this.containerDeferred.promise;
                 } else if (!baseRequest) {
@@ -145,7 +145,7 @@ export class Loader extends EventEmitter implements ILoader {
         documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
-        private readonly scope: IComponent,
+        private readonly scope: IComponent & IFluidObject,
         private readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
         logger?: ITelemetryBaseLogger,
     ) {
@@ -170,7 +170,7 @@ export class Loader extends EventEmitter implements ILoader {
     }
 
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
-        debug(`Container creating in detached state: ${now()} `);
+        debug(`Container creating in detached state: ${performanceNow()} `);
 
         return Container.create(
             this.codeLoader,

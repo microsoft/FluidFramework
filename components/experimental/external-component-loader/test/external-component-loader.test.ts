@@ -36,7 +36,7 @@ describe("external-component-loader", () => {
         // internal component div count
         const getValue = async () => {
             return page.evaluate(() => {
-                const clickerElements = document.getElementsByClassName("spaces-component-view");
+                const clickerElements = document.getElementsByClassName("spaces-item-view");
                 return clickerElements.length;
             });
         };
@@ -47,7 +47,7 @@ describe("external-component-loader", () => {
 
         // internal component button check
         const addComponentButton = await page.evaluate(async () => {
-            const clickerElements = document.getElementsByClassName("spaces-component-view");
+            const clickerElements = document.getElementsByClassName("spaces-item-view");
             const buttons = clickerElements[0].getElementsByTagName("button");
             return buttons[0].innerText;
         });

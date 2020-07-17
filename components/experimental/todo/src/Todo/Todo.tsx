@@ -7,7 +7,7 @@ import { PrimedComponent } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { ITodoItemInitialState, TodoItem } from "../TodoItem/index";
@@ -24,9 +24,7 @@ export const TodoName = `${pkg.name as string}-todo`;
  * - New todo item entry
  * - List of todo items
  */
-export class Todo extends PrimedComponent implements
-    IComponentHTMLView,
-    IComponentReactViewable {
+export class Todo extends PrimedComponent implements IComponentHTMLView {
     // DDS ids stored as variables to minimize simple string mistakes
     private readonly todoItemsKey = "todo-items";
     private readonly todoTitleKey = "todo-title";
@@ -34,7 +32,6 @@ export class Todo extends PrimedComponent implements
     private todoItemsMap: ISharedMap;
 
     public get IComponentHTMLView() { return this; }
-    public get IComponentReactViewable() { return this; }
 
     // Would prefer not to hand this out, and instead give back a title component?
     public async getTodoTitleString() {
@@ -73,29 +70,13 @@ export class Todo extends PrimedComponent implements
     public render(div: HTMLElement) {
         // Because we are using React and our caller is not we will use the
         // ReactDOM to render our JSX.Element directly into the provided div.
-        // Because we support IComponentReactViewable and createViewElement returns a JSX.Element
-        // we can just call that and minimize duplicate code.
         ReactDOM.render(
-            this.createJSXElement(),
+            <TodoView todoModel={this} />,
             div,
         );
     }
 
     // end IComponentHTMLView
-
-    // start IComponentReactViewable
-
-    /**
-     * If our caller supports React they can query against the IComponentReactViewable
-     * Since this returns a JSX.Element it allows for an easier model.
-     */
-    public createJSXElement(): JSX.Element {
-        return (
-            <TodoView todoModel={this} />
-        );
-    }
-
-    // end IComponentReactViewable
 
     // start public API surface for the Todo model, used by the view
 

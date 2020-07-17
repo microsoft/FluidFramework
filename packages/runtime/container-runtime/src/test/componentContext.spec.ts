@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
 import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
@@ -22,13 +22,13 @@ import { ContainerRuntime } from "../containerRuntime";
 describe("Component Context Tests", () => {
     let summaryTracker: SummaryTracker;
     beforeEach(async () => {
-        summaryTracker = new SummaryTracker(false, "", 0, 0, async () => undefined);
+        summaryTracker = new SummaryTracker("", 0, 0);
     });
 
     describe("LocalComponentContext Initialization", () => {
         let localComponentContext: LocalComponentContext;
         let storage: IDocumentStorageService;
-        let scope: IComponent;
+        let scope: IComponent & IFluidObject;
         const attachCb = (mR: IComponentRuntimeChannel) => { };
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
@@ -44,8 +44,7 @@ describe("Component Context Tests", () => {
             containerRuntime = {
                 IComponentRegistry: registry,
                 notifyComponentInstantiated: (c) => { },
-                isLocal: () => false,
-                on: (event, listener) => { },
+                on: (event, listener) => {},
             } as ContainerRuntime;
         });
 
@@ -88,7 +87,7 @@ describe("Component Context Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
-                new SummaryTracker(true, "", 0, 0, async () => undefined),
+                new SummaryTracker("", 0, 0),
                 attachCb);
 
             await localComponentContext.realize()
@@ -109,8 +108,7 @@ describe("Component Context Tests", () => {
             containerRuntime = {
                 IComponentRegistry: registryWithSubRegistries,
                 notifyComponentInstantiated: (c) => { },
-                isLocal: () => false,
-                on: (event, listener) => { },
+                on: (event, listener) => {},
             } as ContainerRuntime;
             localComponentContext = new LocalComponentContext(
                 "Test1",
@@ -146,7 +144,7 @@ describe("Component Context Tests", () => {
         let remotedComponentContext: RemotedComponentContext;
         let componentAttributes: IComponentAttributes;
         const storage: Partial<IDocumentStorageService> = {};
-        let scope: IComponent;
+        let scope: IComponent & IFluidObject;
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
             const factory: { [key: string]: any } = {};
@@ -161,8 +159,7 @@ describe("Component Context Tests", () => {
             containerRuntime = {
                 IComponentRegistry: registry,
                 notifyComponentInstantiated: (c) => { },
-                isLocal: () => false,
-                on: (event, listener) => { },
+                on: (event, listener) => {},
             } as ContainerRuntime;
         });
 

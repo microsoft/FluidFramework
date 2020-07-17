@@ -130,7 +130,6 @@ export type SnapshotTreeEntry = ISnapshotTreeValueEntry | ISnapshotTreeHandleEnt
 export interface ISnapshotTreeBaseEntry {
     path: string;
     type: string;
-    mode: string;
 }
 
 export interface ISnapshotTreeValueEntry extends ISnapshotTreeBaseEntry {
@@ -214,7 +213,7 @@ export interface ISnapshotOptions {
     channels?: number;
     /*
      * Maximum Data size (in bytes)
-     * If specified, SPO will fail snapshot request with 413 error (see ErrorType.snapshotTooBig)
+     * If specified, SPO will fail snapshot request with 413 error (see OdspErrorType.snapshotTooBig)
      * if snapshot is bigger in size than specified limit.
      */
     mds?: number;
@@ -241,4 +240,23 @@ export interface HostStoragePolicy {
  */
 export interface HostStoragePolicyInternal extends HostStoragePolicy {
     summarizerClient?: boolean;
+}
+
+export interface ICreateFileResponse {
+    "@odata.context": string;
+    driveId: string;
+    id: string;
+    itemId: string;
+    itemUrl: string;
+    sequenceNumber: number;
+}
+
+export interface ICreateFileResponseZeroSize {
+    "@odata.context": string;
+    driveId: string;
+    id: string;
+    itemId: string;
+    itemUrl: string;
+    sequenceNumber: number;
+    name: string;
 }

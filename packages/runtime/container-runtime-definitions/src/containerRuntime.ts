@@ -4,7 +4,7 @@
  */
 
 import {
-    IComponent,
+    IComponent, IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -12,6 +12,7 @@ import {
     IDeltaManager,
     ContainerWarning,
     ILoader,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -28,10 +29,13 @@ import {
     IComponentContext,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
+import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideContainerRuntime>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideContainerRuntime>> { }
 }
 
 export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
@@ -45,6 +49,7 @@ export interface IProvideContainerRuntime {
  */
 export interface IContainerRuntime extends
     IProvideContainerRuntime,
+    Partial<IProvideContainerRuntimeDirtyable>,
     IContainerRuntimeBase {
     readonly id: string;
     readonly existing: boolean;
@@ -61,7 +66,11 @@ export interface IContainerRuntime extends
     readonly loader: ILoader;
     readonly flushMode: FlushMode;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly scope: IComponent;
+    readonly scope: IComponent & IFluidObject;
+    /**
+     * Indicates the attachment state of the container to a host service.
+     */
+    readonly attachState: AttachState;
 
     on(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): this;
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
@@ -127,14 +136,9 @@ export interface IContainerRuntime extends
     notifyComponentInstantiated(componentContext: IComponentContext): void;
 
     /**
-     * Flag indicating if the given container has been attached to a host service.
-     * False if the container is attached to storage.
-     */
-    isLocal(): boolean;
-
-    /**
      * Get an absolute url for a provided container-relative request.
+     * Returns undefined if the container isn't attached to storage.
      * @param relativeUrl - A relative request within the container
      */
-    getAbsoluteUrl(relativeUrl: string): Promise<string>;
+    getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 }

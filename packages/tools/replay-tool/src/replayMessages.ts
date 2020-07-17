@@ -11,7 +11,7 @@ import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/commo
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/common-utils";
+import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -470,10 +470,10 @@ export class ReplayTool {
                     storage = new FluidFetchReaderFileSnapshotWriter(this.args.initalizeFromSnapshotsDir, node.name);
                 } else {
                     if (node.name.startsWith("snapshot_")) {
-                        storage = FileSnapshotReader.createFromPath(
-                            `${this.args.initalizeFromSnapshotsDir}/${node.name}`);
-                    }
-                    else {
+                        const content = fs.readFileSync(`${this.args.initalizeFromSnapshotsDir}/${node.name}`, "utf-8");
+                        const snapshot = JSON.parse(content) as IFileSnapshot;
+                        storage = new FileSnapshotReader(snapshot);
+                    } else {
                         continue;
                     }
                 }

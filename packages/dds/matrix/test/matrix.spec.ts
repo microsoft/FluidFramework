@@ -6,7 +6,7 @@
 import "mocha";
 
 import { strict as assert } from "assert";
-import { Serializable, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { Serializable, IChannelServices } from "@fluidframework/component-runtime-definitions";
 import {
     MockComponentRuntime,
     MockContainerRuntimeFactory,
@@ -296,7 +296,7 @@ describe("Matrix", () => {
             // Create and connect the first SharedMatrix.
             const componentRuntime1 = new MockComponentRuntime();
             const containerRuntime1 = containterRuntimeFactory.createContainerRuntime(componentRuntime1);
-            const services1: ISharedObjectServices = {
+            const services1: IChannelServices = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
@@ -307,7 +307,7 @@ describe("Matrix", () => {
             // Create and connect the second SharedMatrix.
             const componentRuntime2 = new MockComponentRuntime();
             const containerRuntime2 = containterRuntimeFactory.createContainerRuntime(componentRuntime2);
-            const services2: ISharedObjectServices = {
+            const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
@@ -606,10 +606,7 @@ describe("Matrix", () => {
         });
     });
 
-    /**
-     * TODO: Enable these tests when reconnection logic is added to SharedMatrix.
-     */
-    describe.skip("SharedMatrix reconnection", () => {
+    describe("SharedMatrix reconnection", () => {
         let matrix1: SharedMatrix;
         let matrix2: SharedMatrix;
         let consumer1: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
@@ -641,7 +638,7 @@ describe("Matrix", () => {
             // Create and connect the first SharedMatrix.
             const componentRuntime1 = new MockComponentRuntime();
             containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
-            const services1: ISharedObjectServices = {
+            const services1: IChannelServices = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
@@ -652,7 +649,7 @@ describe("Matrix", () => {
             // Create and connect the second SharedMatrix.
             const componentRuntime2 = new MockComponentRuntime();
             containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
-            const services2: ISharedObjectServices = {
+            const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
@@ -723,6 +720,63 @@ describe("Matrix", () => {
             // Verify that both the matrices have expected content.
             await expect([
                 ["2nd"],
+            ]);
+        });
+
+        it("resubmission omits writes to recycled row/col handles", async () => {
+            matrix1.insertRows(0,2);
+            matrix1.insertCols(0,2);
+            matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [
+                0, 1,
+                2, 3
+            ]);
+            matrix1.removeRows(1,1);
+
+            containerRuntime1.connected = false;
+
+            matrix1.insertRows(0,1);
+            matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [
+                28, 49
+            ]);
+
+            containerRuntime1.connected = true;
+
+            await expect([
+                [28, 49],
+                [ 0,  1]
+            ]);
+        });
+
+        it("omits not-yet-locally deleted row/cols during resubmission", async () => {
+            matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 2);
+            matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 4);
+            matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [
+                0, 1, 2, 3,
+                4, 5, 6, 7
+            ]);
+
+            matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);    // rowCount: 3, colCount: 4
+            matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [
+                61, 57, 7, 62
+            ]);
+
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
+            await expect([
+                [61, 57,  7, 62],
+                [ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+            ]);
+
+            matrix1.setCells(/* row: */ 2, /* col: */ 3, /* colCount: */ 1, [65]);    // rowCount: 3 colCount: 4 stride: 4 length: 1
+            containerRuntime1.connected = false;
+
+            matrix1.removeRows(/* rowStart: */ 0, /* rowCount: */ 1);    // rowCount: 2, colCount: 4
+            containerRuntime1.connected = true;
+
+            await expect([
+                [ 0,  1,  2,  3],
+                [ 4,  5,  6, 65],
             ]);
         });
     });

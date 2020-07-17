@@ -4500,7 +4500,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     }, (10000));
                 },
                 () => {
-                    console.log(`Failed to fetch ${commentHandle.path}`);
+                    console.log(`Failed to fetch ${commentHandle.absolutePath}`);
                 });
         }
     }
@@ -4523,7 +4523,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public insertComponentNew(prefix: string, chaincode: string, inline = false) {
         const id = `${prefix}-${Date.now()}`;
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.collabDocument.context.createComponent(id, chaincode).then((doc) => doc.attach());
+        this.collabDocument.context.createComponent(id, chaincode).then((doc) => doc.bindToContext());
         const props = {
             crefTest: {
                 layout: { inline },

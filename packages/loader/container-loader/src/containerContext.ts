@@ -10,6 +10,7 @@ import {
     IComponentConfiguration,
     IRequest,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -20,8 +21,9 @@ import {
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
-    CriticalContainerError,
+    ICriticalContainerError,
     ContainerWarning,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -46,7 +48,7 @@ import { NullRuntime } from "./nullRuntime";
 export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
-        scope: IComponent,
+        scope: IComponent & IFluidObject,
         codeLoader: ICodeLoader,
         runtimeFactory: IRuntimeFactory,
         baseSnapshot: ISnapshotTree | null,
@@ -59,7 +61,7 @@ export class ContainerContext implements IContainerContext {
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
-        closeFn: (error?: CriticalContainerError) => void,
+        closeFn: (error?: ICriticalContainerError) => void,
         version: string,
         previousRuntimeState: IRuntimeState,
     ): Promise<ContainerContext> {
@@ -166,7 +168,7 @@ export class ContainerContext implements IContainerContext {
 
     constructor(
         private readonly container: Container,
-        public readonly scope: IComponent,
+        public readonly scope: IComponent & IFluidObject,
         public readonly codeLoader: ICodeLoader,
         public readonly runtimeFactory: IRuntimeFactory,
         private readonly _baseSnapshot: ISnapshotTree | null,
@@ -179,11 +181,25 @@ export class ContainerContext implements IContainerContext {
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly snapshotFn: (message: string) => Promise<void>,
-        public readonly closeFn: (error?: CriticalContainerError) => void,
+        public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
     ) {
         this.logger = container.subLogger;
+        this.attachListener();
+    }
+
+    private attachListener() {
+        this.container.once("attaching", () => {
+            if (this.runtime?.setAttachState !== undefined) {
+                this.runtime.setAttachState(AttachState.Attaching);
+            }
+        });
+        this.container.once("attached", () => {
+            if (this.runtime?.setAttachState !== undefined) {
+                this.runtime.setAttachState(AttachState.Attached);
+            }
+        });
     }
 
     public dispose(error?: Error): void {
@@ -212,8 +228,8 @@ export class ContainerContext implements IContainerContext {
         return this.runtime!.stop();
     }
 
-    public isLocal(): boolean {
-        return this.container.isLocal();
+    public get attachState(): AttachState {
+        return this.container.attachState;
     }
 
     public createSummary(): ISummaryTree {
@@ -266,7 +282,7 @@ export class ContainerContext implements IContainerContext {
         return this.runtime! instanceof NullRuntime;
     }
 
-    public async getAbsoluteUrl?(relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined> {
         return this.container.getAbsoluteUrl(relativeUrl);
     }
 

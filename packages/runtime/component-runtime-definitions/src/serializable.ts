@@ -12,7 +12,7 @@ import { AsJsonable, Jsonable, JsonablePrimitive } from "./jsonable";
  *
  * Convenient when declaring type constraints, such as `<T extends Serializable>`.
  *
- * (See Jsonable for caveats regarding serialization of `undefined` and non-finate numbers.)
+ * (See Jsonable for caveats regarding serialization of `undefined` and non-finite numbers.)
  */
 export type Serializable = Jsonable<JsonablePrimitive | IComponentHandle>;
 

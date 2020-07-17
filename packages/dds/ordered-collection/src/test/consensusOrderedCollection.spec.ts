@@ -4,8 +4,7 @@
  */
 
 import assert from "assert";
-import { IDeltaConnection, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
-import { strongAssert } from "@fluidframework/runtime-utils";
+import { IDeltaConnection, IChannelServices } from "@fluidframework/component-runtime-definitions";
 import {
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
@@ -67,11 +66,11 @@ describe("ConsensusOrderedCollection", () => {
             it("Can add and remove a handle", async () => {
                 assert.strictEqual(await removeItem(), undefined);
                 const handle = testCollection.handle;
-                strongAssert(handle, "Need an actual handle to test this case");
+                assert(handle, "Need an actual handle to test this case");
                 await addItem(handle);
 
                 const acquiredValue = await removeItem();
-                assert.strictEqual(acquiredValue.path, handle.path);
+                assert.strictEqual(acquiredValue.absolutePath, handle.absolutePath);
                 const component = await handle.get();
                 assert.strictEqual(component.url, testCollection.url);
 
@@ -177,7 +176,7 @@ describe("ConsensusOrderedCollection", () => {
                 containerRuntimeFactory = new MockContainerRuntimeFactory();
                 const componentRuntime = new MockComponentRuntime();
                 const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
-                const services: ISharedObjectServices = {
+                const services: IChannelServices = {
                     deltaConnection: containerRuntime.createDeltaConnection(),
                     objectStorage: new MockStorage(),
                 };
@@ -204,7 +203,7 @@ describe("ConsensusOrderedCollection", () => {
             componentRuntime: MockComponentRuntime,
             deltaConnection: IDeltaConnection,
         ): Promise<IConsensusOrderedCollection> {
-            const services: ISharedObjectServices = {
+            const services: IChannelServices = {
                 deltaConnection,
                 objectStorage: new MockStorage(),
             };

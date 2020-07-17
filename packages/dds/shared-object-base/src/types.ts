@@ -4,12 +4,14 @@
  */
 
 import { ITree, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IChannel, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { IChannel, IChannelServices } from "@fluidframework/component-runtime-definitions";
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
-declare module "@fluidframework/container-definitions" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IComponent extends Readonly<Partial<IProvideSharedObject>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface IFluidObject extends Readonly<Partial<IProvideSharedObject>> { }
 }
 
 export const ISharedObject: keyof IProvideSharedObject = "ISharedObject";
@@ -29,28 +31,13 @@ export interface ISharedObjectEvents extends IErrorEvent {
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
     extends IProvideSharedObject, IChannel, IEventProvider<TEvent> {
     /**
-     * Registers the given shared object to its containing component runtime, causing it to attach once
+     * Binds the given shared object to its containing component runtime, causing it to attach once
      * the runtime attaches.
      */
-    register(): void;
+    bindToContext(): void;
 
     /**
-     * Returns whether the given shared object is local. It is local if either it is not attached or
-     * container is not attached to storage.
-     * @returns True if the given shared object is local
-     *
-     */
-    isLocal(): boolean;
-
-    /**
-     * Returns whether the given shared object is registered.
-     * @returns True if the given shared object is registered
-     */
-    isRegistered(): boolean;
-
-    /**
-     * Returns whether the given shared object is attached to container. It means it is reachable from container.
-     * It does not matter if the container is live or local.
+     * Returns whether the given shared object is attached to storage.
      * @returns True if the given shared object is attached
      */
     isAttached(): boolean;
@@ -65,5 +52,5 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
      * Enables the channel to send and receive ops.
      * @param services - Services to connect to
      */
-    connect(services: ISharedObjectServices): void;
+    connect(services: IChannelServices): void;
 }

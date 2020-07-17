@@ -3,29 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ISequencedDocumentMessage, IQuorum } from "@fluidframework/protocol-definitions";
-import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions";
-import { ContainerMessageType } from "@fluidframework/container-runtime";
-import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
-
-const schedulerId = "_schdeuler";
-
-// Returns if an "Attach" or "Operation" type message is from the scheduler.
-function isSchedulerMessage(message: ISequencedDocumentMessage) {
-    if (message.type === ContainerMessageType.Attach) {
-        const attachMessage = message.contents as IAttachMessage;
-        if (attachMessage.id === schedulerId) {
-            return true;
-        }
-    } else if (message.type === ContainerMessageType.ComponentOp) {
-        const envelope = message.contents as IEnvelope;
-        if (envelope.address === schedulerId) {
-            return true;
-        }
-    }
-    return false;
-}
+import { ContainerMessageType  } from "@fluidframework/container-runtime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
+import { ILastEditDetails, IFluidLastEditedTracker } from "./interfaces";
+import { IComponentLastEditedTracker } from "./legacy";
 
 // Default implementation of the shouldDiscardMessageFn function below that tells that all messages other
 // than "Attach" and "Operation" type messages should be discarded.
@@ -74,7 +57,7 @@ export async function setupLastEditedTrackerForContainer(
     shouldDiscardMessageFn: (message: ISequencedDocumentMessage) => boolean = shouldDiscardMessageDefault,
 ) {
     // eslint-disable-next-line prefer-const
-    let lastEditedTracker: IComponentLastEditedTracker;
+    let lastEditedTracker: IComponentLastEditedTracker | IFluidLastEditedTracker | undefined;
     // Stores the last edit details until the component has loaded.
     let pendingLastEditDetails: ILastEditDetails | undefined;
 
@@ -82,7 +65,11 @@ export async function setupLastEditedTrackerForContainer(
     // last edited tracker. If the component hasn't loaded, store the last edited information temporarily.
     runtime.on("op", (message: ISequencedDocumentMessage) => {
         // If this is a scheduler messages or it should be discarded as per shouldDiscardMessageFn, return.
-        if (shouldDiscardMessageFn(message) || isSchedulerMessage(message)) {
+        // To check for this, we use the runtime's isMessageDirtyable API. If it is not available, we assume
+        // that the message should not be discarded.
+        const isDirtyable = runtime.IContainerRuntimeDirtyable === undefined
+        ? true : runtime.IContainerRuntimeDirtyable.isMessageDirtyable(message);
+        if (shouldDiscardMessageFn(message) || !isDirtyable) {
             return;
         }
 
@@ -107,8 +94,8 @@ export async function setupLastEditedTrackerForContainer(
     }
 
     // Get the last edited tracker from the component.
-    const component = response.value;
-    lastEditedTracker = component.IComponentLastEditedTracker;
+    const component = response.value as IComponent & IFluidObject;
+    lastEditedTracker = component.IComponentLastEditedTracker ?? component.IFluidLastEditedTracker;
     if (lastEditedTracker === undefined) {
         throw new Error(`Component with id ${componentId} does not have IComponentLastEditedTracker.`);
     }

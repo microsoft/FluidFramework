@@ -1,19 +1,23 @@
 .ink-component-root {
     width: 100%;
     height: 100%;
-    position: relative;
+    /* Set a minimum usable size for the component, we won't tolerate anything smaller */
+    min-width: 300px;
+    min-height: 300px;
+    /* Absolute at the root so we don't inadvertently stretch our container element */
+    position: absolute;
 }
 
 .ink-surface {
-    width: 100%;
     height: 100%;
-    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .ink-canvas {
-    width: 100%;
-    height: calc(100% - 50px);
-    position: absolute;
+    flex-grow: 1;
+    /* Save 50 px for the toolbar */
+    max-height: calc(100% - 50px);
     background-color: #000;
     touch-action: none;
 }
@@ -21,8 +25,6 @@
 .ink-toolbar {
     width: 100%;
     height: 50px;
-    position: absolute;
-    bottom: 0;
     background-color: #222;
 }
 

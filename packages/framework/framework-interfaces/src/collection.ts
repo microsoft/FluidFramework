@@ -8,6 +8,8 @@ import { IComponent } from "@fluidframework/component-core-interfaces";
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideComponentCollection>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideComponentCollection>> { }
 }
 
 export const IComponentCollection: keyof IProvideComponentCollection = "IComponentCollection";

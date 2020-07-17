@@ -4,16 +4,18 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { PerformanceEvent } from "@fluidframework/common-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import {
     fetchHelper,
-    fetchIncorrectResponse,
     getWithRetryForTokenRefresh,
-    throwOdspNetworkError,
     getOrigin,
 } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
+import {
+    fetchIncorrectResponse,
+    throwOdspNetworkError,
+} from "./odspError";
 
 /**
  * Makes join session call on SPO to get information about the web socket for a document
@@ -41,8 +43,7 @@ export async function fetchJoinSession(
         }
 
         const extraProps = refresh ? { secondAttempt: 1 } : {};
-        const joinSessionEvent = PerformanceEvent.start(logger, { eventName: "JoinSession", ...extraProps });
-        try {
+        return PerformanceEvent.timedExecAsync(logger, { eventName: "JoinSession", ...extraProps }, async (event) => {
             // TODO Extract the auth header-vs-query logic out
             const siteOrigin = getOrigin(siteUrl);
             let queryParams = `access_token=${token}`;
@@ -58,7 +59,7 @@ export async function fetchJoinSession(
             );
 
             // TODO SPO-specific telemetry
-            joinSessionEvent.end({
+            event.end({
                 sprequestguid: response.headers.get("sprequestguid"),
                 sprequestduration: response.headers.get("sprequestduration"),
             });
@@ -68,9 +69,6 @@ export async function fetchJoinSession(
             }
 
             return response.content;
-        } catch (error) {
-            joinSessionEvent.cancel({}, error);
-            throw error;
-        }
+        });
     });
 }

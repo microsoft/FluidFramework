@@ -31,10 +31,7 @@ export class SummaryTreeConverter {
 
     /**
      * Converts snapshot ITree to ISummaryTree format.
-     * back-compat: 0.14 uploadSummary
-     * If useContext is set to true, it will ensure that the handles
-     * are the full path.  This is required, because individual components
-     * may still be sending the id instead of the path.
+     * Ensures that the handles are the full path.
      * @param snapshot - snapshot in ITree format
      * @param fullTree - true to never use handles, even if id is specified
      */

@@ -14,7 +14,7 @@
             "type": "node",
             "request": "launch",
             "name": "Matrix Tests",
-            "cwd": "${workspaceFolder}/packages/runtime/matrix",
+            "cwd": "${workspaceFolder}/packages/dds/matrix",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "args": [
                 "-r",

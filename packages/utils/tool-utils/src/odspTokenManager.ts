@@ -12,7 +12,7 @@ import {
     refreshAccessToken,
     getSharepointTenant,
 } from "@fluidframework/odsp-utils";
-import { IAsyncCache, loadRC, saveRC } from "./fluidToolRC";
+import { IAsyncCache, loadRC, saveRC, lockRC } from "./fluidToolRC";
 import { serverListenAndHandle, endResponse } from "./httpHelpers";
 
 const odspAuthRedirectPort = 7000;
@@ -52,7 +52,7 @@ export class OdspTokenManager {
         forceRefresh = false,
         forceReauth = false,
     ): Promise<IOdspTokens> {
-        return this.getTokensCore(
+        return this.getTokens(
             false,
             server,
             clientConfig,
@@ -71,7 +71,7 @@ export class OdspTokenManager {
         forceRefresh = false,
         forceReauth = false,
     ): Promise<IOdspTokens> {
-        return this.getTokensCore(
+        return this.getTokens(
             true,
             server,
             clientConfig,
@@ -80,6 +80,37 @@ export class OdspTokenManager {
             forceRefresh,
             forceReauth,
         );
+    }
+    private async getTokens(
+        isPush: boolean,
+        server: string,
+        clientConfig: IClientConfig,
+        initialNavigator: (url: string) => void,
+        redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
+        forceRefresh = false,
+        forceReauth = false,
+    ): Promise<IOdspTokens> {
+        if (this.tokenCache) {
+            if (!forceReauth && !forceRefresh) {
+                // check and return if it exists without lock
+                const cacheKey: OdspTokenManagerCacheKey = isPush ? { isPush } : { isPush, server };
+                const tokensFromCache = await this.tokenCache.get(cacheKey);
+                if (tokensFromCache?.refreshToken) {
+                    if (redirectUriCallback) {
+                        initialNavigator(await redirectUriCallback(tokensFromCache));
+                    }
+                    return tokensFromCache;
+                }
+            }
+            // check with lock
+            return this.tokenCache.lock(async () => {
+                return this.getTokensCore(
+                    isPush, server, clientConfig, initialNavigator,
+                    redirectUriCallback, forceRefresh, forceReauth);
+            });
+        }
+        return this.getTokensCore(isPush, server, clientConfig, initialNavigator,
+            redirectUriCallback, forceRefresh, forceReauth);
     }
 
     private async getTokensCore(
@@ -205,5 +236,13 @@ export const odspTokensCache: IAsyncCache<OdspTokenManagerCacheKey, IOdspTokens>
             prevTokens[key.server] = tokens;
         }
         return saveRC(rc);
+    },
+    async lock<T>(callback: () => Promise<T>): Promise<T> {
+        const release = await lockRC();
+        try {
+            return await callback();
+        } finally {
+            await release();
+        }
     },
 };

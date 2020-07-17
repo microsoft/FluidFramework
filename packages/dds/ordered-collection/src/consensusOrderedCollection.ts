@@ -15,9 +15,9 @@ import {
 import {
     IChannelAttributes,
     IComponentRuntime,
-    IObjectStorageService,
+    IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
-import { strongAssert, unreachableCase } from "@fluidframework/runtime-utils";
+import { unreachableCase } from "@fluidframework/runtime-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import {
@@ -131,7 +131,7 @@ export class ConsensusOrderedCollection<T = any>
     public async add(value: T): Promise<void> {
         const valueSer = this.serializeValue(value);
 
-        if (this.isLocal()) {
+        if (!this.isAttached()) {
             // For the case where this is not attached yet, explicitly JSON
             // clone the value to match the behavior of going thru the wire.
             const addValue = this.deserializeValue(valueSer) as T;
@@ -223,7 +223,7 @@ export class ConsensusOrderedCollection<T = any>
     }
 
     protected async complete(acquireId: string) {
-        if (this.isLocal()) {
+        if (!this.isAttached()) {
             this.completeCore(acquireId);
             return;
         }
@@ -247,7 +247,7 @@ export class ConsensusOrderedCollection<T = any>
     }
 
     protected release(acquireId: string) {
-        if (this.isLocal()) {
+        if (!this.isAttached()) {
             this.releaseCore(acquireId);
             return;
         }
@@ -275,7 +275,7 @@ export class ConsensusOrderedCollection<T = any>
 
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService): Promise<void> {
+        storage: IChannelStorageService): Promise<void> {
         assert(this.jobTracking.size === 0);
         const rawContentTracking = await storage.read(snapshotFileNameTracking);
         if (rawContentTracking !== undefined) {
@@ -327,7 +327,7 @@ export class ConsensusOrderedCollection<T = any>
                 default: unreachableCase(op);
             }
             if (local) {
-                strongAssert(
+                assert(
                     localOpMetadata, `localOpMetadata is missing from the local client's ${op.opName} operation`);
                 // Resolve the pending promise for this operation now that we have received an ack for it.
                 const resolve = localOpMetadata as PendingResolve<T>;
@@ -339,7 +339,7 @@ export class ConsensusOrderedCollection<T = any>
     private async submit<TMessage extends IConsensusOrderedCollectionOperation>(
         message: TMessage,
     ): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
-        assert(!this.isLocal());
+        assert(this.isAttached());
 
         return this.newAckBasedPromise((resolve) => {
             // Send the resolve function as the localOpMetadata. This will be provided back to us when the
@@ -370,7 +370,7 @@ export class ConsensusOrderedCollection<T = any>
     }
 
     private async acquireInternal(): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
-        if (this.isLocal()) {
+        if (!this.isAttached()) {
             // can be undefined if queue is empty
             return this.acquireCore(uuid(), idForLocalUnattachedClient);
         }

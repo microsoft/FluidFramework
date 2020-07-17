@@ -6,7 +6,7 @@ import { PrimedComponent } from "@fluidframework/aqueduct";
 import { CollaborativeTextArea } from "@fluidframework/react-inputs";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -18,9 +18,8 @@ export const TextBoxName = `${pkg.name as string}-textbox`;
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
  * collaborative textarea.
  */
-export class TextBox extends PrimedComponent<{}, string> implements IComponentHTMLView, IComponentReactViewable {
+export class TextBox extends PrimedComponent<{}, string> implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
-    public get IComponentReactViewable() { return this; }
 
     private text: SharedString | undefined;
 
@@ -45,24 +44,10 @@ export class TextBox extends PrimedComponent<{}, string> implements IComponentHT
 
     public render(div: HTMLElement) {
         ReactDOM.render(
-            this.createJSXElement(),
+            <CollaborativeTextArea sharedString={this.text} />,
             div,
         );
     }
 
     // end IComponentHTMLView
-
-    // start IComponentReactViewable
-
-    /**
-     * If our caller supports React they can query against the IComponentReactViewable
-     * Since this returns a JSX.Element it allows for an easier model.
-     */
-    public createJSXElement(): JSX.Element {
-        return (
-            <CollaborativeTextArea sharedString={this.text} />
-        );
-    }
-
-    // end IComponentReactViewable
 }

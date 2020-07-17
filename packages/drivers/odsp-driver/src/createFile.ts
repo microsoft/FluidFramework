@@ -8,52 +8,44 @@ import { getGitType } from "@fluidframework/protocol-base";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
 import { SummaryType, ISummaryTree, ISummaryBlob, MessageType } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { PerformanceEvent } from "@fluidframework/common-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IOdspResolvedUrl,
     ISnapshotTree,
     SnapshotTreeValue,
     SnapshotTreeEntry,
     SnapshotType,
+    ICreateFileResponse,
+    ICreateFileResponseZeroSize,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { INonPersistentCache } from "./odspCache";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import {
     getWithRetryForTokenRefresh,
-    throwOdspNetworkError,
     fetchHelper,
     INewFileInfo,
-    invalidFileNameStatusCode,
     getOrigin,
-    fetchIncorrectResponse,
 } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
-
-export interface IFileCreateResponse {
-    siteUrl: string;
-    itemId: string;
-    filename: string;
-    driveId: string;
-}
+import {
+    throwOdspNetworkError,
+    invalidFileNameStatusCode,
+    fetchIncorrectResponse,
+} from "./odspError";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
     return !!fileName.match(invalidCharsRegex);
 };
 
-export function getKeyFromFileInfo(fileInfo: INewFileInfo): string {
-    return `${fileInfo.siteUrl}:${fileInfo.driveId}:${fileInfo.filePath}:${fileInfo.filename}`;
-}
-
 /**
- * Creates new fluid file before returning a real resolved url
+ * Creates a new fluid file. '.fluid' is appended to the filename
+ * Returns resolved url
  */
 export async function createNewFluidFile(
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     newFileInfo: INewFileInfo,
-    cache: INonPersistentCache,
     logger: ITelemetryLogger,
     createNewSummary?: ISummaryTree,
 ): Promise<IOdspResolvedUrl> {
@@ -62,49 +54,14 @@ export async function createNewFluidFile(
         throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode);
     }
 
-    const createFileAndResolveUrl = async () => {
-        const fileResponse: IFileCreateResponse = await createNewOdspFile(
-            newFileInfo,
-            getStorageToken,
-            logger,
-            createNewSummary);
-        const odspUrl = createOdspUrl(fileResponse.siteUrl, fileResponse.driveId, fileResponse.itemId, "/");
-        const resolver = new OdspDriverUrlResolver();
+    const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
+    const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.fluid`);
+    const baseUrl =
+        `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
+        `${filePath}/${encodedFilename}`;
 
-        if (newFileInfo.callback) {
-            newFileInfo.callback(fileResponse.itemId, fileResponse.filename);
-        }
-
-        return resolver.resolve({ url: odspUrl });
-    };
-
-    // Issue #2557: Need to clean cache below once im-memory driver is deleted
-    // Don't do any caching for detached container because we have auto rename on name collisions.
-    // This should be done for create-new too but once partner teams move to detached container flow.
-    if (createNewSummary) {
-        return createFileAndResolveUrl();
-    }
-
-    const key = getKeyFromFileInfo(newFileInfo);
-    return cache.fileUrlCache.addOrGet(key, createFileAndResolveUrl);
-}
-
-/**
- * Creates a new fluid file. '.fluid' is appended to the filename
- */
-async function createNewOdspFile(
-    newFileInfo: INewFileInfo,
-    getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-    logger: ITelemetryLogger,
-    createNewSummary?: ISummaryTree,
-): Promise<IFileCreateResponse> {
-    const fileResponse = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
+    const itemId = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
         const storageToken = await getStorageToken(newFileInfo.siteUrl, refresh);
-
-        const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.fluid`);
-
-        let fetchResponse;
-        const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
 
         return PerformanceEvent.timedExecAsync(
             logger,
@@ -112,60 +69,61 @@ async function createNewOdspFile(
                 eventName: "createNewFile",
                 detached: createNewSummary !== undefined,
             },
-            async () => {
+            async (event) => {
                 if (createNewSummary) {
+                    // We do not have name from SPO to provide to callback
+                    assert(newFileInfo.callback === undefined);
+
                     const containerSnapshot: ISnapshotTree = convertSummaryIntoContainerSnapshot(createNewSummary);
-                    const initialUrl =
-                        `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
-                        `${filePath}/${encodedFilename}` +
-                        `:/opStream/snapshots/snapshot`;
+                    const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot`;
                     const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                     headers["Content-Type"] = "application/json";
 
-                    const postBody = JSON.stringify(containerSnapshot);
-                    fetchResponse = await fetchHelper(
+                    const fetchResponse = await fetchHelper<ICreateFileResponse>(
                         url,
                         {
-                            body: postBody,
+                            body: JSON.stringify(containerSnapshot),
                             headers,
                             method: "POST",
                         });
 
-                    const content = await fetchResponse.content;
+                    const content = fetchResponse.content;
                     if (!content || !content.itemId) {
                         throwOdspNetworkError("Could not parse item from Vroom response", fetchIncorrectResponse);
                     }
-                    return {
-                        itemId: content.itemId,
-                        siteUrl: newFileInfo.siteUrl,
-                        driveId: newFileInfo.driveId,
-                        filename: newFileInfo.filename,
-                    };
+                    event.end({
+                        headers: Object.keys(headers).length !== 0 ? true : undefined,
+                    });
+                    return content.itemId;
                 } else {
-                    // eslint-disable-next-line max-len
-                    const initialUrl = `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
+                    const initialUrl =
+                        `${baseUrl}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
                     const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
-                    fetchResponse = await fetchHelper(
+                    const fetchResponse = await fetchHelper<ICreateFileResponseZeroSize>(
                         url,
                         {
                             method: "PUT",
                             headers,
                         });
 
-                    const content = await fetchResponse.content;
+                    const content = fetchResponse.content;
                     if (!content || !content.id) {
                         throwOdspNetworkError("Could not parse drive item from Vroom response", fetchIncorrectResponse);
                     }
-                    return {
-                        itemId: content.id,
-                        siteUrl: newFileInfo.siteUrl,
-                        driveId: newFileInfo.driveId,
-                        filename: content.name,
-                    };
+                    event.end({
+                        headers: Object.keys(headers).length !== 0 ? true : undefined,
+                    });
+                    if (newFileInfo.callback) {
+                        newFileInfo.callback(content.id, content.name);
+                    }
+                    return content.id;
                 }
             });
     });
-    return fileResponse;
+
+    const odspUrl = createOdspUrl(newFileInfo.siteUrl, newFileInfo.driveId, itemId, "/");
+    const resolver = new OdspDriverUrlResolver();
+    return resolver.resolve({ url: odspUrl });
 }
 
 function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
@@ -255,7 +213,6 @@ export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree):
         }
 
         const entry: SnapshotTreeEntry = {
-            mode: "100644",
             path: encodeURIComponent(key),
             type: getGitType(summaryObject),
             value,

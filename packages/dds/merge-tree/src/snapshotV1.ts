@@ -10,15 +10,15 @@ import {
     IComponentHandleContext,
     IComponentSerializer,
 } from "@fluidframework/component-core-interfaces";
-import { ChildLogger, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     FileMode,
-    ISequencedDocumentMessage,
     ITree,
     TreeEntry,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 import { UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as Properties from "./properties";
@@ -39,12 +39,13 @@ export class SnapshotV1 {
     // is really hard to correlate with any actual metric that matters (like bytes over the wire).
     // For test with small number of chunks it would be closer to blob size (before base64 encoding),
     // for very chunky text, blob size can easily be 4x-8x of that number.
-    public static readonly sizeOfChunks: number = 10000;
+    public static readonly chunkSize: number = 10000;
 
     private header: MergeTreeHeaderMetadata;
     private segments: JsonSegmentSpecs[];
     private segmentLengths: number[];
     private readonly logger: ITelemetryLogger;
+    private readonly chunkSize: number;
 
     constructor(
         public mergeTree: MergeTree.MergeTree,
@@ -52,6 +53,7 @@ export class SnapshotV1 {
         public filename?: string,
         public onCompletion?: () => void) {
         this.logger = ChildLogger.create(logger, "Snapshot");
+        this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotV1.chunkSize;
     }
 
     getSeqLengthSegs(
@@ -83,15 +85,10 @@ export class SnapshotV1 {
      * the summary data rather than JSON.stringify.
      */
     emit(
-        // TODO: Remove unused 'catchUpMsgs' argument once new snapshot format is the default.
-        //       (See https://github.com/microsoft/FluidFramework/issues/84)
-        catchUpMsgs: ISequencedDocumentMessage[],
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
         bind?: IComponentHandle,
     ): ITree {
-        assert.equal(catchUpMsgs.length, 0);
-
         const chunks: MergeTreeChunkV1[] = [];
         this.header.totalSegmentCount = 0;
         this.header.totalLength = 0;
@@ -99,7 +96,8 @@ export class SnapshotV1 {
             const chunk = this.getSeqLengthSegs(
                 this.segments,
                 this.segmentLengths,
-                SnapshotV1.sizeOfChunks, this.header.totalSegmentCount);
+                this.chunkSize,
+                this.header.totalSegmentCount);
             chunks.push(chunk);
             this.header.totalSegmentCount += chunk.segmentCount;
             this.header.totalLength += chunk.length;
@@ -254,7 +252,7 @@ export class SnapshotV1 {
     }
 
     public static async loadChunk(
-        storage: IObjectStorageService,
+        storage: IChannelStorageService,
         path: string,
         logger: ITelemetryLogger,
         options: Properties.PropertySet,

@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IComponentRuntime,
-    IObjectStorageService,
+    IChannelStorageService,
     IChannelAttributes,
 } from "@fluidframework/component-runtime-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
@@ -155,7 +155,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      */
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService,
+        storage: IChannelStorageService,
     ): Promise<void> {
         const header = await storage.read(snapshotFileName);
         if (header !== undefined) {

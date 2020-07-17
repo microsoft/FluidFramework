@@ -65,6 +65,7 @@ export class ClientSequenceNumberManager {
      * @param canEvict Flag indicating whether or not we can evict the client (branch clients cannot be evicted)
      * @param scopes scope of the client
      * @param nack Flag indicating whether we have nacked this client
+     * Returns false if the same client has been added earlier.
      */
     public upsertClient(
         clientId: string,
@@ -73,8 +74,9 @@ export class ClientSequenceNumberManager {
         timestamp: number,
         canEvict: boolean,
         scopes: string[] = [],
-        nack: boolean = false) {
+        nack: boolean = false): boolean {
         // Add the client ID to our map if this is the first time we've seen it
+        let newClient = false;
         if (!this.clientNodeMap.has(clientId)) {
             const newNode = this.clientSeqNumbers.add({
                 canEvict,
@@ -86,10 +88,12 @@ export class ClientSequenceNumberManager {
                 scopes,
             });
             this.clientNodeMap.set(clientId, newNode);
+            newClient = true;
         }
 
         // And then update its values
         this.updateClient(clientId, timestamp, clientSequenceNumber, referenceSequenceNumber, nack);
+        return newClient;
     }
 
     /**

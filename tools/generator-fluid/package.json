@@ -5,6 +5,7 @@
   "keywords": [
     "yeoman-generator"
   ],
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "app/index.js",
@@ -27,7 +28,7 @@
   "devDependencies": {
     "@types/mocha": "^5.2.5",
     "make-promises-safe": "^5.1.0",
-    "mocha": "^7.1.1",
+    "mocha": "^8.0.1",
     "shelljs": "^0.8.4",
     "yeoman-assert": "^3.1.1",
     "yeoman-test": "^2.4.1"

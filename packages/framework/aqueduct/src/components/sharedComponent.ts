@@ -80,7 +80,10 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
         this.context = props.context;
         this.providers = props.providers;
 
-        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
+        // Create a ComponentHandle with empty string as `path`. This is because reaching this SharedComponent is the
+        // same as reaching its routeContext (ComponentRuntime) so there is so the relative path to it from the
+        // routeContext is empty.
+        this.innerHandle = new ComponentHandle(this, "", this.runtime.IComponentHandleContext);
 
         // Container event handlers
         this.runtime.once("dispose", () => {
@@ -178,7 +181,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     ): Promise<T> {
         const componentRuntime = await this.context.createComponent(uuid(), pkg, props);
         const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
-        componentRuntime.attach();
+        componentRuntime.bindToContext();
         return component;
     }
 
@@ -237,7 +240,8 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     }
 
     /**
-     * Called the first time the component is initialized.
+     * Called the first time the component is initialized (new creations with a new
+     * component runtime)
      *
      * @param props - Optional props to be passed in on create
      * @deprecated 0.16 Issue #1635 Initial props should be provided through a factory override
@@ -245,7 +249,8 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     protected async componentInitializingFirstTime(props?: any): Promise<void> { }
 
     /**
-     * Called every time but the first time the component is initialized
+     * Called every time but the first time the component is initialized (creations
+     * with an existing component runtime)
      */
     protected async componentInitializingFromExisting(): Promise<void> { }
 

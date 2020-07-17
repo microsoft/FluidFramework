@@ -8,8 +8,9 @@ import { IComponentContext } from "./componentContext";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentFactory>> {
-    }
+    export interface IComponent extends Readonly<Partial<IProvideComponentFactory>> {}
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideComponentFactory>> { }
 }
 
 export const IComponentFactory: keyof IProvideComponentFactory = "IComponentFactory";
@@ -19,7 +20,8 @@ export interface IProvideComponentFactory {
 }
 
 /**
- * The interface implemented by a component module.
+ * IComponentFactory create components.  It is associated with an identifier (its `type` member)
+ * and usually provided to consumers using this mapping through a component registry.
  */
 export interface IComponentFactory extends IProvideComponentFactory {
     /**

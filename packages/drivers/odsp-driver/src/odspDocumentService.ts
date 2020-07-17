@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-internal-modules
+import cloneDeep from "lodash/cloneDeep";
+
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { performanceNow, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     PerformanceEvent,
-    performanceNow,
     TelemetryLogger,
-    TelemetryNullLogger,
-} from "@fluidframework/common-utils";
+} from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -38,10 +40,6 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
-
-// eslint-disable-next-line max-len
-// eslint-disable-next-line import/no-internal-modules, @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-const cloneDeep = require("lodash/cloneDeep");
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
@@ -77,25 +75,20 @@ export class OdspDocumentService implements IDocumentService {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         const options = odspResolvedUrl.createNewOptions;
         if (options) {
-            const event = PerformanceEvent.start(logger,
+            odspResolvedUrl = await PerformanceEvent.timedExecAsync(
+                logger,
                 {
                     eventName: "CreateNew",
                     isWithSummaryUpload: false,
+                },
+                async (event) => {
+                    odspResolvedUrl = await createNewFluidFile(
+                        getStorageToken,
+                        await options.newFileInfoPromise,
+                        logger);
+                    event.end({ docId: odspResolvedUrl.hashedDocumentId });
+                    return odspResolvedUrl;
                 });
-            try {
-                odspResolvedUrl = await createNewFluidFile(
-                    getStorageToken,
-                    await options.newFileInfoPromise,
-                    cache,
-                    logger);
-                const props = {
-                    docId: odspResolvedUrl.hashedDocumentId,
-                };
-                event.end(props);
-            } catch (error) {
-                event.cancel(undefined, error);
-                throw error;
-            }
         }
         return new OdspDocumentService(
             odspResolvedUrl,
