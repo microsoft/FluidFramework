@@ -119,12 +119,14 @@ async function main() {
         .option("-u, --url <url>", "Connect to an existing url rather than creating new")
         .option("-r, --runId <runId>", "run a child process with the given id. Requires --url option.")
         .option("-f, --refresh", "Refresh auth tokens")
+        .option("-d, --debug", "Debug orchestrator and child processes")
         .parse(process.argv);
 
     const profile: string | undefined = commander.profile;
     let url: string | undefined = commander.url;
     const runId: number | undefined = commander.runId === undefined ? undefined : parseInt(commander.runId, 10);
     const refresh: true | undefined = commander.refresh;
+    const debug: true | undefined = commander.debug;
 
     if (config.profiles[profile] === undefined) {
         console.error("Invalid --profile argument not found in testConfig.json profiles");
@@ -176,9 +178,13 @@ async function main() {
 
     const p: Promise<void>[] = [];
     for (let i = 0; i < config.profiles[profile].numClients; i++) {
+        const args = ["dist\\nodeStressTest.js", "--profile", profile, "--runId", i.toString(), "--url", url];
+        if (debug) {
+            args.unshift(`--inspect-brk=${9230 + i}`); // 9229 is the default and will be used for the root test process
+        }
         const process = child_process.spawn(
             "node",
-            ["dist\\nodeStressTest.js", "--runId", i.toString(), "--url", url],
+            args,
             { stdio: "inherit" },
         );
         p.push(new Promise((resolve) => process.on("close", resolve)));
