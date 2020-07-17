@@ -497,12 +497,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         const protocolSummary = this.protocolHandler.captureSummary();
 
-        // Back compat / staging - to be removed with next server version bump
-        if (protocolSummary.tree.attributes === undefined) {
-            protocolSummary.tree.attributes = protocolSummary.tree[".attributes"];
-            delete protocolSummary.tree[".attributes"];
-        }
-
         if (!request.headers?.[CreateNewHeader.createNew]) {
             request.headers = {
                 ...request.headers,
