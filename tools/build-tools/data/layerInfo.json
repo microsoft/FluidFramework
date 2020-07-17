@@ -174,7 +174,7 @@
                 "dirs": [
                     "packages/components/",
                     "components/",
-                    "packages/agent/",
+                    "packages/agents/",
                     "packages/server/tools-core"
                 ],
                 "deps": [

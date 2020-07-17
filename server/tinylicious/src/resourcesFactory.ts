@@ -28,7 +28,7 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
         const collectionNames = config.get("mongo:collectionNames");
 
-        const tenantManager = new TenantManager();
+        const tenantManager = new TenantManager(`http://localhost:${port}`);
         const dbFactory = new DbFactory(config);
         const taskMessageSender = new TaskMessageSender();
         const mongoManager = new MongoManager(dbFactory);

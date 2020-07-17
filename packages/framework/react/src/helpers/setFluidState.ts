@@ -93,11 +93,13 @@ export function setFluidState<SV, SF>(
             const viewKey = key as string;
             const fluidConverter = viewToFluid?.get(viewKey as keyof SV)
                 ?.fluidConverter;
-            if (fluidConverter) {
+            const fluidKey = viewToFluid?.get(viewKey as keyof SV)
+                ?.fluidKey;
+            if (fluidConverter && fluidKey) {
                 const value = fluidConverter(newViewState, newFluidState);
                 // Write this value to the stored state if it doesn't match the name of a view value
                 if (
-                    fluidToView.get(viewKey as keyof SF)?.sharedObjectCreate ===
+                    fluidToView.get(fluidKey)?.sharedObjectCreate ===
                     undefined
                 ) {
                     storedState.set(viewKey, value);
