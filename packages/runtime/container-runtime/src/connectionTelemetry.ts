@@ -10,6 +10,7 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
+import { performanceNow } from "@fluidframework/common-utils";
 
 class ConnectionTelemetry {
     private pongCount: number = 0;
@@ -22,18 +23,56 @@ class ConnectionTelemetry {
     private opSendTimeForLatencyStatistics: number | undefined;
     private clientSequenceNumberForLatencyStatistics: number | undefined;
 
+    private firstConnection = true;
+    private connectionOpSeqNumber: number | undefined;
+    private readonly bootTime = performanceNow();
+    private connectionStartTime = 0;
+    private gap = 0;
+
     public constructor(
         private clientId: string | undefined,
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        private readonly logger: ITelemetryLogger) {
+        private readonly logger: ITelemetryLogger)
+    {
         this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
         this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
         this.deltaManager.on("beforeOpProcessing", (message) => this.beforeProcessingOp(message));
-        this.deltaManager.on("connect", (details) => {
+        this.deltaManager.on("connect", (details, hasBehindInfo) => {
             this.clientId = details.clientId;
             this.clientSequenceNumberForLatencyStatistics = undefined;
+            if (hasBehindInfo) {
+                const op = this.deltaManager.lastKnownSeqNumber;
+                this.connectionOpSeqNumber = op;
+                this.gap = op - this.deltaManager.lastSequenceNumber;
+                this.connectionStartTime = performanceNow();
+
+                // We might be already up-today. If so, report it right away.
+                if (this.gap <= 0) {
+                    this.reportGettingUpToDate();
+                }
+            }
         });
-        this.deltaManager.on("disconnect", (details) => this.clientId = undefined);
+        this.deltaManager.on("disconnect", () => {
+            this.connectionOpSeqNumber = undefined;
+            this.firstConnection = false;
+        });
+        this.deltaManager.on("beforeOpProcessing", (message) => {
+            if (message.sequenceNumber === this.connectionOpSeqNumber) {
+                this.reportGettingUpToDate();
+            }
+        });
+    }
+
+    private reportGettingUpToDate() {
+        this.connectionOpSeqNumber = undefined;
+        this.logger.sendPerformanceEvent({
+            eventName: "ConnectionStats",
+            duration: performanceNow() - this.connectionStartTime,
+            ops: this.gap,
+            // track time to connect only for first connection.
+            timeToConnect: this.firstConnection ? this.connectionStartTime - this.bootTime : undefined,
+            firstConnection: this.firstConnection,
+        });
     }
 
     private recordPingTime(latency: number) {

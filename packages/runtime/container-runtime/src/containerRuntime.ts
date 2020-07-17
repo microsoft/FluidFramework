@@ -668,7 +668,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             this.setNewContext(key, componentContext);
         }
 
-        this.logger = ChildLogger.create(context.logger, undefined, {
+        this.logger = ChildLogger.create(context.logger, "ContainerRuntime", {
             runtimeVersion: pkgVersion,
         });
 

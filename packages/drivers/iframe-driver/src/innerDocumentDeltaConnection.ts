@@ -163,7 +163,8 @@ export class InnerDocumentDeltaConnection
     }
 
     public get lastKnownOpNumber() {
-        return this.details.lastKnownOpNumber;
+        // TODO: remove once latest server bits are picked up
+        return (this.details as any).lastKnownOpNumber;
     }
 
     /**

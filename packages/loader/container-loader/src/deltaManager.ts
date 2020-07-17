@@ -147,9 +147,14 @@ export class DeltaManager
     private minSequenceNumber: number = 0;
 
     // There are three numbers we track
-    // * lastQueuedSequenceNumber is the last queued sequence number
+    // * lastQueuedSequenceNumber is the last queued sequence number. If there are gaps in seq numbers, then this number
+    //   is not updated until we cover that gap, so it increases each time by 1.
+    // * lastObservedSeqNumber is almost the same, but can be greater (jump forward a lot) and tracks
+    //   last known to client sequence number.
+    // * lastProcessedSequenceNumber - last processed sequence number
     private lastQueuedSequenceNumber: number = 0;
-    private _lastSequenceNumber: number = 0;
+    private lastObservedSeqNumber: number = 0;
+    private lastProcessedSequenceNumber: number = 0;
     private baseTerm: number = 0;
 
     // The sequence number we initially loaded from
@@ -180,8 +185,6 @@ export class DeltaManager
     private deltaStorageDelay: number = 0;
     private deltaStreamDelay: number = 0;
 
-    private lastKnownOpNumber: number | undefined;
-
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
     }
@@ -199,7 +202,11 @@ export class DeltaManager
     }
 
     public get lastSequenceNumber(): number {
-        return this._lastSequenceNumber;
+        return this.lastProcessedSequenceNumber;
+    }
+
+    public get lastKnownSeqNumber() {
+        return this.lastObservedSeqNumber;
     }
 
     public get referenceTerm(): number {
@@ -394,10 +401,11 @@ export class DeltaManager
         debug("Attached op handler", sequenceNumber);
 
         this.initSequenceNumber = sequenceNumber;
-        this._lastSequenceNumber = sequenceNumber;
+        this.lastProcessedSequenceNumber = sequenceNumber;
         this.baseTerm = term;
         this.minSequenceNumber = minSequenceNumber;
         this.lastQueuedSequenceNumber = sequenceNumber;
+        this.lastObservedSeqNumber = sequenceNumber;
 
         // We will use same check in other places to make sure all the seq number above are set properly.
         assert(!this.handler);
@@ -597,7 +605,7 @@ export class DeltaManager
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents: JSON.stringify(contents),
             metadata,
-            referenceSequenceNumber: this._lastSequenceNumber,
+            referenceSequenceNumber: this.lastProcessedSequenceNumber,
             traces,
             type,
         };
@@ -874,10 +882,6 @@ export class DeltaManager
     private setupNewSuccessfulConnection(connection: DeltaConnection, requestedMode: ConnectionMode) {
         this.connection = connection;
 
-        if (connection.details.checkpointSequenceNumber !== undefined) {
-            this.lastKnownOpNumber = connection.details.checkpointSequenceNumber;
-        }
-
         // Does information in scopes & mode matches?
         // If we asked for "write" and got "read", then file is read-only
         // But if we ask read, server can still give us write.
@@ -907,10 +911,8 @@ export class DeltaManager
 
         connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
             if (messages instanceof Array) {
-                this.webSocketOps(messages);
                 this.enqueueMessages(messages);
             } else {
-                this.webSocketOps([messages]);
                 this.enqueueMessages([messages]);
             }
         });
@@ -931,7 +933,7 @@ export class DeltaManager
                 this.close(createWriteError("WriteOnReadOnlyDocument"));
             }
 
-            // check message.content for back-compat with old service.
+            // check message.content for Back-compat with old service.
             const reconnectInfo = message.content
                 ? getNackReconnectInfo(message.content) :
                 createGenericNetworkError(`Nack: unknown reason`, true);
@@ -981,12 +983,29 @@ export class DeltaManager
             this.emit("pong", latency);
         });
 
+        const initialMessages = connection.details.initialMessages;
+
+        let hasBehindInfo = false;
+
+        // Some storages may provide checkpointSequenceNumber to identify how far client is behind.
+        if (connection.details.checkpointSequenceNumber !== undefined) {
+            hasBehindInfo = true;
+            this.updateLatestKnownOpSeqNumber(connection.details.checkpointSequenceNumber);
+        }
+
+        // Update knowledge of how far we are behind, before raising "connect" event
+        // This is duplication of what enqueueMessages() does, but we have to raise event before we get there,
+        // so duplicating update logic here as well.
+        if (initialMessages.length > 0) {
+            hasBehindInfo = true;
+            this.updateLatestKnownOpSeqNumber(initialMessages[initialMessages.length - 1].sequenceNumber);
+        }
+
         // Notify of the connection
         // WARNING: This has to happen before processInitialMessages() call below.
         // If not, we may not update Container.pendingClientId in time before seeing our own join session op.
-        this.emit("connect", connection.details);
+        this.emit("connect", connection.details, hasBehindInfo);
 
-        const initialMessages = connection.details.initialMessages;
         this.processInitialMessages(
             initialMessages,
             connection.details.initialContents ?? [],
@@ -1094,7 +1113,6 @@ export class DeltaManager
         }
         if (messages.length > 0) {
             this.catchUp(messages, firstConnection ? "InitialOps" : "ReconnectOps");
-            this.webSocketOps(messages);
         }
         for (const signal of signals) {
             this._inboundSignal.push(signal);
@@ -1109,7 +1127,7 @@ export class DeltaManager
             // We did not setup handler yet.
             // This happens when we connect to web socket faster than we get attributes for container
             // and thus faster than attachOpHandler() is called
-            // this._lastSequenceNumber is still zero, so we can't rely on this.fetchMissingDeltas()
+            // this.lastProcessedSequenceNumber is still zero, so we can't rely on this.fetchMissingDeltas()
             // to do the right thing.
             this.pending = this.pending.concat(messages);
             return;
@@ -1118,6 +1136,10 @@ export class DeltaManager
         let duplicateStart: number | undefined;
         let duplicateEnd: number | undefined;
         let duplicateCount = 0;
+
+        if (messages.length > 0) {
+            this.updateLatestKnownOpSeqNumber(messages[messages.length - 1].sequenceNumber);
+        }
 
         for (const message of messages) {
             // Check that the messages are arriving in the expected order
@@ -1190,8 +1212,8 @@ export class DeltaManager
         assert(this.minSequenceNumber <= message.minimumSequenceNumber, "msn moves backwards");
         this.minSequenceNumber = message.minimumSequenceNumber;
 
-        assert.equal(message.sequenceNumber, this._lastSequenceNumber + 1, "non-seq seq#");
-        this._lastSequenceNumber = message.sequenceNumber;
+        assert.equal(message.sequenceNumber, this.lastProcessedSequenceNumber + 1, "non-seq seq#");
+        this.lastProcessedSequenceNumber = message.sequenceNumber;
 
         // Back-compat for older server with no term
         if (message.term === undefined) {
@@ -1206,6 +1228,8 @@ export class DeltaManager
 
         const endTime = Date.now();
         this.emit("processTime", endTime - startTime);
+
+        this.reportOpGap();
     }
 
     /**
@@ -1316,18 +1340,15 @@ export class DeltaManager
         this.updateSequenceNumberTimer = undefined;
     }
 
-    private webSocketOps(messages: ISequencedDocumentMessage[]) {
-        assert(this.connection);
-        if (this.trackingCurrentConnectionFirstOp && messages.length > 0) {
-            this.trackingCurrentConnectionFirstOp = false;
-            this.emit("currentSeqNumber", messages[messages.length - 1].sequenceNumber);
+    private updateLatestKnownOpSeqNumber(seq: number) {
+        if (this.lastObservedSeqNumber < seq) {
+            this.lastObservedSeqNumber = seq;
+            this.reportOpGap();
         }
     }
 
-    private doneFetchingOps() {
-        if (this.connection && this.trackingCurrentConnectionFirstOp) {
-            this.trackingCurrentConnectionFirstOp = false;
-            this.emit("currentSeqNumber", this.lastQueuedSequenceNumber);
-        }
+    private reportOpGap() {
+        // Future: report this.numberOfOpsBehind with some frequency
+        // to allow hosts to build progress UI reporting how far we are behind.
     }
 }
