@@ -1,5 +1,10 @@
 # Breaking changes
 
+## 0.23 Breaking Changes
+- [ISharedObjectFactory rename](#ISharedObjectFactory)
+
+`ISharedObjectFactory` renamed to `IChannelFactory` and moved from `@fluidframework/shared-object-base` to `@fluidframework/component-runtime-definitions`
+
 ## 0.22 Breaking Changes
 - [Deprecated `path` from `IComponentHandleContext`](#Deprecated-`path`-from-`IComponentHandleContext`)
 - [Dynamically loaded components compiled against older versions of runtime](#Dynamically-loaded-components)
