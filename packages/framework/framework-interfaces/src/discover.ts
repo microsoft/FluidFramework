@@ -29,6 +29,12 @@ declare module "@fluidframework/component-core-interfaces" {
         IProvideComponentDiscoverableInterfaces
         & IProvideComponentDiscoverInterfaces
         & IProvideComponentInterfacesRegistry>> { }
+
+        // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<
+        IProvideComponentDiscoverableInterfaces
+        & IProvideComponentDiscoverInterfaces
+        & IProvideComponentInterfacesRegistry>> { }
 }
 
 export const IComponentDiscoverableInterfaces: keyof IProvideComponentDiscoverableInterfaces
