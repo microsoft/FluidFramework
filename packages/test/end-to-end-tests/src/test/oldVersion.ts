@@ -17,4 +17,5 @@ export { componentRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "ol
 export { IComponentFactory } from "old-runtime-definitions";
 export { createLocalLoader, initializeLocalContainer, TestFluidComponentFactory } from "old-test-utils";
 export { SharedMap } from "old-map";
+export { SharedString } from "old-sequence";
 /* eslint-enable import/no-extraneous-dependencies */

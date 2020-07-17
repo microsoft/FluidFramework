@@ -31,6 +31,7 @@ import {
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
+import { SharedString } from "@fluidframework/sequence";
 
 /* eslint-enable import/no-extraneous-dependencies */
 
@@ -39,6 +40,11 @@ const codeDetails: IFluidCodeDetails = {
     package: "compatibilityTestPackage",
     config: {},
 };
+
+export const enum testFluidObjectKeys {
+    map = "mapKey",
+    sharedString = "sharedStringKey",
+}
 
 export class TestComponent extends PrimedComponent {
     public static readonly type = "@fluid-example/test-component";
@@ -61,11 +67,17 @@ export const createOldPrimedComponentFactory = (): old.IComponentFactory => {
 };
 
 export const createTestFluidComponentFactory = (): IComponentFactory => {
-    return new TestFluidComponentFactory([["mapKey", SharedMap.getFactory()]]);
+    return new TestFluidComponentFactory([
+        [testFluidObjectKeys.map, SharedMap.getFactory()],
+        [testFluidObjectKeys.sharedString, SharedString.getFactory()],
+    ]);
 };
 
 export const createOldTestFluidComponentFactory = (): old.IComponentFactory => {
-    return new old.TestFluidComponentFactory([["mapKey", old.SharedMap.getFactory()]]);
+    return new old.TestFluidComponentFactory([
+        [testFluidObjectKeys.map, old.SharedMap.getFactory()],
+        [testFluidObjectKeys.sharedString, old.SharedString.getFactory()],
+    ]);
 };
 
 export const createRuntimeFactory = (

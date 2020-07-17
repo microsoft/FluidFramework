@@ -17,10 +17,10 @@ import {
     initializeLocalContainer,
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
-import { compatTest } from "./compatUtils";
+import { compatTest, testFluidObjectKeys } from "./compatUtils";
 
 const id = "fluid-test://localhost/mapTest";
-const mapId = "mapKey";
+const mapId = testFluidObjectKeys.map;
 const codeDetails: IFluidCodeDetails = {
     package: "sharedMapTestPackage",
     config: {},
