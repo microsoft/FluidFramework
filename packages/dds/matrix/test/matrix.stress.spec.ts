@@ -7,7 +7,7 @@ import "mocha";
 
 import { strict as assert } from "assert";
 import { Random } from "best-random";
-import { ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { IChannelServices } from "@fluidframework/component-runtime-definitions";
 import {
     MockComponentRuntime,
     MockStorage,
@@ -78,7 +78,7 @@ describe("Matrix", () => {
                 for (let i = 0; i < numClients; i++) {
                     const componentRuntimeN = new MockComponentRuntime();
                     const containerRuntimeN = containerRuntimeFactory.createContainerRuntime(componentRuntimeN);
-                    const servicesN: ISharedObjectServices = {
+                    const servicesN: IChannelServices = {
                         deltaConnection: containerRuntimeN.createDeltaConnection(),
                         objectStorage: new MockStorage(),
                     };

@@ -74,7 +74,7 @@ export const userInfoFactory = async (dc: DependencyContainer) => {
         IComponentRegistry,
     }, {});
     const containerRuntime = await s.IContainerRuntime;
-    if (containerRuntime) {
+    if (containerRuntime !== undefined) {
         return new UserInfo(containerRuntime);
     }
 

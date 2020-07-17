@@ -4,7 +4,7 @@
  */
 
 import { ITree, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IChannel, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { IChannel, IChannelServices } from "@fluidframework/component-runtime-definitions";
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
 declare module "@fluidframework/component-core-interfaces" {
@@ -52,5 +52,5 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
      * Enables the channel to send and receive ops.
      * @param services - Services to connect to
      */
-    connect(services: ISharedObjectServices): void;
+    connect(services: IChannelServices): void;
 }

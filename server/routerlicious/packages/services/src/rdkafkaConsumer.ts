@@ -9,9 +9,9 @@ import { Deferred } from "@fluidframework/common-utils";
 import { IConsumer, IPartition, IPartitionWithEpoch, IQueuedMessage } from "@fluidframework/server-services-core";
 import { ZookeeperClient } from "./zookeeperClient";
 import { IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
-import { tryImport } from "./tryImport";
+import { tryImportNodeRdkafka } from "./tryImport";
 
-const kafka = tryImport("node-rdkafka");
+const kafka = tryImportNodeRdkafka();
 
 /**
  * Kafka consumer using the node-rdkafka library
@@ -19,7 +19,7 @@ const kafka = tryImport("node-rdkafka");
 export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private consumer?: kafkaTypes.KafkaConsumer;
 	private zooKeeperClient?: ZookeeperClient;
-
+	private closed = false;
 	private isRebalancing = true;
 	private assignedPartitions: Set<number> = new Set();
 	private readonly pendingCommits: Map<number, Deferred<void>> = new Map();
@@ -35,6 +35,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	}
 
 	protected connect() {
+		if (this.closed) {
+			return;
+		}
+
 		const zookeeperEndpoints = this.endpoints.zooKeeper;
 		if (zookeeperEndpoints && zookeeperEndpoints.length > 0) {
 			const zooKeeperEndpoint = zookeeperEndpoints[Math.floor(Math.random() % zookeeperEndpoints.length)];
@@ -67,6 +71,15 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 		this.consumer.on("disconnected", () => {
 			this.emit("disconnected");
+		});
+
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		this.consumer.on("connection.failure", async (error) => {
+			await this.close(true);
+
+			this.emit("error", error);
+
+			this.connect();
 		});
 
 		this.consumer.on("data", (message: kafkaTypes.Message) => {
@@ -139,14 +152,24 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			this.emit("error", error);
 		});
 
+		this.consumer.on("event.throttle", (event) => {
+			this.emit("throttled", event);
+		});
+
 		this.consumer.connect();
 	}
 
-	public async close(): Promise<void> {
+	public async close(reconnecting: boolean = false): Promise<void> {
+		if (!reconnecting) {
+			// when closed outside of this class, disable reconnecting
+			this.closed = true;
+		}
+
 		await new Promise((resolve) => {
-			if (this.consumer && this.consumer.isConnected()) {
-				this.consumer.disconnect(resolve);
-				this.consumer = undefined;
+			const consumer = this.consumer;
+			this.consumer = undefined;
+			if (consumer && consumer.isConnected()) {
+				consumer.disconnect(resolve);
 			} else {
 				resolve();
 			}

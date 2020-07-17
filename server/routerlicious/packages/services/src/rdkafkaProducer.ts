@@ -8,9 +8,9 @@ import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@fluidfra
 
 import { IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 import { PendingBoxcar, MaxBatchSize } from "./pendingBoxcar";
-import { tryImport } from "./tryImport";
+import { tryImportNodeRdkafka } from "./tryImport";
 
-const kafka = tryImport("node-rdkafka");
+const kafka = tryImportNodeRdkafka();
 
 /**
  * Kafka producer using the node-rdkafka library
@@ -21,6 +21,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	private sendPending?: NodeJS.Immediate;
 	private connecting = false;
 	private connected = false;
+	private closed = false;
 
 	constructor(
 		endpoints: IKafkaEndpoints,
@@ -37,14 +38,14 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	 * Creates a connection to Kafka. Will reconnect on failure.
 	 */
 	protected connect() {
-		// Exit out if we are already connected or are in the process of connecting
-		if (this.connected || this.connecting) {
+		// Exit out if we are already connected, are in the process of connecting, or closed
+		if (this.connected || this.connecting || this.closed) {
 			return;
 		}
 
 		this.connecting = true;
 
-		this.producer = new kafka.Producer({
+		this.producer = new kafka.HighLevelProducer({
 			"metadata.broker.list": this.endpoints.kafka.join(","),
 			"socket.keepalive.enable": true,
 			"socket.nagle.disable": true,
@@ -53,7 +54,6 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			"queue.buffering.max.messages": 100000,
 			"queue.buffering.max.ms": 0.5,
 			"batch.num.messages": 10000,
-			"dr_cb": true,
 		});
 
 		this.producer.on("ready", () => {
@@ -72,9 +72,18 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			this.emit("disconnected");
 		});
 
+		this.producer.on("connection.failure", (error) => {
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this.handleError(error);
+		});
+
 		this.producer.on("event.error", (error) => {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.handleError(error);
+		});
+
+		this.producer.on("event.throttle", (event) => {
+			this.emit("throttled", event);
 		});
 
 		this.producer.connect();
@@ -82,11 +91,19 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		this.producer.setPollInterval(this.pollIntervalMs);
 	}
 
-	public async close(): Promise<void> {
+	public async close(reconnecting: boolean = false): Promise<void> {
+		if (!reconnecting) {
+			// when closed outside of this class, disable reconnecting
+			this.closed = true;
+		}
+
+		this.connecting = this.connected = false;
+
 		await new Promise((resolve) => {
-			if (this.producer && this.producer.isConnected()) {
-				this.producer.disconnect(resolve);
-				this.producer = undefined;
+			const producer = this.producer;
+			this.producer = undefined;
+			if (producer && producer.isConnected()) {
+				producer.disconnect(resolve);
 			} else {
 				resolve();
 			}
@@ -184,12 +201,21 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 					null, // partition - consistent random for keyed messages
 					message, // message
 					boxcar.documentId, // key
+					undefined, // timestamp
+					(err: any, offset?: number) => {
+						if (err) {
+							boxcar.deferred.reject(err);
+
+							// eslint-disable-next-line @typescript-eslint/no-floating-promises
+							this.handleError(err);
+						} else {
+							boxcar.deferred.resolve();
+							this.emit("produced", boxcarMessage, offset);
+						}
+					},
 				);
-
-				boxcar.deferred.resolve();
-
-				this.emit("produced", boxcarMessage);
 			} catch (ex) {
+				// produce can throw if the outgoing message queue is full
 				boxcar.deferred.reject(ex);
 
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -202,10 +228,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	 * Handles an error that requires a reconnect to Kafka
 	 */
 	private async handleError(error: any) {
-		// Close the client if it exists
-		await this.close();
-
-		this.connecting = this.connected = false;
+		await this.close(true);
 
 		this.emit("error", error);
 

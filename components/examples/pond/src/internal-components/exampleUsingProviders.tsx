@@ -35,7 +35,7 @@ export class ExampleUsingProviders
 
     public render(div: HTMLElement) {
         let element: JSX.Element = <span></span>;
-        if (this.userInformation) {
+        if (this.userInformation !== undefined) {
             element = <ExampleUsingProvidersView userInfo={this.userInformation} />;
         } else {
             console.log("No IComponentUserInformation Provided");
