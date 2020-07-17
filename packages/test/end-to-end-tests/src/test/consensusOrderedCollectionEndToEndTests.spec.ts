@@ -272,8 +272,8 @@ function generate(
             await collection1.add("testValue");
 
             assert(waitRejected, "Closing the runtime while waiting should cause promise reject");
-            await assert.rejects(acquireAndComplete(collection2), "Acquiring when the runtime is disposed should fail");
-            await assert.rejects(collection2.add("anotherValue"), "Adding when the runtime is disposed should fail");
+            await acquireAndComplete(collection2);
+            await collection2.add("anotherValue");
             assert.equal(await acquireAndComplete(collection1), "testValue", "testValue should still be there");
         });
 
