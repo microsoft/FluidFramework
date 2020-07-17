@@ -23,6 +23,7 @@ import {
     MongoDatabaseManager,
     MongoManager,
 } from "@fluidframework/server-services-core";
+import { IPubSub, PubSub } from "@fluidframework/server-services-utils";
 import {
     DebugLogger,
     ITestDbFactory,
@@ -68,7 +69,8 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         const deltasCollectionName = "deltas";
         const scribeDeltasCollectionName = "scribeDeltas";
 
-        const webSocketServer = new TestWebSocketServer();
+        const pubsub: IPubSub = new PubSub();
+        const webSocketServer = new TestWebSocketServer(pubsub);
         const mongoManager = new MongoManager(testDbFactory);
         const testTenantManager = new TestTenantManager(undefined, undefined, testDbFactory.testDatabase);
 
@@ -94,7 +96,8 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             16 * 1024,
             async () => new TestHistorian(testDbFactory.testDatabase),
             logger,
-            serviceConfiguration);
+            serviceConfiguration,
+            pubsub);
 
         configureWebSocketServices(
             webSocketServer,

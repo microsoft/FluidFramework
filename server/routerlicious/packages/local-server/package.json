@@ -55,6 +55,7 @@
     "@fluidframework/server-memory-orderer": "^0.1010.0",
     "@fluidframework/server-services-client": "^0.1010.0",
     "@fluidframework/server-services-core": "^0.1010.0",
+    "@fluidframework/server-services-utils": "^0.1010.0",
     "@fluidframework/server-test-utils": "^0.1010.0"
   },
   "devDependencies": {

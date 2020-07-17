@@ -15,6 +15,7 @@ import {
     ITaskMessageSender,
     ITenantManager,
 } from "@fluidframework/server-services-core";
+import { IPubSub } from "@fluidframework/server-services-utils";
 
 export class MemoryOrdererManager implements IOrdererManager {
     private readonly map = new Map<string, Promise<IOrderer>>();
@@ -29,6 +30,7 @@ export class MemoryOrdererManager implements IOrdererManager {
         private readonly createHistorian: (tenant: string) => Promise<IHistorian>,
         private readonly logger: ILogger,
         private readonly serviceConfiguration?: Partial<IServiceConfiguration>,
+        private readonly pubsub?: IPubSub,
     ) {
     }
 
@@ -73,14 +75,14 @@ export class MemoryOrdererManager implements IOrdererManager {
             this.maxMessageSize,
             this.logger,
             gitManager,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
+            undefined /* ILocalOrdererSetup */,
+            this.pubsub,
+            undefined /* broadcasterContext */,
+            undefined /* scriptoriumContext */,
+            undefined /* foremanContext */,
+            undefined /* scribeContext */,
+            undefined /* deliContext */,
+            undefined /* clientTimeout */,
             this.serviceConfiguration);
 
         const lambdas = [

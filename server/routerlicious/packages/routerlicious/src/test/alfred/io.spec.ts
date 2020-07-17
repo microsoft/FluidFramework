@@ -34,6 +34,7 @@ import assert from "assert";
 import { OrdererManager } from "../../alfred/runnerFactory";
 import { DefaultMetricClient, IScribe } from "@fluidframework/server-services-core";
 import { generateToken } from "@fluidframework/server-services-client";
+import { PubSub } from "@fluidframework/server-services-utils";
 import { configureWebSocketServices, DefaultServiceConfiguration } from "@fluidframework/server-lambdas";
 
 describe("Routerlicious", () => {
@@ -78,7 +79,8 @@ describe("Routerlicious", () => {
                         DefaultServiceConfiguration);
                     testOrderer = new OrdererManager(url, testTenantManager, null, kafkaOrderer, null);
 
-                    webSocketServer = new TestWebSocketServer();
+                    const pubsub = new PubSub();
+                    webSocketServer = new TestWebSocketServer(pubsub);
                     contentCollection = new TestCollection([]);
 
                     configureWebSocketServices(

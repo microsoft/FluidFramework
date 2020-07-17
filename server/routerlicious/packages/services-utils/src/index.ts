@@ -8,4 +8,5 @@ export * from "./dns";
 export * from "./errorTrackingService";
 export * from "./logger";
 export * from "./port";
+export * from "./pubsub";
 export * from "./runner";
