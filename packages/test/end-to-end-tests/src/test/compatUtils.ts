@@ -26,7 +26,7 @@ import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
-    DocumentDeltaEventManager,
+    OpProcessingController,
     initializeLocalContainer,
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
@@ -102,13 +102,18 @@ export const createOldRuntimeFactory = (
     componentFactory: IComponentFactory | old.IComponentFactory,
     runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): old.IRuntimeFactory => {
+    const builder = new old.RuntimeRequestHandlerBuilder();
+    builder.pushHandler(
+        old.componentRuntimeRequestHandler,
+        old.defaultComponentRuntimeRequestHandler("default"));
+
     return {
         get IRuntimeFactory() { return this; },
         instantiateRuntime: async (context: old.IContainerContext) => {
             const runtime = await old.ContainerRuntime.load(
                 context,
                 [[type, Promise.resolve(componentFactory as old.IComponentFactory)]],
-                [old.componentRuntimeRequestHandler, old.defaultComponentRuntimeRequestHandler("default")],
+                async (req, rt) => builder.handleRequest(req, rt),
                 runtimeOptions,
             );
             if (!runtime.existing) {
@@ -163,7 +168,7 @@ export const compatTest = (
             );
             this.deltaConnectionServer = deltaConnectionServer;
 
-            this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
+            this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
         });
 
         tests(makeTestContainer);
@@ -193,7 +198,7 @@ export const compatTest = (
             );
             this.deltaConnectionServer = deltaConnectionServer;
 
-            this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
+            this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
         });
 
         tests(makeTestContainer);
@@ -223,7 +228,7 @@ export const compatTest = (
             );
             this.deltaConnectionServer = deltaConnectionServer;
 
-            this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
+            this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
         });
 
         tests(makeTestContainer);

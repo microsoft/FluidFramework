@@ -15,7 +15,7 @@ import {
 import {
     IChannelAttributes,
     IComponentRuntime,
-    IObjectStorageService,
+    IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
 import { unreachableCase } from "@fluidframework/runtime-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
@@ -211,7 +211,7 @@ export class ConsensusRegisterCollection<T>
 
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService,
+        storage: IChannelStorageService,
     ): Promise<void> {
         const header = await storage.read(snapshotFileName);
         const dataObj = header !== undefined ? this.parse(fromBase64ToUtf8(header)) : {};

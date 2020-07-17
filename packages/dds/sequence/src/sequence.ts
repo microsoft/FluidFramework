@@ -22,7 +22,7 @@ import {
 import {
     IChannelAttributes,
     IComponentRuntime,
-    IObjectStorageService,
+    IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
@@ -488,7 +488,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService) {
+        storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
 
         const data: string = header ? fromBase64ToUtf8(header) : undefined;

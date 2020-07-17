@@ -21,6 +21,7 @@ import {
     IDeltaManager,
     IFluidCodeDetails,
     IGenericBlob,
+    ILoader,
     IRuntimeFactory,
     LoaderHeader,
     IRuntimeState,
@@ -94,7 +95,7 @@ import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
 import { pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
-import { parseUrl } from "./utils";
+import { parseUrl, convertProtocolAndAppSummaryToSnapshotTree } from "./utils";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -134,7 +135,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         codeLoader: ICodeLoader,
         options: any,
         scope: IComponent & IFluidObject,
-        loader: Loader,
+        loader: ILoader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
         urlResolver: IUrlResolver,
@@ -156,35 +157,34 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             },
             logger);
 
-        return new Promise<Container>((res, rej) => {
-            const version = request.headers && request.headers[LoaderHeader.version];
-            const pause = request.headers && request.headers[LoaderHeader.pause];
+        return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
+            return new Promise<Container>((res, rej) => {
+                const version = request.headers && request.headers[LoaderHeader.version];
+                const pause = request.headers && request.headers[LoaderHeader.pause];
 
-            const perfEvent = PerformanceEvent.start(container.logger, { eventName: "Load" });
+                const onClosed = (err?: ICriticalContainerError) => {
+                    // Depending where error happens, we can be attempting to connect to web socket
+                    // and continuously retrying (consider offline mode)
+                    // Host has no container to close, so it's prudent to do it here
+                    const error = err ?? CreateContainerError("Container closed without an error");
+                    container.close(error);
+                    rej(error);
+                };
+                container.on("closed", onClosed);
 
-            const onClosed = (err?: ICriticalContainerError) => {
-                // Depending where error happens, we can be attempting to connect to web socket
-                // and continuously retrying (consider offline mode)
-                // Host has no container to close, so it's prudent to do it here
-                const error = err ?? CreateContainerError("Container closed without an error");
-                container.close(error);
-                rej(error);
-            };
-            container.on("closed", onClosed);
-
-            container.load(version, !!pause)
-                .finally(() => {
-                    container.removeListener("closed", onClosed);
-                })
-                .then((props) => {
-                    perfEvent.end(props);
-                    res(container);
-                },
+                container.load(version, !!pause)
+                    .finally(() => {
+                        container.removeListener("closed", onClosed);
+                    })
+                    .then((props) => {
+                        event.end(props);
+                        res(container);
+                    },
                     (error) => {
-                        perfEvent.cancel(undefined, error);
                         const err = CreateContainerError(error);
                         onClosed(err);
                     });
+                });
         });
     }
 
@@ -358,7 +358,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         public readonly options: any,
         private readonly scope: IComponent & IFluidObject,
         private readonly codeLoader: ICodeLoader,
-        private readonly loader: Loader,
+        private readonly loader: ILoader,
         private readonly serviceFactory: IDocumentServiceFactory,
         private readonly urlResolver: IUrlResolver,
         config: IContainerConfig,
@@ -461,6 +461,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._attachState;
     }
 
+    public serialize(): string {
+        if (!this.context) {
+            throw new Error("Context is undefined");
+        }
+
+        assert(this.attachState === AttachState.Detached, "Should only be called in detached container");
+
+        const appSummary: ISummaryTree = this.context.createSummary();
+        if (!this.protocolHandler) {
+            throw new Error("Protocol Handler is undefined");
+        }
+        const protocolSummary = this.protocolHandler.captureSummary();
+        const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(protocolSummary, appSummary);
+        return JSON.stringify(snapshotTree);
+    }
+
     public async attach(request: IRequest): Promise<void> {
         if (!this.context) {
             throw new Error("Context is undefined");
@@ -506,6 +522,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
             const url = await this.getAbsoluteUrl("");
+            assert(url !== undefined, "Container url undefined");
             this.originalRequest = { url };
             this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
             const parsedUrl = parseUrl(resolvedUrl.url);
@@ -663,10 +680,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.context!.hasNullRuntime();
     }
 
-    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
         if (this.resolvedUrl === undefined) {
-            throw new Error("Container not attached to storage");
+            return undefined;
         }
+
         // TODO: Remove support for legacy requestUrl in 0.20
         const legacyResolver = this.urlResolver as {
             requestUrl?(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse>;

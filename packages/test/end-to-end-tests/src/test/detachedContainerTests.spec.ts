@@ -8,7 +8,7 @@ import { IRequest } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { IComponentContext, IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
@@ -74,7 +74,7 @@ describe("Detached Container", () => {
             [sparseMatrixId, SparseMatrix.getFactory()],
         ]);
         const codeLoader = new LocalCodeLoader([[pkg, factory]]);
-        const documentServiceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
+        const documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
         return new Loader(
             urlResolver,
             documentServiceFactory,
@@ -86,7 +86,7 @@ describe("Detached Container", () => {
 
     beforeEach(async () => {
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        const urlResolver = new TestResolver();
+        const urlResolver = new LocalResolver();
         request = urlResolver.createCreateNewRequest(documentId);
         loader = createTestLoader(urlResolver);
     });
@@ -185,7 +185,7 @@ describe("Detached Container", () => {
         const subComponent1 = response1.value as ITestFluidComponent;
 
         // Now load the container from another loader.
-        const urlResolver2 = new TestResolver();
+        const urlResolver2 = new LocalResolver();
         const loader2 = createTestLoader(urlResolver2);
         // Create a new request url from the resolvedUrl of the first container.
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(container.resolvedUrl, "");

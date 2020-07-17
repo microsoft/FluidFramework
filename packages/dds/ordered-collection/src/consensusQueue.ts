@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, IChannelAttributes } from "@fluidframework/component-runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import {
+    IComponentRuntime,
+    IChannelAttributes,
+    IChannelFactory,
+} from "@fluidframework/component-runtime-definitions";
 import { ConsensusOrderedCollection } from "./consensusOrderedCollection";
 import { ConsensusQueueFactory } from "./consensusOrderedCollectionFactory";
 import { IOrderedCollection } from "./interfaces";
@@ -48,7 +51,7 @@ export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
      *
      * @returns a factory that creates and load ConsensusQueue
      */
-    public static getFactory(): ISharedObjectFactory {
+    public static getFactory(): IChannelFactory {
         return new ConsensusQueueFactory();
     }
 

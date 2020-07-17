@@ -17,7 +17,7 @@ import {
     MockComponentRuntime,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IDeltaConnection, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { IDeltaConnection, IChannelServices } from "@fluidframework/component-runtime-definitions";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection } from "../interfaces";
 
@@ -27,7 +27,7 @@ describe("ConsensusRegisterCollection", () => {
         const componentId = "consensus-register-collection";
         let crc: IConsensusRegisterCollection;
         let componentRuntime: MockComponentRuntime;
-        let services: ISharedObjectServices;
+        let services: IChannelServices;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
 
         beforeEach(() => {
@@ -212,11 +212,11 @@ describe("ConsensusRegisterCollection", () => {
 
             beforeEach(() => {
                 // Connect the collections.
-                const services1: ISharedObjectServices = {
+                const services1: IChannelServices = {
                     deltaConnection: deltaConnection1,
                     objectStorage: new MockStorage(),
                 };
-                const services2: ISharedObjectServices = {
+                const services2: IChannelServices = {
                     deltaConnection: deltaConnection2,
                     objectStorage: new MockStorage(),
                 };
@@ -247,7 +247,7 @@ describe("ConsensusRegisterCollection", () => {
                 const winner = await writeP;
                 assert.equal(winner, true, "Write was not successful");
 
-                // Verify that the remote regsiter collection recieved the write.
+                // Verify that the remote register collection recieved the write.
                 assert.equal(receivedKey, testKey, "The remote client did not receive the key");
                 assert.equal(receivedValue, testValue, "The remote client did not receive the value");
                 assert.equal(receivedLocalStatus, false, "The remote client's value should not be local");
@@ -270,7 +270,7 @@ describe("ConsensusRegisterCollection", () => {
                 const winner = await writeP;
                 assert.equal(winner, true, "Write was not successful");
 
-                // Verify that the remote regsiter collection recieved the write.
+                // Verify that the remote register collection recieved the write.
                 assert.equal(receivedKey, testKey, "The remote client did not receive the key");
                 assert.equal(receivedValue, testValue, "The remote client did not receive the value");
                 assert.equal(receivedLocalStatus, false, "The remote client's value should not be local");

@@ -5,7 +5,7 @@
 
 import "mocha";
 
-import { ISharedObjectServices, Serializable } from "@fluidframework/component-runtime-definitions";
+import { IChannelServices, Serializable } from "@fluidframework/component-runtime-definitions";
 import {
     MockComponentRuntime,
     MockContainerRuntimeFactory,
@@ -59,7 +59,7 @@ describe("Big Matrix", function () {
             // Create and connect the first SharedMatrix.
             componentRuntime1 = new MockComponentRuntime();
             const containerRuntime1 = containterRuntimeFactory.createContainerRuntime(componentRuntime1);
-            const services1: ISharedObjectServices = {
+            const services1: IChannelServices = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
@@ -69,7 +69,7 @@ describe("Big Matrix", function () {
             // Create and connect the second SharedMatrix.
             const componentRuntime2 = new MockComponentRuntime();
             const containerRuntime2 = containterRuntimeFactory.createContainerRuntime(componentRuntime2);
-            const services2: ISharedObjectServices = {
+            const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };

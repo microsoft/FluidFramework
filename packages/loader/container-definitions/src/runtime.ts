@@ -141,7 +141,7 @@ export interface IContainerContext extends IMessageScheduler, IDisposable {
      *
      * TODO: Optional for backwards compatibility. Make non-optional in version 0.19
      */
-    getAbsoluteUrl?(relativeUrl: string): Promise<string>;
+    getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
 
     /**
      * Indicates the attachment state of the container to a host service.

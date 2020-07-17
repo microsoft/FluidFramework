@@ -11,8 +11,8 @@ import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-defin
 import {
     IChannelAttributes,
     IComponentRuntime,
-    IObjectStorageService,
-    ISharedObjectServices,
+    IChannelStorageService,
+    IChannelServices,
 } from "@fluidframework/component-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { v4 as uuid } from "uuid";
@@ -54,7 +54,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * Services used by the shared object
      */
-    private services: ISharedObjectServices | undefined;
+    private services: IChannelServices | undefined;
 
     /**
      * True if the dds is bound to its parent.
@@ -131,7 +131,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     public async load(
         branchId: string,
-        services: ISharedObjectServices): Promise<void> {
+        services: IChannelServices): Promise<void> {
         this.services = services;
 
         await this.loadCore(
@@ -169,7 +169,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * {@inheritDoc (ISharedObject:interface).connect}
      */
-    public connect(services: ISharedObjectServices) {
+    public connect(services: IChannelServices) {
         this.services = services;
         this.attachDeltaHandler();
     }
@@ -201,7 +201,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     protected abstract loadCore(
         branchId: string,
-        services: IObjectStorageService): Promise<void>;
+        services: IChannelStorageService): Promise<void>;
 
     /**
      * Allows the distributed data type to perform custom local loading.

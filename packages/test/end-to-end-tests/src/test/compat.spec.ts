@@ -39,7 +39,7 @@ describe("loader/runtime compatibility", () => {
 
             component = await getComponent<TestComponent>("default", container);
 
-            this.containerDeltaEventManager.registerDocuments(component._runtime);
+            this.opProcessingController.addDeltaManagers(component._runtime.deltaManager);
         });
 
         afterEach(async function() {
@@ -47,7 +47,7 @@ describe("loader/runtime compatibility", () => {
         });
 
         it("loads", async function() {
-            await this.containerDeltaEventManager.process();
+            await this.opProcessingController.process();
         });
 
         it("can set/get on root directory", async function() {

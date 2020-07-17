@@ -42,8 +42,8 @@ import {
     IComponentRuntime,
     IDeltaConnection,
     IDeltaHandler,
-    IObjectStorageService,
-    ISharedObjectServices,
+    IChannelStorageService,
+    IChannelServices,
 } from "@fluidframework/component-runtime-definitions";
 import { ComponentSerializer, getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
 import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
@@ -544,9 +544,9 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 }
 
 /**
- * Mock implementation of IObjectStorageService
+ * Mock implementation of IChannelStorageService
  */
-export class MockObjectStorageService implements IObjectStorageService {
+export class MockObjectStorageService implements IChannelStorageService {
     public constructor(private readonly contents: { [key: string]: string }) {
     }
     public async read(path: string): Promise<string> {
@@ -569,9 +569,9 @@ export class MockObjectStorageService implements IObjectStorageService {
 }
 
 /**
- * Mock implementation of ISharedObjectServices
+ * Mock implementation of IChannelServices
  */
-export class MockSharedObjectServices implements ISharedObjectServices {
+export class MockSharedObjectServices implements IChannelServices {
     public static createFromTree(tree: ITree) {
         const contents: { [key: string]: string } = {};
         for (const entry of tree.entries) {

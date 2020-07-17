@@ -12,7 +12,7 @@ import { MessageType } from "@fluidframework/protocol-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
-    DocumentDeltaEventManager,
+    OpProcessingController,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
@@ -53,11 +53,15 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         const component3 = await getComponent("default", container3);
         sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
 
-        this.containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime, component3.runtime);
+        this.opProcessingController.addDeltaManagers(
+            component1.runtime.deltaManager,
+            component2.runtime.deltaManager,
+            component3.runtime.deltaManager,
+        );
 
         sharedMap1.set("testKey1", "testValue");
 
-        await this.containerDeltaEventManager.process();
+        await this.opProcessingController.process();
     });
 
     function expectAllValues(msg, key, value1, value2, value3) {
@@ -98,7 +102,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         sharedMap2.set("testKey1", undefined);
         sharedMap2.set("testKey2", undefined);
 
-        await this.containerDeltaEventManager.process();
+        await this.opProcessingController.process();
 
         expectAllAfterValues("testKey1", undefined);
         expectAllAfterValues("testKey2", undefined);
@@ -107,7 +111,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
     it("Should delete values in 3 containers correctly", async function() {
         sharedMap2.delete("testKey1");
 
-        await this.containerDeltaEventManager.process();
+        await this.opProcessingController.process();
 
         const hasKey1 = sharedMap1.has("testKey1");
         assert.equal(hasKey1, false, "testKey1 not deleted in container 1");
@@ -122,7 +126,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
     it("Should check if three containers has same number of keys", async function() {
         sharedMap3.set("testKey3", true);
 
-        await this.containerDeltaEventManager.process();
+        await this.opProcessingController.process();
 
         expectAllSize(2);
     });
@@ -158,7 +162,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
 
         sharedMap1.set("testKey1", "updatedValue");
 
-        await this.containerDeltaEventManager.process();
+        await this.opProcessingController.process();
 
         assert.equal(user1ValueChangedCount, 0, "Incorrect number of valueChanged op received in container 1");
         assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 2");
@@ -175,7 +179,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
 
         expectAllBeforeValues("testKey1", "value1", "value2", "value3");
 
-        await this.containerDeltaEventManager.process();
+        await this.opProcessingController.process();
 
         expectAllAfterValues("testKey1", "value3");
     });
@@ -188,7 +192,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
 
         expectAllBeforeValues("testKey1", "value1.1", undefined, "value1.3");
 
-        await this.containerDeltaEventManager.process();
+        await this.opProcessingController.process();
 
         expectAllAfterValues("testKey1", "value1.3");
     });
@@ -200,12 +204,12 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         sharedMap3.set("testKey2", "value2.3");
 
         // drain the outgoing so that the next set will come after
-        await this.containerDeltaEventManager.processOutgoing();
+        await this.opProcessingController.processOutgoing();
 
         sharedMap2.set("testKey2", "value2.2");
         expectAllBeforeValues("testKey2", "value2.1", "value2.2", "value2.3");
 
-        await this.containerDeltaEventManager.process();
+        await this.opProcessingController.process();
 
         expectAllAfterValues("testKey2", "value2.2");
     });
@@ -218,7 +222,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
 
         expectAllBeforeValues("testKey3", "value3.1", "value3.2", undefined);
 
-        await this.containerDeltaEventManager.process();
+        await this.opProcessingController.process();
 
         expectAllAfterValues("testKey3", undefined);
     });
@@ -231,7 +235,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         expectAllBeforeValues("testKey1", "value1.1", "value1.2", undefined);
         assert.equal(sharedMap3.size, 0, "Incorrect map size after clear");
 
-        await this.containerDeltaEventManager.process();
+        await this.opProcessingController.process();
 
         expectAllAfterValues("testKey1", undefined);
         expectAllSize(0);
@@ -244,12 +248,12 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         sharedMap3.set("testKey2", "value2.3");
 
         // drain the outgoing so that the next set will come after
-        await this.containerDeltaEventManager.processOutgoing();
+        await this.opProcessingController.processOutgoing();
 
         sharedMap2.set("testKey2", "value2.2");
         expectAllBeforeValues("testKey2", "value2.1", "value2.2", "value2.3");
 
-        await this.containerDeltaEventManager.process();
+        await this.opProcessingController.process();
 
         expectAllAfterValues("testKey2", "value2.2");
         expectAllSize(1);
@@ -262,7 +266,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         sharedMap3.set("testKey3", "value3.3");
         expectAllBeforeValues("testKey3", "value3.1", undefined, "value3.3");
 
-        await this.containerDeltaEventManager.process();
+        await this.opProcessingController.process();
 
         expectAllAfterValues("testKey3", "value3.3");
         expectAllSize(1);
@@ -290,7 +294,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         // Now add the handle to an attached map so the new map gets attached too.
         sharedMap1.set("newSharedMap", newSharedMap1.handle);
 
-        await this.containerDeltaEventManager.process();
+        await this.opProcessingController.process();
 
         // The new map should be availble in the remote client and it should contain that key that was
         // set in local state.
@@ -300,7 +304,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         // Set a new value for the same key in the remote map.
         newSharedMap2.set("newKey", "anotherNewValue");
 
-        await this.containerDeltaEventManager.process();
+        await this.opProcessingController.process();
 
         // Verify that the new value is updated in both the maps.
         assert.equal(newSharedMap2.get("newKey"), "anotherNewValue", "The new value is not updated in map 2");
@@ -318,7 +322,7 @@ describe("Map", function() {
 
     beforeEach(async function() {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-        this.containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+        this.opProcessingController = new OpProcessingController(deltaConnectionServer);
     });
 
     tests(makeTestContainer);

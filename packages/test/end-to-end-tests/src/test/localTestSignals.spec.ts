@@ -10,7 +10,7 @@ import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidf
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
     createLocalLoader,
-    DocumentDeltaEventManager,
+    OpProcessingController,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
@@ -42,7 +42,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         const container2 = await makeTestContainer();
         component2 = await getComponent("default", container2);
 
-        this.containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime);
+        this.opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
     });
 
     describe("Attach signal Handlers on Both Clients", function() {
@@ -63,12 +63,12 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
             });
 
             component1.runtime.submitSignal("TestSignal", true);
-            await this.containerDeltaEventManager.process();
+            await this.opProcessingController.process();
             assert.equal(user1SignalReceivedCount, 1, "client 1 did not received signal");
             assert.equal(user2SignalReceivedCount, 1, "client 2 did not received signal");
 
             component2.runtime.submitSignal("TestSignal", true);
-            await this.containerDeltaEventManager.process();
+            await this.opProcessingController.process();
             assert.equal(user1SignalReceivedCount, 2, "client 1 did not received signal");
             assert.equal(user2SignalReceivedCount, 2, "client 2 did not received signal");
         });
@@ -92,12 +92,12 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
             });
 
             user1ContainerRuntime.submitSignal("TestSignal", true);
-            await this.containerDeltaEventManager.process();
+            await this.opProcessingController.process();
             assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
             assert.equal(user2SignalReceivedCount, 1, "client 2 did not receive signal");
 
             user2ContainerRuntime.submitSignal("TestSignal", true);
-            await this.containerDeltaEventManager.process();
+            await this.opProcessingController.process();
             assert.equal(user1SignalReceivedCount, 2, "client 1 did not receive signal");
             assert.equal(user2SignalReceivedCount, 2, "client 2 did not receive signal");
         });
@@ -138,14 +138,14 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         });
 
         user1ContainerRuntime.submitSignal("TestSignal", true);
-        await this.containerDeltaEventManager.process();
+        await this.opProcessingController.process();
         assert.equal(user1HostSignalReceivedCount, 1, "client 1 did not receive signal on host runtime");
         assert.equal(user2HostSignalReceivedCount, 1, "client 2 did not receive signal on host runtime");
         assert.equal(user1CompSignalReceivedCount, 0, "client 1 should not receive signal on component runtime");
         assert.equal(user2CompSignalReceivedCount, 0, "client 2 should not receive signal on component runtime");
 
         user2ComponentRuntime.submitSignal("TestSignal", true);
-        await this.containerDeltaEventManager.process();
+        await this.opProcessingController.process();
         assert.equal(user1HostSignalReceivedCount, 1, "client 1 should not receive signal on host runtime");
         assert.equal(user2HostSignalReceivedCount, 1, "client 2 should not receive signal on host runtime");
         assert.equal(user1CompSignalReceivedCount, 1, "client 1 did not receive signal on component runtime");
@@ -163,7 +163,7 @@ describe("TestSignals", () => {
 
     beforeEach(async function() {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-        this.containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+        this.opProcessingController = new OpProcessingController(deltaConnectionServer);
     });
 
     tests(makeTestContainer);
