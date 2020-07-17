@@ -518,7 +518,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     public getAttachSnapshot(): ITreeEntry[] {
         const entries: ITreeEntry[] = [];
-
         // Move resolving the promise in attached event once that becomes
         // default flow for our tests.
         this.deferredAttached.resolve();
