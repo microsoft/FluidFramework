@@ -22,7 +22,6 @@ import {
     IComponentLoadable,
 } from "@fluidframework/component-core-interfaces";
 import { IDeltaManager, IErrorBase } from "@fluidframework/container-definitions";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     IDocumentMessage,
@@ -590,7 +589,11 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         private readonly configurationGetter: () => ISummaryConfiguration,
         // eslint-disable-next-line max-len
         private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
-        private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => Promise<void>,
+        private readonly refreshLatestAck: (
+            proposalHandle: string,
+            ackHandle: string,
+            referenceSequenceNumber: number
+        ) => Promise<void>,
         handleContext: IComponentHandleContext,
         summaryCollection?: SummaryCollection,
     ) {
@@ -803,12 +806,12 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             try {
                 const ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
                 refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
-                const context: ISummaryContext = {
-                    proposalHandle: ack.summaryOp.contents.handle,
-                    ackHandle: ack.summaryAckNack.contents.handle,
-                };
 
-                await this.refreshLatestAck(context, refSequenceNumber);
+                await this.refreshLatestAck(
+                    ack.summaryOp.contents.handle,
+                    ack.summaryAckNack.contents.handle,
+                    refSequenceNumber,
+                );
             } catch (error) {
                 this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);
             }

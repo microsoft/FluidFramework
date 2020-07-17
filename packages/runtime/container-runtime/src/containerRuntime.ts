@@ -32,6 +32,7 @@ import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/c
 import {
     Deferred,
     Trace,
+    PerformanceEvent,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
@@ -63,6 +64,7 @@ import {
     ITree,
     MessageType,
     SummaryType,
+    IVersion,
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
@@ -687,7 +689,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             ? SummarizerNode.createRootFromSummary(
                 changeSequenceNumber, // latest change sequence number
                 this.deltaManager.initialSequenceNumber, // summary reference sequence number
-                "", // path - the root is unnamed
             )
             : SummarizerNode.createRootWithoutSummary(changeSequenceNumber);
 
@@ -749,7 +750,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             this,
             () => this.summaryConfiguration,
             async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
-            async (summContext, refSeq) => this.refreshLatestSummaryAck(summContext, refSeq),
+            async (propHandle, ackHandle, refSeq) => this.refreshLatestSummaryAck(propHandle, ackHandle, refSeq),
             this.IComponentHandleContext,
             this.previousState.summaryCollection);
 
@@ -1464,11 +1465,13 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
             // safe mode refreshes the latest summary ack
             if (safe) {
-                const versions = await this.storage.getVersions(this.id, 1);
-                const parents = versions.map((version) => version.id);
-                this.refreshLatestSummaryAck(
-                    { proposalHandle: undefined, ackHandle: parents[0] },
-                    this.summaryTracker.referenceSequenceNumber);
+                const version = await this.getVersionFromStorage(this.id);
+                await this.refreshLatestSummaryAck(
+                    undefined,
+                    version.id,
+                    this.summaryTracker.referenceSequenceNumber,
+                    version,
+                );
             }
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1802,15 +1805,61 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         }
     }
 
-    private refreshLatestSummaryAck(context: ISummaryContext, referenceSequenceNumber: number) {
-        if (referenceSequenceNumber < this.summaryTracker.referenceSequenceNumber) {
+    private async refreshLatestSummaryAck(
+        proposalHandle: string | undefined,
+        ackHandle: string,
+        trackerRefSeqNum: number, // back-compat: 0.21 summarizerNode - remove
+        version?: IVersion,
+    ) {
+        if (trackerRefSeqNum < this.summaryTracker.referenceSequenceNumber) {
             return;
         }
 
-        this.latestSummaryAck = context;
-        this.summaryTracker.refreshLatestSummary(referenceSequenceNumber);
-        if (context.proposalHandle !== undefined) {
-            this.summarizerNode.refreshLatestSummary(context.proposalHandle);
-        }
+        this.latestSummaryAck = { proposalHandle, ackHandle };
+
+        // back-compat: 0.21 summarizerNode - remove all summary trackers
+        this.summaryTracker.refreshLatestSummary(trackerRefSeqNum);
+
+        const getSnapshot = async () => {
+            const perfEvent = PerformanceEvent.start(this.logger, {
+                eventName: "RefreshLatestSummaryGetSnapshot",
+                hasVersion: !!version, // expected in this case
+            });
+            const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
+            let snapshot: ISnapshotTree | undefined;
+            try {
+                const trace = Trace.start();
+
+                const versionToUse = version ?? await this.getVersionFromStorage(ackHandle);
+                stats.getVersionDuration = trace.trace().duration;
+
+                snapshot = await this.getSnapshotFromStorage(versionToUse);
+                stats.getSnapshotDuration = trace.trace().duration;
+            } catch (error) {
+                perfEvent.cancel(stats, error);
+                throw error;
+            }
+
+            perfEvent.end(stats);
+            return snapshot;
+        };
+
+        await this.summarizerNode.refreshLatestSummary(
+            proposalHandle,
+            getSnapshot,
+            async <T>(id: string) => readAndParse<T>(this.storage, id),
+        );
+    }
+
+    private async getVersionFromStorage(versionId: string): Promise<IVersion> {
+        const versions = await this.storage.getVersions(versionId, 1);
+        assert(versions && versions[0], "Failed to get version from storage");
+        return versions[0];
+    }
+
+    private async getSnapshotFromStorage(version: IVersion): Promise<ISnapshotTree> {
+        const snapshot = await this.storage.getSnapshotTree(version);
+        assert(snapshot, "Failed to get snapshot from storage");
+        return snapshot;
     }
 }
