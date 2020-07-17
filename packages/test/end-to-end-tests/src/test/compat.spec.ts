@@ -94,13 +94,18 @@ describe("loader/runtime compatibility", () => {
         componentFactory: IComponentFactory | old.IComponentFactory,
         runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): old.IRuntimeFactory => {
+        const builder = new old.RuntimeRequestHandlerBuilder();
+        builder.pushHandler(
+            old.componentRuntimeRequestHandler,
+            old.defaultComponentRuntimeRequestHandler("default"));
+
         return {
             get IRuntimeFactory() { return this; },
             instantiateRuntime: async (context: old.IContainerContext) => {
                 const runtime = await old.ContainerRuntime.load(
                     context,
                     [[type, Promise.resolve(componentFactory as old.IComponentFactory)]],
-                    [old.componentRuntimeRequestHandler, old.defaultComponentRuntimeRequestHandler("default")],
+                    async (req,rt) => builder.handleRequest(req,rt),
                     runtimeOptions,
                 );
                 if (!runtime.existing) {

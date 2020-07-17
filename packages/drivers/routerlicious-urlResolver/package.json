@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/routerlicious-urlresolver",
-  "version": "0.22.0",
+  "version": "0.23.0",
   "description": "Url Resolver for routerlicious urls.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -28,10 +28,10 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.22.0",
-    "@fluidframework/driver-definitions": "^0.22.0",
-    "@fluidframework/protocol-definitions": "^0.1009.0-0",
-    "@fluidframework/server-services-client": "^0.1009.0-0",
+    "@fluidframework/component-core-interfaces": "^0.23.0",
+    "@fluidframework/driver-definitions": "^0.23.0",
+    "@fluidframework/protocol-definitions": "^0.1009.0",
+    "@fluidframework/server-services-client": "^0.1009.0",
     "nconf": "^0.10.0"
   },
   "devDependencies": {

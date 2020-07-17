@@ -6,7 +6,7 @@
 import {
     IChannelAttributes,
     IComponentRuntime,
-    ISharedObjectServices,
+    IChannelServices,
 } from "@fluidframework/component-runtime-definitions";
 import { ConsensusQueue } from "./consensusQueue";
 import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces";
@@ -35,7 +35,7 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
     public async load(
         runtime: IComponentRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<IConsensusOrderedCollection> {
         const collection = new ConsensusQueue(id, runtime, attributes);

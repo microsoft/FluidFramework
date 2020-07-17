@@ -24,11 +24,11 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
     IComponentRuntime,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
 import {
     IContainerRuntime,
 } from "@fluidframework/container-runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
@@ -50,6 +50,8 @@ export interface IKeyValue extends IProvideKeyValue {
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideKeyValue>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideKeyValue>> { }
 }
 
 class KeyValue implements IKeyValue, IComponent, IComponentRouter {
@@ -135,7 +137,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
     }
 
     public instantiateComponent(context: IComponentContext): void {
-        const dataTypes = new Map<string, ISharedObjectFactory>();
+        const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
