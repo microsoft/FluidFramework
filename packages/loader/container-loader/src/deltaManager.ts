@@ -178,7 +178,7 @@ export class DeltaManager
     private deltaStorageDelay: number = 0;
     private deltaStreamDelay: number = 0;
 
-    private trackingCurrentConnectionFirstOp = false;
+    private lastKnownOpNumber: number | undefined;
 
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
@@ -872,7 +872,10 @@ export class DeltaManager
      */
     private setupNewSuccessfulConnection(connection: DeltaConnection, requestedMode: ConnectionMode) {
         this.connection = connection;
-        this.trackingCurrentConnectionFirstOp = true;
+
+        if (connection.details.checkpointSequenceNumber !== undefined) {
+            this.lastKnownOpNumber = connection.details.checkpointSequenceNumber;
+        }
 
         // Does information in scopes & mode matches?
         // If we asked for "write" and got "read", then file is read-only
@@ -1226,7 +1229,6 @@ export class DeltaManager
             this.catchUpCore(messages, telemetryEventSuffix);
         });
 
-        this.doneFetchingOps();
         this.fetching = false;
     }
 

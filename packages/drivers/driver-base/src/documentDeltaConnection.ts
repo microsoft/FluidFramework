@@ -100,6 +100,8 @@ export class DocumentDeltaConnection
         return deltaConnection;
     }
 
+    public checkpointSequenceNumber: number | undefined;
+
     // Listen for ops sent before we receive a response to connect_document
     protected readonly queuedMessages: ISequencedDocumentMessage[] = [];
     private readonly queuedContents: IContentMessage[] = [];
@@ -391,6 +393,8 @@ export class DocumentDeltaConnection
                 if (response.initialSignals === undefined) {
                     response.initialSignals = [];
                 }
+
+                this.checkpointSequenceNumber = response.checkpointSequenceNumber;
 
                 this.removeTrackedListeners(true);
                 resolve(response);
