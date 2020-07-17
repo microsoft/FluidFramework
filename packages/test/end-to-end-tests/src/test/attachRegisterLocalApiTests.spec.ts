@@ -514,7 +514,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             await createDetachedContainerAndGetRootComponent();
         let componentContextAttachState = AttachState.Detached;
         let componentRuntimeAttachState = AttachState.Detached;
-        defaultComponent.context.on("attaching", () => {
+        defaultComponent.context.once("attaching", () => {
             assert.strictEqual(componentContextAttachState, AttachState.Detached,
                 "Should be fire from Detached state for context");
             assert.strictEqual(defaultComponent.context.attachState, AttachState.Attaching,
@@ -522,7 +522,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             componentContextAttachState = AttachState.Attaching;
         });
 
-        defaultComponent.context.on("attached", () => {
+        defaultComponent.context.once("attached", () => {
             assert.strictEqual(componentContextAttachState, AttachState.Attaching,
                 "Should be fire from attaching state for context");
             assert.strictEqual(defaultComponent.context.attachState, AttachState.Attached,
@@ -530,16 +530,15 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             componentContextAttachState = AttachState.Attached;
         });
 
-        defaultComponent.runtime.on("attaching", () => {
-            // This should be true after back-compat removal related to "attaching" event in component runtime
-            // assert.strictEqual(componentRuntimeAttachState, AttachState.Detached,
-            //     "Should be fire from Detached state for runtime");
-            // assert.strictEqual(defaultComponent.runtime.attachState, AttachState.Attaching,
-            //     "Component runtime should be attaching at this stage");
+        defaultComponent.runtime.once("attaching", () => {
+            assert.strictEqual(componentRuntimeAttachState, AttachState.Detached,
+                "Should be fire from Detached state for runtime");
+            assert.strictEqual(defaultComponent.runtime.attachState, AttachState.Attaching,
+                "Component runtime should be attaching at this stage");
             componentRuntimeAttachState = AttachState.Attaching;
         });
 
-        defaultComponent.runtime.on("attached", () => {
+        defaultComponent.runtime.once("attached", () => {
             assert.strictEqual(componentRuntimeAttachState, AttachState.Attaching,
                 "Should be fire from attaching state for runtime");
             assert.strictEqual(defaultComponent.runtime.attachState, AttachState.Attached,
@@ -564,7 +563,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         const component2 = peerComponent2.peerComponent as TestFluidComponent;
 
         let component1AttachState = AttachState.Detached;
-        component1.context.on("attaching", () => {
+        component1.context.once("attaching", () => {
             assert.strictEqual(component1AttachState, AttachState.Detached,
                 "Should be fire from Detached state for context");
             assert.strictEqual(component1.context.attachState, AttachState.Attaching,
@@ -572,7 +571,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             component1AttachState = AttachState.Attaching;
         });
 
-        component1.context.on("attached", () => {
+        component1.context.once("attached", () => {
             assert.strictEqual(component1AttachState, AttachState.Attaching,
                 "Should be fire from attaching state for context");
             assert.strictEqual(component1.context.attachState, AttachState.Attached,
@@ -580,11 +579,11 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             component1AttachState = AttachState.Attached;
         });
 
-        component2.context.on("attaching", () => {
+        component2.context.once("attaching", () => {
             assert.fail("Attaching event should not be fired for not bounded context");
         });
 
-        component2.context.on("attached", () => {
+        component2.context.once("attached", () => {
             assert.fail("Attached event should not be fired for not bounded context");
         });
         await container.attach(request);
@@ -609,7 +608,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
         let component1AttachState = AttachState.Detached;
         let component2AttachState = AttachState.Detached;
-        component1.context.on("attaching", () => {
+        component1.context.once("attaching", () => {
             assert.strictEqual(component1AttachState, AttachState.Detached,
                 "Should be fire from Detached state for context");
             assert.strictEqual(component1.context.attachState, AttachState.Attaching,
@@ -617,7 +616,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             component1AttachState = AttachState.Attaching;
         });
 
-        component1.context.on("attached", () => {
+        component1.context.once("attached", () => {
             assert.strictEqual(component1AttachState, AttachState.Attaching,
                 "Should be fire from attaching state for context");
             assert.strictEqual(component1.context.attachState, AttachState.Attached,
@@ -625,7 +624,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             component1AttachState = AttachState.Attached;
         });
 
-        component2.context.on("attaching", () => {
+        component2.context.once("attaching", () => {
             assert.strictEqual(component2AttachState, AttachState.Detached,
                 "Should be fire from Detached state for context");
             assert.strictEqual(component2.context.attachState, AttachState.Attaching,
@@ -633,7 +632,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             component2AttachState = AttachState.Attaching;
         });
 
-        component2.context.on("attached", () => {
+        component2.context.once("attached", () => {
             assert.strictEqual(component2AttachState, AttachState.Attaching,
                 "Should be fire from attaching state for context");
             assert.strictEqual(component2.context.attachState, AttachState.Attached,

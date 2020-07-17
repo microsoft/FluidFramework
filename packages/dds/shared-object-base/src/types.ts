@@ -7,9 +7,11 @@ import { ITree, ISequencedDocumentMessage } from "@fluidframework/protocol-defin
 import { IChannel, IChannelServices } from "@fluidframework/component-runtime-definitions";
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
-declare module "@fluidframework/container-definitions" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IComponent extends Readonly<Partial<IProvideSharedObject>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface IFluidObject extends Readonly<Partial<IProvideSharedObject>> { }
 }
 
 export const ISharedObject: keyof IProvideSharedObject = "ISharedObject";

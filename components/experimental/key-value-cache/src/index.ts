@@ -50,6 +50,8 @@ export interface IKeyValue extends IProvideKeyValue {
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideKeyValue>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideKeyValue>> { }
 }
 
 class KeyValue implements IKeyValue, IComponent, IComponentRouter {

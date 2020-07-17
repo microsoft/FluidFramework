@@ -4,7 +4,15 @@
  */
 
 import { EventEmitter } from "events";
-import * as kafka from "node-rdkafka";
+import type * as kafkaTypes from "node-rdkafka";
+import { tryImport } from "./tryImport";
+
+// The native dependency of node-rdkafka throws an error when installing in one environment (e.g., macOS) and running
+// inside another (e.g., docker ubuntu). The issue only occurs because we volume mount code directly into docker
+// for local dev flow. Using a pre-built image works fine (https://github.com/Blizzard/node-rdkafka/issues/315).
+// Because of this limitation, currently we cannot use node-rdkafka in local dev flow. So locally kafka config should
+// always point to kafka-node library. Production code can use either one of those.
+const kafka = tryImport("node-rdkafka");
 
 export interface IKafkaEndpoints {
 	kafka: string[];
@@ -47,7 +55,7 @@ export abstract class RdkafkaBase extends EventEmitter {
 			"metadata.broker.list": this.endpoints.kafka.join(","),
 		});
 
-		const newTopic: kafka.NewTopic = {
+		const newTopic: kafkaTypes.NewTopic = {
 			topic: this.topic,
 			num_partitions: this.numberOfPartitions,
 			replication_factor: this.replicationFactor,

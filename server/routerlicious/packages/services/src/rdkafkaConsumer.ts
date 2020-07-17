@@ -3,18 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import * as kafka from "node-rdkafka";
+import type * as kafkaTypes from "node-rdkafka";
 
 import { Deferred } from "@fluidframework/common-utils";
 import { IConsumer, IPartition, IPartitionWithEpoch, IQueuedMessage } from "@fluidframework/server-services-core";
 import { ZookeeperClient } from "./zookeeperClient";
 import { IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
+import { tryImport } from "./tryImport";
+
+const kafka = tryImport("node-rdkafka");
 
 /**
  * Kafka consumer using the node-rdkafka library
  */
 export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
-	private consumer?: kafka.KafkaConsumer;
+	private consumer?: kafkaTypes.KafkaConsumer;
 	private zooKeeperClient?: ZookeeperClient;
 
 	private isRebalancing = true;
@@ -66,7 +69,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			this.emit("disconnected");
 		});
 
-		this.consumer.on("data", (message: kafka.Message) => {
+		this.consumer.on("data", (message: kafkaTypes.Message) => {
 			this.emit("data", message as IQueuedMessage);
 		});
 
