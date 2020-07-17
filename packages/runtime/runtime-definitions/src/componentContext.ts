@@ -13,6 +13,7 @@ import {
     IProvideComponentSerializer,
     IRequest,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -130,9 +131,10 @@ export interface IContainerRuntimeBase extends
 
     /**
      * Get an absolute url for a provided container-relative request.
+     * Returns undefined if the container or component isn't attached to storage.
      * @param relativeUrl - A relative request within the container
      */
-    getAbsoluteUrl(relativeUrl: string): Promise<string>;
+    getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 }
 
 /**
@@ -278,7 +280,7 @@ export interface IComponentContext extends EventEmitter {
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IComponent;
+    readonly scope: IComponent & IFluidObject;
     readonly summaryTracker: ISummaryTracker;
 
     on(event: "leader" | "notleader" | "attaching" | "attached", listener: () => void): this;
@@ -362,9 +364,10 @@ export interface IComponentContext extends EventEmitter {
 
     /**
      * Get an absolute url to the containe rbased on the provided relativeUrl.
+     * Returns undefined if the container or component isn't attached to storage.
      * @param relativeUrl - A relative request within the container
      */
-    getAbsoluteUrl(relativeUrl: string): Promise<string>;
+    getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 }
 
 /**

@@ -14,7 +14,7 @@ import {
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
-import { LoaderHeader } from "@fluidframework/container-definitions";
+import { LoaderHeader, AttachState } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
@@ -33,7 +33,7 @@ import { v4 as uuid } from "uuid";
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
 
-class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent, IComponentRouter {
+class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponentRouter {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         let root: ISharedMap;
         let scheduler: ConsensusRegisterCollection<string | null>;
@@ -436,6 +436,8 @@ export class TaskManager implements ITaskManager {
     public async pick(componentUrl: string, taskId: string, worker?: boolean): Promise<void> {
         if (!this.context.deltaManager.clientDetails.capabilities.interactive) {
             return Promise.reject("Picking not allowed on secondary copy");
+        } else if (this.runtime.attachState !== AttachState.Attached) {
+            return Promise.reject("Picking not allowed in detached container in task manager");
         } else {
             const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
             const fullUrl = `${urlWithSlash}/${this.url}/${taskId}`;
