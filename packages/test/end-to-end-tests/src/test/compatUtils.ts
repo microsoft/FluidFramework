@@ -23,15 +23,15 @@ import { SharedMap } from "@fluidframework/map";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { componentRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
+import { SharedString } from "@fluidframework/sequence";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
-    OpProcessingController,
     initializeLocalContainer,
+    OpProcessingController,
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
-import { SharedString } from "@fluidframework/sequence";
 
 /* eslint-enable import/no-extraneous-dependencies */
 
