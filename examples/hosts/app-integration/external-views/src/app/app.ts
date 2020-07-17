@@ -20,8 +20,7 @@ document.title = documentId;
 
 // In this app, we are assuming our container code is capable of providing a default mountable view.  This is up to
 // how the container code is authored though (e.g. if the container code is data-only and does not bundle views).
-async function mountDefaultComponentFromContainer(container: Container): Promise<void> {
-    const div = document.getElementById("content") as HTMLDivElement;
+async function getDiceRollerFromContainer(container: Container): Promise<IDiceRoller> {
     // For this basic scenario, I'm just requesting the default view.  Nothing stopping me from issuing alternate
     // requests (e.g. for other components or views) if I wished.
     const url = "/";
@@ -35,9 +34,12 @@ async function mountDefaultComponentFromContainer(container: Container): Promise
     }
 
     // Now we know we got the component back, time to start mounting it.
-    const component = response.value as IDiceRoller;
+    return response.value;
+}
 
-    ReactDOM.render(React.createElement(PrettyDiceRollerView, { model: component }), div);
+async function renderPrettyDiceRoller(diceRoller: IDiceRoller) {
+    const div = document.getElementById("content") as HTMLDivElement;
+    ReactDOM.render(React.createElement(PrettyDiceRollerView, { model: diceRoller }), div);
 }
 
 // The format of the code proposal will be the contents of our package.json, which has a special "fluid" section
@@ -48,7 +50,8 @@ const packageJson = require("../../package.json");
 // If you'd prefer to load the container bundle yourself (rather than relying on the codeLoader), pass the entrypoint
 // to the module as the third param below (e.g. window["main"]).
 getTinyliciousContainer(documentId, packageJson)
-    .then(mountDefaultComponentFromContainer)
+    .then(getDiceRollerFromContainer)
+    .then(renderPrettyDiceRoller)
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line dot-notation
     .then(() => { window["fluidStarted"] = true; })
