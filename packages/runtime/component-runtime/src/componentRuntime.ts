@@ -518,10 +518,16 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     public getAttachSnapshot(): ITreeEntry[] {
         const entries: ITreeEntry[] = [];
+        // 0.21 back-compat noAttachEvents
+        this._attachState = AttachState.Attached;
         // Move resolving the promise in attached event once that becomes
         // default flow for our tests.
         this.deferredAttached.resolve();
         this.attachGraph();
+        // 0.21 back-compat noAttachEvents
+        // Fire this event telling dds that we are going live and they can do any
+        // custom processing based on that.
+        this.emit("attaching");
 
         // Craft the .attributes file for each shared object
         for (const [objectId, value] of this.contexts) {
