@@ -9,7 +9,7 @@ import { IComponentHandle, IComponentLoadable } from "@fluidframework/component-
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { ISequencedDocumentMessage, ConnectionState } from "@fluidframework/protocol-definitions";
 import { IEnvelope, SchedulerType, FlushMode } from "@fluidframework/runtime-definitions";
@@ -17,7 +17,7 @@ import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidf
 import { SharedString } from "@fluidframework/sequence";
 import {
     LocalCodeLoader,
-    DocumentDeltaEventManager,
+    OpProcessingController,
     initializeLocalContainer,
     ITestFluidComponent,
     TestFluidComponentFactory,
@@ -40,8 +40,8 @@ describe("Ops on Reconnect", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let documentServiceFactory: TestDocumentServiceFactory;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let documentServiceFactory: LocalDocumentServiceFactory;
+    let opProcessingController: OpProcessingController;
     let firstContainer: Container;
     let firstContainerClientId: string;
     let firstContainerComp1: ITestFluidComponent & IComponentLoadable;
@@ -77,7 +77,7 @@ describe("Ops on Reconnect", () => {
                 ],
             );
 
-        const urlResolver = new TestResolver();
+        const urlResolver = new LocalResolver();
         const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
         const loader = new Loader(
@@ -134,14 +134,14 @@ describe("Ops on Reconnect", () => {
 
         // Get component1 on the second container.
         const secondContainerComp1 = await getComponent("default", secondContainer);
-        containerDeltaEventManager.registerDocuments(secondContainerComp1.runtime);
+        opProcessingController.addDeltaManagers(secondContainerComp1.runtime.deltaManager);
 
         return secondContainerComp1;
     }
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-        documentServiceFactory = new TestDocumentServiceFactory(deltaConnectionServer);
+        documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 
         // Create the first container, component and DDSes.
         firstContainer = await createContainer();
@@ -151,11 +151,11 @@ describe("Ops on Reconnect", () => {
         firstContainerComp1Directory = await firstContainerComp1.getSharedObject<SharedDirectory>(directoryId);
         firstContainerComp1String = await firstContainerComp1.getSharedObject<SharedString>(stringId);
 
-        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-        containerDeltaEventManager.registerDocuments(firstContainerComp1.runtime);
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController.addDeltaManagers(firstContainerComp1.runtime.deltaManager);
 
         // Wait for the attach ops to get processed.
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
     });
 
     describe("Ops on Container reconnect", () => {
@@ -182,7 +182,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(firstContainer);
 
             // Wait for the ops to get processed by both the containers.
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             const expectedValues = [
                 ["key1", "value1", undefined /* batch */],
@@ -217,7 +217,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(firstContainer);
 
             // Wait for the ops to get processed by both the containers.
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             const expectedValues = [
                 ["key1", "value1", undefined /* batch */],
@@ -255,7 +255,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(firstContainer);
 
             // Wait for the ops to get processed by both the containers.
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             const expectedValues = [
                 ["key1", "value1", undefined /* batch */],
@@ -289,7 +289,7 @@ describe("Ops on Reconnect", () => {
             const secondContainerComp1 = await setupSecondContainersComponent();
 
             // Wait for the set above to get processed.
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             // Get component2 in the second container.
             const secondContainerComp1Map1 = await secondContainerComp1.getSharedObject<SharedMap>(map1Id);
@@ -318,7 +318,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(firstContainer);
 
             // Wait for the ops to get processed by both the containers.
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             const expectedValues = [
                 ["key1", "value1", undefined /* batch */],
@@ -360,7 +360,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(firstContainer);
 
             // Wait for the ops to get processed by both the containers.
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             const expectedValues = [
                 ["key1", "value1", undefined /* batch */],
@@ -394,7 +394,7 @@ describe("Ops on Reconnect", () => {
             const secondContainerComp1 = await setupSecondContainersComponent();
 
             // Wait for the set above to get processed.
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             // Get component2 in the second container.
             const secondContainerComp1Map1 = await secondContainerComp1.getSharedObject<SharedMap>(map1Id);
@@ -423,7 +423,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(firstContainer);
 
             // Wait for the ops to get processed by both the containers.
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             const expectedValues = [
                 ["key1", "value1", undefined /* batch */],
@@ -470,7 +470,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(firstContainer);
 
             // Wait for the ops to get processed by both the containers.
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             const expectedValues: [string, string, boolean | undefined][] = [
                 ["key1", "value1", true /* batch */],
@@ -519,7 +519,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(firstContainer);
 
             // Wait for the ops to get processed by both the containers.
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             const expectedValues: [string, string, boolean | undefined][] = [
                 ["key1", "value1", true /* batch */],
@@ -563,7 +563,7 @@ describe("Ops on Reconnect", () => {
             await waitForContainerReconnection(firstContainer);
 
             // Wait for the ops to get processed by both the containers.
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             const expectedValues: [string, string, boolean | undefined][] = [
                 ["key1", "value1", true /* batch */],

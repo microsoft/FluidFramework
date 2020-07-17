@@ -13,6 +13,7 @@ import {
     IComponentSerializer,
     IRequest,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -440,7 +441,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         registryEntries: NamedComponentRegistryEntries,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
-        containerScope: IComponent = context.scope,
+        containerScope: IComponent & IFluidObject = context.scope,
     ): Promise<ContainerRuntime> {
         // Back-compat: <= 0.18 loader
         if (context.deltaManager.lastSequenceNumber === undefined) {
@@ -542,7 +543,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         return this._flushMode;
     }
 
-    public get scope(): IComponent {
+    public get scope(): IComponent & IFluidObject {
         return this.containerScope;
     }
 
@@ -551,8 +552,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     }
 
     public get attachState(): AttachState {
-        // 0.21 back-compat isAttached
-        return this.context.attachState ?? (this.context as any).isAttached();
+        return this.context.attachState;
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
@@ -625,7 +625,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         private readonly registry: IComponentRegistry,
         chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: true, enableWorker: false },
-        private readonly containerScope: IComponent,
+        private readonly containerScope: IComponent & IFluidObject,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
     ) {
         super();
@@ -1384,13 +1384,11 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
         let eventName: string;
         if (attachState === AttachState.Attaching) {
-            // 0.21 back-compat attachState
-            // Currently the runtime attach state is decided by upper layers, so it already turns to attaching here.
-            // It does not need to depend once we remove the back-compat. We can change the below asserts after that.
-            assert(this.attachState === AttachState.Attaching, "Should move to attaching state from detached only");
+            assert(this.attachState === AttachState.Attaching,
+                "Container Context should already be in attaching state");
             eventName = "attaching";
         } else {
-            assert(this.attachState === AttachState.Attached, "Should move to attached state from attaching only");
+            assert(this.attachState === AttachState.Attached, "Container Context should already be in attached state");
             eventName = "attached";
         }
         for (const context of this.contexts.values()) {
@@ -1428,9 +1426,12 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         return summaryTree;
     }
 
-    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
         if (this.context.getAbsoluteUrl === undefined) {
             throw new Error("Driver does not implement getAbsoluteUrl");
+        }
+        if (this.attachState !== AttachState.Attached) {
+            return undefined;
         }
         return this.context.getAbsoluteUrl(relativeUrl);
     }
