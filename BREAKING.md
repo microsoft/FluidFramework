@@ -1,5 +1,10 @@
 # Breaking changes
 
+- [Removed "collaborating" event on IComponentRuntime](#Remove-`collaborating`-event-on-IComponentRuntime)
+
+### Removed `collaborating` event on IComponentRuntime
+Component Runtime no longer fires the collaborating event on attaching. Now it fires `attaching` event.
+
 ## 0.22 Breaking Changes
 - [Deprecated `path` from `IComponentHandleContext`](#Deprecated-`path`-from-`IComponentHandleContext`)
 - [Dynamically loaded components compiled against older versions of runtime](#Dynamically-loaded-components)
