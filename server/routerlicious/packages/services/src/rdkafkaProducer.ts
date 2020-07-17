@@ -3,19 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import * as kafka from "node-rdkafka";
-
+import type * as kafkaTypes from "node-rdkafka";
 import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@fluidframework/server-services-core";
 
 import { IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 import { PendingBoxcar, MaxBatchSize } from "./pendingBoxcar";
+import { tryImport } from "./tryImport";
+
+const kafka = tryImport("node-rdkafka");
 
 /**
  * Kafka producer using the node-rdkafka library
  */
 export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	private readonly messages = new Map<string, IPendingBoxcar[]>();
-	private producer?: kafka.HighLevelProducer;
+	private producer?: kafkaTypes.Producer;
 	private sendPending?: NodeJS.Immediate;
 	private connecting = false;
 	private connected = false;

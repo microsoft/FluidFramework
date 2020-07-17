@@ -7,9 +7,12 @@ import { IComponentLoadable } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelAttributes } from "./storage";
 
-declare module "@fluidframework/container-definitions" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IComponent extends Readonly<Partial<IProvideChannel>> { }
+
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface IFluidObject extends Readonly<Partial<IProvideChannel>> { }
 }
 
 export const IChannel: keyof IProvideChannel = "IChannel";

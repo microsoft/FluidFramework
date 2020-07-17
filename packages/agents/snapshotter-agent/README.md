@@ -1,1 +1,0 @@
-# @fluid-example/snapshotter-agent
