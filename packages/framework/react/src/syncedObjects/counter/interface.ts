@@ -22,7 +22,7 @@ export interface ISyncedCounterViewState extends IFluidFunctionalComponentViewSt
  * The state interface for the Fluid data source that powers the synced counter
  */
 export interface ISyncedCounterFluidState extends IFluidFunctionalComponentFluidState {
-    counter: ISharedCounter;
+    counter?: ISharedCounter;
 }
 
 /**

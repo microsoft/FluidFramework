@@ -5,8 +5,21 @@
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { SharedCounter } from "@fluidframework/counter";
 import { SyncedComponent } from "../..";
-import { ISyncedCounterViewState, ISyncedCounterFluidState, ISyncedCounterReducer } from "./interface";
-import { setFluidSyncedCounterConfig, useSyncedCounterReducerFluid } from "./fluidSyncedCounter";
+import {
+    ISyncedCounterViewState,
+    ISyncedCounterFluidState,
+    ISyncedCounterReducer,
+} from "./interface";
+import {
+    setFluidSyncedCounterConfig,
+    useSyncedCounterReducerFluid,
+    generateCounterFluidToViewConvertor,
+} from "./fluidSyncedCounter";
+
+export const generateCounter = () => generateCounterFluidToViewConvertor<
+    ISyncedCounterFluidState,
+    ISyncedCounterFluidState
+>("counter", "counter");
 
 /**
  * Function to set the config for a synced counter on a syncedComponent's SharedMap synced state. This
@@ -23,7 +36,10 @@ export function setSyncedCounterConfig(
     defaultValue: number = 0,
     sharedObjectCreate: (runtime: IComponentRuntime) => SharedCounter = SharedCounter.create,
 ) {
-    setFluidSyncedCounterConfig<ISyncedCounterViewState, ISyncedCounterFluidState>(
+    setFluidSyncedCounterConfig<
+        ISyncedCounterViewState,
+        ISyncedCounterFluidState
+    >(
         syncedComponent,
         syncedStateId,
         "value",
@@ -49,15 +65,21 @@ export function useSyncedCounter(
 ): [number, ISyncedCounterReducer] {
     type viewState = ISyncedCounterViewState;
     type fluidState = ISyncedCounterFluidState;
-    const [state, fluidReducer] = useSyncedCounterReducerFluid<viewState, fluidState>(
+    const [state, fluidReducer] = useSyncedCounterReducerFluid<
+        viewState,
+        fluidState
+    >(
         syncedComponent,
         syncedStateId,
         "value",
         "counter",
-        { value: defaultValue },
+        {
+            value: defaultValue,
+        },
     );
     const reducer: ISyncedCounterReducer = {
-        increment: (step: number) => fluidReducer.increment.function(state, step),
+        increment: (step: number) =>
+            fluidReducer.increment.function(state, step),
     };
 
     return [state.viewState.value, reducer];

@@ -6,11 +6,10 @@
 import { globals } from "../jest.config";
 
 describe("clickerVue", () => {
-
     beforeAll(async () => {
         // Wait for the page to load first before running any tests
         // so this time isn't attributed to the first test
-        await page.goto(globals.PATH, { waitUntil: "load" });
+        await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
     }, 45000);
 
     beforeEach(async () => {

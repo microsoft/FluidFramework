@@ -11,8 +11,35 @@ import {
     ICombinedState,
     IFluidDataProps,
     useReducerFluid,
+    IViewConverter,
 } from "../..";
 import { IFluidSyncedCounterReducer } from "./interface";
+
+export function generateCounterFluidToViewConvertor<
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState
+>(
+    viewKey: keyof SV,
+    fluidKey: keyof SF,
+    sharedObjectCreate = SharedCounter.create,
+): IViewConverter<SV,SF> {
+    const viewConverter = {
+        type: SharedCounter.name,
+        viewKey,
+        viewConverter: (viewState, fluidState) => {
+            if (fluidState[fluidKey] === undefined) {
+                throw Error("Fluid state was not initialized");
+            }
+            viewState[viewKey] = (fluidState[
+                fluidKey
+            ]).value;
+            return viewState;
+        },
+        sharedObjectCreate,
+        listenedEvents: ["incremented"],
+    };
+    return viewConverter as IViewConverter<SV,SF>;
+}
 
 export function setFluidSyncedCounterConfig<
     SV extends IFluidFunctionalComponentViewState,
@@ -30,21 +57,7 @@ export function setFluidSyncedCounterConfig<
         fluidToView: new Map([
             [
                 fluidKey,
-                {
-                    type: SharedCounter.name,
-                    viewKey,
-                    viewConverter: (viewState, fluidState) => {
-                        if (fluidState[fluidKey] === undefined) {
-                            throw Error("Fluid state was not initialized");
-                        }
-                        viewState[viewKey] = (fluidState[
-                            fluidKey
-                        ] as any).value;
-                        return viewState;
-                    },
-                    sharedObjectCreate,
-                    listenedEvents: ["incremented"],
-                },
+                generateCounterFluidToViewConvertor<SV,SF>(viewKey, fluidKey, sharedObjectCreate),
             ],
         ]),
         viewToFluid: new Map([

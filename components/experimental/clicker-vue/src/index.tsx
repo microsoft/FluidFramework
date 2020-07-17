@@ -9,8 +9,8 @@ import {
 } from "@fluidframework/aqueduct";
 // TODO: Move SyncedComponent to its own package to avoid a dependency on the ff/react package
 // This is the only remaining mention of "react" in here
-import { SyncedComponent, setSyncedCounterConfig } from "@fluidframework/react";
-import { SharedCounter } from "@fluidframework/counter";
+import { SyncedComponent, generateCounter, IFluidReactState } from "@fluidframework/react";
+import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { renderVue } from "@fluidframework/vue";
 import Component from "vue-class-component";
 
@@ -18,7 +18,8 @@ import Component from "vue-class-component";
 // interface defined ICounterState
 const VueProps = Vue.extend({
     props: {
-        counter: Object,
+        counter1: Object,
+        counter2: Object,
     },
 });
 
@@ -28,19 +29,37 @@ export class CounterVue extends VueProps {
     render(createElement) {
         return createElement("div",
             [
-                createElement("span", this.counter.value),
+                createElement("span", this.counter1.value),
                 createElement("button",
                     {
                         on: {
                             click: () => {
-                                this.counter.increment(1);
+                                this.counter1.increment(1);
                             },
                         },
                     },
                     "+",
                 ),
+                createElement("span", this.counter2.value),
+                createElement("button",
+                    {
+                        on: {
+                            click: () => {
+                                this.counter2.increment(2);
+                            },
+                        },
+                    },
+                    "++",
+                ),
             ]);
     }
+}
+
+// The state definition powering the Vue view component. This is defined in SyncedComponent
+// by the setConfig call in the constructor
+interface ICounterState extends IFluidReactState {
+    counter1?: ISharedCounter;
+    counter2?: ISharedCounter;
 }
 
 /**
@@ -49,7 +68,21 @@ export class CounterVue extends VueProps {
 export class ClickerVue extends SyncedComponent {
     constructor(props) {
         super(props);
-        setSyncedCounterConfig(this, "clicker-vue", 0);
+        this.setConfig<ICounterState>(
+            "clicker-vue",
+            {
+                syncedStateId: "clicker-vue",
+                fluidToView:  new Map([
+                    [
+                        "counter1", generateCounter(),
+                    ],
+                    [
+                        "counter2", generateCounter(),
+                    ],
+                ]),
+                defaultViewState: {},
+            },
+        );
     }
 
     /**

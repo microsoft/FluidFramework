@@ -29,6 +29,8 @@ export class FluidVueComponent extends FluidReactComponent {
     static propTypes = {
         vueComponent: PropTypes.any,
         on: PropTypes.func,
+        syncedComponent: PropTypes.object,
+        syncedStateId: PropTypes.string,
     };
 
     constructor(props) {
@@ -42,20 +44,19 @@ export class FluidVueComponent extends FluidReactComponent {
 
     _internalCreateVueInstance(targetElement) {
         const { vueComponent, on, syncedComponent, syncedStateId } = this.props;
-        const currentFluidState = getFluidState(
+        const fluidState = getFluidState(
             syncedStateId,
             syncedComponent.syncedState,
             syncedComponent.dataProps.fluidComponentMap,
             this._fluidToView,
         );
-
         this.vueInstance = new Vue({
             el: targetElement,
-            data: currentFluidState,
+            data: fluidState,
             render: (createElement) => createElement(
                 "internal_vue_component",
                 {
-                    props: currentFluidState,
+                    props: fluidState,
                     on,
                 },
                 <div/>,
