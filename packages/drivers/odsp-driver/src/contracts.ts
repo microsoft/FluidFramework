@@ -251,7 +251,7 @@ export interface ICreateFileResponse {
     sequenceNumber: number;
 }
 
-export interface ICreateFileResponseZeroFile {
+export interface ICreateFileResponseZeroSize {
     "@odata.context": string;
     driveId: string;
     id: string;

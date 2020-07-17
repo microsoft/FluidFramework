@@ -16,7 +16,7 @@ import {
     SnapshotTreeEntry,
     SnapshotType,
     ICreateFileResponse,
-    ICreateFileResponseZeroFile,
+    ICreateFileResponseZeroSize,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
@@ -99,7 +99,7 @@ export async function createNewFluidFile(
                     const initialUrl =
                         `${baseUrl}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
                     const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
-                    const fetchResponse = await fetchHelper<ICreateFileResponseZeroFile>(
+                    const fetchResponse = await fetchHelper<ICreateFileResponseZeroSize>(
                         url,
                         {
                             method: "PUT",
