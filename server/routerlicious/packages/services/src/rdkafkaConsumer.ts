@@ -9,9 +9,9 @@ import { Deferred } from "@fluidframework/common-utils";
 import { IConsumer, IPartition, IPartitionWithEpoch, IQueuedMessage } from "@fluidframework/server-services-core";
 import { ZookeeperClient } from "./zookeeperClient";
 import { IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
-import { tryImport } from "./tryImport";
+import { tryImportNodeRdkafka } from "./tryImport";
 
-const kafka = tryImport("node-rdkafka");
+const kafka = tryImportNodeRdkafka();
 
 /**
  * Kafka consumer using the node-rdkafka library
