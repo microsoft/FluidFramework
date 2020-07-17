@@ -137,9 +137,9 @@ opProcessingController.addDeltaManagers(component1.runtime.deltaManager, compone
 
 ### `isAttached` replaced with `attachState` property
 
-`isAttached` is replaced with `attachState` property on IContainerContext, IContainerRuntime and IComponentContext.
-isAttached returned true when the entity was either attaching or attached to the storage.
-So if attachState is AttachState.Attaching or AttachState.Attached then isAttached would have returned true.
+`isAttached` is replaced with `attachState` property on `IContainerContext`, `IContainerRuntime` and `IComponentContext`.
+`isAttached` returned true when the entity was either attaching or attached to the storage.
+So if `attachState` is `AttachState.Attaching` or `AttachState.Attached` then `isAttached` would have returned true.
 Attaching is introduced in regards to Detached container where there is a time where state is neither AttachState.Detached nor AttachState.Attached.
 
 ## 0.21 Breaking Changes
