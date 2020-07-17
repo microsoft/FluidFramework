@@ -8,20 +8,15 @@ import {
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
-
-import React from "react";
-import ReactDOM from "react-dom";
 
 import { IDiceRoller } from "./interface";
-import { DiceRollerView } from "./view";
 
 const diceValueKey = "diceValue";
 
 /**
  * The DiceRoller is our implementation of the IDiceRoller interface.
  */
-export class DiceRoller extends PrimedComponent implements IDiceRoller, IComponentHTMLView {
+export class DiceRoller extends PrimedComponent implements IDiceRoller {
     public static get ComponentName() { return "@fluid-example/dice-roller"; }
 
     public get IComponentHTMLView() { return this; }
@@ -42,16 +37,6 @@ export class DiceRoller extends PrimedComponent implements IDiceRoller, ICompone
                 this.emit("diceRolled");
             }
         });
-    }
-
-    /**
-     * Render the dice.
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            React.createElement(DiceRollerView, { model: this }),
-            div,
-        );
     }
 
     public get value() {

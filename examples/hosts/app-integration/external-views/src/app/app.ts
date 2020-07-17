@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
 import { Container } from "@fluidframework/container-loader";
-import { HTMLViewAdapter } from "@fluidframework/view-adapters";
-import { IComponentMountableView } from "@fluidframework/view-interfaces";
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 import { getTinyliciousContainer } from "../util";
+import { IDiceRoller } from "../component";
+import { PrettyDiceRollerView } from "./views";
 
 // I'm choosing to put the docId in the hash just for my own convenience.  There should be no requirements on the
 // page's URL format deeper in the system.
@@ -24,13 +25,7 @@ async function mountDefaultComponentFromContainer(container: Container): Promise
     // For this basic scenario, I'm just requesting the default view.  Nothing stopping me from issuing alternate
     // requests (e.g. for other components or views) if I wished.
     const url = "/";
-    const response = await container.request({
-        // We request with a mountableView since we intend to get this view from across the bundle boundary.
-        headers: {
-            mountableView: true,
-        },
-        url,
-    });
+    const response = await container.request({ url });
 
     // Verify the response
     if (response.status !== 200 || response.mimeType !== "fluid/component") {
@@ -40,23 +35,9 @@ async function mountDefaultComponentFromContainer(container: Container): Promise
     }
 
     // Now we know we got the component back, time to start mounting it.
-    const component = response.value as IComponent;
+    const component = response.value as IDiceRoller;
 
-    // In a production app, we should probably be retaining a reference to mountableView long-term so we can call
-    // unmount() on it to correctly remove it from the DOM if needed.
-    const mountableView: IComponentMountableView | undefined = component.IComponentMountableView;
-    if (mountableView !== undefined) {
-        mountableView.mount(div);
-        return;
-    }
-
-    // If we don't get a mountable view back, we can still try to use a view adapter.  This won't always work (e.g.
-    // if the response is a React-based component using hooks) and is not the preferred path, but sometimes it
-    // can work.
-    console.warn(`Container returned a non-IComponentMountableView.  This can cause errors when mounting components `
-        + `with React hooks across bundle boundaries.  URL: ${url}`);
-    const view = new HTMLViewAdapter(component);
-    view.render(div, { display: "block" });
+    ReactDOM.render(React.createElement(PrettyDiceRollerView, { model: component }), div);
 }
 
 // The format of the code proposal will be the contents of our package.json, which has a special "fluid" section
