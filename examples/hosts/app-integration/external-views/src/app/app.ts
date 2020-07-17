@@ -18,8 +18,7 @@ if (window.location.hash.length === 0) {
 const documentId = window.location.hash.substring(1);
 document.title = documentId;
 
-// In this app, we are assuming our container code is capable of providing a default mountable view.  This is up to
-// how the container code is authored though (e.g. if the container code is data-only and does not bundle views).
+// In this app, we know our container code provides a default component that is an IDiceRoller.
 async function getDiceRollerFromContainer(container: Container): Promise<IDiceRoller> {
     // For this basic scenario, I'm just requesting the default view.  Nothing stopping me from issuing alternate
     // requests (e.g. for other components or views) if I wished.
@@ -33,10 +32,10 @@ async function getDiceRollerFromContainer(container: Container): Promise<IDiceRo
         throw new Error(`Empty response from URL: "${url}"`);
     }
 
-    // Now we know we got the component back, time to start mounting it.
     return response.value;
 }
 
+// Given an IDiceRoller, we can render its data using the PrettyDiceRollerView we've created in our app.
 async function renderPrettyDiceRoller(diceRoller: IDiceRoller) {
     const div = document.getElementById("content") as HTMLDivElement;
     ReactDOM.render(React.createElement(PrettyDiceRollerView, { model: diceRoller }), div);
