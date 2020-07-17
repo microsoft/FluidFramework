@@ -15,7 +15,7 @@ import {
 import {
     IChannelAttributes,
     IComponentRuntime,
-    IObjectStorageService,
+    IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
 import { unreachableCase } from "@fluidframework/runtime-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
@@ -275,7 +275,7 @@ export class ConsensusOrderedCollection<T = any>
 
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService): Promise<void> {
+        storage: IChannelStorageService): Promise<void> {
         assert(this.jobTracking.size === 0);
         const rawContentTracking = await storage.read(snapshotFileNameTracking);
         if (rawContentTracking !== undefined) {

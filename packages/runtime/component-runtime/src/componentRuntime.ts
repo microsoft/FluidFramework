@@ -48,8 +48,7 @@ import {
     SchedulerType,
 } from "@fluidframework/runtime-definitions";
 import { generateHandleContextPath, unreachableCase } from "@fluidframework/runtime-utils";
-import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { IChannel, IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
@@ -64,7 +63,7 @@ export enum ComponentMessageType {
 export interface ISharedObjectRegistry {
     // TODO consider making this async. A consequence is that either the creation of a distributed data type
     // is async or we need a new API to split the synchronous vs. asynchronous creation.
-    get(name: string): ISharedObjectFactory | undefined;
+    get(name: string): IChannelFactory | undefined;
 }
 
 /**

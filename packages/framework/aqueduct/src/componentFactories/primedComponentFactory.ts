@@ -15,7 +15,7 @@ import {
 import {
     NamedComponentRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { ComponentSymbolProvider } from "@fluidframework/synthesize";
 
 import { PrimedComponent, ISharedComponentProps } from "../components";
@@ -38,7 +38,7 @@ export class PrimedComponentFactory<
     constructor(
         type: string,
         ctor: new (props: ISharedComponentProps<P>) => PrimedComponent<P, S>,
-        sharedObjects: readonly ISharedObjectFactory[] = [],
+        sharedObjects: readonly IChannelFactory[] = [],
         optionalProviders: ComponentSymbolProvider<P>,
         registryEntries?: NamedComponentRegistryEntries,
         onDemandInstantiation = true,

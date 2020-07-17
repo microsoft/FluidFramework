@@ -1,9 +1,14 @@
 # Breaking changes
 
-- [Removed "collaborating" event on IComponentRuntime](#Remove-`collaborating`-event-on-IComponentRuntime)
+## 0.23 Breaking Changes
+- [Removed `collaborating` event on IComponentRuntime](#Removed-`collaborating`-event-on-IComponentRuntime)
+- [ISharedObjectFactory rename](#ISharedObjectFactory)
 
 ### Removed `collaborating` event on IComponentRuntime
 Component Runtime no longer fires the collaborating event on attaching. Now it fires `attaching` event.
+
+### ISharedObjectFactory
+`ISharedObjectFactory` renamed to `IChannelFactory` and moved from `@fluidframework/shared-object-base` to `@fluidframework/component-runtime-definitions`
 
 ## 0.22 Breaking Changes
 - [Deprecated `path` from `IComponentHandleContext`](#Deprecated-`path`-from-`IComponentHandleContext`)

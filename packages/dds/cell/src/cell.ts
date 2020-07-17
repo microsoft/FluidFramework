@@ -16,9 +16,10 @@ import {
 import {
     IChannelAttributes,
     IComponentRuntime,
-    IObjectStorageService,
+    IChannelStorageService,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
-import { ISharedObjectFactory, SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";
 import { ISharedCell, ISharedCellEvents } from "./interfaces";
@@ -67,7 +68,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      *
      * @returns a factory that creates and load SharedCell
      */
-    public static getFactory(): ISharedObjectFactory {
+    public static getFactory(): IChannelFactory {
         return new CellFactory();
     }
     /**
@@ -200,7 +201,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      */
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService): Promise<void> {
+        storage: IChannelStorageService): Promise<void> {
         const rawContent = await storage.read(snapshotFileName);
 
         const content = rawContent !== undefined

@@ -68,7 +68,6 @@
     "@fluidframework/request-handler": "^0.23.0",
     "@fluidframework/runtime-definitions": "^0.23.0",
     "@fluidframework/runtime-utils": "^0.23.0",
-    "@fluidframework/shared-object-base": "^0.23.0",
     "@fluidframework/synthesize": "^0.23.0",
     "@fluidframework/view-adapters": "^0.23.0",
     "@fluidframework/view-interfaces": "^0.23.0",
