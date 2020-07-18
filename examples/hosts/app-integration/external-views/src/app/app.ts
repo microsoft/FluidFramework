@@ -4,9 +4,9 @@
  */
 
 import { Container } from "@fluidframework/container-loader";
+import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { getTinyliciousContainer } from "../util";
 import { IDiceRoller } from "../component";
 import { PrettyDiceRollerView } from "./views";
 

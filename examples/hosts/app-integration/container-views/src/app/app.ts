@@ -5,9 +5,9 @@
 
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { Container } from "@fluidframework/container-loader";
+import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IComponentMountableView } from "@fluidframework/view-interfaces";
-import { getTinyliciousContainer } from "../util";
 
 // I'm choosing to put the docId in the hash just for my own convenience.  There should be no requirements on the
 // page's URL format deeper in the system.
