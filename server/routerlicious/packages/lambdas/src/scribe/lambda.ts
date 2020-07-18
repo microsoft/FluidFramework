@@ -155,6 +155,10 @@ export class ScribeLambda extends SequencedLambda {
                     this.processFromPending(this.minSequenceNumber);
                 }
 
+                const messageMetaData = {
+                    documentId: this.documentId,
+                    tenantId: this.tenantId,
+                };
                 this.clearCache = false;
                 if (value.operation.type === MessageType.Summarize) {
                     const summarySequenceNumber = value.operation.sequenceNumber;
@@ -184,7 +188,8 @@ export class ScribeLambda extends SequencedLambda {
                         } else {
                             this.protocolHead = this.protocolHandler.sequenceNumber;
                             this.context.log.info(
-                                `Client summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`);
+                                `Client summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`,
+                                 { messageMetaData });
                         }
                     } catch (ex) {
                         this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
@@ -219,7 +224,8 @@ export class ScribeLambda extends SequencedLambda {
                         if (success) {
                             this.clearCache = true;
                             this.context.log.info(
-                                `Service summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`);
+                                `Service summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`,
+                                { messageMetaData });
                         }
                     }
                 } else if (value.operation.type === MessageType.SummaryAck) {
@@ -322,7 +328,12 @@ export class ScribeLambda extends SequencedLambda {
                 "operation.sequenceNumber": lte ? { $lte: sequenceNumber } : { $gte: sequenceNumber },
                 "tenantId": this.tenantId,
             });
-        this.context.log.info(`Scribe cache is cleared for ${this.tenantId}/${this.documentId}`);
+            const messageMetaData = {
+                documentId: this.documentId,
+                tenantId: this.tenantId,
+            };
+            this.context.log.info(
+                `Scribe cache is cleared for ${this.tenantId}/${this.documentId}`,{ messageMetaData });
     }
 
     /**
