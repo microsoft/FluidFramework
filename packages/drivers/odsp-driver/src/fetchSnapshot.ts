@@ -41,7 +41,10 @@ export async function fetchSnapshot(
     const { url, headers } = getUrlAndHeadersWithAuth(`${snapshotUrl}${path}${queryString}`, token);
     return PerformanceEvent.timedExecAsync(
         logger,
-        { eventName: "fetchSnapshot" },
+        {
+            eventName: "fetchSnapshot",
+            headers: Object.keys(headers).length !== 0 ? true : undefined,
+        },
         async () => fetchHelper<IOdspSnapshot>(url, headers),
     );
 }

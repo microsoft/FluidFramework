@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 
 /**
  * The interfaces in this file are related to component interface discovery. The idea
@@ -29,6 +29,12 @@ declare module "@fluidframework/component-core-interfaces" {
         IProvideComponentDiscoverableInterfaces
         & IProvideComponentDiscoverInterfaces
         & IProvideComponentInterfacesRegistry>> { }
+
+        // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<
+        IProvideComponentDiscoverableInterfaces
+        & IProvideComponentDiscoverInterfaces
+        & IProvideComponentInterfacesRegistry>> { }
 }
 
 export const IComponentDiscoverableInterfaces: keyof IProvideComponentDiscoverableInterfaces
@@ -48,7 +54,7 @@ export interface IComponentDiscoverableInterfaces extends IProvideComponentDisco
      * The interfaces this component implements that it wants other components to be able
      * to discover.
      */
-    readonly discoverableInterfaces: (keyof IComponent)[];
+    readonly discoverableInterfaces: (keyof (IComponent & IFluidObject))[];
 }
 
 export const IComponentDiscoverInterfaces: keyof IProvideComponentDiscoverInterfaces = "IComponentDiscoverInterfaces";
@@ -69,7 +75,7 @@ export interface IComponentDiscoverInterfaces extends IProvideComponentDiscoverI
      * The interfaces this component cares about, i.e. it wants to be notified when other components
      * that implement any of these interfaces are added to the ecosystem.
      */
-    readonly interfacesToDiscover: (keyof IComponent)[];
+    readonly interfacesToDiscover: (keyof (IComponent & IFluidObject))[];
 
     /**
      * Invoked when any components that implement any of the interfaces in interfacesToDiscover are
@@ -83,7 +89,9 @@ export interface IComponentDiscoverInterfaces extends IProvideComponentDiscoverI
      * @param interfaceName - The name of the interface that the given components implement.
      * @param components - A list of the components that implement the given interface.
      */
-    notifyComponentsDiscovered(interfaceName: keyof IComponent, components: readonly IComponent[]): void;
+    notifyComponentsDiscovered(
+        interfaceName: keyof (IComponent & IFluidObject),
+        components: readonly (IComponent & IFluidObject)[]): void;
 }
 
 export const IComponentInterfacesRegistry: keyof IProvideComponentInterfacesRegistry = "IComponentInterfacesRegistry";

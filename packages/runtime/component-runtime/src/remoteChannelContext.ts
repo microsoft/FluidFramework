@@ -16,12 +16,12 @@ import {
     IChannel,
     IChannelAttributes,
     IComponentRuntime,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
 import {
     IComponentContext,
     ISummaryTracker,
 } from "@fluidframework/runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
@@ -119,7 +119,7 @@ export class RemoteChannelContext implements IChannelContext {
                 ".attributes");
         }
 
-        let factory: ISharedObjectFactory | undefined;
+        let factory: IChannelFactory | undefined;
         // this is a back-compat case where
         // the attach message doesn't include
         // the attributes. Since old attach messages

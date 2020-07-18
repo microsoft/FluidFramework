@@ -6,6 +6,8 @@
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideComponentUserInformation>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideComponentUserInformation>> { }
 }
 
 export const IComponentUserInformation: keyof IProvideComponentUserInformation = "IComponentUserInformation";

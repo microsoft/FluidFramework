@@ -105,6 +105,11 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     attach(request: IRequest): Promise<void>;
 
     /**
+     * Extract the snapshot from the detached container.
+     */
+    serialize(): string;
+
+    /**
      * Get an absolute url for a provided container-relative request.
      * If the container is not attached, this will return undefined.
      *

@@ -61,8 +61,8 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
     // start IComponentHTMLView
 
     public render(div: HTMLElement) {
-        if (!this.clickerView ||
-            !this.clickerUsingProvidersView) {
+        if (this.clickerView === undefined ||
+            this.clickerUsingProvidersView === undefined) {
             throw new Error(`Pond not initialized correctly`);
         }
 

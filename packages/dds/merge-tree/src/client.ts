@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { IComponentRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performanceNow } from "@fluidframework/common-utils";
 import { IIntegerRange } from "./base";
@@ -928,7 +928,7 @@ export class Client {
 
     public async load(
         runtime: IComponentRuntime,
-        storage: IObjectStorageService,
+        storage: IChannelStorageService,
         branchId?: string,
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
         const loader = new SnapshotLoader(runtime, this, this.mergeTree, this.logger);
