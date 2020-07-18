@@ -177,7 +177,8 @@ async function main() {
     for (let i = 0; i < config.profiles[profile].numClients; i++) {
         const args = ["dist\\nodeStressTest.js", "--profile", profile, "--runId", i.toString(), "--url", url];
         if (debug) {
-            args.unshift(`--inspect-brk=${9230 + i}`); // 9229 is the default and will be used for the root orchestrator process
+            const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
+            args.unshift(`--inspect-brk=${debugPort}`);
         }
         const process = child_process.spawn(
             "node",
