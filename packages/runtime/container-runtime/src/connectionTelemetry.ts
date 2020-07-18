@@ -42,13 +42,12 @@ class OpPerfTelemetry {
         this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
         this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
         this.deltaManager.on("beforeOpProcessing", (message) => this.beforeProcessingOp(message));
-        this.deltaManager.on("connect", (details, hasBehindInfo) => {
+        this.deltaManager.on("connect", (details, opsBehind) => {
             this.clientId = details.clientId;
             this.clientSequenceNumberForLatencyStatistics = undefined;
-            if (hasBehindInfo) {
-                const op = this.deltaManager.lastKnownSeqNumber;
-                this.connectionOpSeqNumber = op;
-                this.gap = op - this.deltaManager.lastSequenceNumber;
+            if (opsBehind !== undefined) {
+                this.connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
+                this.gap = opsBehind;
                 this.connectionStartTime = performanceNow();
 
                 // We might be already up-today. If so, report it right away.

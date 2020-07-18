@@ -72,7 +72,10 @@ export interface ICodeAllowList {
 export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
     (event: "connected", listener: (clientId: string) => void);
-    (event: "connect", listener: (gap?: number) => void);
+    /**
+     * @param opsBehind - number of ops this client is behind (if present).
+     */
+    (event: "connect", listener: (opsBehind?: number) => void);
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
     (event: "disconnected" | "attaching" | "attached", listener: () => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);

@@ -985,11 +985,11 @@ export class DeltaManager
 
         const initialMessages = connection.details.initialMessages;
 
-        let hasBehindInfo = false;
+        let hasOpsBehindInfo = false;
 
         // Some storages may provide checkpointSequenceNumber to identify how far client is behind.
         if (connection.details.checkpointSequenceNumber !== undefined) {
-            hasBehindInfo = true;
+            hasOpsBehindInfo = true;
             this.updateLatestKnownOpSeqNumber(connection.details.checkpointSequenceNumber);
         }
 
@@ -997,14 +997,17 @@ export class DeltaManager
         // This is duplication of what enqueueMessages() does, but we have to raise event before we get there,
         // so duplicating update logic here as well.
         if (initialMessages.length > 0) {
-            hasBehindInfo = true;
+            hasOpsBehindInfo = true;
             this.updateLatestKnownOpSeqNumber(initialMessages[initialMessages.length - 1].sequenceNumber);
         }
 
         // Notify of the connection
         // WARNING: This has to happen before processInitialMessages() call below.
         // If not, we may not update Container.pendingClientId in time before seeing our own join session op.
-        this.emit("connect", connection.details, hasBehindInfo);
+        this.emit(
+            "connect",
+            connection.details,
+            hasOpsBehindInfo ? this.lastKnownSeqNumber - this.lastSequenceNumber : undefined);
 
         this.processInitialMessages(
             initialMessages,
@@ -1348,7 +1351,7 @@ export class DeltaManager
     }
 
     private reportOpGap() {
-        // Future: report this.numberOfOpsBehind with some frequency
+        // Future: report (this.lastKnownSeqNumber - this.lastSequenceNumber) with some frequency
         // to allow hosts to build progress UI reporting how far we are behind.
     }
 }

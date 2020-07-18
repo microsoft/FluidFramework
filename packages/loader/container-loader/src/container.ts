@@ -354,16 +354,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._parentBranch;
     }
 
-    /**
-     * Returns gap between last known op and last processed op.
-     * Might be useful for hosts to report (progress bar) how far we are behind once reconnected after being offline.
-     */
-    public get numberOfOpsBehind() {
-        const gap = this._deltaManager.lastKnownSeqNumber - this._deltaManager.lastSequenceNumber;
-        assert(gap >= 0);
-        return gap;
-    }
-
     constructor(
         public readonly options: any,
         private readonly scope: IComponent & IFluidObject,
@@ -1200,7 +1190,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.canReconnect,
         );
 
-        deltaManager.on("connect", (details: IConnectionDetails, hasBehindInfo: boolean) => {
+        deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
             const oldState = this._connectionState;
             this._connectionState = ConnectionState.Connecting;
 
@@ -1212,14 +1202,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // we know there can no longer be outstanding ops that we sent with the previous client id.
             this.pendingClientId = details.clientId;
 
-            this.emit("connect", hasBehindInfo ? this.numberOfOpsBehind : undefined);
+            this.emit("connect", opsBehind);
 
             // Report telemetry after we set client id!
             this.logConnectionStateChangeTelemetry(
                 ConnectionState.Connecting,
                 oldState,
                 "websocket established",
-                hasBehindInfo);
+                opsBehind);
 
             if (deltaManager.connectionMode === "read") {
                 this.setConnectionState(
@@ -1284,7 +1274,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         value: ConnectionState,
         oldState: ConnectionState,
         reason: string,
-        hasBehindInfo?: boolean)
+        opsBehind?: number)
     {
         // Log actual event
         const time = performanceNow();
@@ -1295,7 +1285,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         let connectionMode: string | undefined;
         let connectionInitiationReason: string | undefined;
         let autoReconnect: ReconnectMode | undefined;
-        let opsBehind: number | undefined;
         if (value === ConnectionState.Disconnected) {
             autoReconnect = this._deltaManager.reconnectMode;
         } else {
@@ -1303,8 +1292,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (value === ConnectionState.Connected) {
                 durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
                 durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
-            } else if (hasBehindInfo) {
-                opsBehind = this.numberOfOpsBehind;
             }
             if (this.firstConnection) {
                 connectionInitiationReason = "InitialConnect";
