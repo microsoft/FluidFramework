@@ -88,7 +88,7 @@ import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
-import { ReportConnectionTelemetry } from "./connectionTelemetry";
+import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
@@ -563,6 +563,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     public readonly IComponentHandleContext: IComponentHandleContext;
 
     public readonly logger: ITelemetryLogger;
+    public readonly subLogger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
     private readonly summaryTreeConverter: SummaryTreeConverter;
@@ -668,14 +669,16 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             this.setNewContext(key, componentContext);
         }
 
-        this.logger = ChildLogger.create(context.logger, "ContainerRuntime", {
+        this.subLogger = ChildLogger.create(context.logger, undefined, {
             runtimeVersion: pkgVersion,
         });
+
+        this.logger = ChildLogger.create(this.subLogger, "ContainerRuntime");
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
             this,
-            ChildLogger.create(this.logger, "ScheduleManager"),
+            ChildLogger.create(this.subLogger, "ScheduleManager"),
         );
 
         this.deltaSender = this.deltaManager;
@@ -710,7 +713,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             context,
             this.runtimeOptions.generateSummaries !== false,
             !!this.runtimeOptions.enableWorker,
-            this.logger,
+            this.subLogger,
             (summarizer) => { this.nextSummarizerP = summarizer; },
             this.previousState.nextSummarizerP,
             !!this.previousState.reload,
@@ -721,7 +724,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             this.summaryManager.setConnected(this.context.clientId!);
         }
 
-        ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
+        ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.subLogger);
     }
 
     public dispose(): void {

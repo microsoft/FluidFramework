@@ -5,6 +5,7 @@
 
 import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
@@ -12,7 +13,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { performanceNow } from "@fluidframework/common-utils";
 
-class ConnectionTelemetry {
+class OpPerfTelemetry {
     private pongCount: number = 0;
     private socketLatency = 0;
 
@@ -29,11 +30,15 @@ class ConnectionTelemetry {
     private connectionStartTime = 0;
     private gap = 0;
 
+    private readonly logger: ITelemetryLogger;
+
     public constructor(
         private clientId: string | undefined,
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        private readonly logger: ITelemetryLogger)
+        logger: ITelemetryLogger)
     {
+        this.logger = ChildLogger.create(logger, "OpPerf");
+
         this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
         this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
         this.deltaManager.on("beforeOpProcessing", (message) => this.beforeProcessingOp(message));
@@ -66,11 +71,13 @@ class ConnectionTelemetry {
     private reportGettingUpToDate() {
         this.connectionOpSeqNumber = undefined;
         this.logger.sendPerformanceEvent({
-            eventName: "ConnectionStats",
+            eventName: "ConnectionSpeed",
             duration: performanceNow() - this.connectionStartTime,
             ops: this.gap,
             // track time to connect only for first connection.
-            timeToConnect: this.firstConnection ? this.connectionStartTime - this.bootTime : undefined,
+            timeToConnect: this.firstConnection ?
+                TelemetryLogger.formatTick(this.connectionStartTime - this.bootTime) :
+                undefined,
             firstConnection: this.firstConnection,
         });
     }
@@ -122,9 +129,9 @@ class ConnectionTelemetry {
     }
 }
 
-export function ReportConnectionTelemetry(
+export function ReportOpPerfTelemetry(
     clientId: string | undefined,
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
     logger: ITelemetryLogger) {
-    new ConnectionTelemetry(clientId, deltaManager, logger);
+    new OpPerfTelemetry(clientId, deltaManager, logger);
 }
