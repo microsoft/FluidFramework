@@ -1405,21 +1405,31 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             type: SummaryType.Tree,
         };
 
-        // Iterate over each component and ask it to snapshot
-        Array.from(this.contexts)
-            .filter(([key, value]) =>
-                // Take summary of bounded components.
-                !this.notBoundedComponentContexts.has(key),
-            )
-            .map(async ([key, value]) => {
-                const snapshot = value.generateAttachMessage().snapshot;
-                const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-                    snapshot,
-                    `/${encodeURIComponent(key)}`,
-                    true,
-                );
-                summaryTree.tree[key] = treeWithStats.summaryTree;
-            });
+        // 0.22 back-compat attachingEventBeforeSummary
+        // After removing back-compat we should always collect summary twice. Reason below.
+        let limit = 1;
+        if (this.attachState === AttachState.Detached) {
+            limit = 2;
+        }
+        // Attaching graph of some components can cause other components to get bound too.
+        // So need to iterate twice for collecting the summary.
+        for (let i = 0; i < limit; ++i) {
+            // Iterate over each component and ask it to snapshot
+            Array.from(this.contexts)
+                .filter(([key, value]) =>
+                    // Take summary of bounded components.
+                    !(this.notBoundedComponentContexts.has(key) || summaryTree.tree[key]),
+                )
+                .map(async ([key, value]) => {
+                    const snapshot = value.generateAttachMessage().snapshot;
+                    const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+                        snapshot,
+                        `/${encodeURIComponent(key)}`,
+                        true,
+                    );
+                    summaryTree.tree[key] = treeWithStats.summaryTree;
+                });
+        }
 
         this.serializeContainerBlobs(summaryTree);
 

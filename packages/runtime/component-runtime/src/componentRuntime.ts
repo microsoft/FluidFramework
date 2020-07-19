@@ -519,9 +519,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     public getAttachSnapshot(): ITreeEntry[] {
         const entries: ITreeEntry[] = [];
-        // Move resolving the promise in attached event once that becomes
-        // default flow for our tests.
-        this.deferredAttached.resolve();
+
         this.attachGraph();
 
         // Craft the .attributes file for each shared object
@@ -667,6 +665,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.componentContext.once("attaching", () => {
             assert(this.bindState !== BindState.NotBound, "Component attaching should not occur if it is not bound");
             this._attachState = AttachState.Attaching;
+            // This promise resolution will be moved to attached event once we fix the scheduler.
+            this.deferredAttached.resolve();
             this.emit("attaching");
         });
         this.componentContext.once("attached", () => {
