@@ -674,6 +674,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             this._attachState = AttachState.Attached;
             this.emit("attached");
         });
+
     }
 
     private verifyNotClosed() {
