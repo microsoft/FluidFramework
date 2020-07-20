@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import { IPubSub, ISubscriber, WebSocketSubscriber } from "@fluidframework/server-memory-orderer";
 import * as core from "@fluidframework/server-services-core";
-import * as moniker from "moniker";
+import { v4 as uuid } from "uuid";
 
 export class LocalWebSocket implements core.IWebSocket {
     private readonly events = new EventEmitter();
@@ -70,7 +70,7 @@ export class LocalWebSocketServer implements core.IWebSocketServer {
     }
 
     public createConnection(): LocalWebSocket {
-        const socket = new LocalWebSocket(moniker.choose(), this);
+        const socket = new LocalWebSocket(uuid(), this);
         const mockRequest = { url: "TestWebSocket" };
         this.events.emit("connection", socket, mockRequest);
         return socket;
