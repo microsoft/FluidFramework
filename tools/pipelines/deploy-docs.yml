@@ -67,6 +67,7 @@ stages:
                   STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                   STORAGE_KEY: $(STORAGE_KEY)
                   DEST_PATH: '/'
+                  artifactName: fluid-docs
 
               - template: templates/deploy-docs-steps.yml
                 parameters:
@@ -100,6 +101,7 @@ stages:
                   STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                   STORAGE_KEY: $(STORAGE_KEY)
                   DEST_PATH: '/versions/latest/'
+                  artifactName: fluid-docs
 
               - template: templates/deploy-docs-steps.yml
                 parameters:
@@ -122,3 +124,4 @@ stages:
                   STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                   STORAGE_KEY: $(STORAGE_KEY)
                   DEST_PATH: '/versions/$(N1_VERSION)/'
+                  artifactName: fluid-docs
