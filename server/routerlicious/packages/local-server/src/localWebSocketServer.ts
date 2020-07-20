@@ -13,7 +13,7 @@ export class LocalWebSocket implements core.IWebSocket {
     private readonly rooms = new Set<string>();
     private readonly subscriber: ISubscriber;
 
-    constructor(public id: string, private readonly server: LocalWebSocketServer) {
+    constructor(public readonly id: string, private readonly server: LocalWebSocketServer) {
         this.subscriber = new WebSocketSubscriber(this);
     }
 
