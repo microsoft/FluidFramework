@@ -149,8 +149,9 @@ export class DeltaManager
     // There are three numbers we track
     // * lastQueuedSequenceNumber is the last queued sequence number. If there are gaps in seq numbers, then this number
     //   is not updated until we cover that gap, so it increases each time by 1.
-    // * lastObservedSeqNumber is almost the same, but can be greater (jump forward a lot) and tracks
-    //   last known to client sequence number.
+    // * lastObservedSeqNumber is  an estimation of last known sequence number for container in storage. It's initially
+    //   populated at web socket connection time (if storage provides that info) and is  updated once ops shows up.
+    //   It's never less than lastQueuedSequenceNumber
     // * lastProcessedSequenceNumber - last processed sequence number
     private lastQueuedSequenceNumber: number = 0;
     private lastObservedSeqNumber: number = 0;
@@ -1231,8 +1232,6 @@ export class DeltaManager
 
         const endTime = Date.now();
         this.emit("processTime", endTime - startTime);
-
-        this.reportOpGap();
     }
 
     /**
@@ -1346,12 +1345,6 @@ export class DeltaManager
     private updateLatestKnownOpSeqNumber(seq: number) {
         if (this.lastObservedSeqNumber < seq) {
             this.lastObservedSeqNumber = seq;
-            this.reportOpGap();
         }
-    }
-
-    private reportOpGap() {
-        // Future: report (this.lastKnownSeqNumber - this.lastSequenceNumber) with some frequency
-        // to allow hosts to build progress UI reporting how far we are behind.
     }
 }
