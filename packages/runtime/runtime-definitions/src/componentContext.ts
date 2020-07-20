@@ -184,7 +184,7 @@ export interface IComponentRuntimeChannel extends
 
     /**
      * Generates a summary for the component.
-     * back-compat: 0.21 summarizerNode - should not be optional.
+     * back-compat: 0.22 summarizerNode - should not be optional.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      */
     summarize?(fullTree?: boolean): Promise<ISummaryTreeWithStats>;

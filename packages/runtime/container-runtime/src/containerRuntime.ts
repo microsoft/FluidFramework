@@ -576,7 +576,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
     private latestSummaryAck: ISummaryContext;
-    // back-compat: 0.21 summarizerNode - remove all summary trackers
+    // back-compat: 0.22 summarizerNode - remove all summary trackers
     private readonly summaryTracker: SummaryTracker;
     private readonly summarizerNode: SummarizerNode;
     private readonly notBoundedComponentContexts = new Set<string>();
@@ -1842,7 +1842,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     private async refreshLatestSummaryAck(
         proposalHandle: string | undefined,
         ackHandle: string,
-        trackerRefSeqNum: number, // back-compat: 0.21 summarizerNode - remove
+        trackerRefSeqNum: number, // back-compat: 0.22 summarizerNode - remove
         version?: IVersion,
     ) {
         if (trackerRefSeqNum < this.summaryTracker.referenceSequenceNumber) {
@@ -1851,7 +1851,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         this.latestSummaryAck = { proposalHandle, ackHandle };
 
-        // back-compat: 0.21 summarizerNode - remove all summary trackers
+        // back-compat: 0.22 summarizerNode - remove all summary trackers
         this.summaryTracker.refreshLatestSummary(trackerRefSeqNum);
 
         const getSnapshot = async () => {

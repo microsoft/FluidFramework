@@ -432,7 +432,7 @@ export abstract class ComponentContext extends EventEmitter implements
                 addBlobToSummary(summary, ".component", JSON.stringify(componentAttributes));
                 return { ...summary, id: this.id };
             } else {
-                // back-compat: 0.21 summarizerNode - remove this case
+                // back-compat: 0.22 summarizerNode - remove this case
                 const entries = await componentRuntime.snapshotInternal(fullTree);
                 entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
                 const summary = convertToSummaryTree({ entries, id: null });
