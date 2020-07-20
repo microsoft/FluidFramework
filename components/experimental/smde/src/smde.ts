@@ -6,12 +6,13 @@
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import {
-    IComponent,
+    IFluidObject,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
     IResponse,
     IComponentHandle,
+    IComponent,
 } from "@fluidframework/component-core-interfaces";
 import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -206,7 +207,7 @@ export class Smde extends EventEmitter implements
 
     // TODO: this should be an utility.
     private isReadonly() {
-        const runtimeAsComponent = this.context.containerRuntime as IComponent;
+        const runtimeAsComponent = this.context.containerRuntime as IFluidObject & IComponent;
         const scopes = runtimeAsComponent.IComponentConfiguration?.scopes;
         return scopes !== undefined && !scopes.includes("doc:write");
     }

@@ -341,11 +341,12 @@ export class ConsensusOrderedCollection<T = any>
     ): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
         assert(this.isAttached());
 
-        return this.newAckBasedPromise((resolve) => {
+        return this.newAckBasedPromise<IConsensusOrderedCollectionValue<T>>((resolve) => {
             // Send the resolve function as the localOpMetadata. This will be provided back to us when the
             // op is ack'd.
             this.submitLocalMessage(message, resolve);
-        });
+        // If we fail due to runtime being disposed, it's better to return undefined then unhandled exception.
+        }).catch((error) => undefined);
     }
 
     private addCore(value: T) {

@@ -167,7 +167,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     private async registerCore(taskUrls: string[]): Promise<void> {
         if (taskUrls.length > 0) {
-            const registersP: Promise<boolean>[] = [];
+            const registersP: Promise<void>[] = [];
             for (const taskUrl of taskUrls) {
                 debug(`Registering ${taskUrl}`);
                 // tslint:disable no-null-keyword
@@ -193,7 +193,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     private async releaseCore(taskUrls: string[]) {
         if (taskUrls.length > 0) {
-            const releasesP: Promise<boolean>[] = [];
+            const releasesP: Promise<void>[] = [];
             for (const taskUrl of taskUrls) {
                 debug(`Releasing ${taskUrl}`);
                 // Remove from local map so that it can be picked later.
@@ -206,7 +206,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     private async clearTasks(taskUrls: string[]) {
         assert(this.isActive());
-        const clearP: Promise<boolean>[] = [];
+        const clearP: Promise<void>[] = [];
         for (const taskUrl of taskUrls) {
             debug(`Clearing ${taskUrl}`);
             clearP.push(this.writeCore(taskUrl, null));
@@ -218,8 +218,8 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         return this.scheduler.read(url);
     }
 
-    private async writeCore(key: string, clientId: string | null): Promise<boolean> {
-        return this.scheduler.write(key, clientId);
+    private async writeCore(key: string, clientId: string | null): Promise<void> {
+        await this.scheduler.write(key, clientId);
     }
 
     private initialize() {

@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 import React from "react";
@@ -42,7 +42,7 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
     protected async componentHasInitialized() {
         const registry = await this.context.containerRuntime.IComponentRegistry.get("");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const registryDetails = (registry as IComponent).IComponentInternalRegistry!;
+        const registryDetails = (registry as IFluidObject).IComponentInternalRegistry!;
         this.dataModelInternal =
             new TabsDataModel(
                 this.root,

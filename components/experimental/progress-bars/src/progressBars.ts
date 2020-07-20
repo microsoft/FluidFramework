@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import {
-    IComponent,
+    IFluidObject,
     IComponentHandleContext,
     IComponentLoadable,
     IComponentRouter,
@@ -158,7 +158,7 @@ export class ProgressCollection
         return this.progressBars.get(id);
     }
 
-    public removeCollectionItem(instance: IComponent): void {
+    public removeCollectionItem(instance: IFluidObject): void {
         throw new Error("Method not implemented.");
     }
 
