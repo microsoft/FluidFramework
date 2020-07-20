@@ -96,27 +96,6 @@ describe("Runtime", () => {
                     assert.strictEqual(subBlobBase64.content.toString("utf-8"), "test-b64");
                 });
 
-                it("Should convert correctly with context converting to paths", () => {
-                    const summaryResults = convertToSummaryTree(inputTree);
-                    const summaryTree = assertSummaryTree(summaryResults.summary);
-
-                    // blobs should parse
-                    const blob = assertSummaryBlob(summaryTree.tree.b);
-                    assert.strictEqual(blob.content, "test-blob");
-
-                    // trees with ids should become handles
-                    const handle = assertSummaryHandle(summaryTree.tree.h);
-                    assert.strictEqual(handle.handleType, SummaryType.Tree);
-                    assert.strictEqual(handle.handle, "/h");
-
-                    // subtrees should recurse
-                    const subTree = assertSummaryTree(summaryTree.tree.t);
-                    const subBlobUtf8 = assertSummaryBlob(subTree.tree.bu8);
-                    assert.strictEqual(subBlobUtf8.content, "test-u8");
-                    const subBlobBase64 = assertSummaryBlob(subTree.tree.b64);
-                    assert.strictEqual(subBlobBase64.content.toString("utf-8"), "test-b64");
-                });
-
                 it("Should calculate summary data correctly", () => {
                     const summaryResults = convertToSummaryTree(inputTree);
                     // nodes should count
