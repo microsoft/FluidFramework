@@ -36,11 +36,11 @@ export function setFluidState<SV, SF>(
     const storedStateHandle = syncedState.get<IComponentHandle>(
         `syncedState-${syncedStateId}`,
     );
-    let storedState = componentMap.get(storedStateHandle?.path)
+    let storedState = componentMap.get(storedStateHandle?.absolutePath)
         ?.component as ISharedMap;
     if (storedStateHandle === undefined || storedState === undefined) {
         const newState = SharedMap.create(runtime);
-        componentMap.set(newState.handle.path, {
+        componentMap.set(newState.handle.absolutePath, {
             component: newState,
             isRuntimeMap: true,
         });
@@ -57,7 +57,7 @@ export function setFluidState<SV, SF>(
         if (createCallback) {
             if (storedState.get(fluidKey) === undefined) {
                 const sharedObject = createCallback(runtime);
-                componentMap.set(sharedObject.handle.path, {
+                componentMap.set(sharedObject.handle.absolutePath, {
                     component: sharedObject,
                     listenedEvents: fluidToView?.get(fluidKey as keyof SF)
                         ?.listenedEvents || ["valueChanged"],
@@ -93,11 +93,13 @@ export function setFluidState<SV, SF>(
             const viewKey = key as string;
             const fluidConverter = viewToFluid?.get(viewKey as keyof SV)
                 ?.fluidConverter;
-            if (fluidConverter) {
+            const fluidKey = viewToFluid?.get(viewKey as keyof SV)
+                ?.fluidKey;
+            if (fluidConverter && fluidKey) {
                 const value = fluidConverter(newViewState, newFluidState);
                 // Write this value to the stored state if it doesn't match the name of a view value
                 if (
-                    fluidToView.get(viewKey as keyof SF)?.sharedObjectCreate ===
+                    fluidToView.get(fluidKey)?.sharedObjectCreate ===
                     undefined
                 ) {
                     storedState.set(viewKey, value);

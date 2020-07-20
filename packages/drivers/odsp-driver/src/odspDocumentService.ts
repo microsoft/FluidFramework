@@ -7,13 +7,12 @@
 import cloneDeep from "lodash/cloneDeep";
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { performanceNow, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     PerformanceEvent,
-    performanceNow,
     TelemetryLogger,
-    TelemetryNullLogger,
-} from "@fluidframework/common-utils";
+} from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -76,25 +75,20 @@ export class OdspDocumentService implements IDocumentService {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         const options = odspResolvedUrl.createNewOptions;
         if (options) {
-            const event = PerformanceEvent.start(logger,
+            odspResolvedUrl = await PerformanceEvent.timedExecAsync(
+                logger,
                 {
                     eventName: "CreateNew",
                     isWithSummaryUpload: false,
+                },
+                async (event) => {
+                    odspResolvedUrl = await createNewFluidFile(
+                        getStorageToken,
+                        await options.newFileInfoPromise,
+                        logger);
+                    event.end({ docId: odspResolvedUrl.hashedDocumentId });
+                    return odspResolvedUrl;
                 });
-            try {
-                odspResolvedUrl = await createNewFluidFile(
-                    getStorageToken,
-                    await options.newFileInfoPromise,
-                    cache,
-                    logger);
-                const props = {
-                    docId: odspResolvedUrl.hashedDocumentId,
-                };
-                event.end(props);
-            } catch (error) {
-                event.cancel(undefined, error);
-                throw error;
-            }
         }
         return new OdspDocumentService(
             odspResolvedUrl,

@@ -4,13 +4,13 @@
  */
 
 import * as assert from "assert";
-import { initializeLocalContainer, LocalCodeLoader } from "@fluidframework/test-utils";
+import { OpProcessingController, initializeLocalContainer, LocalCodeLoader } from "@fluidframework/test-utils";
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { UpgradeManager } from "@fluidframework/base-host";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { ICodeLoader, IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager, TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
@@ -37,11 +37,11 @@ describe("UpgradeManager", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let documentServiceFactory: TestDocumentServiceFactory;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let documentServiceFactory: LocalDocumentServiceFactory;
+    let opProcessingController: OpProcessingController;
 
     async function createContainer(factory: IComponentFactory): Promise<Container> {
-        const urlResolver = new TestResolver();
+        const urlResolver = new LocalResolver();
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const loader = new Loader(
             urlResolver,
@@ -64,8 +64,8 @@ describe("UpgradeManager", () => {
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-        documentServiceFactory = new TestDocumentServiceFactory(deltaConnectionServer);
-        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+        documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
     });
 
     afterEach(async () => {
@@ -83,7 +83,7 @@ describe("UpgradeManager", () => {
                 async (container) => getComponent<TestComponent>("default", container))));
 
         const containers = await Promise.all(containersP);
-        containerDeltaEventManager.registerDocuments(...components.map((c) => c._runtime));
+        opProcessingController.addDeltaManagers(...components.map((c) => c._runtime.deltaManager));
 
         components.map((c, i) => {
             c._runtime.getQuorum().on("addProposal", () => { ++addCounts[i]; });
@@ -112,7 +112,7 @@ describe("UpgradeManager", () => {
         const container = await createContainer(TestComponent.getFactory());
         const component = await getComponent<TestComponent>("default", container);
 
-        containerDeltaEventManager.registerDocuments(component._runtime);
+        opProcessingController.addDeltaManagers(component._runtime.deltaManager);
         const upgradeManager = new UpgradeManager((container as any).context.runtime);
 
         const upgradeP = new Promise<void>((resolve) => {
@@ -121,7 +121,7 @@ describe("UpgradeManager", () => {
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         upgradeManager.upgrade(codeDetails);
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
         await upgradeP;
     });
 

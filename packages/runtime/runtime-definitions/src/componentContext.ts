@@ -13,6 +13,7 @@ import {
     IProvideComponentSerializer,
     IRequest,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -20,6 +21,7 @@ import {
     IDeltaManager,
     ContainerWarning,
     ILoader,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -129,9 +131,10 @@ export interface IContainerRuntimeBase extends
 
     /**
      * Get an absolute url for a provided container-relative request.
+     * Returns undefined if the container or component isn't attached to storage.
      * @param relativeUrl - A relative request within the container
      */
-    getAbsoluteUrl(relativeUrl: string): Promise<string>;
+    getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 }
 
 /**
@@ -146,6 +149,11 @@ export interface IComponentRuntimeChannel extends
     IDisposable {
 
     readonly id: string;
+
+    /**
+     * Indicates the attachment state of the component to a host service.
+     */
+    readonly attachState: AttachState;
 
     /**
      * Called to bind the runtime to the container.
@@ -207,11 +215,6 @@ export interface ISummaryTracker {
      */
     getId(): Promise<string | undefined>;
     /**
-     * Fetches the snapshot tree of the previously acked summary.
-     * back-compat: 0.14 uploadSummary
-     */
-    getSnapshotTree(): Promise<ISnapshotTree | undefined>;
-    /**
      * Updates the latest sequence number representing change to this node or subtree.
      * @param latestSequenceNumber - new latest sequence number
      */
@@ -256,6 +259,10 @@ export interface IComponentContext extends EventEmitter {
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
+    /**
+     * Indicates the attachment state of the component to a host service.
+     */
+    readonly attachState: AttachState;
 
     readonly containerRuntime: IContainerRuntimeBase;
     /**
@@ -273,10 +280,10 @@ export interface IComponentContext extends EventEmitter {
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IComponent;
+    readonly scope: IComponent & IFluidObject;
     readonly summaryTracker: ISummaryTracker;
 
-    on(event: "leader" | "notleader", listener: () => void): this;
+    on(event: "leader" | "notleader" | "attaching" | "attached", listener: () => void): this;
 
     /**
      * Returns the current quorum.
@@ -356,15 +363,11 @@ export interface IComponentContext extends EventEmitter {
     setChannelDirty(address: string): void;
 
     /**
-     * It is true if the component is attached or attaching to storage.
-     */
-    isAttached: boolean;
-
-    /**
      * Get an absolute url to the containe rbased on the provided relativeUrl.
+     * Returns undefined if the container or component isn't attached to storage.
      * @param relativeUrl - A relative request within the container
      */
-    getAbsoluteUrl(relativeUrl: string): Promise<string>;
+    getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 }
 
 /**

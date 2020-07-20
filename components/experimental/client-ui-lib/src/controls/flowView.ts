@@ -7,7 +7,7 @@ import * as SearchMenu from "@fluid-example/search-menu";
 import * as api from "@fluid-internal/client-api";
 import { performanceNow } from "@fluidframework/common-utils";
 import {
-    IComponent,
+    IFluidObject,
     IComponentHandle,
     IComponentLoadable,
 } from "@fluidframework/component-core-interfaces";
@@ -39,7 +39,7 @@ import { PresenceSignal } from "./presenceSignal";
 import { Status } from "./status";
 
 interface IPersistentElement extends HTMLDivElement {
-    component: IComponent;
+    component: IFluidObject;
 }
 
 interface IMathViewMarker extends MergeTree.Marker {
@@ -57,7 +57,7 @@ function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
 
 interface IBlockViewMarker extends MergeTree.Marker {
     instanceP?: Promise<IComponentHTMLView>;
-    instance?: IComponentHTMLView & IComponent;
+    instance?: IComponentHTMLView & IFluidObject;
 }
 
 interface IComponentViewMarker extends MergeTree.Marker {
@@ -820,7 +820,7 @@ function renderSegmentIntoLine(
                                     return Promise.reject(response);
                                 }
 
-                                const component = response.value as IComponent;
+                                const component = response.value as IFluidObject;
                                 if (!HTMLViewAdapter.canAdapt(component)) {
                                     return Promise.reject("component is not viewable");
                                 }
@@ -2324,9 +2324,9 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                     // eslint-disable-next-line @typescript-eslint/no-misused-promises
                     if (!newBlock.instanceP) {
                         newBlock.instanceP = newBlock.properties.leafId.get()
-                            .then(async (component: IComponent) => {
+                            .then(async (component: IFluidObject) => {
                                 // TODO below is a temporary workaround. Should every QI interface also implement
-                                // IComponent. Then you can go from IComponentHTMLView to IComponentLayout.
+                                // IFluidObject. Then you can go from IComponentHTMLView to IComponentLayout.
                                 // Or should you query for each one individually.
                                 if (!HTMLViewAdapter.canAdapt(component)) {
                                     return Promise.reject("component is not viewable");
@@ -3026,7 +3026,7 @@ export interface ISeqTestItem {
 }
 
 export class PersistentComponent {
-    constructor(public component: IComponent, public elm: HTMLDivElement) {
+    constructor(public component: IFluidObject, public elm: HTMLDivElement) {
     }
 }
 
@@ -3057,7 +3057,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public comments: Sequence.IntervalCollection<Sequence.SequenceInterval>;
     public commentsView: Sequence.IntervalCollectionView<Sequence.SequenceInterval>;
     public sequenceTest: Sequence.SharedNumberSequence;
-    public persistentComponents: Map<IComponent, PersistentComponent>;
+    public persistentComponents: Map<IFluidObject, PersistentComponent>;
     public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
     public presenceSignal: PresenceSignal;
     public presenceVector: Map<string, ILocalPresenceInfo> = new Map();
@@ -3200,9 +3200,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     // Remember an element to give to a component; element will be absolutely positioned during render, if needed
-    public addPersistentComponent(elm: HTMLDivElement, component: IComponent) {
+    public addPersistentComponent(elm: HTMLDivElement, component: IFluidObject) {
         if (!this.persistentComponents) {
-            this.persistentComponents = new Map<IComponent, PersistentComponent>();
+            this.persistentComponents = new Map<IFluidObject, PersistentComponent>();
         }
         (elm as IPersistentElement).component = component;
         this.persistentComponents.set(component, new PersistentComponent(component, elm));
@@ -3215,7 +3215,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public getPersistentComponent(component: IComponent) {
+    public getPersistentComponent(component: IFluidObject) {
         if (this.persistentComponents) {
             return this.persistentComponents.get(component);
         }
@@ -4500,7 +4500,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     }, (10000));
                 },
                 () => {
-                    console.log(`Failed to fetch ${commentHandle.path}`);
+                    console.log(`Failed to fetch ${commentHandle.absolutePath}`);
                 });
         }
     }

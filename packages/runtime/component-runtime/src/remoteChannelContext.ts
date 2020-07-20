@@ -5,7 +5,8 @@
 
 import assert from "assert";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse, CreateContainerError } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
+import { readAndParse } from "@fluidframework/driver-utils";
 import {
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -15,12 +16,12 @@ import {
     IChannel,
     IChannelAttributes,
     IComponentRuntime,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
 import {
     IComponentContext,
     ISummaryTracker,
 } from "@fluidframework/runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
@@ -118,7 +119,7 @@ export class RemoteChannelContext implements IChannelContext {
                 ".attributes");
         }
 
-        let factory: ISharedObjectFactory | undefined;
+        let factory: IChannelFactory | undefined;
         // this is a back-compat case where
         // the attach message doesn't include
         // the attributes. Since old attach messages

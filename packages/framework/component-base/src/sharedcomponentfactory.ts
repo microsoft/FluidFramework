@@ -14,8 +14,9 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
     IComponentRuntime,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
-import { ISharedObjectFactory, ISharedObject } from "@fluidframework/shared-object-base";
+import { ISharedObject } from "@fluidframework/shared-object-base";
 import { LazyPromise } from "@fluidframework/common-utils";
 import { SharedComponent } from "./sharedcomponent";
 
@@ -26,8 +27,8 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
     constructor(
         public readonly type: string,
         private readonly ctor: new (context: IComponentContext, runtime: IComponentRuntime, root: ISharedObject) => T,
-        public readonly root: ISharedObjectFactory,
-        sharedObjects: readonly ISharedObjectFactory[] = [],
+        public readonly root: IChannelFactory,
+        sharedObjects: readonly IChannelFactory[] = [],
         components?: readonly IComponentFactory[],
     ) {
         if (components !== undefined) {

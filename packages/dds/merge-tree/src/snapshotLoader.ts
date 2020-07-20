@@ -4,9 +4,10 @@
  */
 
 import assert from "assert";
-import { fromBase64ToUtf8, ChildLogger } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { IComponentRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
@@ -33,7 +34,7 @@ export class SnapshotLoader {
 
     public  async initialize(
         branchId: string,
-        services: IObjectStorageService,
+        services: IChannelStorageService,
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
         // Override branch by default which is derived from document id,
         // as document id isn't stable for spo
@@ -56,7 +57,7 @@ export class SnapshotLoader {
 
     private async loadBodyAndCatchupOps(
         headerChunkP: Promise<MergeTreeChunkV1>,
-        services: IObjectStorageService,
+        services: IChannelStorageService,
         branch: string,
     ): Promise<ISequencedDocumentMessage[]> {
         const blobsP = services.list("");
@@ -158,7 +159,7 @@ export class SnapshotLoader {
         return chunk;
     }
 
-    private async loadBody(chunk1: MergeTreeChunkV1, services: IObjectStorageService): Promise<void> {
+    private async loadBody(chunk1: MergeTreeChunkV1, services: IChannelStorageService): Promise<void> {
         this.runtime.logger.shipAssert(
             chunk1.length <= chunk1.headerMetadata.totalLength,
             { eventName: "Mismatch in totalLength" });

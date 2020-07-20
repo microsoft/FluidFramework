@@ -6,13 +6,12 @@
 import { EventEmitter } from "events";
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    ChildLogger,
     Deferred,
-    PerformanceEvent,
     PromiseTimer,
     Timer,
     IPromiseTimerResult,
 } from "@fluidframework/common-utils";
+import { ChildLogger, CustomErrorWithProps, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IComponentRouter,
     IComponentRunnable,
@@ -22,9 +21,9 @@ import {
     IComponentHandle,
     IComponentLoadable,
 } from "@fluidframework/component-core-interfaces";
-import { IDeltaManager, ErrorType, ISummarizingWarning } from "@fluidframework/container-definitions";
+import { IDeltaManager, IErrorBase } from "@fluidframework/container-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
-import { ErrorWithProps, CreateContainerError } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -46,6 +45,8 @@ const minOpsForLastSummary = 50;
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideSummarizer>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideSummarizer>> { }
 }
 
 export const ISummarizer: keyof IProvideSummarizer = "ISummarizer";
@@ -54,8 +55,18 @@ export interface IProvideSummarizer {
     readonly ISummarizer: ISummarizer;
 }
 
-export class SummarizingWarning extends ErrorWithProps implements ISummarizingWarning {
-    readonly errorType = ErrorType.summarizingError;
+const summarizingError = "summarizingError";
+
+export interface ISummarizingWarning extends IErrorBase {
+    readonly errorType: "summarizingError";
+    /**
+     * Whether this error has already been logged. Used to avoid logging errors twice.
+     */
+    readonly logged: boolean;
+}
+
+export class SummarizingWarning extends CustomErrorWithProps implements ISummarizingWarning {
+    readonly errorType = summarizingError;
     readonly canRetry = true;
 
     constructor(errorMessage: string, readonly logged: boolean = false) {
@@ -581,7 +592,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         private readonly configurationGetter: () => ISummaryConfiguration,
         // eslint-disable-next-line max-len
         private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
-        private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => Promise<void>,
+        private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => void,
         handleContext: IComponentHandleContext,
         summaryCollection?: SummaryCollection,
     ) {
@@ -609,7 +620,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             const err2: ISummarizingWarning = {
                 logged: false,
                 ...CreateContainerError(error),
-                errorType: ErrorType.summarizingError,
+                errorType: summarizingError,
             };
             this.emit("summarizingError", err2);
             throw error;
@@ -799,7 +810,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                     ackHandle: ack.summaryAckNack.contents.handle,
                 };
 
-                await this.refreshLatestAck(context, refSequenceNumber);
+                this.refreshLatestAck(context, refSequenceNumber);
                 refSequenceNumber++;
             } catch (error) {
                 this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);

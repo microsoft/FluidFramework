@@ -47,7 +47,11 @@ export function generateComponentSchema<
         } = value;
         const fluidConverter = viewToFluid?.get(viewKey);
         if (fluidConverter === undefined) {
-            if (defaultViewState[viewKey] !== undefined && typeof (defaultViewState[viewKey]) !== type) {
+            if (
+                defaultViewState[viewKey] !== undefined
+                && typeof (defaultViewState[viewKey]) !== type
+                && type !== "any"
+            ) {
                 throw Error(`Failed to find fluid converter for key ${viewKey}`);
             } else {
                 continue;

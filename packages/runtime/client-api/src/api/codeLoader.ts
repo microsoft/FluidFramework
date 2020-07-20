@@ -24,7 +24,7 @@ import {
     IComponentFactory,
     NamedComponentRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { CreateContainerError } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
 import * as sequence from "@fluidframework/sequence";
 import { Document } from "./document";
 
@@ -128,7 +128,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
                 [chaincode.type, Promise.resolve(chaincode)],
                 ...this.registries,
             ],
-            [ChaincodeFactory.containerRequestHandler],
+            ChaincodeFactory.containerRequestHandler,
             this.runtimeOptions);
 
         // On first boot create the base component

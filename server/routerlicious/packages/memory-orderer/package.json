@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-memory-orderer",
-  "version": "0.1009.0",
+  "version": "0.1010.0",
   "description": "Fluid ordering services",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -27,11 +27,11 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.20.0",
-    "@fluidframework/protocol-base": "^0.1009.0",
-    "@fluidframework/protocol-definitions": "^0.1009.0",
-    "@fluidframework/server-lambdas": "^0.1009.0",
-    "@fluidframework/server-services-client": "^0.1009.0",
-    "@fluidframework/server-services-core": "^0.1009.0",
+    "@fluidframework/protocol-base": "^0.1010.0",
+    "@fluidframework/protocol-definitions": "^0.1010.0",
+    "@fluidframework/server-lambdas": "^0.1010.0",
+    "@fluidframework/server-services-client": "^0.1010.0",
+    "@fluidframework/server-services-core": "^0.1010.0",
     "@types/debug": "^4.1.5",
     "@types/double-ended-queue": "^2.1.0",
     "@types/lodash": "^4.14.118",
@@ -39,7 +39,7 @@
     "@types/ws": "^6.0.1",
     "debug": "^4.1.1",
     "double-ended-queue": "^2.1.0-0",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.19",
     "moniker": "^0.1.2",
     "uuid": "^3.3.2",
     "ws": "^6.1.2"
@@ -60,7 +60,7 @@
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
     "rimraf": "^2.6.2",
-    "typescript": "~3.7.4",
+    "typescript": "~3.8.2",
     "typescript-formatter": "7.1.0"
   }
 }

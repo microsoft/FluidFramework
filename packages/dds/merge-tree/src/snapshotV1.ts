@@ -10,14 +10,15 @@ import {
     IComponentHandleContext,
     IComponentSerializer,
 } from "@fluidframework/component-core-interfaces";
-import { ChildLogger, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     FileMode,
     ITree,
     TreeEntry,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 import { UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as Properties from "./properties";
@@ -251,7 +252,7 @@ export class SnapshotV1 {
     }
 
     public static async loadChunk(
-        storage: IObjectStorageService,
+        storage: IChannelStorageService,
         path: string,
         logger: ITelemetryLogger,
         options: Properties.PropertySet,

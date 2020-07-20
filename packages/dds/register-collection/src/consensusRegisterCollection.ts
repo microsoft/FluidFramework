@@ -15,7 +15,7 @@ import {
 import {
     IChannelAttributes,
     IComponentRuntime,
-    IObjectStorageService,
+    IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
 import { unreachableCase } from "@fluidframework/runtime-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
@@ -150,11 +150,12 @@ export class ConsensusRegisterCollection<T>
             refSeq: this.runtime.deltaManager.lastSequenceNumber,
         };
 
-        return this.newAckBasedPromise((resolve) => {
+        return this.newAckBasedPromise<boolean>((resolve) => {
             // Send the resolve function as the localOpMetadata. This will be provided back to us when the
             // op is ack'd.
             this.submitLocalMessage(message, resolve);
-        });
+        // If we fail due to runtime being disposed, it's better to return false then unhandled exception.
+        }).catch((error) => false);
     }
 
     /**
@@ -211,7 +212,7 @@ export class ConsensusRegisterCollection<T>
 
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService,
+        storage: IChannelStorageService,
     ): Promise<void> {
         const header = await storage.read(snapshotFileName);
         const dataObj = header !== undefined ? this.parse(fromBase64ToUtf8(header)) : {};

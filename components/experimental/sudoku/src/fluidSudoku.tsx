@@ -6,7 +6,7 @@
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { loadPuzzle } from "./helpers/puzzles";
@@ -20,13 +20,8 @@ export const FluidSudokuName = "FluidSudoku";
 /**
  * A collaborative Sudoku component built on the Fluid Framework.
  */
-export class FluidSudoku extends PrimedComponent
-    implements IComponentHTMLView, IComponentReactViewable {
+export class FluidSudoku extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() {
-        return this;
-    }
-
-    public get IComponentReactViewable() {
         return this;
     }
 
@@ -99,27 +94,25 @@ export class FluidSudoku extends PrimedComponent
         });
     }
 
-    public createJSXElement(): JSX.Element {
-        if (this.puzzle) {
-            return (
-                <SudokuView
-                    puzzle={this.puzzle}
-                    clientPresence={this.clientPresence}
-                    clientId={this.runtime.clientId ?? "not connected"}
-                    setPresence={this.presenceSetter}
-                />
-            );
-        } else {
-            return <div />;
-        }
-    }
-
     public render(element?: HTMLElement): void {
         if (element) {
             this.domElement = element;
         }
         if (this.domElement) {
-            ReactDOM.render(this.createJSXElement(), this.domElement);
+            let view: JSX.Element;
+            if (this.puzzle) {
+                view = (
+                    <SudokuView
+                        puzzle={this.puzzle}
+                        clientPresence={this.clientPresence}
+                        clientId={this.runtime.clientId ?? "not connected"}
+                        setPresence={this.presenceSetter}
+                    />
+                );
+            } else {
+                view = <div />;
+            }
+            ReactDOM.render(view, this.domElement);
         }
     }
 

@@ -12,11 +12,13 @@ import {
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
+import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
-export class ComponentHandle implements IComponentHandle {
+export class ComponentHandle<T extends IComponent = IComponent> implements IComponentHandle {
     // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
     private graphAttachState: AttachState = AttachState.Detached;
     private bound: Set<IComponentHandle> | undefined;
+    public readonly absolutePath: string;
 
     public get IComponentRouter(): IComponentRouter { return this; }
     public get IComponentHandleContext(): IComponentHandleContext { return this; }
@@ -26,11 +28,18 @@ export class ComponentHandle implements IComponentHandle {
         return this.routeContext.isAttached;
     }
 
+    /**
+     * Creates a new ComponentHandle.
+     * @param value - The IComponent object this handle is for.
+     * @param path - The path to this handle relative to the routeContext.
+     * @param routeContext - The parent IComponentHandleContext that has a route to this handle.
+     */
     constructor(
-        private readonly value: IComponent,
+        protected readonly value: T,
         public readonly path: string,
         public readonly routeContext: IComponentHandleContext,
     ) {
+        this.absolutePath = generateHandleContextPath(path, this.routeContext);
     }
 
     public async get(): Promise<any> {

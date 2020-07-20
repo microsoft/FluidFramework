@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { CriticalContainerError, ErrorType } from "@fluidframework/container-definitions";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import {
@@ -13,29 +12,31 @@ import {
 } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
 
+export enum R11sErrorType {
+    authorizationError = "authorizationError",
+    fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
+}
+
 function createNetworkError(
     errorMessage: string,
     canRetry: boolean,
     statusCode?: number,
     retryAfterSeconds?: number,
-): CriticalContainerError {
-    let error: CriticalContainerError;
-
+) {
     switch (statusCode) {
         case 401:
         case 403:
-            error = new NetworkErrorBasic(errorMessage, ErrorType.authorizationError, canRetry);
+            return new NetworkErrorBasic(errorMessage, R11sErrorType.authorizationError, canRetry);
             break;
         case 404:
-            error = new NetworkErrorBasic(errorMessage, ErrorType.fileNotFoundOrAccessDeniedError, canRetry);
+            return new NetworkErrorBasic(errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, canRetry);
             break;
         case 500:
-            error = new GenericNetworkError(errorMessage, canRetry);
+            return new GenericNetworkError(errorMessage, canRetry);
             break;
         default:
-            error = createGenericNetworkError(errorMessage, canRetry, retryAfterSeconds, statusCode);
+            return createGenericNetworkError(errorMessage, canRetry, retryAfterSeconds, statusCode);
     }
-    return error;
 }
 
 /**

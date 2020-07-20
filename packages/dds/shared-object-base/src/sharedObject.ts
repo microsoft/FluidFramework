@@ -6,14 +6,15 @@
 import assert from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/common-utils";
+import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
-    IObjectStorageService,
-    ISharedObjectServices,
+    IChannelStorageService,
+    IChannelServices,
 } from "@fluidframework/component-runtime-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { v4 as uuid } from "uuid";
 import { SharedObjectComponentHandle } from "./handle";
 import { ISharedObject, ISharedObjectEvents } from "./types";
@@ -53,7 +54,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * Services used by the shared object
      */
-    private services: ISharedObjectServices | undefined;
+    private services: IChannelServices | undefined;
 
     /**
      * True if the dds is bound to its parent.
@@ -72,7 +73,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * The loadable URL for this SharedObject
      */
     public get url(): string {
-        return this.handle.path;
+        return this.id;
     }
 
     /**
@@ -107,7 +108,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         // Only listen to these events if not attached.
         if (!this.isAttached()) {
-            this.runtime.on("collaborating", () => {
+            this.runtime.once("attaching", () => {
                 // Calling this will let the dds to do any custom processing based on attached
                 // like starting generating ops.
                 this.didAttach();
@@ -130,7 +131,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     public async load(
         branchId: string,
-        services: ISharedObjectServices): Promise<void> {
+        services: IChannelServices): Promise<void> {
         this.services = services;
 
         await this.loadCore(
@@ -168,7 +169,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * {@inheritDoc (ISharedObject:interface).connect}
      */
-    public connect(services: ISharedObjectServices) {
+    public connect(services: IChannelServices) {
         this.services = services;
         this.attachDeltaHandler();
     }
@@ -177,7 +178,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc (ISharedObject:interface).isAttached}
      */
     public isAttached(): boolean {
-        return this.services !== undefined && this.runtime.isAttached;
+        return this.services !== undefined && this.runtime.attachState !== AttachState.Detached;
     }
 
     /**
@@ -200,7 +201,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     protected abstract loadCore(
         branchId: string,
-        services: IObjectStorageService): Promise<void>;
+        services: IChannelStorageService): Promise<void>;
 
     /**
      * Allows the distributed data type to perform custom local loading.
@@ -296,13 +297,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         return new Promise<T>((resolve, reject) => {
             rejectBecauseDispose =
                 () => reject(new Error("ComponentRuntime disposed while this ack-based Promise was pending"));
-            this.runtime.on("dispose", rejectBecauseDispose);
 
-            // Even in this case don't return, so the caller's executor can run
             if (this.runtime.disposed) {
-                reject("Preparing to wait for an op to be acked but ComponentRuntime has been disposed");
+                rejectBecauseDispose();
+                return;
             }
 
+            this.runtime.once("dispose", rejectBecauseDispose);
             executor(resolve, reject);
         }).finally(() => {
             // Note: rejectBecauseDispose will never be undefined here
@@ -329,7 +330,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this.didAttach();
 
         // attachDeltaHandler is only called after services is assigned
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.services.deltaConnection.attach({
             process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
                 this.process(message, local, localOpMetadata);
@@ -344,7 +344,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         // Trigger initial state
         // attachDeltaHandler is only called after services is assigned
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.setConnectionState(this.services.deltaConnection.connected);
     }
 

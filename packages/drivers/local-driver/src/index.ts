@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export * from "./documentEventManager";
-export * from "./testDeltaStorageService";
-export * from "./testDocumentDeltaConnection";
-export * from "./testDocumentService";
-export * from "./testDocumentServiceFactory";
-export * from "./testResolver";
+export * from "./localDeltaStorageService";
+export * from "./localDocumentDeltaConnection";
+export * from "./localDocumentService";
+export * from "./localDocumentServiceFactory";
+export * from "./localResolver";

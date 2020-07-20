@@ -58,7 +58,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     // start IComponentHTMLView
 
     public render(div: HTMLElement) {
-        if (!this.counter1 || !this.counter2) {
+        if (this.counter1 === undefined || this.counter2 === undefined) {
             throw new Error("componentHasInitialized should be called prior to render");
         }
 

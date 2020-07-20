@@ -8,7 +8,8 @@ import assert from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 
-import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { Deferred, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { IValueChanged, MapKernel } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import {
@@ -21,7 +22,7 @@ import {
 import {
     IChannelAttributes,
     IComponentRuntime,
-    IObjectStorageService,
+    IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
@@ -487,7 +488,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService) {
+        storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
 
         const data: string = header ? fromBase64ToUtf8(header) : undefined;

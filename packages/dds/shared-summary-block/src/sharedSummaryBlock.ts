@@ -13,12 +13,12 @@ import {
 import {
     IChannelAttributes,
     IComponentRuntime,
-    IObjectStorageService,
+    IChannelStorageService,
     Jsonable,
     AsJsonable,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
 import {
-    ISharedObjectFactory,
     SharedObject,
 } from "@fluidframework/shared-object-base";
 import { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory";
@@ -55,7 +55,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      *
      * @returns a factory that creates and loads SharedSummaryBlock.
      */
-    public static getFactory(): ISharedObjectFactory {
+    public static getFactory(): IChannelFactory {
         return new SharedSummaryBlockFactory();
     }
 
@@ -128,7 +128,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      */
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService): Promise<void> {
+        storage: IChannelStorageService): Promise<void> {
         const rawContent = await storage.read(snapshotFileName);
         const contents = JSON.parse(fromBase64ToUtf8(rawContent)) as ISharedSummaryBlockDataSerializable;
 

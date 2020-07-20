@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IDeltaConnection, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { IDeltaConnection, IChannelServices } from "@fluidframework/component-runtime-definitions";
 import {
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
@@ -70,7 +70,7 @@ describe("ConsensusOrderedCollection", () => {
                 await addItem(handle);
 
                 const acquiredValue = await removeItem();
-                assert.strictEqual(acquiredValue.path, handle.path);
+                assert.strictEqual(acquiredValue.absolutePath, handle.absolutePath);
                 const component = await handle.get();
                 assert.strictEqual(component.url, testCollection.url);
 
@@ -176,7 +176,7 @@ describe("ConsensusOrderedCollection", () => {
                 containerRuntimeFactory = new MockContainerRuntimeFactory();
                 const componentRuntime = new MockComponentRuntime();
                 const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
-                const services: ISharedObjectServices = {
+                const services: IChannelServices = {
                     deltaConnection: containerRuntime.createDeltaConnection(),
                     objectStorage: new MockStorage(),
                 };
@@ -203,7 +203,7 @@ describe("ConsensusOrderedCollection", () => {
             componentRuntime: MockComponentRuntime,
             deltaConnection: IDeltaConnection,
         ): Promise<IConsensusOrderedCollection> {
-            const services: ISharedObjectServices = {
+            const services: IChannelServices = {
                 deltaConnection,
                 objectStorage: new MockStorage(),
             };

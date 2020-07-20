@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import {
     MockComponentRuntime,
     MockContainerRuntimeFactory,
@@ -18,7 +18,7 @@ import { ISharedCounter, SharedCounter } from "..";
 describe("SharedCounter", () => {
     let testCounter: ISharedCounter;
     let componentRuntime: MockComponentRuntime;
-    let factory: ISharedObjectFactory;
+    let factory: IChannelFactory;
 
     beforeEach(async () => {
         componentRuntime = new MockComponentRuntime();
