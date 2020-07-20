@@ -1,4 +1,55 @@
 # @fluid-internal/service-load-test
 
-NodeJs based test to simulate many client and rate of op generation.
+_Note: This tool has dependencies on Microsoft-internal systems._
 
+NodeJs-based test to simulate many clients and a high rate of op generation.
+
+## Pre-requisites
+
+* Run [getkeys](/tools/getkeys/README.md) to enable your machine to retrieve OAuth tokens
+
+## Usage
+
+This test runs in two different modes: Orchestrator Mode and Test Runner mode
+
+### Orchestrator Mode
+
+_This is the main entry point to the test - this Orchestrator process will spawn many Test Runner processes._
+
+```bash
+node ./dist/nodeStressTest.js [--url <url>] [--profile <profile>] [--refresh] [--debug]
+```
+
+### Test Runner Mode
+
+_This is not typically invoked manually - rather, the Orchestrator process spawns Test Runners using this mode._
+
+```bash
+node ./dist/nodeStressTest.js --runId <runId> --url <url> [--profile <profile>]
+```
+
+Also take note of npm scripts like `npm run start` and `npm run debug` for running the test.
+
+### Options
+
+#### --url, -u
+
+If present, the test will load an existing data store (at the given url) rather than creating a new container and data store.
+(Required when `--runId` is provided)
+
+#### --profile, -p
+
+Specifies which test profile to use from [testConfig.json](./testConfig.json).  Defaults to **full**.
+
+#### --runId, -r
+
+If present, launch in Test Runner mode with the given runId (to distinguish from other concurrent test runners).
+`--url` is required, since the test runner needs to know which data store to connect to.
+
+#### --refresh, -f
+
+Force refresh of cached auth tokens before continuing the orchestrator process. (Not compatible with `--runId`)
+
+#### --debug, -d
+
+Launches each test runner with `--inspect-brk` and a unique Node debugging port. (Not compatible with `--runId`)

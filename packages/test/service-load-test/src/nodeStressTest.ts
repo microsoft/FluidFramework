@@ -115,8 +115,8 @@ async function main() {
 
     commander
         .version("0.0.1")
-        .requiredOption("-l, --profile <profile>", "Which test profile to use from testConfig.json", "full")
-        .option("-u, --url <url>", "Connect to an existing url rather than creating new")
+        .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "full")
+        .option("-u, --url <url>", "Load an existing data store rather than creating new")
         .option("-r, --runId <runId>", "run a child process with the given id. Requires --url option.")
         .option("-f, --refresh", "Refresh auth tokens")
         .option("-d, --debug", "Debug child processes via --inspect-brk")
@@ -133,6 +133,7 @@ async function main() {
         process.exit(-1);
     }
 
+    // When runId is specified, kick off a single test runner and exit when it's finished
     if (runId !== undefined) {
         if (url === undefined) {
             console.error("Missing --url argument needed to run child process");
@@ -146,6 +147,8 @@ async function main() {
         await stressTest.run(runConfig);
         process.exit(0);
     }
+
+    // When runId is not specified, this is the orchestrator process which will spawn child test runners.
 
     if (refresh) {
         console.log("Refreshing tokens");
