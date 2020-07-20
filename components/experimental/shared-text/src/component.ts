@@ -13,11 +13,12 @@ import * as API from "@fluid-internal/client-api";
 import { SharedCell } from "@fluidframework/cell";
 import { performanceNow } from "@fluidframework/common-utils";
 import {
-    IComponent,
+    IFluidObject,
     IComponentHandle,
     IComponentLoadable,
     IRequest,
     IResponse,
+    IComponent,
 } from "@fluidframework/component-core-interfaces";
 import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
 import { Ink } from "@fluidframework/ink";
@@ -56,7 +57,7 @@ async function getHandle(runtimeP: Promise<IComponentRuntimeChannel>): Promise<I
         return Promise.reject("Not found");
     }
 
-    const component = request.value as IComponent;
+    const component = request.value as IFluidObject & IComponent;
     return component.IComponentLoadable.handle;
 }
 
@@ -185,7 +186,7 @@ export class SharedTextRunner
         debug(`Partial load fired: ${performanceNow()}`);
 
         const schedulerResponse = await this.runtime.request({ url: `/${SchedulerType}` });
-        const schedulerComponent = schedulerResponse.value as IComponent;
+        const schedulerComponent = schedulerResponse.value as IFluidObject;
         this.taskManager = schedulerComponent.ITaskManager;
 
         const options = parse(window.location.search.substr(1));
@@ -283,7 +284,8 @@ class TaskScheduler {
     }
 
     public start() {
-        const hostTokens = (this.componentContext.containerRuntime as IComponent).IComponentTokenProvider;
+        const hostTokens =
+            (this.componentContext.containerRuntime as IFluidObject & IComponent).IComponentTokenProvider;
         const intelTokens = hostTokens && hostTokens.intelligence
             ? hostTokens.intelligence.textAnalytics
             : undefined;
