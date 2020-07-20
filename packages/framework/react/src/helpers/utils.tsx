@@ -79,7 +79,7 @@ export const addComponent = async <
     return handle.get().then((component) => {
         if (value.isRuntimeMap) {
             (component as SharedMap).on("valueChanged", syncedStateCallback);
-        } else if (value.listenedEvents) {
+        } else if (value.listenedEvents !== undefined) {
             for (const event of value.listenedEvents) {
                 (component as SharedObject).on(event, refreshView);
             }

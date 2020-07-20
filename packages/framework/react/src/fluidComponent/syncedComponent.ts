@@ -79,14 +79,14 @@ export abstract class SyncedComponent<
      * using the addValueChangedListener
      */
     public get syncedState(): ISyncedState {
-        if (!this.internalSyncedState) {
+        if (this.internalSyncedState === undefined) {
             throw new Error(this.getUninitializedErrorString(`syncedState`));
         }
         return {
             set: this.internalSyncedState.set.bind(this.internalSyncedState),
             get: this.internalSyncedState.get.bind(this.internalSyncedState),
             addValueChangedListener: (callback) => {
-                if (!this.internalSyncedState) {
+                if (this.internalSyncedState === undefined) {
                     throw new Error(
                         this.getUninitializedErrorString(`syncedState`),
                     );
@@ -180,17 +180,17 @@ export abstract class SyncedComponent<
                 const fluidKey = key as string;
                 const rootKey = value.rootKey;
                 const createCallback = value.sharedObjectCreate;
-                if (createCallback) {
+                if (createCallback !== undefined) {
                     const sharedObject = createCallback(this.runtime);
                     this.fluidComponentMap.set(sharedObject.handle.absolutePath, {
                         component: sharedObject,
-                        listenedEvents: value.listenedEvents || ["valueChanged"],
+                        listenedEvents: value.listenedEvents ?? ["valueChanged"],
                     });
                     storedFluidState.set(fluidKey, sharedObject.handle);
-                    if (rootKey) {
+                    if (rootKey !== undefined) {
                         this.root.set(rootKey, sharedObject.handle);
                     }
-                } else if (rootKey) {
+                } else if (rootKey !== undefined) {
                     storedFluidState.set(fluidKey, this.root.get(rootKey));
                 }
             }
@@ -272,8 +272,8 @@ export abstract class SyncedComponent<
                 const fluidKey = key as string;
                 const rootKey = value.rootKey;
                 const createCallback = value.sharedObjectCreate;
-                if (createCallback) {
-                    const handle = rootKey
+                if (createCallback !== undefined) {
+                    const handle = rootKey !== undefined
                         ? this.root.get(rootKey)
                         : storedFluidState.get(fluidKey);
                     if (handle === undefined) {
@@ -283,17 +283,17 @@ export abstract class SyncedComponent<
                     }
                     this.fluidComponentMap.set(handle.absolutePath, {
                         component: await handle.get(),
-                        listenedEvents: value.listenedEvents || ["valueChanged"],
+                        listenedEvents: value.listenedEvents ?? ["valueChanged"],
                     });
                 } else {
-                    const storedValue = rootKey
+                    const storedValue = rootKey !== undefined
                         ? this.root.get(rootKey)
                         : storedFluidState.get(fluidKey);
                     const handle = storedValue?.IComponentHandle;
-                    if (handle) {
+                    if (handle !== undefined) {
                         this.fluidComponentMap.set(handle.absolutePath, {
                             component: await handle.get(),
-                            listenedEvents: value.listenedEvents || [
+                            listenedEvents: value.listenedEvents ?? [
                                 "valueChanged",
                             ],
                         });
