@@ -49,7 +49,7 @@ export function getFluidState<
         const createCallback = fluidToView?.get(fluidKey as keyof SF)
             ?.sharedObjectCreate;
         let value = componentState.get(fluidKey);
-        if (value && createCallback) {
+        if (value !== undefined && createCallback !== undefined) {
             const possibleComponentId = (value as IComponent)
                 ?.IComponentHandle?.absolutePath;
             if (possibleComponentId !== undefined) {
