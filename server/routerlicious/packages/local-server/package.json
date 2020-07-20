@@ -7,10 +7,10 @@
   "author": "Microsoft",
   "sideEffects": "false",
   "main": "dist/index.js",
+  "module": "lib/index.js",
   "browser": {
     "moniker": "@fluidframework/server-services-client/dist/dockerNames.js"
   },
-  "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
