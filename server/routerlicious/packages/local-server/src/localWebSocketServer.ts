@@ -4,16 +4,16 @@
  */
 
 import { EventEmitter } from "events";
+import { IPubSub, ISubscriber, WebSocketSubscriber } from "@fluidframework/server-memory-orderer";
 import * as core from "@fluidframework/server-services-core";
-import { IPubSub, ISubscriber, WebSocketSubscriber } from "@fluidframework/server-services-utils";
 import * as moniker from "moniker";
 
-export class TestWebSocket implements core.IWebSocket {
+export class LocalWebSocket implements core.IWebSocket {
     private readonly events = new EventEmitter();
     private readonly rooms = new Set<string>();
     private readonly subscriber: ISubscriber;
 
-    constructor(public id: string, private readonly server: TestWebSocketServer) {
+    constructor(public id: string, private readonly server: LocalWebSocketServer) {
         this.subscriber = new WebSocketSubscriber(this);
     }
 
@@ -55,7 +55,7 @@ export class TestWebSocket implements core.IWebSocket {
     }
 }
 
-export class TestWebSocketServer implements core.IWebSocketServer {
+export class LocalWebSocketServer implements core.IWebSocketServer {
     private readonly events = new EventEmitter();
 
     constructor(public readonly pubsub: IPubSub) {}
@@ -69,8 +69,8 @@ export class TestWebSocketServer implements core.IWebSocketServer {
         return Promise.resolve();
     }
 
-    public createConnection(): TestWebSocket {
-        const socket = new TestWebSocket(moniker.choose(), this);
+    public createConnection(): LocalWebSocket {
+        const socket = new LocalWebSocket(moniker.choose(), this);
         const mockRequest = { url: "TestWebSocket" };
         this.events.emit("connection", socket, mockRequest);
         return socket;

@@ -35,13 +35,13 @@ import {
     IWebSocket,
     ILogger,
 } from "@fluidframework/server-services-core";
-import { IPubSub, ISubscriber, PubSub, WebSocketSubscriber } from "@fluidframework/server-services-utils";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalContext } from "./localContext";
 import { LocalKafka } from "./localKafka";
 import { LocalLambdaController } from "./localLambdaController";
 import { LocalOrdererConnection } from "./localOrdererConnection";
 import { LocalOrdererSetup } from "./localOrdererSetup";
+import { IPubSub, ISubscriber, PubSub, WebSocketSubscriber } from "./pubsub";
 
 const DefaultScribe: IScribe = {
     lastClientSummaryHead: undefined,

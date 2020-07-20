@@ -13,6 +13,7 @@ import {
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
+import { IPubSub, PubSub } from "@fluidframework/server-memory-orderer";
 import {
     DefaultMetricClient,
     IDatabaseManager,
@@ -23,7 +24,6 @@ import {
     MongoDatabaseManager,
     MongoManager,
 } from "@fluidframework/server-services-core";
-import { IPubSub, PubSub } from "@fluidframework/server-services-utils";
 import {
     DebugLogger,
     ITestDbFactory,
@@ -33,8 +33,8 @@ import {
     TestHistorian,
     TestTaskMessageSender,
     TestTenantManager,
-    TestWebSocketServer,
 } from "@fluidframework/server-test-utils";
+import { LocalWebSocketServer } from "./localWebSocketServer";
 import { MemoryOrdererManager } from "./memoryOrdererManager";
 
 /**
@@ -70,7 +70,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         const scribeDeltasCollectionName = "scribeDeltas";
 
         const pubsub: IPubSub = new PubSub();
-        const webSocketServer = new TestWebSocketServer(pubsub);
+        const webSocketServer = new LocalWebSocketServer(pubsub);
         const mongoManager = new MongoManager(testDbFactory);
         const testTenantManager = new TestTenantManager(undefined, undefined, testDbFactory.testDatabase);
 
@@ -119,7 +119,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
     }
 
     private constructor(
-        public webSocketServer: TestWebSocketServer,
+        public webSocketServer: LocalWebSocketServer,
         public databaseManager: IDatabaseManager,
         private readonly ordererManager: MemoryOrdererManager,
         public testDbFactory: ITestDbFactory,

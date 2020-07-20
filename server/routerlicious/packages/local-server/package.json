@@ -7,6 +7,9 @@
   "author": "Microsoft",
   "sideEffects": "false",
   "main": "dist/index.js",
+  "browser": {
+    "moniker": "@fluidframework/server-services-client/dist/dockerNames.js"
+  },
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -55,8 +58,8 @@
     "@fluidframework/server-memory-orderer": "^0.1010.0",
     "@fluidframework/server-services-client": "^0.1010.0",
     "@fluidframework/server-services-core": "^0.1010.0",
-    "@fluidframework/server-services-utils": "^0.1010.0",
-    "@fluidframework/server-test-utils": "^0.1010.0"
+    "@fluidframework/server-test-utils": "^0.1010.0",
+    "moniker": "^0.1.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",

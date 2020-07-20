@@ -4,7 +4,7 @@
  */
 
 import { IServiceConfiguration } from "@fluidframework/protocol-definitions";
-import { LocalOrderer } from "@fluidframework/server-memory-orderer";
+import { IPubSub, LocalOrderer } from "@fluidframework/server-memory-orderer";
 import { GitManager, IHistorian } from "@fluidframework/server-services-client";
 import {
     IDatabaseManager,
@@ -15,7 +15,6 @@ import {
     ITaskMessageSender,
     ITenantManager,
 } from "@fluidframework/server-services-core";
-import { IPubSub } from "@fluidframework/server-services-utils";
 
 export class MemoryOrdererManager implements IOrdererManager {
     private readonly map = new Map<string, Promise<IOrderer>>();

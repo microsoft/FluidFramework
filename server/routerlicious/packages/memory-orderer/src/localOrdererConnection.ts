@@ -21,7 +21,7 @@ import {
     IRawOperationMessage,
     RawOperationType,
 } from "@fluidframework/server-services-core";
-import { ISubscriber } from "@fluidframework/server-services-utils";
+import { ISubscriber } from "./pubsub";
 
 export class LocalOrdererConnection implements IOrdererConnection {
     public readonly parentBranch: string;
