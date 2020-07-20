@@ -20,7 +20,6 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private consumer?: kafkaTypes.KafkaConsumer;
 	private zooKeeperClient?: ZookeeperClient;
 	private closed = false;
-	private isRebalancing = true;
 	private assignedPartitions: Set<number> = new Set();
 	private readonly pendingCommits: Map<number, Deferred<void>> = new Map();
 
@@ -121,14 +120,16 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					return;
 				}
 
-				if (this.isRebalancing) {
-					this.isRebalancing = false;
-				} else {
-					this.emit("rebalancing", this.getPartitions(this.assignedPartitions), err.code);
+				// reject pending commits for the partitions we lost
+				for (const partition of this.assignedPartitions) {
+					if (!newAssignedPartitions.has(partition)) {
+						const deferredCommit = this.pendingCommits.get(partition);
+						if (deferredCommit) {
+							this.pendingCommits.delete(partition);
+							deferredCommit.reject(new Error(`Partition ${partition} was unassigned`));
+						}
+					}
 				}
-
-				// maybe?
-				// this.pendingCommits.clear();
 
 				this.assignedPartitions = newAssignedPartitions;
 
@@ -180,7 +181,6 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			this.zooKeeperClient = undefined;
 		}
 
-		this.isRebalancing = true;
 		this.assignedPartitions.clear();
 		this.pendingCommits.clear();
 	}
