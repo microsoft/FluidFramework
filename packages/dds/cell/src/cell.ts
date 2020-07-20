@@ -18,6 +18,7 @@ import {
     IComponentRuntime,
     IChannelStorageService,
     IChannelFactory,
+    Serializable,
 } from "@fluidframework/component-runtime-definitions";
 import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
@@ -74,7 +75,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
     /**
      * The data held by this cell.
      */
-    private data: any;
+    private data: Serializable;
 
     /**
      * This is used to assign a unique id to outgoing messages. It is used to track messages until
@@ -109,7 +110,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
     /**
      * {@inheritDoc ISharedCell.set}
      */
-    public set(value: any) {
+    public set(value: Serializable) {
         if (SharedObject.is(value)) {
             throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
         }

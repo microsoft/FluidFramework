@@ -4,6 +4,7 @@
  */
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { Serializable } from "@fluidframework/component-runtime-definitions";
 
 export interface ISharedCellEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (value: any) => void);
@@ -19,14 +20,14 @@ export interface ISharedCell extends ISharedObject<ISharedCellEvents> {
      *
      * @returns - the value of the cell
      */
-    get(): any;
+    get(): Serializable;
 
     /**
      * Sets the cell value.
      *
      * @param value - a JSON-able or SharedObject value to set the cell to
      */
-    set(value: any): void;
+    set(value: Serializable): void;
 
     /**
      * Checks whether cell is empty or not.
