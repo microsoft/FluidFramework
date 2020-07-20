@@ -49,8 +49,7 @@ import {
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import { generateHandleContextPath, unreachableCase, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { IChannel, IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
@@ -65,7 +64,7 @@ export enum ComponentMessageType {
 export interface ISharedObjectRegistry {
     // TODO consider making this async. A consequence is that either the creation of a distributed data type
     // is async or we need a new API to split the synchronous vs. asynchronous creation.
-    get(name: string): ISharedObjectFactory | undefined;
+    get(name: string): IChannelFactory | undefined;
 }
 
 /**
@@ -374,48 +373,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         }
         this.bindState = BindState.Binding;
         // Attach the runtime to the container via this callback
-        if (this.componentContext.bindToContext !== undefined) {
-            this.componentContext.bindToContext(this);
-        } else {
-            // 0.20 back-compat attach
-            (this.componentContext as any).attach(this);
-        }
+        this.componentContext.bindToContext(this);
 
         this.bindState = BindState.Bound;
-        this.deferredAttached.resolve();
-    }
-
-    // 0.20 back-compat attach
-    public attach() {
-        if (this.bindState !== BindState.NotBound) {
-            return;
-        }
-        this.bindState = BindState.Binding;
-        if (this.boundhandles !== undefined) {
-            this.boundhandles.forEach((handle) => {
-                handle.attachGraph();
-            });
-            this.boundhandles = undefined;
-        }
-
-        // Attach the runtime to the container via this callback
-        if (this.componentContext.bindToContext !== undefined) {
-            this.componentContext.bindToContext(this);
-        } else {
-            // 0.20 back-compat attach
-            (this.componentContext as any).attach(this);
-        }
-
-        // Flush the queue to set any pre-existing channels to local
-        this.localChannelContextQueue.forEach((channel) => {
-            // When we are attaching the component we don't need to send attach for the registered services.
-            // This is because they will be captured as part of the Attach component snapshot
-            channel.attach();
-        });
-
-        this.bindState = BindState.Bound;
-        this.deferredAttached.resolve();
-        this.localChannelContextQueue.clear();
     }
 
     public bind(handle: IComponentHandle): void {
@@ -582,12 +542,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     public getAttachSnapshot(): ITreeEntry[] {
         const entries: ITreeEntry[] = [];
-        this._attachState = AttachState.Attached;
-        // As the component is attaching, attach the graph too.
+        // Move resolving the promise in attached event once that becomes
+        // default flow for our tests.
+        this.deferredAttached.resolve();
         this.attachGraph();
-        // Fire this event telling dds that we are going live and they can do any
-        // custom processing based on that.
-        this.emit("collaborating");
 
         // Craft the .attributes file for each shared object
         for (const [objectId, value] of this.contexts) {
@@ -728,6 +686,16 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         });
         this.componentContext.on("notleader", () => {
             this.emit("notleader");
+        });
+        this.componentContext.once("attaching", () => {
+            assert(this.bindState !== BindState.NotBound, "Component attaching should not occur if it is not bound");
+            this._attachState = AttachState.Attaching;
+            this.emit("attaching");
+        });
+        this.componentContext.once("attached", () => {
+            assert(this.bindState === BindState.Bound, "Component should only be attached after it is bound");
+            this._attachState = AttachState.Attached;
+            this.emit("attached");
         });
     }
 

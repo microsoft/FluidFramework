@@ -10,6 +10,7 @@ import {
     IComponentConfiguration,
     IRequest,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -47,7 +48,7 @@ import { NullRuntime } from "./nullRuntime";
 export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
-        scope: IComponent,
+        scope: IComponent & IFluidObject,
         codeLoader: ICodeLoader,
         runtimeFactory: IRuntimeFactory,
         baseSnapshot: ISnapshotTree | null,
@@ -167,7 +168,7 @@ export class ContainerContext implements IContainerContext {
 
     constructor(
         private readonly container: Container,
-        public readonly scope: IComponent,
+        public readonly scope: IComponent & IFluidObject,
         public readonly codeLoader: ICodeLoader,
         public readonly runtimeFactory: IRuntimeFactory,
         private readonly _baseSnapshot: ISnapshotTree | null,
@@ -185,6 +186,20 @@ export class ContainerContext implements IContainerContext {
         public readonly previousRuntimeState: IRuntimeState,
     ) {
         this.logger = container.subLogger;
+        this.attachListener();
+    }
+
+    private attachListener() {
+        this.container.once("attaching", () => {
+            if (this.runtime?.setAttachState !== undefined) {
+                this.runtime.setAttachState(AttachState.Attaching);
+            }
+        });
+        this.container.once("attached", () => {
+            if (this.runtime?.setAttachState !== undefined) {
+                this.runtime.setAttachState(AttachState.Attached);
+            }
+        });
     }
 
     public dispose(error?: Error): void {
@@ -211,16 +226,6 @@ export class ContainerContext implements IContainerContext {
      */
     public async snapshotRuntimeState(): Promise<IRuntimeState> {
         return this.runtime!.stop();
-    }
-
-    // 0.20 back-compat islocal
-    public isLocal(): boolean {
-        return !this.isAttached();
-    }
-
-    // 0.21 back-compat isAttached
-    public isAttached(): boolean {
-        return this.container.attachState !== AttachState.Detached;
     }
 
     public get attachState(): AttachState {
@@ -277,7 +282,7 @@ export class ContainerContext implements IContainerContext {
         return this.runtime! instanceof NullRuntime;
     }
 
-    public async getAbsoluteUrl?(relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined> {
         return this.container.getAbsoluteUrl(relativeUrl);
     }
 

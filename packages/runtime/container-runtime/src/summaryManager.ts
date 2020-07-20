@@ -309,13 +309,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     }
 
     private raiseContainerWarning(warning: ISummarizingWarning) {
-        // back-compat: <= 0.18 loader:
-        const errorFn = (this.context as any).error;
-        if (errorFn !== undefined) {
-            errorFn(warning);
-        } else {
-            this.context.raiseContainerWarning(warning);
-        }
+        this.context.raiseContainerWarning(warning);
     }
 
     private start() {
@@ -358,17 +352,16 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private run(summarizer: ISummarizer) {
         this.state = SummaryManagerState.Running;
 
-        const runningSummarizerEvent = PerformanceEvent.start(this.logger,
-            { eventName: "RunningSummarizer", attempt: this.startThrottler.attempts });
-        this.runningSummarizer = summarizer;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const clientId = this.latestClientId!;
+        this.runningSummarizer = summarizer;
+
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.runningSummarizer.run(clientId).then(() => {
-            runningSummarizerEvent.end();
-        }, (error) => {
-            runningSummarizerEvent.cancel({}, error);
-        }).finally(() => {
+        PerformanceEvent.timedExecAsync(
+            this.logger,
+            { eventName: "RunningSummarizer", attempt: this.startThrottler.attempts },
+            async () => summarizer.run(clientId),
+        ).finally(() => {
             this.runningSummarizer = undefined;
             this.nextSummarizerP = undefined;
             this.tryRestart();

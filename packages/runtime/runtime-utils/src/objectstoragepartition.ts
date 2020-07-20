@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 
 /**
- * Returns a new IObjectStorageService that resolves the given `path` as root.
+ * Returns a new IChannelStorageService that resolves the given `path` as root.
  */
-export class ObjectStoragePartition implements IObjectStorageService {
-    constructor(private readonly storage: IObjectStorageService, private readonly path: string) {
+export class ObjectStoragePartition implements IChannelStorageService {
+    constructor(private readonly storage: IChannelStorageService, private readonly path: string) {
         // `path` must not include the trailing separator.
         assert(!path.endsWith("/"));
     }

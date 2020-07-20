@@ -6,7 +6,13 @@
 import assert from "assert";
 import EventEmitter from "events";
 import { IDisposable } from "@fluidframework/common-definitions";
-import { IComponent, IComponentLoadable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import {
+    IComponent,
+    IComponentLoadable,
+    IRequest,
+    IResponse,
+    IFluidObject,
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -76,11 +82,6 @@ export abstract class ComponentContext extends EventEmitter implements
     IComponentContext,
     IComponentContextLegacy,
     IDisposable {
-    // 0.20 back-compat islocal
-    public isLocal(): boolean {
-        return !this.isAttached;
-    }
-
     public get documentId(): string {
         return this._containerRuntime.id;
     }
@@ -156,33 +157,24 @@ export abstract class ComponentContext extends EventEmitter implements
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
-    // 0.21 back-compat isAttached
-    public get isAttached(): boolean {
-        return this.attachState !== AttachState.Detached;
-    }
-
     public get attachState(): AttachState {
-        if (this.componentRuntime !== undefined) {
-            return this.componentRuntime.attachState;
-        }
-        return AttachState.Detached;
+        return this._attachState;
     }
 
-    // 0.20 back-compat attach
-    public readonly attach: (componentRuntime: IComponentRuntimeChannel) => void;
     public readonly bindToContext: (componentRuntime: IComponentRuntimeChannel) => void;
     protected componentRuntime: IComponentRuntimeChannel | undefined;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
     private componentRuntimeDeferred: Deferred<IComponentRuntimeChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
+    protected _attachState: AttachState;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
-        public readonly scope: IComponent,
+        public readonly scope: IComponent & IFluidObject,
         public readonly summaryTracker: SummaryTracker,
         protected readonly summarizerNode: ITrackingSummarizerNode,
         private bindState: BindState,
@@ -191,19 +183,10 @@ export abstract class ComponentContext extends EventEmitter implements
     ) {
         super();
 
-        // 0.20 back-compat attach
-        this.attach = (componentRuntime: IComponentRuntimeChannel) => {
-            this.bindToContext(componentRuntime);
-        };
+        this._attachState = existing ? AttachState.Attached : AttachState.Detached;
 
         this.bindToContext = (componentRuntime: IComponentRuntimeChannel) => {
-            // This needs to be there for back compat reasons because the old component runtime does not
-            // have Binding state and it does not stop Binding again while it is Binding.
-            // Previosuly that was prevented my container runtime.
-            // 0.20 back-compat Binding
-            if (this.bindState !== BindState.NotBound) {
-                return;
-            }
+            assert(this.bindState === BindState.NotBound);
             this.bindState = BindState.Binding;
             bindComponent(componentRuntime);
             this.bindState = BindState.Bound;
@@ -432,7 +415,6 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public async summarize(fullTree: boolean = false): Promise<ISummarizeResult> {
-        assert(!this.isLocal(), "Should not summarize a local component");
         return this.summarizerNode.summarize(async () => {
             const { pkg } = await this.getInitialSnapshotDetails();
 
@@ -569,7 +551,10 @@ export abstract class ComponentContext extends EventEmitter implements
         this.containerRuntime.notifyComponentInstantiated(this);
     }
 
-    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
+        if (this.attachState !== AttachState.Attached) {
+            return undefined;
+        }
         return this._containerRuntime.getAbsoluteUrl(relativeUrl);
     }
 
@@ -612,13 +597,8 @@ export abstract class ComponentContext extends EventEmitter implements
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
         assert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
-
         const innerContents = contents as ComponentMessage;
-
-        // back-compat: 0.18 components
-        if (this.componentRuntime.reSubmit) {
-            this.componentRuntime.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
-        }
+        this.componentRuntime.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
 
     private verifyNotClosed() {
@@ -640,7 +620,7 @@ export class RemotedComponentContext extends ComponentContext {
         private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent,
+        scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
         summarizerNode: ITrackingSummarizerNode,
         pkg?: string[],
@@ -730,7 +710,7 @@ export class LocalComponentContext extends ComponentContext {
         pkg: string[],
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent,
+        scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
         summarizerNode: ITrackingSummarizerNode,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
@@ -750,6 +730,18 @@ export class LocalComponentContext extends ComponentContext {
             BindState.NotBound,
             bindComponent,
             pkg);
+        this.attachListeners();
+    }
+
+    private attachListeners(): void {
+        this.once("attaching", () => {
+            assert.strictEqual(this.attachState, AttachState.Detached, "Should move from detached to attaching");
+            this._attachState = AttachState.Attaching;
+        });
+        this.once("attached", () => {
+            assert.strictEqual(this.attachState, AttachState.Attaching, "Should move from attaching to attached");
+            this._attachState = AttachState.Attached;
+        });
     }
 
     public generateAttachMessage(): IAttachMessage {

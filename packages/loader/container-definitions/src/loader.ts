@@ -12,9 +12,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IFluidCodeDetails, IFluidModule, IFluidPackage, AttachState } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
+import { IFluidModule } from "./fluidModule";
+import { IFluidCodeDetails, IFluidPackage } from "./fluidPackage";
+import { AttachState } from "./runtime";
 
 /**
  * Code loading interface
@@ -71,7 +73,7 @@ export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
     (event: "connected", listener: (clientId: string) => void);
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
-    (event: "disconnected" | "joining", listener: () => void);
+    (event: "disconnected" | "joining" | "attaching" | "attached", listener: () => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
@@ -103,11 +105,23 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     attach(request: IRequest): Promise<void>;
 
     /**
-     * Get an absolute url for a provided container-relative request.
-     * @param relativeUrl - A relative request within the container
-     *
+     * Extract the snapshot from the detached container.
      */
-    getAbsoluteUrl(relativeUrl: string): Promise<string>;
+    serialize(): string;
+
+    /**
+     * Get an absolute url for a provided container-relative request.
+     * If the container is not attached, this will return undefined.
+     *
+     * @param relativeUrl - A relative request within the container
+     */
+    getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+
+    /**
+     * Issue a request against the container for a resource.
+     * @param request - The request to be issued against the container
+     */
+    request(request: IRequest): Promise<IResponse>;
 }
 
 export interface ILoader {

@@ -5,22 +5,23 @@
 
 import {
     IComponentRuntime,
-    ISharedObjectServices,
+    IChannelServices,
     IChannelAttributes,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 /**
  * Consensus Register Collection channel factory interface
  *
- * Extends the base ISharedObjectFactory to return a more definite type of IConsensusRegisterCollection
+ * Extends the base IChannelFactory to return a more definite type of IConsensusRegisterCollection
  * Use for the runtime to create and load distributed data structure by type name of each channel
  */
-export interface IConsensusRegisterCollectionFactory extends ISharedObjectFactory {
+export interface IConsensusRegisterCollectionFactory extends IChannelFactory {
     load(
         document: IComponentRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<IConsensusRegisterCollection>;
 

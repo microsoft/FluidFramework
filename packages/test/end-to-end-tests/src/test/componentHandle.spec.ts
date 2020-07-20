@@ -12,11 +12,11 @@ import {
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
+    OpProcessingController,
     initializeLocalContainer,
     TestFluidComponent,
 } from "@fluidframework/test-utils";
@@ -52,7 +52,7 @@ describe("ComponentHandle", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let opProcessingController: OpProcessingController;
     let firstContainerComponent1: TestSharedComponent;
     let firstContainerComponent2: TestSharedComponent;
     let secondContainerComponent1: TestSharedComponent;
@@ -90,11 +90,11 @@ describe("ComponentHandle", () => {
         const secondContainer = await createContainer();
         secondContainerComponent1 = await getComponent("default", secondContainer);
 
-        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-        containerDeltaEventManager.registerDocuments(
-            firstContainerComponent1._runtime, secondContainerComponent1._runtime);
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController.addDeltaManagers(
+            firstContainerComponent1._runtime.deltaManager, secondContainerComponent1._runtime.deltaManager);
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
     });
 
     it("should generate the absolute path for ContainerRuntime correctly", () => {
@@ -139,7 +139,7 @@ describe("ComponentHandle", () => {
         // Add the handle to the root DDS of `firstContainerComponent1`.
         firstContainerComponent1._root.set("sharedMap", sharedMapHandle);
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         // Get the handle in the remote client.
         const remoteSharedMapHandle = secondContainerComponent1._root.get<IComponentHandle<SharedMap>>("sharedMap");
@@ -169,7 +169,7 @@ describe("ComponentHandle", () => {
         // Add the handle to the root DDS of `firstContainerComponent1` so that the ComponentRuntime is different.
         firstContainerComponent1._root.set("sharedMap", sharedMap.handle);
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         // Get the handle in the remote client.
         const remoteSharedMapHandle = secondContainerComponent1._root.get<IComponentHandle<SharedMap>>("sharedMap");
@@ -196,7 +196,7 @@ describe("ComponentHandle", () => {
         // ComponentRuntime is different.
         firstContainerComponent1._root.set("component2", firstContainerComponent2.handle);
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         // Get the handle in the remote client.
         const remoteComponentHandle =

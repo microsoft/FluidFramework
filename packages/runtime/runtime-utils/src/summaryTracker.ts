@@ -62,7 +62,6 @@ export class SummaryTracker implements ISummaryTracker {
         }
 
         const newChild = new SummaryTracker(
-            this.useContext,
             `${this._fullPath}/${encodeURIComponent(key)}`,
             this._referenceSequenceNumber,
             latestSequenceNumber);
@@ -76,7 +75,6 @@ export class SummaryTracker implements ISummaryTracker {
     }
 
     public constructor(
-        public readonly useContext: boolean,
         private readonly _fullPath: string,
         private _referenceSequenceNumber: number,
         private _latestSequenceNumber: number) { }

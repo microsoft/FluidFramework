@@ -47,6 +47,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
             if (this.logger) {
                 this.logger.sendTelemetryEvent({
                     eventName: "DeltaStorageOpsFetch",
+                    headers: Object.keys(headers).length !== 0 ? true : undefined,
                     sprequestguid: response.headers.get("sprequestguid"),
                     sprequestduration: response.headers.get("sprequestduration"),
                 });

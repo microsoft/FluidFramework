@@ -14,10 +14,10 @@ import {
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
-import { LoaderHeader } from "@fluidframework/container-definitions";
+import { LoaderHeader, AttachState } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import {
     IAgentScheduler,
     IComponentContext,
@@ -26,14 +26,13 @@ import {
     ITaskManager,
     SchedulerType,
 } from "@fluidframework/runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import debug from "debug";
 import { v4 as uuid } from "uuid";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
 
-class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent, IComponentRouter {
+class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponentRouter {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         let root: ISharedMap;
         let scheduler: ConsensusRegisterCollection<string | null>;
@@ -168,7 +167,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     private async registerCore(taskUrls: string[]): Promise<void> {
         if (taskUrls.length > 0) {
-            const registersP: Promise<boolean>[] = [];
+            const registersP: Promise<void>[] = [];
             for (const taskUrl of taskUrls) {
                 debug(`Registering ${taskUrl}`);
                 // tslint:disable no-null-keyword
@@ -194,7 +193,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     private async releaseCore(taskUrls: string[]) {
         if (taskUrls.length > 0) {
-            const releasesP: Promise<boolean>[] = [];
+            const releasesP: Promise<void>[] = [];
             for (const taskUrl of taskUrls) {
                 debug(`Releasing ${taskUrl}`);
                 // Remove from local map so that it can be picked later.
@@ -207,7 +206,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     private async clearTasks(taskUrls: string[]) {
         assert(this.isActive());
-        const clearP: Promise<boolean>[] = [];
+        const clearP: Promise<void>[] = [];
         for (const taskUrl of taskUrls) {
             debug(`Clearing ${taskUrl}`);
             clearP.push(this.writeCore(taskUrl, null));
@@ -219,8 +218,8 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         return this.scheduler.read(url);
     }
 
-    private async writeCore(key: string, clientId: string | null): Promise<boolean> {
-        return this.scheduler.write(key, clientId);
+    private async writeCore(key: string, clientId: string | null): Promise<void> {
+        await this.scheduler.write(key, clientId);
     }
 
     private initialize() {
@@ -320,10 +319,10 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     private isActive() {
-        // Issue-2720
-        // if (!this.runtime.isBoundToContext) {
-        //     return true;
-        // }
+        // Scheduler should be active in detached container.
+        if (!this.runtime.IComponentHandleContext.isAttached) {
+            return true;
+        }
         if (!this.runtime.connected) {
             return false;
         }
@@ -436,6 +435,8 @@ export class TaskManager implements ITaskManager {
     public async pick(componentUrl: string, taskId: string, worker?: boolean): Promise<void> {
         if (!this.context.deltaManager.clientDetails.capabilities.interactive) {
             return Promise.reject("Picking not allowed on secondary copy");
+        } else if (this.runtime.attachState !== AttachState.Attached) {
+            return Promise.reject("Picking not allowed in detached container in task manager");
         } else {
             const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
             const fullUrl = `${urlWithSlash}/${this.url}/${taskId}`;
@@ -483,7 +484,7 @@ export class AgentSchedulerFactory implements IComponentFactory {
     public instantiateComponent(context: IComponentContext): void {
         const mapFactory = SharedMap.getFactory();
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
-        const dataTypes = new Map<string, ISharedObjectFactory>();
+        const dataTypes = new Map<string, IChannelFactory>();
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
 

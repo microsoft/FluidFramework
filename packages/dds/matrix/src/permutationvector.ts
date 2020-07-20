@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { IComponentRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     BaseSegment,
@@ -97,9 +97,9 @@ export class PermutationVector extends Client {
         super(
             PermutationSegment.fromJSONObject,
             ChildLogger.create(logger, `Matrix.${path}.MergeTreeClient`), {
-            ...runtime.options,
-            newMergeTreeSnapshotFormat: true,
-        },
+                ...runtime.options,
+                newMergeTreeSnapshotFormat: true,   // Temporarily force new snapshot format until it is the default.
+            },                                      // (See https://github.com/microsoft/FluidFramework/issues/84)
         );
 
         this.mergeTreeDeltaCallback = this.onDelta;
@@ -185,7 +185,7 @@ export class PermutationVector extends Client {
         };
     }
 
-    public async load(runtime: IComponentRuntime, storage: IObjectStorageService, branchId?: string) {
+    public async load(runtime: IComponentRuntime, storage: IChannelStorageService, branchId?: string) {
         const [handleTableData, handles] = await Promise.all([
             await deserializeBlob(runtime, storage, SnapshotPath.handleTable),
             await deserializeBlob(runtime, storage, SnapshotPath.handles),

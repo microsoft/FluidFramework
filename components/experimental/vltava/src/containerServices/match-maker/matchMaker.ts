@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { BaseContainerService, serviceRoutePathRoot } from "@fluidframework/aqueduct";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IComponent } from "@fluidframework/component-core-interfaces";
 import {
     IComponentInterfacesRegistry,
     IProvideComponentDiscoverableInterfaces,
@@ -22,7 +22,7 @@ const getMatchMakerContainerService = async (context: IComponentContext): Promis
         url: `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
     });
     if (response.status === 200 && response.mimeType === "fluid/component") {
-        const value = response.value as IComponent;
+        const value = response.value as IFluidObject;
         const matchMaker = value.IComponentInterfacesRegistry;
         if (matchMaker) {
             return matchMaker;
@@ -70,9 +70,11 @@ export const unregisterWithMatchMaker = async (
  * registerWithMatchMaker and unregisterWithMatchMaker functions.
  */
 export class MatchMaker extends BaseContainerService implements IComponentInterfacesRegistry {
-    private readonly discoverableInterfacesMap: Map<keyof IComponent, IComponentDiscoverableInterfaces[]> = new Map();
+    private readonly discoverableInterfacesMap =
+        new Map<keyof (IFluidObject & IComponent), IComponentDiscoverableInterfaces[]>();
 
-    private readonly discoverInterfacesMap: Map<keyof IComponent, IComponentDiscoverInterfaces[]> = new Map();
+    private readonly discoverInterfacesMap =
+        new Map<keyof (IFluidObject & IComponent), IComponentDiscoverInterfaces[]>();
 
     public get IComponentInterfacesRegistry() { return this; }
 
@@ -89,7 +91,7 @@ export class MatchMaker extends BaseContainerService implements IComponentInterf
         if (discoverable) {
             // The below code is some crazy typescript magic that checks to see that the interface the component
             // is declaring as discoverable is implemented by the component itself. We can do this because
-            // `keyof IComponent` allows us to iterate though to check if the component also implements a getter
+            // `keyof IFluidObject` allows us to iterate though to check if the component also implements a getter
             // with the same name.
             discoverable.discoverableInterfaces.forEach((interfaceName) => {
                 assert(
@@ -167,7 +169,7 @@ export class MatchMaker extends BaseContainerService implements IComponentInterf
             const discoverComponents = this.discoverInterfacesMap.get(interfaceName);
             if (discoverComponents) {
                 discoverComponents.forEach((component) => {
-                    if (component !== (discoverableComponent as IComponent)) {
+                    if (component !== (discoverableComponent as (IComponent & IFluidObject))) {
                         component.notifyComponentsDiscovered(interfaceName, [discoverableComponent]);
                     }
                 });
