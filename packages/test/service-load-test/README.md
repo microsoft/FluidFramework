@@ -28,7 +28,11 @@ _This is not typically invoked manually - rather, the Orchestrator process spawn
 node ./dist/nodeStressTest.js --runId <runId> --url <url> [--profile <profile>]
 ```
 
-Also take note of npm scripts like `npm run start` and `npm run debug` for running the test.
+### npm scripts
+
+There are several npm scripts in [package.json](./package.json) to make it quicker to launch this tool. For example:
+`npm run start` - Launches in Orchestrator Mode with default options
+`npm run debug` - Launches in Orchestrator Mode with `--debug` provided to allow for attaching to child test runners.
 
 ### Options
 
