@@ -14,20 +14,21 @@ export interface ISharedCellEvents extends ISharedObjectEvents {
 /**
  * Shared cell interface
  */
-export interface ISharedCell extends ISharedObject<ISharedCellEvents> {
+
+export interface ISharedCell<T extends Serializable = any> extends ISharedObject<ISharedCellEvents> {
     /**
      * Retrieves the cell value.
      *
      * @returns - the value of the cell
      */
-    get(): Serializable;
+    get(): T;
 
     /**
      * Sets the cell value.
      *
      * @param value - a JSON-able or SharedObject value to set the cell to
      */
-    set(value: Serializable): void;
+    set(value: T): void;
 
     /**
      * Checks whether cell is empty or not.

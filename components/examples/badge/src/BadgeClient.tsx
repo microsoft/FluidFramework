@@ -16,7 +16,7 @@ import { IBadgeClientProps, IBadgeType } from "./Badge.types";
 export const BadgeClient: React.FC<IBadgeClientProps> = ({ model }: IBadgeClientProps) => {
     // Setters
     const changeSelectedOption = (newItem: IBadgeType): void => {
-        if (newItem.key !== (model.currentCell.get() as unknown as IBadgeType).key) {
+        if (newItem.key !== model.currentCell.get().key) {
             const len = model.historySequence.getItemCount();
             model.historySequence.insert(len, [
                 {
