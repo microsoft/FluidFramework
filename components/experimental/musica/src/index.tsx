@@ -5,9 +5,9 @@
 
 // Fluid
 import {
-    ContainerRuntimeFactoryWithDefaultComponent,
-    PrimedComponent,
-    PrimedComponentFactory,
+    ContainerRuntimeFactoryWithDefaultDataStore,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
@@ -25,10 +25,10 @@ const musicaName = "@fluid-example/musica";
 // TODO: Is this right?
 const audioContext = new AudioContext();
 
-export class Musica extends PrimedComponent implements IComponentHTMLView {
+export class Musica extends DataObject implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.player = new Player(audioContext);
     }
 
@@ -100,14 +100,14 @@ export class Musica extends PrimedComponent implements IComponentHTMLView {
     }
 }
 
-export const MusicaInstantiationFactory = new PrimedComponentFactory(
+export const MusicaInstantiationFactory = new DataObjectFactory(
     musicaName,
     Musica,
     [],
     {},
 );
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     musicaName,
     new Map([
         [musicaName, Promise.resolve(MusicaInstantiationFactory)],

@@ -7,7 +7,7 @@ import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { Spaces } from "@fluid-example/spaces";
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
@@ -66,7 +66,7 @@ export class InternalRegistry implements IComponentRegistry, IComponentInternalR
     }
 }
 
-export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultComponent {
+export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultDataStore {
     constructor(
         defaultComponentName: string,
         registryEntries: NamedComponentRegistryEntries,
@@ -84,7 +84,7 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultComp
         // Right now this setup has to be done asynchronously because in the case where we load the Container from
         // remote ops, the `Attach` message for the last edited tracker component has not arrived yet.
         // We should be able to wait here after the create-new workflow is in place.
-        setupLastEditedTrackerForContainer(ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId, runtime)
+        setupLastEditedTrackerForContainer(ContainerRuntimeFactoryWithDefaultDataStore.defaultComponentId, runtime)
             .catch((error) => {
                 console.error(error);
             });

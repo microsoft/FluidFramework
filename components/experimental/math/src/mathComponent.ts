@@ -29,7 +29,7 @@ import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
-import { SharedComponentFactory, SharedComponent } from "@fluidframework/component-base";
+import { PureDataObjectFactory, PureDataObject } from "@fluidframework/component-base";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as Katex from "katex";
 import * as MathExpr from "./mathExpr";
@@ -494,8 +494,8 @@ const endIdPrefix = "end-";
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IMathOptions extends IComponentHTMLOptions { }
 
-export class MathCollection extends SharedComponent<ISharedDirectory> implements IComponentCollection {
-    private static readonly factory = new SharedComponentFactory<MathCollection>(
+export class MathCollection extends PureDataObject<ISharedDirectory> implements IComponentCollection {
+    private static readonly factory = new PureDataObjectFactory<MathCollection>(
         "@fluid-example/math",
         MathCollection,
         /* root: */ SharedDirectory.getFactory(),

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PrimedComponent } from "@fluidframework/aqueduct";
+import { DataObject } from "@fluidframework/aqueduct";
 import {
     IComponent,
     IComponentHandle,
@@ -26,7 +26,7 @@ import {
 } from "../helpers";
 
 /**
- * SyncedComponent is a base component for components with views. It extends PrimedComponent.
+ * SyncedComponent is a base component for components with views. It extends DataObject.
  * In addition to the root and task manager, the SyncedComponent also provides a syncedStateConfig
  * and assures that the syncedState will be initialized according the config by the time the view
  * is rendered.
@@ -34,7 +34,7 @@ import {
  * As this is used for views, it also implements the IComponentHTMLView interface, and requires
  * the render function to be filled in.
  *
- * Generics (extended from PrimedComponent):
+ * Generics (extended from DataObject):
  * P - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced component may take during creation
  * E - represents events that will be available in the EventForwarder
@@ -43,7 +43,7 @@ export abstract class SyncedComponent<
     P extends IComponent = object,
     S = undefined,
     E extends IEvent = IEvent
-> extends PrimedComponent<P, S, E> implements IComponentHTMLView {
+> extends DataObject<P, S, E> implements IComponentHTMLView {
     private readonly syncedStateConfig: SyncedStateConfig = new Map();
     private readonly fluidComponentMap: FluidComponentMap = new Map();
     private readonly syncedStateDirectoryId = "syncedState";
@@ -57,7 +57,7 @@ export abstract class SyncedComponent<
      * Runs the first time the component is generated and sets up all necessary data structures for the view
      * To extend this function, please call super() prior to adding to functionality to ensure correct initializing
      */
-    protected async componentInitializingFirstTime(props?: any): Promise<void> {
+    protected async initializingFirstTime(props?: any): Promise<void> {
         // Initialize our synced state map for the first time using our
         // syncedStateConfig values
         await this.initializeStateFirstTime();
@@ -68,7 +68,7 @@ export abstract class SyncedComponent<
      * with any additional ones that may have been added due to user behavior
      * To extend this function, please call super() prior to adding to functionality to ensure correct initializing
      */
-    protected async componentInitializingFromExisting(): Promise<void> {
+    protected async initializingFromExisting(): Promise<void> {
         // Load our existing state values to be ready for the render lifecycle
         await this.initializeStateFromExisting();
     }
@@ -333,5 +333,15 @@ export abstract class SyncedComponent<
                 },
             );
         }
+    }
+
+    /** deprecated: backcompat for FDL split */
+    componentInitializingFirstTime?(props?: any) {
+        return this.initializingFirstTime(props);
+    }
+
+    /** deprecated: backcompat for FDL split */
+    componentInitializingFromExisting?() {
+        return this.initializingFromExisting();
     }
 }

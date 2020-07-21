@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PrimedComponent } from "@fluidframework/aqueduct";
+import { DataObject } from "@fluidframework/aqueduct";
 import { CollaborativeTextArea } from "@fluidframework/react-inputs";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
@@ -18,7 +18,7 @@ export const TextBoxName = `${pkg.name as string}-textbox`;
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
  * collaborative textarea.
  */
-export class TextBox extends PrimedComponent<{}, string> implements IComponentHTMLView {
+export class TextBox extends DataObject<{}, string> implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     private text: SharedString | undefined;
@@ -26,7 +26,7 @@ export class TextBox extends PrimedComponent<{}, string> implements IComponentHT
     /**
      * Do creation work
      */
-    protected async componentInitializingFirstTime(initialState?: string) {
+    protected async initializingFirstTime(initialState?: string) {
         // if initial state is provided then use it.
         const newItemText = initialState ?? "Important Things";
 
@@ -36,7 +36,7 @@ export class TextBox extends PrimedComponent<{}, string> implements IComponentHT
         this.root.set("text", text.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.text = await this.root.get<IComponentHandle<SharedString>>("text").get();
     }
 

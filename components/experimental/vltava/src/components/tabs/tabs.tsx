@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
@@ -15,10 +15,10 @@ import { TabsView } from "./view";
 
 export const TabsName = "tabs";
 
-export class TabsComponent extends PrimedComponent implements IComponentHTMLView {
+export class TabsComponent extends DataObject implements IComponentHTMLView {
     private dataModelInternal: ITabsDataModel | undefined;
 
-    private static readonly factory = new PrimedComponentFactory(TabsName, TabsComponent, [], {});
+    private static readonly factory = new DataObjectFactory(TabsName, TabsComponent, [], {});
 
     public static getFactory() {
         return TabsComponent.factory;
@@ -34,12 +34,12 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
 
     public get IComponentHTMLView() { return this; }
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         // create the tabs directory
         this.root.createSubDirectory("tab-ids");
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         const registry = await this.context.containerRuntime.IComponentRegistry.get("");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const registryDetails = (registry as IFluidObject).IComponentInternalRegistry!;
@@ -47,8 +47,8 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
             new TabsDataModel(
                 this.root,
                 registryDetails,
-                this.createAndAttachComponent.bind(this),
-                this.getComponentFromDirectory.bind(this),
+                this.createAndAttachDataStore.bind(this),
+                this.getFluidObjectFromDirectory.bind(this),
             );
     }
 

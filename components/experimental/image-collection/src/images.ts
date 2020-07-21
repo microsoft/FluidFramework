@@ -16,7 +16,7 @@ import { IComponentLayout } from "@fluidframework/framework-experimental";
 import { IComponentCollection } from "@fluidframework/framework-interfaces";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
 import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
-import { SharedComponent, SharedComponentFactory } from "@fluidframework/component-base";
+import { PureDataObject, PureDataObjectFactory } from "@fluidframework/component-base";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 export class ImageComponent implements
@@ -53,9 +53,9 @@ export class ImageComponent implements
     }
 }
 
-export class ImageCollection extends SharedComponent<ISharedDirectory> implements
+export class ImageCollection extends PureDataObject<ISharedDirectory> implements
     IComponentLoadable, IComponentRouter, IComponentCollection {
-    private static readonly factory = new SharedComponentFactory(
+    private static readonly factory = new PureDataObjectFactory(
         "@fluid-example/image-collection",
         ImageCollection,
         SharedDirectory.getFactory(),

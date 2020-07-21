@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { BaseHost, IBaseHostConfig } from "@fluidframework/base-host";
 import {
     IFluidModule,
@@ -79,7 +79,7 @@ function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidM
     if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
         const componentFactory = fluidModule.fluidExport.IComponentFactory;
 
-        const runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
+        const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
             packageJson.name,
             new Map([
                 [packageJson.name, Promise.resolve(componentFactory)],

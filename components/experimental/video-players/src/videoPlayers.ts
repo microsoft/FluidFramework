@@ -16,7 +16,7 @@ import { IComponentLayout } from "@fluidframework/framework-experimental";
 import { IComponentCollection } from "@fluidframework/framework-interfaces";
 import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";
 import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
-import { SharedComponent, SharedComponentFactory } from "@fluidframework/component-base";
+import { PureDataObject, PureDataObjectFactory } from "@fluidframework/component-base";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 declare global {
@@ -147,9 +147,9 @@ export class VideoPlayer implements
     }
 }
 
-export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> implements
+export class VideoPlayerCollection extends PureDataObject<ISharedDirectory> implements
     IComponentCollection {
-    private static readonly factory = new SharedComponentFactory<VideoPlayerCollection>(
+    private static readonly factory = new PureDataObjectFactory<VideoPlayerCollection>(
         "@fluid-example/video-players",
         VideoPlayerCollection,
         SharedDirectory.getFactory(),

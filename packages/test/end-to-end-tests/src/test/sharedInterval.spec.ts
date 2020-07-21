@@ -63,7 +63,7 @@ describe("SharedInterval", () => {
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
 
-    async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
+    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
         const response = await container.request({ url: componentId });
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             throw new Error(`Component with id: ${componentId} not found`);
@@ -91,7 +91,7 @@ describe("SharedInterval", () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
 
             const container = await createContainer([[stringId, SharedString.getFactory()]]);
-            const component = await getComponent("default", container);
+            const component = await requestFluidObject("default", container);
             sharedString = await component.getSharedObject<SharedString>(stringId);
             sharedString.insertText(0, "012");
             intervals = await sharedString.getIntervalCollection("intervals").getView();
@@ -210,7 +210,7 @@ describe("SharedInterval", () => {
             opProcessingController = new OpProcessingController(deltaConnectionServer);
 
             const container1 = await createContainer([[stringId, SharedString.getFactory()]]);
-            const component1 = await getComponent("default", container1);
+            const component1 = await requestFluidObject("default", container1);
             const sharedString1 = await component1.getSharedObject<SharedString>(stringId);
 
             sharedString1.insertText(0, "0123456789");
@@ -219,7 +219,7 @@ describe("SharedInterval", () => {
             assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
 
             const container2 = await createContainer([[stringId, SharedString.getFactory()]]);
-            const component2 = await getComponent("default", container2);
+            const component2 = await requestFluidObject("default", container2);
             opProcessingController.addDeltaManagers(
                 component1.runtime.deltaManager,
                 component2.runtime.deltaManager);
@@ -257,21 +257,21 @@ describe("SharedInterval", () => {
                 [mapId, SharedMap.getFactory()],
                 [stringId, SharedString.getFactory()],
             ]);
-            component1 = await getComponent("default", container1);
+            component1 = await requestFluidObject("default", container1);
             sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
 
             const container2 = await createContainer([
                 [mapId, SharedMap.getFactory()],
                 [stringId, SharedString.getFactory()],
             ]);
-            const component2 = await getComponent("default", container2);
+            const component2 = await requestFluidObject("default", container2);
             sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
 
             const container3 = await createContainer([
                 [mapId, SharedMap.getFactory()],
                 [stringId, SharedString.getFactory()],
             ]);
-            const component3 = await getComponent("default", container3);
+            const component3 = await requestFluidObject("default", container3);
             sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
 
             opProcessingController = new OpProcessingController(deltaConnectionServer);

@@ -4,8 +4,8 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultComponent,
-    PrimedComponentFactory,
+    ContainerRuntimeFactoryWithDefaultDataStore,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IProvideRuntimeFactory } from "@fluidframework/container-definitions";
 import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
@@ -14,7 +14,7 @@ import { MonacoRunner } from "./chaincode";
 
 const monacoName = "@fluid-example/monaco";
 
-const componentFactory = new PrimedComponentFactory(
+const componentFactory = new DataObjectFactory(
     monacoName,
     MonacoRunner,
     [
@@ -25,7 +25,7 @@ const componentFactory = new PrimedComponentFactory(
     {},
 );
 
-const runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
+const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
     monacoName,
     new Map([
         [monacoName, Promise.resolve(componentFactory)],

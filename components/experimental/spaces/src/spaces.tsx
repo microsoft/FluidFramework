@@ -7,8 +7,8 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { Layout } from "react-grid-layout";
 import {
-    PrimedComponent,
-    PrimedComponentFactory,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
     IComponentHandle,
@@ -50,13 +50,13 @@ export interface ISpacesItem {
 /**
  * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.
  */
-export class Spaces extends PrimedComponent implements IComponentHTMLView {
+export class Spaces extends DataObject implements IComponentHTMLView {
     private storageComponent: SpacesStorage<ISpacesItem> | undefined;
     private baseUrl: string | undefined;
 
     public static get ComponentName() { return "@fluid-example/spaces"; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         Spaces.ComponentName,
         Spaces,
         [],
@@ -125,9 +125,9 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         );
     }
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const storageComponent =
-            await this.createAndAttachComponent<SpacesStorage<ISpacesItem>>(SpacesStorage.ComponentName);
+            await this.createAndAttachDataStore<SpacesStorage<ISpacesItem>>(SpacesStorage.ComponentName);
         this.root.set(SpacesStorageKey, storageComponent.handle);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
@@ -136,7 +136,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         }
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.storageComponent =
             await this.root.get<IComponentHandle<SpacesStorage<ISpacesItem>>>(SpacesStorageKey)?.get();
 
@@ -184,8 +184,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
             throw new Error("Unknown item, can't add");
         }
 
-        // Don't really want to hand out createAndAttachComponent here, see spacesItemMap.ts for more info.
-        const serializableObject = await itemMapEntry.create(this.createAndAttachComponent.bind(this));
+        // Don't really want to hand out createAndAttachDataStore here, see spacesItemMap.ts for more info.
+        const serializableObject = await itemMapEntry.create(this.createAndAttachDataStore.bind(this));
         return this.storageComponent.addItem(
             {
                 serializableObject,

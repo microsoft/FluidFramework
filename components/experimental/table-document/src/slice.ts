@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
 import { CellRange } from "./cellrange";
@@ -21,10 +21,10 @@ export interface ITableSliceConfig {
     maxCol: number;
 }
 
-export class TableSlice extends PrimedComponent<{}, ITableSliceConfig> implements ITable {
+export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         TableSliceType,
         TableSlice,
         [],
@@ -100,14 +100,14 @@ export class TableSlice extends PrimedComponent<{}, ITableSliceConfig> implement
         this.doc.removeCols(startCol, numCols);
     }
 
-    protected async componentInitializingFirstTime(initialState?: ITableSliceConfig) {
+    protected async initializingFirstTime(initialState?: ITableSliceConfig) {
         if (!initialState) {
             throw new Error("TableSlice must be created with initial state");
         }
 
         this.root.set(ConfigKey.docId, initialState.docId);
         this.root.set(ConfigKey.name, initialState.name);
-        this.maybeDoc = await this.getComponent_UNSAFE(initialState.docId);
+        this.maybeDoc = await this.requestFluidObject_UNSAFE(initialState.docId);
         this.root.set(initialState.docId, this.maybeDoc.handle);
         await this.ensureDoc();
         this.createValuesRange(
@@ -118,11 +118,11 @@ export class TableSlice extends PrimedComponent<{}, ITableSliceConfig> implement
         );
     }
 
-    protected async componentInitializingFromExisting() {
+    protected async initializingFromExisting() {
         await this.ensureDoc();
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.maybeValues = await this.doc.getRange(this.root.get(ConfigKey.valuesKey));
 
         this.root.on("op", this.emitOp);

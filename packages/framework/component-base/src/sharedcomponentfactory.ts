@@ -18,9 +18,9 @@ import {
 } from "@fluidframework/component-runtime-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { LazyPromise } from "@fluidframework/common-utils";
-import { SharedComponent } from "./sharedcomponent";
+import { PureDataObject } from "./sharedcomponent";
 
-export class SharedComponentFactory<T extends SharedComponent> implements IComponentFactory {
+export class PureDataObjectFactory<T extends PureDataObject> implements IComponentFactory {
     public readonly ISharedObjectRegistry: ISharedObjectRegistry;
     public readonly IComponentRegistry: IComponentRegistry | undefined;
 

@@ -4,8 +4,8 @@
  */
 
 import {
-    PrimedComponent,
-    PrimedComponentFactory,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
@@ -21,7 +21,7 @@ const diceValueKey = "diceValue";
 /**
  * The DiceRoller is our implementation of the IDiceRoller interface.
  */
-export class DiceRoller extends PrimedComponent implements IDiceRoller, IComponentHTMLView {
+export class DiceRoller extends DataObject implements IDiceRoller, IComponentHTMLView {
     public static get ComponentName() { return "@fluid-example/dice-roller"; }
 
     public get IComponentHTMLView() { return this; }
@@ -32,11 +32,11 @@ export class DiceRoller extends PrimedComponent implements IDiceRoller, ICompone
      *
      * This method is used to perform component setup, which can include setting an initial schema or initial values.
      */
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         this.root.set(diceValueKey, 1);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.root.on("valueChanged", (changed: IValueChanged) => {
             if (changed.key === diceValueKey) {
                 this.emit("diceRolled");
@@ -65,10 +65,10 @@ export class DiceRoller extends PrimedComponent implements IDiceRoller, ICompone
 }
 
 /**
- * The PrimedComponentFactory declares the component and defines any additional distributed data structures.
+ * The DataObjectFactory declares the component and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
-export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
+export const DiceRollerInstantiationFactory = new DataObjectFactory(
     DiceRoller.ComponentName,
     DiceRoller,
     [],

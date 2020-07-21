@@ -22,19 +22,19 @@ import {
 
 import {
     ISharedComponentProps,
-    SharedComponent,
+    PureDataObject,
 } from "../components";
 
 /**
- * SharedComponentFactory is a barebones IComponentFactory for use with SharedComponent.
- * Consumers should typically use PrimedComponentFactory instead unless creating
+ * PureDataObjectFactory is a barebones IComponentFactory for use with PureDataObject.
+ * Consumers should typically use DataObjectFactory instead unless creating
  * another base component factory.
  *
  * Generics:
  * P - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced component may take during creation
  */
-export class SharedComponentFactory<P extends IComponent, S = undefined> implements
+export class PureDataObjectFactory<P extends IComponent, S = undefined> implements
     IComponentFactory,
     Partial<IProvideComponentRegistry>
 {
@@ -43,7 +43,7 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
 
     constructor(
         public readonly type: string,
-        private readonly ctor: new (props: ISharedComponentProps<P>) => SharedComponent<P, S>,
+        private readonly ctor: new (props: ISharedComponentProps<P>) => PureDataObject<P, S>,
         sharedObjects: readonly IChannelFactory[],
         private readonly optionalProviders: ComponentSymbolProvider<P>,
         registryEntries?: NamedComponentRegistryEntries,
@@ -96,7 +96,7 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
             this.registry,
         );
 
-        let instanceP: Promise<SharedComponent>;
+        let instanceP: Promise<PureDataObject>;
         // For new runtime, we need to force the component instance to be create
         // run the initialization.
         if (!this.onDemandInstantiation || !runtime.existing) {

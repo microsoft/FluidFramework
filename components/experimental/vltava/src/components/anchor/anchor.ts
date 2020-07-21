@@ -4,7 +4,7 @@
  */
 
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
     IComponentLastEditedTracker,
     IProvideComponentLastEditedTracker,
@@ -17,7 +17,7 @@ export const AnchorName = "anchor";
 /**
  * Anchor is an default component is responsible for managing creation and the default component
  */
-export class Anchor extends PrimedComponent implements IProvideComponentHTMLView, IProvideComponentLastEditedTracker {
+export class Anchor extends DataObject implements IProvideComponentHTMLView, IProvideComponentLastEditedTracker {
     private readonly defaultComponentId = "default-component-id";
     private defaultComponentInternal: IComponentHTMLView | undefined;
     private readonly lastEditedComponentId = "last-edited-component-id";
@@ -31,7 +31,7 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
         return this.defaultComponentInternal;
     }
 
-    private static readonly factory = new PrimedComponentFactory(AnchorName, Anchor, [], {});
+    private static readonly factory = new DataObjectFactory(AnchorName, Anchor, [], {});
 
     public static getFactory() {
         return Anchor.factory;
@@ -47,15 +47,15 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
         return this.lastEditedComponent;
     }
 
-    protected async componentInitializingFirstTime() {
-        const defaultComponent = await this.createAndAttachComponent("vltava");
+    protected async initializingFirstTime() {
+        const defaultComponent = await this.createAndAttachDataStore("vltava");
         this.root.set(this.defaultComponentId, defaultComponent.handle);
 
-        const lastEditedComponent = await this.createAndAttachComponent(LastEditedTrackerComponentName);
+        const lastEditedComponent = await this.createAndAttachDataStore(LastEditedTrackerComponentName);
         this.root.set(this.lastEditedComponentId, lastEditedComponent.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.defaultComponentInternal =
             (await this.root.get<IComponentHandle>(this.defaultComponentId).get())
                 .IComponentHTMLView;

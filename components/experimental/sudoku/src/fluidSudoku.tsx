@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
@@ -20,7 +20,7 @@ export const FluidSudokuName = "FluidSudoku";
 /**
  * A collaborative Sudoku component built on the Fluid Framework.
  */
-export class FluidSudoku extends PrimedComponent implements IComponentHTMLView {
+export class FluidSudoku extends DataObject implements IComponentHTMLView {
     public get IComponentHTMLView() {
         return this;
     }
@@ -28,7 +28,7 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLView {
     /**
      * This is where you define all which Distributed Data Structures your component will use
      */
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         FluidSudokuName,
         FluidSudoku,
         [SharedMap.getFactory()],
@@ -47,10 +47,10 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLView {
 
     /**
      * ComponentInitializingFirstTime is where you do setup for your component. This is only called once the first time
-     * your component is created. Anything that happens in componentInitializingFirstTime will happen before any other
+     * your component is created. Anything that happens in initializingFirstTime will happen before any other
      * user will see the component.
      */
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         // Create a new map for our Sudoku data
         const map = SharedMap.create(this.runtime);
 
@@ -68,7 +68,7 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLView {
     /**
      * This method will be called whenever the component has initialized, be it the first time or subsequent times.
      */
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         // Shared objects that are stored within other Shared objects (e.g. a SharedMap within the root, which is a
         // SharedDirectory) must be retrieved asynchronously. We do that here, in this async function, then store a
         // local reference to the object so we can easily use it in synchronous code.

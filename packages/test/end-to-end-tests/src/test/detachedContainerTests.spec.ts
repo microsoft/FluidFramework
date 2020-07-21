@@ -52,7 +52,7 @@ describe("Detached Container", () => {
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let loader: Loader;
 
-    const createAndAttachComponent = (async (
+    const createAndAttachDataStore = (async (
         componentContext: IComponentContext,
         componentId: string,
         type: string,
@@ -126,7 +126,7 @@ describe("Detached Container", () => {
 
         // Create a sub component of type TestFluidComponent and verify that it is attached.
         const subCompId = uuid();
-        await createAndAttachComponent(component.context, subCompId, "default");
+        await createAndAttachDataStore(component.context, subCompId, "default");
         const subResponse = await container.request({ url: `/${subCompId}` });
         if (subResponse.mimeType !== "fluid/component" && subResponse.status !== 200) {
             assert.fail("New components should be created in detached container");
@@ -148,7 +148,7 @@ describe("Detached Container", () => {
 
         // Create a sub component of type TestFluidComponent.
         const newComponentId = uuid();
-        await createAndAttachComponent(component.context, newComponentId, "default");
+        await createAndAttachDataStore(component.context, newComponentId, "default");
 
         // Now attach the container
         await container.attach(request);
@@ -177,7 +177,7 @@ describe("Detached Container", () => {
 
         // Create a sub component of type TestFluidComponent.
         const subCompId = uuid();
-        await createAndAttachComponent(component.context, subCompId, "default");
+        await createAndAttachDataStore(component.context, subCompId, "default");
 
         // Now attach the container and get the sub component.
         await container.attach(request);

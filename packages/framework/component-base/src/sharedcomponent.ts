@@ -22,7 +22,7 @@ import { ISharedObject } from "@fluidframework/shared-object-base";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
 
-export abstract class SharedComponent<
+export abstract class PureDataObject<
     TRoot extends ISharedObject = ISharedObject,
     TEvents extends IEvent = IEvent>
     extends EventForwarder<TEvents>

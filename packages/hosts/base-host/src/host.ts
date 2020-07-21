@@ -87,7 +87,7 @@ export class BaseHost {
         return container;
     }
 
-    public async getComponent(url: string) {
+    public async requestFluidObject(url: string) {
         const loader = await this.getLoader();
         const response = await loader.request({ url });
 
@@ -100,5 +100,10 @@ export class BaseHost {
         }
 
         return response.value as IComponent & IFluidObject;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    getComponent?(url: string) {
+        return this.requestFluidObject(url);
     }
 }

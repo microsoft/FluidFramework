@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 import React from "react";
@@ -17,10 +17,10 @@ export const VltavaName = "vltava";
 /**
  * Vltava is an application experience
  */
-export class Vltava extends PrimedComponent implements IComponentHTMLView {
+export class Vltava extends DataObject implements IComponentHTMLView {
     private dataModelInternal: IVltavaDataModel | undefined;
 
-    private static readonly factory = new PrimedComponentFactory(VltavaName, Vltava, [], {});
+    private static readonly factory = new DataObjectFactory(VltavaName, Vltava, [], {});
 
     public static getFactory() {
         return Vltava.factory;
@@ -36,12 +36,12 @@ export class Vltava extends PrimedComponent implements IComponentHTMLView {
 
     public get IComponentHTMLView() { return this; }
 
-    protected async componentInitializingFirstTime() {
-        const tabsComponent = await this.createAndAttachComponent("tabs");
+    protected async initializingFirstTime() {
+        const tabsComponent = await this.createAndAttachDataStore("tabs");
         this.root.set("tabs-component-id", tabsComponent.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.dataModelInternal =
             new VltavaDataModel(
                 this.root,

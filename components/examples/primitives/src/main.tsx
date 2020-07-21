@@ -4,7 +4,7 @@
  */
 
 import {
-    PrimedComponent,
+    DataObject,
 } from "@fluidframework/aqueduct";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
@@ -19,7 +19,7 @@ export const PrimitivesName = pkg.name as string;
 /**
  * Basic DDS examples using view interfaces and stock component classes.
  */
-export class PrimitivesCollection extends PrimedComponent implements IComponentHTMLView {
+export class PrimitivesCollection extends DataObject implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     private internalMapDir: IDirectory | undefined;
@@ -31,11 +31,11 @@ export class PrimitivesCollection extends PrimedComponent implements IComponentH
      *
      * This method is used to perform component setup, which can include setting an initial schema or initial values.
      */
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         this.internalMapDir = this.root.createSubDirectory("map");
     }
 
-    protected async componentInitializingFromExisting() {
+    protected async initializingFromExisting() {
         this.internalMapDir = this.root.getSubDirectory("map");
     }
 

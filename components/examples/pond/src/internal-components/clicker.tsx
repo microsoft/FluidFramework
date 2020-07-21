@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -21,7 +21,7 @@ const pkg = require("../../package.json");
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends PrimedComponent implements IComponentHTMLView {
+export class Clicker extends DataObject implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     private counter1: SharedCounter | undefined;
@@ -32,7 +32,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     /**
      * Do setup work here
      */
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const counter = SharedCounter.create(this.runtime);
         this.root.set(counter1Key, counter.handle);
         counter.increment(5);
@@ -46,7 +46,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
         storedMap.set(counter2Key, counter2.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         const counter1Handle = this.root.get<IComponentHandle<SharedCounter>>(counter1Key);
         this.counter1 = await counter1Handle.get();
 
@@ -59,7 +59,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
     public render(div: HTMLElement) {
         if (this.counter1 === undefined || this.counter2 === undefined) {
-            throw new Error("componentHasInitialized should be called prior to render");
+            throw new Error("hasInitialized should be called prior to render");
         }
 
         // Get our counter object that we set in initialize and pass it in to the view.
@@ -75,7 +75,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
     public static getFactory() { return Clicker.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         Clicker.ComponentName,
         Clicker,
         [

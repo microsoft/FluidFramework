@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
 import {
@@ -19,9 +19,9 @@ export const LastEditedTrackerComponentName = pkg.name as string;
 /**
  * LastEditedTrackerComponent creates a LastEditedTracker that keeps track of the latest edits to the document.
  */
-export class LastEditedTrackerComponent extends PrimedComponent
+export class LastEditedTrackerComponent extends DataObject
 implements IProvideComponentLastEditedTracker, IProvideFluidLastEditedTracker {
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         LastEditedTrackerComponentName,
         LastEditedTrackerComponent,
         [SharedSummaryBlock.getFactory()],

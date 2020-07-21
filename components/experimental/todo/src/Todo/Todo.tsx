@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent } from "@fluidframework/aqueduct";
+import { DataObject } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
@@ -24,7 +24,7 @@ export const TodoName = `${pkg.name as string}-todo`;
  * - New todo item entry
  * - List of todo items
  */
-export class Todo extends PrimedComponent implements IComponentHTMLView {
+export class Todo extends DataObject implements IComponentHTMLView {
     // DDS ids stored as variables to minimize simple string mistakes
     private readonly todoItemsKey = "todo-items";
     private readonly todoTitleKey = "todo-title";
@@ -41,7 +41,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLView {
     /**
      * Do setup work here
      */
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         // Create a list for of all inner todo item components.
         // We will use this to know what components to load.
         const map = SharedMap.create(this.runtime);
@@ -52,7 +52,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLView {
         this.root.set(this.todoTitleKey, text.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.todoItemsMap = await this.root.get<IComponentHandle<ISharedMap>>(this.todoItemsKey).get();
         // Hide the DDS eventing used by the model, expose a model-specific event interface.
         this.todoItemsMap.on("op", (op, local) => {

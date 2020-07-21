@@ -49,7 +49,7 @@ describe("Batching", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
+    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
         const response = await container.request({ url: componentId });
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             throw new Error(`Component with id: ${componentId} not found`);
@@ -87,12 +87,12 @@ describe("Batching", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
         const container1 = await createContainer();
-        component1 = await getComponent("default", container1);
+        component1 = await requestFluidObject("default", container1);
         component1map1 = await component1.getSharedObject<SharedMap>(map1Id);
         component1map2 = await component1.getSharedObject<SharedMap>(map2Id);
 
         const container2 = await createContainer();
-        component2 = await getComponent("default", container2);
+        component2 = await requestFluidObject("default", container2);
         component2map1 = await component2.getSharedObject<SharedMap>(map1Id);
         component2map2 = await component2.getSharedObject<SharedMap>(map2Id);
 

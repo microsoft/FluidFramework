@@ -5,7 +5,7 @@
 
 import { Template } from "@fluid-example/flow-util-lib";
 import { TableDocument, TableDocumentType } from "@fluid-example/table-document";
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import { GridView } from "./grid";
@@ -34,7 +34,7 @@ const template = new Template({
 
 const innerDocKey = "innerDoc";
 
-export class TableView extends PrimedComponent implements IComponentHTMLView {
+export class TableView extends DataObject implements IComponentHTMLView {
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     public static getFactory() { return factory; }
 
@@ -90,7 +90,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
     }
     // #endregion IComponentHTMLView
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         // Set up internal table doc
         const doc = await TableDocument.getFactory().createComponent(this.context) as TableDocument;
         this.root.set(innerDocKey, doc.handle);
@@ -99,7 +99,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
     }
 }
 
-const factory = new PrimedComponentFactory(
+const factory = new DataObjectFactory(
     tableViewType,
     TableView,
     [],

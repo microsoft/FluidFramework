@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentDefaultFactoryName } from "@fluidframework/framework-interfaces";
+import { IFluidExportDefaultFactoryName } from "@fluidframework/framework-interfaces";
 import { NamedComponentRegistryEntries } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { DependencyContainerRegistry } from "@fluidframework/synthesize";
@@ -20,8 +20,8 @@ const defaultComponentId = "default";
  *
  * This factory should be exposed as fluidExport off the entry point to your module.
  */
-export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRuntimeFactory implements
-    IComponentDefaultFactoryName {
+export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory implements
+    IFluidExportDefaultFactoryName {
     public static readonly defaultComponentId = defaultComponentId;
 
     constructor(
@@ -43,7 +43,7 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
         );
     }
 
-    public get IComponentDefaultFactoryName() { return this; }
+    public get IFluidExportDefaultFactoryName() { return this; }
     public getDefaultFactoryName() { return this.defaultComponentName; }
 
     /**
@@ -51,7 +51,7 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
         const componentRuntime = await runtime.createComponent(
-            ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId,
+            ContainerRuntimeFactoryWithDefaultDataStore.defaultComponentId,
             this.defaultComponentName,
         );
         // We need to request the component before attaching to ensure it

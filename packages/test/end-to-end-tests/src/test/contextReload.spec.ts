@@ -5,9 +5,9 @@
 
 import assert from "assert";
 import {
-    ContainerRuntimeFactoryWithDefaultComponent,
-    PrimedComponent,
-    PrimedComponentFactory,
+    ContainerRuntimeFactoryWithDefaultDataStore,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IFluidCodeDetails, IFluidPackage, ILoader, IRuntimeFactory } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
@@ -20,7 +20,7 @@ const V2 = "0.2.0";
 
 // A simple component with runtime/root exposed for testing purposes. Two
 // different versions (defined below) are used to test context reload.
-abstract class TestComponent extends PrimedComponent {
+abstract class TestComponent extends DataObject {
     public static readonly type = "@fluid-example/test-component";
     public readonly version: string;
     public get _runtime() { return this.runtime; }
@@ -36,7 +36,7 @@ class TestComponentV2 extends TestComponent {
     public static readonly version = V2;
     public readonly version = V2;
     public static readonly testKey = "version2";
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.root.set(TestComponentV2.testKey, true);
     }
 }
@@ -60,7 +60,7 @@ class OldTestComponentV2 extends OldTestComponent {
     public static readonly version = V2;
     public readonly version = V2;
     public static readonly testKey = "version2";
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.root.set(OldTestComponentV2.testKey, true);
     }
 }
@@ -96,7 +96,7 @@ describe("context reload", function() {
         return old.initializeLocalContainer(id, loader, defaultCodeDetails);
     }
 
-    async function getComponent<T>(componentId: string, container: Container | old.Container): Promise<T> {
+    async function requestFluidObject<T>(componentId: string, container: Container | old.Container): Promise<T> {
         const response = await container.request({ url: componentId });
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             throw new Error(`Component with id: ${componentId} not found`);
@@ -106,9 +106,9 @@ describe("context reload", function() {
 
     const createRuntimeFactory = (component): IRuntimeFactory => {
         const type = TestComponent.type;
-        return new ContainerRuntimeFactoryWithDefaultComponent(
+        return new ContainerRuntimeFactoryWithDefaultDataStore(
             type,
-            [[type, Promise.resolve(new PrimedComponentFactory(type, component, [], {}))]],
+            [[type, Promise.resolve(new DataObjectFactory(type, component, [], {}))]],
         );
     };
 
@@ -152,7 +152,7 @@ describe("context reload", function() {
 
             await proposeAndWaitForReload(V2, this.container);
 
-            const componentV2 = await getComponent<TestComponent>("default", this.container);
+            const componentV2 = await requestFluidObject<TestComponent>("default", this.container);
 
             assert.strictEqual(await componentV2._root.get(test[0]), test[1]);
         });
@@ -162,7 +162,7 @@ describe("context reload", function() {
 
             await proposeAndWaitForReload(V2, this.container);
 
-            const componentV2 = await getComponent<TestComponent>("default", this.container);
+            const componentV2 = await requestFluidObject<TestComponent>("default", this.container);
 
             assert.strictEqual(componentV2.version, TestComponentV2.version);
 
@@ -177,7 +177,7 @@ describe("context reload", function() {
                 [codeDetails(V1), { fluidExport: createRuntimeFactory(TestComponentV1) }],
                 [codeDetails(V2), { fluidExport: createRuntimeFactory(TestComponentV2) }],
             ], this.deltaConnectionServer);
-            this.componentV1 = await getComponent<TestComponent>("default", this.container);
+            this.componentV1 = await requestFluidObject<TestComponent>("default", this.container);
             assert.strictEqual(this.componentV1.version, TestComponentV1.version);
         });
 
@@ -206,7 +206,7 @@ describe("context reload", function() {
             containers.map((container) => container.on("closed", (error) => success = success && error === undefined));
 
             let components = await Promise.all(containers.map(
-                async (container) => getComponent<TestComponent>("default", container)));
+                async (container) => requestFluidObject<TestComponent>("default", container)));
 
             assert.strictEqual(components[0].version, TestComponentV1.version);
             assert.strictEqual(components[1].version, TestComponentV1.version);
@@ -214,7 +214,7 @@ describe("context reload", function() {
             await proposeAndWaitForReload(V2, ...containers);
 
             components = await Promise.all(containers.map(
-                async (container) => getComponent<TestComponent>("default", container)));
+                async (container) => requestFluidObject<TestComponent>("default", container)));
 
             assert.strictEqual(components[0].version, TestComponentV2.version);
             assert.strictEqual(components[1].version, TestComponentV2.version);
@@ -236,7 +236,7 @@ describe("context reload", function() {
                     [codeDetails(V1), { fluidExport: createOldRuntimeFactory(OldTestComponentV1) }],
                     [codeDetails(V2), { fluidExport: createRuntimeFactory(TestComponentV2) }],
                 ], this.deltaConnectionServer);
-                this.componentV1 = await getComponent<OldTestComponent>("default", this.container);
+                this.componentV1 = await requestFluidObject<OldTestComponent>("default", this.container);
                 assert.strictEqual(this.componentV1.version, TestComponentV1.version);
             });
 
@@ -254,7 +254,7 @@ describe("context reload", function() {
                     [codeDetails(V1), { fluidExport: createRuntimeFactory(TestComponentV1) }],
                     [codeDetails(V2), { fluidExport: createOldRuntimeFactory(OldTestComponentV2) }],
                 ], this.deltaConnectionServer);
-                this.componentV1 = await getComponent<TestComponent>("default", this.container);
+                this.componentV1 = await requestFluidObject<TestComponent>("default", this.container);
                 assert.strictEqual(this.componentV1.version, TestComponentV1.version);
             });
 

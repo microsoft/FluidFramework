@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PrimedComponent } from "@fluidframework/aqueduct";
+import { DataObject } from "@fluidframework/aqueduct";
 import { IDirectory } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
@@ -18,7 +18,7 @@ export const TextListName = `${pkg.name as string}-textlist`;
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
  * collaborative textarea.
  */
-export class TextList extends PrimedComponent implements IComponentHTMLView {
+export class TextList extends DataObject implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     private textDirectory: IDirectory;
@@ -26,19 +26,19 @@ export class TextList extends PrimedComponent implements IComponentHTMLView {
     /**
      * Do creation work
      */
-    protected async componentInitializingFirstTime(_props?: any) {
+    protected async initializingFirstTime(_props?: any) {
         this.textDirectory = this.root.createSubDirectory("textDirectory");
 
         // We want to populate the list of items with an initial shared string
         this.createNewItem();
     }
 
-    protected async componentInitializingFromExisting() {
+    protected async initializingFromExisting() {
         this.textDirectory = this.root.getSubDirectory("textDirectory");
     }
 
-    protected async componentHasInitialized() {
-        console.log("componentHasInitialized setting listener");
+    protected async hasInitialized() {
+        console.log("hasInitialized setting listener");
         this.runtime.on("op", (e) => {
             console.log(JSON.stringify(e));
         });

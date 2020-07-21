@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
@@ -69,7 +69,7 @@ describe("Ops on Reconnect", () => {
         );
 
         const runtimeFactory =
-            new ContainerRuntimeFactoryWithDefaultComponent(
+            new ContainerRuntimeFactoryWithDefaultDataStore(
                 "default",
                 [
                     ["default", Promise.resolve(factory)],
@@ -91,7 +91,7 @@ describe("Ops on Reconnect", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function getComponent(componentId: string, fromContainer: Container):
+    async function requestFluidObject(componentId: string, fromContainer: Container):
         Promise<ITestFluidComponent & IComponentLoadable> {
         const response = await fromContainer.request({ url: componentId });
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
@@ -133,7 +133,7 @@ describe("Ops on Reconnect", () => {
         });
 
         // Get component1 on the second container.
-        const secondContainerComp1 = await getComponent("default", secondContainer);
+        const secondContainerComp1 = await requestFluidObject("default", secondContainer);
         opProcessingController.addDeltaManagers(secondContainerComp1.runtime.deltaManager);
 
         return secondContainerComp1;
@@ -145,7 +145,7 @@ describe("Ops on Reconnect", () => {
 
         // Create the first container, component and DDSes.
         firstContainer = await createContainer();
-        firstContainerComp1 = await getComponent("default", firstContainer);
+        firstContainerComp1 = await requestFluidObject("default", firstContainer);
         firstContainerComp1Map1 = await firstContainerComp1.getSharedObject<SharedMap>(map1Id);
         firstContainerComp1Map2 = await firstContainerComp1.getSharedObject<SharedMap>(map2Id);
         firstContainerComp1Directory = await firstContainerComp1.getSharedObject<SharedDirectory>(directoryId);
