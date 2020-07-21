@@ -5,9 +5,9 @@
 
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { Container } from "@fluidframework/container-loader";
+import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IComponentMountableView } from "@fluidframework/view-interfaces";
-import { getTinyliciousContainer } from "./tinyliciousContainer";
 
 // I'm choosing to put the docId in the hash just for my own convenience.  There should be no requirements on the
 // page's URL format deeper in the system.
@@ -59,16 +59,20 @@ async function mountDefaultComponentFromContainer(container: Container): Promise
     view.render(div, { display: "block" });
 }
 
-// The format of the code proposal will be the contents of our package.json, which has a special "fluid" section
-// describing the code to load.
-// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-const packageJson = require("../../package.json");
+// Just a helper function to kick things off.  Making it async allows us to use await.
+async function start(): Promise<void> {
+    // The format of the code proposal will be the contents of our package.json, which has a special "fluid" section
+    // describing the code to load.
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+    const packageJson = require("../../package.json");
 
-// If you'd prefer to load the container bundle yourself (rather than relying on the codeLoader), pass the entrypoint
-// to the module as the third param below (e.g. window["main"]).
-getTinyliciousContainer(documentId, packageJson)
-    .then(mountDefaultComponentFromContainer)
+    // If you'd prefer to load the container bundle yourself (rather than relying on the codeLoader), pass the
+    // entrypoint to the module as the third param below (e.g. window["main"]).
+    const container = await getTinyliciousContainer(documentId, packageJson);
+    await mountDefaultComponentFromContainer(container);
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line dot-notation
-    .then(() => { window["fluidStarted"] = true; })
-    .catch((error) => console.error(error));
+    window["fluidStarted"] = true;
+}
+
+start().catch((error) => console.error(error));
