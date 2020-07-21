@@ -18,3 +18,4 @@ export * from "./safeParser";
 export * from "./timer";
 export * from "./trace";
 export * from "./typedEventEmitter";
+export * from "./unreachable";
