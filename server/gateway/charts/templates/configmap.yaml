@@ -82,7 +82,7 @@ data:
                 }
             },
             "alfredUrl": "{{ .Values.alfred.url }}",
-            "frsAlfredUrl": "{{ .Values.frsAlfred.url }}",
+            "frsAlfredUrl": "{{ .Values.alfred.frsAlfredUrl }}",
             "gatewayUrl": "http://{{ template "fullname" . }}",
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "frsServerUrl": "{{ .Values.alfred.frsExternalUrl }}",
