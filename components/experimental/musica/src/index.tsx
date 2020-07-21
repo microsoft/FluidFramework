@@ -9,7 +9,7 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 // React
 import React from "react";
@@ -25,8 +25,8 @@ const musicaName = "@fluid-example/musica";
 // TODO: Is this right?
 const audioContext = new AudioContext();
 
-export class Musica extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class Musica extends PrimedComponent implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     protected async componentHasInitialized() {
         this.player = new Player(audioContext);

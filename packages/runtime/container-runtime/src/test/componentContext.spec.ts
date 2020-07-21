@@ -11,8 +11,8 @@ import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
     IComponentRuntimeChannel,
     IComponentContext,
-    IComponentFactory,
-    IComponentRegistry,
+    IFluidDataStoreFactory,
+    IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker } from "@fluidframework/runtime-utils";
@@ -32,17 +32,17 @@ describe("Component Context Tests", () => {
         const attachCb = (mR: IComponentRuntimeChannel) => { };
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
-            const factory: IComponentFactory = {
-                get IComponentFactory() { return factory; },
-                instantiateComponent: (context: IComponentContext) => { },
+            const factory: IFluidDataStoreFactory = {
+                get IFluidDataStoreFactory() { return factory; },
+                instantiateDataStore: (context: IComponentContext) => { },
             };
-            const registry: IComponentRegistry = {
-                get IComponentRegistry() { return registry; },
+            const registry: IFluidDataStoreRegistry = {
+                get IFluidDataStoreRegistry() { return registry; },
                 get: async (pkg) => Promise.resolve(factory),
             };
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
-                IComponentRegistry: registry,
+                IFluidDataStoreRegistry: registry,
                 notifyComponentInstantiated: (c) => { },
                 on: (event, listener) => {},
             } as ContainerRuntime;
@@ -99,14 +99,14 @@ describe("Component Context Tests", () => {
 
         it("Supplying array of packages in LocalComponentContext should not create exception", async () => {
             const registryWithSubRegistries: { [key: string]: any } = {};
-            registryWithSubRegistries.IComponentFactory = registryWithSubRegistries;
-            registryWithSubRegistries.IComponentRegistry = registryWithSubRegistries;
+            registryWithSubRegistries.IFluidDataStoreFactory = registryWithSubRegistries;
+            registryWithSubRegistries.IFluidDataStoreRegistry = registryWithSubRegistries;
             registryWithSubRegistries.get = async (pkg) => Promise.resolve(registryWithSubRegistries);
-            registryWithSubRegistries.instantiateComponent = (context: IComponentContext) => { };
+            registryWithSubRegistries.instantiateDataStore = (context: IComponentContext) => { };
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
-                IComponentRegistry: registryWithSubRegistries,
+                IFluidDataStoreRegistry: registryWithSubRegistries,
                 notifyComponentInstantiated: (c) => { },
                 on: (event, listener) => {},
             } as ContainerRuntime;
@@ -148,16 +148,16 @@ describe("Component Context Tests", () => {
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
             const factory: { [key: string]: any } = {};
-            factory.IComponentFactory = factory;
-            factory.instantiateComponent =
+            factory.IFluidDataStoreFactory = factory;
+            factory.instantiateDataStore =
                 (context: IComponentContext) => { context.bindRuntime(new MockComponentRuntime()); };
             const registry: { [key: string]: any } = {};
-            registry.IComponentRegistry = registry;
+            registry.IFluidDataStoreRegistry = registry;
             registry.get = async (pkg) => Promise.resolve(factory);
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
-                IComponentRegistry: registry,
+                IFluidDataStoreRegistry: registry,
                 notifyComponentInstantiated: (c) => { },
                 on: (event, listener) => {},
             } as ContainerRuntime;

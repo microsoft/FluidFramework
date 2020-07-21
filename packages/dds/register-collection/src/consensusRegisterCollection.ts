@@ -343,15 +343,15 @@ export class ConsensusRegisterCollection<T>
     }
 
     private stringify(value: any): string {
-        return this.runtime.IComponentSerializer.stringify(
+        return this.runtime.IFluidSerializer.stringify(
             value,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidHandleContext,
             this.handle);
     }
 
     private parse(content: string): any {
-        return this.runtime.IComponentSerializer.parse(
+        return this.runtime.IFluidSerializer.parse(
             content,
-            this.runtime.IComponentHandleContext);
+            this.runtime.IFluidHandleContext);
     }
 }

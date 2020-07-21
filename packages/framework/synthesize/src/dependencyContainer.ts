@@ -12,29 +12,29 @@ import {
     ComponentKey,
 } from "./types";
 import {
-    IComponentDependencySynthesizer,
-} from "./IComponentDependencySynthesizer";
+    IFluidDependencySynthesizer,
+} from "./IFluidDependencySynthesizer";
 
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will
  * synthesize an object based on them when requested.
  */
-export class DependencyContainer implements IComponentDependencySynthesizer {
+export class DependencyContainer implements IFluidDependencySynthesizer {
     private readonly providers = new Map<keyof IComponent, ComponentProvider<any>>();
 
-    public get IComponentDependencySynthesizer() { return this; }
+    public get IFluidDependencySynthesizer() { return this; }
 
     /**
-     * {@inheritDoc (IComponentDependencySynthesizer:interface).registeredTypes}
+     * {@inheritDoc (IFluidDependencySynthesizer:interface).registeredTypes}
      */
     public get registeredTypes(): Iterable<(keyof IComponent)> {
         return this.providers.keys();
     }
 
-    public constructor(public parent: IComponentDependencySynthesizer | undefined = undefined) { }
+    public constructor(public parent: IFluidDependencySynthesizer | undefined = undefined) { }
 
     /**
-     * {@inheritDoc (IComponentDependencySynthesizer:interface).register}
+     * {@inheritDoc (IFluidDependencySynthesizer:interface).register}
      */
     public register<T extends keyof IComponent>(type: T, provider: ComponentProvider<T>): void {
         if (this.has(type)) {
@@ -45,7 +45,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     }
 
     /**
-     * {@inheritDoc (IComponentDependencySynthesizer:interface).unregister}
+     * {@inheritDoc (IFluidDependencySynthesizer:interface).unregister}
      */
     public unregister<T extends keyof IComponent>(type: T): void {
         if (this.providers.has(type)) {
@@ -54,7 +54,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     }
 
     /**
-     * {@inheritDoc (IComponentDependencySynthesizer:interface).synthesize}
+     * {@inheritDoc (IFluidDependencySynthesizer:interface).synthesize}
      */
     public synthesize<
         O extends IComponent,
@@ -76,7 +76,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     }
 
     /**
-     * {@inheritDoc (IComponentDependencySynthesizer:interface).has}
+     * {@inheritDoc (IFluidDependencySynthesizer:interface).has}
      */
     public has(...types: (keyof IComponent)[]): boolean {
         return types.every((type) => {
@@ -85,7 +85,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     }
 
     /**
-     * {@inheritDoc (IComponentDependencySynthesizer:interface).getProvider}
+     * {@inheritDoc (IFluidDependencySynthesizer:interface).getProvider}
      */
     public getProvider<T extends keyof IComponent>(type: T): ComponentProvider<T> | undefined {
         // If we have the provider return it
@@ -158,5 +158,10 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
                 }
             },
         };
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentDependencySynthesizer() {
+        return this.IFluidDependencySynthesizer;
     }
 }

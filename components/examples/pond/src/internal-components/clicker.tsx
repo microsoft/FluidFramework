@@ -4,10 +4,10 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -21,8 +21,8 @@ const pkg = require("../../package.json");
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class Clicker extends PrimedComponent implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private counter1: SharedCounter | undefined;
     private counter2: SharedCounter | undefined;
@@ -47,15 +47,15 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentHasInitialized() {
-        const counter1Handle = this.root.get<IComponentHandle<SharedCounter>>(counter1Key);
+        const counter1Handle = this.root.get<IFluidHandle<SharedCounter>>(counter1Key);
         this.counter1 = await counter1Handle.get();
 
-        const storedMap = await this.root.get<IComponentHandle<ISharedMap>>(storedMapKey).get();
-        const counter2Handle = storedMap.get<IComponentHandle<SharedCounter>>(counter2Key);
+        const storedMap = await this.root.get<IFluidHandle<ISharedMap>>(storedMapKey).get();
+        const counter2Handle = storedMap.get<IFluidHandle<SharedCounter>>(counter2Key);
         this.counter2 = await counter2Handle.get();
     }
 
-    // start IComponentHTMLView
+    // start IFluidHTMLView
 
     public render(div: HTMLElement) {
         if (this.counter1 === undefined || this.counter2 === undefined) {
@@ -69,7 +69,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
         );
     }
 
-    // end IComponentHTMLView
+    // end IFluidHTMLView
 
     // ----- COMPONENT SETUP STUFF -----
 

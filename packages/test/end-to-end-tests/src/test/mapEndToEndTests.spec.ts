@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -307,7 +307,7 @@ describe("Map", () => {
 
         // The new map should be availble in the remote client and it should contain that key that was
         // set in local state.
-        const newSharedMap2 = await sharedMap2.get<IComponentHandle<SharedMap>>("newSharedMap").get();
+        const newSharedMap2 = await sharedMap2.get<IFluidHandle<SharedMap>>("newSharedMap").get();
         assert.equal(newSharedMap2.get("newKey"), "newValue", "The data set in local state is not available in map 2");
 
         // Set a new value for the same key in the remote map.

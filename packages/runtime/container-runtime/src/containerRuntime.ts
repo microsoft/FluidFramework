@@ -9,8 +9,8 @@ import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
-    IComponentHandleContext,
-    IComponentSerializer,
+    IFluidHandleContext,
+    IFluidSerializer,
     IRequest,
     IResponse,
     IFluidObject,
@@ -69,15 +69,15 @@ import {
     FlushMode,
     IAttachMessage,
     IComponentContext,
-    IComponentRegistry,
+    IFluidDataStoreRegistry,
     IComponentRuntimeChannel,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelop,
-    NamedComponentRegistryEntries,
+    NamedFluidDataStoreRegistryEntries,
     SchedulerType,
 } from "@fluidframework/runtime-definitions";
-import { ComponentSerializer, SummaryTracker, unreachableCase, RequestParser } from "@fluidframework/runtime-utils";
+import { FluidSerializer, SummaryTracker, unreachableCase, RequestParser } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
@@ -412,7 +412,7 @@ export const schedulerId = SchedulerType;
 
 // Wraps the provided list of packages and augments with some system level services.
 class ContainerRuntimeComponentRegistry extends ComponentRegistry {
-    constructor(namedEntries: NamedComponentRegistryEntries) {
+    constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
         super([
             ...namedEntries,
             [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
@@ -438,7 +438,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
      */
     public static async load(
         context: IContainerContext,
-        registryEntries: NamedComponentRegistryEntries,
+        registryEntries: NamedFluidDataStoreRegistryEntries,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IComponent & IFluidObject = context.scope,
@@ -547,7 +547,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         return this.containerScope;
     }
 
-    public get IComponentRegistry(): IComponentRegistry {
+    public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
         return this.registry;
     }
 
@@ -562,9 +562,9 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     public nextSummarizerP?: Promise<Summarizer>;
     public nextSummarizerD?: Deferred<Summarizer>;
 
-    public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
+    public readonly IFluidSerializer: IFluidSerializer = new FluidSerializer();
 
-    public readonly IComponentHandleContext: IComponentHandleContext;
+    public readonly IFluidHandleContext: IFluidHandleContext;
 
     public readonly logger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
@@ -626,7 +626,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
     private constructor(
         private readonly context: IContainerContext,
-        private readonly registry: IComponentRegistry,
+        private readonly registry: IFluidDataStoreRegistry,
         chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: true, enableWorker: false },
         private readonly containerScope: IComponent & IFluidObject,
@@ -636,7 +636,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         this.chunkMap = new Map<string, string[]>(chunks);
 
-        this.IComponentHandleContext = new ComponentHandleContext("", this);
+        this.IFluidHandleContext = new ComponentHandleContext("", this);
 
         this.latestSummaryAck = {
             proposalHandle: undefined,
@@ -706,7 +706,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             () => this.summaryConfiguration,
             async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
             (summContext, refSeq) => this.refreshLatestSummaryAck(summContext, refSeq),
-            this.IComponentHandleContext,
+            this.IFluidHandleContext,
             this.previousState.summaryCollection);
 
         // Create the SummaryManager and mark the initial state
@@ -760,7 +760,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         return undefined;
     }
 
-    public get IComponentConfiguration() {
+    public get IFluidConfiguration() {
         return this.context.configuration;
     }
 
@@ -785,8 +785,8 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             if (component) {
                 const subRequest = requestParser.createSubRequest(1);
                 if (subRequest !== undefined) {
-                    assert(component.IComponentRouter);
-                    return component.IComponentRouter.request(subRequest);
+                    assert(component.IFluidRouter);
+                    return component.IFluidRouter.request(subRequest);
                 } else {
                     return {
                         status: 200,
@@ -1830,5 +1830,41 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         this.latestSummaryAck = context;
         this.summaryTracker.refreshLatestSummary(referenceSequenceNumber);
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentRegistry() {
+        this.logger.send({
+            category: "warning", eventName: "deprecated",
+            message: "ContainerRuntime.IComponentRegistry",
+        });
+        return this.IFluidDataStoreRegistry;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentConfiguration() {
+        this.logger.send({
+            category: "warning", eventName: "deprecated",
+            message: "ContainerRuntime.IComponentConfiguration",
+        });
+        return this.IFluidConfiguration;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentSerializer() {
+        this.logger.send({
+            category: "warning", eventName: "deprecated",
+            message: "ContainerRuntime.IComponentSerializer",
+        });
+        return this.IFluidSerializer;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentHandleContext() {
+        this.logger.send({
+            category: "warning", eventName: "deprecated",
+            message: "ContainerRuntime.IComponentHandleContext",
+        });
+        return this.IFluidHandleContext;
     }
 }

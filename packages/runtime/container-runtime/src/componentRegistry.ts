@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 import {
-    ComponentRegistryEntry,
-    IComponentRegistry,
-    NamedComponentRegistryEntries,
+    FluidDataStoreRegistryEntry,
+    IFluidDataStoreRegistry,
+    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 
-export class ComponentRegistry implements IComponentRegistry {
-    private readonly map: Map<string, Promise<ComponentRegistryEntry>>;
+export class ComponentRegistry implements IFluidDataStoreRegistry {
+    private readonly map: Map<string, Promise<FluidDataStoreRegistryEntry>>;
 
-    public get IComponentRegistry() { return this; }
+    public get IFluidDataStoreRegistry() { return this; }
 
-    constructor(namedEntries: NamedComponentRegistryEntries) {
+    constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
         this.map = new Map(namedEntries);
     }
 
-    public async get(name: string): Promise<ComponentRegistryEntry | undefined> {
+    public async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
         if (this.map.has(name)) {
             return this.map.get(name);
         }

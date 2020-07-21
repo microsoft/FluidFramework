@@ -4,9 +4,9 @@
  */
 
 import { PrimedComponent } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IColor, IInk, Ink, InkCanvas } from "@fluidframework/ink";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.less";
 
@@ -24,14 +24,14 @@ const colorPickerColors: IColor[] = [
     { r: 0, g: 0, b: 0, a: 1 },
 ];
 
-export class Canvas extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class Canvas extends PrimedComponent implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private ink: IInk;
     private inkCanvas: InkCanvas;
     private inkColorPicker: HTMLDivElement;
 
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         elm.appendChild(this.createCanvasDom());
         this.sizeCanvas();
 
@@ -44,7 +44,7 @@ export class Canvas extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentHasInitialized() {
         // Wait here for the ink
-        const handle = await this.root.wait<IComponentHandle<IInk>>("pageInk");
+        const handle = await this.root.wait<IFluidHandle<IInk>>("pageInk");
         this.ink = await handle.get();
     }
 

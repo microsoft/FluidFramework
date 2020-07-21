@@ -9,8 +9,8 @@ import {
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
-    ComponentRegistryEntry,
-    IComponentRegistry,
+    FluidDataStoreRegistryEntry,
+    IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { WebCodeLoader, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
@@ -18,10 +18,10 @@ import { WebCodeLoader, SemVerCdnCodeResolver } from "@fluidframework/web-code-l
 /**
  * A component registry that can load component via their url
  */
-export class UrlRegistry implements IComponentRegistry {
+export class UrlRegistry implements IFluidDataStoreRegistry {
     private static readonly WindowKeyPrefix = "FluidExternalComponent";
 
-    private readonly urlRegistryMap = new Map<string, Promise<ComponentRegistryEntry | undefined>>();
+    private readonly urlRegistryMap = new Map<string, Promise<FluidDataStoreRegistryEntry | undefined>>();
     private readonly loadingPackages: Map<string, Promise<IFluidPackage>>;
     private readonly webloader = new WebCodeLoader(new SemVerCdnCodeResolver());
 
@@ -34,13 +34,13 @@ export class UrlRegistry implements IComponentRegistry {
         this.loadingPackages = window[loadingPackagesKey] as Map<string, Promise<IFluidPackage>>;
     }
 
-    public get IComponentRegistry() { return this; }
+    public get IFluidDataStoreRegistry() { return this; }
 
     /**
      * Gets a registry entry, or will try to load based on the passed name if not found.
      * @param name - the registry name, which may be a URL to retrieve from or a published package name.
      */
-    public async get(name: string): Promise<ComponentRegistryEntry | undefined> {
+    public async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
         if (!this.urlRegistryMap.has(name)) {
             this.urlRegistryMap.set(name, this.loadEntrypoint(name));
         }

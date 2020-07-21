@@ -4,9 +4,9 @@
  */
 
 import {
-    IComponentHandle,
-    IComponentHandleContext,
-    IComponentRouter,
+    IFluidHandle,
+    IFluidHandleContext,
+    IFluidRouter,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -16,14 +16,14 @@ import { ISharedDirectory } from "@fluidframework/map";
 /**
  * This class represents blob (long string)
  * This object is used only when creating (writing) new blob and serialization purposes.
- * De-serialization process goes through ComponentHandle and request flow:
+ * De-serialization process goes through FluidOjectHandle and request flow:
  * PrimedComponent.request() recognizes requests in the form of `/blobs/<id>`
  * and loads blob.
  */
-export class BlobHandle implements IComponentHandle {
-    public get IComponentRouter(): IComponentRouter { return this; }
-    public get IComponentHandleContext(): IComponentHandleContext { return this; }
-    public get IComponentHandle(): IComponentHandle { return this; }
+export class BlobHandle implements IFluidHandle {
+    public get IFluidRouter(): IFluidRouter { return this; }
+    public get IFluidHandleContext(): IFluidHandleContext { return this; }
+    public get IFluidHandle(): IFluidHandle { return this; }
 
     public get isAttached(): boolean {
         return true;
@@ -34,7 +34,7 @@ export class BlobHandle implements IComponentHandle {
     constructor(
         public readonly path: string,
         private readonly directory: ISharedDirectory,
-        public readonly routeContext: IComponentHandleContext,
+        public readonly routeContext: IFluidHandleContext,
     ) {
         this.absolutePath = generateHandleContextPath(path, this.routeContext);
     }
@@ -47,11 +47,26 @@ export class BlobHandle implements IComponentHandle {
         return;
     }
 
-    public bind(handle: IComponentHandle) {
+    public bind(handle: IFluidHandle) {
         throw new Error("Cannot bind to blob handle");
     }
 
     public async request(request: IRequest): Promise<IResponse> {
         return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentRouter() {
+        return this.IFluidRouter;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentHandleContext() {
+        return this.IFluidHandleContext;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentHandle() {
+        return this.IFluidHandle;
     }
 }

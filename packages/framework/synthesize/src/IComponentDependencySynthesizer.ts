@@ -13,16 +13,16 @@ import {
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentDependencySynthesizer>> { }
+    export interface IComponent extends Readonly<Partial<IProvideFluidDependencySynthesizer>> { }
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideComponentDependencySynthesizer>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideFluidDependencySynthesizer>> { }
 }
 
-export const IComponentDependencySynthesizer: keyof IProvideComponentDependencySynthesizer
-    = "IComponentDependencySynthesizer";
+export const IFluidDependencySynthesizer: keyof IProvideFluidDependencySynthesizer
+    = "IFluidDependencySynthesizer";
 
-export interface IProvideComponentDependencySynthesizer {
-    IComponentDependencySynthesizer: IComponentDependencySynthesizer;
+export interface IProvideFluidDependencySynthesizer {
+    IFluidDependencySynthesizer: IFluidDependencySynthesizer;
 }
 
 /**
@@ -30,7 +30,7 @@ export interface IProvideComponentDependencySynthesizer {
  * It allow for registering providers and uses synthesize to generate a new object with the optional
  * and required types.
  */
-export interface IComponentDependencySynthesizer extends IProvideComponentDependencySynthesizer {
+export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynthesizer {
     /**
      * All the registered types available
      */

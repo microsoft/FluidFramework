@@ -10,10 +10,10 @@ import {
     IFluidModule,
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
+import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
 // Represents the entry point for a fluid container.
-export type fluidEntryPoint = Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>;
+export type fluidEntryPoint = Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IFluidModule>;
 
 /**
  * A simple code loader that caches a mapping of package name to a fluid entry point.
@@ -63,7 +63,7 @@ export class LocalCodeLoader implements ICodeLoader {
         if (entryPoint === undefined) {
             throw new Error(`Cannot find package ${pkdId}`);
         }
-        const factory: Partial<IProvideRuntimeFactory & IProvideComponentFactory> =
+        const factory: Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory> =
             entryPoint.fluidExport ?? entryPoint;
         const runtimeFactory: IProvideRuntimeFactory =
             factory.IRuntimeFactory ??

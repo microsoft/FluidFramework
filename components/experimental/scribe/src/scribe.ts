@@ -6,13 +6,13 @@
 import { EventEmitter } from "events";
 import { resolve } from "url";
 import {
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
-    IComponentHandle,
+    IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
+import { ComponentRuntime, FluidOjectHandle } from "@fluidframework/component-runtime";
 import {
     IContainerContext,
     IFluidCodeDetails,
@@ -28,12 +28,12 @@ import {
 } from "@fluidframework/component-runtime-definitions";
 import {
     IComponentContext,
-    IComponentFactory,
+    IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import {
     IContainerRuntime,
 } from "@fluidframework/container-runtime-definitions";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import Axios from "axios";
 
 import * as scribe from "./tools-core";
@@ -381,7 +381,7 @@ const html =
 
 export class Scribe
     extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLView {
+    implements IFluidLoadable, IFluidRouter, IFluidHTMLView {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new Scribe(runtime, context);
         await collection.initialize();
@@ -389,14 +389,14 @@ export class Scribe
         return collection;
     }
 
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
-    public get IComponentHandle() { return this.innerHandle; }
-    public get IComponentLoadable() { return this; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get IFluidHandle() { return this.innerHandle; }
+    public get IFluidLoadable() { return this; }
 
-    public get IComponentRouter() { return this; }
-    public get IComponentHTMLView() { return this; }
+    public get IFluidRouter() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     public url: string;
     private root: ISharedMap;
@@ -406,7 +406,7 @@ export class Scribe
         super();
 
         this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
+        this.innerHandle = new FluidOjectHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -417,7 +417,7 @@ export class Scribe
         };
     }
 
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         if (!this.div) {
             this.div = document.createElement("div");
             // tslint:disable-next-line:no-inner-html
@@ -450,15 +450,15 @@ export class Scribe
     }
 }
 
-class ScribeFactory implements IComponentFactory, IRuntimeFactory {
+class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
     public static readonly type = "@fluid-example/scribe";
     public readonly type = ScribeFactory.type;
 
-    public get IComponentFactory() { return this; }
+    public get IFluidDataStoreFactory() { return this; }
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const registry = new Map<string, Promise<IComponentFactory>>([
+        const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
             [ScribeFactory.type, Promise.resolve(this)],
         ]);
 
@@ -496,7 +496,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         return runtime;
     }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateDataStore(context: IComponentContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);

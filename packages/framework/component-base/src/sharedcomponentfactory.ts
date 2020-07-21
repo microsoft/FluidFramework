@@ -8,9 +8,9 @@ import { ComponentRuntime, ISharedObjectRegistry } from "@fluidframework/compone
 import { ComponentRegistry } from "@fluidframework/container-runtime";
 import {
     IComponentContext,
-    IComponentFactory,
-    IComponentRegistry,
-    NamedComponentRegistryEntries,
+    IFluidDataStoreFactory,
+    IFluidDataStoreRegistry,
+    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
     IComponentRuntime,
@@ -20,22 +20,22 @@ import { ISharedObject } from "@fluidframework/shared-object-base";
 import { LazyPromise } from "@fluidframework/common-utils";
 import { SharedComponent } from "./sharedcomponent";
 
-export class SharedComponentFactory<T extends SharedComponent> implements IComponentFactory {
+export class SharedComponentFactory<T extends SharedComponent> implements IFluidDataStoreFactory {
     public readonly ISharedObjectRegistry: ISharedObjectRegistry;
-    public readonly IComponentRegistry: IComponentRegistry | undefined;
+    public readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry | undefined;
 
     constructor(
         public readonly type: string,
         private readonly ctor: new (context: IComponentContext, runtime: IComponentRuntime, root: ISharedObject) => T,
         public readonly root: IChannelFactory,
         sharedObjects: readonly IChannelFactory[] = [],
-        components?: readonly IComponentFactory[],
+        components?: readonly IFluidDataStoreFactory[],
     ) {
         if (components !== undefined) {
-            this.IComponentRegistry = new ComponentRegistry(
+            this.IFluidDataStoreRegistry = new ComponentRegistry(
                 components.map(
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    (factory) => [factory.type!, factory]) as NamedComponentRegistryEntries);
+                    (factory) => [factory.type!, factory]) as NamedFluidDataStoreRegistryEntries);
         }
 
         this.ISharedObjectRegistry = new Map(
@@ -44,9 +44,9 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
                 .map((ext) => [ext.type, ext]));
     }
 
-    public get IComponentFactory() { return this; }
+    public get IFluidDataStoreFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateDataStore(context: IComponentContext): void {
         const runtime = this.createRuntime(context);
 
         // Note this may synchronously return an instance or a deferred LazyPromise,
@@ -106,7 +106,17 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
         return ComponentRuntime.load(
             context,
             this.ISharedObjectRegistry,
-            this.IComponentRegistry,
+            this.IFluidDataStoreRegistry,
         );
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentFactory() {
+        return this.IFluidDataStoreFactory;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentRegistry() {
+        return this.IFluidDataStoreRegistry;
     }
 }

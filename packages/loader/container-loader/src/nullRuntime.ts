@@ -5,8 +5,8 @@
 
 import { EventEmitter } from "events";
 import {
-    IComponentHandleContext,
-    IComponentSerializer,
+    IFluidHandleContext,
+    IFluidSerializer,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -25,11 +25,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 export class NullRuntime extends EventEmitter implements IRuntime {
-    public get IComponentSerializer(): IComponentSerializer {
+    public get IFluidSerializer(): IFluidSerializer {
         throw new Error("Not implemented");
     }
 
-    public get IComponentHandleContext(): IComponentHandleContext {
+    public get IFluidHandleContext(): IFluidHandleContext {
         throw new Error("Not implemented");
     }
 
@@ -91,6 +91,16 @@ export class NullRuntime extends EventEmitter implements IRuntime {
     public processSignal(message: any, local: boolean) {
         // Null runtime can receive signals but it's okay to miss those.
         return;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentSerializer() {
+        return this.IFluidSerializer;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentHandleContext() {
+        return this.IFluidHandleContext;
     }
 }
 

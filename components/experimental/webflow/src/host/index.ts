@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IComponentContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { SharedComponentFactory, SharedComponent } from "@fluidframework/component-base";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { FlowDocument } from "../document";
 import { hostType } from "../package";
 import { WebflowView } from "./host";
 import { importDoc } from "./import";
 
-export class WebFlow extends SharedComponent<ISharedDirectory> implements IComponentHTMLView {
+export class WebFlow extends SharedComponent<ISharedDirectory> implements IFluidHTMLView {
     private static readonly factory = new SharedComponentFactory<WebFlow>(
         hostType,
         WebFlow,
@@ -21,7 +21,7 @@ export class WebFlow extends SharedComponent<ISharedDirectory> implements ICompo
         [],
         [FlowDocument.getFactory()]);
 
-    public static getFactory(): IComponentFactory { return WebFlow.factory; }
+    public static getFactory(): IFluidDataStoreFactory { return WebFlow.factory; }
 
     public static create(parentContext: IComponentContext, props?: any) {
         return WebFlow.factory.create(parentContext, props);
@@ -41,16 +41,16 @@ export class WebFlow extends SharedComponent<ISharedDirectory> implements ICompo
 
     public async load() { }
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
-    // #region IComponentHTMLView
+    // #region IFluidHTMLView
 
     public render(elm: HTMLElement): void {
-        const view = new WebflowView(this.root.get<IComponentHandle<FlowDocument>>("doc").get());
+        const view = new WebflowView(this.root.get<IFluidHandle<FlowDocument>>("doc").get());
         view.render(elm);
     }
 
-    // #endregion IComponentHTMLView
+    // #endregion IFluidHTMLView
 
     protected async componentInitializingFirstTime() { this.create(); }
 }

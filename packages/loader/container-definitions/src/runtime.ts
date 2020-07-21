@@ -6,7 +6,7 @@
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IComponent,
-    IComponentConfiguration,
+    IFluidConfiguration,
     IRequest,
     IResponse,
     IFluidObject,
@@ -104,7 +104,7 @@ export interface IContainerContext extends IMessageScheduler, IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;
-    readonly configuration: IComponentConfiguration;
+    readonly configuration: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly parentBranch: string | null;

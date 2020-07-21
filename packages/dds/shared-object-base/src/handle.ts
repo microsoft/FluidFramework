@@ -4,22 +4,22 @@
  */
 
 import {
-    IComponentHandleContext,
+    IFluidHandleContext,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentHandle } from "@fluidframework/component-runtime";
+import { FluidOjectHandle } from "@fluidframework/component-runtime";
 import { ISharedObject } from "./types";
 
 /**
  * Component handle for shared object
  * This object is used for already loaded (in-memory) shared object
  * and is used only for serialization purposes.
- * De-serialization process goes through ComponentHandle and request flow:
+ * De-serialization process goes through FluidOjectHandle and request flow:
  * ComponentRuntime.request() recognizes requests in the form of '/<shared object id>'
  * and loads shared object.
  */
-export class SharedObjectComponentHandle extends ComponentHandle<ISharedObject> {
+export class SharedObjectHandle extends FluidOjectHandle<ISharedObject> {
     /**
      * Whether services have been attached for the associated shared object.
      */
@@ -28,15 +28,15 @@ export class SharedObjectComponentHandle extends ComponentHandle<ISharedObject> 
     }
 
     /**
-     * Creates a new SharedObjectComponentHandle.
+     * Creates a new SharedObjectHandle.
      * @param value - The shared object this handle is for.
      * @param path - The id of the shared object. It is also the path to this object relative to the routeContext.
-     * @param routeContext - The parent IComponentHandleContext that has a route to this handle.
+     * @param routeContext - The parent IFluidHandleContext that has a route to this handle.
      */
     constructor(
         value: ISharedObject,
         path: string,
-        routeContext: IComponentHandleContext,
+        routeContext: IFluidHandleContext,
     ) {
         super(value, path, routeContext);
     }

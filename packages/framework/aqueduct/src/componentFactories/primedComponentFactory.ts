@@ -13,7 +13,7 @@ import {
     SharedMap,
 } from "@fluidframework/map";
 import {
-    NamedComponentRegistryEntries,
+    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { ComponentSymbolProvider } from "@fluidframework/synthesize";
@@ -22,7 +22,7 @@ import { PrimedComponent, ISharedComponentProps } from "../components";
 import { SharedComponentFactory } from "./sharedComponentFactory";
 
 /**
- * PrimedComponentFactory is the IComponentFactory for use with PrimedComponents.
+ * PrimedComponentFactory is the IFluidDataStoreFactory for use with PrimedComponents.
  * It facilitates PrimedComponent's features (such as its shared directory) by
  * ensuring relevant shared objects etc are available to the factory.
  *
@@ -40,7 +40,7 @@ export class PrimedComponentFactory<
         ctor: new (props: ISharedComponentProps<P>) => PrimedComponent<P, S>,
         sharedObjects: readonly IChannelFactory[] = [],
         optionalProviders: ComponentSymbolProvider<P>,
-        registryEntries?: NamedComponentRegistryEntries,
+        registryEntries?: NamedFluidDataStoreRegistryEntries,
         onDemandInstantiation = true,
     ) {
         const mergedObjects = [...sharedObjects];

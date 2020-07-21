@@ -5,7 +5,7 @@
 
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { IFluidObject } from "@fluidframework/component-core-interfaces";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -15,7 +15,7 @@ import { TabsView } from "./view";
 
 export const TabsName = "tabs";
 
-export class TabsComponent extends PrimedComponent implements IComponentHTMLView {
+export class TabsComponent extends PrimedComponent implements IFluidHTMLView {
     private dataModelInternal: ITabsDataModel | undefined;
 
     private static readonly factory = new PrimedComponentFactory(TabsName, TabsComponent, [], {});
@@ -32,7 +32,7 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
         return this.dataModelInternal;
     }
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     protected async componentInitializingFirstTime() {
         // create the tabs directory
@@ -40,7 +40,7 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
     }
 
     protected async componentHasInitialized() {
-        const registry = await this.context.containerRuntime.IComponentRegistry.get("");
+        const registry = await this.context.containerRuntime.IFluidDataStoreRegistry.get("");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const registryDetails = (registry as IFluidObject).IComponentInternalRegistry!;
         this.dataModelInternal =

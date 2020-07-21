@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import {
     IFluidObject,
-    IComponentRouter,
+    IFluidRouter,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -20,7 +20,7 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IComponentContext,
-    IComponentFactory,
+    IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import {
     IComponentRuntime,
@@ -54,7 +54,7 @@ declare module "@fluidframework/component-core-interfaces" {
     export interface IFluidObject extends Readonly<Partial<IProvideKeyValue>> { }
 }
 
-class KeyValue implements IKeyValue, IFluidObject, IComponentRouter {
+class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const kevValue = new KeyValue(runtime);
         await kevValue.initialize();
@@ -62,7 +62,7 @@ class KeyValue implements IKeyValue, IFluidObject, IComponentRouter {
         return kevValue;
     }
 
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
     public get IKeyValue() { return this; }
 
     private _root: ISharedMap | undefined;
@@ -109,12 +109,12 @@ class KeyValue implements IKeyValue, IFluidObject, IComponentRouter {
     }
 }
 
-export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFactory {
+export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/key-value-cache";
     public readonly type = KeyValueFactoryComponent.type;
 
     public get IRuntimeFactory() { return this; }
-    public get IComponentFactory() { return this; }
+    public get IFluidDataStoreFactory() { return this; }
 
     /**
      * A request handler for a container runtime
@@ -136,7 +136,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
         return component.request({ url: pathForComponent });
     }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateDataStore(context: IComponentContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);

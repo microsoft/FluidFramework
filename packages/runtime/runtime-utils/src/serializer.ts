@@ -4,20 +4,20 @@
  */
 
 import {
-    IComponentHandle,
-    IComponentHandleContext,
-    IComponentSerializer,
+    IFluidHandle,
+    IFluidHandleContext,
+    IFluidSerializer,
 } from "@fluidframework/component-core-interfaces";
-import { RemoteComponentHandle } from "./remoteComponentHandle";
+import { RemoteFluidObjectHandle } from "./remoteComponentHandle";
 import { isSerializedHandle } from "./utils";
 
 /**
  * 0.21 back-compat
  * Retrieves the absolute URL for a handle
  */
-function toAbsoluteUrl(handle: IComponentHandle): string {
+function toAbsoluteUrl(handle: IFluidHandle): string {
     let result = "";
-    let context: IComponentHandleContext | undefined = handle;
+    let context: IFluidHandleContext | undefined = handle;
 
     while (context !== undefined) {
         if (context.path !== "") {
@@ -33,13 +33,13 @@ function toAbsoluteUrl(handle: IComponentHandle): string {
 /**
  * Component serializer implementation
  */
-export class ComponentSerializer implements IComponentSerializer {
-    public get IComponentSerializer() { return this; }
+export class FluidSerializer implements IFluidSerializer {
+    public get IFluidSerializer() { return this; }
 
     public replaceHandles(
         input: any,
-        context: IComponentHandleContext,
-        bind: IComponentHandle,
+        context: IFluidHandleContext,
+        bind: IFluidHandle,
     ) {
         // If the given 'input' cannot contain handles, return it immediately.  Otherwise,
         // return the result of 'recursivelyReplaceHandles()'.
@@ -49,12 +49,12 @@ export class ComponentSerializer implements IComponentSerializer {
             : input;
     }
 
-    public stringify(input: any, context: IComponentHandleContext, bind: IComponentHandle) {
+    public stringify(input: any, context: IFluidHandleContext, bind: IFluidHandle) {
         return JSON.stringify(input, (key, value) => {
             // If the current 'value' is not a handle, return it unmodified.  Otherwise,
             // return the result of 'serializeHandle'.
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-            const handle = !!value && value.IComponentHandle;
+            const handle = !!value && value.IFluidHandle;
             // TODO - understand why handle === false in some of our tests
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             return handle
@@ -64,8 +64,8 @@ export class ComponentSerializer implements IComponentSerializer {
     }
 
     // Parses the serialized data - context must match the context with which the JSON was stringified
-    public parse(input: string, context: IComponentHandleContext) {
-        let root: IComponentHandleContext;
+    public parse(input: string, context: IFluidHandleContext) {
+        let root: IFluidHandleContext;
 
         return JSON.parse(
             input,
@@ -75,7 +75,7 @@ export class ComponentSerializer implements IComponentSerializer {
                 }
 
                 // 0.21 back-compat
-                // 0.22 onwards, we always use the routeContext of the root to create the RemoteComponentHandle.
+                // 0.22 onwards, we always use the routeContext of the root to create the RemoteFluidObjectHandle.
                 // We won't need to check for the if condition below once we remove the back-compat code.
                 const absoluteUrl = value.url.startsWith("/");
                 if (absoluteUrl && root === undefined) {
@@ -86,24 +86,24 @@ export class ComponentSerializer implements IComponentSerializer {
                     }
                 }
 
-                const handle = new RemoteComponentHandle(value.url, absoluteUrl ? root : context);
+                const handle = new RemoteFluidObjectHandle(value.url, absoluteUrl ? root : context);
 
                 return handle;
             });
     }
 
-    // Invoked by `replaceHandles()` for non-null objects to recursively replace IComponentHandle references
+    // Invoked by `replaceHandles()` for non-null objects to recursively replace IFluidHandle references
     // with serialized handles (cloning as-needed to avoid mutating the original `input` object.)
     private recursivelyReplaceHandles(
         input: any,
-        context: IComponentHandleContext,
-        bind: IComponentHandle,
+        context: IFluidHandleContext,
+        bind: IFluidHandle,
     ) {
-        // If the current input is an IComponentHandle instance, replace this leaf in the object graph with
+        // If the current input is an IFluidHandle instance, replace this leaf in the object graph with
         // the handle's serialized from.
 
         // Note: Caller is responsible for ensuring that `input` is a non-null object.
-        const handle = input.IComponentHandle;
+        const handle = input.IFluidHandle;
         if (handle !== undefined) {
             return this.serializeHandle(handle, context, bind);
         }
@@ -113,7 +113,7 @@ export class ComponentSerializer implements IComponentSerializer {
             const value = input[key];
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (!!value && typeof value === "object") {
-                // Note: Except for IComponentHandle, `input` must not contain circular references (as object must
+                // Note: Except for IFluidHandle, `input` must not contain circular references (as object must
                 //       be JSON serializable.)  Therefore, guarding against infinite recursion here would only
                 //       lead to a later error when attempting to stringify().
                 const replaced = this.recursivelyReplaceHandles(value, context, bind);
@@ -136,7 +136,7 @@ export class ComponentSerializer implements IComponentSerializer {
         return clone ?? input;
     }
 
-    private serializeHandle(handle: IComponentHandle, context: IComponentHandleContext, bind: IComponentHandle) {
+    private serializeHandle(handle: IFluidHandle, context: IFluidHandleContext, bind: IFluidHandle) {
         bind.bind(handle);
         let url: string;
 
@@ -153,5 +153,10 @@ export class ComponentSerializer implements IComponentSerializer {
             type: "__fluid_handle__",
             url,
         };
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentSerializer() {
+        return this.IFluidSerializer;
     }
 }

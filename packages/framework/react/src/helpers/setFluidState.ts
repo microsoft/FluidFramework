@@ -5,7 +5,7 @@
 
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import {
     FluidComponentMap,
     IViewConverter,
@@ -32,8 +32,8 @@ export function setFluidState<SV, SF>(
     newViewState: SV,
     newFluidState?: SF,
     viewToFluid?: Map<keyof SV, IFluidConverter<SV, SF>>,
-): IComponentHandle {
-    const storedStateHandle = syncedState.get<IComponentHandle>(
+): IFluidHandle {
+    const storedStateHandle = syncedState.get<IFluidHandle>(
         `syncedState-${syncedStateId}`,
     );
     let storedState = componentMap.get(storedStateHandle?.absolutePath)

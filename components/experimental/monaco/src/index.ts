@@ -8,7 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import { IProvideRuntimeFactory } from "@fluidframework/container-definitions";
-import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
+import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
 import { MonacoRunner } from "./chaincode";
 
@@ -32,7 +32,7 @@ const runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
     ]),
 );
 
-export const fluidExport: IProvideComponentFactory & IProvideRuntimeFactory = {
-    IComponentFactory: componentFactory,
+export const fluidExport: IProvideFluidDataStoreFactory & IProvideRuntimeFactory = {
+    IFluidDataStoreFactory: componentFactory,
     IRuntimeFactory: runtimeFactory,
 };

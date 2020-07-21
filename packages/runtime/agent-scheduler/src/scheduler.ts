@@ -7,13 +7,13 @@ import assert from "assert";
 import { EventEmitter } from "events";
 import {
     IComponent,
-    IComponentHandle,
-    IComponentRouter,
-    IComponentRunnable,
+    IFluidHandle,
+    IFluidRouter,
+    IFluidRunnableTask,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
+import { ComponentRuntime, FluidOjectHandle } from "@fluidframework/component-runtime";
 import { LoaderHeader, AttachState } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
@@ -21,7 +21,7 @@ import { IComponentRuntime, IChannelFactory } from "@fluidframework/component-ru
 import {
     IAgentScheduler,
     IComponentContext,
-    IComponentFactory,
+    IFluidDataStoreFactory,
     ITask,
     ITaskManager,
     SchedulerType,
@@ -32,7 +32,7 @@ import { v4 as uuid } from "uuid";
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
 
-class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponentRouter {
+class AgentScheduler extends EventEmitter implements IAgentScheduler, IFluidRouter {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         let root: ISharedMap;
         let scheduler: ConsensusRegisterCollection<string | null>;
@@ -44,7 +44,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             root.set("scheduler", scheduler.handle);
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
-            const handle = await root.wait<IComponentHandle<ConsensusRegisterCollection<string | null>>>("scheduler");
+            const handle = await root.wait<IFluidHandle<ConsensusRegisterCollection<string | null>>>("scheduler");
             scheduler = await handle.get();
         }
         const agentScheduler = new AgentScheduler(runtime, context, scheduler);
@@ -53,17 +53,17 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         return agentScheduler;
     }
 
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
-    public get IComponentHandle() { return this.innerHandle; }
-    public get IComponentLoadable() { return this; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get IFluidHandle() { return this.innerHandle; }
+    public get IFluidLoadable() { return this; }
 
     public get IAgentScheduler() { return this; }
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
 
     private get clientId(): string {
-        if (!this.runtime.IComponentHandleContext.isAttached) {
+        if (!this.runtime.IFluidHandleContext.isAttached) {
             return UnattachedClientId;
         }
         const clientId = this.runtime.clientId;
@@ -93,7 +93,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         private readonly context: IComponentContext,
         private readonly scheduler: ConsensusRegisterCollection<string | null>) {
         super();
-        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
+        this.innerHandle = new FluidOjectHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -229,7 +229,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         // Probably okay for now to have every client try to do this.
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         quorum.on("removeMember", async (clientId: string) => {
-            assert(this.runtime.IComponentHandleContext.isAttached);
+            assert(this.runtime.IFluidHandleContext.isAttached);
             // Cleanup only if connected. If not, cleanup will happen in initializeCore() that runs on connection.
             if (this.isActive()) {
                 const leftTasks: string[] = [];
@@ -264,7 +264,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             }
         });
 
-        if (!this.runtime.IComponentHandleContext.isAttached) {
+        if (!this.runtime.IFluidHandleContext.isAttached) {
             this.runtime.waitAttached().then(() => {
                 this.clearRunningTasks();
             }).catch((error) => {
@@ -273,7 +273,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         }
 
         this.runtime.on("disconnected", () => {
-            if (this.runtime.IComponentHandleContext.isAttached) {
+            if (this.runtime.IFluidHandleContext.isAttached) {
                 this.clearRunningTasks();
             }
         });
@@ -320,7 +320,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     private isActive() {
         // Scheduler should be active in detached container.
-        if (!this.runtime.IComponentHandleContext.isAttached) {
+        if (!this.runtime.IFluidHandleContext.isAttached) {
             return true;
         }
         if (!this.runtime.connected) {
@@ -389,23 +389,23 @@ export class TaskManager implements ITaskManager {
         return new TaskManager(agentScheduler, runtime, context);
     }
 
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
     public get IAgentScheduler() { return this.scheduler; }
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
-    public get IComponentHandle() { return this.innerHandle; }
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get IFluidHandle() { return this.innerHandle; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidRouter() { return this; }
     public get ITaskManager() { return this; }
 
     public get url() { return this.scheduler.url; }
 
-    private readonly taskMap = new Map<string, IComponentRunnable>();
+    private readonly taskMap = new Map<string, IFluidRunnableTask>();
     constructor(
         private readonly scheduler: IAgentScheduler,
         private readonly runtime: IComponentRuntime,
         private readonly context: IComponentContext) {
-        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
+        this.innerHandle = new FluidOjectHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -466,22 +466,22 @@ export class TaskManager implements ITaskManager {
         }
 
         const rawComponent = response.value as IComponent;
-        const agent = rawComponent.IComponentRunnable;
+        const agent = rawComponent.IFluidRunnableTask;
         if (agent === undefined) {
-            return Promise.reject("Component does not implement IComponentRunnable");
+            return Promise.reject("Component does not implement IFluidRunnableTask");
         }
 
         return agent.run();
     }
 }
 
-export class AgentSchedulerFactory implements IComponentFactory {
+export class AgentSchedulerFactory implements IFluidDataStoreFactory {
     public static readonly type = SchedulerType;
     public readonly type = AgentSchedulerFactory.type;
 
-    public get IComponentFactory() { return this; }
+    public get IFluidDataStoreFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateDataStore(context: IComponentContext): void {
         const mapFactory = SharedMap.getFactory();
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const dataTypes = new Map<string, IChannelFactory>();
@@ -500,5 +500,10 @@ export class AgentSchedulerFactory implements IComponentFactory {
             const taskManager = await taskManagerP;
             return taskManager.request(request);
         });
+    }
+
+    /** deprecated: backcompat for FDL split */
+    instantiateComponent?(context: IComponentContext) {
+        return this.instantiateDataStore(context);
     }
 }

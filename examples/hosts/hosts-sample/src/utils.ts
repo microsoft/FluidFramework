@@ -7,7 +7,7 @@ import { parse } from "querystring";
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 /**
  * The initializeChaincode method takes in a document and a desired npm package and establishes a code quorum
@@ -46,7 +46,7 @@ async function attachCore(loader: Loader, url: string, div: HTMLDivElement) {
 
     const component = response.value as IComponent;
     // Try to render the component if it is a view
-    const view: IComponentHTMLView | undefined = component.IComponentHTMLView;
+    const view: IFluidHTMLView | undefined = component.IFluidHTMLView;
     if (view !== undefined) {
         view.render(div, { display: "block" });
     }

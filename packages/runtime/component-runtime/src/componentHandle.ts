@@ -5,39 +5,39 @@
 
 import {
     IComponent,
-    IComponentHandle,
-    IComponentHandleContext,
-    IComponentRouter,
+    IFluidHandle,
+    IFluidHandleContext,
+    IFluidRouter,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
-export class ComponentHandle<T extends IComponent = IComponent> implements IComponentHandle {
+export class FluidOjectHandle<T extends IComponent = IComponent> implements IFluidHandle {
     // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
     private graphAttachState: AttachState = AttachState.Detached;
-    private bound: Set<IComponentHandle> | undefined;
+    private bound: Set<IFluidHandle> | undefined;
     public readonly absolutePath: string;
 
-    public get IComponentRouter(): IComponentRouter { return this; }
-    public get IComponentHandleContext(): IComponentHandleContext { return this; }
-    public get IComponentHandle(): IComponentHandle { return this; }
+    public get IFluidRouter(): IFluidRouter { return this; }
+    public get IFluidHandleContext(): IFluidHandleContext { return this; }
+    public get IFluidHandle(): IFluidHandle { return this; }
 
     public get isAttached(): boolean {
         return this.routeContext.isAttached;
     }
 
     /**
-     * Creates a new ComponentHandle.
+     * Creates a new FluidOjectHandle.
      * @param value - The IComponent object this handle is for.
      * @param path - The path to this handle relative to the routeContext.
-     * @param routeContext - The parent IComponentHandleContext that has a route to this handle.
+     * @param routeContext - The parent IFluidHandleContext that has a route to this handle.
      */
     constructor(
         protected readonly value: T,
         public readonly path: string,
-        public readonly routeContext: IComponentHandleContext,
+        public readonly routeContext: IFluidHandleContext,
     ) {
         this.absolutePath = generateHandleContextPath(path, this.routeContext);
     }
@@ -63,7 +63,7 @@ export class ComponentHandle<T extends IComponent = IComponent> implements IComp
         this.graphAttachState = AttachState.Attached;
     }
 
-    public bind(handle: IComponentHandle) {
+    public bind(handle: IFluidHandle) {
         // If the dds is already attached or its graph is already in attaching or attached state,
         // then attach the incoming handle too.
         if (this.isAttached || this.graphAttachState !== AttachState.Detached) {
@@ -71,17 +71,32 @@ export class ComponentHandle<T extends IComponent = IComponent> implements IComp
             return;
         }
         if (this.bound === undefined) {
-            this.bound = new Set<IComponentHandle>();
+            this.bound = new Set<IFluidHandle>();
         }
 
         this.bound.add(handle);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        if (this.value.IComponentRouter !== undefined) {
-            return this.value.IComponentRouter.request(request);
+        if (this.value.IFluidRouter !== undefined) {
+            return this.value.IFluidRouter.request(request);
         } else {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentRouter() {
+        return this.IFluidRouter;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentHandleContext() {
+        return this.IFluidHandleContext;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentHandle() {
+        return this.IFluidHandle;
     }
 }

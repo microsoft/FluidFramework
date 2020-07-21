@@ -7,11 +7,11 @@ import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { PrimedComponent, PrimedComponentFactory, waitForAttach } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import {
-    IComponentHandle, IComponentLoadable,
+    IFluidHandle, IFluidLoadable,
 } from "@fluidframework/component-core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { TextBoxInstantiationFactory } from "../TextBox";
@@ -39,12 +39,12 @@ const innerComponentKey = "innerId";
  * - Link to open component in separate tab
  * - Button to remove entry
  */
-export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> implements IComponentHTMLView {
+export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> implements IFluidHTMLView {
     private text: SharedString;
     private innerIdCell: ISharedCell;
     private _absoluteUrl: string | undefined;
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
     public get absoluteUrl() { return this._absoluteUrl; }
 
     /**
@@ -70,8 +70,8 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
     }
 
     protected async componentHasInitialized() {
-        const text = this.root.get<IComponentHandle<SharedString>>(textKey).get();
-        const innerIdCell = this.root.get<IComponentHandle<ISharedCell>>(innerComponentKey).get();
+        const text = this.root.get<IFluidHandle<SharedString>>(textKey).get();
+        const innerIdCell = this.root.get<IFluidHandle<ISharedCell>>(innerComponentKey).get();
 
         this.setCheckedState = this.setCheckedState.bind(this);
 
@@ -124,7 +124,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
         ]),
     );
 
-    // start IComponentHTMLView
+    // start IFluidHTMLView
 
     public render(div: HTMLElement) {
         ReactDOM.render(
@@ -133,7 +133,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
         );
     }
 
-    // end IComponentHTMLView
+    // end IFluidHTMLView
 
     // start public API surface for the TodoItem model, used by the view
 
@@ -170,7 +170,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
      * @param props - props to be passed into component creation
      */
     public async createInnerComponent(type: TodoItemSupportedComponents): Promise<void> {
-        let component: IComponentLoadable;
+        let component: IFluidLoadable;
         switch (type) {
             case "todo":
                 component = await TodoItem.getFactory().createComponent(

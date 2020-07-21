@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -22,8 +22,8 @@ import { MemberList } from "./MemberList";
 const pkg = require("../package.json");
 export const DraftJsName = pkg.name as string;
 
-export class DraftJsExample extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class DraftJsExample extends PrimedComponent implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     /**
      * Do setup work here

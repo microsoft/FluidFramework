@@ -4,7 +4,7 @@
  */
 
 import { IFluidObject, IComponent } from "@fluidframework/component-core-interfaces";
-import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
+import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -32,7 +32,7 @@ export interface IComponentInternalRegistry extends IProvideComponentInternalReg
  */
 export interface IInternalRegistryEntry {
     type: string;
-    factory: Promise<IProvideComponentFactory>;
+    factory: Promise<IProvideFluidDataStoreFactory>;
     capabilities: (keyof (IFluidObject & IComponent))[];
     friendlyName: string;
     fabricIconName: string;

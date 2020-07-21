@@ -398,15 +398,15 @@ export class ConsensusOrderedCollection<T = any>
     }
 
     private serializeValue(value) {
-        return this.runtime.IComponentSerializer.stringify(
+        return this.runtime.IFluidSerializer.stringify(
             value,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidHandleContext,
             this.handle);
     }
 
     private deserializeValue(content: string) {
-        return this.runtime.IComponentSerializer.parse(
+        return this.runtime.IFluidSerializer.parse(
             content,
-            this.runtime.IComponentHandleContext);
+            this.runtime.IFluidHandleContext);
     }
 }

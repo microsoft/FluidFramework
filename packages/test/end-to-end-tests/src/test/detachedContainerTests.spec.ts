@@ -159,7 +159,7 @@ describe("Detached Container", () => {
             assert.fail("New components should be created in detached container");
         }
         const testComponent = testResponse.value as ITestFluidComponent;
-        assert.strictEqual(testComponent.runtime.IComponentHandleContext.isAttached, true,
+        assert.strictEqual(testComponent.runtime.IFluidHandleContext.isAttached, true,
             "Component should be attached!!");
 
         // Get the sub component's "root" channel and verify that it is attached.
@@ -194,7 +194,7 @@ describe("Detached Container", () => {
         // Get the sub component and assert that it is attached.
         const response2 = await container2.request({ url: `/${subCompId}` });
         const subComponent2 = response2.value as ITestFluidComponent;
-        assert.strictEqual(subComponent2.runtime.IComponentHandleContext.isAttached, true,
+        assert.strictEqual(subComponent2.runtime.IFluidHandleContext.isAttached, true,
             "Component should be attached!!");
 
         // Verify the attributes of the root channel of both sub components.

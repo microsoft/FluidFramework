@@ -8,7 +8,7 @@ import EventEmitter from "events";
 import { IDisposable } from "@fluidframework/common-definitions";
 import {
     IComponent,
-    IComponentLoadable,
+    IFluidLoadable,
     IRequest,
     IResponse,
     IFluidObject,
@@ -37,13 +37,13 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-    ComponentRegistryEntry,
+    FluidDataStoreRegistryEntry,
     IComponentRuntimeChannel,
     IAttachMessage,
     IComponentContext,
     IComponentContextLegacy,
-    IComponentFactory,
-    IComponentRegistry,
+    IFluidDataStoreFactory,
+    IFluidDataStoreRegistry,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker } from "@fluidframework/runtime-utils";
@@ -231,7 +231,7 @@ export abstract class ComponentContext extends EventEmitter implements
     public async createComponentWithRealizationFn(
         pkg: string,
         realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponent & IComponentLoadable> {
+    ): Promise<IComponent & IFluidLoadable> {
         const packagePath = await this.composeSubpackagePath(pkg);
 
         const componentRuntime = await this.containerRuntime.createComponentWithRealizationFn(
@@ -268,9 +268,9 @@ export abstract class ComponentContext extends EventEmitter implements
             // that it is set here, before bindRuntime is called.
             this._baseSnapshot = details.snapshot;
             const packages = details.pkg;
-            let entry: ComponentRegistryEntry | undefined;
-            let registry: IComponentRegistry | undefined = this._containerRuntime.IComponentRegistry;
-            let factory: IComponentFactory | undefined;
+            let entry: FluidDataStoreRegistryEntry | undefined;
+            let registry: IFluidDataStoreRegistry | undefined = this._containerRuntime.IFluidDataStoreRegistry;
+            let factory: IFluidDataStoreFactory | undefined;
             let lastPkg: string | undefined;
             for (const pkg of packages) {
                 if (!registry) {
@@ -281,8 +281,8 @@ export abstract class ComponentContext extends EventEmitter implements
                 if (!entry) {
                     return this.rejectDeferredRealize(`Registry does not contain entry for the package ${pkg}`);
                 }
-                factory = entry.IComponentFactory;
-                registry = entry.IComponentRegistry;
+                factory = entry.IFluidDataStoreFactory;
+                registry = entry.IFluidDataStoreRegistry;
             }
 
             if (factory === undefined) {
@@ -290,7 +290,7 @@ export abstract class ComponentContext extends EventEmitter implements
             }
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred
-            factory.instantiateComponent(this);
+            factory.instantiateDataStore(this);
         }
 
         return this.componentRuntimeDeferred.promise;
@@ -546,10 +546,10 @@ export abstract class ComponentContext extends EventEmitter implements
         // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
         // to the packagePath. If not, look into the global registry and the packagePath becomes just the
         // passed package.
-        if (await this.componentRuntime?.IComponentRegistry?.get(subpackage)) {
+        if (await this.componentRuntime?.IFluidDataStoreRegistry?.get(subpackage)) {
             packagePath.push(subpackage);
         } else {
-            if (!(await this._containerRuntime.IComponentRegistry.get(subpackage))) {
+            if (!(await this._containerRuntime.IFluidDataStoreRegistry.get(subpackage))) {
                 throw new Error(`Registry does not contain entry for package '${subpackage}'`);
             }
 
@@ -665,7 +665,7 @@ export class LocalComponentContext extends ComponentContext {
         summaryTracker: SummaryTracker,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
         /**
-         * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
+         * @deprecated 0.16 Issue #1635 Use the IFluidDataStoreFactory creation methods instead to specify initial state
          */
         public readonly createProps?: any,
     ) {

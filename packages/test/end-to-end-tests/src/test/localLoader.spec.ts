@@ -5,11 +5,11 @@
 
 import { strict as assert } from "assert";
 import { PrimedComponent, PrimedComponentFactory, ISharedComponentProps } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { SharedCounter } from "@fluidframework/counter";
-import { IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -69,7 +69,7 @@ export class TestComponent extends PrimedComponent {
     }
 
     protected async componentHasInitialized() {
-        const counterHandle = await this.root.wait<IComponentHandle<SharedCounter>>(counterKey);
+        const counterHandle = await this.root.wait<IFluidHandle<SharedCounter>>(counterKey);
         this.counter = await counterHandle.get();
     }
 }
@@ -94,7 +94,7 @@ describe("LocalLoader", () => {
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
 
-    async function createContainer(factory: IComponentFactory): Promise<Container> {
+    async function createContainer(factory: IFluidDataStoreFactory): Promise<Container> {
         const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }

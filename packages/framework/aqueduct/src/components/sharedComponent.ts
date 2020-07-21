@@ -5,17 +5,17 @@
 
 import {
     IComponent,
-    IComponentHandle,
-    IComponentLoadable,
-    IComponentRouter,
-    IProvideComponentHandle,
+    IFluidHandle,
+    IFluidLoadable,
+    IFluidRouter,
+    IProvideFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { AsyncComponentProvider, ComponentKey } from "@fluidframework/synthesize";
 import { IComponentContext } from "@fluidframework/runtime-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { ComponentHandle } from "@fluidframework/component-runtime";
+import { FluidOjectHandle } from "@fluidframework/component-runtime";
 import { IDirectory } from "@fluidframework/map";
 import { v4 as uuid } from "uuid";
 import { EventForwarder } from "@fluidframework/common-utils";
@@ -39,9 +39,9 @@ export interface ISharedComponentProps<P extends IComponent = object> {
  */
 export abstract class SharedComponent<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
     extends EventForwarder<E>
-    implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
+    implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
     private initializeP: Promise<void> | undefined;
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
     private _disposed = false;
 
     /**
@@ -65,14 +65,14 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     public get disposed() { return this._disposed; }
 
     public get id() { return this.runtime.id; }
-    public get IComponentRouter() { return this; }
-    public get IComponentLoadable() { return this; }
-    public get IComponentHandle() { return this.innerHandle; }
+    public get IFluidRouter() { return this; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidHandle() { return this.innerHandle; }
 
     /**
      * Handle to a shared component
      */
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
     public constructor(props: ISharedComponentProps<P>) {
         super();
@@ -80,10 +80,10 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
         this.context = props.context;
         this.providers = props.providers;
 
-        // Create a ComponentHandle with empty string as `path`. This is because reaching this SharedComponent is the
+        // Create a FluidOjectHandle with empty string as `path`. This is because reaching this SharedComponent is the
         // same as reaching its routeContext (ComponentRuntime) so there is so the relative path to it from the
         // routeContext is empty.
-        this.innerHandle = new ComponentHandle(this, "", this.runtime.IComponentHandleContext);
+        this.innerHandle = new FluidOjectHandle(this, "", this.runtime.IFluidHandleContext);
 
         // Container event handlers
         this.runtime.once("dispose", () => {
@@ -105,7 +105,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
         await this.initializeP;
     }
 
-    // #region IComponentRouter
+    // #region IFluidRouter
 
     /**
      * Return this object if someone requests it directly
@@ -126,16 +126,16 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
         return Promise.reject(`unknown request url: ${req.url}`);
     }
 
-    // #endregion IComponentRouter
+    // #endregion IFluidRouter
 
-    // #region IComponentLoadable
+    // #region IFluidLoadable
 
     /**
      * Absolute URL to the component within the document
      */
     public get url() { return this.context.id; }
 
-    // #endregion IComponentLoadable
+    // #endregion IFluidLoadable
 
     /**
      * Given a request response will return a component if a component was in the response.
@@ -176,7 +176,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      * @param pkg - package name for the new component
      * @param props - optional props to be passed in
      */
-    protected async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
+    protected async createAndAttachComponent<T extends IComponent & IFluidLoadable>(
         pkg: string, props?: any,
     ): Promise<T> {
         const componentRuntime = await this.context.createComponent(uuid(), pkg, props);
@@ -193,22 +193,22 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      * @param getObjectFromDirectory - optional callback for fetching object from the directory, allows users to
      * define custom types/getters for object retrieval
      */
-    public async getComponentFromDirectory<T extends IComponent & IComponentLoadable>(
+    public async getComponentFromDirectory<T extends IComponent & IFluidLoadable>(
         key: string,
         directory: IDirectory,
-        getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IComponentHandle | undefined):
+        getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IFluidHandle | undefined):
         Promise<T | undefined> {
         const handleOrId = getObjectFromDirectory ? getObjectFromDirectory(key, directory) : directory.get(key);
         if (typeof handleOrId === "string") {
             // For backwards compatibility with older stored IDs
             // We update the storage with the handle so that this code path is less and less trafficked
             const component = await this.getComponent_UNSAFE<T>(handleOrId);
-            if (component.IComponentLoadable && component.handle) {
+            if (component.IFluidLoadable && component.handle) {
                 directory.set(key, component.handle);
             }
             return component;
         } else {
-            const handle = handleOrId?.IComponentHandle;
+            const handle = handleOrId?.IFluidHandle;
             return await (handle ? handle.get() : this.getComponent_UNSAFE(key)) as T;
         }
     }

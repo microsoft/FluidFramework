@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
@@ -188,7 +188,7 @@ export class MapKernel implements IValueTypeCreator {
      */
     constructor(
         private readonly runtime: IComponentRuntime,
-        private readonly handle: IComponentHandle,
+        private readonly handle: IFluidHandle,
         private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
         private readonly isAttached: () => boolean,
         valueTypes: Readonly<IValueType<any>[]>,
@@ -330,8 +330,8 @@ export class MapKernel implements IValueTypeCreator {
         const localValue = this.localValueMaker.fromInMemory(value);
         const serializableValue = makeSerializable(
             localValue,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidSerializer,
+            this.runtime.IFluidHandleContext,
             this.handle);
 
         // Set the value locally.
@@ -363,12 +363,12 @@ export class MapKernel implements IValueTypeCreator {
         const localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), params);
 
         // TODO ideally we could use makeSerialized in this case as well. But the interval
-        // collection has assumptions of attach being called prior. Given the IComponentSerializer it
+        // collection has assumptions of attach being called prior. Given the IFluidSerializer it
         // may be possible to remove custom value type serialization entirely.
         const transformedValue = makeHandlesSerializable(
             params,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidSerializer,
+            this.runtime.IFluidHandleContext,
             this.handle);
 
         // Set the value locally.
@@ -445,8 +445,8 @@ export class MapKernel implements IValueTypeCreator {
         const serializableMapData: IMapDataObjectSerialized = {};
         this.data.forEach((localValue, key) => {
             serializableMapData[key] = localValue.makeSerialized(
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
+                this.runtime.IFluidSerializer,
+                this.runtime.IFluidHandleContext,
                 this.handle);
         });
         return serializableMapData;
@@ -457,8 +457,8 @@ export class MapKernel implements IValueTypeCreator {
         this.data.forEach((localValue, key) => {
             serializableMapData[key] = makeSerializable(
                 localValue,
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
+                this.runtime.IFluidSerializer,
+                this.runtime.IFluidHandleContext,
                 this.handle);
         });
         return serializableMapData;
@@ -725,8 +725,8 @@ export class MapKernel implements IValueTypeCreator {
                     const previousValue = localValue.value;
                     const translatedValue = parseHandles(
                         op.value.value,
-                        this.runtime.IComponentSerializer,
-                        this.runtime.IComponentHandleContext);
+                        this.runtime.IFluidSerializer,
+                        this.runtime.IFluidHandleContext);
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IValueChanged = { key: op.key, previousValue };
                     this.eventEmitter.emit("valueChanged", event, local, message, this);
@@ -769,8 +769,8 @@ export class MapKernel implements IValueTypeCreator {
         const emit = (opName: string, previousValue: any, params: any) => {
             const translatedParams = makeHandlesSerializable(
                 params,
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
+                this.runtime.IFluidSerializer,
+                this.runtime.IFluidHandleContext,
                 this.handle);
 
             const op: IMapValueTypeOperation = {

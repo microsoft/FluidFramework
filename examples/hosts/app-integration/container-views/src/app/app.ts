@@ -7,7 +7,7 @@ import { IComponent } from "@fluidframework/component-core-interfaces";
 import { Container } from "@fluidframework/container-loader";
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
-import { IComponentMountableView } from "@fluidframework/view-interfaces";
+import { IFluidMountableView } from "@fluidframework/view-interfaces";
 
 // I'm choosing to put the docId in the hash just for my own convenience.  There should be no requirements on the
 // page's URL format deeper in the system.
@@ -44,7 +44,7 @@ async function mountDefaultComponentFromContainer(container: Container): Promise
 
     // In a production app, we should probably be retaining a reference to mountableView long-term so we can call
     // unmount() on it to correctly remove it from the DOM if needed.
-    const mountableView: IComponentMountableView | undefined = component.IComponentMountableView;
+    const mountableView: IFluidMountableView | undefined = component.IFluidMountableView;
     if (mountableView !== undefined) {
         mountableView.mount(div);
         return;
@@ -53,7 +53,7 @@ async function mountDefaultComponentFromContainer(container: Container): Promise
     // If we don't get a mountable view back, we can still try to use a view adapter.  This won't always work (e.g.
     // if the response is a React-based component using hooks) and is not the preferred path, but sometimes it
     // can work.
-    console.warn(`Container returned a non-IComponentMountableView.  This can cause errors when mounting components `
+    console.warn(`Container returned a non-IFluidMountableView.  This can cause errors when mounting components `
         + `with React hooks across bundle boundaries.  URL: ${url}`);
     const view = new HTMLViewAdapter(component);
     view.render(div, { display: "block" });

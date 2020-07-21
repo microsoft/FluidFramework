@@ -7,7 +7,7 @@ import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
-    IComponentConfiguration,
+    IFluidConfiguration,
     IRequest,
     IResponse,
     IFluidObject,
@@ -138,12 +138,12 @@ export class ContainerContext implements IContainerContext {
         return this.container.options;
     }
 
-    public get configuration(): IComponentConfiguration {
-        const config: Partial<IComponentConfiguration> = {
+    public get configuration(): IFluidConfiguration {
+        const config: Partial<IFluidConfiguration> = {
             canReconnect: this.container.canReconnect,
             scopes: this.container.scopes,
         };
-        return config as IComponentConfiguration;
+        return config as IFluidConfiguration;
     }
 
     public get IMessageScheduler() {

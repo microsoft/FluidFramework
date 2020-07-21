@@ -7,10 +7,10 @@ import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IComponent,
-    IComponentLoadable,
-    IComponentRouter,
-    IProvideComponentHandleContext,
-    IProvideComponentSerializer,
+    IFluidLoadable,
+    IFluidRouter,
+    IProvideFluidHandleContext,
+    IProvideFluidSerializer,
     IRequest,
     IResponse,
     IFluidObject,
@@ -33,7 +33,7 @@ import {
     ISnapshotTree,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IProvideComponentRegistry } from "./componentRegistry";
+import { IProvideFluidDataStoreRegistry } from "./componentRegistry";
 import { IInboundSignalMessage } from "./protocol";
 
 /**
@@ -58,10 +58,10 @@ export enum FlushMode {
  */
 export interface IContainerRuntimeBase extends
     EventEmitter,
-    IProvideComponentHandleContext,
-    IProvideComponentSerializer,
+    IProvideFluidHandleContext,
+    IProvideFluidSerializer,
     /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
-    IProvideComponentRegistry {
+    IProvideFluidDataStoreRegistry {
 
     readonly logger: ITelemetryLogger;
     readonly clientDetails: IClientDetails;
@@ -100,7 +100,7 @@ export interface IContainerRuntimeBase extends
      * calling IComponentContext.bindRuntime() when the component is prepared to begin processing ops.
      *
      * @param pkg - Package path for the component to be created
-     * @param props - Properties to be passed to the instantiateComponent thru the context
+     * @param props - Properties to be passed to the instantiateDataStore thru the context
      *  @deprecated 0.16 Issue #1537 Properties should be passed directly to the component's initialization
      *  or to the factory method rather than be stored in/passed from the context
      */
@@ -111,10 +111,10 @@ export interface IContainerRuntimeBase extends
      *  Properties should be passed to the component factory method rather than to the runtime
      * Creates a new component with props
      * @param pkg - Package name of the component
-     * @param props - properties to be passed to the instantiateComponent thru the context
+     * @param props - properties to be passed to the instantiateDataStore thru the context
      * @param id - Only supplied if the component is explicitly passing its ID, only used for default components
      * @remarks
-     * Only used by aqueduct PrimedComponent to pass param to the instantiateComponent function thru the context.
+     * Only used by aqueduct PrimedComponent to pass param to the instantiateDataStore function thru the context.
      * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
      * @internal
      */
@@ -144,8 +144,8 @@ export interface IContainerRuntimeBase extends
  * and connection state notifications
  */
 export interface IComponentRuntimeChannel extends
-    IComponentRouter,
-    Partial<IProvideComponentRegistry>,
+    IFluidRouter,
+    Partial<IProvideFluidDataStoreRegistry>,
     IDisposable {
 
     readonly id: string;
@@ -273,7 +273,7 @@ export interface IComponentContext extends EventEmitter {
     readonly snapshotFn: (message: string) => Promise<void>;
 
     /**
-     * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
+     * @deprecated 0.16 Issue #1635 Use the IFluidDataStoreFactory creation methods instead to specify initial state
      */
     readonly createProps?: any;
 
@@ -319,13 +319,13 @@ export interface IComponentContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
-     * @deprecated 0.16 Issue #1537, issue #1756 Components should be created using IComponentFactory methods instead
+     * @deprecated 0.16 Issue #1537, issue #1756 Components should be created using IFluidDataStoreFactory methods instead
      * Creates a new component by using subregistries.
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
      *                  ID is being deprecated, so prefer passing undefined instead (the runtime will
      *                  generate an ID in this case).
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
-     * @param props - Properties to be passed to the instantiateComponent through the context.
+     * @param props - Properties to be passed to the instantiateDataStore through the context.
      */
     createComponent(
         pkgOrId: string | undefined,
@@ -343,7 +343,7 @@ export interface IComponentContext extends EventEmitter {
     createComponentWithRealizationFn(
         pkg: string,
         realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponent & IComponentLoadable>;
+    ): Promise<IComponent & IFluidLoadable>;
 
     /**
      * Binds a runtime to the context.

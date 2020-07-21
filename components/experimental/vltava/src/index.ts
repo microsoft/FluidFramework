@@ -16,9 +16,9 @@ import {
     setupLastEditedTrackerForContainer,
 } from "@fluidframework/last-edited-experimental";
 import {
-    IComponentRegistry,
-    IProvideComponentFactory,
-    NamedComponentRegistryEntries,
+    IFluidDataStoreRegistry,
+    IProvideFluidDataStoreFactory,
+    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 
 import {
@@ -33,8 +33,8 @@ import {
     IInternalRegistryEntry,
 } from "./interfaces";
 
-export class InternalRegistry implements IComponentRegistry, IComponentInternalRegistry {
-    public get IComponentRegistry() { return this; }
+export class InternalRegistry implements IFluidDataStoreRegistry, IComponentInternalRegistry {
+    public get IFluidDataStoreRegistry() { return this; }
     public get IComponentInternalRegistry() { return this; }
 
     constructor(
@@ -42,7 +42,7 @@ export class InternalRegistry implements IComponentRegistry, IComponentInternalR
     ) {
     }
 
-    public async get(name: string): Promise<Readonly<IProvideComponentFactory | undefined>> {
+    public async get(name: string): Promise<Readonly<IProvideFluidDataStoreFactory | undefined>> {
         const index = this.containerComponentArray.findIndex(
             (containerComponent) => name === containerComponent.type,
         );
@@ -69,7 +69,7 @@ export class InternalRegistry implements IComponentRegistry, IComponentInternalR
 export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultComponent {
     constructor(
         defaultComponentName: string,
-        registryEntries: NamedComponentRegistryEntries,
+        registryEntries: NamedFluidDataStoreRegistryEntries,
     ) {
         super(defaultComponentName, registryEntries);
     }
@@ -96,41 +96,41 @@ const generateFactory = () => {
         {
             type: "clicker",
             factory: Promise.resolve(ClickerInstantiationFactory),
-            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+            capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Clicker",
             fabricIconName: "NumberField",
         },
         {
             type: "tabs",
             factory: Promise.resolve(TabsComponent.getFactory()),
-            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+            capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Tabs",
             fabricIconName: "BrowserTab",
         },
         {
             type: "spaces",
             factory: Promise.resolve(Spaces.getFactory()),
-            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+            capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Spaces",
             fabricIconName: "SnapToGrid",
         },
         {
             type: "codemirror",
             factory: Promise.resolve(cmfe),
-            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+            capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Codemirror",
             fabricIconName: "Code",
         },
         {
             type: "prosemirror",
             factory: Promise.resolve(pmfe),
-            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+            capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Prosemirror",
             fabricIconName: "Edit",
         },
     ];
 
-    const containerComponents: [string, Promise<IProvideComponentFactory>][] = [];
+    const containerComponents: [string, Promise<IProvideFluidDataStoreFactory>][] = [];
     containerComponentsDefinition.forEach((value) => {
         containerComponents.push([value.type, value.factory]);
     });
@@ -144,7 +144,7 @@ const generateFactory = () => {
     containerComponents.push([AnchorName, Promise.resolve(Anchor.getFactory())]);
     containerComponents.push([VltavaName, Promise.resolve(Vltava.getFactory())]);
 
-    const containerRegistries: NamedComponentRegistryEntries = [
+    const containerRegistries: NamedFluidDataStoreRegistryEntries = [
         ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],
     ];
 

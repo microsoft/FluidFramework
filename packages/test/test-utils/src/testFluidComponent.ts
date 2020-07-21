@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
+import { IRequest, IResponse, IFluidHandle, IFluidLoadable } from "@fluidframework/component-core-interfaces";
+import { FluidOjectHandle, ComponentRuntime } from "@fluidframework/component-runtime";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IComponentContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { ITestFluidComponent } from "./interfaces";
 
@@ -15,7 +15,7 @@ import { ITestFluidComponent } from "./interfaces";
  * The shared objects can be retrieved by passing the key of the entry to getSharedObject.
  * It exposes the IComponentContext and IComponentRuntime.
  */
-export class TestFluidComponent implements ITestFluidComponent, IComponentLoadable {
+export class TestFluidComponent implements ITestFluidComponent, IFluidLoadable {
     public static async load(
         runtime: IComponentRuntime,
         context: IComponentContext,
@@ -30,15 +30,15 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
         return this;
     }
 
-    public get IComponentLoadable() {
+    public get IFluidLoadable() {
         return this;
     }
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
     public url: string;
     public root!: ISharedMap;
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
     /**
      * Creates a new TestFluidComponent.
@@ -53,7 +53,7 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
         private readonly factoryEntriesMap: Map<string, IChannelFactory>,
     ) {
         this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, "", runtime.IComponentHandleContext);
+        this.innerHandle = new FluidOjectHandle(this, "", runtime.IFluidHandleContext);
     }
 
     /**
@@ -67,7 +67,7 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
 
         for (const key of this.factoryEntriesMap.keys()) {
             if (key === id) {
-                const handle = this.root.get<IComponentHandle>(id);
+                const handle = this.root.get<IFluidHandle>(id);
                 return handle?.get() as unknown as T;
             }
         }
@@ -116,11 +116,11 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
  *      sharedString = testFluidComponent.getSharedObject<SharedString>("sharedString");
  *      sharedDir = testFluidComponent.getSharedObject<SharedDirectory>("sharedDirectory");
  */
-export class TestFluidComponentFactory implements IComponentFactory {
+export class TestFluidComponentFactory implements IFluidDataStoreFactory {
     public static readonly type = "TestFluidComponentFactory";
     public readonly type = TestFluidComponentFactory.type;
 
-    public get IComponentFactory() { return this; }
+    public get IFluidDataStoreFactory() { return this; }
 
     /**
      * Creates a new TestFluidComponentFactory.
@@ -130,7 +130,7 @@ export class TestFluidComponentFactory implements IComponentFactory {
      */
     constructor(private readonly factoryEntries: Iterable<[string | undefined, IChannelFactory]>) { }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateDataStore(context: IComponentContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
 
         // Add SharedMap's factory which will be used to create the root map.

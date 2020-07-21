@@ -5,7 +5,7 @@
 
 import {
     IComponent,
-    IComponentHandle,
+    IFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -81,14 +81,14 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
      * on map doing proper snapshot blob partitioning to reuse non-changing big properties.
      * In future blobs would be implemented as first class citizen, using blob storage APIs
      */
-    protected async writeBlob(blob: string): Promise<IComponentHandle<string>> {
+    protected async writeBlob(blob: string): Promise<IFluidHandle<string>> {
         this.runtime.logger.sendTelemetryEvent({
             eventName: "WriteBlob",
             size: blob.length,
         });
         const path = `${this.bigBlobs}${uuid()}`;
         this.root.set(path, blob);
-        return new BlobHandle(path, this.root, this.runtime.IComponentHandleContext);
+        return new BlobHandle(path, this.root, this.runtime.IFluidHandleContext);
     }
 
     /**

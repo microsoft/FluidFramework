@@ -4,8 +4,8 @@
  */
 
 import {
-    IComponentRouter,
-    IComponentRunnable,
+    IFluidRouter,
+    IFluidRunnableTask,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -14,7 +14,7 @@ import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import Comlink from "comlink";
 
 // Proxy loader that proxies request to web worker.
-interface IProxyLoader extends ILoader, IComponentRunnable {
+interface IProxyLoader extends ILoader, IFluidRunnableTask {
     // eslint-disable-next-line @typescript-eslint/no-misused-new
     new(id: string,
         options: any,
@@ -27,7 +27,7 @@ interface IProxyLoader extends ILoader, IComponentRunnable {
 /**
  * Proxies requests to web worker loader.
  */
-export class WebWorkerLoader implements ILoader, IComponentRunnable, IComponentRouter {
+export class WebWorkerLoader implements ILoader, IFluidRunnableTask, IFluidRouter {
     public static async load(
         id: string,
         options: any,
@@ -47,8 +47,8 @@ export class WebWorkerLoader implements ILoader, IComponentRunnable, IComponentR
     constructor(private readonly proxy: Comlink.Remote<IProxyLoader>) {
     }
 
-    public get IComponentRouter() { return this; }
-    public get IComponentRunnable() { return this; }
+    public get IFluidRouter() { return this; }
+    public get IFluidRunnableTask() { return this; }
 
     public async request(request: IRequest): Promise<IResponse> {
         const response = await this.proxy.request(request);
@@ -73,5 +73,15 @@ export class WebWorkerLoader implements ILoader, IComponentRunnable, IComponentR
 
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer> {
         return this.proxy.createDetachedContainer(source);
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentRouter() {
+        return this.IFluidRouter;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentRunnable() {
+        return this.IFluidRunnableTask;
     }
 }

@@ -6,10 +6,10 @@ import assert from "assert";
 import {
     IComponentRuntimeChannel,
     IComponentContext,
-    IComponentFactory,
-    IComponentRegistry,
-    ComponentRegistryEntry,
-    NamedComponentRegistryEntries,
+    IFluidDataStoreFactory,
+    IFluidDataStoreRegistry,
+    FluidDataStoreRegistryEntry,
+    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -43,25 +43,25 @@ describe("Component Creation Tests", () => {
         const componentCName = "componentC";
         let summaryTracker: SummaryTracker;
 
-        // Helper function that creates a ComponentRegistryEntry with the registry entries
+        // Helper function that creates a FluidDataStoreRegistryEntry with the registry entries
         // provided to it.
-        function createComponentRegistryEntry(entries: NamedComponentRegistryEntries): ComponentRegistryEntry {
+        function createComponentRegistryEntry(entries: NamedFluidDataStoreRegistryEntries): FluidDataStoreRegistryEntry {
             const registryEntries = new Map(entries);
-            const factory: IComponentFactory = {
-                get IComponentFactory() { return factory; },
-                instantiateComponent: (context: IComponentContext) => {
+            const factory: IFluidDataStoreFactory = {
+                get IFluidDataStoreFactory() { return factory; },
+                instantiateDataStore: (context: IComponentContext) => {
                     context.bindRuntime(new MockComponentRuntime());
                 },
             };
-            const registry: IComponentRegistry = {
-                get IComponentRegistry() { return registry; },
+            const registry: IFluidDataStoreRegistry = {
+                get IFluidDataStoreRegistry() { return registry; },
                 // Returns the registry entry as per the entries provided in the param.
                 get: async (pkg) => registryEntries.get(pkg),
             };
 
-            const entry: ComponentRegistryEntry = {
-                get IComponentFactory() { return factory; },
-                get IComponentRegistry() { return registry; },
+            const entry: FluidDataStoreRegistryEntry = {
+                get IFluidDataStoreFactory() { return factory; },
+                get IFluidDataStoreRegistry() { return registry; },
             };
             return entry;
         }
@@ -81,13 +81,13 @@ describe("Component Creation Tests", () => {
 
             // Create the global registry for the container that can only create the default component.
             const globalRegistryEntries = new Map([[defaultName, Promise.resolve(entryDefault)]]);
-            const globalRegistry: IComponentRegistry = {
-                get IComponentRegistry() { return globalRegistry; },
+            const globalRegistry: IFluidDataStoreRegistry = {
+                get IFluidDataStoreRegistry() { return globalRegistry; },
                 get: async (pkg) => globalRegistryEntries.get(pkg),
             };
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
-                IComponentRegistry: globalRegistry,
+                IFluidDataStoreRegistry: globalRegistry,
                 notifyComponentInstantiated: (c) => { },
                 on: (event, listener) => {},
             } as ContainerRuntime;

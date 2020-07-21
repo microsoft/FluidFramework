@@ -7,14 +7,14 @@ import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import {
     IFluidObject,
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
-    IComponentHandle,
+    IFluidHandle,
     IComponent,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
+import { ComponentRuntime, FluidOjectHandle } from "@fluidframework/component-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     MergeTreeDeltaType,
@@ -23,10 +23,10 @@ import {
     reservedTileLabelsKey,
     Marker,
 } from "@fluidframework/merge-tree";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IComponentContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import SimpleMDE from "simplemde";
 import { Viewer } from "./marked";
 
@@ -34,9 +34,9 @@ import { Viewer } from "./marked";
 import "simplemde/dist/simplemde.min.css";
 
 export class Smde extends EventEmitter implements
-    IComponentLoadable,
-    IComponentRouter,
-    IComponentHTMLView {
+    IFluidLoadable,
+    IFluidRouter,
+    IFluidHTMLView {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new Smde(runtime, context);
         await collection.initialize();
@@ -44,14 +44,14 @@ export class Smde extends EventEmitter implements
         return collection;
     }
 
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
-    public get IComponentHandle() { return this.innerHandle; }
-    public get IComponentLoadable() { return this; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get IFluidHandle() { return this.innerHandle; }
+    public get IFluidLoadable() { return this; }
 
-    public get IComponentRouter() { return this; }
-    public get IComponentHTMLView() { return this; }
+    public get IFluidRouter() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     public url: string;
     private root: ISharedMap | undefined;
@@ -67,7 +67,7 @@ export class Smde extends EventEmitter implements
         super();
 
         this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
+        this.innerHandle = new FluidOjectHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -94,10 +94,10 @@ export class Smde extends EventEmitter implements
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this._text = await this.root.get<IComponentHandle<SharedString>>("text").get();
+        this._text = await this.root.get<IFluidHandle<SharedString>>("text").get();
     }
 
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         if (this.isReadonly()) {
             const viewer = new Viewer(elm, this.text);
             viewer.render();
@@ -208,18 +208,18 @@ export class Smde extends EventEmitter implements
     // TODO: this should be an utility.
     private isReadonly() {
         const runtimeAsComponent = this.context.containerRuntime as IFluidObject & IComponent;
-        const scopes = runtimeAsComponent.IComponentConfiguration?.scopes;
+        const scopes = runtimeAsComponent.IFluidConfiguration?.scopes;
         return scopes !== undefined && !scopes.includes("doc:write");
     }
 }
 
-class SmdeFactory implements IComponentFactory {
+class SmdeFactory implements IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/smde";
     public readonly type = SmdeFactory.type;
 
-    public get IComponentFactory() { return this; }
+    public get IFluidDataStoreFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateDataStore(context: IComponentContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         const sequenceFactory = SharedString.getFactory();

@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -17,7 +17,7 @@ export const VltavaName = "vltava";
 /**
  * Vltava is an application experience
  */
-export class Vltava extends PrimedComponent implements IComponentHTMLView {
+export class Vltava extends PrimedComponent implements IFluidHTMLView {
     private dataModelInternal: IVltavaDataModel | undefined;
 
     private static readonly factory = new PrimedComponentFactory(VltavaName, Vltava, [], {});
@@ -34,7 +34,7 @@ export class Vltava extends PrimedComponent implements IComponentHTMLView {
         return this.dataModelInternal;
     }
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     protected async componentInitializingFirstTime() {
         const tabsComponent = await this.createAndAttachComponent("tabs");

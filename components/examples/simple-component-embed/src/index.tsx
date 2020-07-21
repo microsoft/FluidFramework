@@ -9,12 +9,12 @@ import {
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import { ClickerInstantiationFactory, Clicker } from "@fluid-example/clicker";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 const simpleComponentEmbedName = "@fluid-example/simple-component-embed";
 
-export class SimpleComponentEmbed extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class SimpleComponentEmbed extends PrimedComponent implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private clicker: Clicker | undefined;
 

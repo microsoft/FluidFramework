@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IComponentRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -890,7 +890,7 @@ export class Client {
 
     // TODO: Remove `catchUpMsgs` once new snapshot format is adopted as default.
     //       (See https://github.com/microsoft/FluidFramework/issues/84)
-    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
+    public snapshot(runtime: IComponentRuntime, handle: IFluidHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
         const deltaManager = runtime.deltaManager;
         const minSeq = deltaManager.minimumSequenceNumber;
 
@@ -912,16 +912,16 @@ export class Client {
             const snap = new SnapshotV1(this.mergeTree, this.logger);
             snap.extractSync();
             return snap.emit(
-                runtime.IComponentSerializer,
-                runtime.IComponentHandleContext,
+                runtime.IFluidSerializer,
+                runtime.IFluidHandleContext,
                 handle);
         }else{
             const snap = new SnapshotLegacy(this.mergeTree, this.logger);
             snap.extractSync();
             return snap.emit(
                 catchUpMsgs,
-                runtime.IComponentSerializer,
-                runtime.IComponentHandleContext,
+                runtime.IFluidSerializer,
+                runtime.IFluidHandleContext,
                 handle);
         }
     }

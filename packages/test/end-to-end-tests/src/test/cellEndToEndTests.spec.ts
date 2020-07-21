@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -224,7 +224,7 @@ describe("Cell", () => {
 
         async function getCellComponent(cellP: Promise<ISharedCell>): Promise<ISharedCell> {
             const cell = await cellP;
-            const handle = cell.get() as IComponentHandle<ISharedCell>;
+            const handle = cell.get() as IFluidHandle<ISharedCell>;
             return handle.get();
         }
 

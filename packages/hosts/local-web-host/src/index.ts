@@ -14,21 +14,21 @@ import {
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { Loader, Container } from "@fluidframework/container-loader";
-import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
+import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
 import { initializeContainerCode } from "@fluidframework/base-host";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 
 export async function createLocalContainerFactory(
-    entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>,
+    entryPoint: Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IFluidModule>,
 ): Promise<() => Promise<Container>> {
     const urlResolver = new LocalResolver();
 
     const deltaConn = LocalDeltaConnectionServer.create();
     const documentServiceFactory = new LocalDocumentServiceFactory(deltaConn);
 
-    const factory: Partial<IProvideRuntimeFactory & IProvideComponentFactory> =
+    const factory: Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory> =
         entryPoint.fluidExport ? entryPoint.fluidExport : entryPoint;
 
     const runtimeFactory: IProvideRuntimeFactory =
@@ -36,7 +36,7 @@ export async function createLocalContainerFactory(
             factory.IRuntimeFactory :
             new ContainerRuntimeFactoryWithDefaultComponent(
                 "default",
-                [["default", Promise.resolve(factory.IComponentFactory)]],
+                [["default", Promise.resolve(factory.IFluidDataStoreFactory)]],
             );
 
     const codeLoader: ICodeLoader = {

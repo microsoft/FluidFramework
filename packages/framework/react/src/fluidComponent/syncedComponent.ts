@@ -5,11 +5,11 @@
 import { PrimedComponent } from "@fluidframework/aqueduct";
 import {
     IComponent,
-    IComponentHandle,
+    IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import {
     FluidComponentMap,
@@ -31,7 +31,7 @@ import {
  * and assures that the syncedState will be initialized according the config by the time the view
  * is rendered.
  *
- * As this is used for views, it also implements the IComponentHTMLView interface, and requires
+ * As this is used for views, it also implements the IFluidHTMLView interface, and requires
  * the render function to be filled in.
  *
  * Generics (extended from PrimedComponent):
@@ -43,13 +43,13 @@ export abstract class SyncedComponent<
     P extends IComponent = object,
     S = undefined,
     E extends IEvent = IEvent
-> extends PrimedComponent<P, S, E> implements IComponentHTMLView {
+> extends PrimedComponent<P, S, E> implements IFluidHTMLView {
     private readonly syncedStateConfig: SyncedStateConfig = new Map();
     private readonly fluidComponentMap: FluidComponentMap = new Map();
     private readonly syncedStateDirectoryId = "syncedState";
     private internalSyncedState: ISharedMap | undefined;
 
-    public get IComponentHTMLView() {
+    public get IFluidHTMLView() {
         return this;
     }
 
@@ -204,11 +204,11 @@ export abstract class SyncedComponent<
             );
             const componentSchemaHandles = {
                 fluidMatchingMapHandle: componentSchema.fluidMatchingMap
-                    .handle as IComponentHandle<SharedMap>,
+                    .handle as IFluidHandle<SharedMap>,
                 viewMatchingMapHandle: componentSchema.viewMatchingMap
-                    .handle as IComponentHandle<SharedMap>,
+                    .handle as IFluidHandle<SharedMap>,
                 storedHandleMapHandle: componentSchema.storedHandleMap
-                    .handle as IComponentHandle<SharedMap>,
+                    .handle as IFluidHandle<SharedMap>,
             };
             this.fluidComponentMap.set(
                 componentSchema.fluidMatchingMap.handle.absolutePath,
@@ -250,7 +250,7 @@ export abstract class SyncedComponent<
             const { syncedStateId, fluidToView } = stateConfig;
             // Fetch this specific view's state using the syncedStateId
             const storedFluidStateHandle = this.syncedState.get<
-                IComponentHandle<ISharedMap>
+                IFluidHandle<ISharedMap>
             >(`syncedState-${syncedStateId}`);
             if (storedFluidStateHandle === undefined) {
                 throw new Error(
@@ -289,7 +289,7 @@ export abstract class SyncedComponent<
                     const storedValue = rootKey !== undefined
                         ? this.root.get(rootKey)
                         : storedFluidState.get(fluidKey);
-                    const handle = storedValue?.IComponentHandle;
+                    const handle = storedValue?.IFluidHandle;
                     if (handle !== undefined) {
                         this.fluidComponentMap.set(handle.absolutePath, {
                             component: await handle.get(),
@@ -333,5 +333,10 @@ export abstract class SyncedComponent<
                 },
             );
         }
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentHTMLView() {
+        return this.IFluidHTMLView;
     }
 }

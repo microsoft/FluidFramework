@@ -896,8 +896,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
-                    const translatedValue = this.runtime.IComponentSerializer.parse(
-                        JSON.stringify(op.value.value), this.runtime.IComponentHandleContext);
+                    const translatedValue = this.runtime.IFluidSerializer.parse(
+                        JSON.stringify(op.value.value), this.runtime.IFluidHandleContext);
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IDirectoryValueChanged = { key: op.key, path: op.path, previousValue };
                     this.emit("valueChanged", event, local, message);
@@ -1018,8 +1018,8 @@ class SubDirectory implements IDirectory {
         const localValue = this.directory.localValueMaker.fromInMemory(value);
         const serializableValue = makeSerializable(
             localValue,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidSerializer,
+            this.runtime.IFluidHandleContext,
             this.directory.handle);
 
         // Set the value locally.
@@ -1404,8 +1404,8 @@ class SubDirectory implements IDirectory {
     public *getSerializedStorage() {
         for (const [key, localValue] of this._storage) {
             const value = localValue.makeSerialized(
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
+                this.runtime.IFluidSerializer,
+                this.runtime.IFluidHandleContext,
                 this.directory.handle);
             const res: [string, ISerializedValue] = [key, value];
             yield res;

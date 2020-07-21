@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { SharedComponent, SharedComponentFactory } from "@fluidframework/component-base";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import {
     createInsertSegmentOp,
     createRemoveRangeOp,
@@ -23,7 +23,7 @@ import {
     reservedTileLabelsKey,
     TextSegment,
 } from "@fluidframework/merge-tree";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IComponentContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import {
     SharedString,
     SharedStringSegment,
@@ -31,7 +31,7 @@ import {
     SequenceDeltaEvent,
 } from "@fluidframework/sequence";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { IComponentHTMLOptions } from "@fluidframework/view-interfaces";
+import { IFluidHTMLOptions } from "@fluidframework/view-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
@@ -94,7 +94,7 @@ const empty = Object.freeze({});
 
 export const getCss = (segment: ISegment): Readonly<{ style?: string, classList?: string }> => segment.properties || empty;
 
-export const getComponentOptions = (segment: ISegment): IComponentHTMLOptions | undefined => (segment.properties && segment.properties.componentOptions) || empty;
+export const getComponentOptions = (segment: ISegment): IFluidHTMLOptions | undefined => (segment.properties && segment.properties.componentOptions) || empty;
 
 type LeafAction = (position: number, segment: ISegment, startOffset: number, endOffset: number) => boolean;
 
@@ -137,7 +137,7 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
         /* root: */ SharedDirectory.getFactory(),
         [SharedString.getFactory()]);
 
-    public static getFactory(): IComponentFactory { return FlowDocument.factory; }
+    public static getFactory(): IFluidDataStoreFactory { return FlowDocument.factory; }
 
     public static create(parentContext: IComponentContext, props?: any) {
         return FlowDocument.factory.create(parentContext, props);
@@ -174,7 +174,7 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
         Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
 
-        const handle = await this.root.wait<IComponentHandle<SharedString>>("text");
+        const handle = await this.root.wait<IFluidHandle<SharedString>>("text");
         this.maybeSharedString = await handle.get();
         if (this.maybeSharedString !== undefined) {
             this.forwardEvent(this.maybeSharedString, "sequenceDelta", "maintenance");
@@ -315,7 +315,7 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
         this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakProperties);
     }
 
-    public insertComponent(position: number, handle: IComponentHandle, view: string, componentOptions: object, style?: string, classList?: string[]) {
+    public insertComponent(position: number, handle: IFluidHandle, view: string, componentOptions: object, style?: string, classList?: string[]) {
         this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({
             ...FlowDocument.inclusionProperties,
             componentOptions, handle, style, classList: classList && classList.join(" "), view,
