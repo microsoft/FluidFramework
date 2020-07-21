@@ -8,6 +8,6 @@
  * One common usage is in the default case of a switch block,
  * to ensure that all cases are explicitly handled.
  */
-export function unreachableCase(value: never): never {
-    throw new Error(`Unreachable Case: Type of ${value} is never`);
+export function unreachableCase(_: never, message = "Unreachable Case"): never {
+    throw new Error(message);
 }
