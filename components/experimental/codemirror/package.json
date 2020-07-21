@@ -43,7 +43,6 @@
     "@fluidframework/merge-tree": "^0.23.0",
     "@fluidframework/runtime-definitions": "^0.23.0",
     "@fluidframework/sequence": "^0.23.0",
-    "@fluidframework/shared-object-base": "^0.23.0",
     "@fluidframework/view-interfaces": "^0.23.0",
     "@types/codemirror": "0.0.76",
     "codemirror": "^5.48.4"

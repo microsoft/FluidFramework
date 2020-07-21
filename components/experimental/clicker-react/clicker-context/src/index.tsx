@@ -17,10 +17,6 @@ import {
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const ClickerContextName = pkg.name as string;
-
 // ----- REACT STUFF -----
 interface ICounterState {
     value: number;
@@ -118,7 +114,7 @@ export class ClickerContext extends SyncedComponent {
 
 // ----- FACTORY SETUP -----
 export const ClickerContextInstantiationFactory = new PrimedComponentFactory(
-    ClickerContextName,
+    "clicker-context",
     ClickerContext,
     [],
     {},

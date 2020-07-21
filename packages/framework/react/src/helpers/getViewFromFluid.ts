@@ -48,19 +48,18 @@ export function getViewFromFluid<
         );
     }
     let value = componentState[fluidKey];
-    if (combinedFluidState) {
-        value = (combinedFluidState[fluidKey] || value) as SF[keyof SF];
+    if (combinedFluidState !== undefined) {
+        value = combinedFluidState[fluidKey] ?? value;
     }
-    const viewConverter =
-        fluidToView && fluidToView.get(fluidKey)?.viewConverter;
-    if (viewConverter) {
+    const viewConverter = fluidToView.get(fluidKey)?.viewConverter;
+    if (viewConverter !== undefined) {
         const partialFluidState: Partial<SF> = {};
         partialFluidState[fluidKey] = value;
         return viewConverter(viewState, partialFluidState, fluidComponentMap);
     } else {
         const partialViewState: Partial<SV> = {};
         const valueAsIComponentHandle = (value as IComponent).IComponentHandle;
-        const convertedValue = valueAsIComponentHandle
+        const convertedValue = valueAsIComponentHandle !== undefined
             ? fluidComponentMap.get(valueAsIComponentHandle.absolutePath)
             : value;
         partialViewState[fluidKey as string] = convertedValue;

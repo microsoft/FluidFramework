@@ -20,10 +20,6 @@ import { SharedCounter } from "@fluidframework/counter";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const ClickerReducerName = pkg.name as string;
-
 // ---- React Functional Component w/ useReducer ----
 
 interface ICounterReducerViewState extends IFluidFunctionalComponentViewState {
@@ -160,7 +156,7 @@ export class ClickerReducer extends SyncedComponent {
 
 // ----- FACTORY SETUP -----
 export const ClickerReducerInstantiationFactory = new PrimedComponentFactory(
-    ClickerReducerName,
+    "clicker-reducer",
     ClickerReducer,
     [SharedCounter.getFactory()],
     {},

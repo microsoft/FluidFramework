@@ -16,10 +16,6 @@ import { SharedCounter } from "@fluidframework/counter";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const ClickerName = pkg.name as string;
-
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
@@ -92,7 +88,7 @@ class CounterReactView extends FluidReactComponent<CounterViewState, CounterFlui
 
 // ----- FACTORY SETUP -----
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
-    ClickerName,
+    "clicker",
     Clicker,
     [SharedCounter.getFactory()],
     {},

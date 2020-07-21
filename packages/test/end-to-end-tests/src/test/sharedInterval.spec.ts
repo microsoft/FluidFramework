@@ -17,7 +17,7 @@ import {
     SharedString,
 } from "@fluidframework/sequence";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import {
     createLocalLoader,
     OpProcessingController,
@@ -71,7 +71,7 @@ describe("SharedInterval", () => {
         return response.value as ITestFluidComponent;
     }
 
-    async function createContainer(factoryEntries: Iterable<[string, ISharedObjectFactory]>): Promise<Container> {
+    async function createContainer(factoryEntries: Iterable<[string, IChannelFactory]>): Promise<Container> {
         const factory = new TestFluidComponentFactory(factoryEntries);
         const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);

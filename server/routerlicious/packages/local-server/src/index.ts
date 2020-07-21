@@ -4,3 +4,4 @@
  */
 
 export * from "./localDeltaConnectionServer";
+export * from "./localWebSocketServer";

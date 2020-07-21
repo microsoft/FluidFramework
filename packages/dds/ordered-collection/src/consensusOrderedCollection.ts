@@ -15,7 +15,7 @@ import {
 import {
     IChannelAttributes,
     IComponentRuntime,
-    IObjectStorageService,
+    IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
 import { unreachableCase } from "@fluidframework/runtime-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
@@ -275,7 +275,7 @@ export class ConsensusOrderedCollection<T = any>
 
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService): Promise<void> {
+        storage: IChannelStorageService): Promise<void> {
         assert(this.jobTracking.size === 0);
         const rawContentTracking = await storage.read(snapshotFileNameTracking);
         if (rawContentTracking !== undefined) {
@@ -341,11 +341,12 @@ export class ConsensusOrderedCollection<T = any>
     ): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
         assert(this.isAttached());
 
-        return this.newAckBasedPromise((resolve) => {
+        return this.newAckBasedPromise<IConsensusOrderedCollectionValue<T>>((resolve) => {
             // Send the resolve function as the localOpMetadata. This will be provided back to us when the
             // op is ack'd.
             this.submitLocalMessage(message, resolve);
-        });
+        // If we fail due to runtime being disposed, it's better to return undefined then unhandled exception.
+        }).catch((error) => undefined);
     }
 
     private addCore(value: T) {

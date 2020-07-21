@@ -14,7 +14,7 @@ import {
     NamedComponentRegistryEntries,
     NamedComponentRegistryEntry,
 } from "@fluidframework/runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import {
     ComponentSymbolProvider,
     DependencyContainer,
@@ -44,7 +44,7 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
     constructor(
         public readonly type: string,
         private readonly ctor: new (props: ISharedComponentProps<P>) => SharedComponent<P, S>,
-        sharedObjects: readonly ISharedObjectFactory[],
+        sharedObjects: readonly IChannelFactory[],
         private readonly optionalProviders: ComponentSymbolProvider<P>,
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,

@@ -60,11 +60,7 @@ export class RemoteComponentHandle implements IComponentHandle {
     }
 
     public bind(handle: IComponentHandle): void {
-        if (this.isAttached) {
-            handle.attachGraph();
-            return;
-        }
-        throw new Error("Cannot bind to an attached handle");
+        handle.attachGraph();
     }
 
     public async request(request: IRequest): Promise<IResponse> {
