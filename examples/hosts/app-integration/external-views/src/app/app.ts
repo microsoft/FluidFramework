@@ -41,17 +41,21 @@ async function renderPrettyDiceRoller(diceRoller: IDiceRoller) {
     ReactDOM.render(React.createElement(PrettyDiceRollerView, { model: diceRoller }), div);
 }
 
-// The format of the code proposal will be the contents of our package.json, which has a special "fluid" section
-// describing the code to load.
-// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-const packageJson = require("../../package.json");
+// Just a helper function to kick things off.  Making it async allows us to use await.
+async function start(): Promise<void> {
+    // The format of the code proposal will be the contents of our package.json, which has a special "fluid" section
+    // describing the code to load.
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+    const packageJson = require("../../package.json");
 
-// If you'd prefer to load the container bundle yourself (rather than relying on the codeLoader), pass the entrypoint
-// to the module as the third param below (e.g. window["main"]).
-getTinyliciousContainer(documentId, packageJson)
-    .then(getDiceRollerFromContainer)
-    .then(renderPrettyDiceRoller)
+    // If you'd prefer to load the container bundle yourself (rather than relying on the codeLoader), pass the
+    // entrypoint to the module as the third param below (e.g. window["main"]).
+    const container = await getTinyliciousContainer(documentId, packageJson);
+    const diceRoller = await getDiceRollerFromContainer(container);
+    await renderPrettyDiceRoller(diceRoller);
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line dot-notation
-    .then(() => { window["fluidStarted"] = true; })
-    .catch((error) => console.error(error));
+    window["fluidStarted"] = true;
+}
+
+start().catch((error) => console.error(error));
