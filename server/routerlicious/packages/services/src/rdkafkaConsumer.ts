@@ -20,8 +20,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private consumer?: kafkaTypes.KafkaConsumer;
 	private zooKeeperClient?: ZookeeperClient;
 	private closed = false;
+	private isRebalancing = true;
 	private assignedPartitions: Set<number> = new Set();
 	private readonly pendingCommits: Map<number, Deferred<void>> = new Map();
+	private readonly latestOffsets: Map<number, number> = new Map();
 
 	constructor(
 		endpoints: IKafkaEndpoints,
@@ -29,7 +31,8 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		topic: string,
 		public readonly groupId: string,
 		numberOfPartitions?: number,
-		replicationFactor?: number) {
+		replicationFactor?: number,
+		private readonly optimizedRebalance?: boolean) {
 		super(endpoints, clientId, topic, numberOfPartitions, replicationFactor);
 	}
 
@@ -55,7 +58,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				"fetch.min.bytes": 1,
 				"fetch.max.bytes": 1024 * 1024,
 				"offset_commit_cb": true,
-				"rebalance_cb": true,
+				"rebalance_cb": this.optimizedRebalance ? this.rebalance.bind(this) : true,
 			},
 			{
 				"auto.offset.reset": "latest",
@@ -82,6 +85,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		});
 
 		this.consumer.on("data", (message: kafkaTypes.Message) => {
+			this.latestOffsets.set(message.partition, message.offset);
 			this.emit("data", message as IQueuedMessage);
 		});
 
@@ -120,14 +124,26 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					return;
 				}
 
-				// reject pending commits for the partitions we lost
+				// cleanup things left over from the lost partitions
 				for (const partition of this.assignedPartitions) {
 					if (!newAssignedPartitions.has(partition)) {
+						// clear latest offset
+						this.latestOffsets.delete(partition);
+
+						// reject pending commit
 						const deferredCommit = this.pendingCommits.get(partition);
 						if (deferredCommit) {
 							this.pendingCommits.delete(partition);
 							deferredCommit.reject(new Error(`Partition ${partition} was unassigned`));
 						}
+					}
+				}
+
+				if (!this.optimizedRebalance) {
+					if (this.isRebalancing) {
+						this.isRebalancing = false;
+					} else {
+						this.emit("rebalancing", this.getPartitions(this.assignedPartitions), err.code);
 					}
 				}
 
@@ -183,6 +199,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 		this.assignedPartitions.clear();
 		this.pendingCommits.clear();
+		this.latestOffsets.clear();
 	}
 
 	public async commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
@@ -225,6 +242,38 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			partition,
 			offset: -1, // n/a
 		}));
+	}
+
+	/**
+	 * The default node-rdkafka consumer rebalance callback with the addition
+	 * of continuing from the last seen offset for assignments that have not changed
+	 */
+	private rebalance(err: kafkaTypes.LibrdKafkaError, assignments: kafkaTypes.Assignment[]) {
+		if (!this.consumer) {
+			return;
+		}
+
+		try {
+			if (err.code === kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS) {
+				for (const assignment of assignments) {
+					const offset = this.latestOffsets.get(assignment.partition);
+					if (offset !== undefined) {
+						// this consumer is already assigned this partition
+						// ensure we continue reading from our current offset
+						// + 1 so we do not read the latest message again
+						(assignment as kafkaTypes.TopicPartitionOffset).offset = offset + 1;
+					}
+				}
+
+				this.consumer.assign(assignments);
+			} else if (err.code === kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
+				this.consumer.unassign();
+			}
+		} catch (ex) {
+			if (this.consumer.isConnected()) {
+				this.consumer.emit("rebalance.error", ex);
+			}
+		}
 	}
 
 	private async fetchPartitionEpochs(partitions: IPartition[]): Promise<IPartitionWithEpoch[]> {
