@@ -76,7 +76,7 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
         minCol: number,
         maxRow: number,
         maxCol: number): Promise<ITable> {
-        const component = await TableSlice.getFactory().createComponent(
+        const component = await TableSlice.getFactory().createDataStore(
             this.context,
             { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol },
         ) as TableSlice;

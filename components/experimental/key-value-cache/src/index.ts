@@ -10,7 +10,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime } from "@fluidframework/component-runtime";
 import {
     IContainerContext,
     IRuntime,
@@ -19,11 +19,11 @@ import {
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
-    IComponentContext,
+    IFluidDataStoreContext,
     IComponentFactory,
 } from "@fluidframework/runtime-definitions";
 import {
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
 import {
@@ -55,7 +55,7 @@ declare module "@fluidframework/component-core-interfaces" {
 }
 
 class KeyValue implements IKeyValue, IFluidObject, IComponentRouter {
-    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
+    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         const kevValue = new KeyValue(runtime);
         await kevValue.initialize();
 
@@ -72,7 +72,7 @@ class KeyValue implements IKeyValue, IFluidObject, IComponentRouter {
         return this._root;
     }
 
-    constructor(private readonly runtime: IComponentRuntime) {
+    constructor(private readonly runtime: IFluidDataStoreRuntime) {
     }
 
     public set(key: string, value: any): void {
@@ -132,16 +132,16 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
             : ComponentName;
 
         const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
-        const component = await runtime.getComponentRuntime(componentId, true);
+        const component = await runtime.getDataStore(componentId, true);
         return component.request({ url: pathForComponent });
     }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IFluidDataStoreContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
-        const runtime = ComponentRuntime.load(
+        const runtime = FluidDataStoreRuntime.load(
             context,
             dataTypes,
         );
@@ -161,7 +161,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
         );
 
         if (!runtime.existing) {
-            const created = await runtime.createComponent(ComponentName, ComponentName);
+            const created = await runtime.createDataStore(ComponentName, ComponentName);
             created.bindToContext();
         }
 

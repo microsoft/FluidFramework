@@ -4,7 +4,7 @@
  */
 
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext, IComponentFactory } from "@fluidframework/runtime-definitions";
 import { SharedComponentFactory, SharedComponent } from "@fluidframework/component-base";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
@@ -23,7 +23,7 @@ export class WebFlow extends SharedComponent<ISharedDirectory> implements ICompo
 
     public static getFactory(): IComponentFactory { return WebFlow.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
+    public static create(parentContext: IFluidDataStoreContext, props?: any) {
         return WebFlow.factory.create(parentContext, props);
     }
 

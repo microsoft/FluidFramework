@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
 import { unreachableCase } from "@fluidframework/runtime-utils";
@@ -109,7 +109,7 @@ export class ConsensusOrderedCollection<T = any>
      */
     protected constructor(
         id: string,
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
         private readonly data: IOrderedCollection<T>,
     ) {

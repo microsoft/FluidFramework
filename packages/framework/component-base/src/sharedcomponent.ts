@@ -12,10 +12,10 @@ import {
     IProvideComponentHandle,
 } from "@fluidframework/component-core-interfaces";
 import {
-    IComponentContext,
+    IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
 import {
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
 } from "@fluidframework/component-runtime-definitions";
 import { ComponentHandle } from "@fluidframework/component-runtime";
 import { ISharedObject } from "@fluidframework/shared-object-base";
@@ -41,8 +41,8 @@ export abstract class SharedComponent<
     protected readonly root: TRoot;
 
     public constructor(
-        protected readonly context: IComponentContext,
-        protected readonly runtime: IComponentRuntime,
+        protected readonly context: IFluidDataStoreContext,
+        protected readonly runtime: IFluidDataStoreRuntime,
         root: ISharedObject,
     ) {
         super();

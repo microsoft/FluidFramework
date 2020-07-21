@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/merge-tree";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelServices,
     Jsonable,
     JsonablePrimitive,
@@ -196,7 +196,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
      * @param id - optional name of the sparse matrix
      * @returns newly create sparse matrix (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SparseMatrixFactory.Type) as SparseMatrix;
     }
 
@@ -209,7 +209,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         return new SparseMatrixFactory();
     }
 
-    constructor(document: IComponentRuntime, public id: string, attributes: IChannelAttributes) {
+    constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(document, id, attributes, SparseMatrixFactory.segmentFromSpec);
     }
 
@@ -353,7 +353,7 @@ export class SparseMatrixFactory implements IChannelFactory {
     }
 
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
         branchId: string,
@@ -364,7 +364,7 @@ export class SparseMatrixFactory implements IChannelFactory {
         return sharedObject;
     }
 
-    public create(document: IComponentRuntime, id: string): ISharedObject {
+    public create(document: IFluidDataStoreRuntime, id: string): ISharedObject {
         const sharedObject = new SparseMatrix(document, id, this.attributes);
         sharedObject.initializeLocal();
         return sharedObject;

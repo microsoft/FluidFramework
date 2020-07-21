@@ -80,7 +80,7 @@ describe("loader/runtime compatibility", () => {
                     runtimeOptions,
                 );
                 if (!runtime.existing) {
-                    const componentRuntime = await runtime.createComponent("default", type);
+                    const componentRuntime = await runtime.createDataStore("default", type);
                     await componentRuntime.request({ url: "/" });
                     componentRuntime.bindToContext();
                 }
@@ -261,7 +261,7 @@ describe("loader/runtime compatibility", () => {
         });
     });
 
-    describe("new ContainerRuntime, old ComponentRuntime", function() {
+    describe("new ContainerRuntime, old FluidDataStoreRuntime", function() {
         beforeEach(async function() {
             this.deltaConnectionServer = LocalDeltaConnectionServer.create(
                 undefined,

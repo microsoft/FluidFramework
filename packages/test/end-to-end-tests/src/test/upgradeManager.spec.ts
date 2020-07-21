@@ -7,7 +7,7 @@ import * as assert from "assert";
 import { OpProcessingController, initializeLocalContainer, LocalCodeLoader } from "@fluidframework/test-utils";
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { UpgradeManager } from "@fluidframework/base-host";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { ICodeLoader, IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
@@ -25,7 +25,7 @@ class TestComponent extends PrimedComponent {
         {},
     );
 
-    public get _runtime(): IComponentRuntime { return this.runtime; }
+    public get _runtime(): IFluidDataStoreRuntime { return this.runtime; }
     public get _root() { return this.root; }
 }
 

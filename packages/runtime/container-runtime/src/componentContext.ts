@@ -38,9 +38,9 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     ComponentRegistryEntry,
-    IComponentRuntimeChannel,
+    IFluidDataStoreChannel,
     IAttachMessage,
-    IComponentContext,
+    IFluidDataStoreContext,
     IComponentContextLegacy,
     IComponentFactory,
     IComponentRegistry,
@@ -54,11 +54,11 @@ import { ContainerRuntime } from "./containerRuntime";
 const currentSnapshotFormatVersion = "0.1";
 
 /**
- * Added IComponentAttributes similar to IChannelAttributes which will tell
+ * Added IFluidDataStoretAttributes similar to IChannelAttributes which will tell
  * the attributes of a component like the package, snapshotFormatVersion to
  * take different decisions based on a particular snapshotForamtVersion.
  */
-export interface IComponentAttributes {
+export interface IFluidDataStoretAttributes {
     pkg: string;
     readonly snapshotFormatVersion?: string;
 }
@@ -76,8 +76,8 @@ interface ComponentMessage {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export abstract class ComponentContext extends EventEmitter implements
-    IComponentContext,
+export abstract class FluidDataStoreContext extends EventEmitter implements
+    IFluidDataStoreContext,
     IComponentContextLegacy,
     IDisposable {
     public get documentId(): string {
@@ -159,11 +159,11 @@ export abstract class ComponentContext extends EventEmitter implements
         return this._attachState;
     }
 
-    public readonly bindToContext: (componentRuntime: IComponentRuntimeChannel) => void;
-    protected componentRuntime: IComponentRuntimeChannel | undefined;
+    public readonly bindToContext: (componentRuntime: IFluidDataStoreChannel) => void;
+    protected componentRuntime: IFluidDataStoreChannel | undefined;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
-    private componentRuntimeDeferred: Deferred<IComponentRuntimeChannel> | undefined;
+    private componentRuntimeDeferred: Deferred<IFluidDataStoreChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
 
@@ -175,14 +175,14 @@ export abstract class ComponentContext extends EventEmitter implements
         public readonly scope: IComponent & IFluidObject,
         public readonly summaryTracker: SummaryTracker,
         private bindState: BindState,
-        bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
+        bindComponent: (componentRuntime: IFluidDataStoreChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
         this._attachState = existing ? AttachState.Attached : AttachState.Detached;
 
-        this.bindToContext = (componentRuntime: IComponentRuntimeChannel) => {
+        this.bindToContext = (componentRuntime: IFluidDataStoreChannel) => {
             assert(this.bindState === BindState.NotBound);
             this.bindState = BindState.Binding;
             bindComponent(componentRuntime);
@@ -212,11 +212,11 @@ export abstract class ComponentContext extends EventEmitter implements
      * @deprecated
      * Remove once issue #1756 is closed
      */
-    public async createComponent(
+    public async createDataStore(
         pkgOrId: string | undefined,
         pkg?: string,
         props?: any,
-    ): Promise<IComponentRuntimeChannel> {
+    ): Promise<IFluidDataStoreChannel> {
         // pkgOrId can't be undefined if pkg is undefined
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pkgName = pkg ?? pkgOrId!;
@@ -225,16 +225,16 @@ export abstract class ComponentContext extends EventEmitter implements
 
         const packagePath: string[] = await this.composeSubpackagePath(pkgName);
 
-        return this.containerRuntime._createComponentWithProps(packagePath, props, id);
+        return this.containerRuntime._createDataStoreWithProps(packagePath, props, id);
     }
 
-    public async createComponentWithRealizationFn(
+    public async createDataStoreWithRealizationFn(
         pkg: string,
-        realizationFn?: (context: IComponentContext) => void,
+        realizationFn?: (context: IFluidDataStoreContext) => void,
     ): Promise<IComponent & IComponentLoadable> {
         const packagePath = await this.composeSubpackagePath(pkg);
 
-        const componentRuntime = await this.containerRuntime.createComponentWithRealizationFn(
+        const componentRuntime = await this.containerRuntime.createDataStoreWithRealizationFn(
             packagePath,
             realizationFn,
         );
@@ -259,9 +259,9 @@ export abstract class ComponentContext extends EventEmitter implements
         return deferred.promise;
     }
 
-    public async realize(): Promise<IComponentRuntimeChannel> {
+    public async realize(): Promise<IFluidDataStoreChannel> {
         if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeChannel>();
+            this.componentRuntimeDeferred = new Deferred<IFluidDataStoreChannel>();
             const details = await this.getInitialSnapshotDetails();
             // Base snapshot is the baseline where pending ops are applied to.
             // It is important that this be in sync with the pending ops, and also
@@ -297,10 +297,10 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public async realizeWithFn(
-        realizationFn: (context: IComponentContext) => void,
-    ): Promise<IComponentRuntimeChannel> {
+        realizationFn: (context: IFluidDataStoreContext) => void,
+    ): Promise<IFluidDataStoreChannel> {
         if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeChannel>();
+            this.componentRuntimeDeferred = new Deferred<IFluidDataStoreChannel>();
             realizationFn(this);
         }
 
@@ -324,7 +324,7 @@ export abstract class ComponentContext extends EventEmitter implements
         assert(this.connected === connected);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const runtime: IComponentRuntimeChannel = this.componentRuntime!;
+        const runtime: IFluidDataStoreChannel = this.componentRuntime!;
 
         // Back-compat: supporting <= 0.16 components
         if (runtime.setConnectionState) {
@@ -395,7 +395,7 @@ export abstract class ComponentContext extends EventEmitter implements
 
         const { pkg } = await this.getInitialSnapshotDetails();
 
-        const componentAttributes: IComponentAttributes = {
+        const componentAttributes: IFluidDataStoretAttributes = {
             pkg: JSON.stringify(pkg),
             snapshotFormatVersion: currentSnapshotFormatVersion,
         };
@@ -481,12 +481,12 @@ export abstract class ComponentContext extends EventEmitter implements
         }
     }
 
-    public bindRuntime(componentRuntime: IComponentRuntimeChannel) {
+    public bindRuntime(componentRuntime: IFluidDataStoreChannel) {
         if (this.componentRuntime) {
             throw new Error("runtime already bound");
         }
 
-        // If this ComponentContext was created via `IContainerRuntime.createComponentContext`, the
+        // If this FluidDataStoreContext was created via `IContainerRuntime.createDataStoreContext`, the
         // `componentRuntimeDeferred` promise hasn't yet been initialized.  Do so now.
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred();
@@ -516,7 +516,7 @@ export abstract class ComponentContext extends EventEmitter implements
         this.componentRuntimeDeferred.resolve(this.componentRuntime);
 
         // notify the runtime if they want to propagate up. Used for logging.
-        this.containerRuntime.notifyComponentInstantiated(this);
+        this.containerRuntime.notifyDataStoreInstantiated(this);
     }
 
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
@@ -564,7 +564,7 @@ export abstract class ComponentContext extends EventEmitter implements
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
-        assert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
+        assert(this.componentRuntime, "FluidDataStoreRuntime must exist when resubmitting ops");
         const innerContents = contents as ComponentMessage;
         this.componentRuntime.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
@@ -576,7 +576,7 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 }
 
-export class RemotedComponentContext extends ComponentContext {
+export class RemotedFluidDataStoreContext  extends FluidDataStoreContext {
     private details: ISnapshotDetails | undefined;
 
     constructor(
@@ -623,7 +623,7 @@ export class RemotedComponentContext extends ComponentContext {
             if (tree !== null && tree.blobs[".component"] !== undefined) {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion } =
-                    await readAndParse<IComponentAttributes>(
+                    await readAndParse<IFluidDataStoretAttributes>(
                         this.storage,
                         tree.blobs[".component"]);
 
@@ -655,7 +655,7 @@ export class RemotedComponentContext extends ComponentContext {
     }
 }
 
-export class LocalComponentContext extends ComponentContext {
+export class LocalFluidDataStoreContext extends FluidDataStoreContext {
     constructor(
         id: string,
         pkg: string[],
@@ -663,7 +663,7 @@ export class LocalComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
-        bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
+        bindComponent: (componentRuntime: IFluidDataStoreChannel) => void,
         /**
          * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
          */
@@ -685,7 +685,7 @@ export class LocalComponentContext extends ComponentContext {
     }
 
     public generateAttachMessage(): IAttachMessage {
-        const componentAttributes: IComponentAttributes = {
+        const componentAttributes: IFluidDataStoretAttributes = {
             pkg: JSON.stringify(this.pkg),
             snapshotFormatVersion: currentSnapshotFormatVersion,
         };

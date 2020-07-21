@@ -27,7 +27,7 @@ import {
 } from "@fluidframework/framework-interfaces";
 import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext, IComponentFactory } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
 import { SharedComponentFactory, SharedComponent } from "@fluidframework/component-base";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
@@ -504,7 +504,7 @@ export class MathCollection extends SharedComponent<ISharedDirectory> implements
 
     public static getFactory(): IComponentFactory { return MathCollection.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
+    public static create(parentContext: IFluidDataStoreContext, props?: any) {
         return MathCollection.factory.create(parentContext, props);
     }
 

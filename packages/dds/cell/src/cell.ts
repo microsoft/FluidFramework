@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
@@ -59,7 +59,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      * @param id - optional name of the shared map
      * @returns newly create shared map (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, CellFactory.Type) as SharedCell;
     }
 
@@ -95,7 +95,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      * @param runtime - component runtime the shared map belongs to
      * @param id - optional name of the shared map
      */
-    constructor(id: string, runtime: IComponentRuntime, attributes: IChannelAttributes) {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
     }
 

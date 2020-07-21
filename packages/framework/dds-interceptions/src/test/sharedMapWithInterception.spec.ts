@@ -6,7 +6,7 @@
 import assert from "assert";
 import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
 import { ISharedMap, SharedMap, MapFactory } from "@fluidframework/map";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { createSharedMapWithInterception } from "../map";
 
 describe("Shared Map with Interception", () => {
@@ -20,7 +20,7 @@ describe("Shared Map with Interception", () => {
         const documentId = "fakeId";
         const attributionKey = (key: string) => `${key}.attribution`;
         let sharedMap: SharedMap;
-        let componentContext: IComponentContext;
+        let componentContext: IFluidDataStoreContext;
 
         function orderSequentially(callback: () => void): void {
             callback();
@@ -36,7 +36,7 @@ describe("Shared Map with Interception", () => {
             componentRuntime.bindToContext();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;
+            componentContext = { containerRuntime: { orderSequentially } } as IFluidDataStoreContext;
         });
 
         // Verifies that the props are stored correctly in the given map under a key derived from the

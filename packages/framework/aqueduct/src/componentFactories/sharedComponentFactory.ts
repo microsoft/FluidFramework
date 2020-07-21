@@ -4,10 +4,10 @@
  */
 
 import { IComponent, IComponentLoadable, IRequest } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
 import { ComponentRegistry } from "@fluidframework/container-runtime";
 import {
-    IComponentContext,
+    IFluidDataStoreContext,
     IComponentFactory,
     IComponentRegistry,
     IProvideComponentRegistry,
@@ -76,7 +76,7 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
      *
      * @param context - component context used to load a component runtime
      */
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IFluidDataStoreContext): void {
         this.instantiateComponentWithInitialState(context, undefined);
     }
 
@@ -86,11 +86,11 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
      * @param initialState  - The initial state to provide the created component
      */
     private instantiateComponentWithInitialState(
-        context: IComponentContext,
+        context: IFluidDataStoreContext,
         initialState?: S): void {
         // Create a new runtime for our component
         // The runtime is what Fluid uses to create DDS' and route to your component
-        const runtime = ComponentRuntime.load(
+        const runtime = FluidDataStoreRuntime.load(
             context,
             this.sharedObjectRegistry,
             this.registry,
@@ -121,8 +121,8 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
      * @param context - component context used to load a component runtime
      */
     private async instantiateInstance(
-        runtime: ComponentRuntime,
-        context: IComponentContext,
+        runtime: FluidDataStoreRuntime,
+        context: IFluidDataStoreContext,
         initialState?: S,
     ) {
         const dependencyContainer = new DependencyContainer(context.scope.IComponentDependencySynthesizer);
@@ -134,7 +134,7 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
     }
 
     /**
-     * Implementation of IComponentFactory's createComponent method that also exposes an initial
+     * Implementation of IComponentFactory's createDataStore method that also exposes an initial
      * state argument.  Only specific factory instances are intended to take initial state.
      * @param context - The component context being used to create the component
      * (the created component will have its own new context created as well)
@@ -142,17 +142,22 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
      * @returns A promise for a component that will have been initialized. Caller is responsible
      * for attaching the component to the provided runtime's container such as by storing its handle
      */
-    public async createComponent(
-        context: IComponentContext,
+    public async createDataStore(
+        context: IFluidDataStoreContext,
         initialState?: S,
     ): Promise<IComponent & IComponentLoadable> {
         if (this.type === "") {
             throw new Error("undefined type member");
         }
 
-        return context.createComponentWithRealizationFn(
+        return context.createDataStoreWithRealizationFn(
             this.type,
             (newContext) => { this.instantiateComponentWithInitialState(newContext, initialState); },
         );
+    }
+
+    /** deprecated: backcompat for FDL split */
+    createComponent?(context: IFluidDataStoreContext, initialState?: S) {
+        return this.createDataStore(context, initialState);
     }
 }

@@ -4,21 +4,21 @@
  */
 
 import { IRequest, IResponse, IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
+import { ComponentHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
-import { IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { ITestFluidComponent } from "./interfaces";
 
 /**
  * A test component that will create a shared object for each key-value pair in the factoryEntries passed to load.
  * The shared objects can be retrieved by passing the key of the entry to getSharedObject.
- * It exposes the IComponentContext and IComponentRuntime.
+ * It exposes the IFluidDataStoreContext and IFluidDataStoreRuntime.
  */
 export class TestFluidComponent implements ITestFluidComponent, IComponentLoadable {
     public static async load(
-        runtime: IComponentRuntime,
-        context: IComponentContext,
+        runtime: IFluidDataStoreRuntime,
+        context: IFluidDataStoreContext,
         factoryEntries: Map<string, IChannelFactory>) {
         const component = new TestFluidComponent(runtime, context, factoryEntries);
         await component.initialize();
@@ -48,8 +48,8 @@ export class TestFluidComponent implements ITestFluidComponent, IComponentLoadab
      * a shared object is created which can be retrieved by calling getSharedObject() with the id;
      */
     constructor(
-        public readonly runtime: IComponentRuntime,
-        public readonly context: IComponentContext,
+        public readonly runtime: IFluidDataStoreRuntime,
+        public readonly context: IFluidDataStoreContext,
         private readonly factoryEntriesMap: Map<string, IChannelFactory>,
     ) {
         this.url = context.id;
@@ -130,7 +130,7 @@ export class TestFluidComponentFactory implements IComponentFactory {
      */
     constructor(private readonly factoryEntries: Iterable<[string | undefined, IChannelFactory]>) { }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IFluidDataStoreContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
 
         // Add SharedMap's factory which will be used to create the root map.
@@ -143,7 +143,7 @@ export class TestFluidComponentFactory implements IComponentFactory {
             dataTypes.set(factory.type, factory);
         }
 
-        const runtime = ComponentRuntime.load(
+        const runtime = FluidDataStoreRuntime.load(
             context,
             dataTypes,
         );

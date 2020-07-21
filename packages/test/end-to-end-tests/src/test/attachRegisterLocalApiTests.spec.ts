@@ -52,7 +52,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         containerRuntime: IContainerRuntimeBase,
     ) => {
         const peerComponentRuntimeChannel = await (containerRuntime as IContainerRuntime)
-            .createComponentWithRealizationFn(["default"]);
+            .createDataStoreWithRealizationFn(["default"]);
         const peerComponent =
             (await peerComponentRuntimeChannel.request({ url: "/" })).value as ITestFluidComponent;
         return {

@@ -10,7 +10,7 @@ import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definition
 import { Container } from "@fluidframework/container-loader";
 import { SharedCounter } from "@fluidframework/counter";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
@@ -44,7 +44,7 @@ export class TestComponent extends PrimedComponent {
      * Expose the runtime for testing purposes.
      */
 
-    public runtime: IComponentRuntime;
+    public runtime: IFluidDataStoreRuntime;
 
     public constructor(props: ISharedComponentProps) {
         super(props);
@@ -117,7 +117,7 @@ describe("LocalLoader", () => {
         });
 
         it("opened", async () => {
-            assert(component instanceof TestComponent, "createComponent() must return the expected component type.");
+            assert(component instanceof TestComponent, "createDataStore() must return the expected component type.");
         });
 
         afterEach(async () => {

@@ -13,7 +13,7 @@ import {
     IConsensusRegisterCollection,
     ReadPolicy,
 } from "@fluidframework/register-collection";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
@@ -23,7 +23,7 @@ import {
 } from "@fluidframework/test-utils";
 
 interface ISharedObjectConstructor<T> {
-    create(runtime: IComponentRuntime, id?: string): T;
+    create(runtime: IFluidDataStoreRuntime, id?: string): T;
 }
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {

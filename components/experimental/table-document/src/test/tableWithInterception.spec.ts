@@ -6,7 +6,7 @@
 import assert from "assert";
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 import { ITable } from "../table";
@@ -24,7 +24,7 @@ describe("Table Document with Interception", () => {
 
         const userAttributes = { userId: "Fake User" };
         let tableDocument: TableDocument;
-        let componentContext: IComponentContext;
+        let componentContext: IFluidDataStoreContext;
 
         // Sample interface used for storing the details of a cell.
         interface ICellType {
@@ -82,7 +82,7 @@ describe("Table Document with Interception", () => {
             tableDocument = response.value;
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;
+            componentContext = { containerRuntime: { orderSequentially } } as IFluidDataStoreContext;
         });
 
         it("should be able to intercept TableDocument methods by the interception", async () => {

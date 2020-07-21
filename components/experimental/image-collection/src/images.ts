@@ -15,7 +15,7 @@ import { ComponentHandle } from "@fluidframework/component-runtime";
 import { IComponentLayout } from "@fluidframework/framework-experimental";
 import { IComponentCollection } from "@fluidframework/framework-interfaces";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext, IComponentFactory } from "@fluidframework/runtime-definitions";
 import { SharedComponent, SharedComponentFactory } from "@fluidframework/component-base";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 
@@ -63,7 +63,7 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
 
     public static getFactory(): IComponentFactory { return ImageCollection.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
+    public static create(parentContext: IFluidDataStoreContext, props?: any) {
         return ImageCollection.factory.create(parentContext, props);
     }
 

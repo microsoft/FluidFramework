@@ -4,7 +4,7 @@
  */
 
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import {
     FluidComponentMap,
@@ -26,7 +26,7 @@ import {
 export function setFluidState<SV, SF>(
     syncedStateId: string,
     syncedState: ISyncedState,
-    runtime: IComponentRuntime,
+    runtime: IFluidDataStoreRuntime,
     componentMap: FluidComponentMap,
     fluidToView: Map<keyof SF, IViewConverter<SV, SF>>,
     newViewState: SV,

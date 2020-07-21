@@ -9,8 +9,8 @@ import {
     ISequencedDocumentMessage,
     ITree,
 } from "@fluidframework/protocol-definitions";
-import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
@@ -28,8 +28,8 @@ export class LocalChannelContext implements IChannelContext {
         id: string,
         registry: ISharedObjectRegistry,
         type: string,
-        runtime: IComponentRuntime,
-        private readonly componentContext: IComponentContext,
+        runtime: IFluidDataStoreRuntime,
+        private readonly componentContext: IFluidDataStoreContext,
         private readonly storageService: IDocumentStorageService,
         private readonly submitFn: (content: any, localOpMetadata: unknown) => number,
         dirtyFn: (address: string) => void,

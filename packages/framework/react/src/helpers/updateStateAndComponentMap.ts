@@ -5,7 +5,7 @@
 
 import { IDirectoryValueChanged, SharedMap } from "@fluidframework/map";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import {
     FluidComponentMap,
     IFluidFunctionalComponentFluidState,
@@ -45,7 +45,7 @@ export const updateStateAndComponentMap = async <
     isSyncedStateUpdate: boolean,
     syncedStateId: string,
     syncedState: ISyncedState,
-    runtime: IComponentRuntime,
+    runtime: IFluidDataStoreRuntime,
     viewState: SV,
     setState: (newState: SV, isSyncedStateUpdate?: boolean) => void,
     syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,

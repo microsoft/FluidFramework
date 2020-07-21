@@ -21,7 +21,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
@@ -121,7 +121,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
     private readonly intervalMapKernel: MapKernel;
     constructor(
-        private readonly componentRuntime: IComponentRuntime,
+        private readonly componentRuntime: IFluidDataStoreRuntime,
         public id: string,
         attributes: IChannelAttributes,
         public readonly segmentFromSpec: (spec: MergeTree.IJSONSegment) => MergeTree.ISegment,

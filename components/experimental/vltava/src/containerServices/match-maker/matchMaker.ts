@@ -13,24 +13,25 @@ import {
     IComponentDiscoverInterfaces,
     IComponentDiscoverableInterfaces,
 } from "@fluidframework/framework-interfaces";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
 export const MatchMakerContainerServiceId = "matchMaker";
 
-const getMatchMakerContainerService = async (context: IComponentContext): Promise<IComponentInterfacesRegistry> => {
-    const response = await context.containerRuntime.request({
-        url: `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
-    });
-    if (response.status === 200 && response.mimeType === "fluid/component") {
-        const value = response.value as IFluidObject;
-        const matchMaker = value.IComponentInterfacesRegistry;
-        if (matchMaker) {
-            return matchMaker;
+const getMatchMakerContainerService =
+    async (context: IFluidDataStoreContext): Promise<IComponentInterfacesRegistry> => {
+        const response = await context.containerRuntime.request({
+            url: `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
+        });
+        if (response.status === 200 && response.mimeType === "fluid/component") {
+            const value = response.value as IFluidObject;
+            const matchMaker = value.IComponentInterfacesRegistry;
+            if (matchMaker) {
+                return matchMaker;
+            }
         }
-    }
 
-    throw new Error("MatchMaker Container Service not registered");
-};
+        throw new Error("MatchMaker Container Service not registered");
+    };
 
 /**
  * Helper function for registering with the MatchMaker. Manages getting the MatchMaker from the Container before
@@ -40,7 +41,7 @@ const getMatchMakerContainerService = async (context: IComponentContext): Promis
  * @param component - Discover/Discoverable instance
  */
 export const registerWithMatchMaker = async (
-    context: IComponentContext,
+    context: IFluidDataStoreContext,
     component: IProvideComponentDiscoverInterfaces | IProvideComponentDiscoverableInterfaces,
 ): Promise<void> => {
     const matchMaker = await getMatchMakerContainerService(context);
@@ -55,7 +56,7 @@ export const registerWithMatchMaker = async (
  * @param component - Discover/Discoverable instance
  */
 export const unregisterWithMatchMaker = async (
-    context: IComponentContext,
+    context: IFluidDataStoreContext,
     component: IProvideComponentDiscoverInterfaces | IProvideComponentDiscoverableInterfaces,
 ): Promise<void> => {
     const matchMaker = await getMatchMakerContainerService(context);

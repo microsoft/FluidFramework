@@ -20,7 +20,7 @@ import {
     IResponse,
     IComponent,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime, ComponentHandle } from "@fluidframework/component-runtime";
 import { Ink } from "@fluidframework/ink";
 import {
     ISharedMap,
@@ -28,8 +28,8 @@ import {
 } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import {
-    IComponentRuntimeChannel,
-    IComponentContext,
+    IFluidDataStoreChannel,
+    IFluidDataStoreContext,
     ITask,
     ITaskManager,
     SchedulerType,
@@ -49,7 +49,7 @@ const debug = registerDebug("fluid:shared-text");
 /**
  * Helper function to retrieve the handle for the default component route
  */
-async function getHandle(runtimeP: Promise<IComponentRuntimeChannel>): Promise<IComponentHandle> {
+async function getHandle(runtimeP: Promise<IFluidDataStoreChannel>): Promise<IComponentHandle> {
     const runtime = await runtimeP;
     const request = await runtime.request({ url: "" });
 
@@ -64,7 +64,8 @@ async function getHandle(runtimeP: Promise<IComponentRuntimeChannel>): Promise<I
 export class SharedTextRunner
     extends EventEmitter
     implements IComponentHTMLView, IComponentLoadable, IProvideSharedString {
-    public static async load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
+    public static async load(
+        runtime: FluidDataStoreRuntime, context: IFluidDataStoreContext): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
         await runner.initialize();
 
@@ -88,7 +89,8 @@ export class SharedTextRunner
     private taskManager: ITaskManager;
     private uiInitialized = false;
 
-    private constructor(private readonly runtime: ComponentRuntime, private readonly context: IComponentContext) {
+    private constructor(
+        private readonly runtime: FluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {
         super();
         this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
     }
@@ -152,10 +154,10 @@ export class SharedTextRunner
 
             const containerRuntime = this.context.containerRuntime;
             const [progressBars, math, videoPlayers, images] = await Promise.all([
-                getHandle(containerRuntime._createComponentWithProps("@fluid-example/progress-bars")),
-                getHandle(containerRuntime._createComponentWithProps("@fluid-example/math")),
-                getHandle(containerRuntime._createComponentWithProps("@fluid-example/video-players")),
-                getHandle(containerRuntime._createComponentWithProps("@fluid-example/image-collection")),
+                getHandle(containerRuntime._createDataStoreWithProps("@fluid-example/progress-bars")),
+                getHandle(containerRuntime._createDataStoreWithProps("@fluid-example/math")),
+                getHandle(containerRuntime._createDataStoreWithProps("@fluid-example/video-players")),
+                getHandle(containerRuntime._createDataStoreWithProps("@fluid-example/image-collection")),
             ]);
 
             this.rootView.set("progressBars", progressBars);
@@ -274,7 +276,7 @@ export class SharedTextRunner
 
 class TaskScheduler {
     constructor(
-        private readonly componentContext: IComponentContext,
+        private readonly componentContext: IFluidDataStoreContext,
         private readonly taskManager: ITaskManager,
         private readonly componentUrl: string,
         private readonly sharedString: SharedString,
@@ -307,7 +309,7 @@ class TaskScheduler {
     }
 }
 
-export function instantiateComponent(context: IComponentContext): void {
+export function instantiateComponent(context: IFluidDataStoreContext): void {
     const modules = new Map<string, any>();
 
     // Create channel factories
@@ -325,7 +327,7 @@ export function instantiateComponent(context: IComponentContext): void {
     modules.set(objectSequenceFactory.type, objectSequenceFactory);
     modules.set(numberSequenceFactory.type, numberSequenceFactory);
 
-    const runtime = ComponentRuntime.load(
+    const runtime = FluidDataStoreRuntime.load(
         context,
         modules,
     );

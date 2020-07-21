@@ -9,7 +9,7 @@ import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframe
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { IComponentContext, IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
@@ -53,11 +53,11 @@ describe("Detached Container", () => {
     let loader: Loader;
 
     const createAndAttachComponent = (async (
-        componentContext: IComponentContext,
+        componentContext: IFluidDataStoreContext,
         componentId: string,
         type: string,
     ) => {
-        const doc = await componentContext.createComponent(componentId, type);
+        const doc = await componentContext.createDataStore(componentId, type);
         doc.bindToContext();
     });
 
@@ -304,7 +304,7 @@ describe("Detached Container", () => {
     it("Fire component attach ops during container attach", async () => {
         const testComponentType = "default";
         // eslint-disable-next-line prefer-const
-        let peerComponentRuntimeChannel: IComponentRuntimeChannel;
+        let peerComponentRuntimeChannel: IFluidDataStoreChannel;
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -325,7 +325,7 @@ describe("Detached Container", () => {
 
         const containerP = container.attach(request);
         peerComponentRuntimeChannel = await (component.context.containerRuntime as IContainerRuntime)
-            .createComponentWithRealizationFn([testComponentType]);
+            .createDataStoreWithRealizationFn([testComponentType]);
         // Fire attach op
         peerComponentRuntimeChannel.bindToContext();
         await containerP;

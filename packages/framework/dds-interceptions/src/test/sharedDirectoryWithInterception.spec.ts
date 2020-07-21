@@ -6,7 +6,7 @@
 import assert from "assert";
 import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
 import { IDirectory, SharedDirectory, DirectoryFactory } from "@fluidframework/map";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { createDirectoryWithInterception } from "../map";
 
 describe("Shared Directory with Interception", () => {
@@ -16,7 +16,7 @@ describe("Shared Directory with Interception", () => {
         const attributionDirectoryName = "attribution";
         const attributionKey = (key: string) => `${key}.attribution`;
         let sharedDirectory: SharedDirectory;
-        let componentContext: IComponentContext;
+        let componentContext: IFluidDataStoreContext;
 
         // This function gets / creates the attribution directory for the given subdirectory path.
         function getAttributionDirectory(root: IDirectory, path: string) {
@@ -92,7 +92,7 @@ describe("Shared Directory with Interception", () => {
             componentRuntime.bindToContext();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;
+            componentContext = { containerRuntime: { orderSequentially } } as IFluidDataStoreContext;
         });
 
         // Verifies that the props are stored correctly in the attribution sub directory - a sub directory

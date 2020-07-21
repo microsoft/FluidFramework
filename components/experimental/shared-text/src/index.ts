@@ -12,7 +12,7 @@ import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/co
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-    IComponentContext,
+    IFluidDataStoreContext,
     IComponentFactory,
     IComponentRegistry,
     NamedComponentRegistryEntries,
@@ -106,7 +106,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
         const componentId = requestUrl
             ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
             : "text";
-        const component = await runtime.getComponentRuntime(componentId, true);
+        const component = await runtime.getDataStore(componentId, true);
 
         return component.request(
             {
@@ -115,7 +115,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
             });
     }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IFluidDataStoreContext): void {
         return sharedTextComponent.instantiateComponent(context);
     }
 
@@ -138,7 +138,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                runtime.createComponent(DefaultComponentName, SharedTextFactoryComponent.type)
+                runtime.createDataStore(DefaultComponentName, SharedTextFactoryComponent.type)
                     .then((componentRuntime) => componentRuntime.bindToContext()),
             ]);
         }

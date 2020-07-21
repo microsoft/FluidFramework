@@ -7,8 +7,8 @@ import { EventEmitter } from "events";
 
 import { IFluidObject, IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IComponentLastEditedTracker } from "@fluidframework/last-edited-experimental";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
 import { IQuorum, ISequencedClient } from "@fluidframework/protocol-definitions";
 
@@ -41,8 +41,8 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
 
     constructor(
         private readonly root: ISharedDirectory,
-        private readonly context: IComponentContext,
-        runtime: IComponentRuntime,
+        private readonly context: IFluidDataStoreContext,
+        runtime: IFluidDataStoreRuntime,
     ) {
         super();
 

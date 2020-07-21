@@ -11,7 +11,7 @@ import {
     IResponse,
     IComponentHandle,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
+import { ComponentHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IMergeTreeInsertMsg,
@@ -20,8 +20,8 @@ import {
     MergeTreeDeltaType,
     createMap,
 } from "@fluidframework/merge-tree";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
-import { IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import { EditorView } from "prosemirror-view";
@@ -99,7 +99,7 @@ class ProseMirrorView implements IComponentHTMLView {
  */
 export class ProseMirror extends EventEmitter
     implements IComponentLoadable, IComponentRouter, IComponentHTMLView, IProvideRichTextEditor {
-    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
+    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         const collection = new ProseMirror(runtime, context);
         await collection.initialize();
 
@@ -121,8 +121,8 @@ export class ProseMirror extends EventEmitter
     private readonly innerHandle: IComponentHandle<this>;
 
     constructor(
-        private readonly runtime: IComponentRuntime,
-        /* Private */ context: IComponentContext,
+        private readonly runtime: IFluidDataStoreRuntime,
+        /* Private */ context: IFluidDataStoreContext,
     ) {
         super();
 
@@ -175,7 +175,7 @@ class ProseMirrorFactory implements IComponentFactory {
 
     public get IComponentFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IFluidDataStoreContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         const sequenceFactory = SharedString.getFactory();
@@ -183,7 +183,7 @@ class ProseMirrorFactory implements IComponentFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(sequenceFactory.type, sequenceFactory);
 
-        const runtime = ComponentRuntime.load(
+        const runtime = FluidDataStoreRuntime.load(
             context,
             dataTypes,
         );

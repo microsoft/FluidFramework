@@ -39,14 +39,14 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannel,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IDeltaConnection,
     IDeltaHandler,
     IChannelStorageService,
     IChannelServices,
 } from "@fluidframework/component-runtime-definitions";
 import { ComponentSerializer, getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
-import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 
@@ -117,9 +117,9 @@ export class MockContainerRuntime {
         protected readonly factory: MockContainerRuntimeFactory,
     ) {
         this.deltaManager = new MockDeltaManager();
-        // Set ComponentRuntime's deltaManager to ours so that they are in sync.
+        // Set FluidDataStoreRuntime's deltaManager to ours so that they are in sync.
         this.componentRuntime.deltaManager = this.deltaManager;
-        // ComponentRuntime already creates a clientId, reuse that so they are in sync.
+        // FluidDataStoreRuntime already creates a clientId, reuse that so they are in sync.
         this.clientId = this.componentRuntime.clientId;
     }
 
@@ -361,7 +361,7 @@ export class MockQuorum implements IQuorum, EventEmitter {
  * Mock implementation of IRuntime for testing that does nothing
  */
 export class MockComponentRuntime extends EventEmitter
-    implements IComponentRuntime, IComponentRuntimeChannel, IComponentHandleContext {
+    implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IComponentHandleContext {
     public get IComponentHandleContext(): IComponentHandleContext { return this; }
     public get IComponentRouter() { return this; }
 

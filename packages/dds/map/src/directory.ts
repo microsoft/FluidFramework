@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelServices,
     IChannelFactory,
@@ -332,7 +332,7 @@ export class DirectoryFactory {
      * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.load}
      */
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
         branchId: string,
@@ -346,7 +346,7 @@ export class DirectoryFactory {
     /**
      * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
      */
-    public create(runtime: IComponentRuntime, id: string): ISharedDirectory {
+    public create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory {
         const directory = new SharedDirectory(id, runtime, DirectoryFactory.Attributes);
         directory.initializeLocal();
 
@@ -376,7 +376,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * @param id - Optional name of the shared directory
      * @returns Newly create shared directory (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string): SharedDirectory {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory {
         return runtime.createChannel(id, DirectoryFactory.Type) as SharedDirectory;
     }
 
@@ -425,7 +425,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      */
     constructor(
         id: string,
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);
@@ -959,7 +959,7 @@ class SubDirectory implements IDirectory {
      */
     constructor(
         private readonly directory: SharedDirectory,
-        private readonly runtime: IComponentRuntime,
+        private readonly runtime: IFluidDataStoreRuntime,
         public readonly absolutePath: string) {
     }
 

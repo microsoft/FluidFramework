@@ -15,7 +15,7 @@ import { ComponentHandle } from "@fluidframework/component-runtime";
 import { IComponentLayout } from "@fluidframework/framework-experimental";
 import { IComponentCollection } from "@fluidframework/framework-interfaces";
 import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext, IComponentFactory } from "@fluidframework/runtime-definitions";
 import { SharedComponent, SharedComponentFactory } from "@fluidframework/component-base";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
@@ -157,7 +157,7 @@ export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> imp
 
     public static getFactory(): IComponentFactory { return VideoPlayerCollection.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
+    public static create(parentContext: IFluidDataStoreContext, props?: any) {
         return VideoPlayerCollection.factory.create(parentContext, props);
     }
 

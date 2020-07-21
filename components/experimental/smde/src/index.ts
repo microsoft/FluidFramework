@@ -38,7 +38,7 @@ class SmdeContainerFactory implements IRuntimeFactory {
                 const componentId = requestUrl
                     ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
                     : defaultComponentId;
-                const component = await containerRuntime.getComponentRuntime(componentId, true);
+                const component = await containerRuntime.getDataStore(componentId, true);
 
                 return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
             },
@@ -50,7 +50,7 @@ class SmdeContainerFactory implements IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
+                runtime.createDataStore(defaultComponentId, defaultComponent).then((componentRuntime) => {
                     componentRuntime.bindToContext();
                 }),
             ]);

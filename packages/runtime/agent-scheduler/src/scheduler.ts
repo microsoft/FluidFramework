@@ -13,14 +13,14 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime, ComponentHandle } from "@fluidframework/component-runtime";
 import { LoaderHeader, AttachState } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import {
     IAgentScheduler,
-    IComponentContext,
+    IFluidDataStoreContext,
     IComponentFactory,
     ITask,
     ITaskManager,
@@ -33,7 +33,7 @@ import { v4 as uuid } from "uuid";
 const UnattachedClientId = `${uuid()}_unattached`;
 
 class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponentRouter {
-    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
+    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         let root: ISharedMap;
         let scheduler: ConsensusRegisterCollection<string | null>;
         if (!runtime.existing) {
@@ -89,8 +89,8 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     private runningTasks = new Set<string>();
 
     constructor(
-        private readonly runtime: IComponentRuntime,
-        private readonly context: IComponentContext,
+        private readonly runtime: IFluidDataStoreRuntime,
+        private readonly context: IFluidDataStoreContext,
         private readonly scheduler: ConsensusRegisterCollection<string | null>) {
         super();
         this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
@@ -384,7 +384,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 }
 
 export class TaskManager implements ITaskManager {
-    public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<TaskManager> {
+    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext): Promise<TaskManager> {
         const agentScheduler = await AgentScheduler.load(runtime, context);
         return new TaskManager(agentScheduler, runtime, context);
     }
@@ -403,8 +403,8 @@ export class TaskManager implements ITaskManager {
     private readonly taskMap = new Map<string, IComponentRunnable>();
     constructor(
         private readonly scheduler: IAgentScheduler,
-        private readonly runtime: IComponentRuntime,
-        private readonly context: IComponentContext) {
+        private readonly runtime: IFluidDataStoreRuntime,
+        private readonly context: IFluidDataStoreContext) {
         this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
     }
 
@@ -481,14 +481,14 @@ export class AgentSchedulerFactory implements IComponentFactory {
 
     public get IComponentFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IFluidDataStoreContext): void {
         const mapFactory = SharedMap.getFactory();
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const dataTypes = new Map<string, IChannelFactory>();
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
 
-        const runtime = ComponentRuntime.load(
+        const runtime = FluidDataStoreRuntime.load(
             context,
             dataTypes,
         );

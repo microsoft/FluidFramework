@@ -9,7 +9,7 @@ import {
     IComponentSerializer,
     ISerializedHandle,
 } from "@fluidframework/component-core-interfaces";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import {
     ISharedObject,
     parseHandles,
@@ -213,7 +213,7 @@ export class LocalValueMaker {
      * Create a new LocalValueMaker.
      * @param runtime - The runtime this maker will be associated with
      */
-    constructor(private readonly runtime: IComponentRuntime) {
+    constructor(private readonly runtime: IFluidDataStoreRuntime) {
     }
 
     /**

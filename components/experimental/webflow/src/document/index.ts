@@ -23,7 +23,7 @@ import {
     reservedTileLabelsKey,
     TextSegment,
 } from "@fluidframework/merge-tree";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext, IComponentFactory } from "@fluidframework/runtime-definitions";
 import {
     SharedString,
     SharedStringSegment,
@@ -139,7 +139,7 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
 
     public static getFactory(): IComponentFactory { return FlowDocument.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
+    public static create(parentContext: IFluidDataStoreContext, props?: any) {
         return FlowDocument.factory.create(parentContext, props);
     }
 
