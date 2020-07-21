@@ -19,8 +19,6 @@ const diceValueKey = "diceValue";
 export class DiceRoller extends PrimedComponent implements IDiceRoller {
     public static get ComponentName() { return "@fluid-example/dice-roller"; }
 
-    public get IComponentHTMLView() { return this; }
-
     /**
      * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the
      * component and all work will resolve before the view is presented to any user.
