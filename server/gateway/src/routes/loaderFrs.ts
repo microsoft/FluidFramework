@@ -31,9 +31,12 @@ export function create(
     const codeResolver = new SemVerCdnCodeResolver();
 
     // FRS
-    config.set("worker:blobStorage", config.get("worker.frsBlobStorage"));
-    config.set("worker:serverUrl", config.get("worker.frsServerUrl"));
-    config.set("worker:blobStorage", config.get("worker.frsBlobStorage"));
+    const blobStorage = config.get("worker.frsBlobStorage");
+    const serverUrl = config.get("worker.frsServerUrl");
+    if (blobStorage !== undefined && serverUrl !== undefined) {
+        config.set("worker:blobStorage", blobStorage);
+        config.set("worker:serverUrl", serverUrl);
+    }
 
     /**
      * Loading of a specific fluid document.
