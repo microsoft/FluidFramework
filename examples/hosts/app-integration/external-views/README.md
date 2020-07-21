@@ -2,7 +2,7 @@
 
 **Dice Roller** is a basic example that has a die and a button. Clicking the button re-rolls the die and persists the value in the root SharedDirectory. The Fluid Container is defined in container/, the component is defined in component/.
 
-This implementation demonstrates plugging that Container into a standalone application, rather than using the webpack-component-loader environment that most of our packages use.  This implementation relies on Tinylicious, so there are a few extra steps to get started.  We bring our own view that we will bind to the data in the container.
+This implementation demonstrates plugging that Container into a standalone application, rather than using the webpack-component-loader environment that most of our packages use.  This implementation relies on [Tinylicious](/server/tinylicious), so there are a few extra steps to get started.  We bring our own view that we will bind to the data in the container.
 
 ## Getting Started
 
