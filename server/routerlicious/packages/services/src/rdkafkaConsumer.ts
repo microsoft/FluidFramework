@@ -93,14 +93,12 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			let shouldRetryCommit = false;
 
 			if (err) {
+				this.emit("error", err);
+
 				// a rebalance occurred while we were committing
 				// we can resubmit the commit if we still own the partition
 				shouldRetryCommit =
 					this.optimizedRebalance && err.message.includes("Specified group generation id is not valid");
-
-				if (!shouldRetryCommit) {
-					this.emit("error", err);
-				}
 			}
 
 			for (const offset of offsets) {
