@@ -90,13 +90,28 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		});
 
 		this.consumer.on("offset.commit", (err, offsets) => {
+			let shouldRetryCommit = false;
+
 			if (err) {
-				this.emit("error", err);
+				// a rebalance occurred while we were committing
+				// we can resubmit the commit if we still own the partition
+				shouldRetryCommit =
+					this.optimizedRebalance && err.message.includes("Specified group generation id is not valid");
+
+				if (!shouldRetryCommit) {
+					this.emit("error", err);
+				}
 			}
 
 			for (const offset of offsets) {
 				const deferredCommit = this.pendingCommits.get(offset.partition);
 				if (deferredCommit) {
+					if (shouldRetryCommit && this.assignedPartitions.has(offset.partition)) {
+						// we still own this partition. checkpoint again
+						this.consumer.commit(offset);
+						continue;
+					}
+
 					this.pendingCommits.delete(offset.partition);
 
 					if (err) {
@@ -134,7 +149,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 						const deferredCommit = this.pendingCommits.get(partition);
 						if (deferredCommit) {
 							this.pendingCommits.delete(partition);
-							deferredCommit.reject(new Error(`Partition ${partition} was unassigned`));
+							deferredCommit.reject(new Error(`Partition for commit was unassigned. ${partition}`));
 						}
 					}
 				}
