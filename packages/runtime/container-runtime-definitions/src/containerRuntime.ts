@@ -93,18 +93,6 @@ export interface IContainerRuntime extends
     getComponentRuntime(id: string, wait?: boolean): Promise<IComponentRuntimeChannel>;
 
     /**
-     * Creates a new component using an optional realization function.  This API does not allow specifying
-     * the component's id and instead generates a uuid.  Consumers must save another reference to the
-     * component, such as the handle.
-     * @param pkg - Package name of the component
-     * @param realizationFn - Optional function to call to realize the component over the context default
-     */
-    createComponentWithRealizationFn(
-        pkg: string[],
-        realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponentRuntimeChannel>;
-
-    /**
      * Returns the current quorum.
      */
     getQuorum(): IQuorum;

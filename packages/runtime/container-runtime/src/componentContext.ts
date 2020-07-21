@@ -47,7 +47,6 @@ import {
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker } from "@fluidframework/runtime-utils";
-import { v4 as uuid } from "uuid";
 import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in component attributes.
@@ -208,36 +207,24 @@ export abstract class ComponentContext extends EventEmitter implements
         }
     }
 
-    /**
-     * @deprecated
-     * Remove once issue #1756 is closed
-     */
-    public async createComponent(
-        pkgOrId: string | undefined,
-        pkg?: string,
-        props?: any,
-    ): Promise<IComponentRuntimeChannel> {
-        // pkgOrId can't be undefined if pkg is undefined
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const pkgName = pkg ?? pkgOrId!;
-        assert(pkgName);
-        const id = pkg ? (pkgOrId ?? uuid()) : uuid();
-
-        const packagePath: string[] = await this.composeSubpackagePath(pkgName);
-
-        return this.containerRuntime._createComponentWithProps(packagePath, props, id);
-    }
-
-    public async createComponentWithRealizationFn(
+    public async _createComponentWithProps(
         pkg: string,
-        realizationFn?: (context: IComponentContext) => void,
+        attach,
+        initialState?: any,
+        id?: string,
     ): Promise<IComponent & IComponentLoadable> {
         const packagePath = await this.composeSubpackagePath(pkg);
 
-        const componentRuntime = await this.containerRuntime.createComponentWithRealizationFn(
+        const componentRuntime = await this.containerRuntime._createComponentWithProps(
             packagePath,
-            realizationFn,
+            initialState,
+            id,
         );
+
+        if (attach) {
+            componentRuntime.bindToContext();
+        }
+
         const response = await componentRuntime.request({ url: "/" });
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             throw new Error("Failed to create component");
@@ -291,17 +278,6 @@ export abstract class ComponentContext extends EventEmitter implements
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred
             factory.instantiateComponent(this);
-        }
-
-        return this.componentRuntimeDeferred.promise;
-    }
-
-    public async realizeWithFn(
-        realizationFn: (context: IComponentContext) => void,
-    ): Promise<IComponentRuntimeChannel> {
-        if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeChannel>();
-            realizationFn(this);
         }
 
         return this.componentRuntimeDeferred.promise;
@@ -486,11 +462,10 @@ export abstract class ComponentContext extends EventEmitter implements
             throw new Error("runtime already bound");
         }
 
-        // If this ComponentContext was created via `IContainerRuntime.createComponentContext`, the
-        // `componentRuntimeDeferred` promise hasn't yet been initialized.  Do so now.
-        if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred();
-        }
+        // If you hit assert here, then it means we did not go through realize() workflow.
+        // The only supported way to load / create components is through realize() flow, please
+        // do not take short cuts!
+        assert (this.componentRuntimeDeferred !== undefined);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pending = this.pending!;

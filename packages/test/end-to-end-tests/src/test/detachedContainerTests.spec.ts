@@ -22,7 +22,6 @@ import { Deferred } from "@fluidframework/common-utils";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
 import { Ink, IColor } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { SharedCell } from "@fluidframework/cell";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
@@ -57,8 +56,7 @@ describe("Detached Container", () => {
         componentId: string,
         type: string,
     ) => {
-        const doc = await componentContext.createComponent(componentId, type);
-        doc.bindToContext();
+        return componentContext._createComponentWithProps(type, true, undefined, componentId);
     });
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
@@ -324,8 +322,8 @@ describe("Detached Container", () => {
         const component = response.value as ITestFluidComponent;
 
         const containerP = container.attach(request);
-        peerComponentRuntimeChannel = await (component.context.containerRuntime as IContainerRuntime)
-            .createComponentWithRealizationFn([testComponentType]);
+        peerComponentRuntimeChannel =
+            await component.context.containerRuntime._createComponentWithProps([testComponentType]);
         // Fire attach op
         peerComponentRuntimeChannel.bindToContext();
         await containerP;

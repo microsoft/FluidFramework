@@ -95,7 +95,7 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
      * Initializes internal objects and calls initialization overrides.
      * Caller is responsible for ensuring this is only invoked once.
      */
-    protected async initializeInternal(props?: any): Promise<void> {
+    protected async initializeInternal(): Promise<void> {
         // Initialize task manager.
         const request = {
             headers: [[true]],
@@ -108,7 +108,6 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
             // Create a root directory and register it before calling componentInitializingFirstTime
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
             this.internalRoot.bindToContext();
-            await this.componentInitializingFirstTime(props);
         } else {
             // Component has a root directory so we just need to set it before calling componentInitializingFromExisting
             this.internalRoot = await this.runtime.getChannel(this.rootDirectoryId) as ISharedDirectory;
@@ -123,12 +122,9 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
                     message: "Legacy document, SharedMap is masquerading as SharedDirectory in PrimedComponent",
                 });
             }
-
-            await this.componentInitializingFromExisting();
         }
 
-        // This always gets called at the end of initialize on FirstTime or from existing.
-        await this.componentHasInitialized();
+        return super.initializeInternal();
     }
 
     protected getUninitializedErrorString(item: string) {

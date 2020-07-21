@@ -24,11 +24,11 @@ import {
     IComponentFactory,
     NamedComponentRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { CreateContainerError } from "@fluidframework/container-utils";
 import * as sequence from "@fluidframework/sequence";
 import { Document } from "./document";
 
 const rootMapId = "root";
+const rootComponentId = "root";
 const insightsMapId = "insights";
 
 export class Chaincode implements IComponentFactory {
@@ -108,7 +108,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
             .substr(1)
             .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));
 
-        const componentId = trimmed !== "" ? trimmed : rootMapId;
+        const componentId = trimmed !== "" ? trimmed : rootComponentId;
 
         const component = await runtime.getComponentRuntime(componentId, true);
         return component.request({ url: trimmed.substr(1 + trimmed.length) });
@@ -133,13 +133,11 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            runtime.createComponent(rootMapId, "@fluid-internal/client-api")
-                .then((componentRuntime) => {
-                    componentRuntime.bindToContext();
-                })
-                .catch((error: any) => {
-                    context.closeFn(CreateContainerError(error));
-                });
+            const componentRuntime = await runtime._createComponentWithProps(
+                "@fluid-internal/client-api",
+                undefined,
+                rootComponentId);
+            componentRuntime.bindToContext();
         }
 
         return runtime;

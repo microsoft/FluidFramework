@@ -17,7 +17,6 @@ import { IComponentContext } from "@fluidframework/runtime-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { ComponentHandle } from "@fluidframework/component-runtime";
 import { IDirectory } from "@fluidframework/map";
-import { v4 as uuid } from "uuid";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
 import { serviceRoutePathRoot } from "../containerServices";
@@ -96,10 +95,10 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      * Allow inheritors to plugin to an initialize flow
      * We guarantee that this part of the code will only happen once
      */
-    public async initialize(initialState?: S): Promise<void> {
+    public async initialize(): Promise<void> {
         // We want to ensure if this gets called more than once it only executes the initialize code once.
         if (!this.initializeP) {
-            this.initializeP = this.initializeInternal(this.context.createProps as S ?? initialState);
+            this.initializeP = this.initializeInternal();
         }
 
         await this.initializeP;
@@ -157,10 +156,10 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      * Calls componentInitializingFirstTime, componentInitializingFromExisting, and componentHasInitialized. Caller is
      * responsible for ensuring this is only invoked once.
      */
-    protected async initializeInternal(props?: S): Promise<void> {
+    protected async initializeInternal(): Promise<void> {
         if (!this.runtime.existing) {
             // If it's the first time through
-            await this.componentInitializingFirstTime(props);
+            await this.componentInitializingFirstTime(this.context.createProps as S);
         } else {
             // Else we are loading from existing
             await this.componentInitializingFromExisting();
@@ -179,10 +178,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     protected async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
         pkg: string, props?: any,
     ): Promise<T> {
-        const componentRuntime = await this.context.createComponent(uuid(), pkg, props);
-        const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
-        componentRuntime.bindToContext();
-        return component;
+        return this.context._createComponentWithProps(pkg, true, props) as Promise<T>;
     }
 
     /**

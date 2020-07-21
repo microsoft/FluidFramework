@@ -77,7 +77,7 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
      * @param context - component context used to load a component runtime
      */
     public instantiateComponent(context: IComponentContext): void {
-        this.instantiateComponentWithInitialState(context, undefined);
+        this.instantiateComponentWithInitialState(context);
     }
 
     /**
@@ -86,8 +86,7 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
      * @param initialState  - The initial state to provide the created component
      */
     private instantiateComponentWithInitialState(
-        context: IComponentContext,
-        initialState?: S): void {
+        context: IComponentContext): void {
         // Create a new runtime for our component
         // The runtime is what Fluid uses to create DDS' and route to your component
         const runtime = ComponentRuntime.load(
@@ -101,14 +100,14 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
         // run the initialization.
         if (!this.onDemandInstantiation || !runtime.existing) {
             // Create a new instance of our component up front
-            instanceP = this.instantiateInstance(runtime, context, initialState);
+            instanceP = this.instantiateInstance(runtime, context);
         }
 
         runtime.registerRequestHandler(async (request: IRequest) => {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             if (!instanceP) {
                 // Create a new instance of our component on demand
-                instanceP = this.instantiateInstance(runtime, context, initialState);
+                instanceP = this.instantiateInstance(runtime, context);
             }
             const instance = await instanceP;
             return instance.request(request);
@@ -123,13 +122,12 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
     private async instantiateInstance(
         runtime: ComponentRuntime,
         context: IComponentContext,
-        initialState?: S,
     ) {
         const dependencyContainer = new DependencyContainer(context.scope.IComponentDependencySynthesizer);
         const providers = dependencyContainer.synthesize<P>(this.optionalProviders, {});
         // Create a new instance of our component
         const instance = new this.ctor({ runtime, context, providers });
-        await instance.initialize(initialState);
+        await instance.initialize();
         return instance;
     }
 
@@ -150,9 +148,10 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
             throw new Error("undefined type member");
         }
 
-        return context.createComponentWithRealizationFn(
+        return context._createComponentWithProps(
             this.type,
-            (newContext) => { this.instantiateComponentWithInitialState(newContext, initialState); },
+            false,
+            initialState,
         );
     }
 }

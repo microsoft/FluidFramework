@@ -109,7 +109,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
 
     public static getFactory() { return TodoItem.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new PrimedComponentFactory<{}, ITodoItemInitialState>(
         TodoItemName,
         TodoItem,
         [

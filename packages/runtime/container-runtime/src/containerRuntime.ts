@@ -468,10 +468,8 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         // Create all internal components in first load.
         if (!context.existing) {
-            await runtime.createComponent(schedulerId, schedulerId)
-                .then((componentRuntime) => {
-                    componentRuntime.bindToContext();
-                });
+            const componentRuntime = await runtime._createComponentWithProps(schedulerId, undefined, schedulerId);
+            componentRuntime.bindToContext();
         }
 
         runtime.subscribeToLeadership();
@@ -1095,16 +1093,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         }
     }
 
-    /**
-     * @deprecated
-     * Remove once issue #1756 is closed
-     */
-    public async createComponent(idOrPkg: string, maybePkg: string | string[]) {
-        const id = maybePkg === undefined ? uuid() : idOrPkg;
-        const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
-        return this._createComponentWithProps(pkg, undefined, id);
-    }
-
     public async _createComponentWithProps(pkg: string | string[], props?: any, id?: string):
         Promise<IComponentRuntimeChannel> {
         return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
@@ -1134,36 +1122,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         this.contexts.set(id, context);
 
         return context;
-    }
-
-    public async createComponentWithRealizationFn(
-        pkg: string[],
-        realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponentRuntimeChannel> {
-        this.verifyNotClosed();
-
-        // tslint:disable-next-line: no-unsafe-any
-        const id: string = uuid();
-        this.notBoundedComponentContexts.add(id);
-        const context = new LocalComponentContext(
-            id,
-            pkg,
-            this,
-            this.storage,
-            this.containerScope,
-            this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            (cr: IComponentRuntimeChannel) => this.bindComponent(cr),
-            undefined /* #1635: Remove LocalComponentContext createProps */);
-
-        const deferred = new Deferred<ComponentContext>();
-        this.contextsDeferred.set(id, deferred);
-        this.contexts.set(id, context);
-
-        if (realizationFn) {
-            return context.realizeWithFn(realizationFn);
-        } else {
-            return context.realize();
-        }
     }
 
     public getQuorum(): IQuorum {

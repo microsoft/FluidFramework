@@ -5,10 +5,11 @@
 
 import { PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { SharedString } from "@fluidframework/sequence";
+import { TodoItemSupportedComponents } from "../TodoItem/supportedComponent";
 import { TextBoxName } from "./TextBox";
 import { TextBox } from "./index";
 
-export const TextBoxInstantiationFactory = new PrimedComponentFactory(
+export const TextBoxInstantiationFactory = new PrimedComponentFactory<{}, TodoItemSupportedComponents>(
     TextBoxName,
     TextBox,
     [

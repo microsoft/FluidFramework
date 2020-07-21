@@ -7,7 +7,6 @@ import assert from "assert";
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -51,8 +50,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
     const createPeerComponent = async (
         containerRuntime: IContainerRuntimeBase,
     ) => {
-        const peerComponentRuntimeChannel = await (containerRuntime as IContainerRuntime)
-            .createComponentWithRealizationFn(["default"]);
+        const peerComponentRuntimeChannel = await containerRuntime._createComponentWithProps(["default"]);
         const peerComponent =
             (await peerComponentRuntimeChannel.request({ url: "/" })).value as ITestFluidComponent;
         return {

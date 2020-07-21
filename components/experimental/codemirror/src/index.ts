@@ -50,11 +50,11 @@ class CodeMirrorFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            await Promise.all([
-                runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
-                    componentRuntime.bindToContext();
-                }),
-            ]);
+            const componentRuntime = await runtime._createComponentWithProps(
+                defaultComponent,
+                undefined,
+                defaultComponentId);
+            componentRuntime.bindToContext();
         }
 
         return runtime;

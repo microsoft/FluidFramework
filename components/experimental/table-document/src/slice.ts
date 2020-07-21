@@ -24,7 +24,7 @@ export interface ITableSliceConfig {
 export class TableSlice extends PrimedComponent<{}, ITableSliceConfig> implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new PrimedComponentFactory<{}, ITableSliceConfig>(
         TableSliceType,
         TableSlice,
         [],

@@ -121,15 +121,6 @@ export interface IContainerRuntimeBase extends
     _createComponentWithProps(pkg: string | string[], props?: any, id?: string): Promise<IComponentRuntimeChannel>;
 
     /**
-     * @deprecated
-     * Creates a new component.
-     * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
-     * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
-     * Remove once issue #1756 is closed
-     */
-    createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntimeChannel>;
-
-    /**
      * Get an absolute url for a provided container-relative request.
      * Returns undefined if the container or component isn't attached to storage.
      * @param relativeUrl - A relative request within the container
@@ -319,30 +310,17 @@ export interface IComponentContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
-     * @deprecated 0.16 Issue #1537, issue #1756 Components should be created using IComponentFactory methods instead
-     * Creates a new component by using subregistries.
-     * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
-     *                  ID is being deprecated, so prefer passing undefined instead (the runtime will
-     *                  generate an ID in this case).
-     * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
-     * @param props - Properties to be passed to the instantiateComponent through the context.
-     */
-    createComponent(
-        pkgOrId: string | undefined,
-        pkg?: string | string[],
-        props?: any,
-    ): Promise<IComponentRuntimeChannel>;
-
-    /**
      * Create a new component using subregistries with fallback.
      * @param pkg - Package name of the component
      * @param realizationFn - Optional function to call to realize the component over the context default
      * @returns A promise for a component that will have been initialized. Caller is responsible
      * for attaching the component to the provided runtime's container such as by storing its handle
      */
-    createComponentWithRealizationFn(
+    _createComponentWithProps(
         pkg: string,
-        realizationFn?: (context: IComponentContext) => void,
+        attach: boolean,
+        initialState?: any,
+        id?: string,
     ): Promise<IComponent & IComponentLoadable>;
 
     /**

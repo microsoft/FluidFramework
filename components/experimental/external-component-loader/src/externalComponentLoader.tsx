@@ -47,22 +47,24 @@ export class ExternalComponentLoader extends PrimedComponent {
         let componentRuntime: IComponentRuntimeChannel;
         const id = uuid();
         if (pkgReg?.IComponentDefaultFactoryName !== undefined) {
-            componentRuntime = await this.context.containerRuntime.createComponent(
-                id,
+            componentRuntime = await this.context.containerRuntime._createComponentWithProps(
                 [
                     ...this.context.packagePath,
                     "url",
                     componentUrl,
                     pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
-                ]);
+                ],
+                undefined,
+                id);
         } else if (pkgReg?.IComponentFactory !== undefined) {
-            componentRuntime = await this.context.containerRuntime.createComponent(
-                id,
+            componentRuntime = await this.context.containerRuntime._createComponentWithProps(
                 [
                     ...this.context.packagePath,
                     "url",
                     componentUrl,
-                ]);
+                ],
+                undefined,
+                id);
         } else {
             throw new Error(`${componentUrl} is not a factory, and does not provide default component name`);
         }
