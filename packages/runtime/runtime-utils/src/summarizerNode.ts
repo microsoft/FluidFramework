@@ -532,6 +532,10 @@ export class SummarizerNode implements ITrackingSummarizerNode {
             changeSequenceNumber,
             summary,
         );
+        // If created while summarizing, relay that information down
+        if (this.wipReferenceSequenceNumber !== undefined) {
+            child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
+        }
         this.children.set(id, child);
         return child;
     }
