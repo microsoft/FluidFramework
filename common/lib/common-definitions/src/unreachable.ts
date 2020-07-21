@@ -8,4 +8,6 @@
  * One common usage is in the default case of a switch block,
  * to ensure that all cases are explicitly handled.
  */
-export const unreachableCase: (value: never) => void = () => {};
+export function unreachableCase(value: never): never {
+    throw new Error(`Unreachable Case: Type of ${value} is never`);
+}
