@@ -6,4 +6,3 @@
 export * from "./disposable";
 export * from "./events";
 export * from "./logger";
-export * from "./unreachable";
