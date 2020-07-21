@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -23,7 +23,7 @@ export interface IProvideFluidObjectCollection {
  * components in the collection would be like-typed.
  */
 export interface IFluidObjectCollection extends IProvideFluidObjectCollection {
-    createCollectionItem<TOpt = object>(options?: TOpt): IComponent;
-    removeCollectionItem(instance: IComponent): void;
+    createCollectionItem<TOpt = object>(options?: TOpt): IComponent & IFluidObject;
+    removeCollectionItem(instance: IComponent & IFluidObject): void;
     // Need iteration
 }

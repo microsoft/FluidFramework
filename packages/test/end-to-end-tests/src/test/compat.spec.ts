@@ -56,13 +56,13 @@ describe("loader/runtime compatibility", () => {
         return new PrimedComponentFactory(TestComponent.type, TestComponent, [], {});
     };
 
-    const createOldComponentFactory = (): old.IFluidDataStoreFactory => {
+    const createOldComponentFactory = (): old.IComponentFactory => {
         return new old.PrimedComponentFactory(OldTestComponent.type, OldTestComponent, [], {});
     };
 
     const createRuntimeFactory = (
         type: string,
-        componentFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
+        componentFactory: IFluidDataStoreFactory | old.IComponentFactory,
         runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): IRuntimeFactory => {
         const builder = new RuntimeRequestHandlerBuilder();
@@ -91,7 +91,7 @@ describe("loader/runtime compatibility", () => {
 
     const createOldRuntimeFactory = (
         type: string,
-        componentFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
+        componentFactory: IFluidDataStoreFactory | old.IComponentFactory,
         runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): old.IRuntimeFactory => {
         const builder = new old.RuntimeRequestHandlerBuilder();
@@ -104,7 +104,7 @@ describe("loader/runtime compatibility", () => {
             instantiateRuntime: async (context: old.IContainerContext) => {
                 const runtime = await old.ContainerRuntime.load(
                     context,
-                    [[type, Promise.resolve(componentFactory as old.IFluidDataStoreFactory)]],
+                    [[type, Promise.resolve(componentFactory as old.IComponentFactory)]],
                     async (req,rt) => builder.handleRequest(req,rt),
                     runtimeOptions,
                 );

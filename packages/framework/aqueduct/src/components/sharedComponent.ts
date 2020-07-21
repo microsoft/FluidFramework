@@ -11,6 +11,7 @@ import {
     IProvideFluidHandle,
     IRequest,
     IResponse,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import { AsyncComponentProvider, ComponentKey } from "@fluidframework/synthesize";
 import { IComponentContext } from "@fluidframework/runtime-definitions";
@@ -218,7 +219,8 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      * Gets the component of a given id. Will follow the pattern of the container for waiting.
      * @param id - component id
      */
-    protected async getComponent_UNSAFE<T extends IComponent>(id: string, wait: boolean = true): Promise<T> {
+    protected async getComponent_UNSAFE<T extends IComponent & IFluidObject>(
+        id: string, wait: boolean = true): Promise<T> {
         const request = {
             headers: [[wait]],
             url: `/${id}`,

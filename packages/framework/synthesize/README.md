@@ -1,8 +1,8 @@
 # @fluidframework/synthesize
 
-An Ioc type library for synthesizing a fluid IComponent object based on registered IComponent providers.
+An Ioc type library for synthesizing a fluid IFluidObject object based on registered IFluidObject providers.
 
-It allows for the creation of a `DependencyContainer` that can have IComponent objects registered with it
+It allows for the creation of a `DependencyContainer` that can have IFluidObject objects registered with it
 based on their interface Symbol. So for example if I wanted to register something as `IComponentFoo` I would
 need to provide and object that implements `IComponentFoo` along side it.
 
@@ -44,7 +44,7 @@ console.log(s.IComponentFoo?.foo;)
 
 ## Component Providers
 
-Component Providers are the the different ways you can return a Component when registering.  
+Component Providers are the the different ways you can return a Component when registering.
 
 There are four types of providers:
 
@@ -54,16 +54,16 @@ There are four types of providers:
 4. [`Async Factory Provider`](###Async-Factory-Provider)
 
 ```typescript
-type ComponentProvider<T extends keyof IComponent> =
-    IComponent[T]
-    | Promise<IComponent[T]>
-    | ((dependencyContainer: DependencyContainer) => IComponent[T])
-    | ((dependencyContainer: DependencyContainer) => Promise<IComponent[T]>);
+type ComponentProvider<T extends keyof IFluidObject> =
+    IFluidObject[T]
+    | Promise<IFluidObject[T]>
+    | ((dependencyContainer: DependencyContainer) => IFluidObject[T])
+    | ((dependencyContainer: DependencyContainer) => Promise<IFluidObject[T]>);
 ```
 
 ### Value Provider
 
-Provide an IComponent of a given type.
+Provide an IFluidObject of a given type.
 
 #### Usage
 
@@ -80,7 +80,7 @@ dc.register(IComponentFoo, new Foo())
 
 ### Async Value Provider
 
-Provide a Promise to an IComponent of a given type.
+Provide a Promise to an IFluidObject of a given type.
 
 #### Usage
 
@@ -104,10 +104,10 @@ dc.register(IComponentFoo, generateFoo());
 ### Factory Provider
 
 ```typescript
-(dependencyContainer: DependencyContainer) => IComponent[T]
+(dependencyContainer: DependencyContainer) => IFluidObject[T]
 ```
 
-Provide a function that will resolve an IComponent object of a given type.
+Provide a function that will resolve an IFluidObject object of a given type.
 
 #### Usage
 
@@ -116,7 +116,7 @@ const dc = new DependencyContainer();
 const fooFactory = () => new Foo();
 dc.register(IComponentFoo, fooFactory);
 
-// Factories can utilize the DependencyContainer if the IComponent object depends
+// Factories can utilize the DependencyContainer if the IFluidObject object depends
 // on other providers
 const barFactory = (dc) => new Bar(dc);
 dc.register(IComponentBar, barFactory);
@@ -125,10 +125,10 @@ dc.register(IComponentBar, barFactory);
 ### Async Factory Provider
 
 ```typescript
-(dependencyContainer: DependencyContainer) => Promise<IComponent[T]>
+(dependencyContainer: DependencyContainer) => Promise<IFluidObject[T]>
 ```
 
-Provide a function that will resolve a Promise to an IComponent object of a given type.
+Provide a function that will resolve a Promise to an IFluidObject object of a given type.
 
 #### Usage
 
@@ -154,7 +154,7 @@ dc.register(IComponentBar, generateBar);
 
 ## Synthesize
 
-Once you have a `DependencyContainer` with registered providers you can synthesize/generate a new IComponent object from it. The
+Once you have a `DependencyContainer` with registered providers you can synthesize/generate a new IFluidObject object from it. The
 object that is returned will have the correct typing of optional and required types.
 
 An Example:
@@ -173,7 +173,7 @@ is a TypeScript `type` that ensures the types being passed match the ones in the
 
 ### Optional Types
 
-Optional types will return a Promise to it's corresponding IComponent object or undefined. Because of this we need to do an if check to validate the object or use the `?` like in the example below.
+Optional types will return a Promise to it's corresponding IFluidObject object or undefined. Because of this we need to do an if check to validate the object or use the `?` like in the example below.
 
 ```typescript
 const dc = new DependencyContainer();
@@ -188,7 +188,7 @@ need to provide the type.*
 
 ### Required Types
 
-Required types will return a Promise to it's corresponding IComponent object or it will throw.
+Required types will return a Promise to it's corresponding IFluidObject object or it will throw.
 
 You can see below that we don't need to add the `?` to check our requested type.
 

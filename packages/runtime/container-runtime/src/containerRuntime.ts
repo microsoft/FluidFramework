@@ -781,7 +781,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const component = await this.getComponentRuntime(requestParser.pathParts[0], wait) as IComponent;
+            const component = await this.getComponentRuntime(requestParser.pathParts[0], wait) as IFluidObject;
             if (component) {
                 const subRequest = requestParser.createSubRequest(1);
                 if (subRequest !== undefined) {
@@ -1766,7 +1766,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     private async getScheduler() {
         const schedulerRuntime = await this.getComponentRuntime(schedulerId, true);
         const schedulerResponse = await schedulerRuntime.request({ url: "" });
-        const schedulerComponent = schedulerResponse.value as IComponent;
+        const schedulerComponent = schedulerResponse.value as IFluidObject;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return schedulerComponent.IAgentScheduler!;
     }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IResponse, IComponent, IFluidRouter, IRequest } from "@fluidframework/component-core-interfaces";
+import { IResponse, IFluidObject, IFluidRouter, IRequest } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { RequestParser } from "@fluidframework/runtime-utils";
@@ -11,7 +11,7 @@ import { RequestParser } from "@fluidframework/runtime-utils";
 // TODO: should this just be "s"?
 export const serviceRoutePathRoot = "_services";
 
-export type ContainerServiceRegistryEntries = Iterable<[string, (runtime: IContainerRuntime) => Promise<IComponent>]>;
+export type ContainerServiceRegistryEntries = Iterable<[string, (runtime: IContainerRuntime) => Promise<IFluidObject>]>;
 
 /**
  * This class is a simple starter class for building a Container Service. It simply provides routing
@@ -40,13 +40,13 @@ export abstract class BaseContainerService implements IFluidRouter {
  * ContainerService Factory that will only create one instance of the service for the Container.
  */
 class SingletonContainerServiceFactory {
-    private service: Promise<IComponent> | undefined;
+    private service: Promise<IFluidObject> | undefined;
 
     public constructor(
-        private readonly serviceFn: (runtime: IContainerRuntime) => Promise<IComponent>,
+        private readonly serviceFn: (runtime: IContainerRuntime) => Promise<IFluidObject>,
     ) { }
 
-    public async getService(runtime: IContainerRuntime): Promise<IComponent> {
+    public async getService(runtime: IContainerRuntime): Promise<IFluidObject> {
         if (!this.service) {
             this.service = this.serviceFn(runtime);
         }

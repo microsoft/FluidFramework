@@ -20,7 +20,7 @@ import { Deferred } from "@fluidframework/common-utils";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { MultiUrlResolver } from "./multiResolver";
 import { getDocumentServiceFactory } from "./multiDocumentServiceFactory";
@@ -258,7 +258,7 @@ async function getComponentAndRender(container: Container, url: string, div: HTM
         return false;
     }
 
-    const component = response.value as IComponent;
+    const component = response.value as IFluidObject;
     if (component === undefined) {
         return;
     }
