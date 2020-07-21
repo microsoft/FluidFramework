@@ -23,7 +23,7 @@ const baseSummaryTreeKey = ".baseSummary";
 const outstandingOpsBlobKey = ".outstandingOps";
 const maxDecodeDepth = 10000;
 
-interface IDecodedSummaryInternal {
+interface IDecodedSummaryWithoutOps {
     readonly baseSummary: ISnapshotTree;
     readonly pathParts: string[];
 }
@@ -50,7 +50,7 @@ function decodeSummaryBody(baseSummary: ISnapshotTree, pathParts: string[]): Dec
     return { complete: false, baseSummary: newBaseSummary, outstandingOpsBlob };
 }
 
-function decodeSummaryWithoutOps(snapshot: ISnapshotTree): IDecodedSummaryInternal {
+function decodeSummaryWithoutOps(snapshot: ISnapshotTree): IDecodedSummaryWithoutOps {
     let baseSummary = snapshot;
     const pathParts: string[] = [];
 
@@ -73,7 +73,9 @@ async function seqFromTree(
     return attrib.sequenceNumber;
 }
 
-export interface IDecodedSummary extends IDecodedSummaryInternal {
+export interface IDecodedSummary {
+    readonly baseSummary: ISnapshotTree;
+    readonly pathParts: string[];
     readonly outstandingOps: ISequencedDocumentMessage[];
 }
 
