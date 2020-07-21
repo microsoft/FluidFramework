@@ -14,7 +14,7 @@ variables:
   - name: latestPipeline
     value: ${{ or(
       eq(variables['Build.SourceBranchName'], 'master'),
-      eq(variables['Build.SourceBranchName'], 'api-pipeline')
+      eq(variables['Build.SourceBranchName'], 'pipeline')
       )}}
   - name: n1Pipeline
     value: ${{ eq(variables['Build.SourceBranchName'], variables['N1_BRANCH']) }}
@@ -27,12 +27,12 @@ resources:
   pipelines:
   - pipeline: docs
     source: build-docs
-    trigger: true
-#      branches:
-#        include:
-#        - release/*
-#        - master
-#        - docs/api-pipeline # for testing
+    trigger:
+      branches:
+        include:
+        - release/*
+        - master
+        - docs/pipeline # for testing
 
 # no branch and PR triggers
 trigger: none
