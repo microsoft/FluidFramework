@@ -82,9 +82,12 @@ data:
                 }
             },
             "alfredUrl": "{{ .Values.alfred.url }}",
+            "frsAlfredUrl": "{{ .Values.alfred.frsAlfredUrl }}",
             "gatewayUrl": "http://{{ template "fullname" . }}",
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
+            "frsServerUrl": "{{ .Values.alfred.frsExternalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
+            "frsBlobStorageUrl": "{{ .Values.historian.frsExternalUrl }}",
             "internalBlobStorageUrl": "{{ .Values.historian.internalUrl }}",
             "repository": "FluidFramework",
             "clusterNpm": "{{ .Values.worker.clusterNpm }}",
