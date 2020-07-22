@@ -76,30 +76,6 @@ export const getRefreshTokenFn = (scope: string, server: string, clientConfig: I
     };
 
 /**
- * Fetches new tokens using the refreshToken provided, and also updates the tokens object that's passed in,
- * which is the former behavior of getOdspRefreshTokenFn pre-0.23.
- * @param server - Server to auth against
- * @param clientConfig - Info about this client's identity
- * @param tokens - Contains the refreshToken to use, and will be updated (both access and refresh) upon returning.
- */
-export const getOdspRefreshTokenWithSideEffectFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
-    async () => {
-        // Clear out the old tokens while awaiting the new tokens
-        const refresh_token = tokens.refreshToken;
-        tokens.accessToken = "";
-        tokens.refreshToken = "";
-
-        const credentials: TokenRequestCredentials = {
-            grant_type: "refresh_token",
-            refresh_token,
-        };
-        const newTokens = await fetchTokens(server, getOdspScope(server), clientConfig, credentials);
-        tokens.accessToken = newTokens.accessToken;
-        tokens.refreshToken = newTokens.refreshToken;
-        return tokens.accessToken;
-    };
-
-/**
  * Fetch an access token and refresh token from AAD
  * @param server - The server to auth against
  * @param scope - The desired oauth scope

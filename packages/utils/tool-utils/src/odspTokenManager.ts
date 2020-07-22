@@ -49,7 +49,7 @@ export interface IPushCacheKey { isPush: true }
 export interface IOdspCacheKey { isPush: false; server: string }
 export type OdspTokenManagerCacheKey = IPushCacheKey | IOdspCacheKey;
 
-//* Put it somewhere
+// TODO - Replace with common-utls version when available
 function unreachableCase(value: never): never {
     throw new Error(`Unreachable Case: Type of ${value} is never`);
 }
@@ -115,7 +115,7 @@ export class OdspTokenManager {
                 const cacheKey: OdspTokenManagerCacheKey = isPush ? { isPush } : { isPush, server };
                 const tokensFromCache = await this.tokenCache.get(cacheKey);
                 if (tokensFromCache) {
-                    await this.onTokenCacheRetrieval(tokenConfig, tokensFromCache);
+                    await this.onTokenRetrievalFromCache(tokenConfig, tokensFromCache);
                     return tokensFromCache;
                 }
             }
@@ -149,7 +149,7 @@ export class OdspTokenManager {
                     await this.tokenCache.save(cacheKey, tokensFromCache);
                 }
                 if (canReturn) {
-                    await this.onTokenCacheRetrieval(tokenConfig, tokensFromCache);
+                    await this.onTokenRetrievalFromCache(tokenConfig, tokensFromCache);
                     return tokensFromCache;
                 }
             }
@@ -210,7 +210,7 @@ export class OdspTokenManager {
         navigator: (url: string) => void,
         redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
     ): Promise<IOdspTokens> {
-        // Start up a local auth redirect service to receive the tokens after login
+        // Start up a local auth redirect handler service to receive the tokens after login
         const tokenGetter = await serverListenAndHandle(odspAuthRedirectPort, async (req, res) => {
             // extract code from request URL and fetch the tokens
             const credentials: TokenRequestCredentials = {
@@ -232,7 +232,7 @@ export class OdspTokenManager {
             return tokens;
         });
 
-        // Now that our local auth redirect service is up, navigate the browser to the login page
+        // Now that our local redirect handler is up, navigate the browser to the login page
         navigator(loginPageUrl);
 
         // Receive and extract the tokens
@@ -241,7 +241,7 @@ export class OdspTokenManager {
         return odspTokens;
     }
 
-    private async onTokenCacheRetrieval(config: OdspTokenConfig, tokens: IOdspTokens) {
+    private async onTokenRetrievalFromCache(config: OdspTokenConfig, tokens: IOdspTokens) {
         if (config.type === "browserLogin" && config.redirectUriCallback) {
             config.navigator(await config.redirectUriCallback(tokens));
         }
