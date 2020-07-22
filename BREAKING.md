@@ -3,12 +3,35 @@
 ## 0.23 Breaking Changes
 - [Removed `collaborating` event on IComponentRuntime](#Removed-`collaborating`-event-on-IComponentRuntime)
 - [ISharedObjectFactory rename](#ISharedObjectFactory)
+- [createComponent API renames and deletions](#createComponent-API-renames-and-deletions)
 
 ### Removed `collaborating` event on IComponentRuntime
 Component Runtime no longer fires the collaborating event on attaching. Now it fires `attaching` event.
 
 ### ISharedObjectFactory
 `ISharedObjectFactory` renamed to `IChannelFactory` and moved from `@fluidframework/shared-object-base` to `@fluidframework/component-runtime-definitions`
+
+## createComponent API renames and deletions
+Deprecated APIs:
+1. IContainerRuntime:
+    - createComponentWithRealizationFn() - not used
+2. IContainerRuntimeBase:
+    - createComponent() - switch to _createComponent
+    - getComponentRuntime() is gone. getComponentById() is its replacement, but it returns IComponent, not IComponentRuntimeChannel.
+2. IContainerContext:
+   - createComponent() - switch to IContainerRuntimeBase._createComponent
+   - createComponentWithRealizationFn() - not used
+   - realizeWithFn() - not used
+
+IContainerRuntimeBase._createComponent() is the only APIs to create components. It takes now different args:
+- package path
+- attach (boolean) - indicates if components needs to be attached to container as part of its creation creation
+- id of component (optional, to be removed in future once we have aliases and named components)
+
+Initial props are gone from runtime layer. They have been deprecated for many versions.
+If you need to pass props on component creation, please either use SharedComponentFactory / PrimedComponentFactory, or copy/borrow pattern (IInitializeSharedObject) from there.
+
+Note that there is no way any more to get to IComponentRuntimeChannel or IComponentContext directly, unless component itself choses to expose this info. These interfaces are private communication channel between container and component runtime. _createComponent() and getComponentById() both return components, which is result of doing default request against component runtime. getComponentById() allows to overwrite default request argument.
 
 ## 0.22 Breaking Changes
 - [Deprecated `path` from `IComponentHandleContext`](#Deprecated-`path`-from-`IComponentHandleContext`)
