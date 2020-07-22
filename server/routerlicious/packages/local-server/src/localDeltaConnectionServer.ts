@@ -35,7 +35,7 @@ import {
     TestTenantManager,
 } from "@fluidframework/server-test-utils";
 import { LocalWebSocketServer } from "./localWebSocketServer";
-import { MemoryOrdererManager } from "./memoryOrdererManager";
+import { LocalOrdererManager } from "./localOrdererManager";
 
 /**
  * Items needed for handling deltas.
@@ -87,7 +87,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
         const logger = DebugLogger.create("fluid-server:LocalDeltaConnectionServer");
 
-        const ordererManager = new MemoryOrdererManager(
+        const ordererManager = new LocalOrdererManager(
             testStorage,
             databaseManager,
             testTenantManager,
@@ -121,7 +121,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
     private constructor(
         public webSocketServer: LocalWebSocketServer,
         public databaseManager: IDatabaseManager,
-        private readonly ordererManager: MemoryOrdererManager,
+        private readonly ordererManager: LocalOrdererManager,
         public testDbFactory: ITestDbFactory,
         public documentStorage: IDocumentStorage,
         private readonly logger: ILogger) { }
