@@ -117,7 +117,7 @@
     "typescript-formatter": "7.1.0",
     "url-loader": "^2.1.0",
     "webpack": "^4.43.0",
-    "webpack-bundle-analyzer": "^2.13.1",
+    "webpack-bundle-analyzer": "^3.8.0",
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.8.0",
     "webpack-merge": "^4.1.4",
