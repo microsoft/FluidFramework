@@ -4,6 +4,9 @@
 # build-docs leaf template to build docs via docker container
 
 parameters:
+- name: BASE_URL
+  type: string
+
 - name: THIS_VERSION
   type: string
 
