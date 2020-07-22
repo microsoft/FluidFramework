@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/common-utils",
-  "version": "0.21.0",
+  "version": "0.21.0-0",
   "description": "Collection of utility functions for Fluid",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
