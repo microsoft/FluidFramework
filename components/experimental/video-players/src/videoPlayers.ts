@@ -157,8 +157,8 @@ export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> imp
 
     public static getFactory(): IComponentFactory { return VideoPlayerCollection.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
-        return VideoPlayerCollection.factory.create(parentContext, props);
+    public static create(parentContext: IComponentContext) {
+        return VideoPlayerCollection.factory.create(parentContext);
     }
 
     // TODO: either better error handling is needed here, or create() should be async

@@ -80,7 +80,7 @@ describe("loader/runtime compatibility", () => {
                     runtimeOptions,
                 );
                 if (!runtime.existing) {
-                    const componentRuntime = await runtime._createComponentWithProps(type, undefined, "default");
+                    const componentRuntime = await runtime._createComponentWithProps(type, "default");
                     componentRuntime.bindToContext();
                     await componentRuntime.request({ url: "/" });
                 }
@@ -109,7 +109,7 @@ describe("loader/runtime compatibility", () => {
                     runtimeOptions,
                 );
                 if (!runtime.existing) {
-                    const componentRuntime = await runtime._createComponentWithProps(type, undefined, "default");
+                    const componentRuntime = await runtime._createComponentWithProps(type, "default");
                     await componentRuntime.request({ url: "/" });
                     componentRuntime.bindToContext();
                 }

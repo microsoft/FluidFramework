@@ -54,7 +54,6 @@ export class ExternalComponentLoader extends PrimedComponent {
                     componentUrl,
                     pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
                 ],
-                undefined,
                 id);
         } else if (pkgReg?.IComponentFactory !== undefined) {
             componentRuntime = await this.context.containerRuntime._createComponentWithProps(
@@ -63,7 +62,6 @@ export class ExternalComponentLoader extends PrimedComponent {
                     "url",
                     componentUrl,
                 ],
-                undefined,
                 id);
         } else {
             throw new Error(`${componentUrl} is not a factory, and does not provide default component name`);

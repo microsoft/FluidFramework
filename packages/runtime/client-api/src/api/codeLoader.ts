@@ -135,7 +135,6 @@ export class ChaincodeFactory implements IRuntimeFactory {
         if (!runtime.existing) {
             const componentRuntime = await runtime._createComponentWithProps(
                 "@fluid-internal/client-api",
-                undefined,
                 rootComponentId);
             componentRuntime.bindToContext();
         }

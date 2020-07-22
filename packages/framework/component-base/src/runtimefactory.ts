@@ -74,7 +74,7 @@ export class RuntimeFactory implements IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing && this.defaultComponent.type) {
             const componentRuntime = await runtime
-                ._createComponentWithProps(this.defaultComponent.type, undefined, defaultComponentId);
+                ._createComponentWithProps(this.defaultComponent.type, defaultComponentId);
             componentRuntime.bindToContext();
         }
 

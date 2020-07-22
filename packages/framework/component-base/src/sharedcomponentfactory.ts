@@ -58,20 +58,17 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
             // If the instance has not yet been resolved, await it now.  Once the instance is
             // resolved, we replace the value of `instance` with the resolved component, at which
             // point we begin processing requests synchronously.
-            if ("then" in instance) {
-                instance = await instance;
-            }
+            instance = await instance;
 
             return instance.request(request);
         });
     }
 
-    public create(parentContext: IComponentContext, props?: any) {
+    public create(parentContext: IComponentContext) {
         const { containerRuntime, packagePath } = parentContext;
 
         const childContext = containerRuntime.createComponentContext(
-            packagePath.concat(this.type),
-            props);
+            packagePath.concat(this.type));
 
         return this.createCore(childContext, this.createRuntime(childContext));
     }
@@ -84,10 +81,10 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
             : this.createCore(context, runtime);
     }
 
-    private createCore(context: IComponentContext, runtime: IComponentRuntime, props?: any) {
+    private createCore(context: IComponentContext, runtime: IComponentRuntime) {
         const root = runtime.createChannel("root", this.root.type) as ISharedObject;
         const instance = new this.ctor(context, runtime, root);
-        instance.create(props);
+        instance.create();
         root.bindToContext();
         return instance;
     }

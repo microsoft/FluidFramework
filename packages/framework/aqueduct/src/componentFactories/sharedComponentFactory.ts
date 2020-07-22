@@ -142,7 +142,6 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
         const component = await context._createComponentWithProps(
             this.type,
             false,
-            initialState,
         );
 
         const init: IInitializeSharedObject<S> | undefined = (component as any).IInitializeSharedObject;

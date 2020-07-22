@@ -52,7 +52,6 @@ class CodeMirrorFactory implements IRuntimeFactory {
         if (!runtime.existing) {
             const componentRuntime = await runtime._createComponentWithProps(
                 defaultComponent,
-                undefined,
                 defaultComponentId);
             componentRuntime.bindToContext();
         }

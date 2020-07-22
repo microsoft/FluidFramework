@@ -23,8 +23,8 @@ export class WebFlow extends SharedComponent<ISharedDirectory> implements ICompo
 
     public static getFactory(): IComponentFactory { return WebFlow.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
-        return WebFlow.factory.create(parentContext, props);
+    public static create(parentContext: IComponentContext) {
+        return WebFlow.factory.create(parentContext);
     }
 
     public create() {

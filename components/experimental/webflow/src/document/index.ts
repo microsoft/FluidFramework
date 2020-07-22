@@ -139,8 +139,8 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
 
     public static getFactory(): IComponentFactory { return FlowDocument.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
-        return FlowDocument.factory.create(parentContext, props);
+    public static create(parentContext: IComponentContext) {
+        return FlowDocument.factory.create(parentContext);
     }
 
     private get sharedString() { return this.maybeSharedString; }

@@ -488,7 +488,6 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         if (!runtime.existing) {
             const componentRuntime = await runtime._createComponentWithProps(
                 ScribeFactory.type,
-                undefined,
                 defaultComponentId);
             componentRuntime.bindToContext();
         }

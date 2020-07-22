@@ -104,7 +104,7 @@ export interface IContainerRuntimeBase extends
      *  @deprecated 0.16 Issue #1537 Properties should be passed directly to the component's initialization
      *  or to the factory method rather than be stored in/passed from the context
      */
-    createComponentContext(pkg: string[], props?: any): IComponentContext;
+    createComponentContext(pkg: string[]): IComponentContext;
 
     /**
      * @deprecated 0.16 Issue #1537
@@ -118,7 +118,7 @@ export interface IContainerRuntimeBase extends
      * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
      * @internal
      */
-    _createComponentWithProps(pkg: string | string[], props?: any, id?: string): Promise<IComponentRuntimeChannel>;
+    _createComponentWithProps(pkg: string | string[], id?: string): Promise<IComponentRuntimeChannel>;
 
     /**
      * Get an absolute url for a provided container-relative request.
@@ -264,11 +264,6 @@ export interface IComponentContext extends EventEmitter {
     readonly snapshotFn: (message: string) => Promise<void>;
 
     /**
-     * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
-     */
-    readonly createProps?: any;
-
-    /**
      * Ambient services provided with the context
      */
     readonly scope: IComponent & IFluidObject;
@@ -319,7 +314,6 @@ export interface IComponentContext extends EventEmitter {
     _createComponentWithProps(
         pkg: string,
         attach: boolean,
-        initialState?: any,
         id?: string,
     ): Promise<IComponent & IComponentLoadable>;
 

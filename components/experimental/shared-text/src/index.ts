@@ -139,7 +139,6 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
         if (!runtime.existing) {
             const componentRuntime = await runtime._createComponentWithProps(
                 SharedTextFactoryComponent.type,
-                undefined,
                 DefaultComponentName);
             componentRuntime.bindToContext();
         }

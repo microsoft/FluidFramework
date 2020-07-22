@@ -468,7 +468,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         // Create all internal components in first load.
         if (!context.existing) {
-            const componentRuntime = await runtime._createComponentWithProps(schedulerId, undefined, schedulerId);
+            const componentRuntime = await runtime._createComponentWithProps(schedulerId, schedulerId);
             componentRuntime.bindToContext();
         }
 
@@ -1093,16 +1093,16 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         }
     }
 
-    public async _createComponentWithProps(pkg: string | string[], props?: any, id?: string):
+    public async _createComponentWithProps(pkg: string | string[], id?: string):
         Promise<IComponentRuntimeChannel> {
-        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
+        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], id).realize();
     }
 
-    public createComponentContext(pkg: string[], props?: any): IComponentContext {
-        return this._createComponentContext(pkg, props);
+    public createComponentContext(pkg: string[]): IComponentContext {
+        return this._createComponentContext(pkg);
     }
 
-    private _createComponentContext(pkg: string[], props?: any, id = uuid()) {
+    private _createComponentContext(pkg: string[], id = uuid()) {
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), "Creating component with existing ID");
@@ -1114,8 +1114,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            (cr: IComponentRuntimeChannel) => this.bindComponent(cr),
-            props);
+            (cr: IComponentRuntimeChannel) => this.bindComponent(cr));
 
         const deferred = new Deferred<ComponentContext>();
         this.contextsDeferred.set(id, deferred);

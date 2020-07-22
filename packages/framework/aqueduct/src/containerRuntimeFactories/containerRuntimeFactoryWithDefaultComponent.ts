@@ -52,7 +52,6 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
         const componentRuntime = await runtime._createComponentWithProps(
             this.defaultComponentName,
-            undefined,
             ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId,
         );
         // We need to request the component before attaching to ensure it

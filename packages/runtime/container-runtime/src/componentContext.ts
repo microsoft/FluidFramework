@@ -210,14 +210,12 @@ export abstract class ComponentContext extends EventEmitter implements
     public async _createComponentWithProps(
         pkg: string,
         attach,
-        initialState?: any,
         id?: string,
     ): Promise<IComponent & IComponentLoadable> {
         const packagePath = await this.composeSubpackagePath(pkg);
 
         const componentRuntime = await this.containerRuntime._createComponentWithProps(
             packagePath,
-            initialState,
             id,
         );
 
@@ -639,10 +637,6 @@ export class LocalComponentContext extends ComponentContext {
         scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
-        /**
-         * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
-         */
-        public readonly createProps?: any,
     ) {
         super(runtime, id, false, storage, scope, summaryTracker, BindState.NotBound, bindComponent, pkg);
         this.attachListeners();

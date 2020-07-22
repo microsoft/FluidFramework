@@ -80,6 +80,6 @@ export abstract class SharedComponent<
 
     // #endregion IComponentLoadable
 
-    public abstract create(props?: any);
+    public abstract create();
     public abstract async load();
 }
