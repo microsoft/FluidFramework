@@ -100,25 +100,19 @@ export interface IContainerRuntimeBase extends
      * calling IComponentContext.bindRuntime() when the component is prepared to begin processing ops.
      *
      * @param pkg - Package path for the component to be created
-     * @param props - Properties to be passed to the instantiateComponent thru the context
-     *  @deprecated 0.16 Issue #1537 Properties should be passed directly to the component's initialization
-     *  or to the factory method rather than be stored in/passed from the context
      */
     createComponentContext(pkg: string[]): IComponentContext;
 
     /**
-     * @deprecated 0.16 Issue #1537
-     *  Properties should be passed to the component factory method rather than to the runtime
-     * Creates a new component with props
+     * Creates a new component
      * @param pkg - Package name of the component
-     * @param props - properties to be passed to the instantiateComponent thru the context
      * @param id - Only supplied if the component is explicitly passing its ID, only used for default components
      * @remarks
      * Only used by aqueduct PrimedComponent to pass param to the instantiateComponent function thru the context.
      * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
      * @internal
      */
-    _createComponentWithProps(pkg: string | string[], id?: string): Promise<IComponentRuntimeChannel>;
+    _createComponent(pkg: string | string[], attach: boolean, id?: string): Promise<IComponent & IComponentLoadable>;
 
     /**
      * Get an absolute url for a provided container-relative request.
@@ -311,7 +305,7 @@ export interface IComponentContext extends EventEmitter {
      * @returns A promise for a component that will have been initialized. Caller is responsible
      * for attaching the component to the provided runtime's container such as by storing its handle
      */
-    _createComponentWithProps(
+    _createComponent(
         pkg: string,
         attach: boolean,
         id?: string,

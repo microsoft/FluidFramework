@@ -207,28 +207,18 @@ export abstract class ComponentContext extends EventEmitter implements
         }
     }
 
-    public async _createComponentWithProps(
+    public async _createComponent(
         pkg: string,
         attach,
         id?: string,
     ): Promise<IComponent & IComponentLoadable> {
         const packagePath = await this.composeSubpackagePath(pkg);
 
-        const componentRuntime = await this.containerRuntime._createComponentWithProps(
+        return  this.containerRuntime._createComponent(
             packagePath,
+            attach,
             id,
         );
-
-        if (attach) {
-            componentRuntime.bindToContext();
-        }
-
-        const response = await componentRuntime.request({ url: "/" });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            throw new Error("Failed to create component");
-        }
-
-        return response.value;
     }
 
     private async rejectDeferredRealize(reason: string) {

@@ -4,7 +4,10 @@
  */
 
 import {
-    IComponent, IFluidObject,
+    IComponent,
+    IResponse,
+    IFluidObject,
+    IRequest,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -25,7 +28,6 @@ import {
 import {
     FlushMode,
     IContainerRuntimeBase,
-    IComponentRuntimeChannel,
     IComponentContext,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
@@ -90,7 +92,7 @@ export interface IContainerRuntime extends
      * @param id - Id supplied during creating the component.
      * @param wait - True if you want to wait for it.
      */
-    getComponentRuntime(id: string, wait?: boolean): Promise<IComponentRuntimeChannel>;
+    getComponentById(id: string, request: IRequest, wait?: boolean): Promise<IResponse>;
 
     /**
      * Returns the current quorum.

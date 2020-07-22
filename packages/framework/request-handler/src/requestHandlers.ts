@@ -23,11 +23,11 @@ export const componentRuntimeRequestHandler: RuntimeRequestHandler =
                 wait = request.headers.wait;
             }
 
-            const component = await runtime.getComponentRuntime(request.pathParts[0], wait);
             const subRequest = request.createSubRequest(1);
-            if (subRequest !== undefined) {
-                return component.request(subRequest);
-            }
+            return runtime.getComponentById(
+                request.pathParts[0],
+                subRequest ?? { url: "/" },
+                wait);
         }
         return undefined;
     };

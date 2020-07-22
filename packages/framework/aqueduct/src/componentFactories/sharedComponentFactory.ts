@@ -139,7 +139,7 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
             throw new Error("undefined type member");
         }
 
-        const component = await context._createComponentWithProps(
+        const component = await context._createComponent(
             this.type,
             false,
         );

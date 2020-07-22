@@ -57,9 +57,7 @@ export class RuntimeFactory implements IRuntimeFactory {
                 remainingUrl = "";
             }
 
-            const component = await containerRuntime.getComponentRuntime(componentId, true);
-
-            return component.request({ url: remainingUrl });
+            return containerRuntime.getComponentById(componentId, { url: remainingUrl }, true);
         });
 
         const runtime = await ContainerRuntime.load(
@@ -73,9 +71,7 @@ export class RuntimeFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing && this.defaultComponent.type) {
-            const componentRuntime = await runtime
-                ._createComponentWithProps(this.defaultComponent.type, defaultComponentId);
-            componentRuntime.bindToContext();
+            await runtime._createComponent(this.defaultComponent.type, true, defaultComponentId);
         }
 
         return runtime;

@@ -132,8 +132,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
             : ComponentName;
 
         const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
-        const component = await runtime.getComponentRuntime(componentId, true);
-        return component.request({ url: pathForComponent });
+        return runtime.getComponentById(componentId, { url: pathForComponent }, true);
     }
 
     public instantiateComponent(context: IComponentContext): void {
@@ -161,8 +160,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
         );
 
         if (!runtime.existing) {
-            const created = await runtime._createComponentWithProps(ComponentName, ComponentName);
-            created.bindToContext();
+            await runtime._createComponent(ComponentName, true, ComponentName);
         }
 
         return runtime;

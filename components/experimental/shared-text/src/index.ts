@@ -106,13 +106,13 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
         const componentId = requestUrl
             ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
             : "text";
-        const component = await runtime.getComponentRuntime(componentId, true);
-
-        return component.request(
+        return runtime.getComponentById(
+            componentId,
             {
                 headers: request.headers,
                 url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1),
-            });
+            },
+            true);
     }
 
     public instantiateComponent(context: IComponentContext): void {
@@ -137,10 +137,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            const componentRuntime = await runtime._createComponentWithProps(
-                SharedTextFactoryComponent.type,
-                DefaultComponentName);
-            componentRuntime.bindToContext();
+            await runtime._createComponent(SharedTextFactoryComponent.type, true, DefaultComponentName);
         }
 
         return runtime;

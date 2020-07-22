@@ -9,7 +9,7 @@ import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframe
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { IComponentContext, IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
@@ -56,7 +56,7 @@ describe("Detached Container", () => {
         componentId: string,
         type: string,
     ) => {
-        return componentContext._createComponentWithProps(type, true, componentId);
+        return componentContext._createComponent(type, true, componentId);
     });
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
@@ -302,7 +302,6 @@ describe("Detached Container", () => {
     it("Fire component attach ops during container attach", async () => {
         const testComponentType = "default";
         // eslint-disable-next-line prefer-const
-        let peerComponentRuntimeChannel: IComponentRuntimeChannel;
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -310,7 +309,7 @@ describe("Detached Container", () => {
             assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
             assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
             assert.strictEqual(contents.contents.id,
-                peerComponentRuntimeChannel.id, "Component id should match");
+                (component2 as any as ITestFluidComponent).runtime.id, "Component id should match");
             assert.strictEqual(contents.contents.type,
                 testComponentType, "Component type should match");
             defPromise.resolve();
@@ -322,10 +321,8 @@ describe("Detached Container", () => {
         const component = response.value as ITestFluidComponent;
 
         const containerP = container.attach(request);
-        peerComponentRuntimeChannel =
-            await component.context.containerRuntime._createComponentWithProps([testComponentType]);
-        // Fire attach op
-        peerComponentRuntimeChannel.bindToContext();
+        const component2 =
+            await component.context.containerRuntime._createComponent([testComponentType], true);
         await containerP;
         await defPromise.promise;
     });

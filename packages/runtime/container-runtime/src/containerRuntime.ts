@@ -9,6 +9,7 @@ import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
+    IComponentLoadable,
     IComponentHandleContext,
     IComponentSerializer,
     IRequest,
@@ -468,8 +469,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         // Create all internal components in first load.
         if (!context.existing) {
-            const componentRuntime = await runtime._createComponentWithProps(schedulerId, schedulerId);
-            componentRuntime.bindToContext();
+            await runtime._createComponent(schedulerId, true, schedulerId);
         }
 
         runtime.subscribeToLeadership();
@@ -779,26 +779,12 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const component = await this.getComponentRuntime(requestParser.pathParts[0], wait) as IComponent;
-            if (component) {
-                const subRequest = requestParser.createSubRequest(1);
-                if (subRequest !== undefined) {
-                    assert(component.IComponentRouter);
-                    return component.IComponentRouter.request(subRequest);
-                } else {
-                    return {
-                        status: 200,
-                        mimeType: "fluid/component",
-                        value: component,
-                    };
-                }
-            } else {
-                return {
-                    status: 404,
-                    mimeType: "text/plain",
-                    value: `${schedulerId} not found`,
-                };
-            }
+            const subRequest = requestParser.createSubRequest(1);
+
+            return this.getComponentById(
+                requestParser.pathParts[0],
+                subRequest ? subRequest : { url: "/" },
+                wait);
         }
 
         if (this.requestHandler !== undefined) {
@@ -1008,16 +994,26 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         context.processSignal(transformed, local);
     }
 
-    public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntimeChannel> {
+    public async getComponentById(id: string, request: IRequest, wait = true): Promise<IResponse> {
         // Ensure deferred if it doesn't exist which will resolve once the process ID arrives
         const deferredContext = this.ensureContextDeferred(id);
 
         if (!wait && !deferredContext.isCompleted) {
-            return Promise.reject(`Process ${id} does not exist`);
+            return Promise.reject(`Component ${id} does not exist`);
         }
 
         const componentContext = await deferredContext.promise;
-        return componentContext.realize();
+        const component = await componentContext.realize();
+
+        if (component === undefined) {
+            return {
+                status: 404,
+                mimeType: "text/plain",
+                value: `${schedulerId} not found`,
+            };
+        }
+
+        return component.request(request);
     }
 
     public notifyComponentInstantiated(componentContext: IComponentContext) {
@@ -1093,9 +1089,20 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         }
     }
 
-    public async _createComponentWithProps(pkg: string | string[], id?: string):
-        Promise<IComponentRuntimeChannel> {
-        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], id).realize();
+    public async _createComponent(pkg: string | string[], attach: boolean, id?: string):
+        Promise<IComponent & IComponentLoadable> {
+        const component = await this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], id).realize();
+
+        const response = await component.request({ url: "/" });
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            throw new Error("Failed to create component");
+        }
+
+        if (attach) {
+            component.bindToContext();
+        }
+
+        return response.value;
     }
 
     public createComponentContext(pkg: string[]): IComponentContext {
@@ -1721,8 +1728,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     }
 
     private async getScheduler() {
-        const schedulerRuntime = await this.getComponentRuntime(schedulerId, true);
-        const schedulerResponse = await schedulerRuntime.request({ url: "" });
+        const schedulerResponse = await this.getComponentById(schedulerId, { url: "" }, true);
         const schedulerComponent = schedulerResponse.value as IComponent;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return schedulerComponent.IAgentScheduler!;

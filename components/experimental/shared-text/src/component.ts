@@ -28,7 +28,6 @@ import {
 } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import {
-    IComponentRuntimeChannel,
     IComponentContext,
     ITask,
     ITaskManager,
@@ -49,15 +48,8 @@ const debug = registerDebug("fluid:shared-text");
 /**
  * Helper function to retrieve the handle for the default component route
  */
-async function getHandle(runtimeP: Promise<IComponentRuntimeChannel>): Promise<IComponentHandle> {
-    const runtime = await runtimeP;
-    const request = await runtime.request({ url: "" });
-
-    if (request.status !== 200 || request.mimeType !== "fluid/component") {
-        return Promise.reject("Not found");
-    }
-
-    const component = request.value as IFluidObject & IComponent;
+async function getHandle(componentP: Promise<IComponent>): Promise<IComponentHandle> {
+    const component = await componentP;
     return component.IComponentLoadable.handle;
 }
 
@@ -152,10 +144,10 @@ export class SharedTextRunner
 
             const containerRuntime = this.context.containerRuntime;
             const [progressBars, math, videoPlayers, images] = await Promise.all([
-                getHandle(containerRuntime._createComponentWithProps("@fluid-example/progress-bars")),
-                getHandle(containerRuntime._createComponentWithProps("@fluid-example/math")),
-                getHandle(containerRuntime._createComponentWithProps("@fluid-example/video-players")),
-                getHandle(containerRuntime._createComponentWithProps("@fluid-example/image-collection")),
+                getHandle(containerRuntime._createComponent("@fluid-example/progress-bars", false)),
+                getHandle(containerRuntime._createComponent("@fluid-example/math", false)),
+                getHandle(containerRuntime._createComponent("@fluid-example/video-players", false)),
+                getHandle(containerRuntime._createComponent("@fluid-example/image-collection", false)),
             ]);
 
             this.rootView.set("progressBars", progressBars);

@@ -17,7 +17,7 @@ import {
     TestFluidComponent,
 } from "@fluidframework/test-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { IContainerRuntimeBase, IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 
 describe(`Attach/Bind Api Tests For Attached Container`, () => {
@@ -50,12 +50,10 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
     const createPeerComponent = async (
         containerRuntime: IContainerRuntimeBase,
     ) => {
-        const peerComponentRuntimeChannel = await containerRuntime._createComponentWithProps(["default"]);
-        const peerComponent =
-            (await peerComponentRuntimeChannel.request({ url: "/" })).value as ITestFluidComponent;
+        const peerComponent = await containerRuntime._createComponent(["default"], false) as any as ITestFluidComponent;
         return {
             peerComponent,
-            peerComponentRuntimeChannel,
+            peerComponentRuntimeChannel: peerComponent.runtime as any as IComponentRuntimeChannel,
         };
     };
 

@@ -186,7 +186,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     protected async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
         pkg: string, props?: any,
     ): Promise<T> {
-        return this.context._createComponentWithProps(pkg, true, props) as Promise<T>;
+        return this.context._createComponent(pkg, true, props) as Promise<T>;
     }
 
     /**

@@ -478,18 +478,16 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
                 const componentId = requestUrl
                     ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
                     : defaultComponentId;
-                const component = await containerRuntime.getComponentRuntime(componentId, true);
-
-                return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
+                return containerRuntime.getComponentById(
+                    componentId,
+                    { url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) },
+                    true);
             },
             { generateSummaries: true });
 
         // On first boot create the base component
         if (!runtime.existing) {
-            const componentRuntime = await runtime._createComponentWithProps(
-                ScribeFactory.type,
-                defaultComponentId);
-            componentRuntime.bindToContext();
+            await runtime._createComponent(ScribeFactory.type, true, defaultComponentId);
         }
 
         return runtime;

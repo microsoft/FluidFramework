@@ -7,10 +7,8 @@ import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduc
 import {
     IFluidObject,
     IComponentLoadable,
-    IResponse,
     IComponent,
 } from "@fluidframework/component-core-interfaces";
-import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { UrlRegistry } from "./urlRegistry";
 
@@ -44,35 +42,34 @@ export class ExternalComponentLoader extends PrimedComponent {
 
         // Calling .get() on the urlReg registry will also add it to the registry if it's not already there.
         const pkgReg = await urlReg.IComponentRegistry.get(componentUrl) as IComponent & IFluidObject;
-        let componentRuntime: IComponentRuntimeChannel;
+        let component: IComponent & IFluidObject;
         const id = uuid();
         if (pkgReg?.IComponentDefaultFactoryName !== undefined) {
-            componentRuntime = await this.context.containerRuntime._createComponentWithProps(
+            component = await this.context.containerRuntime._createComponent(
                 [
                     ...this.context.packagePath,
                     "url",
                     componentUrl,
                     pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
                 ],
+                true,
                 id);
         } else if (pkgReg?.IComponentFactory !== undefined) {
-            componentRuntime = await this.context.containerRuntime._createComponentWithProps(
+            component = await this.context.containerRuntime._createComponent(
                 [
                     ...this.context.packagePath,
                     "url",
                     componentUrl,
                 ],
+                true,
                 id);
         } else {
             throw new Error(`${componentUrl} is not a factory, and does not provide default component name`);
         }
 
-        const response: IResponse = await componentRuntime.request({ url: "/" });
-        let component = response.value as IComponent & IFluidObject;
         if (component.IComponentLoadable === undefined) {
             throw new Error(`${componentUrl} must implement the IComponentLoadable interface to be loaded here`);
         }
-        componentRuntime.bindToContext();
         if (component.IComponentCollection !== undefined) {
             component = component.IComponentCollection.createCollectionItem();
             if (component.IComponentLoadable === undefined) {

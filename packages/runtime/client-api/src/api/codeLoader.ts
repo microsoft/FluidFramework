@@ -110,8 +110,10 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
         const componentId = trimmed !== "" ? trimmed : rootComponentId;
 
-        const component = await runtime.getComponentRuntime(componentId, true);
-        return component.request({ url: trimmed.substr(1 + trimmed.length) });
+        return runtime.getComponentById(
+            componentId,
+            { url: trimmed.substr(1 + trimmed.length) },
+            true);
     }
 
     constructor(
@@ -133,10 +135,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            const componentRuntime = await runtime._createComponentWithProps(
-                "@fluid-internal/client-api",
-                rootComponentId);
-            componentRuntime.bindToContext();
+            await runtime._createComponent("@fluid-internal/client-api", true, rootComponentId);
         }
 
         return runtime;

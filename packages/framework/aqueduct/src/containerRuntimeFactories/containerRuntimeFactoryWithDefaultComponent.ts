@@ -50,13 +50,10 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
      * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const componentRuntime = await runtime._createComponentWithProps(
+        await runtime._createComponent(
             this.defaultComponentName,
+            true,
             ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId,
         );
-        // We need to request the component before attaching to ensure it
-        // runs through its entire instantiation flow.
-        await componentRuntime.request({ url: "/" });
-        componentRuntime.bindToContext();
     }
 }

@@ -274,7 +274,7 @@ describe("Ops on Reconnect", () => {
 
             // Create component2 in the first container.
             const firstContainerComp2 =
-                await firstContainerComp1.context._createComponentWithProps(
+                await firstContainerComp1.context._createComponent(
                     "component2",
                     false,
                 ) as unknown as ITestFluidComponent & IComponentLoadable;
@@ -380,7 +380,7 @@ describe("Ops on Reconnect", () => {
 
             // Create component2 in the first container.
             const firstContainerComp2 =
-                await firstContainerComp1.context._createComponentWithProps(
+                await firstContainerComp1.context._createComponent(
                     "component2",
                     false,
                 ) as unknown as ITestFluidComponent & IComponentLoadable;
