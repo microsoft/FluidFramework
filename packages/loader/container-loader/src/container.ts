@@ -1091,32 +1091,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         });
 
-        const reloadContextOnCode = (sequenceNumber, key, value) => {
-            debug(`approved ${key}`);
-            if (key === "code" || key === "code2") {
-                debug(`loadRuntimeFactory ${JSON.stringify(value)}`);
-
-                if (value === this.pkg) {
-                    return;
-                }
-
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                this.reloadContext();
-            }
-        };
-        if (this.options.autoReloadContainerContextOnCodeProposal) {
-            protocol.quorum.on(
-                "approveProposal",
-                reloadContextOnCode);
-        }
-        else if (this.hasNullRuntime()) {
-            // back compat for cases not using
-            // detached container
-            protocol.quorum.once(
-                "approveProposal",
-                reloadContextOnCode);
-        }
-
         return protocol;
     }
 
@@ -1460,6 +1434,31 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     ) {
         this.pkg = this.getCodeDetailsFromQuorum();
         const chaincode = this.pkg ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
+
+        if (this.options.autoReloadContainerContextOnCodeProposal === true
+            // this check is for back-compat with non-detached containers
+            || this.pkg === undefined) {
+            const quorum = this.getQuorum();
+            const reloadContextOnCode = (sequenceNumber, key, value) => {
+                debug(`approved ${key}`);
+                if (key === "code" || key === "code2") {
+                    debug(`loadRuntimeFactory ${JSON.stringify(value)}`);
+
+                    if (value === this.pkg) {
+                        return;
+                    }
+
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    this.reloadContext();
+                    if (this.options.autoReloadContainerContextOnCodeProposal !== true) {
+                        quorum.off("approveProposal", reloadContextOnCode);
+                    }
+                }
+            };
+            quorum.on(
+                "approveProposal",
+                reloadContextOnCode);
+        }
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
