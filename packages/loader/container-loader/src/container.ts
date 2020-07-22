@@ -1091,21 +1091,31 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         });
 
-        protocol.quorum.on(
-            "approveProposal",
-            (sequenceNumber, key, value) => {
-                debug(`approved ${key}`);
-                if (key === "code" || key === "code2") {
-                    debug(`loadRuntimeFactory ${JSON.stringify(value)}`);
+        const reloadContextOnCode = (sequenceNumber, key, value) => {
+            debug(`approved ${key}`);
+            if (key === "code" || key === "code2") {
+                debug(`loadRuntimeFactory ${JSON.stringify(value)}`);
 
-                    if (value === this.pkg) {
-                        return;
-                    }
-
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    this.reloadContext();
+                if (value === this.pkg) {
+                    return;
                 }
-            });
+
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                this.reloadContext();
+            }
+        };
+        if (this.options.autoReloadContainerContextOnCodeProposal) {
+            protocol.quorum.on(
+                "approveProposal",
+                reloadContextOnCode);
+        }
+        else if (this.hasNullRuntime()) {
+            // back compat for cases not using
+            // detached container
+            protocol.quorum.once(
+                "approveProposal",
+                reloadContextOnCode);
+        }
 
         return protocol;
     }
