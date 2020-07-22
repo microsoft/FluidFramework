@@ -23,7 +23,7 @@ import {
 import {
     ISharedComponentProps,
     SharedComponent,
-    IInitializeSharedObject,
+    createComponentHelper,
 } from "../components";
 
 /**
@@ -135,21 +135,6 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
         context: IComponentContext,
         initialState?: S,
     ): Promise<IComponent & IComponentLoadable> {
-        if (this.type === "") {
-            throw new Error("undefined type member");
-        }
-
-        const component = await context._createComponent(
-            this.type,
-            false,
-        );
-
-        const init: IInitializeSharedObject<S> | undefined = (component as any).IInitializeSharedObject;
-        if (init === undefined) {
-            throw new Error("Can't find IInitializeSharedObject");
-        }
-        await init.initializingComponentOnCreation(initialState);
-
-        return component;
+        return createComponentHelper<S>(this.type, context, false, initialState);
     }
 }

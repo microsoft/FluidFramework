@@ -32,6 +32,34 @@ export interface IInitializeSharedObject<S> {
     initializingComponentOnCreation(props?: S): Promise<void>;
 }
 
+export async function createComponentHelper<S>(
+    type: string,
+    context: IComponentContext,
+    attach: boolean,
+    initialState?: S,
+): Promise<IComponent & IComponentLoadable> {
+    if (type === "") {
+        throw new Error("undefined type member");
+    }
+
+    // ComponentContext.composeSubpackagePath() was used before to construct path.
+    // Is this correct way of doing things?
+    const path = context.packagePath.concat(type);
+
+    const component = await context.containerRuntime._createComponent(
+        path,
+        attach,
+    );
+
+    const init: IInitializeSharedObject<S> | undefined = (component as any).IInitializeSharedObject;
+    if (init === undefined) {
+        throw new Error("Can't find IInitializeSharedObject");
+    }
+    await init.initializingComponentOnCreation(initialState);
+
+    return component;
+}
+
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
@@ -184,9 +212,9 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      * @param props - optional props to be passed in
      */
     protected async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
-        pkg: string, props?: any,
+        pkg: string, props?: S,
     ): Promise<T> {
-        return this.context._createComponent(pkg, true, props) as Promise<T>;
+        return createComponentHelper<S>(pkg, this.context, true, props) as Promise<T>;
     }
 
     /**

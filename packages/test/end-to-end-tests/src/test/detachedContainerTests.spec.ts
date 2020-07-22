@@ -56,7 +56,7 @@ describe("Detached Container", () => {
         componentId: string,
         type: string,
     ) => {
-        return componentContext._createComponent(type, true, componentId);
+        return componentContext.containerRuntime._createComponent(type, true, componentId);
     });
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {

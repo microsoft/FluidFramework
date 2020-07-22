@@ -9,4 +9,5 @@ export {
     ISharedComponentProps,
     SharedComponent,
     IInitializeSharedObject,
+    createComponentHelper,
 } from "./sharedComponent";

@@ -299,19 +299,6 @@ export interface IComponentContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
-     * Create a new component using subregistries with fallback.
-     * @param pkg - Package name of the component
-     * @param realizationFn - Optional function to call to realize the component over the context default
-     * @returns A promise for a component that will have been initialized. Caller is responsible
-     * for attaching the component to the provided runtime's container such as by storing its handle
-     */
-    _createComponent(
-        pkg: string,
-        attach: boolean,
-        id?: string,
-    ): Promise<IComponent & IComponentLoadable>;
-
-    /**
      * Binds a runtime to the context.
      */
     bindRuntime(componentRuntime: IComponentRuntimeChannel): void;

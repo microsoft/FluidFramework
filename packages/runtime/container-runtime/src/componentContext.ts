@@ -8,7 +8,6 @@ import EventEmitter from "events";
 import { IDisposable } from "@fluidframework/common-definitions";
 import {
     IComponent,
-    IComponentLoadable,
     IRequest,
     IResponse,
     IFluidObject,
@@ -205,20 +204,6 @@ export abstract class ComponentContext extends EventEmitter implements
                     error);
             });
         }
-    }
-
-    public async _createComponent(
-        pkg: string,
-        attach,
-        id?: string,
-    ): Promise<IComponent & IComponentLoadable> {
-        const packagePath = await this.composeSubpackagePath(pkg);
-
-        return  this.containerRuntime._createComponent(
-            packagePath,
-            attach,
-            id,
-        );
     }
 
     private async rejectDeferredRealize(reason: string) {
