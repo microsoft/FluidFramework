@@ -23,7 +23,7 @@ const baseSummaryTreeKey = ".baseSummary";
 const outstandingOpsBlobKey = ".outstandingOps";
 const maxDecodeDepth = 10000;
 
-interface IDecodedSummaryWithoutOps {
+interface IDecodedSummary {
     readonly baseSummary: ISnapshotTree;
     readonly pathParts: string[];
 }
@@ -50,7 +50,7 @@ function decodeSummaryBody(baseSummary: ISnapshotTree, pathParts: string[]): Dec
     return { complete: false, baseSummary: newBaseSummary, outstandingOpsBlob };
 }
 
-function decodeSummaryWithoutOps(snapshot: ISnapshotTree): IDecodedSummaryWithoutOps {
+function decodeSummaryWithoutOps(snapshot: ISnapshotTree): IDecodedSummary {
     let baseSummary = snapshot;
     const pathParts: string[] = [];
 
@@ -73,16 +73,14 @@ async function seqFromTree(
     return attrib.sequenceNumber;
 }
 
-export interface IDecodedSummary {
-    readonly baseSummary: ISnapshotTree;
-    readonly pathParts: string[];
+interface IDecodedSummaryWithOps extends IDecodedSummary {
     readonly outstandingOps: ISequencedDocumentMessage[];
 }
 
-export async function decodeSummary(
+async function decodeSummary(
     snapshot: ISnapshotTree,
     readAndParseBlob: <T>(id: string) => Promise<T>,
-): Promise<IDecodedSummary> {
+): Promise<IDecodedSummaryWithOps> {
     let baseSummary = snapshot;
     const pathParts: string[] = [];
     let outstandingOps: ISequencedDocumentMessage[] = [];
@@ -446,7 +444,20 @@ export class SummarizerNode implements ITrackingSummarizerNode {
         }
     }
 
-    public prependOutstandingOps(pathPartsForChildren: string[], ops: ISequencedDocumentMessage[]): void {
+    public async loadBaseSummary(
+        snapshot: ISnapshotTree,
+        readAndParseBlob: <T>(id: string) => Promise<T>,
+    ): Promise<ISnapshotTree> {
+        const decodedSummary = await decodeSummary(snapshot, readAndParseBlob);
+
+        if (decodedSummary.outstandingOps.length > 0) {
+            this.prependOutstandingOps(decodedSummary.pathParts, decodedSummary.outstandingOps);
+        }
+
+        return decodedSummary.baseSummary;
+    }
+
+    private prependOutstandingOps(pathPartsForChildren: string[], ops: ISequencedDocumentMessage[]): void {
         assert(this.trackChanges, "Should not prepend outstanding ops when trackChanges is disabled");
         assert(this.latestSummary, "Should have latest summary defined to prepend outstanding ops");
         if (pathPartsForChildren.length > 0) {

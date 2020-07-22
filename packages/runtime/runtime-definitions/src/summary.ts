@@ -7,6 +7,7 @@ import {
     SummaryTree,
     ISummaryTree,
     ISequencedDocumentMessage,
+    ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 
 export interface ISummaryStats {
@@ -63,12 +64,17 @@ export interface ISummarizerNode {
 
 export interface ITrackingSummarizerNode extends ISummarizerNode {
     /**
-     * Prepends additional ops to the tracked outstanding ops. This is used when
-     * loading from a summary which is decoded containing an outstanding ops blob.
-     * @param pathParts - additional path parts resulting from decoding the summary
-     * @param outstandingOps - outstanding ops resulting from decoding the summary
+     * Checks if the base snapshot was created as a failure summary. If it has
+     * the base summary handle + outstanding ops blob, then this will return the
+     * innermost base summary, and update the state by tracking the outstanding ops.
+     * @param snapshot - the base summary to parse
+     * @param readAndParseBlob - function to read and parse blobs from storage
+     * @returns the base summary to be used
      */
-    prependOutstandingOps(pathParts: string[], outstandingOps: ISequencedDocumentMessage[]): void;
+    loadBaseSummary(
+        snapshot: ISnapshotTree,
+        readAndParseBlob: <T>(id: string) => Promise<T>,
+    ): Promise<ISnapshotTree>;
     /**
      * Records an op representing a change to this node/subtree.
      * @param op - op of change to record

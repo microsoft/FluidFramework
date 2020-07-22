@@ -48,7 +48,7 @@ import {
     ISummarizeResult,
     ITrackingSummarizerNode,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker, addBlobToSummary, decodeSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
+import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerRuntime } from "./containerRuntime";
 
@@ -660,15 +660,7 @@ export class RemotedComponentContext extends ComponentContext {
 
             const localReadAndParse = async <T>(id: string) => readAndParse<T>(this.storage, id);
             if (tree) {
-                const decodedSummary = await decodeSummary(tree, localReadAndParse);
-                if (decodedSummary) {
-                    tree = decodedSummary.baseSummary;
-                    if (decodedSummary.outstandingOps.length > 0) {
-                        this.summarizerNode.prependOutstandingOps(
-                            decodedSummary.pathParts,
-                            decodedSummary.outstandingOps);
-                    }
-                }
+                tree = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
             }
 
             if (tree !== null && tree.blobs[".component"] !== undefined) {
