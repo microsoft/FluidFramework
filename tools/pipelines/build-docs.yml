@@ -26,27 +26,39 @@ resources:
   pipelines:
   - pipeline: common_definitions
     source: Build - common-definitions
+    trigger:
+      branches:
+        include:
+        - release/*
+        - master
+        - docs/pipeline # for testing
   - pipeline: common_utils
     source: Build - common-utils
+    trigger:
+      branches:
+        include:
+        - release/*
+        - master
+        - docs/pipeline # for testing
   - pipeline: client
     source: Build - client packages
+    trigger:
+      branches:
+        include:
+        - release/*
+        - master
+        - docs/pipeline # for testing
   - pipeline: server
     source: server-routerlicious
+    trigger:
+      branches:
+        include:
+        - release/*
+        - master
+        - docs/pipeline # for testing
 
-trigger:
-  branches:
-    include:
-    - release/*
-    - master
-    - docs/pipeline # for testing
-  paths:
-    exclude:
-    - packages
-    - server/routerlicious
-    - common/lib/common-utils
-    - common/lib/common-definitions
-
-# no PR triggers
+# no branch and PR triggers
+trigger: none
 pr: none
 
 stages:
@@ -61,6 +73,7 @@ stages:
         steps:
         - template: templates/build-docs-steps.yml
           parameters:
+            BASE_URL: $(BASE_URL)
             THIS_VERSION: $(RELEASE_VERSION)
             MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
             RELEASE_VERSION: $(RELEASE_VERSION)
@@ -72,6 +85,7 @@ stages:
         steps:
         - template: templates/build-docs-steps.yml
           parameters:
+            BASE_URL: $(BASE_URL)
             THIS_VERSION: $(RELEASE_VERSION)
             MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
             RELEASE_VERSION: $(RELEASE_VERSION)
@@ -86,6 +100,7 @@ stages:
         steps:
         - template: templates/build-docs-steps.yml
           parameters:
+            BASE_URL: $(BASE_URL)
             THIS_VERSION: $(MASTER_BRANCH_VERSION)
             MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
             RELEASE_VERSION: $(RELEASE_VERSION)
@@ -97,6 +112,7 @@ stages:
         steps:
         - template: templates/build-docs-steps.yml
           parameters:
+            BASE_URL: $(BASE_URL)
             THIS_VERSION: $(MASTER_BRANCH_VERSION)
             MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
             RELEASE_VERSION: $(RELEASE_VERSION)
@@ -111,6 +127,7 @@ stages:
         steps:
         - template: templates/build-docs-steps.yml
           parameters:
+            BASE_URL: $(BASE_URL)
             THIS_VERSION: $(N1_VERSION)
             MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
             N1_VERSION: $(N1_VERSION)
