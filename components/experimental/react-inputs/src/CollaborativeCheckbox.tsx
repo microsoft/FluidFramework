@@ -9,7 +9,7 @@ export interface ICollaborativeCheckboxProps {
     /**
      * The SharedCell that will store the checkbox value.
      */
-    data: SharedCell;
+    data: SharedCell<boolean>;
     /**
      * The value for the "name" property of the checkbox input
      */
@@ -63,7 +63,7 @@ export class CollaborativeCheckbox
         this.props.data.set(e.target.checked);
     }
 
-    private isChecked(): boolean {
-        return this.props.data.get();
+    private isChecked(): boolean  {
+        return this.props.data.get() ?? false;
     }
 }
