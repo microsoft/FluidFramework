@@ -7,7 +7,7 @@ import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
 import {
     getDriveItemByRootFileName,
-    getOdspRefreshTokenFn, // in @fluidframework/odsp-utils 0.23, renamed to getOdspRefreshTokenWithSideEffectFn
+    getOdspRefreshTokenFn,
     IClientConfig,
     IOdspTokens,
 } from "@fluidframework/odsp-utils";
@@ -63,8 +63,7 @@ export async function spoGetResolvedUrl(
         filePath,
         {
             accessToken: tokens.accessToken,
-            refreshTokenFn:
-                getOdspRefreshTokenFn(server, clientConfig, tokens), // Modifies the given tokens object when invoked
+            refreshTokenFn: getOdspRefreshTokenFn(server, clientConfig, tokens),
         },
         true,
     );
