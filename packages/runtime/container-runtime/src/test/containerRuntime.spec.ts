@@ -17,11 +17,6 @@ import { ScheduleManager } from "../containerRuntime";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
-        describe("Utils", () => {
-            describe("Convert to Summary Tree", () => {
-            });
-        });
-
         describe("ScheduleManager", () => {
             describe("Batch processing events", () => {
                 let batchBegin: number = 0;
