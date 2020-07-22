@@ -7,6 +7,7 @@ import {
     IOdspTokens,
     IClientConfig,
     fetchTokens,
+    refreshTokens,
     getOdspScope,
     pushScope,
     getLoginPageUrl,
@@ -113,7 +114,7 @@ export class OdspTokenManager {
                 // check and return if it exists without lock
                 const cacheKey: OdspTokenManagerCacheKey = isPush ? { isPush } : { isPush, server };
                 const tokensFromCache = await this.tokenCache.get(cacheKey);
-                if (tokensFromCache?.refreshToken) { //* or just if (tokensFromCache) ?
+                if (tokensFromCache) {
                     await this.onTokenCacheRetrieval(tokenConfig, tokensFromCache);
                     return tokensFromCache;
                 }
@@ -135,16 +136,13 @@ export class OdspTokenManager {
         const scope = isPush ? pushScope : getOdspScope(server);
         const cacheKey: OdspTokenManagerCacheKey = isPush ? { isPush } : { isPush, server };
         if (!forceReauth && this.tokenCache) {
-            let tokensFromCache = await this.tokenCache.get(cacheKey);
-            if (tokensFromCache?.refreshToken) {
+            const tokensFromCache = await this.tokenCache.get(cacheKey);
+            if (tokensFromCache) {
                 let canReturn = true;
                 if (forceRefresh) {
                     try {
-                        const credentials: TokenRequestCredentials = {
-                            grant_type: "refresh_token",
-                            refresh_token: tokensFromCache.refreshToken,
-                        };
-                        tokensFromCache = await fetchTokens(server, scope, clientConfig, credentials);
+                        // This updates the tokens in tokensFromCache
+                        await refreshTokens(server, scope, clientConfig, tokensFromCache);
                     } catch (error) {
                         canReturn = false;
                     }

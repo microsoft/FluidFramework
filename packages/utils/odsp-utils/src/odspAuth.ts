@@ -65,20 +65,14 @@ export function getLoginPageUrl(
         + `&redirect_uri=${odspAuthRedirectUri}`;
 }
 
-// Note: This may be renamed back to getOdspRefreshTokenFn once Gateway updates to 0.23 or later
-// and imports getOdspRefreshTokenWithSideEffectFn instead of getOdspRefreshTokenFn
-export const getOdspRefreshTokenNoSideEffectFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
+export const getOdspRefreshTokenFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
     getRefreshTokenFn(getOdspScope(server), server, clientConfig, tokens);
 export const getPushRefreshTokenFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
     getRefreshTokenFn(pushScope, server, clientConfig, tokens);
 export const getRefreshTokenFn = (scope: string, server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
     async () => {
-        const credentials: TokenRequestCredentials = {
-            grant_type: "refresh_token",
-            refresh_token: tokens.refreshToken,
-        };
-        const newTokens = await fetchTokens(server, scope, clientConfig, credentials);
-        return newTokens.accessToken;
+        await refreshTokens(scope, server, clientConfig, tokens);
+        return tokens.accessToken;
     };
 
 /**
@@ -135,6 +129,35 @@ export async function fetchTokens(
         throw createErrorFromResponse("Unable to get access token.", result);
     }
     return { accessToken, refreshToken };
+}
+
+/**
+ * Fetch fresh tokens and update the provided tokens object with them
+ * @param server - The server to auth against
+ * @param scope - The desired oauth scope
+ * @param clientConfig - Info about this client's identity
+ * @param tokens - The tokens object to update with fresh tokens. Also provides the refresh token for the request
+ */
+export async function refreshTokens(
+    server: string,
+    scope: string,
+    clientConfig: IClientConfig,
+    tokens: IOdspTokens,
+): Promise<void> {
+    // Clear out the old tokens while awaiting the new tokens
+    const refresh_token = tokens.refreshToken;
+    tokens.accessToken = "";
+    tokens.refreshToken = "";
+
+    const credentials: TokenRequestCredentials = {
+        grant_type: "refresh_token",
+        refresh_token,
+    };
+    const newTokens = await fetchTokens(server, scope, clientConfig, credentials);
+
+    // Instead of returning, update the passed in tokens object
+    tokens.accessToken = newTokens.accessToken;
+    tokens.refreshToken = newTokens.refreshToken;
 }
 
 /**
