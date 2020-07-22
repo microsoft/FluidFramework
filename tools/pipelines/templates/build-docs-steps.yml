@@ -85,7 +85,7 @@ steps:
       --build-arg BASE_URL=${{ parameters.BASE_URL }}
       --build-arg VUEPRESS_BASE=${{ parameters.VUEPRESS_BASE }}
       --build-arg THIS_VERSION=${{ parameters.THIS_VERSION }}
-      --build-arg MASTER_BRANCH_VERSION=${{parameters.MASTER_BRANCH_VERSION }}
+      --build-arg MASTER_BRANCH_VERSION=${{ parameters.MASTER_BRANCH_VERSION }}
       --build-arg RELEASE_VERSION=${{ parameters.RELEASE_VERSION }}
       --build-arg N1_VERSION=${{ parameters.N1_VERSION }}
     tags: |
