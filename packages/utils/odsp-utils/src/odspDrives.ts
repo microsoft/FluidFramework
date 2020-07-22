@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IOdspAuthRequestInfo } from "./odspAuth";
+import { OdspAuthRequestInfo } from "./odspAuth";
 import {
     getAsync,
     createErrorFromResponse,
@@ -61,7 +61,7 @@ export async function getDriveItemByRootFileName(
     server: string,
     account: string,
     path: string,
-    authRequestInfo: IOdspAuthRequestInfo,
+    authRequestInfo: OdspAuthRequestInfo,
     create: boolean,
 ): Promise<IOdspDriveItem> {
     const accountPath = account ? `/${account}` : "";
@@ -72,7 +72,7 @@ export async function getDriveItemByRootFileName(
 export async function getDriveItemByServerRelativePath(
     server: string,
     serverRelativePath: string,
-    authRequestInfo: IOdspAuthRequestInfo,
+    authRequestInfo: OdspAuthRequestInfo,
     create: boolean,
 ): Promise<IOdspDriveItem> {
     let account = "";
@@ -102,7 +102,7 @@ export async function getDriveItemByServerRelativePath(
 export async function getChildrenByDriveItem(
     driveItem: IOdspDriveItem,
     server: string,
-    authRequestInfo: IOdspAuthRequestInfo,
+    authRequestInfo: OdspAuthRequestInfo,
 ): Promise<IOdspDriveItem[]> {
     if (!driveItem.isFolder) { return []; }
     let url = `https://${server}/_api/v2.1/drives/${driveItem.drive}/items/${driveItem.item}/children`;
@@ -121,7 +121,7 @@ export async function getChildrenByDriveItem(
 
 async function getDriveItem(
     getDriveItemUrl: string,
-    authRequestInfo: IOdspAuthRequestInfo,
+    authRequestInfo: OdspAuthRequestInfo,
     create: boolean,
 ): Promise<IOdspDriveItem> {
     let getDriveItemResult = await getAsync(getDriveItemUrl, authRequestInfo);
@@ -149,7 +149,7 @@ async function getDriveId(
     server: string,
     account: string,
     library: string,
-    authRequestInfo: IOdspAuthRequestInfo,
+    authRequestInfo: OdspAuthRequestInfo,
 ): Promise<string> {
     const drives = await getDrives(server, account, authRequestInfo);
     const accountPath = account ? `/${account}` : "";
@@ -164,7 +164,7 @@ async function getDriveId(
 async function getDrives(
     server: string,
     account: string,
-    authRequestInfo: IOdspAuthRequestInfo,
+    authRequestInfo: OdspAuthRequestInfo,
 ): Promise<IOdspDriveInfo[]> {
     const accountPath = account ? `/${account}` : "";
     const getDriveUrl = `https://${server}${accountPath}/_api/v2.1/drives`;

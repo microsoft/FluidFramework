@@ -9,7 +9,7 @@ import express from "express";
 import moniker from "moniker";
 import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
-import { IOdspTokens, getServer } from "@fluidframework/odsp-utils";
+import { OdspTokens, getServer } from "@fluidframework/odsp-utils";
 import {
     getMicrosoftConfiguration,
     OdspTokenManager,
@@ -124,7 +124,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                     await tokenManager.getOdspTokens(
                         options.server,
                         getMicrosoftConfiguration(),
-                        buildTokenConfig(res, async (tokens: IOdspTokens) => {
+                        buildTokenConfig(res, async (tokens: OdspTokens) => {
                             options.odspAccessToken = tokens.accessToken;
                             return originalUrl;
                         }),
@@ -137,7 +137,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 await tokenManager.getPushTokens(
                     options.server,
                     getMicrosoftConfiguration(),
-                    buildTokenConfig(res, async (tokens: IOdspTokens) => {
+                    buildTokenConfig(res, async (tokens: OdspTokens) => {
                         options.pushAccessToken = tokens.accessToken;
                         return originalUrl;
                     }),
@@ -161,7 +161,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         await tokenManager.getOdspTokens(
             options.server,
             getMicrosoftConfiguration(),
-            buildTokenConfig(res, async (tokens: IOdspTokens) => {
+            buildTokenConfig(res, async (tokens: OdspTokens) => {
                 options.odspAccessToken = tokens.accessToken;
                 return `${getThisOrigin(options)}/pushLogin`;
             }),

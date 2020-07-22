@@ -10,7 +10,7 @@ import os from "os";
 import path from "path";
 import util from "util";
 import { lock } from "proper-lockfile";
-import { IOdspTokens } from "@fluidframework/odsp-utils";
+import { OdspTokens } from "@fluidframework/odsp-utils";
 
 export interface IAsyncCache<TKey, TValue> {
     get(key: TKey): Promise<TValue | undefined>;
@@ -19,8 +19,8 @@ export interface IAsyncCache<TKey, TValue> {
 }
 
 interface IResources {
-    tokens?: { [key: string]: IOdspTokens };
-    pushTokens?: IOdspTokens;
+    tokens?: { [key: string]: OdspTokens };
+    pushTokens?: OdspTokens;
 }
 
 const getRCFileName = () => path.join(os.homedir(), ".fluidtoolrc");

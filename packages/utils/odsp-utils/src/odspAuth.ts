@@ -4,20 +4,20 @@
  */
 
 import { AxiosRequestConfig } from "axios";
-import { IRequestResult, createErrorFromResponse, unauthPostAsync } from "./odspRequest";
+import { OdspRequestResult, createErrorFromResponse, unauthPostAsync } from "./odspRequest";
 import { getSharepointTenant } from "./odspUtils";
 
-export interface IOdspTokens {
+export interface OdspTokens {
     accessToken: string;
     refreshToken: string;
 }
 
-export interface IClientConfig {
+export interface OAuthClientConfig {
     clientId: string;
     clientSecret: string;
 }
 
-export interface IOdspAuthRequestInfo {
+export interface OdspAuthRequestInfo {
     accessToken: string;
     refreshTokenFn?: () => Promise<string>,
 }
@@ -52,7 +52,7 @@ export function getFetchTokenUrl(server: string): string {
 export function getLoginPageUrl(
     isPush: boolean,
     server: string,
-    clientConfig: IClientConfig,
+    clientConfig: OAuthClientConfig,
     scope: string,
     odspAuthRedirectUri: string,
 ) {
@@ -64,11 +64,11 @@ export function getLoginPageUrl(
         + `&redirect_uri=${odspAuthRedirectUri}`;
 }
 
-export const getOdspRefreshTokenFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
+export const getOdspRefreshTokenFn = (server: string, clientConfig: OAuthClientConfig, tokens: OdspTokens) =>
     getRefreshTokenFn(getOdspScope(server), server, clientConfig, tokens);
-export const getPushRefreshTokenFn = (server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
+export const getPushRefreshTokenFn = (server: string, clientConfig: OAuthClientConfig, tokens: OdspTokens) =>
     getRefreshTokenFn(pushScope, server, clientConfig, tokens);
-export const getRefreshTokenFn = (scope: string, server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
+export const getRefreshTokenFn = (scope: string, server: string, clientConfig: OAuthClientConfig, tokens: OdspTokens) =>
     async () => {
         await refreshTokens(server, scope, clientConfig, tokens);
         return tokens.accessToken;
@@ -84,9 +84,9 @@ export const getRefreshTokenFn = (scope: string, server: string, clientConfig: I
 export async function fetchTokens(
     server: string,
     scope: string,
-    clientConfig: IClientConfig,
+    clientConfig: OAuthClientConfig,
     credentials: TokenRequestCredentials,
-): Promise<IOdspTokens> {
+): Promise<OdspTokens> {
     const body: TokenRequestBody = {
         scope,
         client_id: clientConfig.clientId,
@@ -116,8 +116,8 @@ export async function fetchTokens(
 export async function refreshTokens(
     server: string,
     scope: string,
-    clientConfig: IClientConfig,
-    tokens: IOdspTokens,
+    clientConfig: OAuthClientConfig,
+    tokens: OdspTokens,
 ): Promise<void> {
     // Clear out the old tokens while awaiting the new tokens
     const refresh_token = tokens.refreshToken;
@@ -140,9 +140,9 @@ export async function refreshTokens(
  * and retrying with a refreshed token if necessary.
  */
 export async function authRequestWithRetry(
-    authRequestInfo: IOdspAuthRequestInfo,
+    authRequestInfo: OdspAuthRequestInfo,
     requestCallback: (config: AxiosRequestConfig) => Promise<any>,
-): Promise<IRequestResult> {
+): Promise<OdspRequestResult> {
     const createConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
 
     const result = await requestCallback(createConfig(authRequestInfo.accessToken));

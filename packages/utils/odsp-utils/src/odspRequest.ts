@@ -5,55 +5,55 @@
 
 import Axios, { AxiosResponse, AxiosRequestConfig } from "axios";
 import {
-    IOdspAuthRequestInfo,
+    OdspAuthRequestInfo,
     authRequestWithRetry,
 } from "./odspAuth";
 
-export interface IRequestResult {
+export interface OdspRequestResult {
     href: string | undefined;
     status: number;
     data: any;
 }
 
-export type RequestResultError = Error & { requestResult?: IRequestResult };
+export type RequestResultError = Error & { requestResult?: OdspRequestResult };
 
 export async function getAsync(
     url: string,
-    authRequestInfo: IOdspAuthRequestInfo,
-): Promise<IRequestResult> {
+    authRequestInfo: OdspAuthRequestInfo,
+): Promise<OdspRequestResult> {
     return authRequest(authRequestInfo, async (config) => Axios.get(url, config));
 }
 
 export async function putAsync(
     url: string,
-    authRequestInfo: IOdspAuthRequestInfo,
-): Promise<IRequestResult> {
+    authRequestInfo: OdspAuthRequestInfo,
+): Promise<OdspRequestResult> {
     return authRequest(authRequestInfo, async (config) => Axios.put(url, undefined, config));
 }
 
 export async function postAsync(
     url: string,
     body: any,
-    authRequestInfo: IOdspAuthRequestInfo,
-): Promise<IRequestResult> {
+    authRequestInfo: OdspAuthRequestInfo,
+): Promise<OdspRequestResult> {
     return authRequest(authRequestInfo, async (config) => Axios.post(url, body, config));
 }
 
-export async function unauthPostAsync(url: string, body: any): Promise<IRequestResult> {
+export async function unauthPostAsync(url: string, body: any): Promise<OdspRequestResult> {
     return safeRequestCore(async () => Axios.post(url, body));
 }
 
 async function authRequest(
-    authRequestInfo: IOdspAuthRequestInfo,
+    authRequestInfo: OdspAuthRequestInfo,
     requestCallback: (config: AxiosRequestConfig) => Promise<any>,
-): Promise<IRequestResult> {
+): Promise<OdspRequestResult> {
     return authRequestWithRetry(
         authRequestInfo,
         async (config) => safeRequestCore(async () => requestCallback(config)),
     );
 }
 
-async function safeRequestCore(requestCallback: () => Promise<AxiosResponse>): Promise<IRequestResult> {
+async function safeRequestCore(requestCallback: () => Promise<AxiosResponse>): Promise<OdspRequestResult> {
     let response: AxiosResponse;
     try {
         response = await requestCallback();
@@ -67,7 +67,7 @@ async function safeRequestCore(requestCallback: () => Promise<AxiosResponse>): P
     return { href: response.config.url, status: response.status, data: response.data };
 }
 
-export function createErrorFromResponse(message: string, requestResult: IRequestResult): RequestResultError {
+export function createErrorFromResponse(message: string, requestResult: OdspRequestResult): RequestResultError {
     const error: RequestResultError = Error(message);
     error.requestResult = requestResult;
     return error;

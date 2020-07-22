@@ -5,8 +5,8 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import {
-    IOdspTokens,
-    IClientConfig,
+    OdspTokens,
+    OdspClientConfig,
     fetchTokens,
     refreshTokens,
     getOdspScope,
@@ -21,7 +21,7 @@ const odspAuthRedirectPort = 7000;
 const odspAuthRedirectOrigin = `http://localhost:${odspAuthRedirectPort}`;
 const odspAuthRedirectUri = new URL("/auth/callback", odspAuthRedirectOrigin).href;
 
-export const getMicrosoftConfiguration = (): IClientConfig => ({
+export const getMicrosoftConfiguration = (): OdspClientConfig => ({
     get clientId() {
         if (!process.env.login__microsoft__clientId) {
             throw new Error("Client ID environment variable not set: login__microsoft__clientId.");
@@ -43,7 +43,7 @@ export type OdspTokenConfig = {
 } | {
     type: "browserLogin";
     navigator: (url: string) => void;
-    redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>;
+    redirectUriCallback?: (tokens: OdspTokens) => Promise<string>;
 };
 
 export interface IPushCacheKey { isPush: true }
@@ -52,16 +52,16 @@ export type OdspTokenManagerCacheKey = IPushCacheKey | IOdspCacheKey;
 
 export class OdspTokenManager {
     constructor(
-        private readonly tokenCache?: IAsyncCache<OdspTokenManagerCacheKey, IOdspTokens>,
+        private readonly tokenCache?: IAsyncCache<OdspTokenManagerCacheKey, OdspTokens>,
     ) { }
 
     public async getOdspTokens(
         server: string,
-        clientConfig: IClientConfig,
+        clientConfig: OdspClientConfig,
         tokenConfig: OdspTokenConfig,
         forceRefresh = false,
         forceReauth = false,
-    ): Promise<IOdspTokens> {
+    ): Promise<OdspTokens> {
         return this.getTokens(
             false,
             server,
@@ -74,11 +74,11 @@ export class OdspTokenManager {
 
     public async getPushTokens(
         server: string,
-        clientConfig: IClientConfig,
+        clientConfig: OdspClientConfig,
         tokenConfig: OdspTokenConfig,
         forceRefresh = false,
         forceReauth = false,
-    ): Promise<IOdspTokens> {
+    ): Promise<OdspTokens> {
         return this.getTokens(
             true,
             server,
@@ -91,11 +91,11 @@ export class OdspTokenManager {
     private async getTokens(
         isPush: boolean,
         server: string,
-        clientConfig: IClientConfig,
+        clientConfig: OdspClientConfig,
         tokenConfig: OdspTokenConfig,
         forceRefresh: boolean,
         forceReauth: boolean,
-    ): Promise<IOdspTokens> {
+    ): Promise<OdspTokens> {
         const invokeGetTokensCore = async () => {
             return this.getTokensCore(
                 isPush,
@@ -124,11 +124,11 @@ export class OdspTokenManager {
     private async getTokensCore(
         isPush: boolean,
         server: string,
-        clientConfig: IClientConfig,
+        clientConfig: OdspClientConfig,
         tokenConfig: OdspTokenConfig,
         forceRefresh,
         forceReauth,
-    ): Promise<IOdspTokens> {
+    ): Promise<OdspTokens> {
         const scope = isPush ? pushScope : getOdspScope(server);
         const cacheKey: OdspTokenManagerCacheKey = isPush ? { isPush } : { isPush, server };
         if (!forceReauth && this.tokenCache) {
@@ -151,7 +151,7 @@ export class OdspTokenManager {
             }
         }
 
-        let tokens: IOdspTokens | undefined;
+        let tokens: OdspTokens | undefined;
         switch (tokenConfig.type) {
             case "password":
                 tokens = await this.acquireTokensWithPassword(
@@ -186,10 +186,10 @@ export class OdspTokenManager {
     private async acquireTokensWithPassword(
         server: string,
         scope: string,
-        clientConfig: IClientConfig,
+        clientConfig: OdspClientConfig,
         username: string,
         password: string,
-    ): Promise<IOdspTokens> {
+    ): Promise<OdspTokens> {
         const credentials: TokenRequestCredentials = {
             grant_type: "password",
             username,
@@ -201,11 +201,11 @@ export class OdspTokenManager {
     private async acquireTokensViaBrowserLogin(
         loginPageUrl: string,
         server: string,
-        clientConfig: IClientConfig,
+        clientConfig: OdspClientConfig,
         scope: string,
         navigator: (url: string) => void,
-        redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
-    ): Promise<IOdspTokens> {
+        redirectUriCallback?: (tokens: OdspTokens) => Promise<string>,
+    ): Promise<OdspTokens> {
         // Start up a local auth redirect handler service to receive the tokens after login
         const tokenGetter = await serverListenAndHandle(odspAuthRedirectPort, async (req, res) => {
             // extract code from request URL and fetch the tokens
@@ -237,7 +237,7 @@ export class OdspTokenManager {
         return odspTokens;
     }
 
-    private async onTokenRetrievalFromCache(config: OdspTokenConfig, tokens: IOdspTokens) {
+    private async onTokenRetrievalFromCache(config: OdspTokenConfig, tokens: OdspTokens) {
         if (config.type === "browserLogin" && config.redirectUriCallback) {
             config.navigator(await config.redirectUriCallback(tokens));
         }
@@ -256,8 +256,8 @@ export class OdspTokenManager {
     }
 }
 
-export const odspTokensCache: IAsyncCache<OdspTokenManagerCacheKey, IOdspTokens> = {
-    async get(key: OdspTokenManagerCacheKey): Promise<IOdspTokens | undefined> {
+export const odspTokensCache: IAsyncCache<OdspTokenManagerCacheKey, OdspTokens> = {
+    async get(key: OdspTokenManagerCacheKey): Promise<OdspTokens | undefined> {
         const rc = await loadRC();
         if (key.isPush) {
             return rc.pushTokens;
@@ -265,7 +265,7 @@ export const odspTokensCache: IAsyncCache<OdspTokenManagerCacheKey, IOdspTokens>
             return rc.tokens && rc.tokens[key.server];
         }
     },
-    async save(key: OdspTokenManagerCacheKey, tokens: IOdspTokens): Promise<void> {
+    async save(key: OdspTokenManagerCacheKey, tokens: OdspTokens): Promise<void> {
         const rc = await loadRC();
         if (key.isPush) {
             rc.pushTokens = tokens;
