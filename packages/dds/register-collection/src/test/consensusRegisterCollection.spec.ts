@@ -17,7 +17,7 @@ import {
     MockComponentRuntime,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IDeltaConnection, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { IDeltaConnection, IChannelServices } from "@fluidframework/component-runtime-definitions";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection } from "../interfaces";
 
@@ -27,7 +27,7 @@ describe("ConsensusRegisterCollection", () => {
         const componentId = "consensus-register-collection";
         let crc: IConsensusRegisterCollection;
         let componentRuntime: MockComponentRuntime;
-        let services: ISharedObjectServices;
+        let services: IChannelServices;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
 
         beforeEach(() => {
@@ -212,11 +212,11 @@ describe("ConsensusRegisterCollection", () => {
 
             beforeEach(() => {
                 // Connect the collections.
-                const services1: ISharedObjectServices = {
+                const services1: IChannelServices = {
                     deltaConnection: deltaConnection1,
                     objectStorage: new MockStorage(),
                 };
-                const services2: ISharedObjectServices = {
+                const services2: IChannelServices = {
                     deltaConnection: deltaConnection2,
                     objectStorage: new MockStorage(),
                 };

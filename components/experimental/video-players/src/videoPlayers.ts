@@ -4,7 +4,7 @@
  */
 
 import {
-    IComponent,
+    IFluidObject,
     IComponentHandleContext,
     IComponentLoadable,
     IComponentRouter,
@@ -182,7 +182,7 @@ export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> imp
         return this.videoPlayers.get(id);
     }
 
-    public removeCollectionItem(instance: IComponent): void {
+    public removeCollectionItem(instance: IFluidObject): void {
         throw new Error("Method not implemented.");
     }
 

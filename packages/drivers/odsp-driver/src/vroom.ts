@@ -43,8 +43,7 @@ export async function fetchJoinSession(
         }
 
         const extraProps = refresh ? { secondAttempt: 1 } : {};
-        const joinSessionEvent = PerformanceEvent.start(logger, { eventName: "JoinSession", ...extraProps });
-        try {
+        return PerformanceEvent.timedExecAsync(logger, { eventName: "JoinSession", ...extraProps }, async (event) => {
             // TODO Extract the auth header-vs-query logic out
             const siteOrigin = getOrigin(siteUrl);
             let queryParams = `access_token=${token}`;
@@ -60,7 +59,7 @@ export async function fetchJoinSession(
             );
 
             // TODO SPO-specific telemetry
-            joinSessionEvent.end({
+            event.end({
                 sprequestguid: response.headers.get("sprequestguid"),
                 sprequestduration: response.headers.get("sprequestduration"),
             });
@@ -70,9 +69,6 @@ export async function fetchJoinSession(
             }
 
             return response.content;
-        } catch (error) {
-            joinSessionEvent.cancel({}, error);
-            throw error;
-        }
+        });
     });
 }

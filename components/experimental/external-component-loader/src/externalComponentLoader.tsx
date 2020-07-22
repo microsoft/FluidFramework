@@ -5,9 +5,10 @@
 
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import {
-    IComponent,
+    IFluidObject,
     IComponentLoadable,
     IResponse,
+    IComponent,
 } from "@fluidframework/component-core-interfaces";
 import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
@@ -42,7 +43,7 @@ export class ExternalComponentLoader extends PrimedComponent {
         }
 
         // Calling .get() on the urlReg registry will also add it to the registry if it's not already there.
-        const pkgReg = await urlReg.IComponentRegistry.get(componentUrl) as IComponent;
+        const pkgReg = await urlReg.IComponentRegistry.get(componentUrl) as IComponent & IFluidObject;
         let componentRuntime: IComponentRuntimeChannel;
         const id = uuid();
         if (pkgReg?.IComponentDefaultFactoryName !== undefined) {
@@ -67,7 +68,7 @@ export class ExternalComponentLoader extends PrimedComponent {
         }
 
         const response: IResponse = await componentRuntime.request({ url: "/" });
-        let component: IComponent = response.value as IComponent;
+        let component = response.value as IComponent & IFluidObject;
         if (component.IComponentLoadable === undefined) {
             throw new Error(`${componentUrl} must implement the IComponentLoadable interface to be loaded here`);
         }

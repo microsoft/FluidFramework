@@ -5,6 +5,7 @@
 
 import fs from "fs";
 import child_process from "child_process";
+import commander from "commander";
 import { IProxyLoaderFactory, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { OdspDocumentServiceFactory, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
@@ -28,9 +29,6 @@ interface ITestConfigs {
 interface IConfig {
     server: string,
     driveId: string,
-    username: string,
-    password: string,
-    activeProfile: keyof(ITestConfigs),
     profiles: ITestConfigs,
 }
 
@@ -119,31 +117,44 @@ async function main() {
         process.exit(-1);
     }
 
-    // TODO: switch to use commander
-    if (process.argv[2] === "--run") {
-        if (process.argv[3] !== undefined && process.argv[4] !== undefined) {
-            const runConfig: IRunConfig = {
-                runId: parseInt(process.argv[3], 10),
-                testConfig: config.profiles[config.activeProfile],
-            };
-            const stressTest = await load(config, process.argv[4]);
-            await stressTest.run(runConfig);
-            process.exit(0);
-        }
-        console.error("Missing arguments for run");
+    commander
+        .version("0.0.1")
+        .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "full")
+        .option("-u, --url <url>", "Load an existing data store rather than creating new")
+        .option("-r, --runId <runId>", "run a child process with the given id. Requires --url option.")
+        .option("-f, --refresh", "Refresh auth tokens")
+        .option("-d, --debug", "Debug child processes via --inspect-brk")
+        .parse(process.argv);
+
+    const profile: string | undefined = commander.profile;
+    let url: string | undefined = commander.url;
+    const runId: number | undefined = commander.runId === undefined ? undefined : parseInt(commander.runId, 10);
+    const refresh: true | undefined = commander.refresh;
+    const debug: true | undefined = commander.debug;
+
+    if (config.profiles[profile] === undefined) {
+        console.error("Invalid --profile argument not found in testConfig.json profiles");
         process.exit(-1);
     }
 
-    let nextArg = process.argv[2];
-    let componentUrl: string;
-    if (process.argv[2] === "--spawn") {
-        // Use a pre-existing file
-        componentUrl = process.argv[3];
-        //* Fetch fresh tokens and cache them (usually done by initialize which will be skipped below)
-        nextArg = process.argv[4];
+    // When runId is specified, kick off a single test runner and exit when it's finished
+    if (runId !== undefined) {
+        if (url === undefined) {
+            console.error("Missing --url argument needed to run child process");
+            process.exit(-1);
+        }
+        const runConfig: IRunConfig = {
+            runId,
+            testConfig: config.profiles[profile],
+        };
+        const stressTest = await load(config, url);
+        await stressTest.run(runConfig);
+        process.exit(0);
     }
 
-    if (nextArg === "--refresh") {
+    // When runId is not specified, this is the orchestrator process which will spawn child test runners.
+
+    if (refresh) {
         console.log("Refreshing tokens");
         await odspTokenManager.getOdspTokens(
             config.server,
@@ -164,16 +175,21 @@ async function main() {
         );
     }
 
-    if (componentUrl === undefined) {
+    if (url === undefined) {
         // Create a new file
-        componentUrl = await initialize(config);
+        url = await initialize(config);
     }
 
     const p: Promise<void>[] = [];
-    for (let i = 0; i < config.profiles[config.activeProfile].numClients; i++) {
+    for (let i = 0; i < config.profiles[profile].numClients; i++) {
+        const args = ["dist\\nodeStressTest.js", "--profile", profile, "--runId", i.toString(), "--url", url];
+        if (debug) {
+            const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
+            args.unshift(`--inspect-brk=${debugPort}`);
+        }
         const process = child_process.spawn(
             "node",
-            ["dist\\nodeStressTest.js", "--run", i.toString(), componentUrl],
+            args,
             { stdio: "inherit" },
         );
         p.push(new Promise((resolve) => process.on("close", resolve)));

@@ -6,12 +6,13 @@
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import {
-    IComponent,
+    IFluidObject,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
     IResponse,
     IComponentHandle,
+    IComponent,
 } from "@fluidframework/component-core-interfaces";
 import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -23,9 +24,8 @@ import {
     Marker,
 } from "@fluidframework/merge-tree";
 import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import SimpleMDE from "simplemde";
 import { Viewer } from "./marked";
@@ -207,7 +207,7 @@ export class Smde extends EventEmitter implements
 
     // TODO: this should be an utility.
     private isReadonly() {
-        const runtimeAsComponent = this.context.containerRuntime as IComponent;
+        const runtimeAsComponent = this.context.containerRuntime as IFluidObject & IComponent;
         const scopes = runtimeAsComponent.IComponentConfiguration?.scopes;
         return scopes !== undefined && !scopes.includes("doc:write");
     }
@@ -220,7 +220,7 @@ class SmdeFactory implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
-        const dataTypes = new Map<string, ISharedObjectFactory>();
+        const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         const sequenceFactory = SharedString.getFactory();
 

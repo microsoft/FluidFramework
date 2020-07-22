@@ -12,7 +12,7 @@ import * as ui from "./rectangle";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent
+    export interface IFluidObject
         extends Readonly<Partial<IProvideSearchMenuHost & ISearchMenuClient>> { }
 }
 

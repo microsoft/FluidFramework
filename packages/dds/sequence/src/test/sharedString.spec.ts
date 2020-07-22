@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ITree } from "@fluidframework/protocol-definitions";
-import { ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { IChannelServices } from "@fluidframework/component-runtime-definitions";
 import {
     MockComponentRuntime,
     MockContainerRuntimeFactory,
@@ -41,7 +41,7 @@ describe("SharedString", () => {
 
         // Creates a new SharedString and loads it from the passed snaphost tree.
         async function CreateStringAndCompare(tree: ITree): Promise<void> {
-            const services: ISharedObjectServices = {
+            const services: IChannelServices = {
                 deltaConnection: new MockEmptyDeltaConnection(),
                 objectStorage: new MockStorage(tree),
             };
@@ -236,7 +236,7 @@ describe("SharedString", () => {
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
             const componentRuntime2 = new MockComponentRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
-            const services2: ISharedObjectServices = {
+            const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(sharedString.snapshot()),
             };
@@ -466,7 +466,7 @@ describe("SharedString", () => {
 
             // Connect the first SharedString.
             containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
-            const services1: ISharedObjectServices = {
+            const services1: IChannelServices = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
@@ -477,7 +477,7 @@ describe("SharedString", () => {
             const runtime2 = new MockComponentRuntime();
             containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
             sharedString2 = new SharedString(runtime2, "shared-string-2", SharedStringFactory.Attributes);
-            const services2: ISharedObjectServices = {
+            const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
