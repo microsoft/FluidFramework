@@ -7,6 +7,7 @@ import { AxiosRequestConfig } from "axios";
 import { IRequestResult, createErrorFromResponse, unauthPostAsync } from "./odspRequest";
 import { getSharepointTenant } from "./odspUtils";
 
+//* Remove I from these types
 export interface IOdspTokens {
     accessToken: string;
     refreshToken: string;
@@ -49,7 +50,7 @@ export function getFetchTokenUrl(server: string): string {
     return `https://login.microsoftonline.com/${getSharepointTenant(server)}/oauth2/v2.0/token`;
 }
 
-export function getAuthorizePageUrl(
+export function getLoginPageUrl(
     isPush: boolean,
     server: string,
     clientConfig: IClientConfig,

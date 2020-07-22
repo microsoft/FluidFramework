@@ -58,7 +58,6 @@ function createLoader(config: IConfig, password: string, reauth: boolean) {
                     config.server,
                     getMicrosoftConfiguration(),
                     passwordTokenConfig(config.username, password),
-                    undefined,
                     refresh,
                     reauth,
                 );
@@ -69,7 +68,6 @@ function createLoader(config: IConfig, password: string, reauth: boolean) {
                     config.server,
                     getMicrosoftConfiguration(),
                     passwordTokenConfig(config.username, password),
-                    undefined,
                     refresh,
                     reauth,
                 );
@@ -118,6 +116,7 @@ async function main() {
         process.exit(-1);
     }
 
+    //* todo - update readme
     commander
         .version("0.0.1")
         .requiredOption("-w, --password <password>", "Password for username provided in testconfig.json")
@@ -164,7 +163,6 @@ async function main() {
             getMicrosoftConfiguration(),
             passwordTokenConfig(config.username, password),
             undefined,
-            undefined,
             true,
         );
 
@@ -172,7 +170,6 @@ async function main() {
             config.server,
             getMicrosoftConfiguration(),
             passwordTokenConfig(config.username, password),
-            undefined,
             undefined,
             true,
         );

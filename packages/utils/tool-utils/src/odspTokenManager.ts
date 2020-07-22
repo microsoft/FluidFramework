@@ -9,7 +9,7 @@ import {
     fetchTokens,
     getOdspScope,
     pushScope,
-    getAuthorizePageUrl,
+    getLoginPageUrl,
     TokenRequestCredentials,
 } from "@fluidframework/odsp-utils";
 import { IAsyncCache, loadRC, saveRC, lockRC } from "./fluidToolRC";
@@ -62,7 +62,6 @@ export class OdspTokenManager {
         server: string,
         clientConfig: IClientConfig,
         tokenConfig: OdspTokenConfig,
-        onAfterTokenRetrieval?: (tokens: IOdspTokens) => Promise<void>,
         forceRefresh = false,
         forceReauth = false,
     ): Promise<IOdspTokens> {
@@ -73,7 +72,6 @@ export class OdspTokenManager {
             tokenConfig,
             forceRefresh,
             forceReauth,
-            onAfterTokenRetrieval,
         );
     }
 
@@ -81,7 +79,6 @@ export class OdspTokenManager {
         server: string,
         clientConfig: IClientConfig,
         tokenConfig: OdspTokenConfig,
-        onAfterTokenRetrieval?: (tokens: IOdspTokens) => Promise<void>,
         forceRefresh = false,
         forceReauth = false,
     ): Promise<IOdspTokens> {
@@ -92,7 +89,6 @@ export class OdspTokenManager {
             tokenConfig,
             forceRefresh,
             forceReauth,
-            onAfterTokenRetrieval,
         );
     }
     private async getTokens(
@@ -102,7 +98,6 @@ export class OdspTokenManager {
         tokenConfig: OdspTokenConfig,
         forceRefresh: boolean,
         forceReauth: boolean,
-        onAfterTokenRetrieval?: (tokens: IOdspTokens) => Promise<void>,
     ): Promise<IOdspTokens> {
         const invokeGetTokensCore = async () => {
             return this.getTokensCore(
@@ -111,8 +106,7 @@ export class OdspTokenManager {
                 clientConfig,
                 tokenConfig,
                 forceRefresh,
-                forceReauth,
-                onAfterTokenRetrieval);
+                forceReauth);
         };
         if (this.tokenCache) {
             if (!forceReauth && !forceRefresh) {
@@ -120,9 +114,7 @@ export class OdspTokenManager {
                 const cacheKey: OdspTokenManagerCacheKey = isPush ? { isPush } : { isPush, server };
                 const tokensFromCache = await this.tokenCache.get(cacheKey);
                 if (tokensFromCache?.refreshToken) { //* or just if (tokensFromCache) ?
-                    if (onAfterTokenRetrieval) {
-                        await onAfterTokenRetrieval(tokensFromCache);
-                    }
+                    await this.onTokenCacheRetrieval(tokenConfig, tokensFromCache);
                     return tokensFromCache;
                 }
             }
@@ -139,7 +131,6 @@ export class OdspTokenManager {
         tokenConfig: OdspTokenConfig,
         forceRefresh,
         forceReauth,
-        onAfterTokenRetrieval?: (tokens: IOdspTokens) => Promise<void>,
     ): Promise<IOdspTokens> {
         const scope = isPush ? pushScope : getOdspScope(server);
         const cacheKey: OdspTokenManagerCacheKey = isPush ? { isPush } : { isPush, server };
@@ -159,10 +150,8 @@ export class OdspTokenManager {
                     }
                     await this.tokenCache.save(cacheKey, tokensFromCache);
                 }
-                if (canReturn === true) {
-                    if (onAfterTokenRetrieval) {
-                        await onAfterTokenRetrieval(tokensFromCache);
-                    }
+                if (canReturn) {
+                    await this.onTokenCacheRetrieval(tokenConfig, tokensFromCache);
                     return tokensFromCache;
                 }
             }
@@ -177,12 +166,11 @@ export class OdspTokenManager {
                     clientConfig,
                     tokenConfig.username,
                     tokenConfig.password,
-                    onAfterTokenRetrieval,
                 );
                 break;
             case "browserLogin":
                 tokens = await this.acquireTokensViaBrowserLogin(
-                    getAuthorizePageUrl(isPush, server, clientConfig, scope, odspAuthRedirectUri),
+                    getLoginPageUrl(isPush, server, clientConfig, scope, odspAuthRedirectUri),
                     server,
                     clientConfig,
                     scope,
@@ -207,28 +195,24 @@ export class OdspTokenManager {
         clientConfig: IClientConfig,
         username: string,
         password: string,
-        onAfterTokenRetrieval?: (tokens: IOdspTokens) => Promise<void>,
     ): Promise<IOdspTokens> {
         const credentials: TokenRequestCredentials = {
             grant_type: "password",
             username,
             password,
         };
-        const tokens = await fetchTokens(server, scope, clientConfig, credentials);
-        if (onAfterTokenRetrieval) {
-            await onAfterTokenRetrieval(tokens);
-        }
-        return tokens;
+        return fetchTokens(server, scope, clientConfig, credentials);
     }
 
     private async acquireTokensViaBrowserLogin(
-        authUrl: string,
+        loginPageUrl: string,
         server: string,
         clientConfig: IClientConfig,
         scope: string,
         navigator: (url: string) => void,
         redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
     ): Promise<IOdspTokens> {
+        // Start up a local auth redirect service to receive the tokens after login
         const tokenGetter = await serverListenAndHandle(odspAuthRedirectPort, async (req, res) => {
             // extract code from request URL and fetch the tokens
             const credentials: TokenRequestCredentials = {
@@ -238,7 +222,7 @@ export class OdspTokenManager {
             };
             const tokens = await fetchTokens(server, scope, clientConfig, credentials);
 
-            // redirect
+            // redirect now that the browser is done with auth
             if (redirectUriCallback) {
                 res.writeHead(301, { Location: await redirectUriCallback(tokens) });
                 await endResponse(res);
@@ -250,13 +234,19 @@ export class OdspTokenManager {
             return tokens;
         });
 
-        navigator(authUrl);
+        // Now that our local auth redirect service is up, navigate the browser to the login page
+        navigator(loginPageUrl);
 
+        // Receive and extract the tokens
         const odspTokens = await tokenGetter();
 
-        //* Is this ok?
-        // NOTE: We don't use onAfterTokenRetrieval here because we did the redirect above instead
         return odspTokens;
+    }
+
+    private async onTokenCacheRetrieval(config: OdspTokenConfig, tokens: IOdspTokens) {
+        if (config.type === "browserLogin" && config.redirectUriCallback) {
+            config.navigator(await config.redirectUriCallback(tokens));
+        }
     }
 
     private extractAuthorizationCode(relativeUrl: string | undefined): string {
