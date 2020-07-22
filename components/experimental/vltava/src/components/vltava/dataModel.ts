@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { IComponent, IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IComponentLastEditedTracker } from "@fluidframework/last-edited-experimental";
 import { IComponentContext } from "@fluidframework/runtime-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
@@ -23,7 +23,7 @@ export interface IVltavaLastEditedState {
 }
 
 export interface IVltavaDataModel extends EventEmitter {
-    getDefaultComponent(): Promise<IComponent>;
+    getDefaultComponent(): Promise<IFluidObject>;
     getTitle(): string;
     getUsers(): IVltavaUserDetails[];
     getLastEditedState(): Promise<IVltavaLastEditedState | undefined>;
@@ -57,7 +57,7 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
         });
     }
 
-    public async getDefaultComponent(): Promise<IComponent> {
+    public async getDefaultComponent(): Promise<IFluidObject> {
         return this.root.get<IComponentHandle>("tabs-component-id").get();
     }
 

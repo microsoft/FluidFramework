@@ -56,10 +56,10 @@ export const syncedStateCallbackListener = <
         fluidComponentMap,
         fluidToView,
     );
-    if (!currentFluidState) {
+    if (currentFluidState === undefined) {
         throw Error("Synced state update triggered before fluid state was initialized");
     }
-    const viewToFluidKeys: string[] = viewToFluid
+    const viewToFluidKeys: string[] = viewToFluid !== undefined
         ? Array.from(viewToFluid.values()).map((item) => item.fluidKey as string)
         : [];
     if (!local && change.key === `syncedState-${syncedStateId}`) {
@@ -82,7 +82,7 @@ export const syncedStateCallbackListener = <
         // If the update is to a child component, trigger only a view update as the child itself will
         // update its Fluid update
         const stateKey = getByFluidKey(change.key, viewToFluid);
-        if (stateKey) {
+        if (stateKey !== undefined) {
             const newPartialState = getViewFromFluid(
                 syncedStateId,
                 syncedState,

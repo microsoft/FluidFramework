@@ -15,11 +15,12 @@ import {
 import {
     IChannelAttributes,
     IComponentRuntime,
-    ISharedObjectServices,
+    IChannelServices,
     Jsonable,
     JsonablePrimitive,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { ISharedObject } from "@fluidframework/shared-object-base";
 import { pkgVersion } from "./packageVersion";
 import { SharedSegmentSequence, SubSequence } from "./";
 
@@ -204,7 +205,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
      *
      * @returns a factory that creates and load SharedMap
      */
-    public static getFactory(): ISharedObjectFactory {
+    public static getFactory(): IChannelFactory {
         return new SparseMatrixFactory();
     }
 
@@ -320,7 +321,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     }
 }
 
-export class SparseMatrixFactory implements ISharedObjectFactory {
+export class SparseMatrixFactory implements IChannelFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/sparse-matrix";
 
     public static Attributes: IChannelAttributes = {
@@ -354,7 +355,7 @@ export class SparseMatrixFactory implements ISharedObjectFactory {
     public async load(
         runtime: IComponentRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes,
     ): Promise<ISharedObject> {

@@ -14,4 +14,3 @@ export * from "./testKafka";
 export * from "./testPublisher";
 export * from "./testTaskMessageSender";
 export * from "./testTenantManager";
-export * from "./testWebServer";
