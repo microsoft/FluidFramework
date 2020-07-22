@@ -52,8 +52,9 @@ const snapshotFileName = "header";
 /**
  * Implementation of a cell shared object
  */
-// eslint-disable-next-line max-len
-export class SharedCell<T extends Serializable = any> extends SharedObject<ISharedCellEvents<T>> implements ISharedCell<T> {
+
+export class SharedCell<T extends Serializable = any> extends SharedObject<ISharedCellEvents<T>>
+                                                                                            implements ISharedCell<T> {
     /**
      * Create a new shared cell
      *
