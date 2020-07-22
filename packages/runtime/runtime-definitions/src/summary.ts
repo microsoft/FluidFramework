@@ -58,11 +58,6 @@ export interface ISummarizerNode {
         summarizeInternalFn: () => Promise<ISummarizeInternalResult>,
         fullTree: boolean,
     ): Promise<ISummarizeResult>;
-    createChild(changeSequenceNumber: number, id: string): ISummarizerNode;
-    createTrackingChild(changeSequenceNumber: number, id: string): ITrackingSummarizerNode;
-}
-
-export interface ITrackingSummarizerNode extends ISummarizerNode {
     /**
      * Checks if the base snapshot was created as a failure summary. If it has
      * the base summary handle + outstanding ops blob, then this will return the
@@ -80,4 +75,7 @@ export interface ITrackingSummarizerNode extends ISummarizerNode {
      * @param op - op of change to record
      */
     recordChange(op: ISequencedDocumentMessage): void;
+
+    createChild(changeSequenceNumber: number, id: string): ISummarizerNode;
+    getChild(id: string): ISummarizerNode | undefined
 }

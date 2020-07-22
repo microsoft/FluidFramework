@@ -46,7 +46,7 @@ import {
     IComponentRegistry,
     IInboundSignalMessage,
     ISummarizeResult,
-    ITrackingSummarizerNode,
+    ISummarizerNode,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -176,7 +176,7 @@ export abstract class ComponentContext extends EventEmitter implements
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent & IFluidObject,
         public readonly summaryTracker: SummaryTracker,
-        protected readonly summarizerNode: ITrackingSummarizerNode,
+        protected readonly summarizerNode: ISummarizerNode,
         private bindState: BindState,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
         protected pkg?: readonly string[],
@@ -478,12 +478,16 @@ export abstract class ComponentContext extends EventEmitter implements
 
         // Update our summary tracker's latestSequenceNumber.
         this.summaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
-        this.summarizerNode.invalidate(latestSequenceNumber); // TODO: not sure about this
+        this.summarizerNode.invalidate(latestSequenceNumber);
 
         const channelSummaryTracker = this.summaryTracker.getChild(address);
+        const channelSummarizerNode = this.summarizerNode.getChild(address);
         // If there is a summary tracker for the channel that called us, update it's latestSequenceNumber.
         if (channelSummaryTracker) {
             channelSummaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
+        }
+        if (channelSummarizerNode) {
+            channelSummarizerNode.invalidate(latestSequenceNumber); // TODO: lazy load problem?
         }
     }
 
@@ -622,7 +626,7 @@ export class RemotedComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
-        summarizerNode: ITrackingSummarizerNode,
+        summarizerNode: ISummarizerNode,
         pkg?: string[],
     ) {
         super(
@@ -704,7 +708,7 @@ export class LocalComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
-        summarizerNode: ITrackingSummarizerNode,
+        summarizerNode: ISummarizerNode,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
         /**
          * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state

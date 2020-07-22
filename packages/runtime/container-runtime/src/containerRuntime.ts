@@ -658,7 +658,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         const changeSequenceNumber = this.deltaManager.lastSequenceNumber;
         this.summarizerNode = context.baseSnapshot
             ? SummarizerNode.createRootFromSummary(
-                changeSequenceNumber, // latest change sequence number
+                changeSequenceNumber, // latest change sequence number; at this point should match initialSequenceNumber
                 this.deltaManager.initialSequenceNumber, // summary reference sequence number
             )
             : SummarizerNode.createRootWithoutSummary(changeSequenceNumber);
@@ -684,7 +684,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
                 this.storage,
                 this.containerScope,
                 this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber),
-                this.summarizerNode.createTrackingChild(this.summarizerNode.referenceSequenceNumber, key));
+                this.summarizerNode.createChild(this.summarizerNode.referenceSequenceNumber, key));
             this.setNewContext(key, componentContext);
         }
 
@@ -1142,7 +1142,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            this.summarizerNode.createTrackingChild(this.deltaManager.lastSequenceNumber, id),
+            this.summarizerNode.createChild(this.deltaManager.lastSequenceNumber, id),
             (cr: IComponentRuntimeChannel) => this.bindComponent(cr),
             props);
 
@@ -1169,7 +1169,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            this.summarizerNode.createTrackingChild(this.deltaManager.lastSequenceNumber, id),
+            this.summarizerNode.createChild(this.deltaManager.lastSequenceNumber, id),
             (cr: IComponentRuntimeChannel) => this.bindComponent(cr),
             undefined /* #1635: Remove LocalComponentContext createProps */);
 
@@ -1326,7 +1326,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             new BlobCacheStorageService(this.storage, flatBlobsP),
             this.containerScope,
             this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
-            this.summarizerNode.createTrackingChild(message.sequenceNumber, attachMessage.id),
+            this.summarizerNode.createChild(message.sequenceNumber, attachMessage.id),
             [attachMessage.type]);
 
         // If a non-local operation then go and create the object, otherwise mark it as officially attached.

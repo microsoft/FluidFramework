@@ -9,7 +9,6 @@ import {
     ISummarizeInternalResult,
     ISummarizeResult,
     ISummaryTreeWithStats,
-    ITrackingSummarizerNode,
 } from "@fluidframework/runtime-definitions";
 import {
     ISequencedDocumentMessage,
@@ -179,7 +178,7 @@ function encodeSummary(summaryNode: ISummaryNode, outstandingOps: ISequencedDocu
  * call refreshLatestSummary to inform the tree of SummarizerNodes of the new baseline
  * latest successful summary.
  */
-export class SummarizerNode implements ITrackingSummarizerNode {
+export class SummarizerNode implements ISummarizerNode {
     /**
      * The latest sequence number of change to this node or subtree.
      */
@@ -243,7 +242,7 @@ export class SummarizerNode implements ITrackingSummarizerNode {
             this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
             return { summary: result.summary, stats: result.stats };
         } catch (error) {
-            if (!this.trackChanges || throwOnFailure) {
+            if (this.trackingSequenceNumber < this._changeSequenceNumber || throwOnFailure) {
                 throw error;
             }
             const latestSummary = this.latestSummary;
@@ -458,7 +457,6 @@ export class SummarizerNode implements ITrackingSummarizerNode {
     }
 
     private prependOutstandingOps(pathPartsForChildren: string[], ops: ISequencedDocumentMessage[]): void {
-        assert(this.trackChanges, "Should not prepend outstanding ops when trackChanges is disabled");
         assert(this.latestSummary, "Should have latest summary defined to prepend outstanding ops");
         if (pathPartsForChildren.length > 0) {
             this.latestSummary.additionalPath = EscapedPath.createAndConcat(pathPartsForChildren);
@@ -470,12 +468,14 @@ export class SummarizerNode implements ITrackingSummarizerNode {
                 newOpsLatestSeq < prevOpsEarliestSeq,
                 `Out of order prepended outstanding ops: ${newOpsLatestSeq} >= ${prevOpsEarliestSeq}`,
             );
+            if (newOpsLatestSeq > this.trackingSequenceNumber) {
+                this.trackingSequenceNumber = newOpsLatestSeq;
+            }
         }
         this.outstandingOps = ops.concat(this.outstandingOps);
     }
 
     public recordChange(op: ISequencedDocumentMessage): void {
-        assert(this.trackChanges, "Should not record changes when trackChanges is disabled");
         const lastOp = this.outstandingOps[this.outstandingOps.length - 1];
         if (lastOp !== undefined) {
             assert(
@@ -484,6 +484,7 @@ export class SummarizerNode implements ITrackingSummarizerNode {
             );
         }
         this.invalidate(op.sequenceNumber);
+        this.trackingSequenceNumber = op.sequenceNumber;
         this.outstandingOps.push(op);
     }
 
@@ -498,15 +499,14 @@ export class SummarizerNode implements ITrackingSummarizerNode {
     }
 
     private constructor(
-        private readonly trackChanges: boolean,
         private _changeSequenceNumber: number,
         /** Undefined means created without summary */
         private latestSummary?: ISummaryNode,
+        private trackingSequenceNumber = _changeSequenceNumber,
     ) {}
 
     public static createRootWithoutSummary(changeSequenceNumber: number): SummarizerNode {
         return new SummarizerNode(
-            true,
             changeSequenceNumber,
             undefined,
         );
@@ -517,7 +517,6 @@ export class SummarizerNode implements ITrackingSummarizerNode {
         referenceSequenceNumber: number,
     ): SummarizerNode {
         return new SummarizerNode(
-            true,
             changeSequenceNumber,
             {
                 referenceSequenceNumber,
@@ -527,11 +526,10 @@ export class SummarizerNode implements ITrackingSummarizerNode {
         );
     }
 
-    private createChildCore(
-        trackChanges: boolean,
+    public createChild(
         changeSequenceNumber: number,
         id: string,
-    ): SummarizerNode {
+    ): ISummarizerNode {
         let summary: ISummaryNode | undefined;
         if (this.latestSummary !== undefined && changeSequenceNumber <= this.latestSummary.referenceSequenceNumber) {
             summary = {
@@ -541,7 +539,6 @@ export class SummarizerNode implements ITrackingSummarizerNode {
             };
         }
         const child = new SummarizerNode(
-            trackChanges,
             changeSequenceNumber,
             summary,
         );
@@ -553,17 +550,7 @@ export class SummarizerNode implements ITrackingSummarizerNode {
         return child;
     }
 
-    public createChild(
-        changeSequenceNumber: number,
-        id: string,
-    ): ISummarizerNode {
-        return this.createChildCore(false, changeSequenceNumber, id);
-    }
-
-    public createTrackingChild(
-        changeSequenceNumber: number,
-        id: string,
-    ): ITrackingSummarizerNode {
-        return this.createChildCore(true, changeSequenceNumber, id);
+    public getChild(id: string): ISummarizerNode | undefined {
+        return this.children.get(id);
     }
 }
