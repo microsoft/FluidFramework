@@ -6,12 +6,7 @@
 import { initializeContainerCode } from "@fluidframework/base-host";
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
-    IFluidModule,
-    IFluidPackage,
-    IFluidCodeDetails,
-    IFluidCodeResolver,
-    IResolvedFluidCodeDetails,
-    isFluidPackage,
+    IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
@@ -21,7 +16,6 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
-import { extractPackageIdentifierDetails, WebCodeLoader } from "@fluidframework/web-code-loader";
 import jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 
@@ -66,26 +60,6 @@ class InsecureTinyliciousUrlResolver implements IUrlResolver {
     }
 }
 
-// The code resolver's job is basically to take a list of relative URLs (embedded in the IFluidCodeDetails) and
-// convert them to URLs that will find the correct scripts relative to the app (which is the context in which the code
-// will be loaded).  So maybe the URLs can stay relative, or maybe they'll be converted to absolute URLs against a
-// base URL (like a CDN or something).  In this case, we assume any relative URLs are hosted from the same server
-// running the app, and as a result none of the relative URLs need to be converted.
-class WebpackCodeResolver implements IFluidCodeResolver {
-    async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
-        if (typeof details.package === "string" || !isFluidPackage(details.package)) {
-            throw new Error("Not a fluid package");
-        }
-        const parse = extractPackageIdentifierDetails(details.package);
-        return {
-            config: details.config,
-            package: details.package,
-            resolvedPackage: details.package,
-            resolvedPackageCacheId: parse.fullId,
-        };
-    }
-}
-
 /**
  * Connect to the Tinylicious service and retrieve a Container, or if it does not already exist then create a new
  * Container and propose the given code.
@@ -95,8 +69,7 @@ class WebpackCodeResolver implements IFluidCodeResolver {
  */
 export async function getTinyliciousContainer(
     documentId: string,
-    packageJson: IFluidPackage,
-    fluidModule?: IFluidModule,
+    containerRuntimeFactory: IRuntimeFactory,
 ): Promise<Container> {
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(
         false,
@@ -108,18 +81,8 @@ export async function getTinyliciousContainer(
 
     const urlResolver = new InsecureTinyliciousUrlResolver();
 
-    const codeResolver = new WebpackCodeResolver();
-    const codeLoader = new WebCodeLoader(codeResolver);
-
-    const codeDetails: IFluidCodeDetails = {
-        package: packageJson,
-        config: {},
-    };
-    // Optionally, we can seed the codeLoader with a module we loaded ourselves.  If we don't seed, the codeLoader
-    // is supposed to bring it in.
-    if (fluidModule !== undefined) {
-        await codeLoader.seedModule(codeDetails, fluidModule);
-    }
+    const module = { fluidExport: containerRuntimeFactory };
+    const codeLoader = { load: async () => module };
 
     const loader = new Loader(
         urlResolver,
@@ -133,7 +96,7 @@ export async function getTinyliciousContainer(
     // The InsecureTinyliciousUrlResolver expects the url of the request to be the documentId.
     const container = await loader.resolve({ url: documentId });
 
-    await initializeContainerCode(container, codeDetails);
+    await initializeContainerCode(container, { package: "", config: {} });
 
     // If we're loading from ops, the context might be in the middle of reloading.  Check for that case and wait
     // for the contextChanged event to avoid returning before that reload completes.
