@@ -157,35 +157,34 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             },
             logger);
 
-        return new Promise<Container>((res, rej) => {
-            const version = request.headers && request.headers[LoaderHeader.version];
-            const pause = request.headers && request.headers[LoaderHeader.pause];
+        return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
+            return new Promise<Container>((res, rej) => {
+                const version = request.headers && request.headers[LoaderHeader.version];
+                const pause = request.headers && request.headers[LoaderHeader.pause];
 
-            const perfEvent = PerformanceEvent.start(container.logger, { eventName: "Load" });
+                const onClosed = (err?: ICriticalContainerError) => {
+                    // Depending where error happens, we can be attempting to connect to web socket
+                    // and continuously retrying (consider offline mode)
+                    // Host has no container to close, so it's prudent to do it here
+                    const error = err ?? CreateContainerError("Container closed without an error");
+                    container.close(error);
+                    rej(error);
+                };
+                container.on("closed", onClosed);
 
-            const onClosed = (err?: ICriticalContainerError) => {
-                // Depending where error happens, we can be attempting to connect to web socket
-                // and continuously retrying (consider offline mode)
-                // Host has no container to close, so it's prudent to do it here
-                const error = err ?? CreateContainerError("Container closed without an error");
-                container.close(error);
-                rej(error);
-            };
-            container.on("closed", onClosed);
-
-            container.load(version, !!pause)
-                .finally(() => {
-                    container.removeListener("closed", onClosed);
-                })
-                .then((props) => {
-                    perfEvent.end(props);
-                    res(container);
-                },
+                container.load(version, !!pause)
+                    .finally(() => {
+                        container.removeListener("closed", onClosed);
+                    })
+                    .then((props) => {
+                        event.end(props);
+                        res(container);
+                    },
                     (error) => {
-                        perfEvent.cancel(undefined, error);
                         const err = CreateContainerError(error);
                         onClosed(err);
                     });
+                });
         });
     }
 
@@ -496,12 +495,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Protocol Handler is undefined");
         }
         const protocolSummary = this.protocolHandler.captureSummary();
-
-        // Back compat / staging - to be removed with next server version bump
-        if (protocolSummary.tree.attributes === undefined) {
-            protocolSummary.tree.attributes = protocolSummary.tree[".attributes"];
-            delete protocolSummary.tree[".attributes"];
-        }
 
         if (!request.headers?.[CreateNewHeader.createNew]) {
             request.headers = {

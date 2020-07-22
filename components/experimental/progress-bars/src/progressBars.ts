@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import {
-    IComponent,
+    IFluidObject,
     IComponentHandleContext,
     IComponentLoadable,
     IComponentRouter,
@@ -15,9 +15,8 @@ import {
 import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
 import { IComponentCollection } from "@fluidframework/framework-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports,import/no-internal-modules,import/no-unassigned-import
@@ -159,7 +158,7 @@ export class ProgressCollection
         return this.progressBars.get(id);
     }
 
-    public removeCollectionItem(instance: IComponent): void {
+    public removeCollectionItem(instance: IFluidObject): void {
         throw new Error("Method not implemented.");
     }
 
@@ -232,7 +231,7 @@ class ProgressBarsFactory implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
-        const dataTypes = new Map<string, ISharedObjectFactory>();
+        const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 

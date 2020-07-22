@@ -14,7 +14,7 @@ import {
 import { AttachState } from "@fluidframework/container-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
-export class ComponentHandle implements IComponentHandle {
+export class ComponentHandle<T extends IComponent = IComponent> implements IComponentHandle {
     // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
     private graphAttachState: AttachState = AttachState.Detached;
     private bound: Set<IComponentHandle> | undefined;
@@ -35,7 +35,7 @@ export class ComponentHandle implements IComponentHandle {
      * @param routeContext - The parent IComponentHandleContext that has a route to this handle.
      */
     constructor(
-        private readonly value: IComponent,
+        protected readonly value: T,
         public readonly path: string,
         public readonly routeContext: IComponentHandleContext,
     ) {

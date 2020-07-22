@@ -5,10 +5,11 @@
 
 import {
     IComponentRuntime,
-    ISharedObjectServices,
+    IChannelServices,
     IChannelAttributes,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 export enum ConsensusResult {
     Release,
@@ -24,14 +25,14 @@ export type ConsensusCallback<T> = (value: T) => Promise<ConsensusResult>;
 /**
  * Consensus Ordered Collection channel factory interface
  *
- * Extends the base ISharedObjectFactory to return a more definite type of IConsensusOrderedCollection
+ * Extends the base IChannelFactory to return a more definite type of IConsensusOrderedCollection
  * Use for the runtime to create and load distributed data structure by type name of each channel
  */
-export interface IConsensusOrderedCollectionFactory extends ISharedObjectFactory {
+export interface IConsensusOrderedCollectionFactory extends IChannelFactory {
     load(
         document: IComponentRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<IConsensusOrderedCollection>;
 

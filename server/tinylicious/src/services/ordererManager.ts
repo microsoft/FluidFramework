@@ -3,20 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { LocalOrderer } from "@fluidframework/server-memory-orderer";
+import { IPubSub, LocalOrderer } from "@fluidframework/server-memory-orderer";
+import { GitManager, IHistorian } from "@fluidframework/server-services-client";
 import {
-    GitManager,
-    IHistorian,
-} from "@fluidframework/server-services-client";
-import {
-    IOrderer,
-    IOrdererManager,
     IDatabaseManager,
     IDocumentStorage,
+    IOrderer,
+    IOrdererManager,
     ITaskMessageSender,
     ITenantManager,
 } from "@fluidframework/server-services-core";
-import * as winston from "winston";
+import winston from "winston";
 
 export class OrdererManager implements IOrdererManager {
     private readonly map = new Map<string, Promise<IOrderer>>();
@@ -29,6 +26,7 @@ export class OrdererManager implements IOrdererManager {
         private readonly permission: any, // Can probably remove
         private readonly maxMessageSize: number,
         private readonly createHistorian: (tenant: string) => Promise<IHistorian>,
+        private readonly pubsub: IPubSub,
     ) {
     }
 
@@ -57,7 +55,9 @@ export class OrdererManager implements IOrdererManager {
             this.permission,
             this.maxMessageSize,
             winston,
-            gitManager);
+            gitManager,
+            undefined /* ILocalOrdererSetup */,
+            this.pubsub);
 
         // This is a temporary hack to work around promise bugs in the LocalOrderer load. The LocalOrderer does not
         // wait on dependant promises in lambda startup. So we give it time to prepare these before actually resolving

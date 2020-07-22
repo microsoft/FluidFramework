@@ -8,7 +8,7 @@ import * as ClientUI from "@fluid-example/client-ui-lib";
 import { Caret, CaretEventType, Direction, ICaretEvent } from "@fluid-example/flow-util-lib";
 import * as SearchMenu from "@fluid-example/search-menu";
 import {
-    IComponent,
+    IFluidObject,
     IComponentHandleContext,
     IComponentLoadable,
     IComponentRouter,
@@ -68,7 +68,7 @@ export class MathView implements IComponentHTMLView, IComponentCursor, IComponen
     public options?: IComponentHTMLOptions;
     public rootElement: HTMLElement;
 
-    constructor(public instance: MathInstance, scope?: IComponent) {
+    constructor(public instance: MathInstance, scope?: IFluidObject) {
         if (scope) {
             this.searchMenuHost = scope.ISearchMenuHost;
         }
