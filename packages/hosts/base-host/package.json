@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/base-host",
-  "version": "0.22.2",
+  "version": "0.22.3",
   "description": "Loader client app",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -51,19 +51,19 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.20.0",
-    "@fluidframework/component-core-interfaces": "^0.22.2",
-    "@fluidframework/container-definitions": "^0.22.2",
-    "@fluidframework/container-loader": "^0.22.2",
-    "@fluidframework/driver-definitions": "^0.22.2",
+    "@fluidframework/component-core-interfaces": "^0.22.3",
+    "@fluidframework/container-definitions": "^0.22.3",
+    "@fluidframework/container-loader": "^0.22.3",
+    "@fluidframework/driver-definitions": "^0.22.3",
     "@fluidframework/protocol-base": "^0.1009.0",
     "@fluidframework/protocol-definitions": "^0.1009.0",
-    "@fluidframework/telemetry-utils": "^0.22.2",
-    "@fluidframework/web-code-loader": "^0.22.2"
+    "@fluidframework/telemetry-utils": "^0.22.3",
+    "@fluidframework/web-code-loader": "^0.22.3"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/test-runtime-utils": "^0.22.2",
+    "@fluidframework/test-runtime-utils": "^0.22.3",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",

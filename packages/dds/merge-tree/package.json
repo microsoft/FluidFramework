@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/merge-tree",
-  "version": "0.22.2",
+  "version": "0.22.3",
   "description": "Merge tree",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -52,15 +52,15 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.20.0",
-    "@fluidframework/component-core-interfaces": "^0.22.2",
-    "@fluidframework/component-runtime-definitions": "^0.22.2",
+    "@fluidframework/component-core-interfaces": "^0.22.3",
+    "@fluidframework/component-runtime-definitions": "^0.22.3",
     "@fluidframework/protocol-definitions": "^0.1009.0",
-    "@fluidframework/telemetry-utils": "^0.22.2"
+    "@fluidframework/telemetry-utils": "^0.22.3"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/test-runtime-utils": "^0.22.2",
+    "@fluidframework/test-runtime-utils": "^0.22.3",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
