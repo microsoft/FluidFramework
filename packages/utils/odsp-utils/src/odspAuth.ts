@@ -7,7 +7,6 @@ import { AxiosRequestConfig } from "axios";
 import { IRequestResult, createErrorFromResponse, unauthPostAsync } from "./odspRequest";
 import { getSharepointTenant } from "./odspUtils";
 
-//* Remove I from these types
 export interface IOdspTokens {
     accessToken: string;
     refreshToken: string;
