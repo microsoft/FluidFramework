@@ -18,11 +18,14 @@
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "debug": "node --inspect-brk ./dist/nodeStressTest.js --debug",
+    "debug:mini": "node --inspect-brk ./dist/nodeStressTest.js --debug --profile mini",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "start": "node ./dist/nodeStressTest.js",
+    "start:mini": "node ./dist/nodeStressTest.js --profile mini",
     "tsc": "tsc"
   },
   "nyc": {
@@ -51,7 +54,8 @@
     "@fluidframework/container-loader": "^0.23.0",
     "@fluidframework/odsp-driver": "^0.23.0",
     "@fluidframework/test-utils": "^0.23.0",
-    "@fluidframework/tool-utils": "^0.23.0"
+    "@fluidframework/tool-utils": "^0.23.0",
+    "commander": "^5.1.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",

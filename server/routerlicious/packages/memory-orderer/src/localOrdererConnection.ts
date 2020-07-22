@@ -21,13 +21,12 @@ import {
     IRawOperationMessage,
     RawOperationType,
 } from "@fluidframework/server-services-core";
-import { IPubSub, ISubscriber } from "./";
+import { ISubscriber } from "./pubsub";
 
 export class LocalOrdererConnection implements IOrdererConnection {
     public readonly parentBranch: string;
 
     constructor(
-        private readonly pubsub: IPubSub,
         public socket: ISubscriber,
         public readonly existing: boolean,
         document: IDocument,
@@ -43,11 +42,6 @@ export class LocalOrdererConnection implements IOrdererConnection {
     }
 
     public async connect() {
-        // Subscribe to the message channels
-        // Todo: We probably don't need this.
-        this.pubsub.subscribe(`${this.tenantId}/${this.documentId}`, this.socket);
-        this.pubsub.subscribe(`client#${this.clientId}`, this.socket);
-
         // Send the connect message
         const clientDetail: IClientJoin = {
             clientId: this.clientId,
@@ -111,10 +105,6 @@ export class LocalOrdererConnection implements IOrdererConnection {
             type: RawOperationType,
         };
         this.submitRawOperation([message]);
-
-        // Todo: We probably don't need this either.
-        this.pubsub.unsubscribe(`${this.tenantId}/${this.documentId}`, this.socket);
-        this.pubsub.unsubscribe(`client#${this.clientId}`, this.socket);
     }
 
     public once(event: "error", listener: (...args: any[]) => void) {

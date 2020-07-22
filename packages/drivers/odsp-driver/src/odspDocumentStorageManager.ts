@@ -465,7 +465,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${options}`, storageToken);
 
         // This event measures only successful cases of getLatest call (no tokens, no retries).
-        const snapshot = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest" }, async (event) => {
+        const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest" }, async (event) => {
             const response = await fetchHelper<IOdspSnapshot>(url, { headers });
             const content = response.content;
             event.end({
@@ -478,7 +478,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
                 bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
             });
-            return content;
+            return {
+                snapshot: content,
+                // There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we cannot cache using an HTTP response header.
+                canCache: response.headers.get("disablebrowsercachingofusercontent") !== "true",
+            };
         });
 
         assert(this._snapshotCacheEntry === undefined);
@@ -496,7 +500,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         if (!Number.isInteger(seqNumber) || seqNumberFromOps !== undefined && seqNumberFromOps !== seqNumber) {
             this.logger.sendErrorEvent({ eventName: "fetchSnapshotError", seqNumber, seqNumberFromOps });
-        } else {
+        } else if (canCache) {
             this.cache.persistedCache.put(this._snapshotCacheEntry, snapshot, seqNumber);
         }
 
