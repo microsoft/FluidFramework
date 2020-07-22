@@ -37,7 +37,7 @@
     "@fluidframework/container-runtime": "^0.22.2",
     "@fluidframework/driver-definitions": "^0.22.2",
     "@fluidframework/file-driver": "^0.22.2",
-    "@fluidframework/protocol-definitions": "^0.1009.0",
+    "@fluidframework/protocol-definitions": "^0.1010.0-0",
     "@fluidframework/replay-driver": "^0.22.2",
     "@fluidframework/telemetry-utils": "^0.22.2"
   },

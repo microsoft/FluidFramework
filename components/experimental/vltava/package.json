@@ -46,7 +46,7 @@
     "@fluidframework/framework-interfaces": "^0.22.2",
     "@fluidframework/last-edited-experimental": "^0.22.2",
     "@fluidframework/map": "^0.22.2",
-    "@fluidframework/protocol-definitions": "^0.1009.0",
+    "@fluidframework/protocol-definitions": "^0.1010.0-0",
     "@fluidframework/runtime-definitions": "^0.22.2",
     "@fluidframework/view-adapters": "^0.22.2",
     "@fluidframework/view-interfaces": "^0.22.2",

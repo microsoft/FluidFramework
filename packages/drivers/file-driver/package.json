@@ -30,8 +30,8 @@
     "@fluidframework/common-utils": "^0.20.0",
     "@fluidframework/driver-definitions": "^0.22.2",
     "@fluidframework/driver-utils": "^0.22.2",
-    "@fluidframework/protocol-base": "^0.1009.0",
-    "@fluidframework/protocol-definitions": "^0.1009.0",
+    "@fluidframework/protocol-base": "^0.1010.0-0",
+    "@fluidframework/protocol-definitions": "^0.1010.0-0",
     "@fluidframework/replay-driver": "^0.22.2",
     "debug": "^4.1.1"
   },

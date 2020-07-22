@@ -32,7 +32,7 @@
     "@fluidframework/component-core-interfaces": "^0.22.2",
     "@fluidframework/component-runtime-definitions": "^0.22.2",
     "@fluidframework/container-definitions": "^0.22.2",
-    "@fluidframework/protocol-definitions": "^0.1009.0",
+    "@fluidframework/protocol-definitions": "^0.1010.0-0",
     "@fluidframework/runtime-utils": "^0.22.2",
     "@fluidframework/telemetry-utils": "^0.22.2",
     "@types/debug": "^4.1.5",
