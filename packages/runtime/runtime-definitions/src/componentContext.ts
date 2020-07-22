@@ -179,12 +179,13 @@ export interface IComponentRuntimeChannel extends
 
     /**
      * Generates a snapshot of the given component
+     * @deprecated in 0.22 summarizerNode
      */
     snapshotInternal(fullTree?: boolean): Promise<ITreeEntry[]>;
 
     /**
      * Generates a summary for the component.
-     * back-compat: 0.22 summarizerNode - should not be optional.
+     * Introduced in 0.22 summarizerNode - will be required in a future release.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      */
     summarize?(fullTree?: boolean): Promise<ISummaryTreeWithStats>;

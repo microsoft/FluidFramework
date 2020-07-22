@@ -98,11 +98,12 @@ export class DocumentStorageService implements IDocumentStorageService {
 
     private async writeSummaryTree(
         summaryTree: ISummaryTree,
-        fullSnapshot: ISnapshotTree | undefined,
+        /** Entire previous snapshot, not subtree */
+        previousFullSnapshot: ISnapshotTree | undefined,
     ): Promise<string> {
         const entries = await Promise.all(Object.keys(summaryTree.tree).map(async (key) => {
             const entry = summaryTree.tree[key];
-            const pathHandle = await this.writeSummaryTreeObject(key, entry, fullSnapshot);
+            const pathHandle = await this.writeSummaryTreeObject(key, entry, previousFullSnapshot);
             const treeEntry: resources.ICreateTreeEntry = {
                 mode: this.getGitMode(entry),
                 path: encodeURIComponent(key),
@@ -119,7 +120,7 @@ export class DocumentStorageService implements IDocumentStorageService {
     private async writeSummaryTreeObject(
         key: string,
         object: SummaryObject,
-        fullSnapshot: ISnapshotTree | undefined,
+        previousFullSnapshot: ISnapshotTree | undefined,
         currentPath = "",
     ): Promise<string> {
         switch (object.type) {
@@ -127,13 +128,13 @@ export class DocumentStorageService implements IDocumentStorageService {
                 return this.writeSummaryBlob(object.content);
             }
             case SummaryType.Handle: {
-                if (fullSnapshot === undefined) {
+                if (previousFullSnapshot === undefined) {
                     throw Error("Parent summary does not exist to reference by handle.");
                 }
-                return this.getIdFromPath(object.handleType, object.handle, fullSnapshot);
+                return this.getIdFromPath(object.handleType, object.handle, previousFullSnapshot);
             }
             case SummaryType.Tree: {
-                return this.writeSummaryTree(object, fullSnapshot);
+                return this.writeSummaryTree(object, previousFullSnapshot);
             }
 
             default:
@@ -144,7 +145,7 @@ export class DocumentStorageService implements IDocumentStorageService {
     private getIdFromPath(
         handleType: SummaryType,
         handlePath: string,
-        fullSnapshot: ISnapshotTree,
+        previousFullSnapshot: ISnapshotTree,
     ): string {
         const path = handlePath.split("/").map((part) => decodeURIComponent(part));
         if (path[0] === "") {
@@ -152,26 +153,27 @@ export class DocumentStorageService implements IDocumentStorageService {
             path.shift();
         }
 
-        return this.getIdFromPathCore(handleType, path, fullSnapshot);
+        return this.getIdFromPathCore(handleType, path, previousFullSnapshot);
     }
 
     private getIdFromPathCore(
         handleType: SummaryType,
         path: string[],
-        snapshot: ISnapshotTree,
+        /** Previous snapshot, subtree relative to this path part */
+        previousSnapshot: ISnapshotTree,
     ): string {
         const key = path[0];
         if (path.length === 1) {
             switch (handleType) {
                 case SummaryType.Blob: {
-                    const tryId = snapshot.blobs[key];
+                    const tryId = previousSnapshot.blobs[key];
                     if (!tryId) {
                         throw Error("Parent summary does not have blob handle for specified path.");
                     }
                     return tryId;
                 }
                 case SummaryType.Tree: {
-                    const tryId = snapshot.trees[key]?.id;
+                    const tryId = previousSnapshot.trees[key]?.id;
                     if (!tryId) {
                         throw Error("Parent summary does not have tree handle for specified path.");
                     }
@@ -181,7 +183,7 @@ export class DocumentStorageService implements IDocumentStorageService {
                     throw Error(`Unexpected handle summary object type: "${handleType}".`);
             }
         }
-        return this.getIdFromPathCore(handleType, path.slice(1), snapshot.trees[key]);
+        return this.getIdFromPathCore(handleType, path.slice(1), previousSnapshot.trees[key]);
     }
 
     private async writeSummaryBlob(content: string | Buffer): Promise<string> {

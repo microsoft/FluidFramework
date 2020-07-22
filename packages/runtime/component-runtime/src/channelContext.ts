@@ -22,6 +22,7 @@ export interface IChannelContext {
 
     processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
 
+    /** @deprecated in 0.22 summarizerNode */
     snapshot(fullTree?: boolean): Promise<ITree>;
 
     summarize(fullTree?: boolean): Promise<ISummarizeResult>;
