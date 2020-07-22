@@ -144,7 +144,7 @@ async function main() {
             runId,
             testConfig: config.profiles[profile],
         };
-        const stressTest = await load(config, password, url);
+        const stressTest = await load(config, url, password);
         await stressTest.run(runConfig);
         process.exit(0);
     }
