@@ -23,6 +23,7 @@ import {
 import {
     ISharedComponentProps,
     SharedComponent,
+    IInitializeSharedObject,
 } from "../components";
 
 /**
@@ -77,16 +78,6 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
      * @param context - component context used to load a component runtime
      */
     public instantiateComponent(context: IComponentContext): void {
-        this.instantiateComponentWithInitialState(context);
-    }
-
-    /**
-     * Private method for component instantiation that exposes initial state
-     * @param context - Component context used to load a component runtime
-     * @param initialState  - The initial state to provide the created component
-     */
-    private instantiateComponentWithInitialState(
-        context: IComponentContext): void {
         // Create a new runtime for our component
         // The runtime is what Fluid uses to create DDS' and route to your component
         const runtime = ComponentRuntime.load(
@@ -95,7 +86,7 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
             this.registry,
         );
 
-        let instanceP: Promise<SharedComponent>;
+        let instanceP: Promise<SharedComponent<P, S>>;
         // For new runtime, we need to force the component instance to be create
         // run the initialization.
         if (!this.onDemandInstantiation || !runtime.existing) {
@@ -148,10 +139,18 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
             throw new Error("undefined type member");
         }
 
-        return context._createComponentWithProps(
+        const component = await context._createComponentWithProps(
             this.type,
             false,
             initialState,
         );
+
+        const init: IInitializeSharedObject<S> | undefined = (component as any).IInitializeSharedObject;
+        if (init === undefined) {
+            throw new Error("Can't find IInitializeSharedObject");
+        }
+        await init.initializingComponentOnCreation(initialState);
+
+        return component;
     }
 }

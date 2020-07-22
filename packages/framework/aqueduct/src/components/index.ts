@@ -8,4 +8,5 @@ export { PrimedComponent } from "./primedComponent";
 export {
     ISharedComponentProps,
     SharedComponent,
+    IInitializeSharedObject,
 } from "./sharedComponent";

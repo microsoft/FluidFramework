@@ -105,7 +105,7 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
         this.internalTaskManager = await this.asComponent<ITaskManager>(this.context.containerRuntime.request(request));
 
         if (!this.runtime.existing) {
-            // Create a root directory and register it before calling componentInitializingFirstTime
+            // Create a root directory and register it
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
             this.internalRoot.bindToContext();
         } else {
@@ -116,8 +116,7 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
             // PrimedComponent which used a SharedMap.  Since SharedMap and SharedDirectory are compatible unless
             // SharedDirectory-only commands are used on SharedMap, this will mostly just work for compatibility.
             if (this.internalRoot.attributes.type === MapFactory.Type) {
-                this.runtime.logger.send({
-                    category: "generic",
+                this.runtime.logger.sendTelemetryEvent({
                     eventName: "MapPrimedComponent",
                     message: "Legacy document, SharedMap is masquerading as SharedDirectory in PrimedComponent",
                 });

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import {
     IComponent,
     IComponentHandle,
@@ -27,6 +28,10 @@ export interface ISharedComponentProps<P extends IComponent = object> {
     readonly providers: AsyncComponentProvider<ComponentKey<P>, ComponentKey<object>>,
 }
 
+export interface IInitializeSharedObject<S> {
+    initializingComponentOnCreation(props?: S): Promise<void>;
+}
+
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
@@ -38,7 +43,7 @@ export interface ISharedComponentProps<P extends IComponent = object> {
  */
 export abstract class SharedComponent<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
     extends EventForwarder<E>
-    implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
+    implements IComponentLoadable, IComponentRouter, IProvideComponentHandle, IInitializeSharedObject<S> {
     private initializeP: Promise<void> | undefined;
     private readonly innerHandle: IComponentHandle<this>;
     private _disposed = false;
@@ -60,6 +65,8 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      * To define providers set IComponent interfaces in the generic O type for your Component
      */
     protected readonly providers: AsyncComponentProvider<ComponentKey<P>, ComponentKey<object>>;
+
+    public get IInitializeSharedObject() { return this; }
 
     public get disposed() { return this._disposed; }
 
@@ -96,7 +103,8 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      * We guarantee that this part of the code will only happen once
      */
     public async initialize(): Promise<void> {
-        // We want to ensure if this gets called more than once it only executes the initialize code once.
+        // This method is not for public use - it's used only by factory to init object.
+        assert(!this.initializeP);
         if (!this.initializeP) {
             this.initializeP = this.initializeInternal();
         }
@@ -157,15 +165,15 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      * responsible for ensuring this is only invoked once.
      */
     protected async initializeInternal(): Promise<void> {
-        if (!this.runtime.existing) {
-            // If it's the first time through
-            await this.componentInitializingFirstTime(this.context.createProps as S);
-        } else {
-            // Else we are loading from existing
+        if (this.runtime.existing) {
             await this.componentInitializingFromExisting();
+            await this.componentHasInitialized();
         }
+    }
 
-        // This always gets called at the end of initialize on FirstTime or from existing.
+    public async initializingComponentOnCreation(props?: S) {
+        assert(!this.runtime.existing);
+        await this.componentInitializingFirstTime(props);
         await this.componentHasInitialized();
     }
 
@@ -242,7 +250,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      * @param props - Optional props to be passed in on create
      * @deprecated 0.16 Issue #1635 Initial props should be provided through a factory override
      */
-    protected async componentInitializingFirstTime(props?: any): Promise<void> { }
+    protected async componentInitializingFirstTime(props?: S): Promise<void> { }
 
     /**
      * Called every time but the first time the component is initialized (creations
