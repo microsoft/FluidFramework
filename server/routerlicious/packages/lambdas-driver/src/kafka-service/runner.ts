@@ -32,7 +32,7 @@ export class KafkaRunner implements IRunner {
             this.deferred.reject(error);
         });
 
-        this.partitionManager = new PartitionManager(this.factory, this.consumer, this.config);
+        this.partitionManager = new PartitionManager(this.factory, this.consumer, this.config, winston);
         this.partitionManager.on("error", (error, restart) => {
             this.deferred.reject(error);
         });

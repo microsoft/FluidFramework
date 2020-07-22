@@ -48,7 +48,7 @@
     "@fluidframework/container-runtime": "^0.23.0",
     "@fluidframework/framework-interfaces": "^0.23.0",
     "@fluidframework/map": "^0.23.0",
-    "@fluidframework/protocol-definitions": "^0.1009.0",
+    "@fluidframework/protocol-definitions": "^0.1010.0-0",
     "@fluidframework/react-inputs": "^0.23.0",
     "@fluidframework/request-handler": "^0.23.0",
     "@fluidframework/runtime-definitions": "^0.23.0",

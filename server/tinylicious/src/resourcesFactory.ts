@@ -16,6 +16,7 @@ import { TinyliciousResources } from "./resources";
 import {
     DbFactory,
     OrdererManager,
+    PubSubPublisher,
     TaskMessageSender,
     TenantManager,
     WebServerFactory,
@@ -40,6 +41,7 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
             collectionNames.scribeDeltas);
         const storage = new DocumentStorage(databaseManager, tenantManager, null);
         const io = socketIo();
+        const pubsub = new PubSubPublisher(io);
         const webServerFactory = new WebServerFactory(io);
 
         // Initialize isomorphic-git
@@ -55,7 +57,8 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
             async (tenantId: string) => {
                 const url = `http://localhost:${port}/repos/${encodeURIComponent(tenantId)}`;
                 return new Historian(url, false, false);
-            });
+            },
+            pubsub);
 
         // TODO would be nicer to just pass the mongoManager down
         const db = await mongoManager.getDatabase();

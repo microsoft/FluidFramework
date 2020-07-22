@@ -328,6 +328,7 @@ export function create(
 
     app.use(routes.api);
     app.use("/loader", routes.loader);
+    app.use("/loaderFrs", routes.loaderFrs);
     app.use("/loaderFramed", routes.loaderFramed);
     app.use("/waterpark", routes.waterpark);
     app.use("/versions", routes.versions);

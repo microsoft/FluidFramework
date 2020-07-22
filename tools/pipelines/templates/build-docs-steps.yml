@@ -4,6 +4,9 @@
 # build-docs leaf template to build docs via docker container
 
 parameters:
+- name: BASE_URL
+  type: string
+
 - name: THIS_VERSION
   type: string
 
@@ -78,10 +81,13 @@ steps:
     dockerFile: docs/Dockerfile
     buildContext: $(Build.SourcesDirectory)
     arguments: |
-      --target ${{ parameters.DOCKER_TARGET }} --build-arg VUEPRESS_BASE=${{ parameters.VUEPRESS_BASE }}
-      --build-arg THIS_VERSION=${{ parameters.THIS_VERSION }} --build-arg MASTER_BRANCH_VERSION=${{
-      parameters.MASTER_BRANCH_VERSION }} --build-arg RELEASE_VERSION=${{ parameters.RELEASE_VERSION }} --build-arg
-      N1_VERSION=${{ parameters.N1_VERSION }}
+      --target ${{ parameters.DOCKER_TARGET }}
+      --build-arg BASE_URL=${{ parameters.BASE_URL }}
+      --build-arg VUEPRESS_BASE=${{ parameters.VUEPRESS_BASE }}
+      --build-arg THIS_VERSION=${{ parameters.THIS_VERSION }}
+      --build-arg MASTER_BRANCH_VERSION=${{ parameters.MASTER_BRANCH_VERSION }}
+      --build-arg RELEASE_VERSION=${{ parameters.RELEASE_VERSION }}
+      --build-arg N1_VERSION=${{ parameters.N1_VERSION }}
     tags: |
       $(Build.BuildId)
 
