@@ -48,7 +48,7 @@ const passwordTokenConfig = (username, password): OdspTokenConfig => ({
     password,
 });
 
-function createLoader(config: IConfig, password: string, reauth: boolean) {
+function createLoader(config: IConfig, password: string) {
     // Construct the loader
     const loader = new Loader(
         urlResolver,
@@ -59,7 +59,6 @@ function createLoader(config: IConfig, password: string, reauth: boolean) {
                     getMicrosoftConfiguration(),
                     passwordTokenConfig(config.username, password),
                     refresh,
-                    reauth,
                 );
                 return tokens.accessToken;
             },
@@ -69,7 +68,6 @@ function createLoader(config: IConfig, password: string, reauth: boolean) {
                     getMicrosoftConfiguration(),
                     passwordTokenConfig(config.username, password),
                     refresh,
-                    reauth,
                 );
                 return tokens.accessToken;
             },
@@ -83,7 +81,7 @@ function createLoader(config: IConfig, password: string, reauth: boolean) {
 }
 
 async function initialize(config: IConfig, password: string) {
-    const loader = createLoader(config, password, true /* reauth */);
+    const loader = createLoader(config, password);
     const container = await loader.createDetachedContainer(codeDetails);
     container.on("error", (error) => {
         console.log(error);
@@ -99,8 +97,8 @@ async function initialize(config: IConfig, password: string) {
     return componentUrl;
 }
 
-async function load(config: IConfig, password: string, url: string) {
-    const loader = createLoader(config, password, false /* reauth */);
+async function load(config: IConfig, url: string, password: string) {
+    const loader = createLoader(config, password);
     const respond = await loader.request({ url });
     // TODO: Error checking
     return respond.value as ILoadTest;
@@ -116,14 +114,12 @@ async function main() {
         process.exit(-1);
     }
 
-    //* todo - update readme
     commander
         .version("0.0.1")
         .requiredOption("-w, --password <password>", "Password for username provided in testconfig.json")
         .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "full")
         .option("-u, --url <url>", "Load an existing data store rather than creating new")
         .option("-r, --runId <runId>", "run a child process with the given id. Requires --url option.")
-        .option("-f, --refresh", "Refresh auth tokens")
         .option("-d, --debug", "Debug child processes via --inspect-brk")
         .parse(process.argv);
 
@@ -131,7 +127,6 @@ async function main() {
     const profile: string = commander.profile;
     let url: string | undefined = commander.url;
     const runId: number | undefined = commander.runId === undefined ? undefined : parseInt(commander.runId, 10);
-    const refresh: true | undefined = commander.refresh;
     const debug: true | undefined = commander.debug;
 
     if (config.profiles[profile] === undefined) {
@@ -156,24 +151,22 @@ async function main() {
 
     // When runId is not specified, this is the orchestrator process which will spawn child test runners.
 
-    if (refresh) {
-        console.log("Refreshing tokens");
-        await odspTokenManager.getOdspTokens(
-            config.server,
-            getMicrosoftConfiguration(),
-            passwordTokenConfig(config.username, password),
-            undefined,
-            true,
-        );
+    // Ensure fresh tokens here so the test runners have them cached
+    await odspTokenManager.getOdspTokens(
+        config.server,
+        getMicrosoftConfiguration(),
+        passwordTokenConfig(config.username, password),
+        undefined,
+        true,
+    );
 
-        await odspTokenManager.getPushTokens(
-            config.server,
-            getMicrosoftConfiguration(),
-            passwordTokenConfig(config.username, password),
-            undefined,
-            true,
-        );
-    }
+    await odspTokenManager.getPushTokens(
+        config.server,
+        getMicrosoftConfiguration(),
+        passwordTokenConfig(config.username, password),
+        undefined,
+        true,
+    );
 
     if (url === undefined) {
         // Create a new file
