@@ -156,16 +156,15 @@ async function main() {
         config.server,
         getMicrosoftConfiguration(),
         passwordTokenConfig(config.username, password),
-        undefined,
-        true,
+        undefined /* forceRefresh */,
+        true /* forceReauth */,
     );
-
     await odspTokenManager.getPushTokens(
         config.server,
         getMicrosoftConfiguration(),
         passwordTokenConfig(config.username, password),
-        undefined,
-        true,
+        undefined /* forceRefresh */,
+        true /* forceReauth */,
     );
 
     if (url === undefined) {
