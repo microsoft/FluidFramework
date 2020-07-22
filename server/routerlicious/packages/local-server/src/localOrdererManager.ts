@@ -16,7 +16,7 @@ import {
     ITenantManager,
 } from "@fluidframework/server-services-core";
 
-export class MemoryOrdererManager implements IOrdererManager {
+export class LocalOrdererManager implements IOrdererManager {
     private readonly map = new Map<string, Promise<IOrderer>>();
 
     constructor(
