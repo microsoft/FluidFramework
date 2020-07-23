@@ -20,6 +20,7 @@ import { makeHandlesSerializable, parseHandles, SharedObject } from "@fluidframe
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import { IMatrixProducer, IMatrixConsumer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 import { MergeTreeDeltaType, IMergeTreeOp, SegmentGroup } from "@fluidframework/merge-tree";
+import { PermutationSequence, forEachPermutation } from "@tiny-calc/micro";
 import { debug } from "./debug";
 import { MatrixOp } from "./ops";
 import { PermutationVector } from "./permutationvector";
@@ -27,6 +28,8 @@ import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from "./runtime";
 import { Handle } from "./handletable";
 import { deserializeBlob, serializeBlob } from "./serialization";
+
+type SegRange = ReturnType<PermutationSequence["deleteRange"]>[];
 
 const enum SnapshotPath {
     rows = "rows",
@@ -105,7 +108,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
 
     public getCell(row: number, col: number): T | undefined | null {
         // Map the logical (row, col) to associated storage handles.
-        const rowHandle = this.rows.handles[row];
+        const rowHandle = this.rows.permutations.getItem(row) as number;
 
         // Perf: Leverage the JavaScript behavior of returning `undefined` for out of bounds
         //       array access to detect bad coordinates. (~4% faster vs. an unconditional
@@ -116,7 +119,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
             return undefined;
         }
 
-        const colHandle = this.cols.handles[col];
+        const colHandle = this.cols.permutations.getItem(col) as number;
 
         // Perf: Leverage the JavaScript behavior of returning `undefined` for out of bounds
         //       array access to detect bad coordinates. (~4% faster vs. an unconditional
@@ -479,25 +482,29 @@ export class SharedMatrix<T extends Serializable = Serializable>
         }
     };
 
-    private readonly onRowHandlesRecycled = (rowHandles: Handle[]) => {
+    private readonly onRowHandlesRecycled = (rowHandles: SegRange) => {
         for (let col = 0; col < this.colCount; col++) {
-            const colHandle = this.cols.handles[col];
+            const colHandle = this.cols.permutations.getItem(col) as number;
             if (colHandle !== Handle.unallocated) {
-                for (const rowHandle of rowHandles) {
-                    this.cells.setCell(rowHandle, colHandle, undefined);
-                    this.pending.setCell(rowHandle, colHandle, undefined);
+                for (const rng of rowHandles) {
+                    forEachPermutation(rng, (n) => {
+                        this.cells.setCell(n, colHandle, undefined);
+                        this.pending.setCell(n, colHandle, undefined);
+                    });
                 }
             }
         }
     };
 
-    private readonly onColHandlesRecycled = (colHandles: Handle[]) => {
+    private readonly onColHandlesRecycled = (colHandles: SegRange) => {
         for (let row = 0; row < this.rowCount; row++) {
-            const rowHandle = this.rows.handles[row];
+            const rowHandle = this.rows.permutations.getItem(row) as number;
             if (rowHandle !== Handle.unallocated) {
-                for (const colHandle of colHandles) {
-                    this.cells.setCell(rowHandle, colHandle, undefined);
-                    this.pending.setCell(rowHandle, colHandle, undefined);
+                for (const rng of colHandles) {
+                    forEachPermutation(rng, (n) => {
+                        this.cells.setCell(rowHandle, n, undefined);
+                        this.pending.setCell(rowHandle, n, undefined);
+                    });
                 }
             }
         }

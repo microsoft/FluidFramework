@@ -19,12 +19,12 @@ import {
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
-import { HandleTable, Handle } from "./handletable";
+import { PermutationSequence, PermutationSequenceSnapshot } from "@tiny-calc/micro";
+import { Handle } from "./handletable";
 import { serializeBlob, deserializeBlob } from "./serialization";
 
 const enum SnapshotPath {
     segments = "segments",
-    handles = "handles",
     handleTable = "handleTable",
 }
 
@@ -83,16 +83,17 @@ export class PermutationSegment extends BaseSegment {
     }
 }
 
+type SegRange = ReturnType<PermutationSequence["deleteRange"]>[];
+
 export class PermutationVector extends Client {
-    private handleTable = new HandleTable<never>(); // Tracks available storage handles for rows.
-    public handles: number[] = [];
+    readonly permutations = new PermutationSequence();
 
     constructor(
         path: string,
         logger: ITelemetryBaseLogger,
         runtime: IComponentRuntime,
         private readonly deltaCallback: (position: number, numRemoved: number, numInserted: number) => void,
-        private readonly handlesRecycledCallback: (handles: Handle[]) => void,
+        private readonly handlesRecycledCallback: (handles: SegRange) => void,
     ) {
         super(
             PermutationSegment.fromJSONObject,
@@ -116,13 +117,7 @@ export class PermutationVector extends Client {
     }
 
     public getAllocatedHandle(pos: number): Handle {
-        let handle = this.handles[pos];
-
-        if (handle === Handle.unallocated) {
-            handle = this.handles[pos] = this.handleTable.allocate();
-        }
-
-        return handle;
+        return this.permutations.getPermutation(pos) as number;
     }
 
     public adjustPosition(pos: number, fromSeq: number, clientId: number) {
@@ -153,7 +148,7 @@ export class PermutationVector extends Client {
         //
         //       If we find that we frequently need a reverse handle -> position lookup, we could maintain
         //       one using the Tiny-Calc adjust tree.
-        const currentPosition = this.handles.indexOf(handle);
+        const currentPosition = this.permutations.indexOf(handle);
 
         // SharedMatrix must verify that 'localSeq' used to originally submit this op is still the
         // most recently pending write to the row/col handle before calling 'getPositionForResubmit'
@@ -178,22 +173,15 @@ export class PermutationVector extends Client {
                     type: TreeEntry[TreeEntry.Tree],
                     value: super.snapshot(runtime, handle, /* catchUpMsgs: */[]),
                 },
-                serializeBlob(runtime, handle, SnapshotPath.handleTable, this.handleTable.snapshot()),
-                serializeBlob(runtime, handle, SnapshotPath.handles, this.handles),
+                serializeBlob(runtime, handle, SnapshotPath.handleTable, this.permutations.snapshot() as any),
             ],
             id: null,   // eslint-disable-line no-null/no-null
         };
     }
 
     public async load(runtime: IComponentRuntime, storage: IChannelStorageService, branchId?: string) {
-        const [handleTableData, handles] = await Promise.all([
-            await deserializeBlob(runtime, storage, SnapshotPath.handleTable),
-            await deserializeBlob(runtime, storage, SnapshotPath.handles),
-        ]);
-
-        this.handleTable = HandleTable.load<never>(handleTableData);
-        this.handles = handles;
-
+        const permutationData = await deserializeBlob(runtime, storage, SnapshotPath.handleTable);
+        (this as any).permutations = new PermutationSequence(permutationData as PermutationSequenceSnapshot);
         return super.load(runtime, new ObjectStoragePartition(storage, SnapshotPath.segments), branchId);
     }
 
@@ -213,9 +201,7 @@ export class PermutationVector extends Client {
             case MergeTreeDeltaType.INSERT:
                 for (const { position, length } of ranges) {
                     // Note: Using the spread operator with `.splice()` can exhaust the stack.
-                    this.handles = this.handles.slice(0, position)
-                        .concat(new Array(length).fill(Handle.unallocated))
-                        .concat(this.handles.slice(position));
+                    this.permutations.insertRange(position, length);
                 }
 
                 // Notify the matrix of inserted positions.  The matrix in turn notifies any IMatrixConsumers.
@@ -225,13 +211,10 @@ export class PermutationVector extends Client {
                 break;
 
             case MergeTreeDeltaType.REMOVE: {
-                let freed: number[] = [];
+                const freed: ReturnType<PermutationSequence["deleteRange"]>[] = [];
 
                 for (const { position, length } of ranges) {
-                    const removed = this.handles.splice(position, /* deleteCount: */ length);
-
-                    // Note: Using the spread operator with `.splice()` can exhaust the stack.
-                    freed = freed.concat(removed.filter((handle) => handle !== Handle.unallocated));
+                    freed.push(this.permutations.deleteRange(position, length));
                 }
 
                 // Notify matrix that handles are about to be freed.  The matrix is responsible for clearing
@@ -239,8 +222,8 @@ export class PermutationVector extends Client {
                 this.handlesRecycledCallback(freed);
 
                 // Now that the physical storage has been cleared, add the recycled handles back to the free pool.
-                for (const handle of freed) {
-                    this.handleTable.free(handle);
+                for (const freeSet of freed) {
+                    this.permutations.free(freeSet);
                 }
 
                 // Notify the matrix of removed positions.  The matrix in turn notifies any IMatrixConsumers.
@@ -256,6 +239,6 @@ export class PermutationVector extends Client {
     };
 
     public toString() {
-        return this.handles.map((handle, index) => `${index}:${handle}`).join(" ");
+        return this.permutations.map((index, handle) => `${index}:${handle}`).join(" ");
     }
 }

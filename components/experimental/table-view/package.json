@@ -41,7 +41,7 @@
     "@fluidframework/aqueduct": "^0.23.0",
     "@fluidframework/component-core-interfaces": "^0.23.0",
     "@fluidframework/view-interfaces": "^0.23.0",
-    "@tiny-calc/micro": "0.0.0-alpha.0"
+    "@tiny-calc/micro": "0.0.0-alpha.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
