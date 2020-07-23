@@ -63,7 +63,7 @@ export class CollaborativeCheckbox
         this.props.data.set(e.target.checked);
     }
 
-    private isChecked(): boolean  {
+    private isChecked(): boolean {
         return this.props.data.get() ?? false;
     }
 }
