@@ -34,28 +34,28 @@ resources:
         - refs/heads/docs/pipeline # for testing
   - pipeline: common_utils
     source: Build - common-utils
-    trigger:
-      branches:
-        include:
-        - refs/heads/release/*
-        - refs/heads/master
-        - refs/heads/docs/pipeline # for testing
+    # trigger:
+    #   branches:
+    #     include:
+    #     - refs/heads/release/*
+    #     - refs/heads/master
+    #     - refs/heads/docs/pipeline # for testing
   - pipeline: client
     source: Build - client packages
-    trigger:
-      branches:
-        include:
-        - refs/heads/release/*
-        - refs/heads/master
-        - refs/heads/docs/pipeline # for testing
+    # trigger:
+    #   branches:
+    #     include:
+    #     - refs/heads/release/*
+    #     - refs/heads/master
+    #     - refs/heads/docs/pipeline # for testing
   - pipeline: server
     source: server-routerlicious
-    trigger:
-      branches:
-        include:
-        - refs/heads/release/*
-        - refs/heads/master
-        - refs/heads/docs/pipeline # for testing
+    # trigger:
+    #   branches:
+    #     include:
+    #     - refs/heads/release/*
+    #     - refs/heads/master
+    #     - refs/heads/docs/pipeline # for testing
 
 # no branch and PR triggers
 trigger: none
