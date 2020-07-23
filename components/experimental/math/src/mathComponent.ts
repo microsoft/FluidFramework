@@ -504,7 +504,7 @@ export class MathCollection extends SharedComponent<ISharedDirectory> implements
 
     public static getFactory(): IComponentFactory { return MathCollection.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
+    public static async create(parentContext: IComponentContext, props?: any) {
         return MathCollection.factory.create(parentContext, props);
     }
 

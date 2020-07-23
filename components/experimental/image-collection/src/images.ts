@@ -63,7 +63,7 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
 
     public static getFactory(): IComponentFactory { return ImageCollection.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
+    public static async create(parentContext: IComponentContext, props?: any) {
         return ImageCollection.factory.create(parentContext, props);
     }
 
