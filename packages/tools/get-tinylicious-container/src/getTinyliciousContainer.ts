@@ -96,6 +96,8 @@ export async function getTinyliciousContainer(
     // The InsecureTinyliciousUrlResolver expects the url of the request to be the documentId.
     const container = await loader.resolve({ url: documentId });
 
+    // We're not actually using the code proposal here, but the Container will only give us a NullRuntime if there's
+    // no proposal.  So we make a fake proposal, using initializeContainerCode to ensure it only happens once.
     await initializeContainerCode(container, { package: "", config: {} });
 
     // If we're loading from ops, the context might be in the middle of reloading.  Check for that case and wait
