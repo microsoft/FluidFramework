@@ -62,11 +62,11 @@ export class Constellation extends PrimedComponent implements IConstellation {
     }
 
     public async addStar(x: number, y: number): Promise<void> {
-        const existingStarHandles = this.root.get<IComponentHandle<ICoordinate>[]>(starListKey);
+        const starHandles = this.root.get<IComponentHandle<ICoordinate>[]>(starListKey);
         const newStar: Coordinate = (await Coordinate.getFactory().createComponent(this.context)) as Coordinate;
         newStar.x = x;
         newStar.y = y;
-        const newStarHandles = [...existingStarHandles, newStar.handle];
-        this.root.set(starListKey, newStarHandles);
+        starHandles.push(newStar.handle);
+        this.root.set(starListKey, starHandles);
     }
 }
