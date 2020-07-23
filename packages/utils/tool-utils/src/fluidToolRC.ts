@@ -15,7 +15,7 @@ import { IOdspTokens } from "@fluidframework/odsp-utils";
 export interface IAsyncCache<TKey, TValue> {
     get(key: TKey): Promise<TValue | undefined>;
     save(key: TKey, value: TValue): Promise<void>;
-    lock<Result>(callback: () => Promise<Result>): Promise<Result>;
+    lock<T>(callback: () => Promise<T>): Promise<T>;
 }
 
 interface IResources {
