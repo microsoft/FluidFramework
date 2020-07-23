@@ -1091,24 +1091,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         });
 
-        protocol.quorum.on(
-            "approveProposal",
-            (sequenceNumber, key, value) => {
-                debug(`approved ${key}`);
-                if (key === "code" || key === "code2") {
-                    debug(`loadRuntimeFactory ${JSON.stringify(value)}`);
-
-                    if (value === this.pkg) {
-                        return;
-                    }
-                    this.emit("codeChanged", value);
-                }
-            });
-
         if (this.options.autoReloadContainerContextOnCodeProposal === true) {
-            this.on("codeChanged", ()=>{
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                this.reloadContext();
+            protocol.quorum.on(
+                "approveProposal",
+                (sequenceNumber, key, value) => {
+                    debug(`approved ${key}`);
+                    if (key === "code" || key === "code2") {
+                        debug(`loadRuntimeFactory ${JSON.stringify(value)}`);
+
+                        if (value === this.pkg) {
+                            return;
+                        }
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    this.reloadContext();
+                }
             });
         }
 
@@ -1454,11 +1450,26 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         previousRuntimeState: IRuntimeState = {},
     ) {
         this.pkg = this.getCodeDetailsFromQuorum();
-        if (this.pkg === undefined) {
-            this.once("codeChanged", ()=>{
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                this.reloadContext();
-            });
+        if (this.pkg === undefined && this.options.autoReloadContainerContextOnCodeProposal !== true) {
+            // back compat for non-detached container
+            const quorum = this.getQuorum();
+            const contextReload =
+                (sequenceNumber, key, value) => {
+                    debug(`approved ${key}`);
+                    if (key === "code" || key === "code2") {
+                        debug(`loadRuntimeFactory ${JSON.stringify(value)}`);
+
+                        if (value === this.pkg) {
+                            return;
+                        }
+                        quorum.off("approveProposal", contextReload);
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    this.reloadContext();
+                }
+            };
+            quorum.on(
+                "approveProposal",
+                contextReload);
         }
         const chaincode = this.pkg ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
 
