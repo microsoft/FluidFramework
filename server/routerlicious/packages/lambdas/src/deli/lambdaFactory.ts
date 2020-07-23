@@ -93,8 +93,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 documentId,
                 tenantId,
             };
-            context.log.info(
-                `New document. Setting empty deli checkpoint for ${tenantId}/${documentId}`, { messageMetaData });
+            context.log.info(`New document. Setting empty deli checkpoint`, { messageMetaData });
             lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
         } else {
             if (dbObject.deli === "") {
@@ -167,8 +166,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                         documentId,
                         tenantId,
                     };
-                    logger.error(
-                        `Error fetching deli state from summary: ${tenantId}/${documentId}`, { messageMetaData });
+                    logger.error(`Error fetching deli state from summary`, { messageMetaData });
                     logger.error(JSON.stringify(exception), { messageMetaData });
                     return undefined;
                 }

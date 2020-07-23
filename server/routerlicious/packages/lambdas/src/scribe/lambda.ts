@@ -187,9 +187,7 @@ export class ScribeLambda extends SequencedLambda {
                             this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                         } else {
                             this.protocolHead = this.protocolHandler.sequenceNumber;
-                            this.context.log.info(
-                                `Client summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`,
-                                 { messageMetaData });
+                            this.context.log.info(`Client summary @seq${summarySequenceNumber}`, { messageMetaData });
                         }
                     } catch (ex) {
                         this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
@@ -223,9 +221,7 @@ export class ScribeLambda extends SequencedLambda {
 
                         if (success) {
                             this.clearCache = true;
-                            this.context.log.info(
-                                `Service summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`,
-                                { messageMetaData });
+                            this.context.log.info(`Service summary @seq${summarySequenceNumber}`, { messageMetaData });
                         }
                     }
                 } else if (value.operation.type === MessageType.SummaryAck) {
@@ -332,8 +328,7 @@ export class ScribeLambda extends SequencedLambda {
                 documentId: this.documentId,
                 tenantId: this.tenantId,
             };
-            this.context.log.info(
-                `Scribe cache is cleared for ${this.tenantId}/${this.documentId}`,{ messageMetaData });
+            this.context.log.info(`Scribe cache is cleared`, { messageMetaData });
     }
 
     /**

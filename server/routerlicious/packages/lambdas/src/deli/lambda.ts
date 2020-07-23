@@ -493,9 +493,7 @@ export class DeliLambda implements IPartitionLambda {
                     documentId: this.documentId,
                     tenantId: this.tenantId,
                 };
-                this.context.log.info(
-                    `Update DSN for ${this.tenantId}/${this.documentId}: ${JSON.stringify(controlMessage)}`,
-                    { messageMetaData });
+                this.context.log.info(`Update DSN: ${JSON.stringify(controlMessage)}`, { messageMetaData });
                 // TODO: Make specific interface type for controlContents. The schema should be more clear
                 // as we introduce more of these.
                 const controlContent = controlMessage.contents as
@@ -507,8 +505,7 @@ export class DeliLambda implements IPartitionLambda {
                 if (controlContent.clearCache && this.noActiveClients) {
                     instruction = InstructionType.ClearCache;
                     this.canClose = true;
-                    this.context.log.info(
-                        `Deli cache will be cleared for ${this.tenantId}/${this.documentId}`, { messageMetaData });
+                    this.context.log.info(`Deli cache will be cleared`, { messageMetaData });
                 }
                 const dsn = controlContent.durableSequenceNumber;
                 assert(dsn >= this.durableSequenceNumber,
