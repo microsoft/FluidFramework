@@ -133,3 +133,88 @@ stages:
             N1_VERSION: $(N1_VERSION)
             VUEPRESS_BASE: '/versions/$(N1_VERSION)/'
             artifactName: fluid-docs-version-path
+- stage: deploy
+  displayName: Deploy Stage
+  pool: Default
+  dependsOn: build
+  jobs:
+    # current release
+    - ${{ if eq(variables.releasePipeline, true) }}:
+      - deployment: current_release
+        displayName: 'Current release'
+        environment: 'fluid-docs-cdn'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - script: |
+                  echo $(resources.pipeline.docs.pipelineID)
+                  echo $(resources.pipeline.docs.runName)
+                  echo $(resources.pipeline.docs.runID)
+                  echo $(resources.pipeline.docs.runURI)
+                  echo $(resources.pipeline.docs.sourceBranch)
+                  echo $(resources.pipeline.docs.sourceCommit)
+                  echo $(resources.pipeline.docs.sourceProvider)
+                  echo $(resources.pipeline.docs.requestedFor)
+                  echo $(resources.pipeline.docs.requestedForID)
+
+              - template: templates/deploy-docs-steps.yml
+                parameters:
+                  STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+                  STORAGE_KEY: $(STORAGE_KEY)
+                  DEST_PATH: '/'
+
+              - template: templates/deploy-docs-steps.yml
+                parameters:
+                  STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+                  STORAGE_KEY: $(STORAGE_KEY)
+                  DEST_PATH: '/versions/$(RELEASE_VERSION)/'
+                  artifactName: fluid-docs-version-path
+
+    # latest - master branch
+    - ${{ if eq(variables.latestPipeline, true) }}:
+      - deployment: latest_release
+        displayName: 'Main branch'
+        environment: 'fluid-docs-cdn'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - script: |
+                  echo $(resources.pipeline.docs.pipelineID)
+                  echo $(resources.pipeline.docs.runName)
+                  echo $(resources.pipeline.docs.runID)
+                  echo $(resources.pipeline.docs.runURI)
+                  echo $(resources.pipeline.docs.sourceBranch)
+                  echo $(resources.pipeline.docs.sourceCommit)
+                  echo $(resources.pipeline.docs.sourceProvider)
+                  echo $(resources.pipeline.docs.requestedFor)
+                  echo $(resources.pipeline.docs.requestedForID)
+
+              - template: templates/deploy-docs-steps.yml
+                parameters:
+                  STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+                  STORAGE_KEY: $(STORAGE_KEY)
+                  DEST_PATH: '/versions/latest/'
+
+              - template: templates/deploy-docs-steps.yml
+                parameters:
+                  STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+                  STORAGE_KEY: $(STORAGE_KEY)
+                  DEST_PATH: '/versions/$(MASTER_BRANCH_VERSION)/'
+                  artifactName: fluid-docs-version-path
+
+    # n-1 release
+    - ${{ if eq(variables.n1Pipeline, true) }}:
+      - deployment: old_release
+        displayName: 'N-1 release (/versions/)'
+        environment: 'fluid-docs-cdn'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - template: templates/deploy-docs-steps.yml
+                parameters:
+                  STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+                  STORAGE_KEY: $(STORAGE_KEY)
+                  DEST_PATH: '/versions/$(N1_VERSION)/'
