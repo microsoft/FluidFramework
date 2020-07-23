@@ -9,10 +9,17 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
-import { IFluidCodeDetails, IFluidPackage, ILoader, IRuntimeFactory } from "@fluidframework/container-definitions";
+import {
+    IFluidCodeDetails,
+    IFluidPackage,
+    ILoader,
+    IRuntimeFactory,
+    IContainerContext,
+} from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import * as old from "./oldVersion";
 
 const V1 = "0.1.0";
@@ -104,9 +111,20 @@ describe("context reload", function() {
         return response.value as T;
     }
 
+    class AutoReloadContextContainer extends ContainerRuntimeFactoryWithDefaultComponent {
+        async containerHasInitialized(runtime: IContainerRuntime, context: IContainerContext) {
+            runtime.getQuorum().on("approveProposal", (s, k,v)=> {
+                if (k === "code") {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    context.reloadContext();
+                }
+            });
+        }
+    }
+
     const createRuntimeFactory = (component): IRuntimeFactory => {
         const type = TestComponent.type;
-        return new ContainerRuntimeFactoryWithDefaultComponent(
+        return new AutoReloadContextContainer(
             type,
             [[type, Promise.resolve(new PrimedComponentFactory(type, component, [], {}))]],
         );

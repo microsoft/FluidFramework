@@ -72,7 +72,7 @@ export interface ICodeAllowList {
 export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
     (event: "connected", listener: (clientId: string) => void);
-    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
+    (event: "codeChanged" | "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
     (event: "disconnected" | "joining" | "attaching" | "attached", listener: () => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);

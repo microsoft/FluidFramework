@@ -79,11 +79,11 @@ export class BaseContainerRuntimeFactory implements
 
         if (!runtime.existing) {
             // If it's the first time through.
-            await this.containerInitializingFirstTime(runtime);
+            await this.containerInitializingFirstTime(runtime, context);
         }
 
         // This always gets called at the end of initialize on first time or from existing.
-        await this.containerHasInitialized(runtime);
+        await this.containerHasInitialized(runtime, context);
 
         return runtime;
     }
@@ -93,12 +93,12 @@ export class BaseContainerRuntimeFactory implements
      * is created. This likely includes creating any initial components that are expected to be there at the outset.
      * @param runtime - The container runtime for the container being initialized
      */
-    protected async containerInitializingFirstTime(runtime: IContainerRuntime) { }
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime, context: IContainerContext) { }
 
     /**
      * Subclasses may override containerHasInitialized to perform any steps after the container has initialized.
      * This likely includes loading any components that are expected to be there at the outset.
      * @param runtime - The container runtime for the container being initialized
      */
-    protected async containerHasInitialized(runtime: IContainerRuntime) { }
+    protected async containerHasInitialized(runtime: IContainerRuntime, context: IContainerContext) { }
 }
