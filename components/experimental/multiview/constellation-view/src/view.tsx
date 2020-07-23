@@ -73,14 +73,24 @@ export const ConstellationView: React.FC<IConstellationViewProps> = (props: ICon
     const sliderViews: JSX.Element[] = [];
     for (const [index, star] of starList.entries()) {
         let dragging: boolean = false;
+        const starStart = { x: star.x, y: star.y };
+        const dragStart = { x: 0, y: 0 };
         const pointerDownHandler = (event) => {
             event.target.setPointerCapture(event.pointerId);
+            starStart.x = star.x;
+            starStart.y = star.y;
+            dragStart.x = event.pageX;
+            dragStart.y = event.pageY;
             dragging = true;
         };
         const pointerMoveHandler = (event) => {
             if (dragging) {
-                star.x = Math.min(Math.max(event.pageX - event.target.parentElement.offsetLeft, 0), 100);
-                star.y = Math.min(Math.max(event.pageY - event.target.parentElement.offsetTop, 0), 100);
+                const totalDragDelta = {
+                    x: event.pageX - dragStart.x,
+                    y: event.pageY - dragStart.y,
+                };
+                star.x = Math.min(Math.max(starStart.x + totalDragDelta.x, 0), 100);
+                star.y = Math.min(Math.max(starStart.y + totalDragDelta.y, 0), 100);
             }
         };
         const pointerUpHandler = (event) => {
