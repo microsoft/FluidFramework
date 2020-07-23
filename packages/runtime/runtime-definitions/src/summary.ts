@@ -52,7 +52,6 @@ export interface ISummarizerNode {
      * a summary with a pointer to the previous summary + a blob of outstanding ops.
      * @param summarizeInternalFn - internal summarize function
      * @param fullTree - true to skip optimizations and always generate the full tree
-     * @param decodedPathParts - path parts resulting from decoded summary
      */
     summarize(
         summarizeInternalFn: () => Promise<ISummarizeInternalResult>,

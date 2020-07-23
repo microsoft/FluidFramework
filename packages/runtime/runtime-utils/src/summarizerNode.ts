@@ -530,6 +530,8 @@ export class SummarizerNode implements ISummarizerNode {
         changeSequenceNumber: number,
         id: string,
     ): ISummarizerNode {
+        assert(!this.children.has(id), "Create SummarizerNode child already exists");
+
         let summary: ISummaryNode | undefined;
         if (this.latestSummary !== undefined && changeSequenceNumber <= this.latestSummary.referenceSequenceNumber) {
             summary = {

@@ -388,6 +388,7 @@ export abstract class ComponentContext extends EventEmitter implements
 
     /**
      * Notifies the object to take snapshot of a component.
+     * @deprecated in 0.22 summarizerNode
      */
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
         if (!fullTree) {

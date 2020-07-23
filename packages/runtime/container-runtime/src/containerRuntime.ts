@@ -64,7 +64,6 @@ import {
     ISummaryTree,
     ITree,
     MessageType,
-    SummaryType,
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -194,6 +193,12 @@ export interface IContainerRuntimeOptions {
 
     // Delay before first attempt to spawn summarizing container
     initialSummarizerDelayMs?: number;
+
+    // Flag to enable summarizing with new SummarizerNode strategy.
+    // Enabling this feature will allow components that fail to summarize to
+    // try to still summarize based on previous successful summary + ops since.
+    // Disabled by default.
+    enableSummarizerNode?: boolean;
 }
 
 interface IRuntimeMessageMetadata {
@@ -635,7 +640,11 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         private readonly context: IContainerContext,
         private readonly registry: IComponentRegistry,
         chunks: [string, string[]][],
-        private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: true, enableWorker: false },
+        private readonly runtimeOptions: IContainerRuntimeOptions = {
+            generateSummaries: true,
+            enableWorker: false,
+            enableSummarizerNode: false,
+        },
         private readonly containerScope: IComponent & IFluidObject,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
     ) {
@@ -867,12 +876,10 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         return root;
     }
 
-    protected serializeContainerBlobs(summaryTree: ISummaryTree) {
+    protected serializeContainerBlobs(summaryTreeBuilder: SummaryTreeBuilder) {
         if (this.chunkMap.size > 0) {
-            summaryTree.tree[chunksBlobName] = {
-                content: JSON.stringify([...this.chunkMap]),
-                type: SummaryType.Blob,
-            };
+            const content = JSON.stringify([...this.chunkMap]);
+            summaryTreeBuilder.addBlob(chunksBlobName, content);
         }
     }
 
@@ -1272,28 +1279,30 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     /**
      * Returns a summary of the runtime at the current sequence number.
      */
-    private async summarize(fullTree: boolean = false): Promise<ISummaryTreeWithStats> {
-        // Both fullTree and throwOnFailure should be true:
+    private async summarize(fullTree = false): Promise<ISummaryTreeWithStats> {
+        // Both fullTree and throwOnFailure should be true for SummarizerNode.summarize args:
         // fullTree - prevents sending summary handle which would cause protocol to be included
         // throwOnFailure - want to throw on any component failure that was too severe to be handled
         return (await this.summarizerNode.summarize(async () => {
+            const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode ?? false;
             const builder = new SummaryTreeBuilder();
 
             // Iterate over each component and ask it to snapshot
             await Promise.all(Array.from(this.contexts)
-                .filter(([key, value]) => {
+                .filter(([_, value]) => {
                     // Summarizer works only with clients with no local changes!
                     assert(value.attachState !== AttachState.Attaching);
                     return value.attachState === AttachState.Attached;
                 })
                 .map(async ([key, value]) => {
-                    const componentSummary = await value.summarize(fullTree);
+                    const componentSummary = enableSummarizerNode
+                        ? await value.summarize(fullTree)
+                        : convertToSummaryTree(await value.snapshot(fullTree), fullTree);
                     builder.addWithStats(key, componentSummary);
                 }));
 
+            this.serializeContainerBlobs(builder);
             const summary = builder.getSummaryTree();
-            this.serializeContainerBlobs(summary.summary);
-
             return { ...summary, id: "" };
         }, true, true)) as ISummaryTreeWithStats;
     }
@@ -1422,7 +1431,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         // Iterate over each component and ask it to snapshot
         Array.from(this.contexts)
-            .filter(([key, value]) =>
+            .filter(([key, _]) =>
                 // Take summary of bounded components.
                 !this.notBoundedComponentContexts.has(key),
             )
@@ -1432,10 +1441,9 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
                 builder.addWithStats(key, componentSummary);
             });
 
-        const summaryTree = builder.summary;
-        this.serializeContainerBlobs(summaryTree);
+        this.serializeContainerBlobs(builder);
 
-        return summaryTree;
+        return builder.summary;
     }
 
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
