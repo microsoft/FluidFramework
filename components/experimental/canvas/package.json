@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/canvas",
-  "version": "0.22.2",
+  "version": "0.22.3",
   "description": "Fluid ink canvas",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -35,16 +35,16 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.22.2",
-    "@fluidframework/component-core-interfaces": "^0.22.2",
-    "@fluidframework/ink": "^0.22.2",
-    "@fluidframework/view-interfaces": "^0.22.2"
+    "@fluidframework/aqueduct": "^0.22.3",
+    "@fluidframework/component-core-interfaces": "^0.22.3",
+    "@fluidframework/ink": "^0.22.3",
+    "@fluidframework/view-interfaces": "^0.22.3"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@fluidframework/test-tools": "^0.1.0",
-    "@fluidframework/webpack-component-loader": "^0.22.2",
+    "@fluidframework/webpack-component-loader": "^0.22.3",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",

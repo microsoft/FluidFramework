@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/badge",
-  "version": "0.22.2",
+  "version": "0.22.3",
   "description": "Badge Fluid example component",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -32,12 +32,12 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.22.2",
-    "@fluidframework/cell": "^0.22.2",
-    "@fluidframework/component-core-interfaces": "^0.22.2",
-    "@fluidframework/map": "^0.22.2",
-    "@fluidframework/sequence": "^0.22.2",
-    "@fluidframework/view-interfaces": "^0.22.2",
+    "@fluidframework/aqueduct": "^0.22.3",
+    "@fluidframework/cell": "^0.22.3",
+    "@fluidframework/component-core-interfaces": "^0.22.3",
+    "@fluidframework/map": "^0.22.3",
+    "@fluidframework/sequence": "^0.22.3",
+    "@fluidframework/view-interfaces": "^0.22.3",
     "@uifabric/fluent-theme": "^7.1.3",
     "office-ui-fabric-react": "^7.28.1",
     "react": "^16.10.2",
@@ -46,7 +46,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/webpack-component-loader": "^0.22.2",
+    "@fluidframework/webpack-component-loader": "^0.22.3",
     "@types/node": "^10.17.24",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",
