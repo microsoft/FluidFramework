@@ -58,8 +58,8 @@
     "@fluidframework/runtime-utils": "^0.23.0",
     "@fluidframework/shared-object-base": "^0.23.0",
     "@fluidframework/telemetry-utils": "^0.23.0",
-    "@tiny-calc/nano": "0.0.0-alpha.0",
     "@tiny-calc/micro": "0.0.0-alpha.1",
+    "@tiny-calc/nano": "0.0.0-alpha.1",
     "debug": "^4.1.1",
     "tslib": "^1.10.0"
   },
