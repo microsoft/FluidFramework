@@ -1280,11 +1280,9 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
      * Returns a summary of the runtime at the current sequence number.
      */
     private async summarize(fullTree = false): Promise<ISummaryTreeWithStats> {
-        // Both fullTree and throwOnFailure should be true for SummarizerNode.summarize args:
-        // fullTree - prevents sending summary handle which would cause protocol to be included
-        // throwOnFailure - want to throw on any component failure that was too severe to be handled
-        return (await this.summarizerNode.summarize(async () => {
-            const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode ?? false;
+        const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode ?? false;
+
+        const summarizeCore = async () => {
             const builder = new SummaryTreeBuilder();
 
             // Iterate over each component and ask it to snapshot
@@ -1304,7 +1302,14 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             this.serializeContainerBlobs(builder);
             const summary = builder.getSummaryTree();
             return { ...summary, id: "" };
-        }, true, true)) as ISummaryTreeWithStats;
+        };
+
+        // Both fullTree and throwOnFailure should be true for SummarizerNode.summarize args:
+        // fullTree - prevents sending summary handle which would cause protocol to be included
+        // throwOnFailure - want to throw on any component failure that was too severe to be handled
+        return enableSummarizerNode
+            ? await this.summarizerNode.summarize(summarizeCore, true, true) as ISummaryTreeWithStats
+            : summarizeCore();
     }
 
     private processAttachMessage(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {
