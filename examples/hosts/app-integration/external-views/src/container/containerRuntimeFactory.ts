@@ -26,4 +26,3 @@ export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWith
         [DiceRoller.ComponentName, Promise.resolve(DiceRollerInstantiationFactory)],
     ]),
 );
-export const fluidExport = DiceRollerContainerRuntimeFactory;

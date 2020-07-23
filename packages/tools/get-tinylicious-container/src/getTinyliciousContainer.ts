@@ -61,11 +61,9 @@ class InsecureTinyliciousUrlResolver implements IUrlResolver {
 }
 
 /**
- * Connect to the Tinylicious service and retrieve a Container, or if it does not already exist then create a new
- * Container and propose the given code.
+ * Connect to the Tinylicious service and retrieve a Container with the given ID running the given code.
  * @param documentId - The document id to retrieve or create
- * @param packageJson - The package that will be proposed as the code proposal
- * @param fluidModule - Optionally, seed the codeLoader with an in-memory entrypoint for that proposal
+ * @param containerRuntimeFactory - The container factory to be loaded in the container
  */
 export async function getTinyliciousContainer(
     documentId: string,
@@ -81,6 +79,8 @@ export async function getTinyliciousContainer(
 
     const urlResolver = new InsecureTinyliciousUrlResolver();
 
+    // To bypass proposal-based loading, we need a codeLoader that will return our already-in-memory container factory.
+    // The expected format of that response is an IFluidModule with a fluidExport.
     const module = { fluidExport: containerRuntimeFactory };
     const codeLoader = { load: async () => module };
 
