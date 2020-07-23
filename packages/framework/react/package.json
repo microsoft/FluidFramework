@@ -29,15 +29,6 @@
     "@fluidframework/aqueduct": "^0.23.0",
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.20.0",
-<<<<<<< HEAD
-    "@fluidframework/component-core-interfaces": "^0.22.0",
-    "@fluidframework/component-runtime-definitions": "^0.22.0",
-    "@fluidframework/map": "^0.22.0",
-    "@fluidframework/runtime-definitions": "^0.22.0",
-    "@fluidframework/sequence": "^0.22.0",
-    "@fluidframework/shared-object-base": "^0.22.0",
-    "@fluidframework/view-interfaces": "^0.22.0",
-=======
     "@fluidframework/component-core-interfaces": "^0.23.0",
     "@fluidframework/component-runtime-definitions": "^0.23.0",
     "@fluidframework/counter": "^0.23.0",
@@ -46,7 +37,6 @@
     "@fluidframework/sequence": "^0.23.0",
     "@fluidframework/shared-object-base": "^0.23.0",
     "@fluidframework/view-interfaces": "^0.23.0",
->>>>>>> 53f0e4a434353df720e33ce5f452a6b9b0b1d2e1
     "react": "^16.10.2"
   },
   "devDependencies": {
