@@ -1,0 +1,19 @@
+.constellation-view {
+    width: 100px;
+    height: 100px;
+    position: relative;
+    background-color: #000;
+}
+
+.star {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    position: absolute;
+    background-color: #ee0;
+}
+
+.slider-views {
+    display: grid;
+    grid-template-columns: repeat(3, fit-content(100px));
+}

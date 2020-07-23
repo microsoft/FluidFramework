@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
 import { AsSerializable, Serializable } from "@fluidframework/component-runtime-definitions";
 import { NamedComponentRegistryEntries } from "@fluidframework/runtime-definitions";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { CollaborativeText } from "@fluid-example/collaborative-textarea";
-import { Coordinate, CoordinateInstantiationFactory } from "@fluid-example/multiview-coordinate-model";
+import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
@@ -18,7 +18,7 @@ import * as React from "react";
 import { Layout } from "react-grid-layout";
 
 export type ICreateAndAttachComponentFunction =
-    <T extends IComponent & IComponentLoadable>(pkg: string, props?: any) => Promise<T>;
+    <T extends IFluidObject & IComponentLoadable>(pkg: string, props?: any) => Promise<T>;
 
 interface ISingleHandleItem {
     handle: IComponentHandle;
@@ -86,7 +86,7 @@ const prosemirrorItemEntry: ISpacesItemEntry<AsSerializable<ISingleHandleItem>> 
 };
 
 const sliderCoordinateItemEntry: ISpacesItemEntry<AsSerializable<ISingleHandleItem>> = {
-    create: createSingleHandleItem(CoordinateInstantiationFactory.type),
+    create: createSingleHandleItem(Coordinate.getFactory().type),
     getView: getSliderCoordinateView,
     friendlyName: "Coordinate",
     fabricIconName: "NumberSymbol",
@@ -106,7 +106,7 @@ export const spacesRegistryEntries: NamedComponentRegistryEntries = new Map([
     [cmfe.type, Promise.resolve(cmfe)],
     [CollaborativeText.ComponentName, Promise.resolve(CollaborativeText.getFactory())],
     [pmfe.type, Promise.resolve(pmfe)],
-    CoordinateInstantiationFactory.registryEntry,
+    Coordinate.getFactory().registryEntry,
 ]);
 
 interface ITemplate {

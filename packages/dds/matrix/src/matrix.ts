@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IComponentRuntime,
-    IObjectStorageService,
+    IChannelStorageService,
     Serializable,
     IChannelAttributes,
 } from "@fluidframework/component-runtime-definitions";
@@ -69,14 +69,14 @@ export class SharedMatrix<T extends Serializable = Serializable>
         this.rows = new PermutationVector(
             SnapshotPath.rows,
             this.logger,
-            runtime.options,
+            runtime,
             this.onRowDelta,
             this.onRowHandlesRecycled);
 
         this.cols = new PermutationVector(
             SnapshotPath.cols,
             this.logger,
-            runtime.options,
+            runtime,
             this.onColDelta,
             this.onColHandlesRecycled);
     }
@@ -388,7 +388,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         debug(`${this.id} is now disconnected`);
     }
 
-    protected async loadCore(branchId: string, storage: IObjectStorageService) {
+    protected async loadCore(branchId: string, storage: IChannelStorageService) {
         try {
             await this.rows.load(this.runtime, new ObjectStoragePartition(storage, SnapshotPath.rows), branchId);
             await this.cols.load(this.runtime, new ObjectStoragePartition(storage, SnapshotPath.cols), branchId);

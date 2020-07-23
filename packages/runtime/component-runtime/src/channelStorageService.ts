@@ -5,10 +5,10 @@
 
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 import { getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
 
-export class ChannelStorageService implements IObjectStorageService {
+export class ChannelStorageService implements IChannelStorageService {
     private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {
         // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const path in tree.trees) {

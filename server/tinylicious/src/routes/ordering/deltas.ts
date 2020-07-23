@@ -7,7 +7,7 @@ import { MongoManager } from "@fluidframework/server-services-core";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { getParam } from "../../utils";
+import { getParam, queryParamToNumber } from "../../utils";
 
 const sequenceNumber = "sequenceNumber";
 
@@ -73,17 +73,12 @@ export function create(config: Provider, mongoManager: MongoManager): Router {
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const router: Router = Router();
 
-    function stringToSequenceNumber(value: string): number {
-        const parsedValue = parseInt(value, 10);
-        return isNaN(parsedValue) ? undefined : parsedValue;
-    }
-
     /**
      * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
      */
     router.get("/:tenantId/:id", (request, response, next) => {
-        const from = stringToSequenceNumber(request.query.from);
-        const to = stringToSequenceNumber(request.query.to);
+        const from = queryParamToNumber(request.query.from);
+        const to = queryParamToNumber(request.query.to);
         const tenantId = getParam(request.params, "tenantId");
 
         // Query for the deltas and return a filtered version of just the operations field
@@ -109,8 +104,8 @@ export function create(config: Provider, mongoManager: MongoManager): Router {
      * @deprecated path "/content:tenantId?/:id" currently kept for backwards compatibility
      */
     router.get(["/content/:tenantId/:id", "/:tenantId?/:id/content"], (request, response, next) => {
-        const from = stringToSequenceNumber(request.query.from);
-        const to = stringToSequenceNumber(request.query.to);
+        const from = queryParamToNumber(request.query.from);
+        const to = queryParamToNumber(request.query.to);
         const tenantId = getParam(request.params, "tenantId");
 
         // Query for the deltas and return a filtered version of just the operations field

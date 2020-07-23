@@ -6,7 +6,13 @@
 import assert from "assert";
 import EventEmitter from "events";
 import { IDisposable } from "@fluidframework/common-definitions";
-import { IComponent, IComponentLoadable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import {
+    IComponent,
+    IComponentLoadable,
+    IRequest,
+    IResponse,
+    IFluidObject,
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -149,11 +155,6 @@ export abstract class ComponentContext extends EventEmitter implements
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
-    // 0.21 back-compat isAttached
-    public get isAttached(): boolean {
-        return this.attachState !== AttachState.Detached;
-    }
-
     public get attachState(): AttachState {
         return this._attachState;
     }
@@ -171,7 +172,7 @@ export abstract class ComponentContext extends EventEmitter implements
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
-        public readonly scope: IComponent,
+        public readonly scope: IComponent & IFluidObject,
         public readonly summaryTracker: SummaryTracker,
         private bindState: BindState,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
@@ -518,7 +519,10 @@ export abstract class ComponentContext extends EventEmitter implements
         this.containerRuntime.notifyComponentInstantiated(this);
     }
 
-    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
+        if (this.attachState !== AttachState.Attached) {
+            return undefined;
+        }
         return this._containerRuntime.getAbsoluteUrl(relativeUrl);
     }
 
@@ -580,7 +584,7 @@ export class RemotedComponentContext extends ComponentContext {
         private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent,
+        scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
         pkg?: string[],
     ) {
@@ -657,7 +661,7 @@ export class LocalComponentContext extends ComponentContext {
         pkg: string[],
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent,
+        scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
         /**

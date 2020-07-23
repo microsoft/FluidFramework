@@ -12,7 +12,8 @@ export {
 } from "old-aqueduct";
 export { IContainerContext, IFluidModule, IRuntimeFactory } from "old-container-definitions";
 export { Container } from "old-container-loader";
-export { componentRuntimeRequestHandler, ContainerRuntime, IContainerRuntimeOptions } from "old-container-runtime";
+export { ContainerRuntime, IContainerRuntimeOptions } from "old-container-runtime";
+export { componentRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "old-request-handler";
 export { IComponentFactory } from "old-runtime-definitions";
 export { createLocalLoader, initializeLocalContainer } from "old-test-utils";
 /* eslint-enable import/no-extraneous-dependencies */

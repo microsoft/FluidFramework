@@ -40,7 +40,7 @@ export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (props
                     onInput={(e) => props.model.x = parseInt((e.target as HTMLInputElement).value, 10)}
                     value={x}
                 />
-                {x}
+                {Math.trunc(x)}
             </div>
             <div>
                 Y:
@@ -49,7 +49,7 @@ export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (props
                     onInput={(e) => props.model.y = parseInt((e.target as HTMLInputElement).value, 10)}
                     value={y}
                 />
-                {y}
+                {Math.trunc(y)}
             </div>
         </div>
     );

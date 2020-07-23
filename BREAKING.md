@@ -1,11 +1,25 @@
 # Breaking changes
 
+## 0.23 Breaking Changes
+- [Removed `collaborating` event on IComponentRuntime](#Removed-`collaborating`-event-on-IComponentRuntime)
+- [ISharedObjectFactory rename](#ISharedObjectFactory)
+
+### Removed `collaborating` event on IComponentRuntime
+Component Runtime no longer fires the collaborating event on attaching. Now it fires `attaching` event.
+
+### ISharedObjectFactory
+`ISharedObjectFactory` renamed to `IChannelFactory` and moved from `@fluidframework/shared-object-base` to `@fluidframework/component-runtime-definitions`
+
 ## 0.22 Breaking Changes
 - [Deprecated `path` from `IComponentHandleContext`](#Deprecated-`path`-from-`IComponentHandleContext`)
 - [Dynamically loaded components compiled against older versions of runtime](#Dynamically-loaded-components)
 - [ContainerRuntime.load Request Handler Changes](#ContainerRuntime.load-Request-Handler-Changes)
 - [IComponentHTMLVisual removed](#IComponentHTMLVisual-removed)
 - [IComponentReactViewable deprecated](#IComponentReactViewable-deprecated)
+- [Forward Compat For Loader IComponent Interfaces](#Forward-Compat-For-Loader-IComponent-Interfaces)
+- [Add Undefined to getAbsoluteUrl return type](#Add-Undefined-to-getAbsoluteUrl-return-type)
+- [Renamed TestDeltaStorageService, TestDocumentDeltaConnection, TestDocumentService, TestDocumentServiceFactory and TestResolver](#Renamed-TestDeltaStorageService,-TestDocumentDeltaConnection,-TestDocumentService,-TestDocumentServiceFactory-and-TestResolver)
+- [DocumentDeltaEventManager has been renamed and moved to "@fluidframework/test-utils"](#DocumentDeltaEventManager-has-been-renamed-and-moved-to-"@fluidframework/test-utils")
 
 ### Deprecated `path` from `IComponentHandleContext`
 Deprecated the `path` field from the interface `IComponentHandleContext`. This means that `IComponentHandle` will not have this going forward as well.
@@ -48,6 +62,87 @@ The `IComponentHTMLVisual` interface was deprecated in 0.21, and is now removed 
 
 ### IComponentReactViewable deprecated
 The `IComponentReactViewable` interface is deprecated and will be removed in an upcoming release.  For multiview scenarios, instead use a pattern like the one demonstrated in the sample in /components/experimental/multiview.  This sample demonstrates how to create multiple views for a component.
+
+
+### Forward Compat For Loader IComponent Interfaces
+
+As part of the Fluid Data Library (FDL) and Fluid Component Library (FCL) split we will be renaming a significant number of out interfaces. Some of these interfaces are used across the loader -> runtime boundary. For these interfaces we have introduced the newly renamed interfaces in this release. This will allow Host's to implment forward compatbitiy for these interfaces, so they are not broken when the implementations themselves are renamed.
+
+- `IComponentLastEditedTracker` will become `IFluidLastEditedTracker`
+- `IComponentHTMLView` will become `IFluidHTMLView`
+- `IComponentMountableViewClass` will become `IFluidMountableViewClass`
+- `IComponentLoadable` will become `IFluidLoadable`
+- `IComponentRunnable` will become `IFluidRunnable`
+- `IComponentConfiguration` will become `IFluidConfiguration`
+- `IComponentRouter` will become `IFluidRouter`
+- `IComponentHandleContext` will become `IFluidHandleContext`
+- `IComponentHandle` will become `IFluidHandle`
+- `IComponentSerializer `will become `IFluidSerializer`
+- `IComponentTokenProvider` will become `IFluidTokenProvider`
+
+`IComponent` will also become `IFluidObject`, and the mime type for for requests will change from `fluid/component` to `fluid/object`
+
+To ensure forward compatability when accessing the above interfaces outside the context of a container e.g. from the host, you should use the nullish coalesing operator (??).
+
+For example
+``` typescript
+        if (response.status !== 200 ||
+            !(
+                response.mimeType === "fluid/component" ||
+                response.mimeType === "fluid/object"
+            )) {
+            return undefined;
+        }
+
+        const fluidObject = response.value as IComponent & IFluidObject;
+        return fluidObject.IComponentHTMLView ?? fluidObject.IFluidHTMLView.
+
+```
+
+### Add Undefined to getAbsoluteUrl return type
+
+getAbsoluteUrl on the container runtime and component context now returns `string | undefined`. `undefined` will be returned if the container or component is not attached. You can determine if  a component is attached and get its url with the below snippit:
+```typescript
+import { waitForAttach } from "@fluidframework/aqueduct";
+
+
+protected async componentHasInitialized() {
+        waitForAttach(this.runtime)
+            .then(async () => {
+                const url = await this.context.getAbsoluteUrl(this.url);
+                this._absoluteUrl = url;
+                this.emit("stateChanged");
+            })
+            .catch(console.error);
+}
+```
+
+### Renamed TestDeltaStorageService, TestDocumentDeltaConnection, TestDocumentService, TestDocumentServiceFactory and TestResolver
+
+Renamed the following in "@fluidframework/local-driver" since these are used beyond testing:
+- `TestDeltaStorageService` -> `LocalDeltaStorageService`
+- `TestDocumentDeltaConnection` -> `LocalDocumentDeltaConnection`
+- `TestDocumentService` -> `LocalDocumentService`
+- `TestDocumentServiceFactory` -> `LocalDocumentServiceFactory`
+- `TestResolver` -> `LocalResolver`
+
+### DocumentDeltaEventManager has been renamed and moved to "@fluidframework/test-utils"
+
+`DocumentDeltaEventManager` has moved to "@fluidframework/test-utils" and renamed to `OpProcessingController`.
+
+The `registerDocuments` method has been renamed to `addDeltaManagers` and should be called with a list of delta managers. Similarly, all the other methods have been updated to be called with delta managers.
+
+So, the usage has now changed to pass in the deltaManager from the object that was passed earlier. For example:
+
+```typescript
+// Old usage
+containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime);
+
+// New usage
+opProcessingController = new OpProcessingController(deltaConnectionServer);
+opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
+```
 
 ## 0.21 Breaking Changes
 - [Removed `@fluidframework/local-test-utils`](#removed-`@fluidframework/local-test-utils`)

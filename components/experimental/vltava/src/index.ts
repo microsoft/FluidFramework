@@ -8,7 +8,7 @@ import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { Spaces } from "@fluid-example/spaces";
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     LastEditedTrackerComponentName,
@@ -53,12 +53,12 @@ export class InternalRegistry implements IComponentRegistry, IComponentInternalR
         return undefined;
     }
 
-    public getFromCapability(capability: keyof IComponent): IInternalRegistryEntry[] {
+    public getFromCapability(capability: keyof IFluidObject): IInternalRegistryEntry[] {
         return this.containerComponentArray.filter(
             (componentDetails) => componentDetails.capabilities.includes(capability));
     }
 
-    public hasCapability(type: string, capability: keyof IComponent) {
+    public hasCapability(type: string, capability: keyof IFluidObject) {
         const index = this.containerComponentArray.findIndex(
             (containerComponent) => type === containerComponent.type,
         );

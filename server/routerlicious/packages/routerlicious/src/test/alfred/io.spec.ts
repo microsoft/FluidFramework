@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import { Deferred } from "@fluidframework/common-utils";
 import {
     IClientJoin,
@@ -17,8 +18,20 @@ import {
     ICommittedProposal,
 } from "@fluidframework/protocol-definitions";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
+import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-local-server";
+import { configureWebSocketServices, DefaultServiceConfiguration } from "@fluidframework/server-lambdas";
+import { PubSub } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
-import * as core from "@fluidframework/server-services-core";
+import { generateToken } from "@fluidframework/server-services-client";
+import {
+    DefaultMetricClient,
+    IClientManager,
+    IOrdererManager,
+    IScribe,
+    MongoDatabaseManager,
+    MongoManager,
+    RawOperationType,
+} from "@fluidframework/server-services-core";
 import {
     MessageFactory,
     TestClientManager,
@@ -26,15 +39,9 @@ import {
     TestDbFactory,
     TestKafka,
     TestTenantManager,
-    TestWebSocket,
-    TestWebSocketServer,
     DebugLogger,
 } from "@fluidframework/server-test-utils";
-import assert from "assert";
 import { OrdererManager } from "../../alfred/runnerFactory";
-import { DefaultMetricClient, IScribe } from "@fluidframework/server-services-core";
-import { generateToken } from "@fluidframework/server-services-client";
-import { configureWebSocketServices, DefaultServiceConfiguration } from "@fluidframework/server-lambdas";
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {
@@ -45,11 +52,11 @@ describe("Routerlicious", () => {
                 const testId = "test";
                 const url = "http://test";
 
-                let webSocketServer: TestWebSocketServer;
+                let webSocketServer: LocalWebSocketServer;
                 let deliKafka: TestKafka;
-                let testOrderer: core.IOrdererManager;
+                let testOrderer: IOrdererManager;
                 let testTenantManager: TestTenantManager;
-                let testClientManager: core.IClientManager;
+                let testClientManager: IClientManager;
                 let contentCollection: TestCollection;
 
                 beforeEach(() => {
@@ -61,8 +68,8 @@ describe("Routerlicious", () => {
                     testTenantManager = new TestTenantManager(url);
                     testClientManager = new TestClientManager();
                     const testDbFactory = new TestDbFactory(testData);
-                    const mongoManager = new core.MongoManager(testDbFactory);
-                    const databaseManager = new core.MongoDatabaseManager(
+                    const mongoManager = new MongoManager(testDbFactory);
+                    const databaseManager = new MongoDatabaseManager(
                         mongoManager,
                         collectionNames,
                         collectionNames,
@@ -78,7 +85,8 @@ describe("Routerlicious", () => {
                         DefaultServiceConfiguration);
                     testOrderer = new OrdererManager(url, testTenantManager, null, kafkaOrderer, null);
 
-                    webSocketServer = new TestWebSocketServer();
+                    const pubsub = new PubSub();
+                    webSocketServer = new LocalWebSocketServer(pubsub);
                     contentCollection = new TestCollection([]);
 
                     configureWebSocketServices(
@@ -96,7 +104,7 @@ describe("Routerlicious", () => {
                     id: string,
                     tenantId: string,
                     secret: string,
-                    socket: TestWebSocket): Promise<IConnected> {
+                    socket: LocalWebSocket): Promise<IConnected> {
                     const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
                     const token = generateToken(tenantId, id, secret, scopes);
 
@@ -134,7 +142,7 @@ describe("Routerlicious", () => {
                 }
 
                 function sendMessage(
-                    socket: TestWebSocket,
+                    socket: LocalWebSocket,
                     clientId: string,
                     message: IDocumentMessage): Promise<void> {
 
@@ -215,7 +223,7 @@ describe("Routerlicious", () => {
                         assert.equal(deliKafka.getRawMessages().length, beforeCount + 1);
                         const lastMessage = deliKafka.getLastMessage();
                         assert.equal(lastMessage.documentId, testId);
-                        assert.equal(lastMessage.type, core.RawOperationType);
+                        assert.equal(lastMessage.type, RawOperationType);
                         assert.deepEqual(lastMessage.operation, message);
                     });
                 });
@@ -239,8 +247,8 @@ describe("Routerlicious", () => {
             const producer = deliKafka.createProducer();
             testTenantManager = new TestTenantManager(url);
             const testDbFactory = new TestDbFactory(testData);
-            const mongoManager = new core.MongoManager(testDbFactory);
-            const databaseManager = new core.MongoDatabaseManager(
+            const mongoManager = new MongoManager(testDbFactory);
+            const databaseManager = new MongoDatabaseManager(
                 mongoManager,
                 collectionNames,
                 collectionNames,

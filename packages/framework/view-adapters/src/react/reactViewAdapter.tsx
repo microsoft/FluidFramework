@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IComponentHTMLView, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 
 export interface IReactViewAdapterProps {
     /**
      * The view to adapt into a React component.
      */
-    view: IComponent;
+    view: IComponent & IFluidObject;
 }
 
 /**
@@ -25,10 +25,11 @@ export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
      * Test whether the given component can be successfully adapted by a ReactViewAdapter.
      * @param view - the component to test if it is adaptable.
      */
-    public static canAdapt(view: IComponent) {
+    public static canAdapt(view: IComponent & IFluidObject) {
         return (
             React.isValidElement(view)
             || view.IComponentHTMLView !== undefined
+            || view.IFluidHTMLView !== undefined
         );
     }
 
@@ -45,7 +46,7 @@ export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
             return;
         }
 
-        const htmlView = this.props.view.IComponentHTMLView;
+        const htmlView = this.props.view.IComponentHTMLView ?? this.props.view.IFluidHTMLView;
         if (htmlView !== undefined) {
             this.element = <HTMLViewEmbeddedComponent htmlView={htmlView} />;
             return;
@@ -60,7 +61,7 @@ export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
 }
 
 interface IHTMLViewProps {
-    htmlView: IComponentHTMLView;
+    htmlView: IComponentHTMLView | IFluidHTMLView;
 }
 
 /**

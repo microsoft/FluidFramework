@@ -4,7 +4,7 @@
  */
 
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { PrimedComponent, PrimedComponentFactory, waitForAttach } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import {
     IComponentHandle, IComponentLoadable,
@@ -93,24 +93,18 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
             if (!local) {
                 if (changed.key === checkedKey) {
                     this.emit("checkedStateChanged");
+                    this.emit("stateChanged");
                 }
             }
         });
 
-        if (this.context.connected) {
-            this._absoluteUrl = await this.context.getAbsoluteUrl(this.url);
-        } else {
-            this.context.deltaManager.on(
-                "connect",
-                () => {
-                    this.context.getAbsoluteUrl(this.url)
-                        .then((url) => {
-                            this._absoluteUrl = url;
-                            return undefined;
-                        })
-                        .catch(() => { });
-                });
-        }
+        waitForAttach(this.runtime)
+            .then(async () => {
+                const url = await this.context.getAbsoluteUrl(this.url);
+                this._absoluteUrl = url;
+                this.emit("stateChanged");
+            })
+            .catch(console.error);
     }
 
     public static getFactory() { return TodoItem.factory; }
@@ -150,7 +144,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
 
     public setCheckedState(newState: boolean): void {
         this.root.set(checkedKey, newState);
-        this.emit("checkedStateChanged");
+        this.emit("stateChanged");
     }
 
     public getCheckedState(): boolean {

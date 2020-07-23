@@ -68,51 +68,19 @@ FROM copysrc AS docs
 WORKDIR /docs
 
 # Build docs
+ARG BASE_URL
 ARG VUEPRESS_BASE
 ARG MASTER_BRANCH_VERSION
 ARG THIS_VERSION
 ARG N1_VERSION
 ARG RELEASE_VERSION
 
-# write the arg into a temp file
+# write the args into temp files
+RUN echo ${BASE_URL} > /root/base_url
 RUN echo ${VUEPRESS_BASE} > /root/vuepress_base
 # set the environment variable right before running the build
-RUN VUEPRESS_BASE=$(cat /root/vuepress_base); npm run build:ci
+RUN BASE_URL=$(cat /root/base_url); VUEPRESS_BASE=$(cat /root/vuepress_base); npm run build:ci
 
 # We want / to be the working dir when we use the image to extract the built docs
 # Without this the working dir is /docs, which doesn't match the local environment
 WORKDIR /
-
-#############################
-FROM docs AS docpublish
-
-WORKDIR /
-
-RUN git config --global user.email "fluidrtdev@microsoft.com"
-RUN git config --global user.name "Fluid build server"
-
-ARG DOCSGITPASSWORD
-RUN git clone https://%24fluid-docs:$DOCSGITPASSWORD@fluid-docs.scm.azurewebsites.net:443/fluid-docs.git repo
-
-WORKDIR /
-ARG VUEPRESS_BASE
-RUN mkdir repo${VUEPRESS_BASE} -p -v
-
-WORKDIR /repo
-RUN git pull
-
-WORKDIR /
-RUN rsync docs/dist/ repo${VUEPRESS_BASE} -rv --delete --exclude '.git' --exclude 'versions'
-
-WORKDIR /repo
-RUN git add .
-RUN git diff --quiet && git diff --staged --quiet || git commit -am 'Automated build'
-RUN git push
-
-#############################
-FROM docpublish AS publishroot
-
-WORKDIR /repo
-RUN git pull
-WORKDIR /
-RUN rsync docs/dist/ repo/ -rv --delete --exclude '.git' --exclude 'versions'

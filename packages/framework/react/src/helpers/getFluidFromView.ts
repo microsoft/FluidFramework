@@ -26,9 +26,8 @@ export function getFluidFromView<
     fluidState: SF,
     viewToFluid?: Map<keyof SV, IFluidConverter<SV, SF>>,
 ): Partial<SF> {
-    const fluidConverter =
-        viewToFluid && viewToFluid.get(viewKey)?.fluidConverter;
-    if (fluidConverter) {
+    const fluidConverter = viewToFluid?.get(viewKey)?.fluidConverter;
+    if (fluidConverter !== undefined) {
         return fluidConverter(state, fluidState);
     } else {
         const partialFluidState: Partial<SF> = {};

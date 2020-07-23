@@ -102,7 +102,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     protected constructor(
         private readonly namespace?: string,
-        private readonly properties?: object,
+        private readonly properties?: ITelemetryProperties,
         private readonly propertyGetters?: ITelemetryPropertyGetters) {
     }
 
@@ -248,7 +248,7 @@ export class ChildLogger extends TelemetryLogger {
     public static create(
         baseLogger?: ITelemetryBaseLogger,
         namespace?: string,
-        properties?: object,
+        properties?: ITelemetryProperties,
         propertyGetters?: ITelemetryPropertyGetters): TelemetryLogger {
         return new ChildLogger(
             baseLogger ? baseLogger : new BaseTelemetryNullLogger(),
@@ -260,7 +260,7 @@ export class ChildLogger extends TelemetryLogger {
     constructor(
         protected readonly logger: ITelemetryBaseLogger,
         namespace?: string,
-        properties?: object,
+        properties?: ITelemetryProperties,
         propertyGetters?: ITelemetryPropertyGetters) {
         super(namespace, properties, propertyGetters);
     }
@@ -291,7 +291,7 @@ export class MultiSinkLogger extends TelemetryLogger {
      */
     constructor(
         namespace?: string,
-        properties?: object,
+        properties?: ITelemetryProperties,
         propertyGetters?: ITelemetryPropertyGetters) {
         super(namespace, properties, propertyGetters);
     }
@@ -331,7 +331,7 @@ export class DebugLogger extends TelemetryLogger {
      */
     public static create(
         namespace: string,
-        properties?: object,
+        properties?: ITelemetryProperties,
         propertyGetters?: ITelemetryPropertyGetters): TelemetryLogger {
         // Setup base logger upfront, such that host can disable it (if needed)
         const debug = registerDebug(namespace);
@@ -354,7 +354,7 @@ export class DebugLogger extends TelemetryLogger {
     public static mixinDebugLogger(
         namespace: string,
         baseLogger?: ITelemetryBaseLogger,
-        properties?: object,
+        properties?: ITelemetryProperties,
         propertyGetters?: ITelemetryPropertyGetters): TelemetryLogger {
         if (!baseLogger) {
             return DebugLogger.create(namespace, properties, propertyGetters);
@@ -370,7 +370,7 @@ export class DebugLogger extends TelemetryLogger {
     constructor(
         private readonly debug: IDebugger,
         private readonly debugErr: IDebugger,
-        properties?: object,
+        properties?: ITelemetryProperties,
         propertyGetters?: ITelemetryPropertyGetters,
     ) {
         super(undefined, properties, propertyGetters);
@@ -439,12 +439,15 @@ export class PerformanceEvent {
     public static timedExec<T>(
         logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
-        callback: () => T,
+        callback: (event: PerformanceEvent) => T,
     ) {
         const perfEvent = PerformanceEvent.start(logger, event);
         try {
-            const ret = callback();
-            perfEvent.end();
+            const ret = callback(perfEvent);
+            // Event might been cancelled or end was already reported
+            if (perfEvent.event) {
+                perfEvent.end();
+            }
             return ret;
         } catch (error) {
             perfEvent.cancel(undefined, error);
@@ -455,12 +458,15 @@ export class PerformanceEvent {
     public static async timedExecAsync<T>(
         logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
-        callback: () => Promise<T>,
+        callback: (event: PerformanceEvent) => Promise<T>,
     ) {
         const perfEvent = PerformanceEvent.start(logger, event);
         try {
-            const ret = await callback();
-            perfEvent.end();
+            const ret = await callback(perfEvent);
+            // Event might been cancelled or end was already reported
+            if (perfEvent.event) {
+                perfEvent.end();
+            }
             return ret;
         } catch (error) {
             perfEvent.cancel(undefined, error);
@@ -484,11 +490,11 @@ export class PerformanceEvent {
         }
     }
 
-    public reportProgress(props?: object, eventNameSuffix: string = "update"): void {
+    public reportProgress(props?: ITelemetryProperties, eventNameSuffix: string = "update"): void {
         this.reportEvent(eventNameSuffix, props);
     }
 
-    public end(props?: object, eventNameSuffix = "end"): void {
+    public end(props?: ITelemetryProperties, eventNameSuffix = "end"): void {
         this.reportEvent(eventNameSuffix, props);
 
         if (this.startMark) {
@@ -501,12 +507,12 @@ export class PerformanceEvent {
         this.event = undefined;
     }
 
-    public cancel(props?: object, error?: any): void {
+    public cancel(props?: ITelemetryProperties, error?: any): void {
         this.reportEvent("cancel", props, error);
         this.event = undefined;
     }
 
-    public reportEvent(eventNameSuffix: string, props?: object, error?: any): void {
+    public reportEvent(eventNameSuffix: string, props?: ITelemetryProperties, error?: any): void {
         if (!this.event) {
             this.logger.sendErrorEvent({
                 eventName: "PerformanceEventAfterStop",
