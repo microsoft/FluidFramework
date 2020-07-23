@@ -135,7 +135,8 @@ stages:
             artifactName: fluid-docs-version-path
 - stage: deploy
   displayName: Deploy Stage
-  pool: Default
+  pool:
+    vmImage: 'ubuntu-latest'
   dependsOn: build
   jobs:
     # current release
