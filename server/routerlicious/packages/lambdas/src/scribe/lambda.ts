@@ -86,6 +86,7 @@ export class ScribeLambda extends SequencedLambda {
         private protocolHead: number,
         messages: ISequencedDocumentMessage[],
         private readonly generateServiceSummary: boolean,
+        private readonly clearCacheAfterServiceSummary: boolean,
         private readonly nackOnSummarizeException?: boolean,
     ) {
         super(context);
@@ -222,7 +223,9 @@ export class ScribeLambda extends SequencedLambda {
                             scribeCheckpoint);
 
                         if (success) {
-                            this.clearCache = true;
+                            if (this.clearCacheAfterServiceSummary) {
+                                this.clearCache = true;
+                            }
                             this.context.log.info(
                                 `Service summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`);
                         }
@@ -591,7 +594,7 @@ export class ScribeLambda extends SequencedLambda {
         const commit = await this.storage.createCommit(commitParams);
         await this.storage.upsertRef(this.documentId, commit.sha);
 
-        await this.sendSummaryConfirmationMessage(sequenceNumber, true);
+        await this.sendSummaryConfirmationMessage(sequenceNumber, this.clearCacheAfterServiceSummary);
         return true;
     }
 
