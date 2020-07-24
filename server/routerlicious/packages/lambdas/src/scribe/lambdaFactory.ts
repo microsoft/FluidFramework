@@ -56,7 +56,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         const gitManager = tenant.gitManager;
 
         const [latestSummary, document] = await Promise.all([
-            fetchLatestSummaryState(gitManager, documentId),
+            fetchLatestSummaryState(gitManager, documentId, context.log),
             this.documentCollection.findOne({ documentId, tenantId }),
         ]);
 

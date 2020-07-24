@@ -116,7 +116,10 @@ export class ScribeLambda extends SequencedLambda {
                     if (value.operation.term < this.term) {
                         continue;
                     } else if (value.operation.term > this.term) {
-                        const lastSummary = await fetchLatestSummaryState(this.storage, this.documentId);
+                        const lastSummary = await fetchLatestSummaryState(
+                            this.storage,
+                            this.documentId,
+                            this.context.log);
                         if (!lastSummary.fromSummary) {
                             throw Error(`Required summary can't be fetched`);
                         }
