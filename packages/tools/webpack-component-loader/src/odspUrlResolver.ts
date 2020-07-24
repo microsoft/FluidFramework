@@ -62,7 +62,7 @@ export class OdspUrlResolver implements IUrlResolver {
             "",
             filePath,
             this.authRequestInfo,
-            true);
+            false);
         return this.driverUrlResolver.createCreateNewRequest(
             `https://${this.server}`, driveItem.drive, filePath, fileName);
     }

@@ -732,12 +732,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             term: this._deltaManager.referenceTerm,
         };
 
+        this._existing = true;
+
         await this.loadContext(attributes, snapshot, previousContextState);
 
         this.deltaManager.inbound.systemResume();
         this.deltaManager.inboundSignal.systemResume();
-
-        this._existing = true;
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
