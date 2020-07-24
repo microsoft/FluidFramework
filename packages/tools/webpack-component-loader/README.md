@@ -28,11 +28,9 @@ The following environment variables can be defined when running webpack-dev-serv
 ### Detached Container
 In all modes you can start with a detached container by appending #manualAttach to the url.
 
-If in side by side mode, only one side will be visable until attached.
+If in side by side mode, only one side will be visible until attached.
 
 Clicking the attach buttom will attach the container, and remove #manualAttach from the url.
-
-To use the detach flow for spo-df, you need to provide driveId also. eg. --env.driveId value
 
 ## Connecting to a remote server
 

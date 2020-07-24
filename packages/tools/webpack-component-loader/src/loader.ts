@@ -141,7 +141,6 @@ class WebpackCodeResolver implements IFluidCodeResolver {
  */
 async function createWebLoader(
     documentId: string,
-    packageJson: IFluidPackage,
     fluidModule: IFluidModule,
     options: RouteOptions,
     urlResolver: IUrlResolver,
@@ -150,7 +149,7 @@ async function createWebLoader(
     const documentServiceFactory = getDocumentServiceFactory(documentId, options);
     const codeLoader = new WebCodeLoader(new WebpackCodeResolver(options));
 
-    await codeLoader.seedModule(codeDetails, wrapIfComponentPackage(packageJson, fluidModule));
+    await codeLoader.seedModule(codeDetails, wrapIfComponentPackage(codeDetails.package as IFluidPackage, fluidModule));
 
     return new Loader(
         urlResolver,
@@ -172,14 +171,25 @@ export async function start(
     let url = window.location.href;
 
     /**
-     * For a new document, the `url` is of the format - http://localhost:8080/createNew.
+     * For a new document, the `url` we get from the router is of the format - http://localhost:8080/createNew.
      * So, we create a new `documentId` and replace the "createNew" in the `url` with the `documentId`.
      * We will replace the url in the browser with this `url` once loading is complete.
      */
-    let createNew: boolean = id === "createNew";
+    const createNew: boolean = id === "createNew";
     if (createNew) {
         documentId = moniker.choose();
         url = url.replace("createNew", documentId);
+    }
+
+    /**
+     * For "manualAttach", the `url` should be of the format - http://localhost:8080/createNew#manualAttach.
+     * "manualAttach" only works for new documents, i.e., "createNew" flow. So, if it's called for existing
+     * documents, we treat this as a "createNew". Replace the `documentId` in the `url` with `createNew` and
+     * reload the page.
+     */
+    const manualAttach = window.location.hash.toLocaleLowerCase().includes("manualattach");
+    if (manualAttach && !createNew) {
+        window.location.href = window.location.href.replace(documentId, "createNew");
     }
 
     const codeDetails: IFluidCodeDetails = {
@@ -189,7 +199,7 @@ export async function start(
     const urlResolver = new MultiUrlResolver(window.location.origin, documentId, options);
 
     // Create the loader that is used to load the Container.
-    const loader1 = await createWebLoader(documentId, packageJson, fluidModule, options, urlResolver, codeDetails);
+    const loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
     const container1Attached = new Deferred();
 
     // For a new document, this is called once loading is complete to replace the url in the address bar with the
@@ -200,12 +210,52 @@ export async function start(
     };
 
     let container1: Container;
-
-    if (window.location.hash.toLocaleLowerCase().includes("manualattach")) {
-        // Manual attach flow. Create a detached conatiner and attach it only after the user clicks the
-        // "Attach Container" button that is created below.
+    if (createNew) {
+        // For new documents, create a detached container which will be attached later.
         container1 = await loader1.createDetachedContainer(codeDetails);
+    } else {
+        // Load existing document flow. We try to load the container with the document id in the `url`.
+        container1 = await loader1.resolve({ url });
 
+        /**
+         * For existing documents, the container should already exist. If it doesn't, we treat this as the new
+         * document scenario. Replace the `documentId` with `createNew` and reload the page.
+         * Note that we have to reload the page because we can't use the same `documentId` as it is already created
+         * in `loader.resolve`.
+         */
+        if (!container1.existing) {
+            container1.close();
+            window.location.href = window.location.href.replace(documentId, "createNew");
+        } else {
+            container1Attached.resolve();
+        }
+    }
+
+    let leftDiv: HTMLDivElement = div;
+    let rightDiv: HTMLDivElement;
+
+    // For side by side mode, create two divs.
+    if (options.mode === "local" && !options.single) {
+        div.style.display = "flex";
+        leftDiv = makeSideBySideDiv("sbs-left");
+        rightDiv = makeSideBySideDiv("sbs-right");
+        div.append(leftDiv, rightDiv);
+    }
+
+    const reqParser = new RequestParser({ url });
+    const componentUrl = `/${reqParser.createSubRequest(3).url}`;
+
+    // Load and render the component.
+    await getComponentAndRender(container1, componentUrl, leftDiv);
+    // Handle the code upgrade scenario (which fires contextChanged)
+    container1.on("contextChanged", () => {
+        getComponentAndRender(container1, componentUrl, leftDiv).catch(() => { });
+    });
+
+    // Now that we have rendered the component, if the container is detached, attach it.
+    if (manualAttach) {
+        // In manual attach flow, we create an "Attach Container" button and only attach the container when the user
+        // clicks the button.
         const attachDiv = document.createElement("div");
         const attachButton = document.createElement("button");
         attachButton.innerText = "Attach Container";
@@ -224,53 +274,7 @@ export async function start(
                     console.error(error);
                 });
         };
-
-        // Set `createNew` to false because we already created a detached container and don't want to do it again.
-        createNew = false;
-    } else if (!createNew) {
-        // Load existing document flow. We try to load the container with the document id in the `url`.
-        container1 = await loader1.resolve({ url });
-
-        /**
-         * For existing document scenario, the container should already exist. If it doesn't, we treat this as the new
-         * document scenario. Replace the `documentId` with `createNew` and reload the page.
-         * Note that we can't use the same `documentId` because the document is already created in `loader.resolve`.
-         */
-        if (!container1.existing) {
-            container1.close();
-            window.location.href = window.location.href.replace(documentId, "createNew");
-        } else {
-            container1Attached.resolve();
-        }
-    }
-
-    // This is the new document flow. Create a detached container.
-    if (createNew) {
-        container1 = await loader1.createDetachedContainer(codeDetails);
-    }
-
-    let leftDiv: HTMLDivElement = div;
-    let rightDiv: HTMLDivElement;
-
-    // For side by side mode, create two divs.
-    if (options.mode === "local" && !options.single) {
-        div.style.display = "flex";
-        leftDiv = makeSideBySideDiv("sbs-left");
-        rightDiv = makeSideBySideDiv("sbs-right");
-        div.append(leftDiv, rightDiv);
-    }
-
-    const reqParser = new RequestParser({ url });
-    const componentUrl = `/${reqParser.createSubRequest(3).url}`;
-
-    await getComponentAndRender(container1, componentUrl, leftDiv);
-    // Handle the code upgrade scenario (which fires contextChanged)
-    container1.on("contextChanged", () => {
-        getComponentAndRender(container1, componentUrl, leftDiv).catch(() => { });
-    });
-
-    // Now that we have rendered the component, attach the detached container and replace the url in the address bar.
-    if (createNew) {
+    } else if (createNew) {
         const attachUrl = await urlResolver.createRequestForCreateNew(documentId);
         await container1.attach(attachUrl);
         replaceUrl();
@@ -288,7 +292,7 @@ export async function start(
         await container1Attached.promise;
 
         // Create a new loader that is used to load the second container.
-        const loader2 = await createWebLoader(documentId, packageJson, fluidModule, options, urlResolver, codeDetails);
+        const loader2 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
 
         // Create a new request url from the resolvedUrl of the first container.
         const requestUrl2 = await urlResolver.getAbsoluteUrl(container1.resolvedUrl, "");
