@@ -103,7 +103,8 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             latestSummary.term,
             latestSummary.protocolHead,
             opMessages,
-            true);
+            true,
+            false);
     }
 
     public async dispose(): Promise<void> {
