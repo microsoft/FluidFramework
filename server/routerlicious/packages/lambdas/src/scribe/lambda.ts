@@ -140,6 +140,11 @@ export class ScribeLambda extends SequencedLambda {
                     continue;
                 }
 
+                if (this.pendingMessages.length > 0 &&
+                    value.operation.sequenceNumber <= this.pendingMessages.peekBack().sequenceNumber) {
+                    continue;
+                }
+
                 // Add the message to the list of pending for this document and those that we need
                 // to include in the checkpoint
                 this.pendingMessages.push(value.operation);
@@ -380,7 +385,7 @@ export class ScribeLambda extends SequencedLambda {
         await this.messageCollection
             .deleteMany({
                 "documentId": this.documentId,
-                "operation.sequenceNumber": { $lte: this.protocolHead },
+                "operation.sequenceNumber": { $lte: checkpoint.protocolState.sequenceNumber },
                 "tenantId": this.tenantId,
             });
     }
