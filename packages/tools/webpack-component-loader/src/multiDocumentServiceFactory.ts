@@ -5,11 +5,10 @@
 
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
-import { LocalDocumentServiceFactory } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalSessionStorageDbFactory } from "@fluidframework/local-driver";
 import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
 import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
 import { RouteOptions } from "./loader";
-import { LocalSessionStorageDbFactory } from "./localSessionStorageDb";
 
 const deltaConns = new Map<string, ILocalDeltaConnectionServer>();
 
