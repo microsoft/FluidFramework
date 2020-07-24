@@ -60,7 +60,8 @@
     "@fluidframework/server-services-client": "^0.1010.0-0",
     "@fluidframework/server-services-core": "^0.1010.0-0",
     "@fluidframework/server-test-utils": "^0.1010.0-0",
-    "debug": "^4.1.1"
+    "debug": "^4.1.1",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
