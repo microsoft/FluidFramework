@@ -137,10 +137,7 @@ class WebpackCodeResolver implements IFluidCodeResolver {
 }
 
 /**
- * Create a loader and return it.
- * @param hostConfig - Config specifying the resolver/factory to be used.
- * @param pkg - A resolved package with cdn links.
- * @param scriptIds - The script tags the chaincode are attached to the view with.
+ * Create a loader with WebCodeLoader and return it.
  */
 async function createWebLoader(
     documentId: string,
