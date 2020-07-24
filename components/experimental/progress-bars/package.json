@@ -33,7 +33,6 @@
     "@fluidframework/framework-interfaces": "^0.23.0",
     "@fluidframework/map": "^0.23.0",
     "@fluidframework/runtime-definitions": "^0.23.0",
-    "@fluidframework/shared-object-base": "^0.23.0",
     "@fluidframework/view-interfaces": "^0.23.0",
     "@types/node": "^10.17.24",
     "bootstrap": "^3.3.7"

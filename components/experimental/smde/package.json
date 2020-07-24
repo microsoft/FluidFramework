@@ -41,7 +41,6 @@
     "@fluidframework/merge-tree": "^0.23.0",
     "@fluidframework/runtime-definitions": "^0.23.0",
     "@fluidframework/sequence": "^0.23.0",
-    "@fluidframework/shared-object-base": "^0.23.0",
     "@fluidframework/view-interfaces": "^0.23.0",
     "@types/simplemde": "^1.11.7",
     "marked": "^0.8.0",

@@ -9,11 +9,11 @@ import {
     IQueuedMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
+    ILogger,
 } from "@fluidframework/server-services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
 import { Provider } from "nconf";
-import * as winston from "winston";
 import { CheckpointManager } from "./checkpointManager";
 import { Context } from "./context";
 
@@ -29,11 +29,12 @@ export class Partition extends EventEmitter {
     private readonly context: Context;
 
     constructor(
-        id: number,
+        private readonly id: number,
         leaderEpoch: number,
         factory: IPartitionLambdaFactory,
         consumer: IConsumer,
-        config: Provider) {
+        config: Provider,
+        private readonly logger?: ILogger) {
         super();
 
         // Should we pass epoch with the context?
@@ -109,14 +110,15 @@ export class Partition extends EventEmitter {
         const drainedP = new Promise<void>((resolve, reject) => {
             // If not entries in the queue we can exit immediatley
             if (this.q.length() === 0) {
-                winston.info("No pending work exiting early");
+                this.logger?.info(`No pending work for partition ${this.id}. Exiting early`);
                 return resolve();
             }
 
             // Wait until the queue is drained
-            winston.info("Waiting for queue to drain");
+            this.logger?.info(`Waiting for queue to drain for partition ${this.id}`);
+
             this.q.drain = () => {
-                winston.info("Drained");
+                this.logger?.info(`Drained partition ${this.id}`);
                 resolve();
             };
         });

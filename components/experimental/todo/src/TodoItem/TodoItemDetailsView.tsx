@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import React from "react";
 import { TodoItemSupportedComponents } from "./supportedComponent";
@@ -15,7 +15,7 @@ interface TodoItemDetailsViewProperties {
 
 interface TodoItemDetailsViewState {
     hasInnerComponent: boolean;
-    innerComponent: IComponent;
+    innerComponent: IFluidObject;
 }
 
 export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProperties, TodoItemDetailsViewState> {

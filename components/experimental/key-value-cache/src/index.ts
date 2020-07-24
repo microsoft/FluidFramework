@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
-    IComponent,
+    IFluidObject,
     IComponentRouter,
     IRequest,
     IResponse,
@@ -24,11 +24,11 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
     IComponentRuntime,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
 import {
     IContainerRuntime,
 } from "@fluidframework/container-runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
@@ -54,7 +54,7 @@ declare module "@fluidframework/component-core-interfaces" {
     export interface IFluidObject extends Readonly<Partial<IProvideKeyValue>> { }
 }
 
-class KeyValue implements IKeyValue, IComponent, IComponentRouter {
+class KeyValue implements IKeyValue, IFluidObject, IComponentRouter {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const kevValue = new KeyValue(runtime);
         await kevValue.initialize();
@@ -137,7 +137,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
     }
 
     public instantiateComponent(context: IComponentContext): void {
-        const dataTypes = new Map<string, ISharedObjectFactory>();
+        const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 

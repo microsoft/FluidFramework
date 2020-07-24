@@ -13,11 +13,12 @@ import {
 import {
     IChannelAttributes,
     IComponentRuntime,
-    IObjectStorageService,
-    ISharedObjectServices,
+    IChannelStorageService,
+    IChannelServices,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
 import {
-    ISharedObjectFactory, SharedObject,
+    SharedObject,
 } from "@fluidframework/shared-object-base";
 import { debug } from "./debug";
 import {
@@ -33,7 +34,7 @@ const snapshotFileName = "header";
 /**
  * The factory that defines the SharedIntervalCollection
  */
-export class SharedIntervalCollectionFactory implements ISharedObjectFactory {
+export class SharedIntervalCollectionFactory implements IChannelFactory {
     public static readonly Type = "https://graph.microsoft.com/types/sharedIntervalCollection";
 
     public static readonly Attributes: IChannelAttributes = {
@@ -53,7 +54,7 @@ export class SharedIntervalCollectionFactory implements ISharedObjectFactory {
     public async load(
         runtime: IComponentRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<SharedIntervalCollection> {
         const map = new SharedIntervalCollection(id, runtime, attributes);
@@ -96,7 +97,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
      *
      * @returns a factory that creates and load SharedIntervalCollection
      */
-    public static getFactory(): ISharedObjectFactory {
+    public static getFactory(): IChannelFactory {
         return new SharedIntervalCollectionFactory();
     }
 
@@ -174,7 +175,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
 
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService) {
+        storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
 
         const data: string = header ? fromBase64ToUtf8(header) : undefined;

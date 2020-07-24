@@ -8,9 +8,9 @@ import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@fluidfra
 
 import { IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 import { PendingBoxcar, MaxBatchSize } from "./pendingBoxcar";
-import { tryImport } from "./tryImport";
+import { tryImportNodeRdkafka } from "./tryImport";
 
-const kafka = tryImport("node-rdkafka");
+const kafka = tryImportNodeRdkafka();
 
 /**
  * Kafka producer using the node-rdkafka library

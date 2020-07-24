@@ -1,9 +1,18 @@
 # Breaking changes
 
-- [Removed "collaborating" event on IComponentRuntime](#Remove-`collaborating`-event-on-IComponentRuntime)
+## 0.23 Breaking Changes
+- [Removed `collaborating` event on IComponentRuntime](#Removed-`collaborating`-event-on-IComponentRuntime)
+- [ISharedObjectFactory rename](#ISharedObjectFactory)
+- [LocalSessionStorageDbFactory moved to @fluidframework/local-driver](LocalSessionStorageDbFactory-moved-to-@fluidframework/local-driver)
 
 ### Removed `collaborating` event on IComponentRuntime
 Component Runtime no longer fires the collaborating event on attaching. Now it fires `attaching` event.
+
+### ISharedObjectFactory
+`ISharedObjectFactory` renamed to `IChannelFactory` and moved from `@fluidframework/shared-object-base` to `@fluidframework/component-runtime-definitions`
+
+### LocalSessionStorageDbFactory moved to @fluidframework/local-driver
+Previously, `LocalSessionStorageDbFactory` was part of the `@fluidframework/webpack-component-loader` package.  It has been moved to the `@fluidframework/local-driver` package.
 
 ## 0.22 Breaking Changes
 - [Deprecated `path` from `IComponentHandleContext`](#Deprecated-`path`-from-`IComponentHandleContext`)
