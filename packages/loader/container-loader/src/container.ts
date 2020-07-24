@@ -720,6 +720,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const blobs = new Map();
         if (previousContextState.snapshot !== undefined) {
             snapshot = await buildSnapshotTree(previousContextState.snapshot.entries, blobs);
+            this._existing = true;
         }
 
         if (blobs.size > 0) {
@@ -731,8 +732,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             sequenceNumber: this._deltaManager.lastSequenceNumber,
             term: this._deltaManager.referenceTerm,
         };
-
-        this._existing = true;
 
         await this.loadContext(attributes, snapshot, previousContextState);
 
