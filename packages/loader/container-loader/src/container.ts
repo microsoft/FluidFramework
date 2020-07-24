@@ -935,8 +935,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.loaded = true;
 
         // Propagate current connection state through the system.
-        const connected = this.connectionState === ConnectionState.Connected;
-        assert(!connected || this._deltaManager.connectionMode === "read");
         this.propagateConnectionState();
 
         if (!pause) {

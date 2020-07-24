@@ -6,7 +6,6 @@
 import fs from "fs";
 import path from "path";
 import express from "express";
-import moniker from "moniker";
 import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
 import { IOdspTokens, getServer } from "@fluidframework/odsp-utils";
@@ -30,7 +29,7 @@ const getThisOrigin = (options: RouteOptions): string => `http://localhost:${opt
 
 export const before = async (app: express.Application) => {
     app.get("/getclientsidewebparts", async (req, res) => res.send(await createManifestResponse()));
-    app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
+    app.get("/", (req, res) => res.redirect(`/createNew`));
 };
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: RouteOptions) => {

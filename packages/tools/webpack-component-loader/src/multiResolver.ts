@@ -96,9 +96,9 @@ export class MultiUrlResolver implements IUrlResolver {
         return this.urlResolver.resolve(request);
     }
 
-    public createRequestForCreateNew(
+    public async createRequestForCreateNew(
         fileName: string,
-    ): IRequest {
+    ): Promise<IRequest> {
         switch (this.options.mode) {
             case "r11s":
             case "docker":
@@ -107,11 +107,8 @@ export class MultiUrlResolver implements IUrlResolver {
 
             case "spo":
             case "spo-df":
-                return (this.urlResolver as OdspUrlResolver).createCreateNewRequest(
-                    `https://${this.options.server}`,
-                    this.options.driveId,
-                    "/r11s/",
-                    fileName);
+                const request = await (this.urlResolver as OdspUrlResolver).createCreateNewRequest(fileName);
+                return request;
 
             default: // Local
                 return (this.urlResolver as LocalResolver).createCreateNewRequest(fileName);

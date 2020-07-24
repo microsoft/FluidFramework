@@ -55,7 +55,15 @@ export class OdspUrlResolver implements IUrlResolver {
         return this.driverUrlResolver.getAbsoluteUrl(resolvedUrl, relativeUrl);
     }
 
-    public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest {
-        return this.driverUrlResolver.createCreateNewRequest(siteUrl, driveId, filePath, fileName);
+    public async createCreateNewRequest(fileName: string): Promise<IRequest> {
+        const filePath = "/r11s/";
+        const driveItem = await getDriveItemByRootFileName(
+            this.server,
+            "",
+            filePath,
+            this.authRequestInfo,
+            true);
+        return this.driverUrlResolver.createCreateNewRequest(
+            `https://${this.server}`, driveItem.drive, filePath, fileName);
     }
 }
