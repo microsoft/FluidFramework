@@ -276,7 +276,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
         }
     }
 
-    private setCore(value: any) {
+    private setCore(value: T) {
         this.data = value;
         this.emit("valueChanged", value);
     }
@@ -286,7 +286,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
         this.emit("delete");
     }
 
-    private toSerializable(value: any) {
+    private toSerializable(value: T | undefined) {
         if (value === undefined) {
             return value;
         }
