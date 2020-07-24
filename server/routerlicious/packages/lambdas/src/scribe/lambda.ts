@@ -380,7 +380,7 @@ export class ScribeLambda extends SequencedLambda {
         await this.messageCollection
             .deleteMany({
                 "documentId": this.documentId,
-                "operation.sequenceNumber": { $lte: this.protocolHead },
+                "operation.sequenceNumber": { $lte: checkpoint.protocolState.sequenceNumber },
                 "tenantId": this.tenantId,
             });
     }
