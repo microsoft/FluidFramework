@@ -8,38 +8,6 @@ import { ITestDbFactory } from "@fluidframework/server-test-utils";
 import uuid from "uuid";
 
 /**
- * A database factory for testing that stores data in the browsers session storage
- */
-export class LocalSessionStorageDbFactory implements ITestDbFactory {
-    public readonly testDatabase: IDb;
-    constructor(namespace: string) {
-        this.testDatabase = new LocalSessionStorageDb(namespace);
-    }
-    public async connect(): Promise<IDb> {
-        return Promise.resolve(this.testDatabase);
-    }
-}
-
-/**
- * A database for testing that stores data in the browsers session storage
- */
-class LocalSessionStorageDb extends EventEmitter implements IDb {
-    private readonly collections = new Map<string, LocalSessionStorageCollection<any>>();
-    constructor(private readonly namespace) {
-        super();
-    }
-    public async close(): Promise<void> {
-        return Promise.resolve();
-    }
-    public collection<T>(name: string): ICollection<T> {
-        if (!this.collections.has(name)) {
-            this.collections.set(name, new LocalSessionStorageCollection<T>(`${this.namespace}-db`, name));
-        }
-        return this.collections.get(name) as LocalSessionStorageCollection<T>;
-    }
-}
-
-/**
  * A collection for testing that stores data in the browsers session storage
  */
 class LocalSessionStorageCollection<T> implements ICollection<T> {
@@ -165,11 +133,13 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
     }
 
     private getAllInternal(): any[] {
-        const values = [];
+        const values: string[] = [];
         for (let i = 0; i < sessionStorage.length; i++) {
             const key = sessionStorage.key(i);
-            if (key.startsWith(this.collectionName)) {
-                values.push(JSON.parse(sessionStorage.getItem(key)));
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            if (key!.startsWith(this.collectionName)) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                values.push(JSON.parse(sessionStorage.getItem(key!)!));
             }
         }
         return values;
@@ -196,10 +166,12 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
             const queryKeys = Object.keys(query);
             for (let i = 0; i < sessionStorage.length; i++) {
                 const ssKey = sessionStorage.key(i);
-                if (!ssKey.startsWith(this.collectionName)) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                if (!ssKey!.startsWith(this.collectionName)) {
                     continue;
                 }
-                const value = JSON.parse(sessionStorage.getItem(ssKey));
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const value = JSON.parse(sessionStorage.getItem(ssKey!)!);
                 for (const qk of queryKeys) {
                     if (value[qk] !== query[qk]) {
                         continue;
@@ -210,5 +182,37 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         }
         // eslint-disable-next-line no-null/no-null
         return null;
+    }
+}
+
+/**
+ * A database for testing that stores data in the browsers session storage
+ */
+class LocalSessionStorageDb extends EventEmitter implements IDb {
+    private readonly collections = new Map<string, LocalSessionStorageCollection<any>>();
+    constructor(private readonly namespace) {
+        super();
+    }
+    public async close(): Promise<void> {
+        return Promise.resolve();
+    }
+    public collection<T>(name: string): ICollection<T> {
+        if (!this.collections.has(name)) {
+            this.collections.set(name, new LocalSessionStorageCollection<T>(`${this.namespace}-db`, name));
+        }
+        return this.collections.get(name) as LocalSessionStorageCollection<T>;
+    }
+}
+
+/**
+ * A database factory for testing that stores data in the browsers session storage
+ */
+export class LocalSessionStorageDbFactory implements ITestDbFactory {
+    public readonly testDatabase: IDb;
+    constructor(namespace: string) {
+        this.testDatabase = new LocalSessionStorageDb(namespace);
+    }
+    public async connect(): Promise<IDb> {
+        return Promise.resolve(this.testDatabase);
     }
 }
