@@ -79,6 +79,7 @@ import {
     SchedulerType,
     ISummaryTreeWithStats,
     ISummaryStats,
+    ISummarizerNode,
 } from "@fluidframework/runtime-definitions";
 import {
     ComponentSerializer,
@@ -583,7 +584,10 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     private latestSummaryAck: ISummaryContext;
     // back-compat: 0.22 summarizerNode - remove all summary trackers
     private readonly summaryTracker: SummaryTracker;
-    private readonly summarizerNode: SummarizerNode;
+    private readonly summarizerNode: {
+        readonly referenceSequenceNumber: number;
+        readonly createChild: (changeSequenceNumber: number, id: string) => ISummarizerNode;
+    } & ({ readonly enabled: true; readonly node: SummarizerNode } | { readonly enabled: false });
     private readonly notBoundedComponentContexts = new Set<string>();
 
     private tasks: string[] = [];
@@ -665,12 +669,27 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         );
 
         const changeSequenceNumber = this.deltaManager.lastSequenceNumber;
-        this.summarizerNode = context.baseSnapshot
+
+        const summarizerNode = context.baseSnapshot
             ? SummarizerNode.createRootFromSummary(
-                changeSequenceNumber, // latest change sequence number; at this point should match initialSequenceNumber
+                changeSequenceNumber, // latest change sequence number; at this point should = initialSequenceNumber
                 this.deltaManager.initialSequenceNumber, // summary reference sequence number
             )
             : SummarizerNode.createRootWithoutSummary(changeSequenceNumber);
+        if (this.runtimeOptions.enableSummarizerNode ?? false) {
+            this.summarizerNode = {
+                enabled: true,
+                node: summarizerNode,
+                get referenceSequenceNumber() { return this.node.referenceSequenceNumber; },
+                createChild(s: number, i: string) { return this.node.createChild(s, i); },
+            };
+        } else {
+            this.summarizerNode = {
+                enabled: false,
+                get referenceSequenceNumber() { return summarizerNode.referenceSequenceNumber; },
+                createChild: (s: number, i: string) => summarizerNode.createChild(s, i),
+            };
+        }
 
         // Extract components stored inside the snapshot
         const components = new Map<string, ISnapshotTree | string>();
@@ -1280,8 +1299,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
      * Returns a summary of the runtime at the current sequence number.
      */
     private async summarize(fullTree = false): Promise<ISummaryTreeWithStats> {
-        const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode ?? false;
-
         const summarizeCore = async () => {
             const builder = new SummaryTreeBuilder();
 
@@ -1293,7 +1310,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
                     return value.attachState === AttachState.Attached;
                 })
                 .map(async ([key, value]) => {
-                    const componentSummary = enableSummarizerNode
+                    const componentSummary = this.summarizerNode.enabled
                         ? await value.summarize(fullTree)
                         : convertToSummaryTree(await value.snapshot(fullTree), fullTree);
                     builder.addWithStats(key, componentSummary);
@@ -1307,8 +1324,8 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         // Both fullTree and throwOnFailure should be true for SummarizerNode.summarize args:
         // fullTree - prevents sending summary handle which would cause protocol to be included
         // throwOnFailure - want to throw on any component failure that was too severe to be handled
-        return enableSummarizerNode
-            ? await this.summarizerNode.summarize(summarizeCore, true, true) as ISummaryTreeWithStats
+        return this.summarizerNode.enabled
+            ? await this.summarizerNode.node.summarize(summarizeCore, true, true) as ISummaryTreeWithStats
             : summarizeCore();
     }
 
@@ -1478,7 +1495,9 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             return;
         }
 
-        this.summarizerNode.startSummary(summaryRefSeqNum);
+        if (this.summarizerNode.enabled) {
+            this.summarizerNode.node.startSummary(summaryRefSeqNum);
+        }
         try {
             await this.scheduleManager.pause();
 
@@ -1539,7 +1558,9 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             const clientSequenceNumber =
                 this.submitSystemMessage(MessageType.Summarize, summaryMessage);
 
-            this.summarizerNode.completeSummary(handle);
+            if (this.summarizerNode.enabled) {
+                this.summarizerNode.node.completeSummary(handle);
+            }
 
             return {
                 ...attemptData,
@@ -1551,7 +1572,9 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             };
         } finally {
             // Cleanup wip summary in case of failure
-            this.summarizerNode.clearSummary();
+            if (this.summarizerNode.enabled) {
+                this.summarizerNode.node.clearSummary();
+            }
             // Restart the delta manager
             this.scheduleManager.resume();
         }
@@ -1855,7 +1878,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     private async refreshLatestSummaryAck(
         proposalHandle: string | undefined,
         ackHandle: string,
-        trackerRefSeqNum: number, // back-compat: 0.22 summarizerNode - remove
+        trackerRefSeqNum: number, // back-compat summarizerNode - remove when fully enabled
         version?: IVersion,
     ) {
         if (trackerRefSeqNum < this.summaryTracker.referenceSequenceNumber) {
@@ -1864,38 +1887,40 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         this.latestSummaryAck = { proposalHandle, ackHandle };
 
-        // back-compat: 0.22 summarizerNode - remove all summary trackers
+        // back-compat summarizerNode - remove all summary trackers when fully enabled
         this.summaryTracker.refreshLatestSummary(trackerRefSeqNum);
 
-        const getSnapshot = async () => {
-            const perfEvent = PerformanceEvent.start(this.logger, {
-                eventName: "RefreshLatestSummaryGetSnapshot",
-                hasVersion: !!version, // expected in this case
-            });
-            const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
-            let snapshot: ISnapshotTree | undefined;
-            try {
-                const trace = Trace.start();
+        if (this.summarizerNode.enabled) {
+            const getSnapshot = async () => {
+                const perfEvent = PerformanceEvent.start(this.logger, {
+                    eventName: "RefreshLatestSummaryGetSnapshot",
+                    hasVersion: !!version, // expected in this case
+                });
+                const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
+                let snapshot: ISnapshotTree | undefined;
+                try {
+                    const trace = Trace.start();
 
-                const versionToUse = version ?? await this.getVersionFromStorage(ackHandle);
-                stats.getVersionDuration = trace.trace().duration;
+                    const versionToUse = version ?? await this.getVersionFromStorage(ackHandle);
+                    stats.getVersionDuration = trace.trace().duration;
 
-                snapshot = await this.getSnapshotFromStorage(versionToUse);
-                stats.getSnapshotDuration = trace.trace().duration;
-            } catch (error) {
-                perfEvent.cancel(stats, error);
-                throw error;
-            }
+                    snapshot = await this.getSnapshotFromStorage(versionToUse);
+                    stats.getSnapshotDuration = trace.trace().duration;
+                } catch (error) {
+                    perfEvent.cancel(stats, error);
+                    throw error;
+                }
 
-            perfEvent.end(stats);
-            return snapshot;
-        };
+                perfEvent.end(stats);
+                return snapshot;
+            };
 
-        await this.summarizerNode.refreshLatestSummary(
-            proposalHandle,
-            getSnapshot,
-            async <T>(id: string) => readAndParse<T>(this.storage, id),
-        );
+            await this.summarizerNode.node.refreshLatestSummary(
+                proposalHandle,
+                getSnapshot,
+                async <T>(id: string) => readAndParse<T>(this.storage, id),
+            );
+        }
     }
 
     private async getVersionFromStorage(versionId: string): Promise<IVersion> {
