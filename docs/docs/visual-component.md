@@ -61,20 +61,19 @@ To see an example of how a Fluid component can implement this interface, we will
 component that consists of a label with a number starting at `0` and a button that increments the displayed number for
 all users simultaneously.
 
-Over the course of this example, we will incrementally build out our entire component in one file. The final two
-versions of the code can be found at the bottom of each section. Each of these files define an entire, self-sufficient
+Over the course of this example, we will incrementally build out our entire component in one file. The Fluid Framework codebase offers two options for building views:
+
+- Option A: Using a robust, event-driven pattern that can be emulated for different view frameworks with `PrimedComponent`, and is also used to power pure data components
+- Option B: Using `SyncedComponent`, that provides UI framework-based scaffolding to reduce code writing specifically for view component developers. This is currently under development and only supports React but will be extended to Vue, Angular, and other frameworks in the future
+
+The final two versions of the code can be found at the bottom of each section. Each of these files define an entire, self-sufficient
 Fluid component that can be exported in its own package.
 
-First, we will look at how `Clicker` is set up such that it defines itself as a Fluid Component and uses a shared state.
-Then, we will take a look at two different ways of generating a view that responds to changes on that shared state when
-a user presses a button:
+## OPTION A: Event-Driven Views
 
-- Option A: Using a robust, event-driven pattern that can be emulated for different view frameworks.
-- Option B: Using a React adapter that React developers may find more familiar but uses experimental code that is still being developed.
+### Setting Up the Fluid Component
 
-## Setting Up the Fluid Component
-
-Before we do either of the options, we first need to do some common steps to say that `Clicker` is a Fluid component,
+Before we write our view, we first need to build the Fluid object, `PrimedComponent`, where the view will be rendered in,
 and bring in the necessary imports. Below is the initial code to get you started; we will incrementally build on this
 throughout the example. The final result of this file is sufficient to produce a standalone component, and can be
 supplied as the `main` script in your component `package.json`.
@@ -137,7 +136,7 @@ Awesome, now that we're up to speed with our code scaffolding, let's add the act
 use to keep track of multiple users clicking the button, and a rudimentary render function. Following that, we will link
 the two together.
 
-## Adding a SharedObject and a Basic View
+### Adding a SharedObject and a Basic View
 
 ```typescript
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
@@ -205,8 +204,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 }
 ```
 
-We then implement the second mandatory function, `render(elm: HTMLElement)`, by calling the `ReactDOM.render` function
-and returning an empty div for now.
+We then implement the second mandatory function, `render(elm: HTMLElement)`, by calling the `ReactDOM.render` function and returning an empty div for now.
 
 ```typescript
 public render(elm: HTMLElement) {
@@ -218,26 +216,9 @@ public render(elm: HTMLElement) {
 }
 ```
 
-Now that we can start using the SharedCounter DDS and have labeled this component as one that provides a view, we can
-start filling out the view itself and how it updates to changes in DDS'.
+Now that we can start using the SharedCounter DDS and have labeled this component as one that provides a view, we can start filling out the view itself and how it updates to changes in DDS'.
 
-## Creating the View
-
-Now, we have two choices for crafting our view.
-
-The recommended choice currently is to use event-driven views. This ties events that are fired on `SharedObject` changes
-to trigger re-renders for any view framework. When using React, instead of needing to re-render, we can simply call
-`setState` with the new value.
-
-There is a also a new, experimental Fluid React library that React developers may find easier to use since it abstracts
-much of the event-driven state update logic, but it is a still a WiP for scenarios such as cross-component relationships
-and may be unstable. However, we can use it for standalone components such as this. It is still recommended to read the
-event-driven case even if you choose to apply the Fluid React libraries to understand the logic that is happening
-beneath the abstraction the libraries provide.
-
-### OPTION A: Event-Driven Views
-
-#### Setting Up The Counter
+### Setting Up The Counter
 
 Now that we have all of our scaffolding ready, we can actually start adding in the logic of creating an instance of the
 `SharedCounter` object. Let's take a look at what this entails.
@@ -351,7 +332,7 @@ us an instance of the same `SharedCounter` we had set in `componentInitializingF
 In a nutshell, this means that `this._counter` is the same instance of `SharedCounter` for all of the clients that share
 the same `root`.
 
-#### Creating the view
+### Creating the view
 
 Alright, now for the moment you've been waiting for, connecting the counter to the view.
 
@@ -528,198 +509,229 @@ be hooked up to different React views, and UI callbacks on these views can then 
 
 ::: warning
 
-The following code uses dependencies that are very experimental and may be unstable.
+The following code uses dependencies that are currently under development and may be unstable.
 
 :::
 
-Now we are going to take the scaffolding that we set up earlier and add in our React libraries to tie our synced state
-update to our local React state update. If you read through Option A, you will see that the Fluid React libraries will
-now handle much of the event-listening logic that we wrote earlier.
+In the following example, we will see how we can use `SyncedComponent` and Fluid's own custom React hooks to build our `Clicker` with a functional view in less than 50 lines of total code!
 
-##### Final code
+### Setting Up the Fluid Component
+
+Before we write our view, we first need to build the Fluid object, `SyncedComponent`, where the view will be rendered in. If you read through Part A, you will see that many of the additional steps, such as the component lifecycle methods, handle management, and event listening, that we needed to write before reaching our view render will now be abstracted.
+
+Below is the initial code to get you started; we will incrementally build on this throughout the example. The final result of this file is sufficient to produce a standalone component, and can be supplied as the `main` script in your component `package.json`.
+
+Alright, lets take a look at some initial scaffolding.
 
 ```typescript
-import {
-    PrimedComponent,
-    PrimedComponentFactory,
-} from "@fluidframework/aqueduct";
-import {
-    FluidReactComponent,
-    IFluidFunctionalComponentFluidState,
-    IFluidFunctionalComponentViewState,
-    FluidToViewMap,
-} from "@fluidframework/react";
+import { PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { SyncedComponent } from "@fluidframework/react";
+export class ClickerWithHook extends SyncedComponent {
+}
+
+export const ClickerWithHookInstantiationFactory = new PrimedComponentFactory(
+    "clicker-with-hook",
+    ClickerWithHook,
+    [/* SharedObject dependencies will go here */],
+    {},
+);
+export const fluidExport = ClickerWithHookInstantiationFactory;
+```
+
+This will be pretty much all of the scaffolding you will need before writing your view! And we're already compiling!
+Let's take a quick summary of what we've written though before adding our DDS and rendering our view.
+
+
+```typescript
+export class ClickerWithHook extends SyncedComponent
+```
+
+By extending the abstract `SyncedComponent` class, we have actually let it do a lot of the necessary set up work for us through its constructor. We will see how we can start adding synced states in its constructor for our views in the next section. The `SyncedComponent` also provides the `render(div: HTMLElement)` function to render our view in and automatically implements the `IComponentHTMLView` interface.
+
+```typescript
+export const ClickerWithHookInstantiationFactory = new PrimedComponentFactory(
+    "clicker-with-hook",
+    ClickerWithHook,
+    [/* SharedObject dependencies will go here */],
+    {},
+);
+export const fluidExport = ClickerWithHookInstantiationFactory;
+```
+These two lines in combination allow the Clicker component to be consumed as a Fluid component. While the first two
+parameters that `PrimedComponentFactory` takes in simply define `Clicker`'s name and pass the class itself, the third
+parameter is important to keep in mind for later as it will list the Fluid DDS' (Distributed Data Structures) that
+`Clicker` utilizes.
+
+For those that read Option A, `SyncedComponent` is a child class of `PrimedComponent` that is targeted specifically for synced views, so we can use the same factory here. The component lifecycle methods of the latter are also still available but their use is automatically handled for you in most scenarios.
+
+Finally, the last line consisting of an exported `fluidExport` variable is what Fluid containers look for in order to instantiate this component using the factory it provides.
+
+Awesome, now that we're up to speed with our code scaffolding, let's add the actual counter data structure that we will use to keep track of multiple users clicking the button, and a rudimentary render function. Following that, we will link the two together.
+
+
+### Setting Up The Counter
+
+Now that we have all of our scaffolding ready, we can actually start adding in the logic to set up our synced counter that will track the number of times users have clicked the button. We'll also render an empty view for now, and then connect the counter to the view in the next section. Let's take a look at what this first part entails.
+
+```typescript
+import { PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { SyncedComponent, setSyncedCounterConfig } from "@fluidframework/react";
 import { SharedCounter } from "@fluidframework/counter";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
-
-interface CounterState {
-    counter?: SharedCounter;
-}
-
-type CounterViewState = IFluidFunctionalComponentViewState & CounterState;
-type CounterFluidState = IFluidFunctionalComponentFluidState & CounterState;
-
-
-export class Clicker extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
-
-    public render(element: HTMLElement) {
-        const fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map();
-        fluidToView.set("counter", {
-            sharedObjectCreate: SharedCounter.create,
-            listenedEvents: ["incremented"],
-        });
-
-        ReactDOM.render(
-            <CounterReactView
-                syncedStateId={"clicker"}
-                root={this.root}
-                dataProps={{
-                    fluidComponentMap: new Map(),
-                    runtime: this.runtime,
-                }}
-                fluidToView={fluidToView}
-            />,
-            element,
-        );
-        return element;
-    }
-}
-
-class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
+import ReactDOM from "react-dom";
+import React from "react";
+export class ClickerWithHook extends SyncedComponent {
     constructor(props) {
         super(props);
-        this.state = {};
+        setSyncedCounterConfig(this, "counter-with-hook");
     }
 
-    render() {
-        return (
-            <div>
-                <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
-                    {this.state.counter?.value}
-                </span>
-                <button onClick={() => { this.state.counter?.increment(1); }}>+</button>
-            </div>
+    public render(div: HTMLElement) {
+        ReactDOM.render(
+            <div/>,
+            div,
         );
+        return div;
     }
 }
 
-export const ClickerInstantiationFactory = new PrimedComponentFactory(
-    ClickerName,
-    Clicker,
+export const ClickerWithHookInstantiationFactory = new PrimedComponentFactory(
+    "clicker-with-hook",
+    ClickerWithHook,
     [SharedCounter.getFactory()],
     {},
 );
-export const fluidExport = ClickerInstantiationFactory;
+export const fluidExport = ClickerWithHookInstantiationFactory;
 ```
 
-Let's take this in parts to understand the link between the Fluid Component and the view that we establish here.
+Three pieces of logic were added here:
+- `setSyncedCounterConfig(this, "counter-with-hook")` - This prepares a synced counter for our view to use. It will be set on the ID `counter-with-hook`, which we will use later in our view to refer back to this counter. For each separate counter state that we want to track in our view, we need to call this helper function with a unique ID. There are similar helper functions for different types of synced states such as `setSyncedStringConfig`, `setSyncedArrayConfig<T>`, and a generic `setSyncedObjectConfig<T>` which you can use depending on the type of data your view needs synced.
+- `render(div: HTMLElement)` - This function provides a `div` that we can easily pass to `ReactDOM.render` to begin rendering our view! We will just show an empty `div` for now but this is where our React application will go.
+- `[SharedCounter.getFactory()]` - This line was added to the factory to let it know that this component requires the SharedCounter DDS that will be powering our synced counter. This only needs to be added once for each type of DDS that we need. i.e. if we wanted to add another counter, we do not need to add this line again. However, if we wanted to add a synced string with `setSyncedStringConfig`, we need to add `SharedString.getFactory()` to this array. Using `setSyncedObjectConfig<T>` does not require any added DDS dependencies here since the SharedMap that powers it is provided by default.
 
-First, let's just take a look at the interfaces our view will be using.
+
+### Writing the view
+
+And that's it for our setup! We can now write our view!
+
+If you read through Option A, you will see that the Fluid React libraries will
+now handle much of the event-listening logic that we had to write with `PrimedComponent`.
 
 ```typescript
-interface CounterState {
-    counter?: SharedCounter;
+interface ICounterReactHookProps {
+    syncedComponent: SyncedComponent
 }
 
-type CounterViewState = IFluidFunctionalComponentViewState & CounterState;
-type CounterFluidState = IFluidFunctionalComponentFluidState & CounterState;
-```
-
-The `CounterViewState` and `CounterFluidState` here both have the `counter` available. The former is what will be used
-by our React views to render, whereas the latter is used for managing the synced state on our `root`. In the case of a
-simple example like this, they are largely the same apart from extending from two different base classes provided by the
-framework. They can be different in more involved examples where we want to abstract Fluid DDS objects out of the
-interface consumed by our views, so that they can exist without requiring Fluid knowledge.
-
-Now, let us break down the `render` function to see how the relationship between these two states is set.
-
-```typescript
-public render(element: HTMLElement) {
-    const fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map();
-    fluidToView.set("counter", {
-        sharedObjectCreate: SharedCounter.create,
-        listenedEvents: ["incremented"],
-    });
-
-    ReactDOM.render(
-        <CounterReactView
-            syncedStateId={"clicker"}
-            root={this.root}
-            dataProps={{
-                fluidComponentMap: new Map(),
-                runtime: this.runtime,
-            }}
-            fluidToView={fluidToView}
-        />,
-        element,
+function CounterWithHook(props: ICounterReactHookProps) {
+    const [value, reducer] = useSyncedCounter(props.syncedComponent, "counter-with-hook");
+    return (
+        <div>
+            <span className="value">
+                {value}
+            </span>
+            <button onClick={() => reducer.increment(1)}>
+                +
+            </button>
+        </div>
     );
-    return element;
 }
 ```
 
-Here, we construct a `fluidToView` mapping to describe the relationship between `counter` in the view state and
-`counter` in the Fluid state. If this is the first time this component is being rendered, it will use the callback in
-`sharedObjectCreate` to initialize the `SharedCounter` object on the synced state. Any returning clients will
-automatically fetch this stored value, convert it from a handle to the component itself, and pass it into the view
-state.
-
-We also pass in the `listenedEvents` parameter to indicate which events on this Fluid state value should trigger a state
-update. Here we pass in `"incremented"` as we want the view to refresh when the user increments.
-
-This also optionally takes in `stateKey`, `viewConverter`, and `rootKey` parameters to handle cases where the view and
-fluid states do not match, but they are not needed here.
-
-If you read Option A above, you will notice that we no longer need to set up the `SharedCounter` in the component
-lifecycle and that we only have the `render` function now. This is because this initialization is happening within the
-React lifecycle, and the `SharedCounter` instance will be made available through a state update after it finishes
-initializing. This is why you see that `CounterState` is defined as `{counter?: SharedCounter}` instead of `{counter:
-SharedCounter}`. Prior to initialization, `state.counter` will return undefined.
-
-Okay, now we have everything necessary to pass in as props to our `CounterReactView`.
-
-- `syncedStateId` - This should be unique for each component that shares the same root, i.e. if there was another
-  clicker being render alongside this one in this component, it should receive its own ID to prevent one from
-  interfering in the updates of the other
-- `root` - The same `SharedDirectory` provided by `this.root` from `PrimedComponent`
-- `dataProps.fluidComponentMap` - This can just take a new `Map` instance for now but will need to be filled when
-  establishing multi-component relationships in more complex cases. This map is where all the DDS' that we use are
-  stored after being fetched from their handles, and it used to make the corresponding component synchronously available
-  in the view.
-- `dataProps.runtime` - The same `ComponentRuntime` provided by `this.runtime` from `PrimedComponent`
-- `fluidToView` - The fluidToView relationship map we set up above.
-
-We're ready to go through our view, which is now super simple due to the setup we did in the Fluid component itself.
+Let's walk through this in parts:
+```typescript
+interface ICounterReactHookProps {
+    syncedComponent: SyncedComponent
+}
+```
+These props are how the view is linked to the counter we set up on our `SyncedComponent`. Here we see it passed in directly as a prop since this is a small, tutorial example but this can also be passed through React contexts in larger scale applications.
 
 ```typescript
-class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
+function CounterWithHook(props: ICounterReactHookProps)
+```
+Our view is written here as a functional component since we are using Fluid hooks. This can also be written as a class-based component using the `FluidReactComponent` import.
+
+```typescript
+const [value, reducer] = useSyncedCounter(props.syncedComponent, "counter-with-hook");
+```
+The `useSyncedCounter` hook, provided from the `@fluidframework/react` package, allows us to retrieve our counter that we stored in our parent `SyncedComponent` under the ID `counter-with-hook`. Each of the setXConfig helper functions have their own corresponding hook, i.e. `useSyncedString`, `useSyncedArray<T>`, `useSyncedObject<T>`, etc. can be found in `@fluidframework/react`.
+
+*It is important to pick the correct hook for your data's purposes as they are powered by different DDS' which provide unique syncing logic.*
+
+ While it may be tempting to use `useSyncedObject<T>` for everything, it is setting an arbitrary `T` primitive or object on a SharedMap. As such, if we store a number to track our counter using `useSyncedObject<number>`, it will correctly set the new numbers on a map but it will not know how to handle the scenario where two people both try to increment at *exactly* the same time. For example, if the counter was at 0, it will try to set the value to 1 for both users on their SharedMap. What we actually want though if for both users to cause the counter to increment, which should result in a value of 2. This is why we use `useSyncedCounter` here instead, as SharedCounter is the DDS that knows how to handle the logic for simultaneous increments of the counter. Similarly, `useSyncedString` knows how to handle multiple people typing concurrently and can be easily rendered using `CollaborativeInput` or `CollaborativeTextArea`. Please see the [LikesAndComments example](../../components/experimental/likes-and-comments/README.md) to see how to use multiple different DDS hooks together with local React state.
+
+Here, our `useSyncedCounter` hook returns to us the value of the `SharedCounter` powering it and a reducer of functions to interact with, containing the increment function we need.
+
+And now, all that's left is to render our clicker!
+
+```typescript
+<div>
+    <span className="value">
+        {value}
+    </span>
+    <button onClick={() => reducer.increment(1)}>
+        +
+    </button>
+</div>
+```
+
+This will render the `value` in the span label and automatically increment that value when the user presses the `+` button.
+
+And we're done! Let's just put everything together.
+
+### Final Code
+
+```typescript
+import { PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { SyncedComponent, setSyncedCounterConfig, useSyncedCounter } from "@fluidframework/react";
+import { SharedCounter } from "@fluidframework/counter";
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+
+interface ICounterReactHookProps {
+    syncedComponent: SyncedComponent
+}
+
+function CounterWithHook(props: ICounterReactHookProps) {
+    const [value, reducer] = useSyncedCounter(props.syncedComponent, "counter-with-hook");
+    return (
+        <div>
+            <span className="value">
+                {value}
+            </span>
+            <button onClick={() => reducer.increment(1)}>
+                +
+            </button>
+        </div>
+    );
+}
+
+export class ClickerWithHook extends SyncedComponent {
     constructor(props) {
         super(props);
-        this.state = {};
+        setSyncedCounterConfig(this, "counter-with-hook");
     }
-
-    render() {
-        return (
+    public render(div: HTMLElement) {
+        ReactDOM.render(
             <div>
-                <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
-                    {this.state.counter?.value}
-                </span>
-                <button onClick={() => { this.state.counter?.increment(1); }}>+</button>
-            </div>
+                <CounterWithHook
+                    syncedComponent={this}
+                />
+            </div>,
+            div,
         );
+        return div;
     }
 }
+export const ClickerWithHookInstantiationFactory = new PrimedComponentFactory(
+    "clicker-with-hook",
+    ClickerWithHook,
+    [SharedCounter.getFactory()],
+    {},
+);
+export const fluidExport = ClickerWithHookInstantiationFactory;
 ```
 
-We can see that the state is initially empty as it only consists of the `SharedCounter` DDS, and we know the
-`FluidReactComponent` will be handling the loading of that since we passed it as a key in the `fluidToView` map.
+All we did here was render our new functional view in the `render` function of our parent SyncedComponent. And, as promised, we have a Clicker with a view powered by a SharedCounter DDS in less than 50 lines!
 
-The view itself can now directly use the `this.state.counter.value` and we can update it by simply using
-`this.state.counter.increment(1)`. This will directly update the `this.state.counter.value` without needing any event
-listeners to be additionally set up. And there you have it, a synced clicker with persistent state without needing to
-directly use IComponentHandles or set up event listeners!
+### Takeaways
 
-We can extend this example to other DDS' by passing in their corresponding `create` functions in and listening to their
-respective events.
+A good way to think about `SyncedComponent` is as the data store for your synced React view powered by Fluid. All DDS' that will power your views will live here and can be easily set using the `setSyncedXConfig` helper functions that are available. Alternatively, you can also set your own custom configurations by calling `this.setFluidConfig`. Please see the [clicker-reducer example](../../components/experimental/clicker-react/clicker-reducer/README.md) to see how to build your own custom schema definitions and use them with the `useReducerFluid` hook. Fluid also provides a synced corrollary to the`React.useState` hook with the `useStateFluid` hook, that you can also pair with your own schema configurations for simpler applications that do not necessarily need reducers. Please see the [clicker-functional example](../../components/experimental/clicker-react/clicker-functional/README.md) to see how that can be done. The DDS-specific hooks simply provide wrappers around these, allowing you to easily start using DDS' by automatically configuring your `SyncedComponent` using pre-set mappings. Finally, if you would like to use class-based React views, please see the  [clicker-react example](../../components/experimental/clicker-react/clicker-react/README.md) to see how to use the `FluidReactComponent` class, which provides a synced `state` and `setState` for your view to use.
