@@ -8,3 +8,4 @@ export * from "./localDocumentDeltaConnection";
 export * from "./localDocumentService";
 export * from "./localDocumentServiceFactory";
 export * from "./localResolver";
+export * from "./localSessionStorageDb";
