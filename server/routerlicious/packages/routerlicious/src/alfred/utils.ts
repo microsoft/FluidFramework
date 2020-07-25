@@ -11,3 +11,24 @@ import { Params } from "express-serve-static-core";
 export function getParam(params: Params, key: string) {
     return Array.isArray(params) ? undefined : params[key];
 }
+
+export function getTenantIdFromRequest(params: Params) {
+    if (getParam(params, "tenantId") !== undefined) {
+        return getParam(params, "tenantId");
+    }
+    if (getParam(params, "id") !== undefined) {
+        return getParam(params, "id");
+    }
+
+    return "-";
+}
+
+export function isValidJson(message: string) {
+    let item;
+    try {
+        item = JSON.parse(message);
+    } catch (e) {
+        return item;
+    }
+    return item;
+}

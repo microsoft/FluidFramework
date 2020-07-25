@@ -8,6 +8,8 @@ import * as bodyParser from "body-parser";
 import express from "express";
 import morgan from "morgan";
 import * as winston from "winston";
+// eslint-disable-next-line import/no-internal-modules
+import { getTenantIdFromRequest, isValidJson } from "../alfred/utils";
 import * as api from "./api";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -17,7 +19,12 @@ const split = require("split");
  * Basic stream logging interface for libraries that require a stream to pipe output to (re: Morgan)
  */
 const stream = split().on("data", (message) => {
-    winston.info(message);
+    const logObject = isValidJson(message);
+    if (logObject !== undefined) {
+        winston.info(message, { logObject });
+    } else {
+        winston.info(message);
+    }
 });
 
 export function create(
@@ -36,7 +43,23 @@ export function create(
 
     // View engine setup.
     app.set("view engine", "hjs");
-
+    if (loggerFormat === "json") {
+        app.use(morgan((tokens, req, res) => {
+            const requestLogObject = {
+                method: tokens.method(req, res),
+                url: tokens.url(req, res),
+                status: tokens.status(req, res),
+                contentLength: tokens.res(req, res, "content-length"),
+                responseTime: tokens["response-time"](req, res),
+                tenantId: getTenantIdFromRequest(req.params),
+                serviceName: "riddler",
+                eventName: "http_requests",
+             };
+             return JSON.stringify(requestLogObject);
+        }, { stream }));
+    } else {
+        app.use(morgan(loggerFormat, { stream }));
+    }
     app.use(morgan(loggerFormat, { stream }));
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
