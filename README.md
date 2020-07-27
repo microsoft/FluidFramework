@@ -57,9 +57,10 @@ git clone https://github.com/microsoft/FluidFramework.git
 cd FluidFramework
 ```
 
-Run the following to build the client packages:
+Run the following to build the client packages.  Note that the first command is an auth helper to obtain tokens for the required package repository, and only works on a Windows machine:
 
 ```shell
+npx --package vsts-npm-auth@latest vsts-npm-auth -config .npmrc
 npm install
 npm run build:fast
 ```
