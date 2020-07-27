@@ -17,6 +17,6 @@ Write-Output "===================================npm build:fast --all"
 npm run build:fast -- --nolint --all
 
 Write-Output "===================================npm build:fast --all -s build:docs"
-npm run build:fast -- --nolint --all -s build:docs
+npm run build:fast -- --nolint --all -s build -s build:docs
 
 Pop-Location

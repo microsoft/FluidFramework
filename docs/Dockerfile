@@ -5,6 +5,7 @@
 # docker build -f .\docs\Dockerfile --target docs -t fluid:docs .
 
 # To get content out of the image, use these commands:
+# docker build -f .\docs\Dockerfile --target docs -t fluid:docs --build-arg VUEPRESS_BASE="/" --build-arg THIS_VERSION=0.21 --build-arg MASTER_BRANCH_VERSION=0.23 --build-arg RELEASE_VERSION=0.22 --build-arg N1_VERSION=0.21 . --no-cache
 
 # 1. create a temporary writeable image
 # docker create -ti --name dummy fluid:docs bash
