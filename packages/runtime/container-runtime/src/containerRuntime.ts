@@ -725,6 +725,16 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             this.summaryManager.setConnected(this.context.clientId!);
         }
 
+        this.deltaManager.on("readonly", (readonly: boolean) => {
+            // we accumulate ops while being in read-only state.
+            // once user gets write permissions and we have active connection, flush all pending ops.
+            assert(readonly === this.deltaManager.readonly);
+            if (this.connected && !readonly)
+            {
+                this.pendingStateManager.replayPendingStates();
+            }
+        });
+
         ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
@@ -899,7 +909,10 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             this.updateDocumentDirtyState(false);
         }
 
-        this.pendingStateManager.setConnectionState(connected);
+        if (connected && this.deltaManager.readonly !== true)
+        {
+            this.pendingStateManager.replayPendingStates();
+        }
 
         for (const [component, componentContext] of this.contexts) {
             try {
@@ -1576,23 +1589,23 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     public submitComponentOp(
         id: string,
         contents: any,
-        localOpMetadata: unknown = undefined): number {
+        localOpMetadata: unknown = undefined): void {
         const envelope: IEnvelope = {
             address: id,
             contents,
         };
-        return this.submit(ContainerMessageType.ComponentOp, envelope, localOpMetadata);
+        this.submit(ContainerMessageType.ComponentOp, envelope, localOpMetadata);
     }
 
     private submit(
         type: ContainerMessageType,
         content: any,
-        localOpMetadata: unknown = undefined): number {
+        localOpMetadata: unknown = undefined): void {
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
 
-        if (this.connected) {
+        if (this.connected && this.deltaManager.readonly !== true) {
             const serializedContent = JSON.stringify(content);
             const maxOpSize = this.context.deltaManager.maxMessageSize;
 
@@ -1631,8 +1644,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }
-
-        return clientSequenceNumber;
     }
 
     private submitChunkedMessage(type: ContainerMessageType, content: string, maxOpSize: number): number {

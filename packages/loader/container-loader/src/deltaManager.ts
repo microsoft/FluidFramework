@@ -569,7 +569,7 @@ export class DeltaManager
         // const maxOpSize = this.context.deltaManager.maxMessageSize;
 
         if (this.readonly) {
-            this.logger.sendErrorEvent({ eventName: "SubmitOpReadOnly", type });
+            this.close(CreateContainerError("Op is sent in read-only document state"));
             return -1;
         }
 

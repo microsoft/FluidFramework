@@ -245,13 +245,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * also sent if we are asked to resubmit the message.
      * @returns Client sequence number
      */
-    protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): number {
+    protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
         if (!this.isAttached()) {
-            return -1;
+            return;
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.services!.deltaConnection.submit(content, localOpMetadata);
+        this.services!.deltaConnection.submit(content, localOpMetadata);
     }
 
     /**

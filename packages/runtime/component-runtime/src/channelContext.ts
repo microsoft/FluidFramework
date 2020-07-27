@@ -29,7 +29,7 @@ export interface IChannelContext {
 export function createServiceEndpoints(
     id: string,
     connected: boolean,
-    submitFn: (content: any, localOpMetadata: unknown) => number,
+    submitFn: (content: any, localOpMetadata: unknown) => void,
     dirtyFn: () => void,
     storageService: IDocumentStorageService,
     tree?: Promise<ISnapshotTree>,
@@ -39,7 +39,7 @@ export function createServiceEndpoints(
         id,
         connected,
         (message, localOpMetadata) => {
-            return submitFn(message, localOpMetadata);
+            submitFn(message, localOpMetadata);
         },
         dirtyFn);
     const objectStorage = new ChannelStorageService(tree, storageService, extraBlobs);
