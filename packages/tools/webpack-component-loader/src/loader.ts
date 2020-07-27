@@ -171,26 +171,23 @@ export async function start(
     let url = window.location.href;
 
     /**
-     * For a new document, the `url` we get from the router is of the format - http://localhost:8080/createNew.
-     * So, we create a new `documentId` and replace the "createNew" in the `url` with the `documentId`.
+     * For new documents, the `url` is of the format - http://localhost:8080/<autoCreate/manualCreate>.
+     * So, we create a new `documentId` and replace the last part in the `url` with the `documentId`.
      * We will replace the url in the browser with this `url` once loading is complete.
      */
-    const createNew: boolean = id === "createNew";
-    if (createNew) {
+    const autoCreate: boolean = id === "autoCreate";
+    const manualCreate: boolean = id === "manualCreate";
+    if (autoCreate || manualCreate) {
         documentId = moniker.choose();
-        url = url.replace("createNew", documentId);
+        url = url.replace(id, documentId);
     }
 
-    /**
-     * For "manualAttach", the `url` should be of the format - http://localhost:8080/createNew#manualAttach.
-     * "manualAttach" only works for new documents, i.e., "createNew" flow. So, if it's called for existing
-     * documents, we treat this as a "createNew". Replace the `documentId` in the `url` with `createNew` and
-     * reload the page.
-     */
-    const manualAttach = window.location.hash.toLocaleLowerCase().includes("manualattach");
-    if (manualAttach && !createNew) {
-        window.location.href = window.location.href.replace(documentId, "createNew");
-    }
+    // For new documents, this is called once loading is complete to replace the url in the address bar with the
+    // new `url` with the `documentId`.
+    const replaceUrl = () => {
+        window.history.replaceState({}, "", url);
+        document.title = documentId;
+    };
 
     const codeDetails: IFluidCodeDetails = {
         package: packageJson,
@@ -202,30 +199,23 @@ export async function start(
     const loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
     const container1Attached = new Deferred();
 
-    // For a new document, this is called once loading is complete to replace the url in the address bar with the
-    // new `url` with the `documentId`.
-    const replaceUrl = () => {
-        window.history.replaceState({}, "", url);
-        document.title = documentId;
-    };
-
     let container1: Container;
-    if (createNew) {
+    if (autoCreate || manualCreate) {
         // For new documents, create a detached container which will be attached later.
         container1 = await loader1.createDetachedContainer(codeDetails);
     } else {
-        // Load existing document flow. We try to load the container with the document id in the `url`.
+        // For existing documents, we try to load the container with the document id in the `url`.
         container1 = await loader1.resolve({ url });
 
         /**
          * For existing documents, the container should already exist. If it doesn't, we treat this as the new
-         * document scenario. Replace the `documentId` with `createNew` and reload the page.
+         * document scenario. Replace the `documentId` with `autoCreate` and reload the page.
          * Note that we have to reload the page because we can't use the same `documentId` as it is already created
          * in `loader.resolve`.
          */
         if (!container1.existing) {
             container1.close();
-            window.location.href = window.location.href.replace(documentId, "createNew");
+            window.location.href = window.location.href.replace(documentId, "autoCreate");
         } else {
             container1Attached.resolve();
         }
@@ -253,8 +243,8 @@ export async function start(
     });
 
     // Now that we have rendered the component, if the container is detached, attach it.
-    if (manualAttach) {
-        // In manual attach flow, we create an "Attach Container" button and only attach the container when the user
+    if (manualCreate) {
+        // In manual create flow, we create an "Attach Container" button and only attach the container when the user
         // clicks the button.
         const attachDiv = document.createElement("div");
         const attachButton = document.createElement("button");
@@ -269,12 +259,11 @@ export async function start(
                     container1Attached.resolve();
                     attachDiv.remove();
                     replaceUrl();
-                    window.location.hash = "";
                 }, (error) => {
                     console.error(error);
                 });
         };
-    } else if (createNew) {
+    } else if (autoCreate) {
         const attachUrl = await urlResolver.createRequestForCreateNew(documentId);
         await container1.attach(attachUrl);
         replaceUrl();
@@ -283,7 +272,7 @@ export async function start(
 
     // For side by side mode, we need to create a second container and component.
     if (rightDiv) {
-        // In manual attach scenario, we display this message in the right div until the user clicks on the
+        // In manual create scenario, we display this message in the right div until the user clicks on the
         // "Attach Container" button.
         if (!container1Attached.isCompleted) {
             rightDiv.innerText = "Waiting for container attach";

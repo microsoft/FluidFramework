@@ -38,6 +38,7 @@ export class FlowContainer extends ui.Component {
 
     constructor(
         element: HTMLDivElement,
+        private readonly id: string,
         private readonly collabDocument: api.Document,
         private readonly sharedString: Sequence.SharedString,
         private readonly overlayInkMap: ISharedMap,
@@ -52,8 +53,8 @@ export class FlowContainer extends ui.Component {
         const titleDiv = document.createElement("div");
         titleDiv.id = "title-bar";
         this.title = new Title(titleDiv);
-        this.title.setTitle(this.collabDocument.id);
-        this.title.setBackgroundColor(this.collabDocument.id);
+        this.title.setTitle(this.id);
+        this.title.setBackgroundColor(this.id);
 
         // Status bar at the bottom
         const statusDiv = document.createElement("div");
@@ -135,9 +136,9 @@ export class FlowContainer extends ui.Component {
         });
 
         // For now only allow one level deep of branching
-        this.status.addButton("Versions", `/sharedText/${this.collabDocument.id}/commits`, false);
+        this.status.addButton("Versions", `/sharedText/${this.id}/commits`, false);
         if (!this.collabDocument.parentBranch) {
-            this.status.addButton("Branch", `/sharedText/${this.collabDocument.id}/fork`, true);
+            this.status.addButton("Branch", `/sharedText/${this.id}/fork`, true);
         }
 
         // Add children to the panel once we have both

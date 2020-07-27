@@ -29,7 +29,7 @@ const getThisOrigin = (options: RouteOptions): string => `http://localhost:${opt
 
 export const before = async (app: express.Application) => {
     app.get("/getclientsidewebparts", async (req, res) => res.send(await createManifestResponse()));
-    app.get("/", (req, res) => res.redirect(`/createNew`));
+    app.get("/", (req, res) => res.redirect(`/autoCreate`));
 };
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: RouteOptions) => {

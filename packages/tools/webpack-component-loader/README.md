@@ -25,12 +25,12 @@ The following environment variables can be defined when running webpack-dev-serv
 | `spo-df` | Use SharePoint DogFood server with your personal OneDrive for storage |
 | `spo` | Use SharePoint server with your personal OneDrive for storage |
 
-### Detached Container
-In all modes you can start with a detached container by appending #manualAttach to the url.
+### Manually attach the container
+In all modes you can start a detached container that you can later attach by appending `/manualCreate` to the url. For example - http://localhost:8080/manualCreate.
+
+You can interact with the component and do any number of operations before clicking the attach buttom to attach the container.
 
 If in side by side mode, only one side will be visible until attached.
-
-Clicking the attach buttom will attach the container, and remove #manualAttach from the url.
 
 ## Connecting to a remote server
 
