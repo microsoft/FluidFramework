@@ -84,20 +84,6 @@ export class PendingStateManager {
     }
 
     /**
-     * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
-     * states in its queue.
-     * @param connected - true if we got connected, false if we got disconnected.
-     */
-    public setConnectionState(connected: boolean) {
-        assert(this.connected === connected, "The connection state is not consistent with the runtime");
-
-        // If we got connected, replay the pending states that have not been ack'd yet.
-        if (connected) {
-            this.replayPendingStates();
-        }
-    }
-
-    /**
      * Called to check if there are any pending messages in the pending state queue.
      * @returns A boolean indicating whether there are messages or not.
      */
@@ -307,10 +293,15 @@ export class PendingStateManager {
     }
 
     /**
+     * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
+     * states in its queue.
      * Replays all the pending states that are currently in the queue. This includes setting the FlushMode and
      * trigerring resubmission of unacked ops. This typically happens when we reconnect.
+     * @param connected - true if we got connected, false if we got disconnected.
      */
-    private replayPendingStates() {
+    public replayPendingStates() {
+        assert(this.connected, "The connection state is not consistent with the runtime");
+
         let pendingStatesCount = this.pendingStates.length;
         if (pendingStatesCount === 0) {
             return;
