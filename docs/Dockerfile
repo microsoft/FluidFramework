@@ -15,6 +15,13 @@
 # 3. Remove the temporary image
 # docker rm -f dummy
 
+# OR
+
+# docker run --rm -v [local absolute path]:/usr/src/fluid-docs -t fluid:docs cp -R docs/dist/ /usr/src/fluid-docs
+# the site will be copied to the local path
+
+# az storage blob upload-batch -s .\dist\ -d `$web --account-name fluiddocsstorage --account-key [key] --destination-path "/versions/0.21/"
+
 # rsync docs/dist/ docker/ -rv --delete --exclude '.git' --exclude 'versions'
 
 FROM node:12.16.1-slim AS base
