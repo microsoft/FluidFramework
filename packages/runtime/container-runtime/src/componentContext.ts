@@ -164,7 +164,7 @@ export abstract class ComponentContext extends EventEmitter implements
     public readonly bindToContext: (componentRuntime: IComponentRuntimeChannel) => void;
     protected componentRuntime: IComponentRuntimeChannel | undefined;
     private loaded = false;
-    private pending: ISequencedDocumentMessage[] | undefined = [];
+    protected pending: ISequencedDocumentMessage[] | undefined = [];
     private componentRuntimeDeferred: Deferred<IComponentRuntimeChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
@@ -665,7 +665,11 @@ export class RemotedComponentContext extends ComponentContext {
 
             const localReadAndParse = async <T>(id: string) => readAndParse<T>(this.storage, id);
             if (tree) {
-                tree = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
+                const loadedSummary = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
+                tree = loadedSummary.baseSummary;
+                // Prepend outstanding ops to pending queue of ops to process.
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.pending = loadedSummary.outstandingOps.concat(this.pending!);
             }
 
             if (tree !== null && tree.blobs[".component"] !== undefined) {

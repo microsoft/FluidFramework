@@ -446,14 +446,14 @@ export class SummarizerNode implements ISummarizerNode {
     public async loadBaseSummary(
         snapshot: ISnapshotTree,
         readAndParseBlob: <T>(id: string) => Promise<T>,
-    ): Promise<ISnapshotTree> {
+    ): Promise<{ baseSummary: ISnapshotTree, outstandingOps: ISequencedDocumentMessage[] }> {
         const decodedSummary = await decodeSummary(snapshot, readAndParseBlob);
 
         if (decodedSummary.outstandingOps.length > 0) {
             this.prependOutstandingOps(decodedSummary.pathParts, decodedSummary.outstandingOps);
         }
 
-        return decodedSummary.baseSummary;
+        return decodedSummary;
     }
 
     private prependOutstandingOps(pathPartsForChildren: string[], ops: ISequencedDocumentMessage[]): void {
