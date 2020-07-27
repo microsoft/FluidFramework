@@ -647,7 +647,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         private readonly runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
             enableWorker: false,
-            enableSummarizerNode: false,
         },
         private readonly containerScope: IComponent & IFluidObject,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
@@ -676,7 +675,11 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
                 this.deltaManager.initialSequenceNumber, // summary reference sequence number
             )
             : SummarizerNode.createRootWithoutSummary(changeSequenceNumber);
-        if (this.runtimeOptions.enableSummarizerNode ?? false) {
+
+        // Use runtimeOptions if provided, otherwise check localStorage
+        const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode
+            ?? (typeof localStorage === "object" && localStorage?.enableSummarizerNode);
+        if (enableSummarizerNode) {
             this.summarizerNode = {
                 enabled: true,
                 node: summarizerNode,
