@@ -6,12 +6,14 @@
 name: $(Build.BuildId)
 
 variables:
+  - name: skipComponentGovernanceDetection
+    value: true
   - group: doc-versions
   - group: storage-vars
   - name: latestPipeline
     value: ${{ or(
       eq(variables['Build.SourceBranchName'], 'master'),
-      eq(variables['Build.SourceBranchName'], 'pipeline')
+      eq(variables['Build.SourceBranchName'], 'pl-test')
       )}}
   - name: n1Branch
     value: ${{ join('/refs/heads/release/', variables['N1_BRANCH']) }}
@@ -22,117 +24,142 @@ variables:
   - name: validRun
     value: ${{ or(variables.releasePipeline, variables.n1Pipeline, variables.latestPipeline) }}
 
+# no branch and PR triggers
+trigger: none
+pr: none
+
 resources:
   pipelines:
+  - pipeline: test
+    source: test - trigger
+    trigger:
+      branches:
+        include:
+        - pl-test
   - pipeline: common_definitions
     source: Build - common-definitions
     trigger:
       branches:
         include:
-        - refs/heads/release/*
-        - refs/heads/master
-        - refs/heads/docs/pipeline # for testing
+        - release/*
+        - master
   - pipeline: common_utils
     source: Build - common-utils
-    # trigger:
-    #   branches:
-    #     include:
-    #     - refs/heads/release/*
-    #     - refs/heads/master
-    #     - refs/heads/docs/pipeline # for testing
+    trigger:
+      branches:
+        include:
+        - release/*
+        - master
   - pipeline: client
     source: Build - client packages
-    # trigger:
-    #   branches:
-    #     include:
-    #     - refs/heads/release/*
-    #     - refs/heads/master
-    #     - refs/heads/docs/pipeline # for testing
+    trigger:
+      branches:
+        include:
+        - release/*
+        - master
   - pipeline: server
     source: server-routerlicious
-    # trigger:
-    #   branches:
-    #     include:
-    #     - refs/heads/release/*
-    #     - refs/heads/master
-    #     - refs/heads/docs/pipeline # for testing
-
-# no branch and PR triggers
-trigger: none
-pr: none
+    trigger:
+      branches:
+        include:
+        - release/*
+        - master
 
 stages:
 - stage: build
   displayName: 'Build docs'
   pool: Default
   jobs:
-    # current release
-    - ${{ if eq(variables.releasePipeline, true) }}:
-      - job: current_release
-        displayName: 'Current release'
-        steps:
-        - template: templates/build-docs-steps.yml
-          parameters:
-            BASE_URL: $(BASE_URL)
-            THIS_VERSION: $(RELEASE_VERSION)
-            MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
-            RELEASE_VERSION: $(RELEASE_VERSION)
-            N1_VERSION: $(N1_VERSION)
-            VUEPRESS_BASE: '/'
+  - job:
+    displayName: Component Detection
+    pool: Shared
+    steps:
+    - script: |
+        echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
+        echo BASE_URL: $(BASE_URL)
+        echo RELEASE_VERSION: $(RELEASE_VERSION)
+        echo MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+        echo N1_VERSION: $(N1_VERSION)
+        echo releasePipeline ${{ variables.releasePipeline }}
+        echo latestPipeline ${{ variables.latestPipeline }}
+        echo n1Pipeline ${{ variables.n1Pipeline }}
+      displayName: 'Show Variables'
+    - task: ComponentGovernanceComponentDetection@0
+      displayName: Component Detection
+      inputs:
+        sourceScanPath: docs
+        verbosity: Verbose
+        scanType: Register
+        alertWarningLevel: High
+ 
+  # current release
+  - ${{ if eq(variables.releasePipeline, true) }}:
+    - job: current_release
+      displayName: 'Current release'
+      steps:
+      - template: templates/build-docs-steps.yml
+        parameters:
+          BASE_URL: $(BASE_URL)
+          THIS_VERSION: $(RELEASE_VERSION)
+          MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+          RELEASE_VERSION: $(RELEASE_VERSION)
+          N1_VERSION: $(N1_VERSION)
+          VUEPRESS_BASE: '/'
+    - job: current_release_versioned
+      displayName: 'Current release (/versions/)'
+      steps:
+      - template: templates/build-docs-steps.yml
+        parameters:
+          BASE_URL: $(BASE_URL)
+          THIS_VERSION: $(RELEASE_VERSION)
+          MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+          RELEASE_VERSION: $(RELEASE_VERSION)
+          N1_VERSION: $(N1_VERSION)
+          VUEPRESS_BASE: '/versions/$(RELEASE_VERSION)/'
+          artifactName: fluid-docs-version-path
 
-      - job: current_release_versioned
-        displayName: 'Current release (/versions/)'
-        steps:
-        - template: templates/build-docs-steps.yml
-          parameters:
-            BASE_URL: $(BASE_URL)
-            THIS_VERSION: $(RELEASE_VERSION)
-            MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
-            RELEASE_VERSION: $(RELEASE_VERSION)
-            N1_VERSION: $(N1_VERSION)
-            VUEPRESS_BASE: '/versions/$(RELEASE_VERSION)/'
-            artifactName: fluid-docs-version-path
+  # latest - master branch
+  - ${{ if eq(variables.latestPipeline, true) }}:
+    - job: latest_release
+      displayName: 'Main branch'
+      steps:
+      - template: templates/build-docs-steps.yml
+        parameters:
+          BASE_URL: $(BASE_URL)
+          THIS_VERSION: $(MASTER_BRANCH_VERSION)
+          MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+          RELEASE_VERSION: $(RELEASE_VERSION)
+          N1_VERSION: $(N1_VERSION)
+          VUEPRESS_BASE: '/versions/latest/'
 
-    # latest - master branch
-    - ${{ if eq(variables.latestPipeline, true) }}:
-      - job: latest_release
-        displayName: 'Main branch'
-        steps:
-        - template: templates/build-docs-steps.yml
-          parameters:
-            BASE_URL: $(BASE_URL)
-            THIS_VERSION: $(MASTER_BRANCH_VERSION)
-            MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
-            RELEASE_VERSION: $(RELEASE_VERSION)
-            N1_VERSION: $(N1_VERSION)
-            VUEPRESS_BASE: '/versions/latest/'
+    - job: latest_release_versioned
+      displayName: 'Main branch (/versions/)'
+      steps:
+      - template: templates/build-docs-steps.yml
+        parameters:
+          BASE_URL: $(BASE_URL)
+          THIS_VERSION: $(MASTER_BRANCH_VERSION)
+          MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+          RELEASE_VERSION: $(RELEASE_VERSION)
+          N1_VERSION: $(N1_VERSION)
+          VUEPRESS_BASE: '/versions/$(MASTER_BRANCH_VERSION)/'
+          artifactName: fluid-docs-version-path
 
-      - job: latest_release_versioned
-        displayName: 'Main branch (/versions/)'
-        steps:
-        - template: templates/build-docs-steps.yml
-          parameters:
-            BASE_URL: $(BASE_URL)
-            THIS_VERSION: $(MASTER_BRANCH_VERSION)
-            MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
-            RELEASE_VERSION: $(RELEASE_VERSION)
-            N1_VERSION: $(N1_VERSION)
-            VUEPRESS_BASE: '/versions/$(MASTER_BRANCH_VERSION)/'
-            artifactName: fluid-docs-version-path
+  # n-1 release
+  - ${{ if eq(variables.n1Pipeline, true) }}:
+    - job: old_release
+      displayName: 'N-1 release (/versions/)'
+      steps:
+      - template: templates/build-docs-steps.yml
+        parameters:
+          BASE_URL: $(BASE_URL)
+          THIS_VERSION: $(N1_VERSION)
+          MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+          N1_VERSION: $(N1_VERSION)
+          RELEASE_VERSION: $(RELEASE_VERSION)
+          VUEPRESS_BASE: '/versions/$(N1_VERSION)/'
+          artifactName: fluid-docs-version-path
 
-    # n-1 release
-    - ${{ if eq(variables.n1Pipeline, true) }}:
-      - job: old_release
-        displayName: 'N-1 release (/versions/)'
-        steps:
-        - template: templates/build-docs-steps.yml
-          parameters:
-            BASE_URL: $(BASE_URL)
-            THIS_VERSION: $(N1_VERSION)
-            MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
-            N1_VERSION: $(N1_VERSION)
-            VUEPRESS_BASE: '/versions/$(N1_VERSION)/'
-            artifactName: fluid-docs-version-path
 - stage: deploy
   displayName: Deploy Stage
   pool:
