@@ -28,11 +28,11 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
-    "@fluidframework/common-utils": "^0.20.0",
+    "@fluidframework/common-utils": "^0.21.0-0",
     "@fluidframework/component-core-interfaces": "^0.23.0",
     "@fluidframework/driver-definitions": "^0.23.0",
     "@fluidframework/driver-utils": "^0.23.0",
-    "@fluidframework/protocol-definitions": "^0.1010.0-0",
+    "@fluidframework/protocol-definitions": "^0.1010.0-34206",
     "comlink": "^4.0.2",
     "debug": "^4.1.1"
   },
