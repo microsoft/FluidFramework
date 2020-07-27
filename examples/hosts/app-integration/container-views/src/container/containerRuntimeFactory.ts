@@ -20,7 +20,7 @@ import { DiceRoller, DiceRollerInstantiationFactory } from "../component";
  * In this example, we are only registering a single component, but more complex examples will register multiple
  * components.
  */
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
     DiceRoller.ComponentName,
     new Map([
         [DiceRoller.ComponentName, Promise.resolve(DiceRollerInstantiationFactory)],

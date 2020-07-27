@@ -4,6 +4,7 @@
  */
 
 import fs from "fs";
+import { LocalOrdererManager } from "@fluidframework/server-local-server";
 import { DocumentStorage } from "@fluidframework/server-services-shared";
 import { MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
@@ -12,10 +13,10 @@ import * as git from "isomorphic-git";
 import { Provider } from "nconf";
 import socketIo from "socket.io";
 import { Historian } from "@fluidframework/server-services-client";
+import winston from "winston";
 import { TinyliciousResources } from "./resources";
 import {
     DbFactory,
-    OrdererManager,
     PubSubPublisher,
     TaskMessageSender,
     TenantManager,
@@ -47,7 +48,7 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
         // Initialize isomorphic-git
         git.plugins.set("fs", fs);
 
-        const orderManager = new OrdererManager(
+        const orderManager = new LocalOrdererManager(
             storage,
             databaseManager,
             tenantManager,
@@ -58,6 +59,8 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
                 const url = `http://localhost:${port}/repos/${encodeURIComponent(tenantId)}`;
                 return new Historian(url, false, false);
             },
+            winston,
+            undefined /* serviceConfiguration */,
             pubsub);
 
         // TODO would be nicer to just pass the mongoManager down

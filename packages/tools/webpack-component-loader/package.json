@@ -67,8 +67,6 @@
     "@fluidframework/runtime-utils": "^0.23.0",
     "@fluidframework/server-local-server": "^0.1010.0-0",
     "@fluidframework/server-services-client": "^0.1010.0-0",
-    "@fluidframework/server-services-core": "^0.1010.0-0",
-    "@fluidframework/server-test-utils": "^0.1010.0-0",
     "@fluidframework/test-runtime-utils": "^0.23.0",
     "@fluidframework/tool-utils": "^0.23.0",
     "@fluidframework/view-adapters": "^0.23.0",

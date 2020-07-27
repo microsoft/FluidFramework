@@ -41,7 +41,7 @@ const innerComponentKey = "innerId";
  */
 export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> implements IComponentHTMLView {
     private text: SharedString;
-    private innerIdCell: ISharedCell;
+    private innerIdCell: ISharedCell<IComponentHandle>;
     private _absoluteUrl: string | undefined;
 
     public get IComponentHTMLView() { return this; }
