@@ -127,7 +127,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentInitializingFirstTime() {
         const storageComponent =
-            await this.createAndAttachComponent<SpacesStorage<ISpacesItem>>(SpacesStorage.ComponentName);
+            await this.createComponent<SpacesStorage<ISpacesItem>>(SpacesStorage.ComponentName);
         this.root.set(SpacesStorageKey, storageComponent.handle);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
@@ -184,8 +184,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
             throw new Error("Unknown item, can't add");
         }
 
-        // Don't really want to hand out createAndAttachComponent here, see spacesItemMap.ts for more info.
-        const serializableObject = await itemMapEntry.create(this.createAndAttachComponent.bind(this));
+        // Don't really want to hand out createComponent here, see spacesItemMap.ts for more info.
+        const serializableObject = await itemMapEntry.create(this.createComponent.bind(this));
         return this.storageComponent.addItem(
             {
                 serializableObject,

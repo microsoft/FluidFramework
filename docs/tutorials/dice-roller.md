@@ -72,7 +72,7 @@ behavior as well as additional helpers to make component development easier.
 
 1. Setup a `root` [SharedDirectory](../api/map.shareddirectory.md) (a Distributed Data Structure) that we can use to
    store collaborative content and other distributed data structures.
-2. Provide `this.createAndAttachComponent(...)` and `this.getComponent(...)` functions for easier creation and access
+2. Provide `this.createComponent(...)` and `this.getComponent(...)` functions for easier creation and access
    to other components.
 3. Provide the following setup overrides
    - `componentInitializingFirstTime()` - only called the first time a component is initialized

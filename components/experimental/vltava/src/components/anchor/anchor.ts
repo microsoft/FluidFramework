@@ -48,10 +48,10 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
     }
 
     protected async componentInitializingFirstTime() {
-        const defaultComponent = await this.createAndAttachComponent("vltava");
+        const defaultComponent = await this.createComponent("vltava");
         this.root.set(this.defaultComponentId, defaultComponent.handle);
 
-        const lastEditedComponent = await this.createAndAttachComponent(LastEditedTrackerComponentName);
+        const lastEditedComponent = await this.createComponent(LastEditedTrackerComponentName);
         this.root.set(this.lastEditedComponentId, lastEditedComponent.handle);
     }
 

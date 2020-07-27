@@ -35,7 +35,6 @@ export interface IInitializeSharedObject<S> {
 export async function createComponentHelper<S>(
     type: string,
     context: IComponentContext,
-    attach: boolean,
     initialState?: S,
 ): Promise<IComponent & IComponentLoadable> {
     if (type === "") {
@@ -43,12 +42,12 @@ export async function createComponentHelper<S>(
     }
 
     // ComponentContext.composeSubpackagePath() was used before to construct path.
-    // Is this correct way of doing things?
+    // Is this correct way of doing
     const path = context.packagePath.concat(type);
 
     const component = await context.containerRuntime._createComponent(
         path,
-        attach,
+        false,
     );
 
     const init: IInitializeSharedObject<S> | undefined = (component as any).IInitializeSharedObject;
@@ -206,15 +205,15 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     }
 
     /**
-     * Calls create, initialize, and attach on a new component with random generated ID
+     * Calls create, and initialize on a new component with random generated ID
      *
      * @param pkg - package name for the new component
      * @param props - optional props to be passed in
      */
-    protected async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
+    protected async createComponent<T extends IComponent & IComponentLoadable>(
         pkg: string, props?: S,
     ): Promise<T> {
-        return createComponentHelper<S>(pkg, this.context, true, props) as Promise<T>;
+        return createComponentHelper<S>(pkg, this.context, props) as Promise<T>;
     }
 
     /**
