@@ -182,13 +182,6 @@ export async function start(
         url = url.replace(id, documentId);
     }
 
-    // For new documents, this is called once loading is complete to replace the url in the address bar with the
-    // new `url` with the `documentId`.
-    const replaceUrl = () => {
-        window.history.replaceState({}, "", url);
-        document.title = documentId;
-    };
-
     const codeDetails: IFluidCodeDetails = {
         package: packageJson,
         config: {},
@@ -197,7 +190,6 @@ export async function start(
 
     // Create the loader that is used to load the Container.
     const loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
-    const container1Attached = new Deferred();
 
     let container1: Container;
     if (autoCreate || manualCreate) {
@@ -216,8 +208,6 @@ export async function start(
         if (!container1.existing) {
             container1.close();
             window.location.href = window.location.href.replace(documentId, "autoCreate");
-        } else {
-            container1Attached.resolve();
         }
     }
 
@@ -242,44 +232,13 @@ export async function start(
         getComponentAndRender(container1, componentUrl, leftDiv).catch(() => { });
     });
 
-    // Now that we have rendered the component, if the container is detached, attach it.
-    if (manualCreate) {
-        // In manual create flow, we create an "Attach Container" button and only attach the container when the user
-        // clicks the button.
-        const attachDiv = document.createElement("div");
-        const attachButton = document.createElement("button");
-        attachButton.innerText = "Attach Container";
-        attachDiv.append(attachButton);
-        document.body.prepend(attachDiv);
-
-        const attachUrl = await urlResolver.createRequestForCreateNew(documentId);
-        attachButton.onclick = () => {
-            container1.attach(attachUrl)
-                .then(() => {
-                    container1Attached.resolve();
-                    attachDiv.remove();
-                    replaceUrl();
-                }, (error) => {
-                    console.error(error);
-                });
-        };
-    } else if (autoCreate) {
-        const attachUrl = await urlResolver.createRequestForCreateNew(documentId);
-        await container1.attach(attachUrl);
-        replaceUrl();
-        container1Attached.resolve();
+    // Now that we have rendered the component, if this is a new document, we have to attach the container.
+    if (autoCreate || manualCreate) {
+        await attachContainer(container1, urlResolver, documentId, url, rightDiv, manualCreate);
     }
 
     // For side by side mode, we need to create a second container and component.
     if (rightDiv) {
-        // In manual create scenario, we display this message in the right div until the user clicks on the
-        // "Attach Container" button.
-        if (!container1Attached.isCompleted) {
-            rightDiv.innerText = "Waiting for container attach";
-        }
-
-        await container1Attached.promise;
-
         // Create a new loader that is used to load the second container.
         const loader2 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
 
@@ -331,4 +290,55 @@ async function getComponentAndRender(container: Container, url: string, div: HTM
         + `with React hooks across bundle boundaries.  URL: ${url}`);
     const view = new HTMLViewAdapter(component);
     view.render(div, { display: "block" });
+}
+
+/**
+ * Attached a detached container.
+ * In case of manual attach (when manualAttach is true), it creates a button and attaches the container when the button
+ * is clicked. Otherwise, it attaches the conatiner right away.
+ */
+async function attachContainer(
+    container: Container,
+    urlResolver: MultiUrlResolver,
+    documentId: string,
+    url: string,
+    div: HTMLDivElement,
+    manualAttach: boolean,
+) {
+    // This is called once loading is complete to replace the url in the address bar with the new `url`.
+    const replaceUrl = () => {
+        window.history.replaceState({}, "", url);
+        document.title = documentId;
+    };
+
+    const attached = new Deferred();
+    const attachUrl = await urlResolver.createRequestForCreateNew(documentId);
+
+    if (manualAttach) {
+        const attachDiv = document.createElement("div");
+        const attachButton = document.createElement("button");
+        attachButton.innerText = "Attach Container";
+        attachDiv.append(attachButton);
+        document.body.prepend(attachDiv);
+
+        attachButton.onclick = () => {
+            container.attach(attachUrl)
+                .then(() => {
+                    div.innerText = "";
+                    attachDiv.remove();
+                    replaceUrl();
+                    attached.resolve();
+                }, (error) => {
+                    console.error(error);
+                });
+        };
+
+        div.innerText = "Waiting for container attach";
+    } else {
+        await container.attach(attachUrl);
+        replaceUrl();
+        attached.resolve();
+    }
+
+    return attached.promise;
 }
