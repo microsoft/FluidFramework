@@ -744,8 +744,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             // but it's an extra requirement for Container.forceReadonly() API
             assert(!readonly || !this.connected, "Unsafe to transtion to read-only state!");
 
-            if (this.connected && !readonly)
-            {
+            if (this.connected && !readonly) {
                 this.pendingStateManager.replayPendingStates();
             }
         });
@@ -924,8 +923,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             this.updateDocumentDirtyState(false);
         }
 
-        if (connected && this.deltaManager.readonly !== true)
-        {
+        if (connected && !this.deltaManager.readonly) {
             this.pendingStateManager.replayPendingStates();
         }
 
