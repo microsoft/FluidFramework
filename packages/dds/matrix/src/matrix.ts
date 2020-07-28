@@ -18,7 +18,14 @@ import {
 } from "@fluidframework/component-runtime-definitions";
 import { makeHandlesSerializable, parseHandles, SharedObject } from "@fluidframework/shared-object-base";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
-import { IMatrixProducer, IMatrixConsumer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
+import {
+    IMatrixProducer,
+    IMatrixConsumer,
+    IMatrixReader,
+    IMatrixWriter,
+    IMatrixIterator,
+    MatrixIteratorSpec,
+} from "@tiny-calc/nano";
 import { MergeTreeDeltaType, IMergeTreeOp, SegmentGroup } from "@fluidframework/merge-tree";
 import { debug } from "./debug";
 import { MatrixOp } from "./ops";
@@ -51,7 +58,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
     extends SharedObject
     implements IMatrixProducer<T | undefined | null>,
     IMatrixReader<T | undefined | null>,
-    IMatrixWriter<T | undefined>
+    IMatrixWriter<T | undefined>,
+    IMatrixIterator<T | undefined | null>
 {
     private readonly consumers = new Set<IMatrixConsumer<T | undefined | null>>();
 
@@ -132,6 +140,45 @@ export class SharedMatrix<T extends Serializable = Serializable>
     public get matrixProducer(): IMatrixProducer<T | undefined | null> { return this; }
 
     // #endregion IMatrixReader
+
+    // #region IMatrixIterator
+
+    public forEachCell(
+        callback: (value: T | undefined | null, row: number, column: number) => void,
+        spec?: MatrixIteratorSpec,
+    ) {
+        const includeEmpty = spec?.includeEmpty ?? false;
+        const rowStart = spec?.rowStart ?? 0;
+        const colStart = spec?.colStart ?? 0;
+        const rowCount = spec?.rowCount ?? this.rowCount;
+        const colCount = spec?.colCount ?? this.colCount;
+        for (let i = 0; i < rowCount; i++) {
+            const row = rowStart + i;
+            const rowHandle = this.rows.handles[row];
+            if (rowHandle === Handle.unallocated) {
+                if (includeEmpty) {
+                    for (let j = 0; j < colCount; j++) {
+                        callback(undefined, row, colStart + j);
+                    }
+                }
+                continue;
+            }
+            for (let j = 0; j < colCount; j++) {
+                const col = colStart + j;
+                const colHandle = this.cols.handles[col];
+                if (colHandle === Handle.unallocated) {
+                    if (includeEmpty) {
+                        callback(undefined, row, col);
+                    }
+                }
+                else {
+                    callback(this.cells.getCell(rowHandle, colHandle), row, col);
+                }
+            }
+        }
+    }
+
+    // #endregion IMatrixIterator
 
     public setCell(row: number, col: number, value: T) {
         assert(0 <= row && row < this.rowCount
