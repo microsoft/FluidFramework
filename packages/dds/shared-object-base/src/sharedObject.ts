@@ -300,7 +300,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
                 return;
             }
 
-            this.runtime.once("dispose", rejectBecauseDispose);
+            this.runtime.on("dispose", rejectBecauseDispose);
             executor(resolve, reject);
         }).finally(() => {
             // Note: rejectBecauseDispose will never be undefined here
