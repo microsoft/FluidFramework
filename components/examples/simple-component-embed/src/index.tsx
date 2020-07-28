@@ -7,6 +7,7 @@ import {
     ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
+    createComponentHelper,
 } from "@fluidframework/aqueduct";
 import { ClickerInstantiationFactory, Clicker } from "@fluid-example/clicker";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
@@ -24,7 +25,7 @@ export class SimpleComponentEmbed extends PrimedComponent implements IComponentH
    * but in this scenario we only want it to be created once.
    */
     protected async componentInitializingFirstTime() {
-        const component = await this.createComponent(ClickerInstantiationFactory.type);
+        const component = await createComponentHelper(ClickerInstantiationFactory.type, this.context);
         this.root.set("myEmbeddedCounter", component.handle);
     }
 

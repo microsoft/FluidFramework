@@ -24,7 +24,7 @@ To host an instance of the Editor, your Fluid component will need to create an i
 example, this is done in host/host.ts:
 
 ```ts
-    const docP = this.createComponent<FlowDocument>(this.docId, FlowDocument.type);
+    const docP = createComponentHelper<FlowDocument>(FlowDocument.type, this.context);
 ```
 
 On subsequent loads, you'll want to open the same flow document:

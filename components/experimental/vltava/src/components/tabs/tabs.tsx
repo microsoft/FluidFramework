@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { createComponentHelper, PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
@@ -47,7 +47,7 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
             new TabsDataModel(
                 this.root,
                 registryDetails,
-                this.createComponent.bind(this),
+                async (pkg: string, props?: any) => createComponentHelper(pkg, this.context, props),
                 this.getComponentFromDirectory.bind(this),
             );
     }

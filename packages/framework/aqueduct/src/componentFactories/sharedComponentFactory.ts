@@ -135,6 +135,6 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
         context: IComponentContext,
         initialState?: S,
     ): Promise<IComponent & IComponentLoadable> {
-        return createComponentHelper<S>(this.type, context, initialState);
+        return createComponentHelper<IComponent & IComponentLoadable, S>(this.type, context, initialState);
     }
 }

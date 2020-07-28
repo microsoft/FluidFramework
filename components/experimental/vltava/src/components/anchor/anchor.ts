@@ -4,7 +4,7 @@
  */
 
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { createComponentHelper, PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import {
     IComponentLastEditedTracker,
     IProvideComponentLastEditedTracker,
@@ -48,10 +48,10 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
     }
 
     protected async componentInitializingFirstTime() {
-        const defaultComponent = await this.createComponent("vltava");
+        const defaultComponent = await createComponentHelper("vltava", this.context);
         this.root.set(this.defaultComponentId, defaultComponent.handle);
 
-        const lastEditedComponent = await this.createComponent(LastEditedTrackerComponentName);
+        const lastEditedComponent = await createComponentHelper(LastEditedTrackerComponentName, this.context);
         this.root.set(this.lastEditedComponentId, lastEditedComponent.handle);
     }
 

@@ -3,7 +3,7 @@
 * Licensed under the MIT License.
 */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { createComponentHelper, PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import {
     IComponentHandle,
     IRequest,
@@ -133,9 +133,9 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentInitializingFirstTime() {
-        const storage = await this.createComponent(SpacesStorage.ComponentName);
+        const storage = await createComponentHelper(SpacesStorage.ComponentName, this.context);
         this.root.set(storageKey, storage.handle);
-        const loader = await this.createComponent(ExternalComponentLoader.ComponentName);
+        const loader = await createComponentHelper(ExternalComponentLoader.ComponentName, this.context);
         this.root.set(loaderKey, loader.handle);
     }
 

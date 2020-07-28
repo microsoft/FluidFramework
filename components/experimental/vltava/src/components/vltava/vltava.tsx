@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { createComponentHelper, PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 import React from "react";
@@ -37,7 +37,7 @@ export class Vltava extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     protected async componentInitializingFirstTime() {
-        const tabsComponent = await this.createComponent("tabs");
+        const tabsComponent = await createComponentHelper("tabs", this.context);
         this.root.set("tabs-component-id", tabsComponent.handle);
     }
 

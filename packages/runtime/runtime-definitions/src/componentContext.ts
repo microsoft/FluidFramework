@@ -321,6 +321,15 @@ export interface IComponentContext extends EventEmitter {
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+
+    /**
+     * Take a package name and transform it into a path that can be used to find it
+     * from container, such as by looking into subregistries
+     * @param subpackage - The subpackage to find in this context
+     * @returns A list of packages to the subpackage destination if found,
+     * otherwise the original subpackage
+     */
+    composeSubpackagePath(subpackage: string): Promise<string[]>;
 }
 
 /**

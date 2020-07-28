@@ -481,7 +481,7 @@ export abstract class ComponentContext extends EventEmitter implements
      * @returns A list of packages to the subpackage destination if found,
      * otherwise the original subpackage
      */
-    protected async composeSubpackagePath(subpackage: string): Promise<string[]> {
+    public async composeSubpackagePath(subpackage: string): Promise<string[]> {
         const details = await this.getInitialSnapshotDetails();
         let packagePath: string[] = [...details.pkg];
 

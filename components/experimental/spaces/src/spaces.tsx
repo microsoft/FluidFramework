@@ -7,6 +7,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { Layout } from "react-grid-layout";
 import {
+    createComponentHelper,
     PrimedComponent,
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
@@ -127,7 +128,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentInitializingFirstTime() {
         const storageComponent =
-            await this.createComponent<SpacesStorage<ISpacesItem>>(SpacesStorage.ComponentName);
+            await createComponentHelper<SpacesStorage<ISpacesItem>>(SpacesStorage.ComponentName, this.context);
         this.root.set(SpacesStorageKey, storageComponent.handle);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
@@ -185,7 +186,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         }
 
         // Don't really want to hand out createComponent here, see spacesItemMap.ts for more info.
-        const serializableObject = await itemMapEntry.create(this.createComponent.bind(this));
+        const serializableObject = await itemMapEntry.create(
+            async (pkg: string, props?: any) => createComponentHelper(pkg, this.context, props));
         return this.storageComponent.addItem(
             {
                 serializableObject,

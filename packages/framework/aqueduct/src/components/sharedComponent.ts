@@ -6,6 +6,7 @@
 import assert from "assert";
 import {
     IComponent,
+    IFluidObject,
     IComponentHandle,
     IComponentLoadable,
     IComponentRouter,
@@ -32,18 +33,16 @@ export interface IInitializeSharedObject<S> {
     initializingComponentOnCreation(props?: S): Promise<void>;
 }
 
-export async function createComponentHelper<S>(
+export async function createComponentHelper<T extends IComponent & IFluidObject & IComponentLoadable, S = undefined>(
     type: string,
     context: IComponentContext,
     initialState?: S,
-): Promise<IComponent & IComponentLoadable> {
+): Promise<T> {
     if (type === "") {
         throw new Error("undefined type member");
     }
 
-    // ComponentContext.composeSubpackagePath() was used before to construct path.
-    // Is this correct way of doing
-    const path = context.packagePath.concat(type);
+   const path = await context.composeSubpackagePath(type);
 
     const component = await context.containerRuntime._createComponent(
         path,
@@ -56,7 +55,7 @@ export async function createComponentHelper<S>(
     }
     await init.initializingComponentOnCreation(initialState);
 
-    return component;
+    return component as T;
 }
 
 /**
@@ -202,18 +201,6 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
         assert(!this.runtime.existing);
         await this.componentInitializingFirstTime(props);
         await this.componentHasInitialized();
-    }
-
-    /**
-     * Calls create, and initialize on a new component with random generated ID
-     *
-     * @param pkg - package name for the new component
-     * @param props - optional props to be passed in
-     */
-    protected async createComponent<T extends IComponent & IComponentLoadable>(
-        pkg: string, props?: S,
-    ): Promise<T> {
-        return createComponentHelper<S>(pkg, this.context, props) as Promise<T>;
     }
 
     /**
