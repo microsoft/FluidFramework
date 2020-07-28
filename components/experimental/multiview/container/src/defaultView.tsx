@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import { ConstellationView } from "@fluid-example/multiview-constellation-view";
+import { ICoordinate, IConstellation } from "@fluid-example/multiview-coordinate-interface";
 import { PlotCoordinateView } from "@fluid-example/multiview-plot-coordinate-view";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { TriangleView } from "@fluid-example/multiview-triangle-view";
@@ -21,6 +22,7 @@ interface IDefaultViewProps {
     triangleCoordinate1: ICoordinate;
     triangleCoordinate2: ICoordinate;
     triangleCoordinate3: ICoordinate;
+    constellation: IConstellation;
 }
 
 /**
@@ -46,6 +48,10 @@ export const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProp
                     coordinate2={props.triangleCoordinate2}
                     coordinate3={props.triangleCoordinate3}
                 />
+            </div>
+            <div>
+                <h2 className="scenario-header">Scenario 3: Linking a nested view to a nested model</h2>
+                <ConstellationView model={props.constellation} />
             </div>
         </div>
     );

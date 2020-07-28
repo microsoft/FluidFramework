@@ -37,7 +37,7 @@ export function generateComponentSchema<
     const storedHandleMap = SharedMap.create(runtime);
     for (const fluidStateKey of fluidToView.keys()) {
         const value = fluidToView.get(fluidStateKey);
-        if (!value) {
+        if (value === undefined) {
             throw Error("Cannot find fluidToView value");
         }
         const {
@@ -69,7 +69,7 @@ export function generateComponentSchema<
     if (viewToFluid !== undefined) {
         for (const viewStateKey of viewToFluid.keys()) {
             const value = viewToFluid.get(viewStateKey);
-            if (!value) {
+            if (value === undefined) {
                 throw Error("Cannot find viewToFluid value");
             }
             const {

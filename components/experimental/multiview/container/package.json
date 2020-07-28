@@ -35,6 +35,8 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "@fluid-example/multiview-constellation-model": "^0.23.0",
+    "@fluid-example/multiview-constellation-view": "^0.23.0",
     "@fluid-example/multiview-coordinate-interface": "^0.23.0",
     "@fluid-example/multiview-coordinate-model": "^0.23.0",
     "@fluid-example/multiview-plot-coordinate-view": "^0.23.0",
