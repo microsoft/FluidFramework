@@ -1141,6 +1141,10 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
     }
 
+    private canSendOps() {
+        return this.connected && !this.deltaManager.readonly;
+    }
+
     private _createComponentContext(pkg: string[], props?: any, id = uuid()) {
         this.verifyNotClosed();
 
