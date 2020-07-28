@@ -227,7 +227,7 @@ describe("Matrix", () => {
                 })
             });
 
-            it("forEach 16x16 empty with blanks skipped", () => {
+            it("forEachCell 16x16 empty with blanks skipped", () => {
                 matrix.insertRows(0, 16);
                 matrix.insertCols(0, 16);
                 matrix.forEachCell(() => {
@@ -235,12 +235,36 @@ describe("Matrix", () => {
                 });
             });
 
-            it("forEach 16x16 empty with blanks", () => {
+            it("forEachCell 16x16 empty with blanks", () => {
                 matrix.insertRows(0, 16);
                 matrix.insertCols(0, 16);
                 let count = 0;
                 matrix.forEachCell((v) => {
                     assert.equal(v, undefined);
+                    count++;
+                }, { includeEmpty: true });
+                assert.equal(count, 16*16);
+            });
+
+            it("forEachCell 16x16 empty with 1 cell", () => {
+                matrix.insertRows(0, 16);
+                matrix.insertCols(0, 16);
+                matrix.setCell(0,0, -42);
+                let count = 0;
+                matrix.forEachCell((v) => {
+                    assert.equal(v, -42);
+                    count++;
+                });
+                assert.equal(count, 1);
+            });
+
+            it("forEachCell 16x16 empty with 1 cell and blanks", () => {
+                matrix.insertRows(0, 16);
+                matrix.insertCols(0, 16);
+                matrix.setCell(0,0, -42);
+                let count = 0;
+                matrix.forEachCell((v, r, c) => {
+                    assert.equal(v, r === 0 && c === 0 ? -42 : undefined);
                     count++;
                 }, { includeEmpty: true });
                 assert.equal(count, 16*16);
