@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { unreachableCase } from "@fluidframework/common-utils";
 import {
     IOdspTokens,
     IClientConfig,
@@ -48,11 +49,6 @@ export type OdspTokenConfig = {
 export interface IPushCacheKey { isPush: true }
 export interface IOdspCacheKey { isPush: false; server: string }
 export type OdspTokenManagerCacheKey = IPushCacheKey | IOdspCacheKey;
-
-// TODO - Replace with common-utls version when available
-function unreachableCase(value: never): never {
-    throw new Error(`Unreachable Case: Type of ${value} is never`);
-}
 
 export class OdspTokenManager {
     constructor(
