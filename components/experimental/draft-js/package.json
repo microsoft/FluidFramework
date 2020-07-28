@@ -36,7 +36,7 @@
     "@fluidframework/component-runtime-definitions": "^0.23.0",
     "@fluidframework/map": "^0.23.0",
     "@fluidframework/merge-tree": "^0.23.0",
-    "@fluidframework/protocol-definitions": "^0.1009.0",
+    "@fluidframework/protocol-definitions": "^0.1010.0-34206",
     "@fluidframework/sequence": "^0.23.0",
     "@fluidframework/shared-object-base": "^0.23.0",
     "@fluidframework/view-interfaces": "^0.23.0",

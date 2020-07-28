@@ -5,28 +5,43 @@
 
 import { Router } from "express";
 import * as nconf from "nconf";
+import { queryParamToString } from "../../../utils";
 import * as utils from "../utils";
+import { getBlob } from "../git/blobs";
+import { getTree } from "../git/trees";
+
+export async function getContent(
+    store: nconf.Provider,
+    tenantId: string,
+    authorization: string,
+    path: string,
+    ref: string,
+): Promise<any> {
+    const tree = await getTree(store, tenantId, authorization, ref, true, true);
+
+    let content;
+    for (const entry of tree.tree) {
+        if (entry.path === path) {
+            content = await getBlob(store, tenantId, authorization, entry.sha, true);
+        }
+    }
+
+    return content;
+}
 
 export function create(store: nconf.Provider): Router {
     const router: Router = Router();
-
-    async function getContent(
-        tenantId: string,
-        authorization: string,
-        path: string,
-        ref: string,
-    ): Promise<any> {
-        throw new Error("Not implemented");
-    }
 
     router.get(
         "/repos/:ignored?/:tenantId/contents/*",
         (request, response) => {
             const contentP = getContent(
+                store,
                 request.params.tenantId,
                 request.get("Authorization"),
                 request.params[0],
-                request.query.ref);
+                queryParamToString(request.query.ref));
+
             utils.handleResponse(
                 contentP,
                 response,

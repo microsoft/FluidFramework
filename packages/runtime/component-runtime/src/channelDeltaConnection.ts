@@ -21,7 +21,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     constructor(
         public objectId: string,
         private _connected: boolean,
-        private readonly submitFn: (message: IDocumentMessage, localOpMetadata: unknown) => number,
+        private readonly submitFn: (message: IDocumentMessage, localOpMetadata: unknown) => void,
         private readonly dirtyFn: () => void) {
     }
 
@@ -46,8 +46,8 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     /**
      * Send new messages to the server
      */
-    public submit(message: IDocumentMessage, localOpMetadata: unknown): number {
-        return this.submitFn(message, localOpMetadata);
+    public submit(message: IDocumentMessage, localOpMetadata: unknown): void {
+        this.submitFn(message, localOpMetadata);
     }
 
     /**

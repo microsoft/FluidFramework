@@ -22,7 +22,8 @@ import * as moniker from "moniker";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { IConcreteNode, IConnectedMessage, IConnectMessage, INodeMessage, IOpMessage } from "./interfaces";
-import { ISubscriber, LocalOrderer } from "./localOrderer";
+import { LocalOrderer } from "./localOrderer";
+import { ISubscriber } from "./pubsub";
 import { Socket } from "./socket";
 
 // Can I treat each Alfred as a mini-Kafka. And consolidate all the deli logic together?

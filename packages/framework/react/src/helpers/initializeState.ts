@@ -78,16 +78,16 @@ export async function initializeState<
         dataProps.fluidComponentMap,
         fluidToView,
     );
-    if (!currentFluidState) {
+    if (currentFluidState === undefined) {
         throw Error("Synced state update triggered before fluid state was initialized");
     }
 
     for (const fluidStateKey of fluidToView.keys()) {
         const value = fluidToView.get(fluidStateKey);
-        if (!value) {
+        if (value === undefined) {
             throw Error("Cannot find fluidToView value");
         }
-        if (value.sharedObjectCreate) {
+        if (value.sharedObjectCreate !== undefined) {
             const component = currentFluidState[fluidStateKey] as any;
             unlistenedHandles.push(component.handle);
         }

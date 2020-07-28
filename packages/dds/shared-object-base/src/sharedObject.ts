@@ -243,15 +243,12 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param localOpMetadata - The local metadata associated with the message. This is kept locally by the runtime
      * and not sent to the server. This will be sent back when this message is received back from the server. This is
      * also sent if we are asked to resubmit the message.
-     * @returns Client sequence number
      */
-    protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): number {
-        if (!this.isAttached()) {
-            return -1;
+    protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
+        if (this.isAttached()) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.services!.deltaConnection.submit(content, localOpMetadata);
         }
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.services!.deltaConnection.submit(content, localOpMetadata);
     }
 
     /**
