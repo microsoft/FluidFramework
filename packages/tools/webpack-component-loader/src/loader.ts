@@ -302,7 +302,7 @@ async function attachContainer(
     urlResolver: MultiUrlResolver,
     documentId: string,
     url: string,
-    div: HTMLDivElement,
+    div: HTMLDivElement | undefined,
     manualAttach: boolean,
 ) {
     // This is called once loading is complete to replace the url in the address bar with the new `url`.
@@ -315,6 +315,7 @@ async function attachContainer(
     const attachUrl = await urlResolver.createRequestForCreateNew(documentId);
 
     if (manualAttach) {
+        // Create an "Attach Container" button that the user can click when they want to attach the container.
         const attachDiv = document.createElement("div");
         const attachButton = document.createElement("button");
         attachButton.innerText = "Attach Container";
@@ -324,16 +325,23 @@ async function attachContainer(
         attachButton.onclick = () => {
             container.attach(attachUrl)
                 .then(() => {
-                    div.innerText = "";
                     attachDiv.remove();
                     replaceUrl();
+
+                    if (div) {
+                        div.innerText = "";
+                    }
+
                     attached.resolve();
                 }, (error) => {
                     console.error(error);
                 });
         };
 
-        div.innerText = "Waiting for container attach";
+        // If we are in side-by-side mode, we need to display the following message in the right div passed here.
+        if (div) {
+            div.innerText = "Waiting for container attach";
+        }
     } else {
         await container.attach(attachUrl);
         replaceUrl();
