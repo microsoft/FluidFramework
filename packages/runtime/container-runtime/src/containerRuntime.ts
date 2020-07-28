@@ -586,8 +586,17 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     // Always matched IAgentScheduler.leader property
     private _leader = false;
 
+    private _connected = false;
+
+    // We can't rely on this.context.connected here, but rather need to transition states
+    // only in response to setConnectionState() calls. This is due to a fact that handling of "readonly"
+    // event needs to rely on cached / last known knowledge of connected state.
+    // This is because host can listen for "connected" transitions as well, and call Coantiner.forceReadonly()
+    // from its handler, thus delivering "readonly" event (on delta manager) while transition to connected is
+    // still in flight. As result, we would call this.pendingStateManager.replayPendingStates() twice in a row,
+    // which will result in same ops being sent twice
     public get connected(): boolean {
-        return this.context.connected;
+        return this._connected;
     }
 
     public get leader(): boolean {
@@ -634,6 +643,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     ) {
         super();
 
+        this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
 
         this.IComponentHandleContext = new ComponentHandleContext("", this);
@@ -720,7 +730,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             !!this.previousState.reload,
             this.runtimeOptions.initialSummarizerDelayMs);
 
-        if (this.context.connected) {
+        if (this.connected) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.summaryManager.setConnected(this.context.clientId!);
         }
@@ -914,7 +924,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
-        assert(this.connected === connected);
+        this._connected = connected;
 
         if (connected) {
             // Once we are connected, all acks are accounted.

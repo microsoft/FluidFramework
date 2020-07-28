@@ -79,6 +79,8 @@ export class PendingStateManager {
     // the correct batch metadata.
     private pendingBatchBeginMessage: ISequencedDocumentMessage | undefined;
 
+    private clientId: string | undefined;
+
     private get connected(): boolean {
         return this.containerRuntime.connected;
     }
@@ -298,6 +300,10 @@ export class PendingStateManager {
      */
     public replayPendingStates() {
         assert(this.connected, "The connection state is not consistent with the runtime");
+
+        // This assert suggests we are about to send same ops twice, which will result in data loss.
+        assert(this.clientId !== this.containerRuntime.clientId, "replayPendingStates called twice for same clientId!");
+        this.clientId = this.containerRuntime.clientId;
 
         let pendingStatesCount = this.pendingStates.length;
         if (pendingStatesCount === 0) {
