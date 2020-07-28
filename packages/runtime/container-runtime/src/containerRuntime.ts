@@ -588,13 +588,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
     private _connected: boolean;
 
-    // We can't rely on this.context.connected here, but rather need to transition states
-    // only in response to setConnectionState() calls. This is due to a fact that handling of "readonly"
-    // event needs to rely on cached / last known knowledge of connected state.
-    // This is because host can listen for "connected" transitions as well, and call Coantiner.forceReadonly()
-    // from its handler, thus delivering "readonly" event (on delta manager) while transition to connected is
-    // still in flight. As result, we would call this.pendingStateManager.replayPendingStates() twice in a row,
-    // which will result in same ops being sent twice
     public get connected(): boolean {
         return this._connected;
     }
@@ -752,7 +745,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             // can reply on same safety mechanism and resend ops only when we establish new connection.
             // This is applicable for read-only permissions (event is raised before connection is properly registered),
             // but it's an extra requirement for Container.forceReadonly() API
-            assert(!readonly || !this.context.connected, "Unsafe to transition to read-only state!");
+            assert(!readonly || !this.connected, "Unsafe to transition to read-only state!");
 
             if (this.canSendOps()) {
                 this.pendingStateManager.replayPendingStates();
