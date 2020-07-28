@@ -617,15 +617,15 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     private submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
         const envelope: IEnvelope = { address, contents };
-        return this.submit(ComponentMessageType.ChannelOp, envelope, localOpMetadata);
+        this.submit(ComponentMessageType.ChannelOp, envelope, localOpMetadata);
     }
 
     private submit(
         type: ComponentMessageType,
         content: any,
-        localOpMetadata: unknown = undefined): number {
+        localOpMetadata: unknown = undefined): void {
         this.verifyNotClosed();
-        return this.componentContext.submitMessage(type, content, localOpMetadata);
+        this.componentContext.submitMessage(type, content, localOpMetadata);
     }
 
     /**

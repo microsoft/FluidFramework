@@ -200,8 +200,8 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      * @param operation - The operation object
      */
     private executeClearOperation(operation: IClearOperation): void {
-        this.emit("clear", operation);
         this.inkData.clear();
+        this.emit("clear", operation);
     }
 
     /**

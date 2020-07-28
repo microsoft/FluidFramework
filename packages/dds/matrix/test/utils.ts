@@ -74,6 +74,18 @@ export function check<T extends IArray2D<U>, U>(
     return matrix;
 }
 
+export function checkValue<T extends IArray2D<U>, U>(
+    matrix: T,
+    test: unknown,
+    r: number,
+    c: number,
+    rowStart = 0,
+    rowCount = matrix.rowCount - rowStart,
+    value = (row: number, col: number) => row * rowCount + col
+) {
+    assert.equal(test, value(r, c) as any);
+}
+
 /**
  * Extracts the contents of the given `SharedMatrix` as a jagged 2D array.  This is convenient for
  * comparing matrices via `assert.deepEqual()`.

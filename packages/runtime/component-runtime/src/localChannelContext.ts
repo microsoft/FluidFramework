@@ -32,7 +32,7 @@ export class LocalChannelContext implements IChannelContext {
         runtime: IComponentRuntime,
         private readonly componentContext: IComponentContext,
         private readonly storageService: IDocumentStorageService,
-        private readonly submitFn: (content: any, localOpMetadata: unknown) => number,
+        private readonly submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
     ) {
         const factory = registry.get(type);

@@ -450,14 +450,14 @@ export abstract class ComponentContext extends EventEmitter implements
         return runtime.request(request);
     }
 
-    public submitMessage(type: string, content: any, localOpMetadata: unknown): number {
+    public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
         this.verifyNotClosed();
         assert(this.componentRuntime);
         const componentContent: ComponentMessage = {
             content,
             type,
         };
-        return this._containerRuntime.submitComponentOp(
+        this._containerRuntime.submitComponentOp(
             this.id,
             componentContent,
             localOpMetadata);
