@@ -10,9 +10,9 @@ import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
 import { IQueuedMessage } from "./queue";
 
 export interface ILogger {
-    info(message: string): void;
-    warn(message: string): void;
-    error(message: string): void;
+    info(message: string, metaData?: any): void;
+    warn(message: string, metaData?: any): void;
+    error(message: string, metaData?: any): void;
 }
 
 export interface IContext {

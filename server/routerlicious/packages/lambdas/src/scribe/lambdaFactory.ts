@@ -60,9 +60,13 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             this.documentCollection.findOne({ documentId, tenantId }),
         ]);
 
+        const messageMetaData = {
+            documentId,
+            tenantId,
+        };
         // If the document doesn't exist then we trivially accept every message
         if (!document) {
-            context.log.info(`Creating NoOpLambda due to missing ${tenantId}/${documentId}`);
+            context.log.info(`Creating NoOpLambda due to missing`, { messageMetaData });
             return new NoOpLambda(context);
         }
 
@@ -73,17 +77,17 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         // Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary
         if (document.scribe === undefined || document.scribe === null) {
-            context.log.info(`New document. Setting empty scribe checkpoint for ${tenantId}/${documentId}`);
+            context.log.info(`New document. Setting empty scribe checkpoint`, { messageMetaData });
             document.scribe = JSON.stringify(DefaultScribe);
         } else if (document.scribe === "") {
             if (!latestSummary.fromSummary) {
                 throw Error(`Required summary can't be fetched for ${tenantId}/${documentId}`);
             }
-            context.log.info(`Loading scribe state from service summary for ${tenantId}/${documentId}`);
+            context.log.info(`Loading scribe state from service summary`, { messageMetaData });
             document.scribe = latestSummary.scribe;
             opMessages = latestSummary.messages;
         } else {
-            context.log.info(`Loading scribe state from cache for ${tenantId}/${documentId}`);
+            context.log.info(`Loading scribe state from cache`, { messageMetaData });
         }
 
         const term = latestSummary.fromSummary ? latestSummary.term : 1;

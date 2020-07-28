@@ -90,9 +90,8 @@ export interface IDeltaConnection {
      * @param localOpMetadata - The local metadata associated with the message. This is kept locally by the runtime
      * and not sent to the server. It will be provided back when this message is acknowledged by the server. It will
      * also be provided back when asked to resubmit the message.
-     * @returns A clientSequenceNumber that uniquely identifies this message for this client.
      */
-    submit(messageContent: any, localOpMetadata: unknown): number;
+    submit(messageContent: any, localOpMetadata: unknown): void;
 
     /**
      * Attaches a message handler to the delta connection

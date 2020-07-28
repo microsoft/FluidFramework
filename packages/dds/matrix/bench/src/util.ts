@@ -6,7 +6,7 @@
 import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "./imports";
 import { insertFragmented } from "../../test/utils";
-const process = require("process");
+import process from "process";
 
 let count = 1;
 let cached: any;
