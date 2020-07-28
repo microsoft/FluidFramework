@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IIconProps, IColor } from "office-ui-fabric-react";
+import { IColor } from "office-ui-fabric-react";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
 import { SharedObjectSequence } from "@fluidframework/sequence";
@@ -10,9 +10,12 @@ import { SharedObjectSequence } from "@fluidframework/sequence";
 export interface IBadgeType {
     key: string;
     text: string;
-    iconProps: IIconProps;
+    iconProps: IBadgeIcon;
 }
-
+export interface IBadgeIcon {
+    iconName: string;
+    style: {color: string};
+}
 export interface IBadgeHistory {
     value: IBadgeType;
     timestamp: Date;
