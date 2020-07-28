@@ -586,7 +586,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     // Always matched IAgentScheduler.leader property
     private _leader = false;
 
-    private _connected = false;
+    private _connected: boolean;
 
     // We can't rely on this.context.connected here, but rather need to transition states
     // only in response to setConnectionState() calls. This is due to a fact that handling of "readonly"
