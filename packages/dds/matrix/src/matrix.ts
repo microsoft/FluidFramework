@@ -386,7 +386,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         //       (See https://github.com/microsoft/FluidFramework/issues/2559)
         assert.equal(this.isAttached(), true);
 
-        const cliSeq = super.submitLocalMessage(
+        super.submitLocalMessage(
             makeHandlesSerializable(
                 message,
                 this.runtime.IComponentSerializer,
@@ -401,10 +401,6 @@ export class SharedMatrix<T extends Serializable = Serializable>
             this.rows.getCollabWindow().localSeq,
             this.cols.getCollabWindow().localSeq,
         );
-
-        // TODO: The returned 'cliSeq' is no longer used, but we need to return a value until the
-        //       signature of SharedObject.submitLocalMessage changes.
-        return cliSeq;
     }
 
     protected didAttach() {
