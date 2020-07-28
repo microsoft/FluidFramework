@@ -331,6 +331,7 @@ export class LocalOrderer implements IOrderer {
             protocolHead,
             scribeMessages.map((message) => message.operation),
             false,
+            false,
             this.scribeNackOnSummarizeException);
     }
 

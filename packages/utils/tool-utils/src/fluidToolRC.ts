@@ -12,10 +12,10 @@ import util from "util";
 import { lock } from "proper-lockfile";
 import { IOdspTokens } from "@fluidframework/odsp-utils";
 
-export interface IAsyncCache<K, T> {
-    get(key: K): Promise<T | undefined>;
-    save(key: K, value: T): Promise<void>;
-    lock<T2>(callback: () => Promise<T2>): Promise<T2>;
+export interface IAsyncCache<TKey, TValue> {
+    get(key: TKey): Promise<TValue | undefined>;
+    save(key: TKey, value: TValue): Promise<void>;
+    lock<T>(callback: () => Promise<T>): Promise<T>;
 }
 
 interface IResources {
@@ -48,5 +48,5 @@ export async function saveRC(rc: IResources) {
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export async function lockRC() {
-    return lock(getRCFileName());
+    return lock(getRCFileName(), { realpath: false });
 }

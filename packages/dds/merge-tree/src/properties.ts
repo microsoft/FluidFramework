@@ -70,6 +70,10 @@ export function matchProperties(a: PropertySet, b: PropertySet) {
             for (const key in a) {
                 if (b[key] === undefined) {
                     return false;
+                } else if(typeof b[key] === "object") {
+                    if (!matchProperties(a[key], b[key])) {
+                        return false;
+                    }
                 } else if (b[key] !== a[key]) {
                     return false;
                 }

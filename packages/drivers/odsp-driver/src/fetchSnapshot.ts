@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { PerformanceEvent } from "@fluidframework/common-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IOdspSnapshot } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";

@@ -119,7 +119,7 @@ export class OdspTokenManager {
                     return tokensFromCache;
                 }
             }
-            // check with lock
+            // check with lock, used to prevent concurrent auth attempts
             return this.tokenCache.lock(invokeGetTokensCore);
         }
         return invokeGetTokensCore();

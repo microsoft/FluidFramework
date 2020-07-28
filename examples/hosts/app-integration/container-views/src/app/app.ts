@@ -8,6 +8,7 @@ import { Container } from "@fluidframework/container-loader";
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IComponentMountableView } from "@fluidframework/view-interfaces";
+import { DiceRollerContainerRuntimeFactory } from "../container";
 
 // I'm choosing to put the docId in the hash just for my own convenience.  There should be no requirements on the
 // page's URL format deeper in the system.
@@ -61,14 +62,8 @@ async function mountDefaultComponentFromContainer(container: Container): Promise
 
 // Just a helper function to kick things off.  Making it async allows us to use await.
 async function start(): Promise<void> {
-    // The format of the code proposal will be the contents of our package.json, which has a special "fluid" section
-    // describing the code to load.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-    const packageJson = require("../../package.json");
-
-    // If you'd prefer to load the container bundle yourself (rather than relying on the codeLoader), pass the
-    // entrypoint to the module as the third param below (e.g. window["main"]).
-    const container = await getTinyliciousContainer(documentId, packageJson);
+    // Get the container to use.  Associate the data with the provided documentId, and run the provided code within.
+    const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory);
     await mountDefaultComponentFromContainer(container);
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line dot-notation
