@@ -38,9 +38,7 @@ export function createServiceEndpoints(
     const deltaConnection = new ChannelDeltaConnection(
         id,
         connected,
-        (message, localOpMetadata) => {
-            submitFn(message, localOpMetadata);
-        },
+        (message, localOpMetadata) => submitFn(message, localOpMetadata),
         dirtyFn);
     const objectStorage = new ChannelStorageService(tree, storageService, extraBlobs);
 

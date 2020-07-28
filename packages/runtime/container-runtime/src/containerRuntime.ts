@@ -752,9 +752,9 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             // can reply on same safety mechanism and resend ops only when we establish new connection.
             // This is applicable for read-only permissions (event is raised before connection is properly registered),
             // but it's an extra requirement for Container.forceReadonly() API
-            assert(!readonly || !this.connected, "Unsafe to transtion to read-only state!");
+            assert(!readonly || !this.context.connected, "Unsafe to transition to read-only state!");
 
-            if (this.connected && !readonly) {
+            if (this.canSendOps()) {
                 this.pendingStateManager.replayPendingStates();
             }
         });
@@ -924,6 +924,8 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
+        // There might be no change of state due to Container calling this API after loading runtime.
+        const changeOfState = this._connected !== connected;
         this._connected = connected;
 
         if (connected) {
@@ -933,7 +935,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             this.updateDocumentDirtyState(false);
         }
 
-        if (connected && !this.deltaManager.readonly) {
+        if (changeOfState && this.canSendOps()) {
             this.pendingStateManager.replayPendingStates();
         }
 
@@ -1148,6 +1150,10 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
     public createComponentContext(pkg: string[], props?: any): IComponentContext {
         return this._createComponentContext(pkg, props);
+    }
+
+    private canSendOps() {
+        return this.connected && !this.deltaManager.readonly;
     }
 
     private _createComponentContext(pkg: string[], props?: any, id = uuid()) {
@@ -1628,7 +1634,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         let clientSequenceNumber: number = -1;
 
-        if (this.connected && !this.deltaManager.readonly) {
+        if (this.canSendOps()) {
             const serializedContent = JSON.stringify(content);
             const maxOpSize = this.context.deltaManager.maxMessageSize;
 
