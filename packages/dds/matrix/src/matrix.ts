@@ -172,7 +172,10 @@ export class SharedMatrix<T extends Serializable = Serializable>
                     }
                 }
                 else {
-                    callback(this.cells.getCell(rowHandle, colHandle), row, col);
+                    const content = this.cells.getCell(rowHandle, colHandle);
+                    if (content !== undefined || includeEmpty) {
+                        callback(content, row, col);
+                    }
                 }
             }
         }
