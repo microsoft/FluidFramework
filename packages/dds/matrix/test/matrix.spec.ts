@@ -243,13 +243,13 @@ describe("Matrix", () => {
                     assert.equal(v, undefined);
                     count++;
                 }, { includeEmpty: true });
-                assert.equal(count, 16*16);
+                assert.equal(count, 16 * 16);
             });
 
             it("forEachCell 16x16 empty with 1 cell", () => {
                 matrix.insertRows(0, 16);
                 matrix.insertCols(0, 16);
-                matrix.setCell(0,0, -42);
+                matrix.setCell(0, 0, -42);
                 let count = 0;
                 matrix.forEachCell((v) => {
                     assert.equal(v, -42);
@@ -261,13 +261,13 @@ describe("Matrix", () => {
             it("forEachCell 16x16 empty with 1 cell and blanks", () => {
                 matrix.insertRows(0, 16);
                 matrix.insertCols(0, 16);
-                matrix.setCell(0,0, -42);
+                matrix.setCell(0, 0, -42);
                 let count = 0;
                 matrix.forEachCell((v, r, c) => {
                     assert.equal(v, r === 0 && c === 0 ? -42 : undefined);
                     count++;
                 }, { includeEmpty: true });
-                assert.equal(count, 16*16);
+                assert.equal(count, 16 * 16);
             });
         });
 
@@ -276,6 +276,18 @@ describe("Matrix", () => {
                 insertFragmented(matrix, 16, 16);
                 fill(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 16, /* colCount: */ 16);
                 check(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 16, /* colCount: */ 16);
+            });
+        });
+
+        describe("annotations", () => {
+            it("read/write 16x16", () => {
+                matrix.insertRows(0, 256);
+                matrix.insertCols(0, 256);
+                matrix.setAnnotation(0, 0, -42);
+                assert.equal(matrix.getAnnotation(0, 0), -42);
+                matrix.setCell(0, 0, 1);
+                // Setting a cell should clear existing annotation.
+                assert.equal(matrix.getAnnotation(0, 0), undefined);
             });
         });
 

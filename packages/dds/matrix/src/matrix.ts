@@ -69,6 +69,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
     private readonly cols: PermutationVector;   // Map logical col to storage handle (if any)
 
     private cells = new SparseArray2D<T>();             // Stores cell values.
+    private annotations = new SparseArray2D<T>();      // Tracks cell annotations.
     private pending = new SparseArray2D<number>();      // Tracks pending writes.
 
     constructor(runtime: IComponentRuntime, public id: string, attributes: IChannelAttributes) {
@@ -230,6 +231,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         colHandle = this.cols.getAllocatedHandle(col),
     ) {
         this.cells.setCell(rowHandle, colHandle, value);
+        this.annotations.setCell(rowHandle, colHandle, undefined);
 
         // If the SharedMatrix is local, it will by synchronized via a Snapshot when initially connected.
         // Do not queue a message or track the pending op, as there will never be an ACK, etc.
@@ -252,6 +254,32 @@ export class SharedMatrix<T extends Serializable = Serializable>
             this.submitLocalMessage(op, metadata);
 
             this.pending.setCell(rowHandle, colHandle, localSeq);
+        }
+    }
+
+    public getAnnotation(row: number, col: number): T | undefined | null {
+        const rowHandle = this.rows.handles[row];
+        if (!(rowHandle >= Handle.valid)) {
+            assert(rowHandle === Handle.unallocated, "'row' out of range.");
+            assert(0 <= col && col < this.colCount, "'col' out of range.");
+            return undefined;
+        }
+        const colHandle = this.cols.handles[col];
+        if (!(colHandle >= Handle.valid)) {
+            assert(colHandle === Handle.unallocated, "'col' out of range.");
+            return undefined;
+        }
+        return this.annotations.getCell(rowHandle, colHandle);
+    }
+
+    public setAnnotation(row: number, col: number, value: T) {
+        assert(0 <= row && row < this.rowCount
+            && 0 <= col && col < this.colCount);
+        const rowHandle = this.rows.getAllocatedHandle(row);
+        const colHandle = this.cols.getAllocatedHandle(col);
+        this.annotations.setCell(rowHandle, colHandle, value);
+        for (const consumer of this.consumers.values()) {
+            consumer.cellsChanged(row, col, 1, 1, this);
         }
     }
 
@@ -445,6 +473,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
             const [cellData, pendingCliSeqData] = await deserializeBlob(this.runtime, storage, SnapshotPath.cells);
 
             this.cells = SparseArray2D.load(cellData);
+            this.annotations = new SparseArray2D();
             this.pending = SparseArray2D.load(pendingCliSeqData);
         } catch (error) {
             this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
@@ -498,6 +527,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                             if (this.pending.getCell(rowHandle, colHandle) === undefined) {
                                 const { value } = contents;
                                 this.cells.setCell(rowHandle, colHandle, value);
+                                this.annotations.setCell(rowHandle, colHandle, undefined);
 
                                 for (const consumer of this.consumers.values()) {
                                     consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
@@ -535,6 +565,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
             if (colHandle !== Handle.unallocated) {
                 for (const rowHandle of rowHandles) {
                     this.cells.setCell(rowHandle, colHandle, undefined);
+                    this.annotations.setCell(rowHandle, colHandle, undefined);
                     this.pending.setCell(rowHandle, colHandle, undefined);
                 }
             }
@@ -547,6 +578,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
             if (rowHandle !== Handle.unallocated) {
                 for (const colHandle of colHandles) {
                     this.cells.setCell(rowHandle, colHandle, undefined);
+                    this.annotations.setCell(rowHandle, colHandle, undefined);
                     this.pending.setCell(rowHandle, colHandle, undefined);
                 }
             }
