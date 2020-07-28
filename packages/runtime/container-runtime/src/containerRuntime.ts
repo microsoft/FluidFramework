@@ -749,7 +749,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             // can reply on same safety mechanism and resend ops only when we establish new connection.
             // This is applicable for read-only permissions (event is raised before connection is properly registered),
             // but it's an extra requirement for Container.forceReadonly() API
-            assert(!readonly || !this.connected, "");
+            assert(!readonly || !this.connected, "Unsafe to transtion to read-only state!");
 
             if (this.connected && !readonly)
             {
