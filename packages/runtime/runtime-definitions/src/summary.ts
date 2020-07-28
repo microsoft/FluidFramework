@@ -32,11 +32,11 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
 }
 
 export interface ISummarizerNode {
-    /** Latest successful summary reference sequence number */
+    /** Latest successfully acked summary reference sequence number */
     readonly referenceSequenceNumber: number;
     /**
      * True if a change has been recorded with sequence number exceeding
-     * the latest successful summary reference sequence number.
+     * the latest successfully acked summary reference sequence number.
      * False implies that the previous summary can be reused.
      */
     hasChanged(): boolean;
