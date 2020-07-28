@@ -7,8 +7,6 @@
 
 import * as ops from "./ops";
 
-// tslint:disable:interface-name
-
 export interface MapLike<T> {
     [index: string]: T;
 }
@@ -156,7 +154,7 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T>) {
 
 // Create a MapLike with good performance.
 export function createMap<T>(): MapLike<T> {
-    const map = Object.create(null); // tslint:disable-line:no-null-keyword
+    const map = Object.create(null);
 
     // Using 'delete' on an object causes V8 to put the object in dictionary mode.
     // This disables creation of hidden classes, which are expensive when an object is

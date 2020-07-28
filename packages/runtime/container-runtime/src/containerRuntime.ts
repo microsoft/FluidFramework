@@ -1141,8 +1141,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         realizationFn?: (context: IComponentContext) => void,
     ): Promise<IComponentRuntimeChannel> {
         this.verifyNotClosed();
-
-        // tslint:disable-next-line: no-unsafe-any
         const id: string = uuid();
         this.notBoundedComponentContexts.add(id);
         const context = new LocalComponentContext(

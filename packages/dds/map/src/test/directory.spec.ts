@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-console
-
 import assert from "assert";
 import {
     IBlob,

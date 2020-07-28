@@ -30,9 +30,6 @@ import * as Properties from "./properties";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 
-// tslint:disable:interface-name
-// tslint:disable:no-suspicious-comment
-
 export interface ReferencePosition {
     properties: Properties.PropertySet;
     refType: ops.ReferenceType;
@@ -2207,7 +2204,6 @@ export class MergeTree {
                 // LocSegment.seq === 0 when coming from SharedSegmentSequence.loadBody()
                 // In all other cases this has to be true (checked by addToLRUSet):
                 // locSegment.seq > this.collabWindow.currentSeq
-                // tslint:disable-next-line: one-line
                 else if ((locSegment.seq > this.collabWindow.minSeq) &&
                     MergeTree.options.zamboniSegments) {
                     this.addToLRUSet(locSegment, locSegment.seq);

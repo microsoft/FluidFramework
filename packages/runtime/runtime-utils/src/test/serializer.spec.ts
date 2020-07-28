@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:completed-docs
-// tslint:disable:mocha-no-side-effect-code
-
 import { strict as assert } from "assert";
 import { ComponentSerializer } from "../serializer";
 import {
