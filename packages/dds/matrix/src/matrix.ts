@@ -114,7 +114,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
 
     public getCell(row: number, col: number): T | undefined | null {
         // Map the logical (row, col) to associated storage handles.
-        const rowHandle = this.rows.handles[row];
+        const rowHandle = this.rows.getMaybeHandle(row);
 
         // Perf: Leverage the JavaScript behavior of returning `undefined` for out of bounds
         //       array access to detect bad coordinates. (~4% faster vs. an unconditional
@@ -125,7 +125,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
             return undefined;
         }
 
-        const colHandle = this.cols.handles[col];
+        const colHandle = this.cols.getMaybeHandle(col);
 
         // Perf: Leverage the JavaScript behavior of returning `undefined` for out of bounds
         //       array access to detect bad coordinates. (~4% faster vs. an unconditional
@@ -155,7 +155,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         const colCount = spec?.colCount ?? this.colCount;
         for (let i = 0; i < rowCount; i++) {
             const row = rowStart + i;
-            const rowHandle = this.rows.handles[row];
+            const rowHandle = this.rows.getMaybeHandle(row);
             if (rowHandle === Handle.unallocated) {
                 if (includeEmpty) {
                     for (let j = 0; j < colCount; j++) {
@@ -166,7 +166,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
             }
             for (let j = 0; j < colCount; j++) {
                 const col = colStart + j;
-                const colHandle = this.cols.handles[col];
+                const colHandle = this.cols.getMaybeHandle(col);
                 if (colHandle === Handle.unallocated) {
                     if (includeEmpty) {
                         callback(undefined, row, col);
@@ -258,13 +258,13 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     public getAnnotation(row: number, col: number): T | undefined | null {
-        const rowHandle = this.rows.handles[row];
+        const rowHandle = this.rows.getMaybeHandle(row);
         if (!(rowHandle >= Handle.valid)) {
             assert(rowHandle === Handle.unallocated, "'row' out of range.");
             assert(0 <= col && col < this.colCount, "'col' out of range.");
             return undefined;
         }
-        const colHandle = this.cols.handles[col];
+        const colHandle = this.cols.getMaybeHandle(col);
         if (!(colHandle >= Handle.valid)) {
             assert(colHandle === Handle.unallocated, "'col' out of range.");
             return undefined;
@@ -561,7 +561,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
 
     private readonly onRowHandlesRecycled = (rowHandles: Handle[]) => {
         for (let col = 0; col < this.colCount; col++) {
-            const colHandle = this.cols.handles[col];
+            const colHandle = this.cols.getMaybeHandle(col);
             if (colHandle !== Handle.unallocated) {
                 for (const rowHandle of rowHandles) {
                     this.cells.setCell(rowHandle, colHandle, undefined);
@@ -574,7 +574,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
 
     private readonly onColHandlesRecycled = (colHandles: Handle[]) => {
         for (let row = 0; row < this.rowCount; row++) {
-            const rowHandle = this.rows.handles[row];
+            const rowHandle = this.rows.getMaybeHandle(row);
             if (rowHandle !== Handle.unallocated) {
                 for (const colHandle of colHandles) {
                     this.cells.setCell(rowHandle, colHandle, undefined);

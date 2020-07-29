@@ -28,64 +28,88 @@ const enum SnapshotPath {
     handleTable = "handleTable",
 }
 
+type PermutationSegmentSpec = [number, number];
+
 export class PermutationSegment extends BaseSegment {
     public static readonly typeString: string = "PermutationSegment";
+    private _start = Handle.unallocated;
 
     public static fromJSONObject(spec: any) {
-        return new PermutationSegment(spec);
+        const [length, start] = spec as PermutationSegmentSpec;
+        return new PermutationSegment(length, start);
     }
 
     public readonly type = PermutationSegment.typeString;
 
-    constructor(length: number) {
+    constructor(length: number, start = Handle.unallocated) {
         super();
+        this._start = start;
         this.cachedLength = length;
     }
 
+    public get start() { return this._start; }
+    public set start(value: Handle) {
+        assert.equal(this._start, Handle.unallocated);
+        assert(value >= Handle.valid);
+
+        this._start = value;
+    }
+
+    public reset() {
+        this._start = Handle.unallocated;
+    }
+
     public toJSONObject() {
-        return this.cachedLength;
+        return [this.cachedLength, this.start];
     }
 
     public clone(start = 0, end = this.cachedLength) {
-        const b = new PermutationSegment(end - start);
+        const b = new PermutationSegment(
+            /* length: */ end - start,
+            /* start: */ this.start + start);
         this.cloneInto(b);
         return b;
     }
 
-    public canAppend(segment: ISegment) { return true; }
+    public canAppend(segment: ISegment) { 
+        const asPerm = segment as PermutationSegment;
+        
+        return this.start === Handle.unallocated
+            ? asPerm.start === Handle.unallocated
+            : asPerm.start === this.start + this.cachedLength;
+    }
 
     public append(segment: ISegment) {
-        // Note: Must call 'appendLocalRefs' before modifying this segment's length as
+        // Note: Must call 'LocalReferenceCollection.append(..)' before modifying this segment's length as
         //       'this.cachedLength' is used to adjust the offsets of the local refs.
         LocalReferenceCollection.append(this, segment);
 
         this.cachedLength += segment.cachedLength;
     }
 
-    // TODO: retain removed items for undo
-    // returns true if entire run removed
-    public removeRange(start: number, end: number) {
-        this.cachedLength -= (end - start);
-        return this.cachedLength === 0;
-    }
-
     protected createSplitSegmentAt(pos: number) {
         assert(0 < pos && pos < this.cachedLength);
 
-        const leafSegment = new PermutationSegment(this.cachedLength - pos);
+        const leafSegment = new PermutationSegment(
+            /* length: */ this.cachedLength - pos,
+            /* start: */ this.start === Handle.unallocated
+                ? Handle.unallocated
+                : this.start + pos);
+        
         this.cachedLength = pos;
 
         return leafSegment;
     }
 
     public toString() {
-        return `<${this.cachedLength} handles>`;
+        return this.start === Handle.unallocated
+            ? `<${this.cachedLength} empty>`
+            : `<${this.cachedLength}: ${this.start}..${this.start + this.cachedLength - 1}>`;
     }
 }
 
 export class PermutationVector extends Client {
     private handleTable = new HandleTable<never>(); // Tracks available storage handles for rows.
-    public handles: number[] = [];
 
     constructor(
         path: string,
@@ -115,12 +139,34 @@ export class PermutationVector extends Client {
         return this.removeRangeLocal(start, start + length);
     }
 
-    public getAllocatedHandle(pos: number): Handle {
-        let handle = this.handles[pos];
+    public getMaybeHandle(pos: number): Handle {
+        assert(0 <= pos && pos < this.getLength());
 
-        if (handle === Handle.unallocated) {
-            handle = this.handles[pos] = this.handleTable.allocate();
+        const { segment, offset } = this.getContainingSegment(pos);
+        const asPerm = segment as PermutationSegment;
+
+        return asPerm.start !== Handle.unallocated
+            ? asPerm.start + offset
+            : Handle.unallocated;
+    }
+
+    public getAllocatedHandle(pos: number): Handle {
+        let handle = this.getMaybeHandle(pos);
+        if (handle !== Handle.unallocated) {
+            return handle;
         }
+
+        this.walkSegments(
+            (segment) => {
+                const asPerm = segment as PermutationSegment;
+                assert.equal(asPerm.start, Handle.unallocated);
+                asPerm.start = handle = this.handleTable.allocate();
+                return true;
+            },
+            pos,
+            pos + 1,
+            /* accum: */ undefined,
+            /* splitRange: */ true);
 
         return handle;
     }
@@ -153,19 +199,38 @@ export class PermutationVector extends Client {
         //
         //       If we find that we frequently need a reverse handle -> position lookup, we could maintain
         //       one using the Tiny-Calc adjust tree.
-        const currentPosition = this.handles.indexOf(handle);
+        let containingSegment: PermutationSegment;
+        let containingOffset: number;
+
+        this.walkSegments((segment) => {
+            const { start, cachedLength } = segment as PermutationSegment;
+
+            // If the segment is unallocated, skip it.
+            if (start < Handle.valid) {
+                return true;
+            }
+
+            const end = start + cachedLength;
+
+            if (start <= handle && handle < end) {
+                containingSegment = segment as PermutationSegment;
+                containingOffset = handle - start;
+                return false;
+            }
+
+            return true;
+        });
 
         // SharedMatrix must verify that 'localSeq' used to originally submit this op is still the
         // most recently pending write to the row/col handle before calling 'getPositionForResubmit'
         // to ensure the handle has not been removed or recycled (See comments in `resubmitCore()`).
-        assert(currentPosition >= 0,
+        assert(containingSegment! !== undefined && containingSegment.start >= Handle.valid,
             "Caller must ensure 'handle' has not been removed/recycled.");
 
         // Once we know the current position of the handle, we can use the MergeTree to get the segment
         // containing this position and use 'findReconnectionPosition' to adjust for the local ops that
         // have not yet been submitted.
-        const { segment, offset } = this.getContainingSegment(currentPosition);
-        return this.findReconnectionPostition(segment, localSeq) + offset;
+        return this.findReconnectionPostition(containingSegment, localSeq) + containingOffset!;
     }
 
     // Constructs an ITreeEntry for the cell data.
@@ -179,20 +244,15 @@ export class PermutationVector extends Client {
                     value: super.snapshot(runtime, handle, /* catchUpMsgs: */[]),
                 },
                 serializeBlob(runtime, handle, SnapshotPath.handleTable, this.handleTable.snapshot()),
-                serializeBlob(runtime, handle, SnapshotPath.handles, this.handles),
             ],
             id: null,   // eslint-disable-line no-null/no-null
         };
     }
 
     public async load(runtime: IComponentRuntime, storage: IChannelStorageService, branchId?: string) {
-        const [handleTableData, handles] = await Promise.all([
-            await deserializeBlob(runtime, storage, SnapshotPath.handleTable),
-            await deserializeBlob(runtime, storage, SnapshotPath.handles),
-        ]);
+        const handleTableData = await deserializeBlob(runtime, storage, SnapshotPath.handleTable);
 
         this.handleTable = HandleTable.load<never>(handleTableData);
-        this.handles = handles;
 
         return super.load(runtime, new ObjectStoragePartition(storage, SnapshotPath.segments), branchId);
     }
@@ -204,34 +264,36 @@ export class PermutationVector extends Client {
         // Apply deltas in descending order to prevent positions from shifting.
         const ranges = deltaSegments
             .map(({ segment }) => ({
+                segment: segment as PermutationSegment,
                 position: this.getPosition(segment),
-                length: segment.cachedLength,
             }))
             .sort((left, right) => left.position - right.position);
 
         switch (operation) {
             case MergeTreeDeltaType.INSERT:
-                for (const { position, length } of ranges) {
-                    // Note: Using the spread operator with `.splice()` can exhaust the stack.
-                    this.handles = this.handles.slice(0, position)
-                        .concat(new Array(length).fill(Handle.unallocated))
-                        .concat(this.handles.slice(position));
-                }
-
                 // Notify the matrix of inserted positions.  The matrix in turn notifies any IMatrixConsumers.
-                for (const { position, length } of ranges) {
-                    this.deltaCallback(position, /* numRemoved: */ 0, /* numInserted: */ length);
+                for (const { segment, position } of ranges) {
+                    // HACK: We need to include the allocated handle in the segment's JSON reperesntation
+                    //       for snapshots, but need to ignore the remote client's handle allocations when
+                    //       processing remote ops.
+                    segment.reset();
+
+                    this.deltaCallback(position, /* numRemoved: */ 0, /* numInserted: */ segment.cachedLength);
                 }
                 break;
 
             case MergeTreeDeltaType.REMOVE: {
                 let freed: number[] = [];
 
-                for (const { position, length } of ranges) {
-                    const removed = this.handles.splice(position, /* deleteCount: */ length);
-
-                    // Note: Using the spread operator with `.splice()` can exhaust the stack.
-                    freed = freed.concat(removed.filter((handle) => handle !== Handle.unallocated));
+                for (const { segment } of ranges) {
+                    if (segment.start !== Handle.unallocated) {
+                        // Note: Using the spread operator with `.splice()` can exhaust the stack.
+                        freed = freed.concat(
+                            new Array(segment.cachedLength)
+                                .fill(0)
+                                .map((value, index) => index + segment.start),
+                        );
+                    }
                 }
 
                 // Notify matrix that handles are about to be freed.  The matrix is responsible for clearing
@@ -244,8 +306,8 @@ export class PermutationVector extends Client {
                 }
 
                 // Notify the matrix of removed positions.  The matrix in turn notifies any IMatrixConsumers.
-                for (const { position, length } of ranges) {
-                    this.deltaCallback(position, /* numRemoved: */ length, /* numInsert: */ 0);
+                for (const { segment, position } of ranges) {
+                    this.deltaCallback(position, /* numRemoved: */ segment.cachedLength, /* numInsert: */ 0);
                 }
                 break;
             }
@@ -256,6 +318,13 @@ export class PermutationVector extends Client {
     };
 
     public toString() {
-        return this.handles.map((handle, index) => `${index}:${handle}`).join(" ");
+        const s: string[] = [];
+
+        this.walkSegments((segment) => {
+            s.push(`${segment}`);
+            return true;
+        });
+
+        return s.join("");
     }
 }
