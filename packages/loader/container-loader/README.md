@@ -88,17 +88,21 @@ There are two ways errors are exposed:
 2. As an `"closed"` event on container, when container is closed due to critical error.
 3. As an `"warning"` event on container.
 
-Most critical errors can show up in #1 & #2 workflows. For example, URI may point to deleted file, which will result in errors on container open. But file can also be deleted while container is opened, resulting in same error type being raised through "error" handler.
+Critical errors can show up in #1 & #2 workflows. For example, URI may point to deleted file, which will result in errors on container open. But file can also be deleted while container is opened, resulting in same error type being raised through "error" handler.
 
-Errors and warnings raised by those paths are typed: errors are of [ICriticalContainerError](../container-definitions/src/error.ts) type, and warnings are of [ContainerWarning](../container-definitions/src/error.ts) type which is a union of interfaces that have one thing in common - they have the following  field, describing type of an error (and appropriate interface of error object):
+Errors are of [ICriticalContainerError](../container-definitions/src/error.ts) type, and warnings are of [ContainerWarning](../container-definitions/src/error.ts) type. Both have `errorType` property, describing type of an error (and appropriate interface of error object):
 ```ts
-     readonly errorType: ErrorType.genericError;
+     readonly errorType: string;
 ```
-ErrorType enum represents all error and warning types that can be raised by container.
-For a full list of error interfaces please see interfaces that are part of these two types above.
+There are 3 sources of errors:
+1. [ContainerErrorType](../container-definitions/src/error.ts) - errors & warnings raised at loader level
+2. [OdspErrorType](../../drivers/odsp-driver/src/odspError.ts) and [R11sErrorType](../../drivers/routerlicious-driver/src/documentDeltaConnection.ts) - errors raised by ODSP and R11S drivers.
+3. Runtime errors, like `"summarizingError"`, `"dataCorruptionError"`. This class of errors it not pre-determined and depends on type of container loaded.
 
- Hosts have to listen to `"closed"` event. If error object is present there, container was closed due to error and this information needs to be communicated to user in some way. If there is no error object, it was closed due to host application calling Container.close() (without specifying error).
- When container is closed, it is no longer connected to ordering service. It is also in read-only state, communicating to components not to allow user to make changes to document.
+`ICriticalContainerError.errorType` is a string, as final set of error types is not known at the loader layer. Hosting application may package different drivers and open different types of containers, thus making errors list raised at container level dynamic.
+
+Hosts have to listen to `"closed"` event. If error object is present there, container was closed due to error and this information needs to be communicated to user in some way. If there is no error object, it was closed due to host application calling Container.close() (without specifying error).
+When container is closed, it is no longer connected to ordering service. It is also in read-only state, communicating to components not to allow user to make changes to document.
 
 ## Connectivity events
 Container raises 2  events to notify hosting application about connectivity issues and connectivity status.
