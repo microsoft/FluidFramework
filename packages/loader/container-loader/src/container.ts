@@ -954,9 +954,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async createDetached(source: IFluidCodeDetails) {
         const attributes: IDocumentAttributes = {
             branch: "",
-            sequenceNumber: 0,
+            sequenceNumber: 1,
             term: 1,
-            minimumSequenceNumber: 0,
+            minimumSequenceNumber: 1,
         };
 
         // Seed the base quorum to be an empty list with a code quorum set
