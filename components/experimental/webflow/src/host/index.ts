@@ -23,12 +23,12 @@ export class WebFlow extends SharedComponent<ISharedDirectory> implements ICompo
 
     public static getFactory(): IComponentFactory { return WebFlow.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
+    public static async create(parentContext: IComponentContext, props?: any) {
         return WebFlow.factory.create(parentContext, props);
     }
 
-    public create() {
-        const doc = FlowDocument.create(this.context);
+    public async create() {
+        const doc = await FlowDocument.create(this.context) as FlowDocument;
         this.root.set("doc", doc.handle);
 
         const url = new URL(window.location.href);
@@ -52,5 +52,5 @@ export class WebFlow extends SharedComponent<ISharedDirectory> implements ICompo
 
     // #endregion IComponentHTMLView
 
-    protected async componentInitializingFirstTime() { this.create(); }
+    protected async componentInitializingFirstTime() { await this.create(); }
 }

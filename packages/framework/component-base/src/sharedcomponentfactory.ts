@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest, IComponent } from "@fluidframework/component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
 import { ComponentRegistry } from "@fluidframework/container-runtime";
 import {
@@ -66,14 +66,11 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
         });
     }
 
-    public create(parentContext: IComponentContext, props?: any) {
+    public async create(parentContext: IComponentContext, props?: any) {
         const { containerRuntime, packagePath } = parentContext;
 
-        const childContext = containerRuntime.createComponentContext(
-            packagePath.concat(this.type),
-            props);
-
-        return this.createCore(childContext, this.createRuntime(childContext));
+        const channel = await containerRuntime._createComponentWithProps(packagePath.concat(this.type));
+        return (await channel.request({ url: "/" })).value as IComponent;
     }
 
     private instantiate(context: IComponentContext, runtime: IComponentRuntime) {

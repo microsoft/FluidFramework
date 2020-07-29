@@ -96,17 +96,6 @@ export interface IContainerRuntimeBase extends
     on(event: "leader" | "notleader", listener: () => void): this;
 
     /**
-     * Creates a new IComponentContext instance.  The caller completes construction of the the component by
-     * calling IComponentContext.bindRuntime() when the component is prepared to begin processing ops.
-     *
-     * @param pkg - Package path for the component to be created
-     * @param props - Properties to be passed to the instantiateComponent thru the context
-     *  @deprecated 0.16 Issue #1537 Properties should be passed directly to the component's initialization
-     *  or to the factory method rather than be stored in/passed from the context
-     */
-    createComponentContext(pkg: string[], props?: any): IComponentContext;
-
-    /**
      * @deprecated 0.16 Issue #1537
      *  Properties should be passed to the component factory method rather than to the runtime
      * Creates a new component with props
