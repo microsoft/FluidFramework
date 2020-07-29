@@ -24,6 +24,7 @@ import {
 } from "@fluidframework/container-definitions";
 import {
     Deferred,
+    unreachableCase,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
@@ -47,7 +48,7 @@ import {
     IInboundSignalMessage,
     SchedulerType,
 } from "@fluidframework/runtime-definitions";
-import { generateHandleContextPath, unreachableCase } from "@fluidframework/runtime-utils";
+import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { IChannel, IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";

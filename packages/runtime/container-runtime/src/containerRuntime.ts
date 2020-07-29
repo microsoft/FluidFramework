@@ -33,6 +33,7 @@ import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/c
 import {
     Deferred,
     Trace,
+    unreachableCase,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
@@ -77,7 +78,7 @@ import {
     NamedComponentRegistryEntries,
     SchedulerType,
 } from "@fluidframework/runtime-definitions";
-import { ComponentSerializer, SummaryTracker, unreachableCase, RequestParser } from "@fluidframework/runtime-utils";
+import { ComponentSerializer, SummaryTracker, RequestParser } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
@@ -1756,12 +1757,10 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             case ContainerMessageType.Attach:
                 this.submit(type, content, localOpMetadata);
                 break;
-            default:
-                unreachableCase(type);
-                break;
             case ContainerMessageType.ChunkedOp:
-                unreachableCase(type as never);
-                break;
+                throw new Error(`chunkedOp not expected here`);
+            default:
+                unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
         }
     }
 
