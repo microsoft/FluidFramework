@@ -37,7 +37,6 @@ import {
     ISnapshotOptions,
     ITree,
     IBlob,
-    idFromSpoEntry,
 } from "./contracts";
 import { fetchSnapshot } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -54,7 +53,7 @@ import { throwOdspNetworkError } from "./odspError";
 
 function convertOdspTree(tree: ITree) {
     const gitTree: resources.ITree = {
-        sha: idFromSpoEntry(tree),
+        sha: tree.id,
         url: "",
         tree: [],
     };
@@ -64,7 +63,7 @@ function convertOdspTree(tree: ITree) {
             mode: "",
             type: entry.type,
             size: 0,
-            sha: idFromSpoEntry(entry),
+            sha: entry.id,
             url: "",
         });
     }
@@ -230,7 +229,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (commits && commits[".app"]) {
             // The latest snapshot is a summary
             // attempt to read .protocol from commits for backwards compat
-            return this.readSummaryTree(idFromSpoEntry(tree), commits[".protocol"] || hierarchicalTree.trees[".protocol"], commits[".app"] as string);
+            return this.readSummaryTree(tree.id, commits[".protocol"] || hierarchicalTree.trees[".protocol"], commits[".app"] as string);
         }
 
         if (hierarchicalTree.blobs) {
@@ -247,7 +246,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         const appTree = hierarchicalTree.trees[".app"];
         const protocolTree = hierarchicalTree.trees[".protocol"];
         if (appTree && protocolTree) {
-            return this.combineProtocolAndAppSnapshotTree(idFromSpoEntry(tree), appTree, protocolTree);
+            return this.combineProtocolAndAppSnapshotTree(tree.id, appTree, protocolTree);
         }
 
         return hierarchicalTree;
@@ -356,7 +355,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                 const odspSnapshot: IOdspSnapshot = cachedSnapshot;
 
-                const { trees, blobs, ops, sha } = odspSnapshot;
+                const { trees, blobs, ops, id } = odspSnapshot;
                 if (trees) {
                     this.initTreesCache(trees);
                 }
@@ -375,10 +374,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 if (entry.path === ".app") {
                                     if (entry.type === "commit") {
                                         // This is the unacked handle of the latest summary generated.
-                                        appCommit = idFromSpoEntry(entry);
+                                        appCommit = entry.id;
                                     }
                                     if (entry.type === "tree") {
-                                        appTree = idFromSpoEntry(entry);
+                                        appTree = entry.id;
                                     }
                                     break;
                                 }
@@ -387,14 +386,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         }
                         for (const entry of treeVal.entries) {
                             if (entry.type === "blob") {
-                                blobsIdToPathMap.set(idFromSpoEntry(entry), key === appCommit ? `/.app/${entry.path}` : `/${entry.path}`);
+                                blobsIdToPathMap.set(entry.id, key === appCommit ? `/.app/${entry.path}` : `/${entry.path}`);
                             }
                         }
                     }
 
                     // Populate the cache with paths from id-to-path mapping.
                     for (const blob of this.blobCache.values()) {
-                        const path = blobsIdToPathMap.get(idFromSpoEntry(blob));
+                        const path = blobsIdToPathMap.get(blob.id);
                         // If this is the first container that was created for the service, it cannot be
                         // the summarizing container (becauase the summarizing container is always created
                         // after the main container). In this case, we do not need to do any hashing
@@ -414,7 +413,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 }
 
                 this.ops = ops;
-                return sha ? [{ id: sha, treeId: undefined! }] : [];
+                return id ? [{ id, treeId: undefined! }] : [];
             });
         }
 
@@ -450,7 +449,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 }
                 return {
                     date,
-                    id: idFromSpoEntry(version),
+                    id: version.id,
                     treeId: undefined!,
                 };
             });
@@ -526,7 +525,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         const { result, blobsShaToPathCacheLatest } = await PerformanceEvent.timedExecAsync(this.logger,
             { eventName: "uploadSummaryWithContext" },
             async () => this.writeSummaryTree(this.lastSummaryHandle, summary));
-        const id = result ? idFromSpoEntry(result) : undefined;
+        const id = result ? result.id : undefined;
         if (!result || !id) {
             throw new Error(`Failed to write summary tree`);
         }
@@ -544,12 +543,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private initTreesCache(trees: ITree[]) {
         trees.forEach((tree) => {
-            this.treesCache.set(idFromSpoEntry(tree), tree);
+            this.treesCache.set(tree.id, tree);
         });
     }
 
     private initBlobsCache(blobs: IBlob[]) {
-        blobs.forEach((blob) => this.blobCache.set(idFromSpoEntry(blob), blob));
+        blobs.forEach((blob) => this.blobCache.set(blob.id, blob));
     }
 
     private checkSnapshotUrl() {

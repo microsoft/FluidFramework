@@ -101,10 +101,7 @@ export interface IDocumentStorageGetVersionsResponse {
 
 export interface IDocumentStorageVersion {
     message: string;
-
-    // Interchangeable, one of them is there.
-    sha?: string;
-    id?: string;
+    id: string;
 }
 
 export enum SnapshotType {
@@ -120,9 +117,7 @@ export interface ISnapshotRequest {
 }
 
 export interface ISnapshotResponse {
-    // Interchangeable, one of them is there.
-    sha?: string;
-    id?: string;
+    id: string;
 }
 
 export type SnapshotTreeEntry = ISnapshotTreeValueEntry | ISnapshotTreeHandleEntry;
@@ -144,8 +139,7 @@ export interface ISnapshotTreeHandleEntry extends ISnapshotTreeBaseEntry {
 export type SnapshotTreeValue = ISnapshotTree | ISnapshotBlob | ISnapshotCommit;
 
 export interface ISnapshotTree {
-    id?: string;
-    sha?: string;
+    // id: string;
     entries?: SnapshotTreeEntry[];
 }
 
@@ -160,26 +154,15 @@ export interface ISnapshotCommit {
 }
 
 export interface ITreeEntry {
-    // Interchangeable, one of them is there.
-    id?: string;
-    sha?: string;
-
+    id: string;
     path: string;
     type: "commit" | "tree" | "blob";
 }
 
 export interface ITree {
     entries: ITreeEntry[];
-
-    // Interchangeable, one of them is there.
-    id?: string;
-    sha?: string;
-
+    id: string;
     sequenceNumber: number;
-}
-
-export function idFromSpoEntry(tree: { id?: string; sha?: string; }) {
-    return (tree.sha ?? tree.id) as string;
 }
 
 /**
@@ -188,14 +171,12 @@ export function idFromSpoEntry(tree: { id?: string; sha?: string; }) {
 export interface IBlob {
     content: string;
     encoding: string;
-    id?: string;
-    sha?: string;
+    id: string;
     size: number;
 }
 
 export interface IOdspSnapshot {
     id: string;
-    sha?: string;
     trees: ITree[];
     blobs?: IBlob[];
     ops?: ISequencedDeltaOpMessage[];
