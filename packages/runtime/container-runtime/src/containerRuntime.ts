@@ -1718,7 +1718,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
                 this.submit(type, content, localOpMetadata);
                 break;
             case ContainerMessageType.ChunkedOp:
-                throw new Error(`Unsupported ContainerMessageType ${ContainerMessageType.ChunkedOp}`);
+                throw new Error(`chunkedOp not expected here`);
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
         }
