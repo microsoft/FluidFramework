@@ -119,6 +119,15 @@ export interface IContainerRuntimeBase extends
     createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntimeChannel>;
 
     /**
+     * Creates data store. Returns router of data store. Data store is not bound to container,
+     * store in such state is not persisted to storage (file). Storing a handle to this store
+     * (or any of its parts, like DDS) into already attached DDS (or non-attached DDS that will eventually
+     * gets attached to storage) will result in this store being attached to storage.
+     * @param pkg - Package name of the data store factory
+     */
+    createDataStore(pkg: string | string[]): Promise<IComponentRouter>;
+
+    /**
      * Get an absolute url for a provided container-relative request.
      * Returns undefined if the container or component isn't attached to storage.
      * @param relativeUrl - A relative request within the container
