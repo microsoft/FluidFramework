@@ -149,7 +149,7 @@ function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
     const snapshot = {
         entries: snapshotTree.entries ?? [],
         message: "app",
-        sequenceNumber: 1,
+        sequenceNumber: documentAttributes.sequenceNumber,
         sha: snapshotTree.id,
         type: SnapshotType.Container,
     };

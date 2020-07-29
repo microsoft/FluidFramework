@@ -956,7 +956,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             branch: "",
             sequenceNumber: 1,
             term: 1,
-            minimumSequenceNumber: 1,
+            minimumSequenceNumber: 0,
         };
 
         // Seed the base quorum to be an empty list with a code quorum set
