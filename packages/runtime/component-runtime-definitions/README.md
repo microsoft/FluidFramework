@@ -14,7 +14,7 @@ _TODO: The full set of functionality is under review_
 - DeltaManager
 - Blob Management API.
 
-### Crash course on Signals
+### Signals
 
 Signals provide a transient data channel for data (any serializable payload)
 that doesn't need to be persisted in the op stream.
