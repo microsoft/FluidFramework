@@ -31,6 +31,8 @@ import { MessageType } from "@fluidframework/protocol-definitions";
 import { ComponentMessageType } from "@fluidframework/component-runtime";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 
+const detachedContainerRefSeqNumber = 1;
+
 describe("Detached Container", () => {
     const documentId = "detachedContainerTest";
     const pkg: IFluidCodeDetails = {
@@ -333,7 +335,7 @@ describe("Detached Container", () => {
     });
 
     it("Fire ops during container attach for consensus register collection", async () => {
-        const op = { key: "1", type: "write", serializedValue: JSON.stringify("b"), refSeq: 0 };
+        const op = { key: "1", type: "write", serializedValue: JSON.stringify("b"), refSeq: detachedContainerRefSeqNumber };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method

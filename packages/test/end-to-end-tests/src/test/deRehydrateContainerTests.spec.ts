@@ -16,6 +16,8 @@ import {
 import { SharedMap } from "@fluidframework/map";
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
 
+const detachedContainerRefSeqNumber = 1;
+
 describe(`Dehydrate Rehydrate Container Test`, () => {
     const codeDetails: IFluidCodeDetails = {
         package: "detachedContainerTestPackage1",
@@ -73,8 +75,10 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const protocolAttributes: IDocumentAttributes =
             JSON.parse(Buffer.from(snapshotTree.trees[".protocol"].blobs[protocolAttributesBlobId],
             "base64").toString());
-        assert.strictEqual(protocolAttributes.sequenceNumber, 0, "Seq number should be 0");
-        assert.strictEqual(protocolAttributes.minimumSequenceNumber, 0, "Min Seq number should be 0");
+        assert.strictEqual(protocolAttributes.sequenceNumber, detachedContainerRefSeqNumber, "initial aeq #");
+        assert(
+            protocolAttributes.minimumSequenceNumber <= protocolAttributes.sequenceNumber,
+            "Min Seq # <= seq #");
 
         // Check for default component
         const defaultComponentBlobId = snapshotTree.trees.default.blobs[".component"];
