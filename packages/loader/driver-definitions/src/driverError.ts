@@ -49,6 +49,19 @@ export enum DriverErrorType {
      * That might be indication of some component error - components should not generate ops in readonly mode.
      */
     writeError = "writeError",
+
+    /**
+     * Generic fetch failure.
+     * Most of such failures are due to client being offline, or DNS is not reachable, such errors map to
+     * DriverErrorType.offlineError. Anything else that can't be diagnose as likely offline maps to this error.
+     * This can also indicate no response from server.
+     */
+    fetchFailure = "fetchFailure",
+
+    /**
+     * Unexpected response from server. Either JSON is malformed, or some required properties are missing
+     */
+    incorrectServerResponse = "incorrectServerResponse",
 }
 
 /**
@@ -82,7 +95,9 @@ export interface IDriverBasicError extends IDriverErrorBase {
         | DriverErrorType.fileNotFoundOrAccessDeniedError
         | DriverErrorType.offlineError
         | DriverErrorType.unsupportedClientProtocolVersion
-        | DriverErrorType.writeError;
+        | DriverErrorType.writeError
+        | DriverErrorType.fetchFailure
+        | DriverErrorType.incorrectServerResponse;
     readonly statusCode?: number;
 }
 
