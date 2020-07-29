@@ -24,6 +24,7 @@ Previously, `LocalSessionStorageDbFactory` was part of the `@fluidframework/webp
 - [Add Undefined to getAbsoluteUrl return type](#Add-Undefined-to-getAbsoluteUrl-return-type)
 - [Renamed TestDeltaStorageService, TestDocumentDeltaConnection, TestDocumentService, TestDocumentServiceFactory and TestResolver](#Renamed-TestDeltaStorageService,-TestDocumentDeltaConnection,-TestDocumentService,-TestDocumentServiceFactory-and-TestResolver)
 - [DocumentDeltaEventManager has been renamed and moved to "@fluidframework/test-utils"](#DocumentDeltaEventManager-has-been-renamed-and-moved-to-"@fluidframework/test-utils")
+- [`isAttached` replaced with `attachState` property](#`isAttached`-replaced-with-`attachState`-property)
 
 ### Deprecated `path` from `IComponentHandleContext`
 Deprecated the `path` field from the interface `IComponentHandleContext`. This means that `IComponentHandle` will not have this going forward as well.
@@ -147,6 +148,13 @@ containerDeltaEventManager.registerDocuments(component1.runtime, component2.runt
 opProcessingController = new OpProcessingController(deltaConnectionServer);
 opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
 ```
+
+### `isAttached` replaced with `attachState` property
+
+`isAttached` is replaced with `attachState` property on `IContainerContext`, `IContainerRuntime` and `IComponentContext`.
+`isAttached` returned true when the entity was either attaching or attached to the storage.
+So if `attachState` is `AttachState.Attaching` or `AttachState.Attached` then `isAttached` would have returned true.
+Attaching is introduced in regards to Detached container where there is a time where state is neither AttachState.Detached nor AttachState.Attached.
 
 ## 0.21 Breaking Changes
 - [Removed `@fluidframework/local-test-utils`](#removed-`@fluidframework/local-test-utils`)
