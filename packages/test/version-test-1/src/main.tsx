@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -14,7 +13,7 @@ import { UpgradeManager } from "@fluidframework/base-host";
 import React from "react";
 import ReactDOM from "react-dom";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
 const pkgversion = pkg.version as string;
 const signalKey = {
@@ -93,7 +92,8 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
     }
 
     private sendUpgradeSignal(highPriority: boolean) {
-        this.runtime.submitSignal(highPriority ? signalKey.upgradeHighPriority
+        this.runtime.submitSignal(highPriority
+            ? signalKey.upgradeHighPriority
             : signalKey.upgradeLowPriority, undefined);
     }
 

@@ -10,7 +10,7 @@ import { NPMTask } from "./npmTask";
 import { Task } from "./task";
 import { TscTask } from "./leaf/tscTask";
 import { getExecutableFromCommand } from "../../common/utils";
-import { EsLintTask, TsFormatTask } from "./leaf/lintTasks";
+import { EsLintTask, TsFormatTask, TsLintTask } from "./leaf/lintTasks";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
 import { WebpackTask } from "./leaf/webpackTask";
 import { LesscTask, CopyfilesTask, EchoTask, GenVerTask } from "./leaf/miscTasks";
@@ -18,6 +18,7 @@ import { LesscTask, CopyfilesTask, EchoTask, GenVerTask } from "./leaf/miscTasks
 // Map of executable name to LeafTasks
 const executableToLeafTask: { [key: string]: new (node: BuildPackage, command: string) => LeafTask } = {
     tsc: TscTask,
+    tslint:TsLintTask,
     eslint: EsLintTask,
     tsfmt: TsFormatTask,
     webpack: WebpackTask,
