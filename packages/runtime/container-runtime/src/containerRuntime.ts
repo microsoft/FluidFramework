@@ -9,6 +9,7 @@ import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
+    IComponentRouter,
     IComponentHandleContext,
     IComponentSerializer,
     IRequest,
@@ -1145,6 +1146,17 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         const id = maybePkg === undefined ? uuid() : idOrPkg;
         const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
         return this._createComponentWithProps(pkg, undefined, id);
+    }
+
+    public async _createComponent(pkg: string | string[]): Promise<IComponentRouter> {
+        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg]).realize();
+    }
+
+    public async createRootComponent(pkg: string | string[], rootComponentId: string): Promise<IComponentRouter> {
+        const context = this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], rootComponentId);
+        const component = await context.realize();
+        component.bindToContext();
+        return component;
     }
 
     public async _createComponentWithProps(pkg: string | string[], props?: any, id?: string):

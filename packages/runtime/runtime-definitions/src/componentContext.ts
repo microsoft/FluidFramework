@@ -119,6 +119,26 @@ export interface IContainerRuntimeBase extends
     createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntimeChannel>;
 
     /**
+     * Creates component. Returned component is not bound to container. Component in such state is not
+     * persisted to storage (file). Storing a handle to this component (or any of its parts, like DDS) into
+     * already attached DDS (or non-attached DDS that will eventually gets attached to storage) will result
+     * in this component being attached to storage.
+     * @param pkg - Package name of the component
+     */
+    _createComponent(pkg: string | string[]): Promise<IComponentRouter>;
+    /**
+     * Creates root component in container. Such component is automatically bound to container, and thus is
+     * attached to storage when/if container is attached to storage. Such components are never garbage collected
+     * and can be found / loaded by name.
+     * Majority of components in container should not be roots, and should be reachable (directly or indirectly)
+     * through one of the roots.
+     * @param pkg - Package name of the component
+     * @param rootComponentId - component ID. IDs naming space is global in container. If collision on name occurs,
+     * it results in container corruption - loading this file after that will always result in error.
+     */
+    createRootComponent(pkg: string | string[], rootComponentId: string): Promise<IComponentRouter>;
+
+    /**
      * Get an absolute url for a provided container-relative request.
      * Returns undefined if the container or component isn't attached to storage.
      * @param relativeUrl - A relative request within the container
