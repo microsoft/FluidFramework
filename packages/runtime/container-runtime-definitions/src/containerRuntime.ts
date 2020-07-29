@@ -4,7 +4,9 @@
  */
 
 import {
-    IComponent, IFluidObject,
+    IComponent,
+    IFluidObject,
+    IComponentRouter,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -103,6 +105,18 @@ export interface IContainerRuntime extends
         pkg: string[],
         realizationFn?: (context: IComponentContext) => void,
     ): Promise<IComponentRuntimeChannel>;
+
+    /**
+     * Creates root data store in container. Such store is automatically bound to container, and thus is
+     * attached to storage when/if container is attached to storage. Such stores are never garbage collected
+     * and can be found / loaded by name.
+     * Majority of data stores in container should not be roots, and should be reachable (directly or indirectly)
+     * through one of the roots.
+     * @param pkg - Package name of the data store factory
+     * @param rootDataStoreId - data store ID. IDs naming space is global in container. If collision on name occurs,
+     * it results in container corruption - loading this file after that will always result in error.
+     */
+    createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IComponentRouter>;
 
     /**
      * Returns the current quorum.
