@@ -140,12 +140,3 @@ export interface INewFileInfo {
     filePath: string;
     callback?(itemId: string, filename: string): void;
 }
-
-export interface INewFileInfoHeader {
-    newFileInfoPromise: Promise<INewFileInfo>,
-}
-
-declare module "@fluidframework/component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IRequestHeader extends Partial<INewFileInfoHeader> { }
-}
