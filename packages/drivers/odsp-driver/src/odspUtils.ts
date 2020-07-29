@@ -44,18 +44,20 @@ export function getHashedDocumentId(driveId: string, itemId: string): string {
  */
 export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
     return get(false).catch(async (e) => {
-        // If the error is 401 or 403 refresh the token and try once more.
-        // fetchIncorrectResponse indicates some error on the wire, retry once.
-        if (e.errorType === DriverErrorType.authorizationError || e.statusCode === fetchIncorrectResponse) {
-            return get(true);
+        switch (e.errorType) {
+            // If the error is 401 or 403 refresh the token and try once more.
+            // fetchIncorrectResponse indicates some error on the wire, retry once.
+            case DriverErrorType.authorizationError:
+            case DriverErrorType.incorrectServerResponse:
+                return get(true);
+            default:
+                // All code paths (deltas, blobs, trees) already throw exceptions.
+                // Throwing is better than returning null as most code paths do not return nullable-objects,
+                // and error reporting is better (for example, getDeltas() will log error to telemetry)
+                // getTree() path is the only potential exception where returning null might result in
+                // document being opened, though there maybe really bad user experience (consuming thousands of ops)
+                throw e;
         }
-
-        // All code paths (deltas, blobs, trees) already throw exceptions.
-        // Throwing is better than returning null as most code paths do not return nullable-objects,
-        // and error reporting is better (for example, getDeltas() will log error to telemetry)
-        // getTree() path is the only potential exception where returning null might result in
-        // document being opened, though there maybe really bad user experience (consuming thousands of ops)
-        throw e;
     });
 }
 
