@@ -242,6 +242,7 @@ export class SharedTextRunner
         const container = new controls.FlowContainer(
             containerDiv,
             sharedTextId,
+            // API.Document should not be used here. This should be removed once #2915 is fixed.
             new API.Document(
                 this.runtime,
                 this.context,

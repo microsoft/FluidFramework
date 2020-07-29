@@ -36,6 +36,7 @@ export class FlowContainer extends ui.Component {
     private layerCache: { [key: string]: Layer } = {};
     private activeLayers: { [key: string]: IOverlayLayerStatus } = {};
 
+    // api.Document should not be used. It should be removed after #2915 is fixed.
     constructor(
         element: HTMLDivElement,
         private readonly id: string,
