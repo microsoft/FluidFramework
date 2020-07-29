@@ -139,7 +139,6 @@ export interface ISnapshotTreeHandleEntry extends ISnapshotTreeBaseEntry {
 export type SnapshotTreeValue = ISnapshotTree | ISnapshotBlob | ISnapshotCommit;
 
 export interface ISnapshotTree {
-    // id: string;
     entries?: SnapshotTreeEntry[];
 }
 
