@@ -1184,7 +1184,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.canReconnect,
         );
 
-        deltaManager.on("connect", (details: IConnectionDetails) => {
+        deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
             const oldState = this._connectionState;
             this._connectionState = ConnectionState.Connecting;
 
@@ -1196,10 +1196,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // we know there can no longer be outstanding ops that we sent with the previous client id.
             this.pendingClientId = details.clientId;
 
-            this.emit("joining");
+            this.emit("connect", opsBehind);
 
             // Report telemetry after we set client id!
-            this.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState, "websocket established");
+            this.logConnectionStateChangeTelemetry(
+                ConnectionState.Connecting,
+                oldState,
+                "websocket established",
+                opsBehind);
 
             if (deltaManager.connectionMode === "read") {
                 this.setConnectionState(
@@ -1260,7 +1264,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             });
     }
 
-    private logConnectionStateChangeTelemetry(value: ConnectionState, oldState: ConnectionState, reason: string) {
+    private logConnectionStateChangeTelemetry(
+        value: ConnectionState,
+        oldState: ConnectionState,
+        reason: string,
+        opsBehind?: number)
+    {
         // Log actual event
         const time = performanceNow();
         this.connectionTransitionTimes[value] = time;
@@ -1299,6 +1308,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             clientId: this.clientId,
             connectionMode,
             autoReconnect,
+            opsBehind,
             online: OnlineStatus[isOnline()],
             lastVisible: this.lastVisible ? performanceNow() - this.lastVisible : undefined,
         });

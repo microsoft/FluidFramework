@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
-    IDeltaManager,
     IGenericBlob,
     ContainerWarning,
     ILoader,
@@ -28,7 +27,6 @@ import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     IBlob,
     ICommittedProposal,
-    IDocumentMessage,
     IQuorum,
     ISequencedClient,
     ISequencedDocumentMessage,
@@ -376,7 +374,7 @@ export class MockComponentRuntime extends EventEmitter
     public readonly path = "";
     public readonly connected = true;
     public readonly leader: boolean;
-    public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> = new MockDeltaManager();
+    public deltaManager = new MockDeltaManager();
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockComponentRuntime");
     private readonly activeDeferred = new Deferred<void>();
