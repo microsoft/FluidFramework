@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8, unreachableCase } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -17,7 +17,6 @@ import {
     IComponentRuntime,
     IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
-import { unreachableCase } from "@fluidframework/runtime-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import {
