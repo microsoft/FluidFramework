@@ -566,8 +566,10 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
     public readonly IComponentHandleContext: IComponentHandleContext;
 
+    // internal logger for ContainerRuntime
+    private readonly _logger: ITelemetryLogger;
+    // publicly visible logger, to be used by components, summarize, etc.
     public readonly logger: ITelemetryLogger;
-    public readonly subLogger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
     private readonly summaryTreeConverter: SummaryTreeConverter;
@@ -676,16 +678,16 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             this.setNewContext(key, componentContext);
         }
 
-        this.subLogger = ChildLogger.create(context.logger, undefined, {
+        this.logger = ChildLogger.create(context.logger, undefined, {
             runtimeVersion: pkgVersion,
         });
 
-        this.logger = ChildLogger.create(this.subLogger, "ContainerRuntime");
+        this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
             this,
-            ChildLogger.create(this.subLogger, "ScheduleManager"),
+            ChildLogger.create(this.logger, "ScheduleManager"),
         );
 
         this.deltaSender = this.deltaManager;
@@ -720,7 +722,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             context,
             this.runtimeOptions.generateSummaries !== false,
             !!this.runtimeOptions.enableWorker,
-            this.subLogger,
+            this.logger,
             (summarizer) => { this.nextSummarizerP = summarizer; },
             this.previousState.nextSummarizerP,
             !!this.previousState.reload,
@@ -755,7 +757,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             }
         });
 
-        ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.subLogger);
+        ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
     public dispose(): void {
@@ -772,7 +774,10 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             contextD.promise.then((context) => {
                 context.dispose();
             }).catch((contextError) => {
-                this.logger.sendErrorEvent({ eventName: "ComponentContextDisposeError", componentId }, contextError);
+                this._logger.sendErrorEvent({
+                    eventName: "ComponentContextDisposeError",
+                    componentId },
+                contextError);
             });
         }
 
@@ -939,7 +944,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             try {
                 componentContext.setConnectionState(connected, clientId);
             } catch (error) {
-                this.logger.sendErrorEvent({
+                this._logger.sendErrorEvent({
                     eventName: "ChangeConnectionStateError",
                     clientId,
                     component,
@@ -947,7 +952,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             }
         }
 
-        raiseConnectedEvent(this.logger, this, connected, clientId);
+        raiseConnectedEvent(this._logger, this, connected, clientId);
 
         if (connected) {
             assert(clientId);
@@ -1037,7 +1042,10 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         if (!context) {
             // Attach message may not have been processed yet
             assert(!local);
-            this.logger.sendTelemetryEvent({ eventName: "SignalComponentNotFound", componentId: envelope.address });
+            this._logger.sendTelemetryEvent({
+                eventName: "SignalComponentNotFound",
+                componentId: envelope.address,
+            });
             return;
         }
 
@@ -1487,7 +1495,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         // TODO: Issue-2171 Support for Branch Snapshots
         if (this.parentBranch) {
-            this.logger.sendTelemetryEvent({
+            this._logger.sendTelemetryEvent({
                 eventName: "SkipGenerateSummaryParentBranch",
                 parentBranch: this.parentBranch,
             });
@@ -1703,7 +1711,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         // That might be not what caller hopes to get, but we can look deeper if telemetry tells us it's a problem.
         const middleOfBatch = this.flushMode === FlushMode.Manual && this.needsFlush;
         if (middleOfBatch) {
-            this.logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
+            this._logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
         }
 
         return this.context.submitFn(

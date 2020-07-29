@@ -75,5 +75,5 @@ describe("context reload", () => {
         upgrade && await upgrade.click();
 
         await summMessage.promise;
-    }, 10000);
+    });
 });
