@@ -7,7 +7,7 @@ import assert from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IComponentRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
@@ -25,14 +25,14 @@ export class SnapshotLoader {
     private readonly logger: ITelemetryLogger;
 
     constructor(
-        private readonly runtime: IComponentRuntime,
+        private readonly runtime: IFluidDataStoreRuntime,
         private readonly client: Client,
         private readonly mergeTree: MergeTree,
         logger: ITelemetryLogger) {
         this.logger = ChildLogger.create(logger, "SnapshotLoader");
     }
 
-    public  async initialize(
+    public async initialize(
         branchId: string,
         services: IChannelStorageService,
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
@@ -42,7 +42,7 @@ export class SnapshotLoader {
         const branch = this.runtime.options && this.runtime.options.enableBranching
             ? branchId : this.runtime.documentId;
         const headerLoadedP =
-            services.read(SnapshotLegacy.header).then((header)=>{
+            services.read(SnapshotLegacy.header).then((header) => {
                 assert(header);
                 return this.loadHeader(header, branch);
             });
@@ -125,8 +125,8 @@ export class SnapshotLoader {
             header,
             this.logger,
             this.mergeTree.options,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext);
+            this.runtime.IFluidSerializer,
+            this.runtime.IFluidHandleContext);
         const segs = chunk.segments.map(this.specToSegment);
         this.mergeTree.reloadFromSegments(segs);
 
@@ -179,8 +179,8 @@ export class SnapshotLoader {
                 chunk1.headerMetadata.orderedChunkMetadata[chunkIndex].id,
                 this.logger,
                 this.mergeTree.options,
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext);
+                this.runtime.IFluidSerializer,
+                this.runtime.IFluidHandleContext);
             lengthSofar += chunk.length;
             // Deserialize each chunk segment and append it to the end of the MergeTree.
             segs.push(...chunk.segments.map(this.specToSegment));

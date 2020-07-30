@@ -4,7 +4,7 @@
  */
 
 import {
-    PrimedComponentFactory,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
     FluidReactComponent,
@@ -30,7 +30,7 @@ export class Clicker extends SyncedComponent {
             "clicker",
             {
                 syncedStateId: "clicker",
-                fluidToView:  new Map([
+                fluidToView: new Map([
                     [
                         "counter", {
                             type: SharedCounter.name,
@@ -87,7 +87,7 @@ class CounterReactView extends FluidReactComponent<CounterViewState, CounterFlui
 }
 
 // ----- FACTORY SETUP -----
-export const ClickerInstantiationFactory = new PrimedComponentFactory(
+export const ClickerInstantiationFactory = new DataObjectFactory(
     "clicker",
     Clicker,
     [SharedCounter.getFactory()],

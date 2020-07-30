@@ -27,7 +27,7 @@ async function getDiceRollerFromContainer(container: Container): Promise<IDiceRo
     const response = await container.request({ url });
 
     // Verify the response
-    if (response.status !== 200 || response.mimeType !== "fluid/component") {
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
         throw new Error(`Unable to retrieve component at URL: "${url}"`);
     } else if (response.value === undefined) {
         throw new Error(`Empty response from URL: "${url}"`);

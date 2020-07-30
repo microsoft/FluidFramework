@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentLoadable } from "@fluidframework/component-core-interfaces";
+import { IFluidLoadable } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelAttributes } from "./storage";
-import { IComponentRuntime } from "./componentRuntime";
+import { IFluidDataStoreRuntime } from "./componentRuntime";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -22,7 +22,7 @@ export interface IProvideChannel {
     readonly IChannel: IChannel;
 }
 
-export interface IChannel extends IProvideChannel, IComponentLoadable {
+export interface IChannel extends IProvideChannel, IFluidLoadable {
     /**
      * A readonly identifier for the channel
      */
@@ -165,7 +165,7 @@ export interface IChannelFactory {
      * need a way to allow the document to provide later storage for the object.
      */
     load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
         branchId: string,
@@ -183,5 +183,5 @@ export interface IChannelFactory {
      * NOTE here - When we attach we need to submit all the pending ops prior to actually doing the attach
      * for consistency.
      */
-    create(runtime: IComponentRuntime, id: string): IChannel;
+    create(runtime: IFluidDataStoreRuntime, id: string): IChannel;
 }

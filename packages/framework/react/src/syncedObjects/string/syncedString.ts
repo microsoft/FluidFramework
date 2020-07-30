@@ -37,7 +37,7 @@ export function setSyncedStringConfig(
                 },
             ],
         ]) as any,
-        defaultViewState: { },
+        defaultViewState: {},
     });
 }
 
@@ -55,7 +55,7 @@ export function useSyncedString(
         {
             syncedComponent,
             syncedStateId,
-        }, { },
+        }, {},
     );
     return [state.value, setState];
 }

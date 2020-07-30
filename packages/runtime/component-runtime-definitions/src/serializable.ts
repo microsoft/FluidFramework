@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { AsJsonable, Jsonable, JsonablePrimitive } from "./jsonable";
 
 /**
@@ -14,6 +14,6 @@ import { AsJsonable, Jsonable, JsonablePrimitive } from "./jsonable";
  *
  * (See Jsonable for caveats regarding serialization of `undefined` and non-finite numbers.)
  */
-export type Serializable = Jsonable<JsonablePrimitive | IComponentHandle>;
+export type Serializable = Jsonable<JsonablePrimitive | IFluidHandle>;
 
-export type AsSerializable<T> = AsJsonable<T, JsonablePrimitive | IComponentHandle>;
+export type AsSerializable<T> = AsJsonable<T, JsonablePrimitive | IFluidHandle>;

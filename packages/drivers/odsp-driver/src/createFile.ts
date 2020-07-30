@@ -16,7 +16,6 @@ import {
     SnapshotTreeEntry,
     SnapshotType,
     ICreateFileResponse,
-    ICreateFileResponseZeroSize,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
@@ -47,7 +46,7 @@ export async function createNewFluidFile(
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
-    createNewSummary?: ISummaryTree,
+    createNewSummary: ISummaryTree,
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
@@ -65,59 +64,29 @@ export async function createNewFluidFile(
 
         return PerformanceEvent.timedExecAsync(
             logger,
-            {
-                eventName: "createNewFile",
-                detached: createNewSummary !== undefined,
-            },
+            { eventName: "createNewFile" },
             async (event) => {
-                if (createNewSummary) {
-                    // We do not have name from SPO to provide to callback
-                    assert(newFileInfo.callback === undefined);
+                const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
+                const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot`;
+                const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
+                headers["Content-Type"] = "application/json";
 
-                    const containerSnapshot: ISnapshotTree = convertSummaryIntoContainerSnapshot(createNewSummary);
-                    const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot`;
-                    const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
-                    headers["Content-Type"] = "application/json";
-
-                    const fetchResponse = await fetchHelper<ICreateFileResponse>(
-                        url,
-                        {
-                            body: JSON.stringify(containerSnapshot),
-                            headers,
-                            method: "POST",
-                        });
-
-                    const content = fetchResponse.content;
-                    if (!content || !content.itemId) {
-                        throwOdspNetworkError("Could not parse item from Vroom response", fetchIncorrectResponse);
-                    }
-                    event.end({
-                        headers: Object.keys(headers).length !== 0 ? true : undefined,
+                const fetchResponse = await fetchHelper<ICreateFileResponse>(
+                    url,
+                    {
+                        body: JSON.stringify(containerSnapshot),
+                        headers,
+                        method: "POST",
                     });
-                    return content.itemId;
-                } else {
-                    const initialUrl =
-                        `${baseUrl}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
-                    const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
-                    const fetchResponse = await fetchHelper<ICreateFileResponseZeroSize>(
-                        url,
-                        {
-                            method: "PUT",
-                            headers,
-                        });
 
-                    const content = fetchResponse.content;
-                    if (!content || !content.id) {
-                        throwOdspNetworkError("Could not parse drive item from Vroom response", fetchIncorrectResponse);
-                    }
-                    event.end({
-                        headers: Object.keys(headers).length !== 0 ? true : undefined,
-                    });
-                    if (newFileInfo.callback) {
-                        newFileInfo.callback(content.id, content.name);
-                    }
-                    return content.id;
+                const content = fetchResponse.content;
+                if (!content || !content.itemId) {
+                    throwOdspNetworkError("Could not parse item from Vroom response", fetchIncorrectResponse);
                 }
+                event.end({
+                    headers: Object.keys(headers).length !== 0 ? true : undefined,
+                });
+                return content.itemId;
             });
     });
 
@@ -150,7 +119,6 @@ function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
         entries: snapshotTree.entries ?? [],
         message: "app",
         sequenceNumber: documentAttributes.sequenceNumber,
-        sha: snapshotTree.id,
         type: SnapshotType.Container,
     };
     return snapshot;

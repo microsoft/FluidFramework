@@ -10,7 +10,7 @@ import React from "react";
 
 interface IEmbeddedComponentWrapperProps {
     id: string;
-    getComponent(id: string): Promise<IFluidObject | undefined>;
+    requestFluidObject(id: string): Promise<IFluidObject | undefined>;
 }
 
 interface IEmbeddedComponentWrapperState {
@@ -32,7 +32,7 @@ export class EmbeddedComponentWrapper
     }
 
     async componentDidMount() {
-        const component = await this.props.getComponent(this.props.id);
+        const component = await this.props.requestFluidObject(this.props.id);
         if (component) {
             const element = <ReactViewAdapter view={component} />;
             this.setState({ element });

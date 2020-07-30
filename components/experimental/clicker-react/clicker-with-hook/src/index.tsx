@@ -4,7 +4,7 @@
  */
 
 import {
-    PrimedComponentFactory,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
     SyncedComponent,
@@ -66,7 +66,7 @@ export class ClickerWithHook extends SyncedComponent {
 }
 
 // ----- FACTORY SETUP -----
-export const ClickerWithHookInstantiationFactory = new PrimedComponentFactory(
+export const ClickerWithHookInstantiationFactory = new DataObjectFactory(
     "clicker-with-hook",
     ClickerWithHook,
     [SharedCounter.getFactory()],

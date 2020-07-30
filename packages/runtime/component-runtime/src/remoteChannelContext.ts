@@ -15,11 +15,11 @@ import {
 import {
     IChannel,
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
 import {
-    IComponentContext,
+    IFluidDataStoreContext,
     ISummaryTracker,
 } from "@fluidframework/runtime-definitions";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
@@ -38,8 +38,8 @@ export class RemoteChannelContext implements IChannelContext {
         readonly objectStorage: ChannelStorageService,
     };
     constructor(
-        private readonly runtime: IComponentRuntime,
-        private readonly componentContext: IComponentContext,
+        private readonly runtime: IFluidDataStoreRuntime,
+        private readonly componentContext: IFluidDataStoreContext,
         storageService: IDocumentStorageService,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
