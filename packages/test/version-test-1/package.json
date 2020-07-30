@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/version-test-1",
-  "version": "0.24.0",
+  "version": "0.24.1",
   "private": true,
   "description": "Component to test version conversion.",
   "repository": "microsoft/FluidFramework",
@@ -30,16 +30,16 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.24.0",
-    "@fluidframework/base-host": "^0.24.0",
-    "@fluidframework/view-interfaces": "^0.24.0",
+    "@fluidframework/aqueduct": "^0.24.1",
+    "@fluidframework/base-host": "^0.24.1",
+    "@fluidframework/view-interfaces": "^0.24.1",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
     "@fluidframework/common-utils": "^0.21.0",
     "@fluidframework/test-tools": "^0.1.0",
-    "@fluidframework/webpack-component-loader": "^0.24.0",
+    "@fluidframework/webpack-component-loader": "^0.24.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",
     "@types/node": "^10.17.24",
