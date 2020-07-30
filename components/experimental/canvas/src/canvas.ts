@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent } from "@fluidframework/aqueduct";
+import { DataObject } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IColor, IInk, Ink, InkCanvas } from "@fluidframework/ink";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
@@ -24,7 +24,7 @@ const colorPickerColors: IColor[] = [
     { r: 0, g: 0, b: 0, a: 1 },
 ];
 
-export class Canvas extends PrimedComponent implements IComponentHTMLView {
+export class Canvas extends DataObject implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     private ink: IInk;
@@ -38,11 +38,11 @@ export class Canvas extends PrimedComponent implements IComponentHTMLView {
         window.addEventListener("resize", this.sizeCanvas.bind(this));
     }
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         this.root.set("pageInk", Ink.create(this.runtime).handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         // Wait here for the ink
         const handle = await this.root.wait<IComponentHandle<IInk>>("pageInk");
         this.ink = await handle.get();

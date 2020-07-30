@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
@@ -13,7 +13,7 @@ import { TodoItem } from "../TodoItem";
 import { TodoName } from "./Todo";
 import { Todo } from "./index";
 
-export const TodoInstantiationFactory: IComponentFactory = new PrimedComponentFactory(
+export const TodoInstantiationFactory: IComponentFactory = new DataObjectFactory(
     TodoName,
     Todo,
     [

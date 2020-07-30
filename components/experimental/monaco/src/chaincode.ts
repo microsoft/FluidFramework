@@ -4,7 +4,7 @@
  */
 
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
-import { PrimedComponent } from "@fluidframework/aqueduct";
+import { DataObject } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IComponentLayout } from "@fluidframework/framework-experimental";
 import {
@@ -58,7 +58,7 @@ const defaultCompilerOptions = {
 /**
  * Component for using the Monaco text editor.
  */
-export class MonacoRunner extends PrimedComponent implements
+export class MonacoRunner extends DataObject implements
     IComponentHTMLView, IComponentLayout {
     public get IComponentHTMLView() { return this; }
     public get IComponentLoadable() { return this; }
@@ -109,7 +109,7 @@ export class MonacoRunner extends PrimedComponent implements
      * Creates the SharedString and inserts some sample text. create() is called only once
      * per component.
      */
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const codeString = SharedString.create(this.runtime);
         codeString.insertText(0, 'console.log("Hello, world!");');
         this.root.set("text", codeString.handle);

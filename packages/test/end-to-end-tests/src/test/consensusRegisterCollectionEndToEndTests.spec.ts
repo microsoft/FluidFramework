@@ -41,7 +41,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         let sharedMap2: ISharedMap;
         let sharedMap3: ISharedMap;
 
-        async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
+        async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
             const response = await container.request({ url: componentId });
             if (response.status !== 200 || response.mimeType !== "fluid/component") {
                 throw new Error(`Component with id: ${componentId} not found`);
@@ -62,15 +62,15 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             deltaConnectionServer = LocalDeltaConnectionServer.create();
 
             const container1 = await createContainer();
-            component1 = await getComponent("default", container1);
+            component1 = await requestFluidObject("default", container1);
             sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
 
             const container2 = await createContainer();
-            const component2 = await getComponent("default", container2);
+            const component2 = await requestFluidObject("default", container2);
             sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
 
             const container3 = await createContainer();
-            const component3 = await getComponent("default", container3);
+            const component3 = await requestFluidObject("default", container3);
             sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
         });
 

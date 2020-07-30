@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import {
     ICodeLoader,
     IProvideRuntimeFactory,
@@ -67,7 +67,7 @@ export class LocalCodeLoader implements ICodeLoader {
             entryPoint.fluidExport ?? entryPoint;
         const runtimeFactory: IProvideRuntimeFactory =
             factory.IRuntimeFactory ??
-            new ContainerRuntimeFactoryWithDefaultComponent("default", [["default", Promise.resolve(factory)]]);
+            new ContainerRuntimeFactoryWithDefaultDataStore("default", [["default", Promise.resolve(factory)]]);
 
         const fluidModule: IFluidModule = { fluidExport: runtimeFactory };
         return fluidModule;

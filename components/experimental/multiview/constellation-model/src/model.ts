@@ -4,8 +4,8 @@
  */
 
 import {
-    PrimedComponent,
-    PrimedComponentFactory,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
@@ -18,7 +18,7 @@ const starListKey = "stars";
 /**
  * The Constellation is our implementation of the IConstellation interface.
  */
-export class Constellation extends PrimedComponent implements IConstellation {
+export class Constellation extends DataObject implements IConstellation {
     public static get ComponentName() { return "@fluid-example/constellation"; }
 
     private _stars: ICoordinate[] = [];
@@ -27,7 +27,7 @@ export class Constellation extends PrimedComponent implements IConstellation {
         return Constellation.factory;
     }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         Constellation.ComponentName,
         Constellation,
         [],
@@ -37,11 +37,11 @@ export class Constellation extends PrimedComponent implements IConstellation {
         ]),
     );
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         this.root.set(starListKey, []);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         await this.updateStarsFromRoot();
         this.root.on("valueChanged", (changed: IValueChanged) => {
             if (changed.key === starListKey) {

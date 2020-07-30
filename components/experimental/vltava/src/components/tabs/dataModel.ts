@@ -43,9 +43,9 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
     constructor(
         public root: ISharedDirectory,
         private readonly internalRegistry: IComponentInternalRegistry,
-        private readonly createAndAttachComponent: <T extends IFluidObject & IComponentLoadable>
+        private readonly createAndAttachDataStore: <T extends IFluidObject & IComponentLoadable>
             (pkg: string, props?: any) => Promise<T>,
-        private readonly getComponentFromDirectory: <T extends IFluidObject & IComponentLoadable>(
+        private readonly getFluidObjectFromDirectory: <T extends IFluidObject & IComponentLoadable>(
             id: string,
             directory: IDirectory,
             getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IComponentHandle | undefined) =>
@@ -75,7 +75,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     public async createTab(type: string): Promise<string> {
         const newKey = uuid();
-        const component = await this.createAndAttachComponent<IFluidObject & IComponentLoadable>(type);
+        const component = await this.createAndAttachDataStore<IFluidObject & IComponentLoadable>(type);
         this.tabs.set(newKey, {
             type,
             handleOrId: component.handle,
@@ -92,7 +92,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     public async getComponentTab(id: string): Promise<IFluidObject | undefined> {
         this.tabs = this.root.getSubDirectory("tab-ids");
-        return this.getComponentFromDirectory(id, this.tabs, this.getObjectFromDirectory);
+        return this.getFluidObjectFromDirectory(id, this.tabs, this.getObjectFromDirectory);
     }
 
     public getNewTabTypes(): ITabsTypes[] {

@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
@@ -17,7 +17,7 @@ const PrimedType = "@fluidframework/primedComponent";
 /**
  * My sample component
  */
-class Component extends PrimedComponent {
+class Component extends DataObject {
     public get root(): ISharedDirectory {
         return super.root;
     }
@@ -26,7 +26,7 @@ class Component extends PrimedComponent {
     }
 }
 
-describe("PrimedComponent", () => {
+describe("DataObject", () => {
     describe("Blob support", () => {
         const id = "fluid-test://localhost/primedComponentTest";
         const codeDetails: IFluidCodeDetails = {
@@ -37,12 +37,12 @@ describe("PrimedComponent", () => {
         let component: Component;
 
         async function createContainer(): Promise<Container> {
-            const factory = new PrimedComponentFactory(PrimedType, Component, [], {});
+            const factory = new DataObjectFactory(PrimedType, Component, [], {});
             const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
             return initializeLocalContainer(id, loader, codeDetails);
         }
 
-        async function getComponent(componentId: string, container: Container): Promise<Component> {
+        async function requestFluidObject(componentId: string, container: Container): Promise<Component> {
             const response = await container.request({ url: componentId });
             if (response.status !== 200 || response.mimeType !== "fluid/component") {
                 throw new Error(`Component with id: ${componentId} not found`);
@@ -54,7 +54,7 @@ describe("PrimedComponent", () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
 
             const container = await createContainer();
-            component = await getComponent("default", container);
+            component = await requestFluidObject("default", container);
         });
 
         it("Blob support", async () => {
@@ -67,7 +67,7 @@ describe("PrimedComponent", () => {
             assert(value2 === "aaaa", "Could not get blob from shared object in the component");
 
             const container2 = await createContainer();
-            const component2 = await getComponent("default", container2);
+            const component2 = await requestFluidObject("default", container2);
             const value = await component2.root.get<IComponentHandle<string>>("key").get();
             assert(value === "aaaa", "Blob value not synced across containers");
         });

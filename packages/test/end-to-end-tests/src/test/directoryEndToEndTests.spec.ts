@@ -33,7 +33,7 @@ describe("Directory", () => {
     let sharedDirectory2: ISharedDirectory;
     let sharedDirectory3: ISharedDirectory;
 
-    async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
+    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
         const response = await container.request({ url: componentId });
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             throw new Error(`Component with id: ${componentId} not found`);
@@ -51,15 +51,15 @@ describe("Directory", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
         const container1 = await createContainer();
-        component1 = await getComponent("default", container1);
+        component1 = await requestFluidObject("default", container1);
         sharedDirectory1 = await component1.getSharedObject<SharedDirectory>(directoryId);
 
         const container2 = await createContainer();
-        const component2 = await getComponent("default", container2);
+        const component2 = await requestFluidObject("default", container2);
         sharedDirectory2 = await component2.getSharedObject<SharedDirectory>(directoryId);
 
         const container3 = await createContainer();
-        const component3 = await getComponent("default", container3);
+        const component3 = await requestFluidObject("default", container3);
         sharedDirectory3 = await component3.getSharedObject<SharedDirectory>(directoryId);
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);

@@ -4,9 +4,9 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultComponent,
-    PrimedComponent,
-    PrimedComponentFactory,
+    ContainerRuntimeFactoryWithDefaultDataStore,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { SharedDirectory } from "@fluidframework/map";
@@ -32,7 +32,7 @@ export const PondName = pkg.name as string;
  *  - Component creation with initial state
  *  - Component creation and storage using Handles
  */
-export class Pond extends PrimedComponent implements IComponentHTMLView {
+export class Pond extends DataObject implements IComponentHTMLView {
     private clickerView: HTMLViewAdapter | undefined;
     private clickerUsingProvidersView: HTMLViewAdapter | undefined;
 
@@ -41,7 +41,7 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
     /**
    * Do setup work here
    */
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const clickerComponent = await Clicker.getFactory()._createDataStore(this.context);
         this.root.set(Clicker.ComponentName, clickerComponent.handle);
 
@@ -49,7 +49,7 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
         this.root.set(ExampleUsingProviders.ComponentName, clickerComponentUsingProvider.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         const clicker = await this.root.get<IComponentHandle>(Clicker.ComponentName).get();
         this.clickerView = new HTMLViewAdapter(clicker);
 
@@ -99,7 +99,7 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
 
     public static getFactory() { return Pond.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         PondName,
         Pond,
         [SharedDirectory.getFactory()],
@@ -113,7 +113,7 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
 
 // ----- CONTAINER SETUP STUFF -----
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     Pond.getFactory().type,
     new Map([
         Pond.getFactory().registryEntry,

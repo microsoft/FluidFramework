@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedMap } from "@fluidframework/map";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
@@ -19,7 +19,7 @@ const pkg = require("../../package.json");
  * Basic example that takes a container provider
  */
 export class ExampleUsingProviders
-    extends PrimedComponent<IComponentUserInformation>
+    extends DataObject<IComponentUserInformation>
     implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
@@ -27,7 +27,7 @@ export class ExampleUsingProviders
 
     public static readonly ComponentName = `${pkg.name as string}-example-using-provider`;
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.userInformation = await this.providers.IComponentUserInformation;
     }
 
@@ -52,7 +52,7 @@ export class ExampleUsingProviders
 
     public static getFactory() { return ExampleUsingProviders.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         ExampleUsingProviders.ComponentName,
         ExampleUsingProviders,
         [SharedMap.getFactory()],

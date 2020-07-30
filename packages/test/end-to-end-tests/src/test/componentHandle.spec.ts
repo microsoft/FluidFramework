@@ -5,9 +5,9 @@
 
 import assert from "assert";
 import {
-    ContainerRuntimeFactoryWithDefaultComponent,
-    PrimedComponent,
-    PrimedComponentFactory,
+    ContainerRuntimeFactoryWithDefaultDataStore,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
@@ -22,9 +22,9 @@ import {
 } from "@fluidframework/test-utils";
 
 /**
- * Test component that extends PrimedComponent so that we can test the ComponentHandle created by SharedComponent.
+ * Test component that extends DataObject so that we can test the ComponentHandle created by PureDataObject.
  */
-class TestSharedComponent extends PrimedComponent {
+class TestSharedComponent extends DataObject {
     public get _root() {
         return this.root;
     }
@@ -38,7 +38,7 @@ class TestSharedComponent extends PrimedComponent {
     }
 }
 
-const TestSharedComponentFactory = new PrimedComponentFactory(
+const TestSharedComponentFactory = new DataObjectFactory(
     "TestSharedComponent",
     TestSharedComponent,
     [SharedMap.getFactory()],
@@ -57,7 +57,7 @@ describe("ComponentHandle", () => {
     let firstContainerComponent2: TestSharedComponent;
     let secondContainerComponent1: TestSharedComponent;
 
-    async function getComponent(componentId: string, container: Container): Promise<TestSharedComponent> {
+    async function requestFluidObject(componentId: string, container: Container): Promise<TestSharedComponent> {
         const response = await container.request({ url: componentId });
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             throw new Error(`Component with id: ${componentId} not found`);
@@ -67,7 +67,7 @@ describe("ComponentHandle", () => {
 
     async function createContainer(): Promise<Container> {
         const runtimeFactory =
-            new ContainerRuntimeFactoryWithDefaultComponent(
+            new ContainerRuntimeFactoryWithDefaultDataStore(
                 "default",
                 [
                     ["default", Promise.resolve(TestSharedComponentFactory)],
@@ -83,12 +83,12 @@ describe("ComponentHandle", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
         const firstContainer = await createContainer();
-        firstContainerComponent1 = await getComponent("default", firstContainer);
+        firstContainerComponent1 = await requestFluidObject("default", firstContainer);
         firstContainerComponent2 =
             await TestSharedComponentFactory._createDataStore(firstContainerComponent1._context) as TestSharedComponent;
 
         const secondContainer = await createContainer();
-        secondContainerComponent1 = await getComponent("default", secondContainer);
+        secondContainerComponent1 = await requestFluidObject("default", secondContainer);
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);
         opProcessingController.addDeltaManagers(
@@ -183,7 +183,7 @@ describe("ComponentHandle", () => {
         assert.equal(remoteSharedMap.get("key1"), "value1", "The map does not have the value that was set");
     });
 
-    it("can store and retrieve a SharedComponent from handle in different component runtime", async () => {
+    it("can store and retrieve a PureDataObject from handle in different component runtime", async () => {
         // The expected absolute path.
         const absolutePath = `/${firstContainerComponent2._runtime.id}`;
 

@@ -4,9 +4,9 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultComponent,
-    PrimedComponent,
-    PrimedComponentFactory,
+    ContainerRuntimeFactoryWithDefaultDataStore,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
@@ -22,13 +22,13 @@ import { MemberList } from "./MemberList";
 const pkg = require("../package.json");
 export const DraftJsName = pkg.name as string;
 
-export class DraftJsExample extends PrimedComponent implements IComponentHTMLView {
+export class DraftJsExample extends DataObject implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     /**
      * Do setup work here
      */
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const text = SharedString.create(this.runtime);
         insertBlockStart(text, 0);
         text.insertText(text.getLength(), "starting text");
@@ -55,14 +55,14 @@ export class DraftJsExample extends PrimedComponent implements IComponentHTMLVie
 }
 
 // ----- COMPONENT SETUP STUFF -----
-export const DraftInstantiationFactory = new PrimedComponentFactory(
+export const DraftInstantiationFactory = new DataObjectFactory(
     DraftJsName,
     DraftJsExample,
     [SharedMap.getFactory(), SharedString.getFactory()],
     {},
 );
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     DraftJsName,
     new Map([[DraftJsName, Promise.resolve(DraftInstantiationFactory)]]),
 );

@@ -4,8 +4,8 @@
  */
 
 import {
-    PrimedComponent,
-    PrimedComponentFactory,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
@@ -17,12 +17,12 @@ const pkg = require("../package.json");
 const pkgversion = pkg.version as string;
 const versionTest2Name = pkg.name as string;
 
-export class VersionTest extends PrimedComponent implements IComponentHTMLView {
+export class VersionTest extends DataObject implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
     private upgradeToPkg: string = "@fluid-internal/version-test-3";
     private upgradeToVersion: string = "0.3.x";
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         if (!this.root.get("diceValue")) {
             this.root.set("diceValue", 0);
         }
@@ -83,4 +83,4 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
     }
 }
 
-export const VersiontestInstantiationFactory = new PrimedComponentFactory(versionTest2Name, VersionTest, [], {});
+export const VersiontestInstantiationFactory = new DataObjectFactory(versionTest2Name, VersionTest, [], {});

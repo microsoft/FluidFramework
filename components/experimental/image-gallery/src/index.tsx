@@ -4,9 +4,9 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultComponent,
-    PrimedComponent,
-    PrimedComponentFactory,
+    ContainerRuntimeFactoryWithDefaultDataStore,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
@@ -20,7 +20,7 @@ import { ISharedMap } from "@fluidframework/map";
 
 const imageGalleryName = "@fluid-example/image-gallery";
 
-export class ImageGalleryComponent extends PrimedComponent implements IComponentHTMLView {
+export class ImageGalleryComponent extends DataObject implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     imageList = [
@@ -72,7 +72,7 @@ export class ImageGalleryComponent extends PrimedComponent implements IComponent
             div,
         );
     };
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         this.root.set("position", 0);
     }
 
@@ -98,14 +98,14 @@ export class ImageGalleryComponent extends PrimedComponent implements IComponent
     }
 }
 
-export const ImageGalleryInstantiationFactory = new PrimedComponentFactory(
+export const ImageGalleryInstantiationFactory = new DataObjectFactory(
     imageGalleryName,
     ImageGalleryComponent,
     [],
     {},
 );
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     imageGalleryName,
     new Map([
         [imageGalleryName, Promise.resolve(ImageGalleryInstantiationFactory)],

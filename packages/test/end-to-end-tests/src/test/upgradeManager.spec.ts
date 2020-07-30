@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { OpProcessingController, initializeLocalContainer, LocalCodeLoader } from "@fluidframework/test-utils";
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { UpgradeManager } from "@fluidframework/base-host";
 import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { ICodeLoader, IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
@@ -14,11 +14,11 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
-class TestComponent extends PrimedComponent {
+class TestComponent extends DataObject {
     public static readonly type = "@fluid-example/test-component";
 
     public static getFactory() { return TestComponent.factory; }
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         TestComponent.type,
         TestComponent,
         [],
@@ -54,7 +54,7 @@ describe("UpgradeManager", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function getComponent<T>(componentId: string, container: Container): Promise<T> {
+    async function requestFluidObject<T>(componentId: string, container: Container): Promise<T> {
         const response = await container.request({ url: componentId });
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             throw new Error(`Component with id: ${componentId} not found`);
@@ -80,7 +80,7 @@ describe("UpgradeManager", () => {
         const containersP = Array(clients).fill(undefined).map(async () => createContainer(TestComponent.getFactory()));
         const components = await Promise.all(containersP.map(
             async (containerP) => (containerP).then(
-                async (container) => getComponent<TestComponent>("default", container))));
+                async (container) => requestFluidObject<TestComponent>("default", container))));
 
         const containers = await Promise.all(containersP);
         opProcessingController.addDeltaManagers(...components.map((c) => c._runtime.deltaManager));
@@ -110,7 +110,7 @@ describe("UpgradeManager", () => {
 
     it("1 client low priority is immediate", async () => {
         const container = await createContainer(TestComponent.getFactory());
-        const component = await getComponent<TestComponent>("default", container);
+        const component = await requestFluidObject<TestComponent>("default", container);
 
         opProcessingController.addDeltaManagers(component._runtime.deltaManager);
         const upgradeManager = new UpgradeManager((container as any).context.runtime);
@@ -131,7 +131,7 @@ describe("UpgradeManager", () => {
 
         await Promise.all(containersP.map(
             async (containerP) => (containerP).then(
-                async (container) => getComponent<TestComponent>("default", container))));
+                async (container) => requestFluidObject<TestComponent>("default", container))));
 
         const containers = await Promise.all(containersP);
 

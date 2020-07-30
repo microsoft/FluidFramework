@@ -103,7 +103,7 @@ export interface IContainerRuntimeBase extends
      * @param props - properties to be passed to the instantiateComponent thru the context
      * @param id - Only supplied if the component is explicitly passing its ID, only used for default components
      * @remarks
-     * Only used by aqueduct PrimedComponent to pass param to the instantiateComponent function thru the context.
+     * Only used by aqueduct DataObject to pass param to the instantiateComponent function thru the context.
      * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
      * @internal
      */

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { ITask } from "@fluidframework/runtime-definitions";
@@ -21,7 +21,7 @@ const counterKey = "counter";
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends PrimedComponent implements IComponentHTMLView {
+export class Clicker extends DataObject implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     private _counter: SharedCounter | undefined;
@@ -29,12 +29,12 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     /**
      * Do setup work here
      */
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const counter = SharedCounter.create(this.runtime);
         this.root.set(counterKey, counter.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(counterKey);
         this._counter = await counterHandle.get();
         this.setupAgent();
@@ -116,7 +116,7 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
 
 // ----- FACTORY SETUP -----
 
-export const ClickerInstantiationFactory = new PrimedComponentFactory(
+export const ClickerInstantiationFactory = new DataObjectFactory(
     ClickerName,
     Clicker,
     [SharedCounter.getFactory()],

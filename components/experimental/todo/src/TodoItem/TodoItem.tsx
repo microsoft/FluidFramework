@@ -4,7 +4,7 @@
  */
 
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import { PrimedComponent, PrimedComponentFactory, waitForAttach } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory, waitForAttach } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import {
     IComponentHandle, IComponentLoadable,
@@ -39,7 +39,7 @@ const innerComponentKey = "innerId";
  * - Link to open component in separate tab
  * - Button to remove entry
  */
-export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> implements IComponentHTMLView {
+export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements IComponentHTMLView {
     private text: SharedString;
     private innerIdCell: ISharedCell<IComponentHandle>;
     private _absoluteUrl: string | undefined;
@@ -50,7 +50,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
     /**
      * Do creation work
      */
-    protected async componentInitializingFirstTime(initialState?: ITodoItemInitialState) {
+    protected async initializingFirstTime(initialState?: ITodoItemInitialState) {
         // Set initial state if it was provided
         const newItemText = initialState?.startingText ?? "New Item";
 
@@ -69,7 +69,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
         this.root.set(innerComponentKey, innerIdCell.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         const text = this.root.get<IComponentHandle<SharedString>>(textKey).get();
         const innerIdCell = this.root.get<IComponentHandle<ISharedCell>>(innerComponentKey).get();
 
@@ -109,7 +109,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
 
     public static getFactory() { return TodoItem.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         TodoItemName,
         TodoItem,
         [

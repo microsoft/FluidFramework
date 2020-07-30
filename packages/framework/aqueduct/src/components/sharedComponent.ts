@@ -37,7 +37,7 @@ export interface ISharedComponentProps<P extends IComponent = object> {
  * S - the initial state type that the produced component may take during creation
  * E - represents events that will be available in the EventForwarder
  */
-export abstract class SharedComponent<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
+export abstract class PureDataObject<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
     extends EventForwarder<E>
     implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
     private initializeP: Promise<void> | undefined;
@@ -80,7 +80,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
         this.context = props.context;
         this.providers = props.providers;
 
-        // Create a ComponentHandle with empty string as `path`. This is because reaching this SharedComponent is the
+        // Create a ComponentHandle with empty string as `path`. This is because reaching this PureDataObject is the
         // same as reaching its routeContext (FluidDataStoreRuntime) so there is so the relative path to it from the
         // routeContext is empty.
         this.innerHandle = new ComponentHandle(this, "", this.runtime.IComponentHandleContext);
@@ -140,7 +140,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     /**
      * Given a request response will return a component if a component was in the response.
      */
-    protected async asComponent<T extends IComponent>(response: Promise<IResponse>): Promise<T> {
+    protected async asFluidObject<T extends IComponent>(response: Promise<IResponse>): Promise<T> {
         const result = await response;
 
         if (result.status === 200 && result.mimeType === "fluid/component") {
@@ -151,23 +151,23 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     }
 
     /**
-     * Internal initialize implementation. Overwriting this will change the flow of the SharedComponent and should
+     * Internal initialize implementation. Overwriting this will change the flow of the PureDataObject and should
      * generally not be done.
      *
-     * Calls componentInitializingFirstTime, componentInitializingFromExisting, and componentHasInitialized. Caller is
+     * Calls initializingFirstTime, initializingFromExisting, and hasInitialized. Caller is
      * responsible for ensuring this is only invoked once.
      */
     protected async initializeInternal(props?: S): Promise<void> {
         if (!this.runtime.existing) {
             // If it's the first time through
-            await this.componentInitializingFirstTime(props);
+            await this.initializingFirstTime(props);
         } else {
             // Else we are loading from existing
-            await this.componentInitializingFromExisting();
+            await this.initializingFromExisting();
         }
 
         // This always gets called at the end of initialize on FirstTime or from existing.
-        await this.componentHasInitialized();
+        await this.hasInitialized();
     }
 
     /**
@@ -176,24 +176,24 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      * @param pkg - package name for the new component
      * @param props - optional props to be passed in
      */
-    protected async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
+    protected async createAndAttachDataStore<T extends IComponent & IComponentLoadable>(
         pkg: string, props?: any,
     ): Promise<T> {
         const componentRuntime = await this.context._createDataStore(uuid(), pkg, props);
-        const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
+        const component = await this.asFluidObject<T>(componentRuntime.request({ url: "/" }));
         componentRuntime.bindToContext();
         return component;
     }
 
     /**
-     * Retreive component using the handle get or the older getComponent_UNSAFE call to fetch by ID
+     * Retreive component using the handle get or the older requestFluidObject_UNSAFE call to fetch by ID
      *
      * @param key - key that object (handle/id) is stored with in the directory
      * @param directory - directory containing the object
      * @param getObjectFromDirectory - optional callback for fetching object from the directory, allows users to
      * define custom types/getters for object retrieval
      */
-    public async getComponentFromDirectory<T extends IComponent & IComponentLoadable>(
+    public async getFluidObjectFromDirectory<T extends IComponent & IComponentLoadable>(
         key: string,
         directory: IDirectory,
         getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IComponentHandle | undefined):
@@ -202,14 +202,14 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
         if (typeof handleOrId === "string") {
             // For backwards compatibility with older stored IDs
             // We update the storage with the handle so that this code path is less and less trafficked
-            const component = await this.getComponent_UNSAFE<T>(handleOrId);
+            const component = await this.requestFluidObject_UNSAFE<T>(handleOrId);
             if (component.IComponentLoadable && component.handle) {
                 directory.set(key, component.handle);
             }
             return component;
         } else {
             const handle = handleOrId?.IComponentHandle;
-            return await (handle ? handle.get() : this.getComponent_UNSAFE(key)) as T;
+            return await (handle ? handle.get() : this.requestFluidObject_UNSAFE(key)) as T;
         }
     }
 
@@ -218,13 +218,13 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      * Gets the component of a given id. Will follow the pattern of the container for waiting.
      * @param id - component id
      */
-    protected async getComponent_UNSAFE<T extends IComponent>(id: string, wait: boolean = true): Promise<T> {
+    protected async requestFluidObject_UNSAFE<T extends IComponent>(id: string, wait: boolean = true): Promise<T> {
         const request = {
             headers: [[wait]],
             url: `/${id}`,
         };
 
-        return this.asComponent<T>(this.context.containerRuntime.request(request));
+        return this.asFluidObject<T>(this.context.containerRuntime.request(request));
     }
 
     /**
@@ -236,7 +236,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
             url: `/${serviceRoutePathRoot}/${id}`,
         };
 
-        return this.asComponent<T>(this.context.containerRuntime.request(request));
+        return this.asFluidObject<T>(this.context.containerRuntime.request(request));
     }
 
     /**
@@ -246,18 +246,18 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      * @param props - Optional props to be passed in on create
      * @deprecated 0.16 Issue #1635 Initial props should be provided through a factory override
      */
-    protected async componentInitializingFirstTime(props?: any): Promise<void> { }
+    protected async initializingFirstTime(props?: any): Promise<void> { }
 
     /**
      * Called every time but the first time the component is initialized (creations
      * with an existing component runtime)
      */
-    protected async componentInitializingFromExisting(): Promise<void> { }
+    protected async initializingFromExisting(): Promise<void> { }
 
     /**
      * Called every time the component is initialized after create or existing.
      */
-    protected async componentHasInitialized(): Promise<void> { }
+    protected async hasInitialized(): Promise<void> { }
 
     /**
      * Called when the host container closes and disposes itself

@@ -5,7 +5,7 @@
 
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidDataStoreContext, IComponentFactory } from "@fluidframework/runtime-definitions";
-import { SharedComponentFactory, SharedComponent } from "@fluidframework/component-base";
+import { PureDataObjectFactory, PureDataObject } from "@fluidframework/component-base";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import { FlowDocument } from "../document";
@@ -13,8 +13,8 @@ import { hostType } from "../package";
 import { WebflowView } from "./host";
 import { importDoc } from "./import";
 
-export class WebFlow extends SharedComponent<ISharedDirectory> implements IComponentHTMLView {
-    private static readonly factory = new SharedComponentFactory<WebFlow>(
+export class WebFlow extends PureDataObject<ISharedDirectory> implements IComponentHTMLView {
+    private static readonly factory = new PureDataObjectFactory<WebFlow>(
         hostType,
         WebFlow,
         /* root: */ SharedDirectory.getFactory(),
@@ -52,5 +52,5 @@ export class WebFlow extends SharedComponent<ISharedDirectory> implements ICompo
 
     // #endregion IComponentHTMLView
 
-    protected async componentInitializingFirstTime() { await this.create(); }
+    protected async initializingFirstTime() { await this.create(); }
 }

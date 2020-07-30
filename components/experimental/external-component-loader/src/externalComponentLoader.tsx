@@ -3,7 +3,7 @@
 * Licensed under the MIT License.
 */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
     IFluidObject,
     IComponentLoadable,
@@ -17,10 +17,10 @@ import { UrlRegistry } from "./urlRegistry";
 /**
  * Component that loads external components via their url
  */
-export class ExternalComponentLoader extends PrimedComponent {
+export class ExternalComponentLoader extends DataObject {
     public static get ComponentName() { return "@fluid-example/external-component-loader"; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         ExternalComponentLoader.ComponentName,
         ExternalComponentLoader,
         [],
@@ -46,14 +46,14 @@ export class ExternalComponentLoader extends PrimedComponent {
         const pkgReg = await urlReg.IComponentRegistry.get(componentUrl) as IComponent & IFluidObject;
         let componentRuntime: IFluidDataStoreChannel;
         const id = uuid();
-        if (pkgReg?.IComponentDefaultFactoryName !== undefined) {
+        if (pkgReg?.IFluidExportDefaultFactoryName !== undefined) {
             componentRuntime = await this.context.containerRuntime._createDataStore(
                 id,
                 [
                     ...this.context.packagePath,
                     "url",
                     componentUrl,
-                    pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
+                    pkgReg.IFluidExportDefaultFactoryName.getDefaultFactoryName(),
                 ]);
         } else if (pkgReg?.IComponentFactory !== undefined) {
             componentRuntime = await this.context.containerRuntime._createDataStore(
