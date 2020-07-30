@@ -16,7 +16,11 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker } from "@fluidframework/runtime-utils";
-import { IFluidDataStoretAttributes, LocalFluidDataStoreContext, RemotedFluidDataStoreContext } from "../componentContext";
+import {
+    IFluidDataStoretAttributes,
+    LocalFluidDataStoreContext,
+    RemotedFluidDataStoreContext,
+} from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
 
 describe("Component Context Tests", () => {

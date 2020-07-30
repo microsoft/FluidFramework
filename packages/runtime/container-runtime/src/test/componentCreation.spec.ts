@@ -45,7 +45,9 @@ describe("Component Creation Tests", () => {
 
         // Helper function that creates a FluidDataStoreRegistryEntry with the registry entries
         // provided to it.
-        function createComponentRegistryEntry(entries: NamedFluidDataStoreRegistryEntries): FluidDataStoreRegistryEntry {
+        function createComponentRegistryEntry(
+            entries: NamedFluidDataStoreRegistryEntries,
+        ): FluidDataStoreRegistryEntry {
             const registryEntries = new Map(entries);
             const factory: IFluidDataStoreFactory = {
                 get IFluidDataStoreFactory() { return factory; },

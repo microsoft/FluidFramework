@@ -63,7 +63,10 @@ async function getHandle(runtimeP: Promise<IFluidDataStoreChannel>): Promise<IFl
 export class SharedTextRunner
     extends EventEmitter
     implements IFluidHTMLView, IFluidLoadable, IProvideSharedString {
-    public static async load(runtime: FluidDataStoreRuntime, context: IFluidDataStoreContext): Promise<SharedTextRunner> {
+    public static async load(
+        runtime: FluidDataStoreRuntime,
+        context: IFluidDataStoreContext,
+    ): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
         await runner.initialize();
 
@@ -87,7 +90,10 @@ export class SharedTextRunner
     private taskManager: ITaskManager;
     private uiInitialized = false;
 
-    private constructor(private readonly runtime: FluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {
+    private constructor(
+        private readonly runtime: FluidDataStoreRuntime,
+        private readonly context: IFluidDataStoreContext,
+    ) {
         super();
         this.innerHandle = new FluidOjectHandle(this, this.url, this.runtime.IFluidHandleContext);
     }

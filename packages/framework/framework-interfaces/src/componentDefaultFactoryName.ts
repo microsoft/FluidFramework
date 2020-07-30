@@ -10,7 +10,8 @@ declare module "@fluidframework/component-core-interfaces" {
     export interface IFluidObject extends Readonly<Partial<IProvideFluidExportDefaultFactoryName>> { }
 }
 
-export const IFluidExportDefaultFactoryName: keyof IProvideFluidExportDefaultFactoryName = "IFluidExportDefaultFactoryName";
+export const IFluidExportDefaultFactoryName: keyof IProvideFluidExportDefaultFactoryName =
+    "IFluidExportDefaultFactoryName";
 
 export interface IProvideFluidExportDefaultFactoryName {
     readonly IFluidExportDefaultFactoryName: IFluidExportDefaultFactoryName;

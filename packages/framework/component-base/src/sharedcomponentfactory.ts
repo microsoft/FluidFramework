@@ -26,7 +26,8 @@ export class PureDataObjectFactory<T extends PureDataObject> implements IFluidDa
 
     constructor(
         public readonly type: string,
-        private readonly ctor: new (context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, root: ISharedObject) => T,
+        private readonly ctor:
+            new (context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, root: ISharedObject) => T,
         public readonly root: IChannelFactory,
         sharedObjects: readonly IChannelFactory[] = [],
         components?: readonly IFluidDataStoreFactory[],

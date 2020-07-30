@@ -102,7 +102,8 @@ export abstract class DataObject<P extends IFluidObject = object, S = undefined,
             url: `/${SchedulerType}`,
         };
 
-        this.internalTaskManager = await this.asFluidObject<ITaskManager>(this.context.containerRuntime.request(request));
+        this.internalTaskManager =
+            await this.asFluidObject<ITaskManager>(this.context.containerRuntime.request(request));
 
         if (!this.runtime.existing) {
             // Create a root directory and register it before calling initializingFirstTime

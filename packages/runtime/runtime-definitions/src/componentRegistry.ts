@@ -15,7 +15,8 @@ declare module "@fluidframework/component-core-interfaces" {
 /**
  * A single registry entry that may be used to create components
  */
-export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>>;
+export type FluidDataStoreRegistryEntry =
+    Readonly<Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>>;
 /**
  * An associated pair of an identifier and registry entry.  Registry entries
  * may be dynamically loaded.

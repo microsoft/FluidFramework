@@ -120,7 +120,10 @@ describe("FluidOjectHandle", () => {
 
         // Verify that the remote client's FluidDataStoreRuntime has the correct absolute path.
         const componentRuntime2 = secondContainerComponent1._runtime.IFluidHandleContext;
-        assert.equal(componentRuntime2.absolutePath, absolutePath, "The remote FluidDataStoreRuntime's path is incorrect");
+        assert.equal(
+            componentRuntime2.absolutePath,
+            absolutePath,
+            "The remote FluidDataStoreRuntime's path is incorrect");
     });
 
     it("can store and retrieve a DDS from handle within same component runtime", async () => {

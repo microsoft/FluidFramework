@@ -777,7 +777,7 @@ export class ContainerRuntime extends EventEmitter
             }).catch((contextError) => {
                 this._logger.sendErrorEvent({
                     eventName: "ComponentContextDisposeError",
-                    componentId
+                    componentId,
                 },
                     contextError);
             });

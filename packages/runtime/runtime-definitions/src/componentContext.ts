@@ -316,7 +316,8 @@ export interface IFluidDataStoreContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
-     * @deprecated 0.16 Issue #1537, issue #1756 Components should be created using IFluidDataStoreFactory methods instead
+     * @deprecated 0.16 Issue #1537, issue #1756 Components
+     *      should be created using IFluidDataStoreFactory methods instead
      * Creates a new component by using subregistries.
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
      *                  ID is being deprecated, so prefer passing undefined instead (the runtime will

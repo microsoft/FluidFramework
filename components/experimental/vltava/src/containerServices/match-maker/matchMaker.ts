@@ -17,20 +17,21 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
 export const MatchMakerContainerServiceId = "matchMaker";
 
-const getMatchMakerContainerService = async (context: IFluidDataStoreContext): Promise<IComponentInterfacesRegistry> => {
-    const response = await context.containerRuntime.request({
-        url: `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
-    });
-    if (response.status === 200 && response.mimeType === "fluid/object") {
-        const value = response.value as IFluidObject;
-        const matchMaker = value.IComponentInterfacesRegistry;
-        if (matchMaker) {
-            return matchMaker;
+const getMatchMakerContainerService =
+    async (context: IFluidDataStoreContext): Promise<IComponentInterfacesRegistry> => {
+        const response = await context.containerRuntime.request({
+            url: `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
+        });
+        if (response.status === 200 && response.mimeType === "fluid/object") {
+            const value = response.value as IFluidObject;
+            const matchMaker = value.IComponentInterfacesRegistry;
+            if (matchMaker) {
+                return matchMaker;
+            }
         }
-    }
 
-    throw new Error("MatchMaker Container Service not registered");
-};
+        throw new Error("MatchMaker Container Service not registered");
+    };
 
 /**
  * Helper function for registering with the MatchMaker. Manages getting the MatchMaker from the Container before
