@@ -389,8 +389,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
         super.submitLocalMessage(
             makeHandlesSerializable(
                 message,
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
+                this.runtime.IFluidSerializer,
+                this.runtime.IFluidHandleContext,
                 this.handle,
             ),
             localOpMetadata,
@@ -477,7 +477,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        const msg = parseHandles(rawMessage, this.runtime.IComponentSerializer, this.runtime.IComponentHandleContext);
+        const msg = parseHandles(rawMessage, this.runtime.IFluidSerializer, this.runtime.IFluidHandleContext);
 
         const contents = msg.contents;
 

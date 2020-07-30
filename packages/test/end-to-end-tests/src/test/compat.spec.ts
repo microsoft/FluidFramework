@@ -22,7 +22,7 @@ import {
     IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
-import { IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { componentRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
 import { createLocalLoader, OpProcessingController, initializeLocalContainer } from "@fluidframework/test-utils";
@@ -52,7 +52,7 @@ describe("loader/runtime compatibility", () => {
         config: {},
     };
 
-    const createComponentFactory = (): IComponentFactory => {
+    const createComponentFactory = (): IFluidDataStoreFactory => {
         return new DataObjectFactory(TestComponent.type, TestComponent, [], {});
     };
 
@@ -62,7 +62,7 @@ describe("loader/runtime compatibility", () => {
 
     const createRuntimeFactory = (
         type: string,
-        componentFactory: IComponentFactory | old.IComponentFactory,
+        componentFactory: IFluidDataStoreFactory | old.IComponentFactory,
         runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): IRuntimeFactory => {
         const builder = new RuntimeRequestHandlerBuilder();
@@ -75,7 +75,7 @@ describe("loader/runtime compatibility", () => {
             instantiateRuntime: async (context: IContainerContext) => {
                 const runtime = await ContainerRuntime.load(
                     context,
-                    [[type, Promise.resolve(componentFactory as IComponentFactory)]],
+                    [[type, Promise.resolve(componentFactory as IFluidDataStoreFactory)]],
                     async (req,rt) => builder.handleRequest(req,rt),
                     runtimeOptions,
                 );
@@ -91,7 +91,7 @@ describe("loader/runtime compatibility", () => {
 
     const createOldRuntimeFactory = (
         type: string,
-        componentFactory: IComponentFactory | old.IComponentFactory,
+        componentFactory: IFluidDataStoreFactory | old.IComponentFactory,
         runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): old.IRuntimeFactory => {
         const builder = new old.RuntimeRequestHandlerBuilder();
@@ -138,7 +138,7 @@ describe("loader/runtime compatibility", () => {
 
     async function requestFluidObject<T>(componentId: string, container: Container | old.Container): Promise<T> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as T;

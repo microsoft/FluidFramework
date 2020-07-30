@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentLoadable, IRequest } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IFluidLoadable, IRequest } from "@fluidframework/component-core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
-import { ComponentRegistry } from "@fluidframework/container-runtime";
+import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
-    IComponentFactory,
-    IComponentRegistry,
-    IProvideComponentRegistry,
-    NamedComponentRegistryEntries,
-    NamedComponentRegistryEntry,
+    IFluidDataStoreFactory,
+    IFluidDataStoreRegistry,
+    IProvideFluidDataStoreRegistry,
+    NamedFluidDataStoreRegistryEntries,
+    NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import {
@@ -26,7 +26,7 @@ import {
 } from "../components";
 
 /**
- * PureDataObjectFactory is a barebones IComponentFactory for use with PureDataObject.
+ * PureDataObjectFactory is a barebones IFluidDataStoreFactory for use with PureDataObject.
  * Consumers should typically use DataObjectFactory instead unless creating
  * another base component factory.
  *
@@ -34,30 +34,30 @@ import {
  * P - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced component may take during creation
  */
-export class PureDataObjectFactory<P extends IComponent, S = undefined> implements
-    IComponentFactory,
-    Partial<IProvideComponentRegistry>
+export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implements
+    IFluidDataStoreFactory,
+    Partial<IProvideFluidDataStoreRegistry>
 {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
-    private readonly registry: IComponentRegistry | undefined;
+    private readonly registry: IFluidDataStoreRegistry | undefined;
 
     constructor(
         public readonly type: string,
         private readonly ctor: new (props: ISharedComponentProps<P>) => PureDataObject<P, S>,
         sharedObjects: readonly IChannelFactory[],
         private readonly optionalProviders: ComponentSymbolProvider<P>,
-        registryEntries?: NamedComponentRegistryEntries,
+        registryEntries?: NamedFluidDataStoreRegistryEntries,
         private readonly onDemandInstantiation = true,
     ) {
         if (registryEntries !== undefined) {
-            this.registry = new ComponentRegistry(registryEntries);
+            this.registry = new FluidDataStoreRegistry(registryEntries);
         }
         this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
     }
 
-    public get IComponentFactory() { return this; }
+    public get IFluidDataStoreFactory() { return this; }
 
-    public get IComponentRegistry() {
+    public get IFluidDataStoreRegistry() {
         return this.registry;
     }
 
@@ -65,9 +65,9 @@ export class PureDataObjectFactory<P extends IComponent, S = undefined> implemen
      * Convenience helper to get the component's/factory's component registry entry.
      * The return type hides the factory's generics, easing grouping of registry
      * entries that differ only in this way into the same array.
-     * @returns The NamedComponentRegistryEntry
+     * @returns The NamedFluidDataStoreRegistryEntry
      */
-    public get registryEntry(): NamedComponentRegistryEntry {
+    public get registryEntry(): NamedFluidDataStoreRegistryEntry {
         return [this.type, Promise.resolve(this)];
     }
 
@@ -76,7 +76,7 @@ export class PureDataObjectFactory<P extends IComponent, S = undefined> implemen
      *
      * @param context - component context used to load a component runtime
      */
-    public instantiateComponent(context: IFluidDataStoreContext): void {
+    public instantiateDataStore(context: IFluidDataStoreContext): void {
         this.instantiateComponentWithInitialState(context, undefined);
     }
 
@@ -125,7 +125,7 @@ export class PureDataObjectFactory<P extends IComponent, S = undefined> implemen
         context: IFluidDataStoreContext,
         initialState?: S,
     ) {
-        const dependencyContainer = new DependencyContainer(context.scope.IComponentDependencySynthesizer);
+        const dependencyContainer = new DependencyContainer(context.scope.IFluidDependencySynthesizer);
         const providers = dependencyContainer.synthesize<P>(this.optionalProviders, {});
         // Create a new instance of our component
         const instance = new this.ctor({ runtime, context, providers });
@@ -134,7 +134,7 @@ export class PureDataObjectFactory<P extends IComponent, S = undefined> implemen
     }
 
     /**
-     * Implementation of IComponentFactory's _createDataStore method that also exposes an initial
+     * Implementation of IFluidDataStoreFactory's _createDataStore method that also exposes an initial
      * state argument.  Only specific factory instances are intended to take initial state.
      * @param context - The component context being used to create the component
      * (the created component will have its own new context created as well)
@@ -145,7 +145,7 @@ export class PureDataObjectFactory<P extends IComponent, S = undefined> implemen
     public async _createDataStore(
         context: IFluidDataStoreContext,
         initialState?: S,
-    ): Promise<IComponent & IComponentLoadable> {
+    ): Promise<IFluidObject & IFluidLoadable> {
         if (this.type === "") {
             throw new Error("undefined type member");
         }
@@ -159,5 +159,20 @@ export class PureDataObjectFactory<P extends IComponent, S = undefined> implemen
     /** deprecated: backcompat for FDL split */
     createComponent?(context: IFluidDataStoreContext, initialState?: S) {
         return this._createDataStore(context, initialState);
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentFactory() {
+        return this.IFluidDataStoreFactory;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentRegistry() {
+        return this.IFluidDataStoreRegistry;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    instantiateComponent?(context: IFluidDataStoreContext) {
+        return this.instantiateDataStore(context);
     }
 }

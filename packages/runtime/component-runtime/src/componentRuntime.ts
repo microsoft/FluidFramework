@@ -7,8 +7,8 @@ import assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IComponentHandle,
-    IComponentHandleContext,
+    IFluidHandle,
+    IFluidHandleContext,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -42,7 +42,7 @@ import {
 import {
     IAttachMessage,
     IFluidDataStoreContext,
-    IComponentRegistry,
+    IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
     IEnvelope,
     IInboundSignalMessage,
@@ -71,7 +71,7 @@ export interface ISharedObjectRegistry {
  * Base component class
  */
 export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreChannel,
-    IFluidDataStoreRuntime, IComponentHandleContext {
+    IFluidDataStoreRuntime, IFluidHandleContext {
     /**
      * Loads the component runtime
      * @param context - The component context
@@ -82,7 +82,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     public static load(
         context: IFluidDataStoreContext,
         sharedObjectRegistry: ISharedObjectRegistry,
-        componentRegistry?: IComponentRegistry,
+        componentRegistry?: IFluidDataStoreRegistry,
     ): FluidDataStoreRuntime {
         const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { componentId: uuid() });
         const runtime = new FluidDataStoreRuntime(
@@ -105,7 +105,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         return runtime;
     }
 
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
 
     public get connected(): boolean {
         return this.componentContext.connected;
@@ -146,14 +146,14 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         return generateHandleContextPath(this.id, this.routeContext);
     }
 
-    public get routeContext(): IComponentHandleContext {
-        return this.componentContext.containerRuntime.IComponentHandleContext;
+    public get routeContext(): IFluidHandleContext {
+        return this.componentContext.containerRuntime.IFluidHandleContext;
     }
 
-    public get IComponentSerializer() { return this.componentContext.containerRuntime.IComponentSerializer; }
+    public get IFluidSerializer() { return this.componentContext.containerRuntime.IFluidSerializer; }
 
-    public get IComponentHandleContext() { return this; }
-    public get IComponentRegistry() { return this.componentRegistry; }
+    public get IFluidHandleContext() { return this; }
+    public get IFluidDataStoreRegistry() { return this.componentRegistry; }
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
@@ -168,7 +168,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     private readonly deferredAttached = new Deferred<void>();
     private readonly localChannelContextQueue = new Map<string, LocalChannelContext>();
     private readonly notBoundedChannelContextSet = new Set<string>();
-    private boundhandles: Set<IComponentHandle> | undefined;
+    private boundhandles: Set<IFluidHandle> | undefined;
     private _attachState: AttachState;
 
     private constructor(
@@ -184,7 +184,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         private readonly audience: IAudience,
         private readonly snapshotFn: (message: string) => Promise<void>,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
-        private readonly componentRegistry: IComponentRegistry | undefined,
+        private readonly componentRegistry: IFluidDataStoreRegistry | undefined,
         public readonly logger: ITelemetryLogger,
     ) {
         super();
@@ -251,7 +251,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             const value = await this.contextsDeferred.get(id)!.promise;
             const channel = await value.getChannel();
 
-            return { mimeType: "fluid/component", status: 200, value: channel };
+            return { mimeType: "fluid/object", status: 200, value: channel };
         }
 
         // Otherwise defer to an attached request handler
@@ -374,7 +374,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         this.bindState = BindState.Bound;
     }
 
-    public bind(handle: IComponentHandle): void {
+    public bind(handle: IFluidHandle): void {
         // If the component is already attached or its graph is already in attaching or attached state,
         // then attach the incoming handle too.
         if (this.isAttached || this.graphAttachState !== AttachState.Detached) {
@@ -382,7 +382,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             return;
         }
         if (this.boundhandles === undefined) {
-            this.boundhandles = new Set<IComponentHandle>();
+            this.boundhandles = new Set<IFluidHandle>();
         }
 
         this.boundhandles.add(handle);
@@ -680,5 +680,25 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         if (this._disposed) {
             throw new Error("Runtime is closed");
         }
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentRouter() {
+        return this.IFluidRouter;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentSerializer() {
+        return this.IFluidSerializer;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentHandleContext() {
+        return this.IFluidHandleContext;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentRegistry() {
+        return this.IFluidDataStoreRegistry;
     }
 }

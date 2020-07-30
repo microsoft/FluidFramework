@@ -7,7 +7,7 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -17,8 +17,8 @@ const pkg = require("../package.json");
 const pkgversion = pkg.version as string;
 const versionTest2Name = pkg.name as string;
 
-export class VersionTest extends DataObject implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class VersionTest extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
     private upgradeToPkg: string = "@fluid-internal/version-test-3";
     private upgradeToVersion: string = "0.3.x";
 

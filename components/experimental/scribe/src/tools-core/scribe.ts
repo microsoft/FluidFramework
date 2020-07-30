@@ -5,7 +5,7 @@
 
 import childProcess from "child_process";
 import path from "path";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { ILoader } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -47,11 +47,11 @@ async function conductor(
     const chunks = author.normalizeText(text).split("\n");
 
     const response = await loader.request({ url });
-    if (response.status !== 200 || response.mimeType !== "fluid/component") {
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
         return Promise.reject("Invalid document");
     }
 
-    const component = response.value as IComponent;
+    const component = response.value as IFluidObject;
     if (!component.ISharedString) {
         return Promise.reject("Cannot type into document");
     }

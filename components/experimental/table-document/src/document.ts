@@ -4,7 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@fluidframework/merge-tree";
 import {
     positionToRowCol,
@@ -152,9 +152,9 @@ export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> impl
 
     protected async hasInitialized() {
         const [maybeMatrixHandle, maybeRowsHandle, maybeColsHandle] = await Promise.all([
-            this.root.wait<IComponentHandle<SparseMatrix>>("matrix"),
-            this.root.wait<IComponentHandle<SharedNumberSequence>>("rows"),
-            this.root.wait<IComponentHandle<SharedNumberSequence>>("cols"),
+            this.root.wait<IFluidHandle<SparseMatrix>>("matrix"),
+            this.root.wait<IFluidHandle<SharedNumberSequence>>("rows"),
+            this.root.wait<IFluidHandle<SharedNumberSequence>>("cols"),
         ]);
 
         this.maybeMatrix = await maybeMatrixHandle.get();

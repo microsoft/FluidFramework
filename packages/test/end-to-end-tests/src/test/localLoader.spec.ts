@@ -5,11 +5,11 @@
 
 import { strict as assert } from "assert";
 import { DataObject, DataObjectFactory, ISharedComponentProps } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { SharedCounter } from "@fluidframework/counter";
-import { IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -69,7 +69,7 @@ export class TestComponent extends DataObject {
     }
 
     protected async hasInitialized() {
-        const counterHandle = await this.root.wait<IComponentHandle<SharedCounter>>(counterKey);
+        const counterHandle = await this.root.wait<IFluidHandle<SharedCounter>>(counterKey);
         this.counter = await counterHandle.get();
     }
 }
@@ -94,14 +94,14 @@ describe("LocalLoader", () => {
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
 
-    async function createContainer(factory: IComponentFactory): Promise<Container> {
+    async function createContainer(factory: IFluidDataStoreFactory): Promise<Container> {
         const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
     async function requestFluidObject<T>(componentId: string, container: Container): Promise<T> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as T;

@@ -5,9 +5,9 @@
 import { ISharedMap, IDirectoryValueChanged } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import {
-    IComponentHandle,
-    IComponentLoadable,
-    IComponent,
+    IFluidHandle,
+    IFluidLoadable,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import { SyncedComponent } from "./fluidComponent";
 
@@ -230,8 +230,8 @@ export type IFluidReactState = IFluidFunctionalComponentFluidState & IFluidFunct
 
 export const instanceOfIComponentLoadable = (
     object: any,
-): object is IComponentLoadable =>
-    object === Object(object) && "IComponentLoadable" in object;
+): object is IFluidLoadable =>
+    object === Object(object) && "IFluidLoadable" in object;
 
 /**
  * The values stored in the fluid component map
@@ -240,7 +240,7 @@ export interface IFluidComponent {
     /**
      * The actual Fluid component that the path this value is keyed against leads to
      */
-    component?: IComponent & IComponentLoadable;
+    component?: IFluidObject & IFluidLoadable;
     /**
      * Boolean indicating if we are listening to changes on this component's synced state to trigger React
      * state updates. Only set if you want custom behavior for adding listeners to your Fluid state
@@ -394,7 +394,7 @@ export interface IStateUpdateResult<
      * Any new components that were added in due this function need to have
      * their corresponding handles passed in so that the object can also be loaded for all other users
      */
-    newComponentHandles?: IComponentHandle[];
+    newComponentHandles?: IFluidHandle[];
 }
 
 export const instanceOfAsyncStateUpdateFunction = <
@@ -424,7 +424,7 @@ export interface FluidSelectorFunction<
         state?: ICombinedState<SV, SF, C>
     ) => {
         result: any | undefined;
-        newComponentHandles?: IComponentHandle[];
+        newComponentHandles?: IFluidHandle[];
     };
 }
 
@@ -441,11 +441,11 @@ export interface FluidComponentSelectorFunction<
      * handle if we need to fetch a component from the fluidComponentMap
      */
     function: (
-        handle: IComponentHandle<any>,
+        handle: IFluidHandle<any>,
         state?: ICombinedState<SV, SF, C>,
     ) => {
-        result: IComponent | undefined;
-        newComponentHandles?: IComponentHandle[];
+        result: IFluidObject | undefined;
+        newComponentHandles?: IFluidHandle[];
     };
 }
 

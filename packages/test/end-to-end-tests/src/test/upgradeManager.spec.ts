@@ -11,7 +11,7 @@ import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-defini
 import { ICodeLoader, IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 class TestComponent extends DataObject {
@@ -40,7 +40,7 @@ describe("UpgradeManager", () => {
     let documentServiceFactory: LocalDocumentServiceFactory;
     let opProcessingController: OpProcessingController;
 
-    async function createContainer(factory: IComponentFactory): Promise<Container> {
+    async function createContainer(factory: IFluidDataStoreFactory): Promise<Container> {
         const urlResolver = new LocalResolver();
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const loader = new Loader(
@@ -56,7 +56,7 @@ describe("UpgradeManager", () => {
 
     async function requestFluidObject<T>(componentId: string, container: Container): Promise<T> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as T;

@@ -21,8 +21,8 @@ import * as map from "@fluidframework/map";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import {
     IFluidDataStoreContext,
-    IComponentFactory,
-    NamedComponentRegistryEntries,
+    IFluidDataStoreFactory,
+    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import * as sequence from "@fluidframework/sequence";
@@ -31,14 +31,14 @@ import { Document } from "./document";
 const rootMapId = "root";
 const insightsMapId = "insights";
 
-export class Chaincode implements IComponentFactory {
+export class Chaincode implements IFluidDataStoreFactory {
     public readonly type = "@fluid-internal/client-api";
 
-    public get IComponentFactory() { return this; }
+    public get IFluidDataStoreFactory() { return this; }
 
     public constructor(private readonly closeFn: () => void) { }
 
-    public instantiateComponent(context: IFluidDataStoreContext): void {
+    public instantiateDataStore(context: IFluidDataStoreContext): void {
         // Create channel factories
         const mapFactory = map.SharedMap.getFactory();
         const sharedStringFactory = sequence.SharedString.getFactory();
@@ -87,11 +87,21 @@ export class Chaincode implements IComponentFactory {
         runtime.registerRequestHandler(async (request) => {
             const document = await documentP;
             return {
-                mimeType: "fluid/component",
+                mimeType: "fluid/object",
                 status: 200,
                 value: document,
             };
         });
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentFactory() {
+        return this.IFluidDataStoreFactory;
+    }
+
+    /** deprecated: backcompat for FDL split */
+    instantiateComponent?(context: IFluidDataStoreContext) {
+        return this.instantiateDataStore(context);
     }
 }
 
@@ -116,7 +126,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
     constructor(
         private readonly runtimeOptions: IContainerRuntimeOptions,
-        private readonly registries: NamedComponentRegistryEntries) {
+        private readonly registries: NamedFluidDataStoreRegistryEntries) {
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
@@ -151,7 +161,7 @@ export class CodeLoader implements ICodeLoader {
 
     constructor(
         runtimeOptions: IContainerRuntimeOptions,
-        registries: NamedComponentRegistryEntries = [],
+        registries: NamedFluidDataStoreRegistryEntries = [],
     ) {
         this.fluidModule = {
             fluidExport: new ChaincodeFactory(

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 
 /**
  * The interfaces in this file are related to component interface discovery. The idea
  * is that a component could say, for example, that it only cares about (and wants to be
- * notified of) components that implement IComponentHTMLView. Then, using these patterns,
+ * notified of) components that implement IFluidHTMLView. Then, using these patterns,
  * it will be notified of all loaded components that implement that type on load, and
- * of all new components that are loaded during that session that implement IComponentHTMLView.
+ * of all new components that are loaded during that session that implement IFluidHTMLView.
  *
  * Components who want their functionality to be discoverable should implement
  * IComponentDiscoverableInterfaces and list the interfaces they implement. Components that
@@ -54,7 +54,7 @@ export interface IComponentDiscoverableInterfaces extends IProvideComponentDisco
      * The interfaces this component implements that it wants other components to be able
      * to discover.
      */
-    readonly discoverableInterfaces: (keyof (IComponent & IFluidObject))[];
+    readonly discoverableInterfaces: (keyof (IFluidObject & IFluidObject))[];
 }
 
 export const IComponentDiscoverInterfaces: keyof IProvideComponentDiscoverInterfaces = "IComponentDiscoverInterfaces";
@@ -75,7 +75,7 @@ export interface IComponentDiscoverInterfaces extends IProvideComponentDiscoverI
      * The interfaces this component cares about, i.e. it wants to be notified when other components
      * that implement any of these interfaces are added to the ecosystem.
      */
-    readonly interfacesToDiscover: (keyof (IComponent & IFluidObject))[];
+    readonly interfacesToDiscover: (keyof (IFluidObject & IFluidObject))[];
 
     /**
      * Invoked when any components that implement any of the interfaces in interfacesToDiscover are
@@ -90,8 +90,8 @@ export interface IComponentDiscoverInterfaces extends IProvideComponentDiscoverI
      * @param components - A list of the components that implement the given interface.
      */
     notifyComponentsDiscovered(
-        interfaceName: keyof (IComponent & IFluidObject),
-        components: readonly (IComponent & IFluidObject)[]): void;
+        interfaceName: keyof (IFluidObject & IFluidObject),
+        components: readonly (IFluidObject & IFluidObject)[]): void;
 }
 
 export const IComponentInterfacesRegistry: keyof IProvideComponentInterfacesRegistry = "IComponentInterfacesRegistry";

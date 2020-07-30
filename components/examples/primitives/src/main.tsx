@@ -6,7 +6,7 @@
 import {
     DataObject,
 } from "@fluidframework/aqueduct";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { SharedMap, IDirectory, IDirectoryValueChanged } from "@fluidframework/map";
@@ -19,8 +19,8 @@ export const PrimitivesName = pkg.name as string;
 /**
  * Basic DDS examples using view interfaces and stock component classes.
  */
-export class PrimitivesCollection extends DataObject implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class PrimitivesCollection extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private internalMapDir: IDirectory | undefined;
     protected get mapDir(): IDirectory { return this.tryGetDds(this.internalMapDir, "mapDir"); }

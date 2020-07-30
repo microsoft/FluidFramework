@@ -4,8 +4,8 @@
  */
 
 import {
-    IComponent,
-    IComponentHandle,
+    IFluidObject,
+    IFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -29,7 +29,7 @@ import { PureDataObject } from "./sharedComponent";
  * S - the initial state type that the produced component may take during creation
  * E - represents events that will be available in the EventForwarder
  */
-export abstract class DataObject<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
+export abstract class DataObject<P extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
     extends PureDataObject<P, S, E>
 {
     private internalRoot: ISharedDirectory | undefined;
@@ -44,9 +44,9 @@ export abstract class DataObject<P extends IComponent = object, S = undefined, E
         } else if (url.startsWith(this.bigBlobs)) {
             const value = this.root.get<string>(url);
             if (value === undefined) {
-                return { mimeType: "fluid/component", status: 404, value: `request ${url} not found` };
+                return { mimeType: "fluid/object", status: 404, value: `request ${url} not found` };
             }
-            return { mimeType: "fluid/component", status: 200, value };
+            return { mimeType: "fluid/object", status: 200, value };
         } else {
             return super.request(request);
         }
@@ -81,14 +81,14 @@ export abstract class DataObject<P extends IComponent = object, S = undefined, E
      * on map doing proper snapshot blob partitioning to reuse non-changing big properties.
      * In future blobs would be implemented as first class citizen, using blob storage APIs
      */
-    protected async writeBlob(blob: string): Promise<IComponentHandle<string>> {
+    protected async writeBlob(blob: string): Promise<IFluidHandle<string>> {
         this.runtime.logger.sendTelemetryEvent({
             eventName: "WriteBlob",
             size: blob.length,
         });
         const path = `${this.bigBlobs}${uuid()}`;
         this.root.set(path, blob);
-        return new BlobHandle(path, this.root, this.runtime.IComponentHandleContext);
+        return new BlobHandle(path, this.root, this.runtime.IFluidHandleContext);
     }
 
     /**

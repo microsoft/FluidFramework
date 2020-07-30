@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -44,7 +44,7 @@ describe("Ops on Reconnect", () => {
     let opProcessingController: OpProcessingController;
     let firstContainer: Container;
     let firstContainerClientId: string;
-    let firstContainerComp1: ITestFluidComponent & IComponentLoadable;
+    let firstContainerComp1: ITestFluidComponent & IFluidLoadable;
     let firstContainerComp1Map1: SharedMap;
     let firstContainerComp1Map2: SharedMap;
     let firstContainerComp1Directory: SharedDirectory;
@@ -92,12 +92,12 @@ describe("Ops on Reconnect", () => {
     }
 
     async function requestFluidObject(componentId: string, fromContainer: Container):
-        Promise<ITestFluidComponent & IComponentLoadable> {
+        Promise<ITestFluidComponent & IFluidLoadable> {
         const response = await fromContainer.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
-        return response.value as ITestFluidComponent & IComponentLoadable;
+        return response.value as ITestFluidComponent & IFluidLoadable;
     }
 
     async function setupSecondContainersComponent(): Promise<ITestFluidComponent> {
@@ -276,7 +276,7 @@ describe("Ops on Reconnect", () => {
             const firstContainerComp2 =
                 await firstContainerComp1.context.createDataStoreWithRealizationFn(
                     "component2",
-                ) as unknown as ITestFluidComponent & IComponentLoadable;
+                ) as unknown as ITestFluidComponent & IFluidLoadable;
 
             // Get the maps in component2.
             const firstContainerComp2Map1 = await firstContainerComp2.getSharedObject<SharedMap>(map1Id);
@@ -295,7 +295,7 @@ describe("Ops on Reconnect", () => {
             const secondContainerComp1Map1 = await secondContainerComp1.getSharedObject<SharedMap>(map1Id);
             const secondContainerComp2 =
                 await secondContainerComp1Map1.get<
-                    IComponentHandle<ITestFluidComponent & IComponentLoadable>>("component2Key").get();
+                    IFluidHandle<ITestFluidComponent & IFluidLoadable>>("component2Key").get();
             assert.ok(secondContainerComp2, "Could not get component2 in the second container");
 
             // Disconnect the client.
@@ -381,7 +381,7 @@ describe("Ops on Reconnect", () => {
             const firstContainerComp2 =
                 await firstContainerComp1.context.createDataStoreWithRealizationFn(
                     "component2",
-                ) as unknown as ITestFluidComponent & IComponentLoadable;
+                ) as unknown as ITestFluidComponent & IFluidLoadable;
 
             // Get the maps in component2.
             const firstContainerComp2Map1 = await firstContainerComp2.getSharedObject<SharedMap>(map1Id);
@@ -400,7 +400,7 @@ describe("Ops on Reconnect", () => {
             const secondContainerComp1Map1 = await secondContainerComp1.getSharedObject<SharedMap>(map1Id);
             const secondContainerComp2 =
                 await secondContainerComp1Map1.get<
-                    IComponentHandle<ITestFluidComponent & IComponentLoadable>>("component2Key").get();
+                    IFluidHandle<ITestFluidComponent & IFluidLoadable>>("component2Key").get();
             assert.ok(secondContainerComp2, "Could not get component2 in the second container");
 
             // Set values in the DDSes across the two components interleaved with each other.

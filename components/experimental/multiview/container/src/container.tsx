@@ -35,7 +35,7 @@ const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string)
     const simpleCoordinateComponentRuntime =
         await runtime._createDataStore(id, Coordinate.ComponentName);
     const simpleResult = await simpleCoordinateComponentRuntime.request({ url: id });
-    if (simpleResult.status !== 200 || simpleResult.mimeType !== "fluid/component") {
+    if (simpleResult.status !== 200 || simpleResult.mimeType !== "fluid/object") {
         throw new Error("Error in creating the coordinate model.");
     }
     simpleCoordinateComponentRuntime.bindToContext();
@@ -119,7 +119,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
         const constellationComponentRuntime =
             await runtime._createDataStore(constellationComponentId, Constellation.ComponentName);
         const constellationResult = await constellationComponentRuntime.request({ url: constellationComponentId });
-        if (constellationResult.status !== 200 || constellationResult.mimeType !== "fluid/component") {
+        if (constellationResult.status !== 200 || constellationResult.mimeType !== "fluid/object") {
             throw new Error("Error in creating the constellation model.");
         }
         constellationComponentRuntime.bindToContext();

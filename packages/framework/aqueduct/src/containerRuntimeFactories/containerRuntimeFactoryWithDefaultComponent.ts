@@ -4,7 +4,7 @@
  */
 
 import { IFluidExportDefaultFactoryName } from "@fluidframework/framework-interfaces";
-import { NamedComponentRegistryEntries } from "@fluidframework/runtime-definitions";
+import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { DependencyContainerRegistry } from "@fluidframework/synthesize";
 import { MountableView } from "@fluidframework/view-adapters";
@@ -26,7 +26,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 
     constructor(
         private readonly defaultComponentName: string,
-        registryEntries: NamedComponentRegistryEntries,
+        registryEntries: NamedFluidDataStoreRegistryEntries,
         providerEntries: DependencyContainerRegistry = [],
         requestHandlers: RuntimeRequestHandler[] = [],
     ) {

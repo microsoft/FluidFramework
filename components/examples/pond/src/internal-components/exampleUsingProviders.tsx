@@ -5,7 +5,7 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedMap } from "@fluidframework/map";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -20,8 +20,8 @@ const pkg = require("../../package.json");
  */
 export class ExampleUsingProviders
     extends DataObject<IComponentUserInformation>
-    implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+    implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private userInformation: IComponentUserInformation | undefined;
 
@@ -31,7 +31,7 @@ export class ExampleUsingProviders
         this.userInformation = await this.providers.IComponentUserInformation;
     }
 
-    // start IComponentHTMLView
+    // start IFluidHTMLView
 
     public render(div: HTMLElement) {
         let element: JSX.Element = <span></span>;
@@ -46,7 +46,7 @@ export class ExampleUsingProviders
             div);
     }
 
-    // end IComponentHTMLView
+    // end IFluidHTMLView
 
     // ----- COMPONENT SETUP STUFF -----
 

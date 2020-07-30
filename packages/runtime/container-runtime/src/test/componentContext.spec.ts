@@ -4,15 +4,15 @@
  */
 
 import assert from "assert";
-import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
 import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
     IFluidDataStoreChannel,
     IFluidDataStoreContext,
-    IComponentFactory,
-    IComponentRegistry,
+    IFluidDataStoreFactory,
+    IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker } from "@fluidframework/runtime-utils";
@@ -28,21 +28,21 @@ describe("Component Context Tests", () => {
     describe("LocalFluidDataStoreContext Initialization", () => {
         let localComponentContext: LocalFluidDataStoreContext;
         let storage: IDocumentStorageService;
-        let scope: IComponent & IFluidObject;
+        let scope: IFluidObject & IFluidObject;
         const attachCb = (mR: IFluidDataStoreChannel) => { };
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
-            const factory: IComponentFactory = {
-                get IComponentFactory() { return factory; },
-                instantiateComponent: (context: IFluidDataStoreContext) => { },
+            const factory: IFluidDataStoreFactory = {
+                get IFluidDataStoreFactory() { return factory; },
+                instantiateDataStore: (context: IFluidDataStoreContext) => { },
             };
-            const registry: IComponentRegistry = {
-                get IComponentRegistry() { return registry; },
+            const registry: IFluidDataStoreRegistry = {
+                get IFluidDataStoreRegistry() { return registry; },
                 get: async (pkg) => Promise.resolve(factory),
             };
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
-                IComponentRegistry: registry,
+                IFluidDataStoreRegistry: registry,
                 notifyDataStoreInstantiated: (c) => { },
                 on: (event, listener) => {},
             } as ContainerRuntime;
@@ -99,14 +99,14 @@ describe("Component Context Tests", () => {
 
         it("Supplying array of packages in LocalFluidDataStoreContext should not create exception", async () => {
             const registryWithSubRegistries: { [key: string]: any } = {};
-            registryWithSubRegistries.IComponentFactory = registryWithSubRegistries;
-            registryWithSubRegistries.IComponentRegistry = registryWithSubRegistries;
+            registryWithSubRegistries.IFluidDataStoreFactory = registryWithSubRegistries;
+            registryWithSubRegistries.IFluidDataStoreRegistry = registryWithSubRegistries;
             registryWithSubRegistries.get = async (pkg) => Promise.resolve(registryWithSubRegistries);
-            registryWithSubRegistries.instantiateComponent = (context: IFluidDataStoreContext) => { };
+            registryWithSubRegistries.instantiateDataStore = (context: IFluidDataStoreContext) => { };
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
-                IComponentRegistry: registryWithSubRegistries,
+                IFluidDataStoreRegistry: registryWithSubRegistries,
                 notifyDataStoreInstantiated: (c) => { },
                 on: (event, listener) => {},
             } as ContainerRuntime;
@@ -144,20 +144,20 @@ describe("Component Context Tests", () => {
         let remotedComponentContext: RemotedFluidDataStoreContext ;
         let componentAttributes: IFluidDataStoretAttributes;
         const storage: Partial<IDocumentStorageService> = {};
-        let scope: IComponent & IFluidObject;
+        let scope: IFluidObject & IFluidObject;
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
             const factory: { [key: string]: any } = {};
-            factory.IComponentFactory = factory;
-            factory.instantiateComponent =
+            factory.IFluidDataStoreFactory = factory;
+            factory.instantiateDataStore =
                 (context: IFluidDataStoreContext) => { context.bindRuntime(new MockFluidDataStoreRuntime()); };
             const registry: { [key: string]: any } = {};
-            registry.IComponentRegistry = registry;
+            registry.IFluidDataStoreRegistry = registry;
             registry.get = async (pkg) => Promise.resolve(factory);
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
-                IComponentRegistry: registry,
+                IFluidDataStoreRegistry: registry,
                 notifyDataStoreInstantiated: (c) => { },
                 on: (event, listener) => {},
             } as ContainerRuntime;

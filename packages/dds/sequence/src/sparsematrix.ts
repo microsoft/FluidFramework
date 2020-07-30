@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import {
     BaseSegment,
     createGroupOp,
@@ -93,7 +93,7 @@ export class PaddingSegment extends BaseSegment {
     }
 }
 
-export type SparseMatrixItem = Jsonable<JsonablePrimitive | IComponentHandle>;
+export type SparseMatrixItem = Jsonable<JsonablePrimitive | IFluidHandle>;
 export class RunSegment extends SubSequence<SparseMatrixItem> {
     public static readonly typeString = "RunSegment";
     public static is(segment: ISegment): segment is RunSegment {

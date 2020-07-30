@@ -7,11 +7,10 @@ import assert from "assert";
 import EventEmitter from "events";
 import { IDisposable } from "@fluidframework/common-definitions";
 import {
-    IComponent,
-    IComponentLoadable,
+    IFluidObject,
+    IFluidLoadable,
     IRequest,
     IResponse,
-    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -37,13 +36,13 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-    ComponentRegistryEntry,
+    FluidDataStoreRegistryEntry,
     IFluidDataStoreChannel,
     IAttachMessage,
     IFluidDataStoreContext,
     IComponentContextLegacy,
-    IComponentFactory,
-    IComponentRegistry,
+    IFluidDataStoreFactory,
+    IFluidDataStoreRegistry,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker } from "@fluidframework/runtime-utils";
@@ -172,7 +171,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
-        public readonly scope: IComponent & IFluidObject,
+        public readonly scope: IFluidObject & IFluidObject,
         public readonly summaryTracker: SummaryTracker,
         private bindState: BindState,
         bindComponent: (componentRuntime: IFluidDataStoreChannel) => void,
@@ -231,7 +230,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     public async createDataStoreWithRealizationFn(
         pkg: string,
         realizationFn?: (context: IFluidDataStoreContext) => void,
-    ): Promise<IComponent & IComponentLoadable> {
+    ): Promise<IFluidObject & IFluidLoadable> {
         const packagePath = await this.composeSubpackagePath(pkg);
 
         const componentRuntime = await this.containerRuntime.createDataStoreWithRealizationFn(
@@ -239,7 +238,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             realizationFn,
         );
         const response = await componentRuntime.request({ url: "/" });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error("Failed to create component");
         }
 
@@ -268,9 +267,9 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             // that it is set here, before bindRuntime is called.
             this._baseSnapshot = details.snapshot;
             const packages = details.pkg;
-            let entry: ComponentRegistryEntry | undefined;
-            let registry: IComponentRegistry | undefined = this._containerRuntime.IComponentRegistry;
-            let factory: IComponentFactory | undefined;
+            let entry: FluidDataStoreRegistryEntry | undefined;
+            let registry: IFluidDataStoreRegistry | undefined = this._containerRuntime.IFluidDataStoreRegistry;
+            let factory: IFluidDataStoreFactory | undefined;
             let lastPkg: string | undefined;
             for (const pkg of packages) {
                 if (!registry) {
@@ -281,16 +280,26 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
                 if (!entry) {
                     return this.rejectDeferredRealize(`Registry does not contain entry for the package ${pkg}`);
                 }
-                factory = entry.IComponentFactory;
-                registry = entry.IComponentRegistry;
+                /** deprecated: backcompat for FDL split */
+                factory = entry.IFluidDataStoreFactory ?? (entry as any).IComponentFactory;
+                registry = entry.IFluidDataStoreRegistry ?? (entry as any).IComponentRegistry;
             }
-
             if (factory === undefined) {
                 return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
             }
-            // During this call we will invoke the instantiate method - which will call back into us
-            // via the bindRuntime call to resolve componentRuntimeDeferred
-            factory.instantiateComponent(this);
+            if (factory.instantiateDataStore) {
+                 // During this call we will invoke the instantiate method - which will call back into us
+                 // via the bindRuntime call to resolve componentRuntimeDeferred
+                 factory.instantiateDataStore(this);
+            } else {
+                /** deprecated: backcompat for FDL split */
+                (factory as any).instantiateComponent(this);
+                this.containerRuntime.logger.send({
+                    category: "warning",
+                    eventName: "deprecated",
+                    message: "ComponentContext.realize.instantiateComponent",
+                    });
+            }
         }
 
         return this.componentRuntimeDeferred.promise;
@@ -546,10 +555,10 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
         // to the packagePath. If not, look into the global registry and the packagePath becomes just the
         // passed package.
-        if (await this.componentRuntime?.IComponentRegistry?.get(subpackage)) {
+        if (await this.componentRuntime?.IFluidDataStoreRegistry?.get(subpackage)) {
             packagePath.push(subpackage);
         } else {
-            if (!(await this._containerRuntime.IComponentRegistry.get(subpackage))) {
+            if (!(await this._containerRuntime.IFluidDataStoreRegistry.get(subpackage))) {
                 throw new Error(`Registry does not contain entry for package '${subpackage}'`);
             }
 
@@ -594,7 +603,7 @@ export class RemotedFluidDataStoreContext  extends FluidDataStoreContext {
         private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent & IFluidObject,
+        scope: IFluidObject & IFluidObject,
         summaryTracker: SummaryTracker,
         pkg?: string[],
     ) {
@@ -671,11 +680,11 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
         pkg: string[],
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent & IFluidObject,
+        scope: IFluidObject & IFluidObject,
         summaryTracker: SummaryTracker,
         bindComponent: (componentRuntime: IFluidDataStoreChannel) => void,
         /**
-         * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
+         * @deprecated 0.16 Issue #1635 Use the IFluidDataStoreFactory creation methods instead to specify initial state
          */
         public readonly createProps?: any,
     ) {

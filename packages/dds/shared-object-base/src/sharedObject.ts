@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import {
@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/component-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { v4 as uuid } from "uuid";
-import { SharedObjectComponentHandle } from "./handle";
+import { SharedObjectHandle } from "./handle";
 import { ISharedObject, ISharedObjectEvents } from "./types";
 
 /**
@@ -34,12 +34,12 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     public get ISharedObject() { return this; }
     public get IChannel() { return this; }
-    public get IComponentLoadable() { return this; }
+    public get IFluidLoadable() { return this; }
 
     /**
      * The handle referring to this SharedObject
      */
-    public readonly handle: IComponentHandle;
+    public readonly handle: IFluidHandle;
 
     /**
      * Telemetry logger for the shared object
@@ -87,10 +87,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         public readonly attributes: IChannelAttributes) {
         super();
 
-        this.handle = new SharedObjectComponentHandle(
+        this.handle = new SharedObjectHandle(
             this,
             id,
-            runtime.IComponentHandleContext);
+            runtime.IFluidHandleContext);
 
         // Runtime could be null since some package hasn't turn on strictNullChecks yet
         // We should remove the null check once that is done
@@ -393,5 +393,14 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     private reSubmit(content: any, localOpMetadata: unknown) {
         this.reSubmitCore(content, localOpMetadata);
+    }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentLoadable() {
+        this.logger.send({
+            category: "warning", eventName: "deprecated",
+            message: "SharedObject.IComponentLoadable",
+        });
+        return this.IFluidLoadable;
     }
 }

@@ -4,7 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -17,7 +17,7 @@ export const VltavaName = "vltava";
 /**
  * Vltava is an application experience
  */
-export class Vltava extends DataObject implements IComponentHTMLView {
+export class Vltava extends DataObject implements IFluidHTMLView {
     private dataModelInternal: IVltavaDataModel | undefined;
 
     private static readonly factory = new DataObjectFactory(VltavaName, Vltava, [], {});
@@ -34,7 +34,7 @@ export class Vltava extends DataObject implements IComponentHTMLView {
         return this.dataModelInternal;
     }
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     protected async initializingFirstTime() {
         const tabsComponent = await this.createAndAttachDataStore("tabs");

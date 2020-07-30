@@ -8,7 +8,7 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -21,10 +21,10 @@ const diceValueKey = "diceValue";
 /**
  * The DiceRoller is our implementation of the IDiceRoller interface.
  */
-export class DiceRoller extends DataObject implements IDiceRoller, IComponentHTMLView {
+export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLView {
     public static get ComponentName() { return "@fluid-example/dice-roller"; }
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     /**
      * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the

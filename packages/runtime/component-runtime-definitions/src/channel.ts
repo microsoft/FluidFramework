@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentLoadable } from "@fluidframework/component-core-interfaces";
+import { IFluidLoadable } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./componentRuntime";
@@ -22,7 +22,7 @@ export interface IProvideChannel {
     readonly IChannel: IChannel;
 }
 
-export interface IChannel extends IProvideChannel, IComponentLoadable {
+export interface IChannel extends IProvideChannel, IFluidLoadable {
     /**
      * A readonly identifier for the channel
      */

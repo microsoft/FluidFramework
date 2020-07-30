@@ -7,8 +7,8 @@ import assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IComponentHandle,
-    IComponentHandleContext,
+    IFluidHandle,
+    IFluidHandleContext,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -43,7 +43,7 @@ import {
     IChannelStorageService,
     IChannelServices,
 } from "@fluidframework/component-runtime-definitions";
-import { ComponentSerializer, getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
+import { FluidSerializer, getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
@@ -359,11 +359,11 @@ export class MockQuorum implements IQuorum, EventEmitter {
  * Mock implementation of IRuntime for testing that does nothing
  */
 export class MockFluidDataStoreRuntime extends EventEmitter
-    implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IComponentHandleContext {
-    public get IComponentHandleContext(): IComponentHandleContext { return this; }
-    public get IComponentRouter() { return this; }
+    implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
+    public get IFluidHandleContext(): IFluidHandleContext { return this; }
+    public get IFluidRouter() { return this; }
 
-    public readonly IComponentSerializer = new ComponentSerializer();
+    public readonly IFluidSerializer = new FluidSerializer();
 
     public readonly documentId: string;
     public readonly id: string = uuid();
@@ -433,7 +433,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return;
     }
 
-    public bind(handle: IComponentHandle): void {
+    public bind(handle: IFluidHandle): void {
         return;
     }
 

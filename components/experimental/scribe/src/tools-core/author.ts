@@ -4,7 +4,7 @@
  */
 
 import * as api from "@fluid-internal/client-api";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { ILoader } from "@fluidframework/container-definitions";
 import { ISharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -160,11 +160,11 @@ export async function typeFile(
 
     for (let i = 1; i < writers; i++) {
         const response = await loader.request({ url: urlBase });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             return Promise.reject("Invalid document");
         }
 
-        const component = response.value as IComponent;
+        const component = response.value as IFluidObject;
         if (!component.ISharedString) {
             return Promise.reject("Cannot type into document");
         }

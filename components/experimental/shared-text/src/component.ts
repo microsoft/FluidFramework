@@ -14,13 +14,12 @@ import { SharedCell } from "@fluidframework/cell";
 import { performanceNow } from "@fluidframework/common-utils";
 import {
     IFluidObject,
-    IComponentHandle,
-    IComponentLoadable,
+    IFluidHandle,
+    IFluidLoadable,
     IRequest,
     IResponse,
-    IComponent,
 } from "@fluidframework/component-core-interfaces";
-import { FluidDataStoreRuntime, ComponentHandle } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/component-runtime";
 import { Ink } from "@fluidframework/ink";
 import {
     ISharedMap,
@@ -40,7 +39,7 @@ import {
     SharedObjectSequence,
     SharedString,
 } from "@fluidframework/sequence";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
 
@@ -49,21 +48,21 @@ const debug = registerDebug("fluid:shared-text");
 /**
  * Helper function to retrieve the handle for the default component route
  */
-async function getHandle(runtimeP: Promise<IFluidDataStoreChannel>): Promise<IComponentHandle> {
+async function getHandle(runtimeP: Promise<IFluidDataStoreChannel>): Promise<IFluidHandle> {
     const runtime = await runtimeP;
     const request = await runtime.request({ url: "" });
 
-    if (request.status !== 200 || request.mimeType !== "fluid/component") {
+    if (request.status !== 200 || request.mimeType !== "fluid/object") {
         return Promise.reject("Not found");
     }
 
-    const component = request.value as IFluidObject & IComponent;
-    return component.IComponentLoadable.handle;
+    const component = request.value as IFluidObject & IFluidObject;
+    return component.IFluidLoadable.handle;
 }
 
 export class SharedTextRunner
     extends EventEmitter
-    implements IComponentHTMLView, IComponentLoadable, IProvideSharedString {
+    implements IFluidHTMLView, IFluidLoadable, IProvideSharedString {
     public static async load(runtime: FluidDataStoreRuntime, context: IFluidDataStoreContext): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
         await runner.initialize();
@@ -71,13 +70,13 @@ export class SharedTextRunner
         return runner;
     }
 
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
-    public get IComponentHandle() { return this.innerHandle; }
-    public get IComponentLoadable() { return this; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get IFluidHandle() { return this.innerHandle; }
+    public get IFluidLoadable() { return this; }
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
     public get ISharedString() { return this.sharedString; }
 
     public readonly url = "/text";
@@ -90,7 +89,7 @@ export class SharedTextRunner
 
     private constructor(private readonly runtime: FluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {
         super();
-        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
+        this.innerHandle = new FluidOjectHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public render(element: HTMLElement) {
@@ -110,7 +109,7 @@ export class SharedTextRunner
         if (request.url.startsWith(this.taskManager.url)) {
             return this.taskManager.request(request);
         } else if (request.url === "" || request.url === "/") {
-            return { status: 200, mimeType: "fluid/component", value: this };
+            return { status: 200, mimeType: "fluid/object", value: this };
         } else {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
@@ -179,8 +178,8 @@ export class SharedTextRunner
 
         await this.rootView.wait("flowContainerMap");
 
-        this.sharedString = await this.rootView.get<IComponentHandle<SharedString>>("text").get();
-        this.insightsMap = await this.rootView.get<IComponentHandle<ISharedMap>>("insights").get();
+        this.sharedString = await this.rootView.get<IFluidHandle<SharedString>>("text").get();
+        this.insightsMap = await this.rootView.get<IFluidHandle<ISharedMap>>("insights").get();
         debug(`Shared string ready - ${performanceNow()}`);
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performanceNow()}`);
@@ -228,9 +227,9 @@ export class SharedTextRunner
             url.resolve(document.baseURI, "/public/images/bindy.svg"));
 
         const overlayMap = await this.rootView
-            .get<IComponentHandle<ISharedMap>>("flowContainerMap")
+            .get<IFluidHandle<ISharedMap>>("flowContainerMap")
             .get();
-        const overlayInkMap = await overlayMap.get<IComponentHandle<ISharedMap>>("overlayInk").get();
+        const overlayInkMap = await overlayMap.get<IFluidHandle<ISharedMap>>("overlayInk").get();
 
         const containerDiv = document.createElement("div");
         containerDiv.id = "flow-container";
@@ -285,7 +284,7 @@ class TaskScheduler {
 
     public start() {
         const hostTokens =
-            (this.componentContext.containerRuntime as IFluidObject & IComponent).IComponentTokenProvider;
+            (this.componentContext.containerRuntime as IFluidObject & IFluidObject).IFluidTokenProvider;
         const intelTokens = hostTokens && hostTokens.intelligence
             ? hostTokens.intelligence.textAnalytics
             : undefined;
@@ -307,7 +306,7 @@ class TaskScheduler {
     }
 }
 
-export function instantiateComponent(context: IFluidDataStoreContext): void {
+export function instantiateDataStore(context: IFluidDataStoreContext): void {
     const modules = new Map<string, any>();
 
     // Create channel factories

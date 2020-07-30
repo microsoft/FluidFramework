@@ -4,9 +4,8 @@
  */
 
 import {
-    IComponent,
     IFluidObject,
-    IComponentRouter,
+    IFluidRouter,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -68,7 +67,7 @@ export interface IContainerRuntime extends
     readonly loader: ILoader;
     readonly flushMode: FlushMode;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly scope: IComponent & IFluidObject;
+    readonly scope: IFluidObject & IFluidObject;
     /**
      * Indicates the attachment state of the container to a host service.
      */
@@ -116,7 +115,7 @@ export interface IContainerRuntime extends
      * @param rootDataStoreId - data store ID. IDs naming space is global in container. If collision on name occurs,
      * it results in container corruption - loading this file after that will always result in error.
      */
-    createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IComponentRouter>;
+    createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
 
     /**
      * Returns the current quorum.
