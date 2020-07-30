@@ -1,0 +1,34 @@
+{
+  "name": "@teo/fluid-standalone-core",
+  "version": "0.11.0",
+  "description": "Fluid core for standalone projects (no components/deployment needed)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "prepublish": "npm run build",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@fluidframework/aqueduct": "^0.23.0",
+    "@fluidframework/component-core-interfaces": "^0.23.0",
+    "@fluidframework/container-loader": "^0.23.0",
+    "@fluidframework/get-tinylicious-container": "^0.23.0",
+    "@fluidframework/register-collection": "^0.23.0",
+    "@fluidframework/routerlicious-driver": "^0.23.0",
+    "jsonwebtoken": "^8.4.0",
+    "react-ionicons": "^3.0.1",
+    "shortid": "^2.2.15"
+  },
+  "devDependencies": {
+    "@types/node": "^10.17.24",
+    "@typescript-eslint/eslint-plugin": "~2.17.0",
+    "@typescript-eslint/parser": "~2.17.0",
+    "eslint": "~6.8.0",
+    "eslint-config-prettier": "^6.4.0",
+    "prettier": "^1.18.2",
+    "typescript": "~3.7.4"
+  }
+}
