@@ -905,7 +905,7 @@ export class Client {
 
         // TODO: Remove options flag once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
-        if(this.mergeTree.options?.newMergeTreeSnapshotFormat === true) {
+        if (this.mergeTree.options?.newMergeTreeSnapshotFormat === true) {
             assert(
                 catchUpMsgs === undefined || catchUpMsgs.length === 0,
                 "New format should not emit catchup ops");
@@ -915,7 +915,7 @@ export class Client {
                 runtime.IFluidSerializer,
                 runtime.IFluidHandleContext,
                 handle);
-        }else{
+        } else {
             const snap = new SnapshotLegacy(this.mergeTree, this.logger);
             snap.extractSync();
             return snap.emit(

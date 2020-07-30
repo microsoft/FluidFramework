@@ -70,7 +70,7 @@ export class BaseContainerRuntimeFactory implements
         const runtime = await ContainerRuntime.load(
             context,
             this.registryEntries,
-            async (req,rt) => builder.handleRequest(req, rt),
+            async (req, rt) => builder.handleRequest(req, rt),
             undefined,
             scope);
 

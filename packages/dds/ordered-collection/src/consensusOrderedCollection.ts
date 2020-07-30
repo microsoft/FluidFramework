@@ -344,7 +344,7 @@ export class ConsensusOrderedCollection<T = any>
             // Send the resolve function as the localOpMetadata. This will be provided back to us when the
             // op is ack'd.
             this.submitLocalMessage(message, resolve);
-        // If we fail due to runtime being disposed, it's better to return undefined then unhandled exception.
+            // If we fail due to runtime being disposed, it's better to return undefined then unhandled exception.
         }).catch((error) => undefined);
     }
 

@@ -343,7 +343,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                                 cachedSnapshot = await cachedSnapshotP;
 
-                                method =  cachedSnapshot !== undefined ? "cache" : "network";
+                                method = cachedSnapshot !== undefined ? "cache" : "network";
 
                                 if (cachedSnapshot === undefined) {
                                     cachedSnapshot = await this.fetchSnapshot(options, refresh);
@@ -495,7 +495,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // There maybe no snapshot - TreesLatest would return just ops.
         const seqNumber: number = (snapshot.trees && (snapshot.trees[0] as any).sequenceNumber) ?? 0;
         const seqNumberFromOps = snapshot.ops && snapshot.ops.length > 0 ?
-        snapshot.ops[0].sequenceNumber - 1 :
+            snapshot.ops[0].sequenceNumber - 1 :
             undefined;
 
         if (!Number.isInteger(seqNumber) || seqNumberFromOps !== undefined && seqNumberFromOps !== seqNumber) {
@@ -662,8 +662,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private async writeSummaryTree(
         parentHandle: string | undefined,
         tree: api.ISummaryTree,
-        depth: number = 0): Promise<{ result: ISnapshotResponse, blobsShaToPathCacheLatest?: Map<string, string> }>
-    {
+        depth: number = 0): Promise<{ result: ISnapshotResponse, blobsShaToPathCacheLatest?: Map<string, string> }> {
         // Wait for all pending hashes to complete before using them in convertSummaryToSnapshotTree
         await Promise.all(this.blobsCachePendingHashes.values());
         // This cache is associated with mapping sha to path for currently generated summary.

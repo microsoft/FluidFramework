@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { MockFluidDataStoreRuntime, MockContainerRuntimeFactory, MockStorage } from "@fluidframework/test-runtime-utils";
-import {  ReferenceType } from "@fluidframework/merge-tree";
+import { ReferenceType } from "@fluidframework/merge-tree";
 import { IChannelServices } from "@fluidframework/component-runtime-definitions";
 import { ITree } from "@fluidframework/protocol-definitions";
 import { SharedStringFactory, SharedString } from "..";
@@ -24,7 +24,7 @@ function applyOperations(sharedString: SharedString, content = sharedString.getL
         }
 
         case 2: {
-           sharedString.insertText(sharedString.getLength(), content);
+            sharedString.insertText(sharedString.getLength(), content);
             const pos = Math.floor(sharedString.getLength() / lenMod);
             sharedString.removeText(
                 pos,
@@ -152,10 +152,10 @@ describe("SharedString Partial Load", () => {
     it("Validate Partial load with local ops", async () => {
         const containerRuntimeFactory = new MockContainerRuntimeFactory();
         const options =
-            {
-                sequenceInitializeFromHeaderOnly: true,
-                mergeTreeSnapshotChunkSize,
-            };
+        {
+            sequenceInitializeFromHeaderOnly: true,
+            mergeTreeSnapshotChunkSize,
+        };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
         const localComponentRuntime = new MockFluidDataStoreRuntime();
@@ -197,10 +197,10 @@ describe("SharedString Partial Load", () => {
     it("Validate Partial load with remote ops", async () => {
         const containerRuntimeFactory = new MockContainerRuntimeFactory();
         const options =
-            {
-                sequenceInitializeFromHeaderOnly: true,
-                mergeTreeSnapshotChunkSize,
-            };
+        {
+            sequenceInitializeFromHeaderOnly: true,
+            mergeTreeSnapshotChunkSize,
+        };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
         const localComponentRuntime = new MockFluidDataStoreRuntime();
@@ -239,10 +239,10 @@ describe("SharedString Partial Load", () => {
     it("Validate Partial load with local and remote ops", async () => {
         const containerRuntimeFactory = new MockContainerRuntimeFactory();
         const options =
-            {
-                sequenceInitializeFromHeaderOnly: true,
-                mergeTreeSnapshotChunkSize,
-            };
+        {
+            sequenceInitializeFromHeaderOnly: true,
+            mergeTreeSnapshotChunkSize,
+        };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
         const localComponentRuntime = new MockFluidDataStoreRuntime();

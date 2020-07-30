@@ -22,7 +22,7 @@ export interface IProvideContainerRuntimeDirtyable {
  * Represents the runtime of the container with the ability to sense whether its message can change its dirty state
  */
 export interface IContainerRuntimeDirtyable extends
-IProvideContainerRuntimeDirtyable {
+    IProvideContainerRuntimeDirtyable {
     /**
      * Will return true for any message that affects the dirty state of this document.
      * This function can be used to filter out any runtime operations that should not be affecting whether or not

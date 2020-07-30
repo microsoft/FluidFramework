@@ -80,7 +80,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { FluidSerializer, SummaryTracker, RequestParser } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
-import { FluidDataStoreContext, LocalFluidDataStoreContext, RemotedFluidDataStoreContext  } from "./componentContext";
+import { FluidDataStoreContext, LocalFluidDataStoreContext, RemotedFluidDataStoreContext } from "./componentContext";
 import { FluidHandleContext } from "./componentHandleContext";
 import { FluidDataStoreRegistry } from "./componentRegistry";
 import { debug } from "./debug";
@@ -426,7 +426,7 @@ class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
  * It will define the component level mappings.
  */
 export class ContainerRuntime extends EventEmitter
-implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
+    implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
     public get IContainerRuntime() { return this; }
     public get IContainerRuntimeDirtyable() { return this; }
 
@@ -669,7 +669,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         // Create a context for each of them
         for (const [key, value] of components) {
-            const componentContext = new RemotedFluidDataStoreContext (
+            const componentContext = new RemotedFluidDataStoreContext(
                 key,
                 typeof value === "string" ? value : Promise.resolve(value),
                 this,
@@ -777,8 +777,9 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             }).catch((contextError) => {
                 this._logger.sendErrorEvent({
                     eventName: "ComponentContextDisposeError",
-                    componentId },
-                contextError);
+                    componentId
+                },
+                    contextError);
             });
         }
 
@@ -1360,7 +1361,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         // Include the type of attach message which is the pkg of the component to be
         // used by RemotedFluidDataStoreContext  in case it is not in the snapshot.
-        const remotedComponentContext = new RemotedFluidDataStoreContext (
+        const remotedComponentContext = new RemotedFluidDataStoreContext(
             attachMessage.id,
             snapshotTreeP,
             this,
@@ -1732,8 +1733,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         type: ContainerMessageType,
         contents: any,
         batch: boolean,
-        appData?: any)
-    {
+        appData?: any) {
         const payload: ContainerRuntimeMessage = { type, contents };
         return this.context.submitFn(
             MessageType.Operation,

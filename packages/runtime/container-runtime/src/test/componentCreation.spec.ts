@@ -89,7 +89,7 @@ describe("Component Creation Tests", () => {
             containerRuntime = {
                 IFluidDataStoreRegistry: globalRegistry,
                 notifyDataStoreInstantiated: (c) => { },
-                on: (event, listener) => {},
+                on: (event, listener) => { },
             } as ContainerRuntime;
             summaryTracker = new SummaryTracker("", 0, 0);
         });

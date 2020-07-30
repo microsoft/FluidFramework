@@ -58,7 +58,7 @@ export class Badge extends DataObject implements IBadgeModel, IFluidHTMLView {
      * object refs as props to the React component.
      */
     protected async hasInitialized() {
-        [ this.currentCell, this.optionsMap, this.historySequence ] = await Promise.all([
+        [this.currentCell, this.optionsMap, this.historySequence] = await Promise.all([
             this.root.get<IFluidHandle<SharedCell>>(this.currentId).get(),
             this.root.get<IFluidHandle<SharedMap>>(this.optionsId).get(),
             this.root.get<IFluidHandle<SharedObjectSequence<IBadgeHistory>>>(this.historyId).get(),

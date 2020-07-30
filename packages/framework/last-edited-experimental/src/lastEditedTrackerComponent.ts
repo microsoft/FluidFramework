@@ -20,7 +20,7 @@ export const LastEditedTrackerComponentName = pkg.name as string;
  * LastEditedTrackerComponent creates a LastEditedTracker that keeps track of the latest edits to the document.
  */
 export class LastEditedTrackerComponent extends DataObject
-implements IProvideComponentLastEditedTracker, IProvideFluidLastEditedTracker {
+    implements IProvideComponentLastEditedTracker, IProvideFluidLastEditedTracker {
     private static readonly factory = new DataObjectFactory(
         LastEditedTrackerComponentName,
         LastEditedTrackerComponent,
@@ -33,7 +33,7 @@ implements IProvideComponentLastEditedTracker, IProvideFluidLastEditedTracker {
     }
 
     private readonly sharedSummaryBlockId = "shared-summary-block-id";
-    private _lastEditedTracker: LastEditedTracker| undefined;
+    private _lastEditedTracker: LastEditedTracker | undefined;
 
     private get lastEditedTracker() {
         if (this._lastEditedTracker === undefined) {

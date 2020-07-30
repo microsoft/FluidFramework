@@ -65,7 +65,7 @@ export class RuntimeFactory implements IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             this.registry,
-            async (req,rt) => builder.handleRequest(req, rt),
+            async (req, rt) => builder.handleRequest(req, rt),
         );
 
         // Flush mode to manual to batch operations within a turn

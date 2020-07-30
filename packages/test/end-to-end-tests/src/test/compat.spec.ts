@@ -76,7 +76,7 @@ describe("loader/runtime compatibility", () => {
                 const runtime = await ContainerRuntime.load(
                     context,
                     [[type, Promise.resolve(componentFactory as IFluidDataStoreFactory)]],
-                    async (req,rt) => builder.handleRequest(req,rt),
+                    async (req, rt) => builder.handleRequest(req, rt),
                     runtimeOptions,
                 );
                 if (!runtime.existing) {
@@ -105,7 +105,7 @@ describe("loader/runtime compatibility", () => {
                 const runtime = await old.ContainerRuntime.load(
                     context,
                     [[type, Promise.resolve(componentFactory as old.IComponentFactory)]],
-                    async (req,rt) => builder.handleRequest(req,rt),
+                    async (req, rt) => builder.handleRequest(req, rt),
                     runtimeOptions,
                 );
                 if (!runtime.existing) {

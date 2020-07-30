@@ -32,7 +32,7 @@ export class SnapshotLoader {
         this.logger = ChildLogger.create(logger, "SnapshotLoader");
     }
 
-    public  async initialize(
+    public async initialize(
         branchId: string,
         services: IChannelStorageService,
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
@@ -42,7 +42,7 @@ export class SnapshotLoader {
         const branch = this.runtime.options && this.runtime.options.enableBranching
             ? branchId : this.runtime.documentId;
         const headerLoadedP =
-            services.read(SnapshotLegacy.header).then((header)=>{
+            services.read(SnapshotLegacy.header).then((header) => {
                 assert(header);
                 return this.loadHeader(header, branch);
             });

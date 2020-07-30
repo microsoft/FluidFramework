@@ -606,10 +606,10 @@ export interface ISyncedState {
     /**
      * Get values from the synced state for a syncedStateId as key
      */
-    get: <T,>(key: string) => T;
+    get: <T, >(key: string) => T;
     /**
      * Add a listener to the synced state using a provided callback
      */
     addValueChangedListener: (
-        callback:  (changed: IDirectoryValueChanged, local: boolean) => void) => void;
+        callback: (changed: IDirectoryValueChanged, local: boolean) => void) => void;
 }

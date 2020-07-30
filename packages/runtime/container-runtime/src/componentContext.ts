@@ -288,9 +288,9 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
                 return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
             }
             if (factory.instantiateDataStore) {
-                 // During this call we will invoke the instantiate method - which will call back into us
-                 // via the bindRuntime call to resolve componentRuntimeDeferred
-                 factory.instantiateDataStore(this);
+                // During this call we will invoke the instantiate method - which will call back into us
+                // via the bindRuntime call to resolve componentRuntimeDeferred
+                factory.instantiateDataStore(this);
             } else {
                 /** deprecated: backcompat for FDL split */
                 (factory as any).instantiateComponent(this);
@@ -298,7 +298,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
                     category: "warning",
                     eventName: "deprecated",
                     message: "ComponentContext.realize.instantiateComponent",
-                    });
+                });
             }
         }
 
@@ -595,7 +595,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     }
 }
 
-export class RemotedFluidDataStoreContext  extends FluidDataStoreContext {
+export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     private details: ISnapshotDetails | undefined;
 
     constructor(

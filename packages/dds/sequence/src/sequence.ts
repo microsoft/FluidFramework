@@ -506,11 +506,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             // setup a promise to process the
             // catch up ops, and finishing the loading process
             const loadCatchUpOps = catchupOpsP
-                .then((msgs)=>{
+                .then((msgs) => {
                     msgs.forEach((m) => this.processMergeTreeMsg(m));
                     this.loadFinished();
                 })
-                .catch((error)=>{
+                .catch((error) => {
                     this.loadFinished(error);
                 });
             if (this.componentRuntime.options?.sequenceInitializeFromHeaderOnly !== true) {

@@ -11,11 +11,11 @@ export async function waitForAttach(componentRuntime: IFluidDataStoreRuntime): P
         return;
     }
 
-    return new Promise((resolve) =>{
+    return new Promise((resolve) => {
         componentRuntime.once(
             "attached",
             () => {
-                Promise.resolve().then(()=>resolve()).catch(()=>{});
+                Promise.resolve().then(() => resolve()).catch(() => { });
             });
     });
 }

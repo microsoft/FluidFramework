@@ -506,7 +506,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
             containerAttachState = AttachState.Attached;
         });
         await container.attach(request);
-        assert.strictEqual(containerAttachState, AttachState.Attached,"Container should end up in attached state");
+        assert.strictEqual(containerAttachState, AttachState.Attached, "Container should end up in attached state");
     });
 
     it("Attach events on components", async () => {

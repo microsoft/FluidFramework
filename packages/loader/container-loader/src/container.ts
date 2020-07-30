@@ -180,11 +180,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         event.end(props);
                         res(container);
                     },
-                    (error) => {
-                        const err = CreateContainerError(error);
-                        onClosed(err);
-                    });
-                });
+                        (error) => {
+                            const err = CreateContainerError(error);
+                            onClosed(err);
+                        });
+            });
         });
     }
 
@@ -1268,8 +1268,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         value: ConnectionState,
         oldState: ConnectionState,
         reason: string,
-        opsBehind?: number)
-    {
+        opsBehind?: number) {
         // Log actual event
         const time = performanceNow();
         this.connectionTransitionTimes[value] = time;

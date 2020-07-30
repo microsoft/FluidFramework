@@ -43,7 +43,7 @@ export abstract class SyncedComponent<
     P extends IFluidObject = object,
     S = undefined,
     E extends IEvent = IEvent
-> extends DataObject<P, S, E> implements IFluidHTMLView {
+    > extends DataObject<P, S, E> implements IFluidHTMLView {
     private readonly syncedStateConfig: SyncedStateConfig = new Map();
     private readonly fluidComponentMap: FluidComponentMap = new Map();
     private readonly syncedStateDirectoryId = "syncedState";

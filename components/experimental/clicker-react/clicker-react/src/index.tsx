@@ -30,7 +30,7 @@ export class Clicker extends SyncedComponent {
             "clicker",
             {
                 syncedStateId: "clicker",
-                fluidToView:  new Map([
+                fluidToView: new Map([
                     [
                         "counter", {
                             type: SharedCounter.name,

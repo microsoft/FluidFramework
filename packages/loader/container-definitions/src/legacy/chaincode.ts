@@ -22,5 +22,5 @@ declare module "@fluidframework/component-core-interfaces" {
         IProvideRuntimeFactory &
         IProvideFluidTokenProvider &
         IProvideMessageScheduler>> { }
-/* eslint-enable @typescript-eslint/no-empty-interface */
+    /* eslint-enable @typescript-eslint/no-empty-interface */
 }

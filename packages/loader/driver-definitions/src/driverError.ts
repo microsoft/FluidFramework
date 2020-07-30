@@ -17,7 +17,7 @@ export enum DriverErrorType {
      * Some non-categorized (below) networking error
      * Include errors like  fatal server error (usually 500).
      */
-    genericNetworkError  = "genericNetworkError",
+    genericNetworkError = "genericNetworkError",
 
     /**
      * Access denied - user does not have enough privileges to open a file, or continue to operate on a file
@@ -90,14 +90,14 @@ export interface IGenericNetworkError extends IDriverErrorBase {
  */
 export interface IDriverBasicError extends IDriverErrorBase {
     readonly errorType:
-        DriverErrorType.genericError
-        | DriverErrorType.authorizationError
-        | DriverErrorType.fileNotFoundOrAccessDeniedError
-        | DriverErrorType.offlineError
-        | DriverErrorType.unsupportedClientProtocolVersion
-        | DriverErrorType.writeError
-        | DriverErrorType.fetchFailure
-        | DriverErrorType.incorrectServerResponse;
+    DriverErrorType.genericError
+    | DriverErrorType.authorizationError
+    | DriverErrorType.fileNotFoundOrAccessDeniedError
+    | DriverErrorType.offlineError
+    | DriverErrorType.unsupportedClientProtocolVersion
+    | DriverErrorType.writeError
+    | DriverErrorType.fetchFailure
+    | DriverErrorType.incorrectServerResponse;
     readonly statusCode?: number;
 }
 

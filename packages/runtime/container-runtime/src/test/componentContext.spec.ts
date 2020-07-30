@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker } from "@fluidframework/runtime-utils";
-import { IFluidDataStoretAttributes, LocalFluidDataStoreContext, RemotedFluidDataStoreContext  } from "../componentContext";
+import { IFluidDataStoretAttributes, LocalFluidDataStoreContext, RemotedFluidDataStoreContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
 
 describe("Component Context Tests", () => {
@@ -44,7 +44,7 @@ describe("Component Context Tests", () => {
             containerRuntime = {
                 IFluidDataStoreRegistry: registry,
                 notifyDataStoreInstantiated: (c) => { },
-                on: (event, listener) => {},
+                on: (event, listener) => { },
             } as ContainerRuntime;
         });
 
@@ -108,7 +108,7 @@ describe("Component Context Tests", () => {
             containerRuntime = {
                 IFluidDataStoreRegistry: registryWithSubRegistries,
                 notifyDataStoreInstantiated: (c) => { },
-                on: (event, listener) => {},
+                on: (event, listener) => { },
             } as ContainerRuntime;
             localComponentContext = new LocalFluidDataStoreContext(
                 "Test1",
@@ -141,7 +141,7 @@ describe("Component Context Tests", () => {
     });
 
     describe("RemoteComponentContext Initialization", () => {
-        let remotedComponentContext: RemotedFluidDataStoreContext ;
+        let remotedComponentContext: RemotedFluidDataStoreContext;
         let componentAttributes: IFluidDataStoretAttributes;
         const storage: Partial<IDocumentStorageService> = {};
         let scope: IFluidObject & IFluidObject;
@@ -159,7 +159,7 @@ describe("Component Context Tests", () => {
             containerRuntime = {
                 IFluidDataStoreRegistry: registry,
                 notifyDataStoreInstantiated: (c) => { },
-                on: (event, listener) => {},
+                on: (event, listener) => { },
             } as ContainerRuntime;
         });
 
@@ -177,7 +177,7 @@ describe("Component Context Tests", () => {
                 trees: {},
             };
 
-            remotedComponentContext = new RemotedFluidDataStoreContext (
+            remotedComponentContext = new RemotedFluidDataStoreContext(
                 "Test1",
                 Promise.resolve(snapshotTree),
                 containerRuntime,
@@ -209,7 +209,7 @@ describe("Component Context Tests", () => {
                 trees: {},
             };
 
-            remotedComponentContext = new RemotedFluidDataStoreContext (
+            remotedComponentContext = new RemotedFluidDataStoreContext(
                 "Test1",
                 Promise.resolve(snapshotTree),
                 containerRuntime,
