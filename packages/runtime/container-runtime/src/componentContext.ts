@@ -280,26 +280,15 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
                 if (!entry) {
                     return this.rejectDeferredRealize(`Registry does not contain entry for the package ${pkg}`);
                 }
-                /** deprecated: backcompat for FDL split */
-                factory = entry.IFluidDataStoreFactory ?? (entry as any).IComponentFactory;
-                registry = entry.IFluidDataStoreRegistry ?? (entry as any).IComponentRegistry;
+                factory = entry.IFluidDataStoreFactory;
+                registry = entry.IFluidDataStoreRegistry;
             }
             if (factory === undefined) {
                 return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
             }
-            if (factory.instantiateDataStore) {
-                // During this call we will invoke the instantiate method - which will call back into us
-                // via the bindRuntime call to resolve componentRuntimeDeferred
-                factory.instantiateDataStore(this);
-            } else {
-                /** deprecated: backcompat for FDL split */
-                (factory as any).instantiateComponent(this);
-                this.containerRuntime.logger.send({
-                    category: "warning",
-                    eventName: "deprecated",
-                    message: "ComponentContext.realize.instantiateComponent",
-                });
-            }
+            // During this call we will invoke the instantiate method - which will call back into us
+            // via the bindRuntime call to resolve componentRuntimeDeferred
+            factory.instantiateDataStore(this);
         }
 
         return this.componentRuntimeDeferred.promise;
@@ -582,16 +571,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         if (this._disposed) {
             throw new Error("Context is closed");
         }
-    }
-
-    /** deprecated: backcompat for FDL split */
-    createComponent?(pkgOrId: string | undefined, pkg?: string, props?: any) {
-        return this._createDataStore(pkgOrId, pkg, props);
-    }
-
-    /** deprecated: backcompat for FDL split */
-    createComponentWithRealizationFn?(pkg: string, realizationFn?: (context: IFluidDataStoreContext) => void) {
-        return this.createDataStoreWithRealizationFn(pkg, realizationFn);
     }
 }
 

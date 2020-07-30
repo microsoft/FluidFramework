@@ -47,14 +47,4 @@ export class FluidHandleContext implements IFluidHandleContext {
     public async request(request: IRequest): Promise<IResponse> {
         return this.runtime.request(request);
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRouter() {
-        return this.IFluidRouter;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentHandleContext() {
-        return this.IFluidHandleContext;
-    }
 }

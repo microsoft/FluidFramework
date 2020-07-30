@@ -71,19 +71,4 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
             ? router.request(request)
             : { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRouter() {
-        return this.IFluidRouter;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentHandleContext() {
-        return this.IFluidHandleContext;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentHandle() {
-        return this.IFluidHandle;
-    }
 }

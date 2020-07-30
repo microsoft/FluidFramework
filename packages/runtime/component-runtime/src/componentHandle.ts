@@ -84,19 +84,4 @@ export class FluidOjectHandle<T extends IFluidObject = IFluidObject> implements 
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRouter() {
-        return this.IFluidRouter;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentHandleContext() {
-        return this.IFluidHandleContext;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentHandle() {
-        return this.IFluidHandle;
-    }
 }

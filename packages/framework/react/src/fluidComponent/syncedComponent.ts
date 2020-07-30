@@ -334,19 +334,4 @@ export abstract class SyncedComponent<
             );
         }
     }
-
-    /** deprecated: backcompat for FDL split */
-    componentInitializingFirstTime?(props?: any) {
-        return this.initializingFirstTime(props);
-    }
-
-    /** deprecated: backcompat for FDL split */
-    componentInitializingFromExisting?() {
-        return this.initializingFromExisting();
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentHTMLView() {
-        return this.IFluidHTMLView;
-    }
 }
