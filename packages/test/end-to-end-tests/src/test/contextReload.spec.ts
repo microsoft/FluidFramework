@@ -44,7 +44,7 @@ class TestComponentV2 extends TestComponent {
 // A simple old-version component with runtime/root exposed for testing
 // purposes. Used to test compatibility of context reload between
 // different runtime versions.
-abstract class OldTestComponent extends old.PrimedComponent {
+abstract class OldTestComponent extends old.DataObject {
     public static readonly type = "@fluid-example/test-component";
     public readonly version: string;
     public get _runtime() { return this.runtime; }
@@ -60,7 +60,7 @@ class OldTestComponentV2 extends OldTestComponent {
     public static readonly version = V2;
     public readonly version = V2;
     public static readonly testKey = "version2";
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.root.set(OldTestComponentV2.testKey, true);
     }
 }
@@ -115,9 +115,9 @@ describe("context reload", function() {
 
     const createOldRuntimeFactory = (component): old.IRuntimeFactory => {
         const type = OldTestComponent.type;
-        return new old.ContainerRuntimeFactoryWithDefaultComponent(
+        return new old.ContainerRuntimeFactoryWithDefaultDataStore(
             type,
-            [[type, Promise.resolve(new old.PrimedComponentFactory(type, component, [], {}))]],
+            [[type, Promise.resolve(new old.DataObjectFactory(type, component, [], {}))]],
         );
     };
 

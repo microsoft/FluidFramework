@@ -39,7 +39,7 @@ class TestComponent extends DataObject {
 // dependencies are updated as part of a minor version bump. Otherwise, changes
 // between loader and runtime should be backwards-compatible and changing this
 // class should not be necessary.
-class OldTestComponent extends old.PrimedComponent {
+class OldTestComponent extends old.DataObject {
     public static readonly type = "@fluid-example/test-component";
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
@@ -56,13 +56,13 @@ describe("loader/runtime compatibility", () => {
         return new DataObjectFactory(TestComponent.type, TestComponent, [], {});
     };
 
-    const createOldComponentFactory = (): old.IComponentFactory => {
-        return new old.PrimedComponentFactory(OldTestComponent.type, OldTestComponent, [], {});
+    const createOldComponentFactory = (): old.IFluidDataStoreFactory => {
+        return new old.DataObjectFactory(OldTestComponent.type, OldTestComponent, [], {});
     };
 
     const createRuntimeFactory = (
         type: string,
-        componentFactory: IFluidDataStoreFactory | old.IComponentFactory,
+        componentFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
         runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): IRuntimeFactory => {
         const builder = new RuntimeRequestHandlerBuilder();
@@ -91,20 +91,20 @@ describe("loader/runtime compatibility", () => {
 
     const createOldRuntimeFactory = (
         type: string,
-        componentFactory: IFluidDataStoreFactory | old.IComponentFactory,
+        componentFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
         runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): old.IRuntimeFactory => {
         const builder = new old.RuntimeRequestHandlerBuilder();
         builder.pushHandler(
             old.componentRuntimeRequestHandler,
-            old.defaultComponentRuntimeRequestHandler("default"));
+            old.defaultDataStoreRuntimeRequestHandler("default"));
 
         return {
             get IRuntimeFactory() { return this; },
             instantiateRuntime: async (context: old.IContainerContext) => {
                 const runtime = await old.ContainerRuntime.load(
                     context,
-                    [[type, Promise.resolve(componentFactory as old.IComponentFactory)]],
+                    [[type, Promise.resolve(componentFactory as old.IFluidDataStoreFactory)]],
                     async (req, rt) => builder.handleRequest(req, rt),
                     runtimeOptions,
                 );
@@ -192,11 +192,9 @@ describe("loader/runtime compatibility", () => {
                 createContainer( // new loader, old container/component runtimes
                     { fluidExport: createOldRuntimeFactory(TestComponent.type, createOldComponentFactory()) },
                     this.deltaConnectionServer),
-                /* disabled for FDL split
                 createContainer( // new loader/container runtime, old component runtime
                     { fluidExport: createRuntimeFactory(TestComponent.type, createOldComponentFactory()) },
                     this.deltaConnectionServer),
-                */
             ];
 
             const components = await Promise.all(containersP.map(async (containerP) => containerP.then(
@@ -263,8 +261,8 @@ describe("loader/runtime compatibility", () => {
             await this.deltaConnectionServer.webSocketServer.close();
         });
     });
-    /** disabled for FDL split */
-    describe.skip("new ContainerRuntime, old FluidDataStoreRuntime", function() {
+
+    describe("new ContainerRuntime, old FluidDataStoreRuntime", function() {
         beforeEach(async function() {
             this.deltaConnectionServer = LocalDeltaConnectionServer.create(
                 undefined,
