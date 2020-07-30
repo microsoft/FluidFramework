@@ -16,7 +16,7 @@ import {
     IMergeTreeDeltaCallbackArgs,
     MergeTreeDeltaType,
 } from "@fluidframework/merge-tree";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import { HandleTable, Handle } from "./handletable";
@@ -169,7 +169,7 @@ export class PermutationVector extends Client {
     }
 
     // Constructs an ITreeEntry for the cell data.
-    public snapshot(runtime: IFluidDataStoreRuntime, handle: IComponentHandle): ITree {
+    public snapshot(runtime: IFluidDataStoreRuntime, handle: IFluidHandle): ITree {
         return {
             entries: [
                 {

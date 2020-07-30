@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
@@ -35,7 +35,7 @@ describe("Directory", () => {
 
     async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as ITestFluidComponent;
@@ -316,9 +316,9 @@ describe("Directory", () => {
                 await opProcessingController.process();
 
                 const [map1, map2, map3] = await Promise.all([
-                    sharedDirectory1.get<IComponentHandle<ISharedMap>>("mapKey").get(),
-                    sharedDirectory2.get<IComponentHandle<ISharedMap>>("mapKey").get(),
-                    sharedDirectory3.get<IComponentHandle<ISharedMap>>("mapKey").get(),
+                    sharedDirectory1.get<IFluidHandle<ISharedMap>>("mapKey").get(),
+                    sharedDirectory2.get<IFluidHandle<ISharedMap>>("mapKey").get(),
+                    sharedDirectory3.get<IFluidHandle<ISharedMap>>("mapKey").get(),
                 ]);
 
                 assert.ok(map1, "Map did not correctly set as value in container 1");
@@ -586,7 +586,7 @@ describe("Directory", () => {
                 // The new directory should be availble in the remote client and it should contain that key that was
                 // set in local state.
                 const newDirectory2
-                    = await sharedDirectory2.get<IComponentHandle<SharedDirectory>>("newSharedDirectory").get();
+                    = await sharedDirectory2.get<IFluidHandle<SharedDirectory>>("newSharedDirectory").get();
                 assert.equal(
                     newDirectory2.get("newKey"),
                     "newValue",
@@ -624,7 +624,7 @@ describe("Directory", () => {
                 // The new directory should be availble in the remote client and it should contain that key that was
                 // set in local state.
                 const newDirectory2
-                    = await sharedDirectory2.get<IComponentHandle<SharedDirectory>>("newSharedDirectory").get();
+                    = await sharedDirectory2.get<IFluidHandle<SharedDirectory>>("newSharedDirectory").get();
                 assert.ok(
                     newDirectory2.getSubDirectory(subDirName),
                     "The subdirectory created in local state is not available in directory 2");

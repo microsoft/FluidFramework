@@ -4,7 +4,7 @@
  */
 
 import * as api from "@fluid-internal/client-api";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IInk } from "@fluidframework/ink";
 import { ISharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -190,7 +190,7 @@ export class FlowContainer extends ui.Component {
         if (this.activeLayers[id]) {
             this.activeLayers[id].active = true;
         }
-        const inkLayerData = await this.overlayInkMap.get<IComponentHandle<IInk>>(id).get();
+        const inkLayerData = await this.overlayInkMap.get<IFluidHandle<IInk>>(id).get();
 
         if (!(id in this.layerCache)) {
             const layer = new InkLayer(this.size, inkLayerData);

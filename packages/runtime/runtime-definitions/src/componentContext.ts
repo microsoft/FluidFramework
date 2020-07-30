@@ -6,14 +6,13 @@
 import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
-    IComponent,
-    IComponentLoadable,
-    IComponentRouter,
-    IProvideComponentHandleContext,
-    IProvideComponentSerializer,
+    IFluidObject,
+    IFluidLoadable,
+    IFluidRouter,
+    IProvideFluidHandleContext,
+    IProvideFluidSerializer,
     IRequest,
     IResponse,
-    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -33,7 +32,7 @@ import {
     ISnapshotTree,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IProvideComponentRegistry } from "./componentRegistry";
+import { IProvideFluidDataStoreRegistry } from "./componentRegistry";
 import { IInboundSignalMessage } from "./protocol";
 
 /**
@@ -58,10 +57,10 @@ export enum FlushMode {
  */
 export interface IContainerRuntimeBase extends
     EventEmitter,
-    IProvideComponentHandleContext,
-    IProvideComponentSerializer,
+    IProvideFluidHandleContext,
+    IProvideFluidSerializer,
     /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
-    IProvideComponentRegistry {
+    IProvideFluidDataStoreRegistry {
 
     readonly logger: ITelemetryLogger;
     readonly clientDetails: IClientDetails;
@@ -100,10 +99,10 @@ export interface IContainerRuntimeBase extends
      *  Properties should be passed to the component factory method rather than to the runtime
      * Creates a new component with props
      * @param pkg - Package name of the component
-     * @param props - properties to be passed to the instantiateComponent thru the context
+     * @param props - properties to be passed to the instantiateDataStore thru the context
      * @param id - Only supplied if the component is explicitly passing its ID, only used for default components
      * @remarks
-     * Only used by aqueduct DataObject to pass param to the instantiateComponent function thru the context.
+     * Only used by aqueduct DataObject to pass param to the instantiateDataStore function thru the context.
      * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
      * @internal
      */
@@ -125,7 +124,7 @@ export interface IContainerRuntimeBase extends
      * gets attached to storage) will result in this store being attached to storage.
      * @param pkg - Package name of the data store factory
      */
-    createDataStore(pkg: string | string[]): Promise<IComponentRouter>;
+    createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
 
     /**
      * Get an absolute url for a provided container-relative request.
@@ -142,8 +141,8 @@ export interface IContainerRuntimeBase extends
  * and connection state notifications
  */
 export interface IFluidDataStoreChannel extends
-    IComponentRouter,
-    Partial<IProvideComponentRegistry>,
+    IFluidRouter,
+    Partial<IProvideFluidDataStoreRegistry>,
     IDisposable {
 
     readonly id: string;
@@ -271,14 +270,14 @@ export interface IFluidDataStoreContext extends EventEmitter {
     readonly snapshotFn: (message: string) => Promise<void>;
 
     /**
-     * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
+     * @deprecated 0.16 Issue #1635 Use the IFluidDataStoreFactory creation methods instead to specify initial state
      */
     readonly createProps?: any;
 
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IComponent & IFluidObject;
+    readonly scope: IFluidObject & IFluidObject;
     readonly summaryTracker: ISummaryTracker;
 
     on(event: "leader" | "notleader" | "attaching" | "attached", listener: () => void): this;
@@ -317,13 +316,13 @@ export interface IFluidDataStoreContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
-     * @deprecated 0.16 Issue #1537, issue #1756 Components should be created using IComponentFactory methods instead
+     * @deprecated 0.16 Issue #1537, issue #1756 Components should be created using IFluidDataStoreFactory methods instead
      * Creates a new component by using subregistries.
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
      *                  ID is being deprecated, so prefer passing undefined instead (the runtime will
      *                  generate an ID in this case).
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
-     * @param props - Properties to be passed to the instantiateComponent through the context.
+     * @param props - Properties to be passed to the instantiateDataStore through the context.
      */
     _createDataStore(
         pkgOrId: string | undefined,
@@ -341,7 +340,7 @@ export interface IFluidDataStoreContext extends EventEmitter {
     createDataStoreWithRealizationFn(
         pkg: string,
         realizationFn?: (context: IFluidDataStoreContext) => void,
-    ): Promise<IComponent & IComponentLoadable>;
+    ): Promise<IFluidObject & IFluidLoadable>;
 
     /**
      * Binds a runtime to the context.

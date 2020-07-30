@@ -5,7 +5,7 @@
 
 import React from "react";
 import { ISharedMap, SharedMap, IDirectory, IDirectoryValueChanged } from "@fluidframework/map";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IMapProps, MapComponent } from "./map";
 
 interface IDdsCollectionProps {
@@ -53,7 +53,7 @@ export class DdsCollectionComponent extends React.Component<IDdsCollectionProps,
     private async getMapsCore(): Promise<IMapProps[]> {
         const maps: IMapProps[] = [];
         await Promise.all(Array.from(this.props.mapDir.keys()).map(async (name) => {
-            const handle = await this.props.mapDir.wait<IComponentHandle<ISharedMap>>(name);
+            const handle = await this.props.mapDir.wait<IFluidHandle<ISharedMap>>(name);
             if (handle !== undefined) {
                 const map = await handle.get();
                 maps.push({ name, map });

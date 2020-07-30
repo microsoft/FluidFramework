@@ -8,7 +8,7 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import ImageGallery from "react-image-gallery";
@@ -20,8 +20,8 @@ import { ISharedMap } from "@fluidframework/map";
 
 const imageGalleryName = "@fluid-example/image-gallery";
 
-export class ImageGalleryComponent extends DataObject implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class ImageGalleryComponent extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     imageList = [
         {

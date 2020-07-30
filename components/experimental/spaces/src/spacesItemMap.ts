@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject, IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IFluidHandle, IFluidLoadable } from "@fluidframework/component-core-interfaces";
 import { AsSerializable, Serializable } from "@fluidframework/component-runtime-definitions";
-import { NamedComponentRegistryEntries } from "@fluidframework/runtime-definitions";
+import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { CollaborativeText } from "@fluid-example/collaborative-textarea";
@@ -18,10 +18,10 @@ import * as React from "react";
 import { Layout } from "react-grid-layout";
 
 export type ICreateAndAttachComponentFunction =
-    <T extends IFluidObject & IComponentLoadable>(pkg: string, props?: any) => Promise<T>;
+    <T extends IFluidObject & IFluidLoadable>(pkg: string, props?: any) => Promise<T>;
 
 interface ISingleHandleItem {
-    handle: IComponentHandle;
+    handle: IFluidHandle;
 }
 
 const createSingleHandleItem = (type: string) => {
@@ -40,7 +40,7 @@ const getAdaptedViewForSingleHandleItem = async (serializableObject: ISingleHand
 };
 
 const getSliderCoordinateView = async (serializableObject: ISingleHandleItem) => {
-    const handle = serializableObject.handle as IComponentHandle<Coordinate>;
+    const handle = serializableObject.handle as IFluidHandle<Coordinate>;
     const model = await handle.get();
     return React.createElement(SliderCoordinateView, { label: "Coordinate", model });
 };
@@ -101,7 +101,7 @@ export const spacesItemMap = new Map<string, ISpacesItemEntry>([
 ]);
 
 // This can go away if the item entries have a way to bring their own subregistries.
-export const spacesRegistryEntries: NamedComponentRegistryEntries = new Map([
+export const spacesRegistryEntries: NamedFluidDataStoreRegistryEntries = new Map([
     ClickerInstantiationFactory.registryEntry,
     [cmfe.type, Promise.resolve(cmfe)],
     [CollaborativeText.ComponentName, Promise.resolve(CollaborativeText.getFactory())],

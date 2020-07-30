@@ -5,13 +5,13 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
-    IComponentHandle,
+    IFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { IPackage } from "@fluidframework/container-definitions";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import {
     SpacesStorage,
     SpacesStorageView,
@@ -64,14 +64,14 @@ if (window.location.hostname === "localhost") {
  * can adapt for rendering purposes.
  */
 export interface IWaterparkItem {
-    handle: IComponentHandle;
+    handle: IFluidHandle;
 }
 
 /**
  * WaterPark assembles the SpacesStorage with the ExternalComponentLoader to load other components.
  */
-export class WaterPark extends DataObject implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class WaterPark extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     public static get ComponentName() { return "@fluid-example/waterpark"; }
 
@@ -140,8 +140,8 @@ export class WaterPark extends DataObject implements IComponentHTMLView {
     }
 
     protected async hasInitialized() {
-        this.storage = await this.root.get<IComponentHandle<SpacesStorage<IWaterparkItem>>>(storageKey)?.get();
-        this.loader = await this.root.get<IComponentHandle<ExternalComponentLoader>>(loaderKey)?.get();
+        this.storage = await this.root.get<IFluidHandle<SpacesStorage<IWaterparkItem>>>(storageKey)?.get();
+        this.loader = await this.root.get<IFluidHandle<ExternalComponentLoader>>(loaderKey)?.get();
         // We'll cache this async result on initialization, since we need it synchronously during render.
         this.baseUrl = await this.context.getAbsoluteUrl(this.url);
     }

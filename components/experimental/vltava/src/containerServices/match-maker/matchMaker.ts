@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { BaseContainerService, serviceRoutePathRoot } from "@fluidframework/aqueduct";
-import { IFluidObject, IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import {
     IComponentInterfacesRegistry,
     IProvideComponentDiscoverableInterfaces,
@@ -21,7 +21,7 @@ const getMatchMakerContainerService = async (context: IFluidDataStoreContext): P
     const response = await context.containerRuntime.request({
         url: `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
     });
-    if (response.status === 200 && response.mimeType === "fluid/component") {
+    if (response.status === 200 && response.mimeType === "fluid/object") {
         const value = response.value as IFluidObject;
         const matchMaker = value.IComponentInterfacesRegistry;
         if (matchMaker) {
@@ -71,10 +71,10 @@ export const unregisterWithMatchMaker = async (
  */
 export class MatchMaker extends BaseContainerService implements IComponentInterfacesRegistry {
     private readonly discoverableInterfacesMap =
-        new Map<keyof (IFluidObject & IComponent), IComponentDiscoverableInterfaces[]>();
+        new Map<keyof (IFluidObject & IFluidObject), IComponentDiscoverableInterfaces[]>();
 
     private readonly discoverInterfacesMap =
-        new Map<keyof (IFluidObject & IComponent), IComponentDiscoverInterfaces[]>();
+        new Map<keyof (IFluidObject & IFluidObject), IComponentDiscoverInterfaces[]>();
 
     public get IComponentInterfacesRegistry() { return this; }
 
@@ -169,7 +169,7 @@ export class MatchMaker extends BaseContainerService implements IComponentInterf
             const discoverComponents = this.discoverInterfacesMap.get(interfaceName);
             if (discoverComponents) {
                 discoverComponents.forEach((component) => {
-                    if (component !== (discoverableComponent as (IComponent & IFluidObject))) {
+                    if (component !== (discoverableComponent as (IFluidObject & IFluidObject))) {
                         component.notifyComponentsDiscovered(interfaceName, [discoverableComponent]);
                     }
                 });

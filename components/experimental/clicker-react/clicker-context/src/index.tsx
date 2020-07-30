@@ -109,7 +109,7 @@ export class ClickerContext extends SyncedComponent {
         return div;
     }
 
-    // #endregion IComponentHTMLView
+    // #endregion IFluidHTMLView
 }
 
 // ----- FACTORY SETUP -----

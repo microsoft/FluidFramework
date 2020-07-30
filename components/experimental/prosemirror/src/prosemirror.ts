@@ -5,13 +5,13 @@
 
 import { EventEmitter } from "events";
 import {
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
-    IComponentHandle,
+    IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
+import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IMergeTreeInsertMsg,
@@ -20,10 +20,10 @@ import {
     MergeTreeDeltaType,
     createMap,
 } from "@fluidframework/merge-tree";
-import { IFluidDataStoreContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { EditorView } from "prosemirror-view";
 import { nodeTypeKey } from "./fluidBridge";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
@@ -56,15 +56,15 @@ function createTreeMarkerOps(
     ];
 }
 
-class ProseMirrorView implements IComponentHTMLView {
+class ProseMirrorView implements IFluidHTMLView {
     private content: HTMLDivElement;
     private editorView: EditorView;
     private textArea: HTMLDivElement;
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     public constructor(private readonly collabManager: FluidCollabManager) { }
 
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         // Create base textarea
         if (!this.textArea) {
             this.textArea = document.createElement("div");
@@ -94,11 +94,11 @@ class ProseMirrorView implements IComponentHTMLView {
 
 /**
  * ProseMirror builds a fluid collaborative text editor on top of the open source text editor ProseMirror.
- * It has its own implementation of IComponentLoadable and does not extend PureDataObject / DataObject. This is
- * done intentionally to serve as an example of exposing the URL and handle via IComponentLoadable.
+ * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
+ * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
 export class ProseMirror extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLView, IProvideRichTextEditor {
+    implements IFluidLoadable, IFluidRouter, IFluidHTMLView, IProvideRichTextEditor {
     public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         const collection = new ProseMirror(runtime, context);
         await collection.initialize();
@@ -106,11 +106,11 @@ export class ProseMirror extends EventEmitter
         return collection;
     }
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
-    public get IComponentHTMLView() { return this; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidRouter() { return this; }
+    public get IFluidHTMLView() { return this; }
     public get IRichTextEditor() { return this.collabManager; }
 
     public url: string;
@@ -118,7 +118,7 @@ export class ProseMirror extends EventEmitter
     private root: ISharedMap;
     private collabManager: FluidCollabManager;
     private view: ProseMirrorView;
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
@@ -127,12 +127,12 @@ export class ProseMirror extends EventEmitter
         super();
 
         this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
+        this.innerHandle = new FluidOjectHandle(this, this.url, runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "fluid/component",
+            mimeType: "fluid/object",
             status: 200,
             value: this,
         };
@@ -152,7 +152,7 @@ export class ProseMirror extends EventEmitter
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this.text = await this.root.get<IComponentHandle<SharedString>>("text").get();
+        this.text = await this.root.get<IFluidHandle<SharedString>>("text").get();
 
         this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
 
@@ -169,13 +169,13 @@ export class ProseMirror extends EventEmitter
     }
 }
 
-class ProseMirrorFactory implements IComponentFactory {
+class ProseMirrorFactory implements IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/prosemirror";
     public readonly type = ProseMirrorFactory.type;
 
-    public get IComponentFactory() { return this; }
+    public get IFluidDataStoreFactory() { return this; }
 
-    public instantiateComponent(context: IFluidDataStoreContext): void {
+    public instantiateDataStore(context: IFluidDataStoreContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         const sequenceFactory = SharedString.getFactory();

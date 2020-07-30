@@ -7,7 +7,7 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { UpgradeManager } from "@fluidframework/base-host"
 
 import React from "react";
@@ -22,8 +22,8 @@ const signalKey = {
 }
 const versionTest1Name = pkg.name as string;
 
-export class VersionTest extends DataObject implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class VersionTest extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
     private upgradeManager: UpgradeManager | undefined;
     private upgradeToPkg: string = "@fluid-internal/version-test-2";
     private upgradeToVersion: string = "0.2.x";

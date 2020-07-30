@@ -4,7 +4,7 @@
  */
 
 import {
-    IComponent,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     DirectoryFactory,
@@ -13,7 +13,7 @@ import {
     SharedMap,
 } from "@fluidframework/map";
 import {
-    NamedComponentRegistryEntries,
+    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { ComponentSymbolProvider } from "@fluidframework/synthesize";
@@ -22,7 +22,7 @@ import { DataObject, ISharedComponentProps } from "../components";
 import { PureDataObjectFactory } from "./sharedComponentFactory";
 
 /**
- * DataObjectFactory is the IComponentFactory for use with PrimedComponents.
+ * DataObjectFactory is the IFluidDataStoreFactory for use with PrimedComponents.
  * It facilitates DataObject's features (such as its shared directory) by
  * ensuring relevant shared objects etc are available to the factory.
  *
@@ -31,7 +31,7 @@ import { PureDataObjectFactory } from "./sharedComponentFactory";
  * S - the initial state type that the produced component may take during creation
  */
 export class DataObjectFactory<
-    P extends IComponent = object,
+    P extends IFluidObject = object,
     S = undefined>
     extends PureDataObjectFactory<P, S>
 {
@@ -40,7 +40,7 @@ export class DataObjectFactory<
         ctor: new (props: ISharedComponentProps<P>) => DataObject<P, S>,
         sharedObjects: readonly IChannelFactory[] = [],
         optionalProviders: ComponentSymbolProvider<P>,
-        registryEntries?: NamedComponentRegistryEntries,
+        registryEntries?: NamedFluidDataStoreRegistryEntries,
         onDemandInstantiation = true,
     ) {
         const mergedObjects = [...sharedObjects];

@@ -4,25 +4,25 @@
  */
 
 import {
-    IComponent,
-    IComponentHandle,
-    IComponentLoadable,
-    IComponentRouter,
-    IProvideComponentHandle,
+    IFluidObject,
+    IFluidHandle,
+    IFluidLoadable,
+    IFluidRouter,
+    IProvideFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { AsyncComponentProvider, ComponentKey } from "@fluidframework/synthesize";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
-import { ComponentHandle } from "@fluidframework/component-runtime";
+import { FluidOjectHandle } from "@fluidframework/component-runtime";
 import { IDirectory } from "@fluidframework/map";
 import { v4 as uuid } from "uuid";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
 import { serviceRoutePathRoot } from "../containerServices";
 
-export interface ISharedComponentProps<P extends IComponent = object> {
+export interface ISharedComponentProps<P extends IFluidObject = object> {
     readonly runtime: IFluidDataStoreRuntime,
     readonly context: IFluidDataStoreContext,
     readonly providers: AsyncComponentProvider<ComponentKey<P>, ComponentKey<object>>,
@@ -37,11 +37,11 @@ export interface ISharedComponentProps<P extends IComponent = object> {
  * S - the initial state type that the produced component may take during creation
  * E - represents events that will be available in the EventForwarder
  */
-export abstract class PureDataObject<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
+export abstract class PureDataObject<P extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
     extends EventForwarder<E>
-    implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
+    implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
     private initializeP: Promise<void> | undefined;
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
     private _disposed = false;
 
     /**
@@ -55,24 +55,25 @@ export abstract class PureDataObject<P extends IComponent = object, S = undefine
     protected readonly context: IFluidDataStoreContext;
 
     /**
-     * Providers are IComponent keyed objects that provide back a promise to the corresponding IComponent or undefined.
+     * Providers are IFluidObject keyed objects that provide back
+     * a promise to the corresponding IFluidObject or undefined.
      * Providers injected/provided by the Container and/or HostingApplication
      *
-     * To define providers set IComponent interfaces in the generic O type for your Component
+     * To define providers set IFluidObject interfaces in the generic O type for your Component
      */
     protected readonly providers: AsyncComponentProvider<ComponentKey<P>, ComponentKey<object>>;
 
     public get disposed() { return this._disposed; }
 
     public get id() { return this.runtime.id; }
-    public get IComponentRouter() { return this; }
-    public get IComponentLoadable() { return this; }
-    public get IComponentHandle() { return this.innerHandle; }
+    public get IFluidRouter() { return this; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidHandle() { return this.innerHandle; }
 
     /**
      * Handle to a shared component
      */
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
     public constructor(props: ISharedComponentProps<P>) {
         super();
@@ -80,10 +81,10 @@ export abstract class PureDataObject<P extends IComponent = object, S = undefine
         this.context = props.context;
         this.providers = props.providers;
 
-        // Create a ComponentHandle with empty string as `path`. This is because reaching this PureDataObject is the
+        // Create a FluidOjectHandle with empty string as `path`. This is because reaching this PureDataObject is the
         // same as reaching its routeContext (FluidDataStoreRuntime) so there is so the relative path to it from the
         // routeContext is empty.
-        this.innerHandle = new ComponentHandle(this, "", this.runtime.IComponentHandleContext);
+        this.innerHandle = new FluidOjectHandle(this, "", this.runtime.IFluidHandleContext);
 
         // Container event handlers
         this.runtime.once("dispose", () => {
@@ -105,7 +106,7 @@ export abstract class PureDataObject<P extends IComponent = object, S = undefine
         await this.initializeP;
     }
 
-    // #region IComponentRouter
+    // #region IFluidRouter
 
     /**
      * Return this object if someone requests it directly
@@ -117,7 +118,7 @@ export abstract class PureDataObject<P extends IComponent = object, S = undefine
     public async request(req: IRequest): Promise<IResponse> {
         if (req.url === "/" || req.url === this.url || req.url === "") {
             return {
-                mimeType: "fluid/component",
+                mimeType: "fluid/object",
                 status: 200,
                 value: this,
             };
@@ -126,24 +127,25 @@ export abstract class PureDataObject<P extends IComponent = object, S = undefine
         return Promise.reject(`unknown request url: ${req.url}`);
     }
 
-    // #endregion IComponentRouter
+    // #endregion IFluidRouter
 
-    // #region IComponentLoadable
+    // #region IFluidLoadable
 
     /**
      * Absolute URL to the component within the document
      */
     public get url() { return this.context.id; }
 
-    // #endregion IComponentLoadable
+    // #endregion IFluidLoadable
 
     /**
      * Given a request response will return a component if a component was in the response.
      */
-    protected async asFluidObject<T extends IComponent>(response: Promise<IResponse>): Promise<T> {
+    protected async asFluidObject<T extends IFluidObject>(response: Promise<IResponse>): Promise<T> {
         const result = await response;
 
-        if (result.status === 200 && result.mimeType === "fluid/component") {
+        if (result.status === 200
+            && (result.mimeType === "fluid/component" || result.mimeType === "fluid/object")) {
             return result.value as T;
         }
 
@@ -176,7 +178,7 @@ export abstract class PureDataObject<P extends IComponent = object, S = undefine
      * @param pkg - package name for the new component
      * @param props - optional props to be passed in
      */
-    protected async createAndAttachDataStore<T extends IComponent & IComponentLoadable>(
+    protected async createAndAttachDataStore<T extends IFluidObject & IFluidLoadable>(
         pkg: string, props?: any,
     ): Promise<T> {
         const componentRuntime = await this.context._createDataStore(uuid(), pkg, props);
@@ -193,22 +195,22 @@ export abstract class PureDataObject<P extends IComponent = object, S = undefine
      * @param getObjectFromDirectory - optional callback for fetching object from the directory, allows users to
      * define custom types/getters for object retrieval
      */
-    public async getFluidObjectFromDirectory<T extends IComponent & IComponentLoadable>(
+    public async getFluidObjectFromDirectory<T extends IFluidObject & IFluidLoadable>(
         key: string,
         directory: IDirectory,
-        getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IComponentHandle | undefined):
+        getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IFluidHandle | undefined):
         Promise<T | undefined> {
         const handleOrId = getObjectFromDirectory ? getObjectFromDirectory(key, directory) : directory.get(key);
         if (typeof handleOrId === "string") {
             // For backwards compatibility with older stored IDs
             // We update the storage with the handle so that this code path is less and less trafficked
             const component = await this.requestFluidObject_UNSAFE<T>(handleOrId);
-            if (component.IComponentLoadable && component.handle) {
+            if (component.IFluidLoadable && component.handle) {
                 directory.set(key, component.handle);
             }
             return component;
         } else {
-            const handle = handleOrId?.IComponentHandle;
+            const handle = handleOrId?.IFluidHandle;
             return await (handle ? handle.get() : this.requestFluidObject_UNSAFE(key)) as T;
         }
     }
@@ -218,7 +220,7 @@ export abstract class PureDataObject<P extends IComponent = object, S = undefine
      * Gets the component of a given id. Will follow the pattern of the container for waiting.
      * @param id - component id
      */
-    protected async requestFluidObject_UNSAFE<T extends IComponent>(id: string, wait: boolean = true): Promise<T> {
+    protected async requestFluidObject_UNSAFE<T extends IFluidObject>(id: string, wait: boolean = true): Promise<T> {
         const request = {
             headers: [[wait]],
             url: `/${id}`,
@@ -231,7 +233,7 @@ export abstract class PureDataObject<P extends IComponent = object, S = undefine
      * Gets the service at a given id.
      * @param id - service id
      */
-    protected async getService<T extends IComponent>(id: string): Promise<T> {
+    protected async getService<T extends IFluidObject>(id: string): Promise<T> {
         const request = {
             url: `/${serviceRoutePathRoot}/${id}`,
         };

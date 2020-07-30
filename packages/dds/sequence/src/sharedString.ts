@@ -12,7 +12,7 @@ import { SharedStringFactory } from "./sequenceFactory";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideSharedString>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideSharedString>> { }
 }
 
 export const ISharedString: keyof IProvideSharedString = "ISharedString";

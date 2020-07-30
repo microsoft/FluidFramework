@@ -10,7 +10,7 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IComponentFactory, FlushMode } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
 import { fluidExport as smde } from "./prosemirror";
 
 const defaultComponent = smde.type;
@@ -19,7 +19,7 @@ class ProseMirrorFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const registry = new Map<string, Promise<IComponentFactory>>([
+        const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
             [defaultComponent, Promise.resolve(smde)],
         ]);
 

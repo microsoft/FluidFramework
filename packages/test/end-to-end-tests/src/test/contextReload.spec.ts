@@ -98,7 +98,8 @@ describe("context reload", function() {
 
     async function requestFluidObject<T>(componentId: string, container: Container | old.Container): Promise<T> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200
+            || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as T;
@@ -246,7 +247,6 @@ describe("context reload", function() {
                 await this.deltaConnectionServer.webSocketServer.close();
             });
         });
-
         describe("new loader, old runtime", () => {
             beforeEach(async function() {
                 this.deltaConnectionServer = LocalDeltaConnectionServer.create();

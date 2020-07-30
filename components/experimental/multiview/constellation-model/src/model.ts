@@ -7,7 +7,7 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 
 import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";
@@ -57,12 +57,12 @@ export class Constellation extends DataObject implements IConstellation {
     }
 
     private async updateStarsFromRoot() {
-        const starHandles = this.root.get<IComponentHandle<ICoordinate>[]>(starListKey);
+        const starHandles = this.root.get<IFluidHandle<ICoordinate>[]>(starListKey);
         this._stars = await Promise.all(starHandles.map(async (starHandle) => starHandle.get()));
     }
 
     public async addStar(x: number, y: number): Promise<void> {
-        const starHandles = this.root.get<IComponentHandle<ICoordinate>[]>(starListKey);
+        const starHandles = this.root.get<IFluidHandle<ICoordinate>[]>(starListKey);
         const newStar: Coordinate = (await Coordinate.getFactory()._createDataStore(this.context)) as Coordinate;
         newStar.x = x;
         newStar.y = y;

@@ -8,10 +8,10 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { SharedDirectory } from "@fluidframework/map";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import {
     Clicker,
@@ -32,11 +32,11 @@ export const PondName = pkg.name as string;
  *  - Component creation with initial state
  *  - Component creation and storage using Handles
  */
-export class Pond extends DataObject implements IComponentHTMLView {
+export class Pond extends DataObject implements IFluidHTMLView {
     private clickerView: HTMLViewAdapter | undefined;
     private clickerUsingProvidersView: HTMLViewAdapter | undefined;
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     /**
    * Do setup work here
@@ -50,15 +50,15 @@ export class Pond extends DataObject implements IComponentHTMLView {
     }
 
     protected async hasInitialized() {
-        const clicker = await this.root.get<IComponentHandle>(Clicker.ComponentName).get();
+        const clicker = await this.root.get<IFluidHandle>(Clicker.ComponentName).get();
         this.clickerView = new HTMLViewAdapter(clicker);
 
         const clickerUsingProviders
-            = await this.root.get<IComponentHandle>(ExampleUsingProviders.ComponentName).get();
+            = await this.root.get<IFluidHandle>(ExampleUsingProviders.ComponentName).get();
         this.clickerUsingProvidersView = new HTMLViewAdapter(clickerUsingProviders);
     }
 
-    // start IComponentHTMLView
+    // start IFluidHTMLView
 
     public render(div: HTMLElement) {
         if (this.clickerView === undefined ||
@@ -93,7 +93,7 @@ export class Pond extends DataObject implements IComponentHTMLView {
         return div;
     }
 
-    // end IComponentHTMLView
+    // end IFluidHTMLView
 
     // ----- COMPONENT SETUP STUFF -----
 

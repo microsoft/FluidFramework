@@ -4,9 +4,9 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { loadPuzzle } from "./helpers/puzzles";
@@ -20,8 +20,8 @@ export const FluidSudokuName = "FluidSudoku";
 /**
  * A collaborative Sudoku component built on the Fluid Framework.
  */
-export class FluidSudoku extends DataObject implements IComponentHTMLView {
-    public get IComponentHTMLView() {
+export class FluidSudoku extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() {
         return this;
     }
 
@@ -74,9 +74,9 @@ export class FluidSudoku extends DataObject implements IComponentHTMLView {
         // local reference to the object so we can easily use it in synchronous code.
         //
         // Our "puzzle" SharedMap is stored as a handle on the "root" SharedDirectory. To get it we must make a
-        // synchronous call to get the IComponentHandle, then an asynchronous call to get the ISharedMap from the
+        // synchronous call to get the IFluidHandle, then an asynchronous call to get the ISharedMap from the
         // handle.
-        this.puzzle = await this.root.get<IComponentHandle<ISharedMap>>(this.sudokuMapKey).get();
+        this.puzzle = await this.root.get<IFluidHandle<ISharedMap>>(this.sudokuMapKey).get();
 
         // Since we're using a Fluid distributed data structure to store our Sudoku data, we need to render whenever a
         // value in our map changes. Recall that distributed data structures can be changed by both local and remote
@@ -86,7 +86,7 @@ export class FluidSudoku extends DataObject implements IComponentHTMLView {
         });
 
         this.clientPresence = await this.root
-            .get<IComponentHandle<ISharedMap>>(this.presenceMapKey)
+            .get<IFluidHandle<ISharedMap>>(this.presenceMapKey)
             .get();
 
         this.clientPresence.on("valueChanged", (changed, local, op) => {
