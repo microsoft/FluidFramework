@@ -1146,7 +1146,7 @@ export class ContainerRuntime extends EventEmitter
     public async _createDataStore(idOrPkg: string, maybePkg: string | string[]) {
         const id = maybePkg === undefined ? uuid() : idOrPkg;
         const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
-        return this._createDataStoreWithProps(pkg, undefined, id);
+        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], id).realize();
     }
 
     public async createDataStore(pkg: string | string[]): Promise<IFluidRouter> {
@@ -1158,11 +1158,6 @@ export class ContainerRuntime extends EventEmitter
         const component = await context.realize();
         component.bindToContext();
         return component;
-    }
-
-    public async _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string):
-        Promise<IFluidDataStoreChannel> {
-        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
     }
 
     private canSendOps() {
@@ -1907,15 +1902,6 @@ export class ContainerRuntime extends EventEmitter
             message: "ContainerRuntime.createComponent",
         });
         return this._createDataStore(idOrPkg, maybePkg);
-    }
-
-    /** deprecated: backcompat for FDL split */
-    _createComponentWithProps?(pkg: string | string[], props?: any, id?: string) {
-        this.logger.send({
-            category: "warning", eventName: "deprecated",
-            message: "ContainerRuntime._createComponentWithProps",
-        });
-        return this._createDataStoreWithProps(pkg, props, id);
     }
 
     /** deprecated: backcompat for FDL split */

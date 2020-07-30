@@ -179,9 +179,9 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * @param props - optional props to be passed in
      */
     protected async createAndAttachDataStore<T extends IFluidObject & IFluidLoadable>(
-        pkg: string, props?: any,
+        pkg: string,
     ): Promise<T> {
-        const componentRuntime = await this.context._createDataStore(uuid(), pkg, props);
+        const componentRuntime = await this.context._createDataStore(uuid(), pkg);
         const component = await this.asFluidObject<T>(componentRuntime.request({ url: "/" }));
         componentRuntime.bindToContext();
         return component;
