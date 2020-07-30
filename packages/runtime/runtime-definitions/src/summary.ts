@@ -31,6 +31,8 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
     id: string;
 }
 
+export type SummarizeInternalFn = (fullTree: boolean) => Promise<ISummarizeInternalResult>;
+
 export interface ISummarizerNode {
     /** Latest successfully acked summary reference sequence number */
     readonly referenceSequenceNumber: number;
@@ -50,13 +52,9 @@ export interface ISummarizerNode {
      * If unchanged and fullTree is false, it will reuse previous summary subtree.
      * If an error is encountered and trackChanges is enabled, it will try to make
      * a summary with a pointer to the previous summary + a blob of outstanding ops.
-     * @param summarizeInternalFn - internal summarize function
      * @param fullTree - true to skip optimizations and always generate the full tree
      */
-    summarize(
-        summarizeInternalFn: () => Promise<ISummarizeInternalResult>,
-        fullTree: boolean,
-    ): Promise<ISummarizeResult>;
+    summarize(fullTree: boolean): Promise<ISummarizeResult>;
     /**
      * Checks if the base snapshot was created as a failure summary. If it has
      * the base summary handle + outstanding ops blob, then this will return the
@@ -75,6 +73,13 @@ export interface ISummarizerNode {
      */
     recordChange(op: ISequencedDocumentMessage): void;
 
-    createChild(changeSequenceNumber: number, id: string): ISummarizerNode;
+    createChild(
+        /** Summarize function */
+        summarizeInternalFn: SummarizeInternalFn,
+        /** Sequence number of latest change to new node/subtree */
+        changeSequenceNumber: number,
+        /** Initial id or path part of this node */
+        id: string,
+    ): ISummarizerNode;
     getChild(id: string): ISummarizerNode | undefined
 }

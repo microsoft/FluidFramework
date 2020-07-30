@@ -236,7 +236,6 @@ export class SummarizerNode implements ISummarizerNode {
     }
 
     public async summarize(
-        summarizeInternalFn: () => Promise<ISummarizeInternalResult>,
         fullTree: boolean,
         throwOnFailure: boolean = false,
     ): Promise<ISummarizeResult> {
@@ -259,7 +258,7 @@ export class SummarizerNode implements ISummarizerNode {
         }
 
         try {
-            const result = await summarizeInternalFn();
+            const result = await this.summarizeInternalFn(fullTree);
             this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
             return { summary: result.summary, stats: result.stats };
         } catch (error) {
@@ -524,24 +523,36 @@ export class SummarizerNode implements ISummarizerNode {
     }
 
     private constructor(
+        private readonly summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
         private _changeSequenceNumber: number,
         /** Undefined means created without summary */
         private latestSummary?: SummaryNode,
         private trackingSequenceNumber = _changeSequenceNumber,
     ) {}
 
-    public static createRootWithoutSummary(changeSequenceNumber: number): SummarizerNode {
+    public static createRootWithoutSummary(
+        /** Summarize function */
+        summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+        /** Sequence number of latest change to new node/subtree */
+        changeSequenceNumber: number,
+    ): SummarizerNode {
         return new SummarizerNode(
+            summarizeInternalFn,
             changeSequenceNumber,
             undefined,
         );
     }
 
     public static createRootFromSummary(
+        /** Summarize function */
+        summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+        /** Sequence number of latest change to new node/subtree */
         changeSequenceNumber: number,
+        /** Reference sequence number of last acked summary */
         referenceSequenceNumber: number,
     ): SummarizerNode {
         return new SummarizerNode(
+            summarizeInternalFn,
             changeSequenceNumber,
             new SummaryNode({
                 referenceSequenceNumber,
@@ -552,7 +563,11 @@ export class SummarizerNode implements ISummarizerNode {
     }
 
     public createChild(
+        /** Summarize function */
+        summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+        /** Sequence number of latest change to new node/subtree */
         changeSequenceNumber: number,
+        /** Initial id or path part of this node */
         id: string,
     ): ISummarizerNode {
         assert(!this.children.has(id), "Create SummarizerNode child already exists");
@@ -566,6 +581,7 @@ export class SummarizerNode implements ISummarizerNode {
             });
         }
         const child = new SummarizerNode(
+            summarizeInternalFn,
             changeSequenceNumber,
             summary,
         );

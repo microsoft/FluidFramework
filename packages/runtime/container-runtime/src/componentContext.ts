@@ -47,6 +47,9 @@ import {
     IInboundSignalMessage,
     ISummarizeResult,
     ISummarizerNode,
+    SummarizeInternal,
+    ISummarizeInternalResult,
+    CreateChildSummarizerNode,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -168,6 +171,7 @@ export abstract class ComponentContext extends EventEmitter implements
     private componentRuntimeDeferred: Deferred<IComponentRuntimeChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
+    protected readonly summarizerNode: ISummarizerNode;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
@@ -176,7 +180,7 @@ export abstract class ComponentContext extends EventEmitter implements
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent & IFluidObject,
         public readonly summaryTracker: SummaryTracker,
-        protected readonly summarizerNode: ISummarizerNode,
+        createSummarizerNode: CreateChildSummarizerNode,
         private bindState: BindState,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
         protected pkg?: readonly string[],
@@ -191,6 +195,9 @@ export abstract class ComponentContext extends EventEmitter implements
             bindComponent(componentRuntime);
             this.bindState = BindState.Bound;
         };
+
+        const thisSummarizeInternal = async (fullTree: boolean) => this.summarizeInternal(fullTree);
+        this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
     }
 
     public dispose(): void {
@@ -416,30 +423,32 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public async summarize(fullTree: boolean = false): Promise<ISummarizeResult> {
-        return this.summarizerNode.summarize(async () => {
-            const { pkg } = await this.getInitialSnapshotDetails();
+        return this.summarizerNode.summarize(fullTree);
+    }
 
-            const componentAttributes: IComponentAttributes = {
-                pkg: JSON.stringify(pkg),
-                snapshotFormatVersion: currentSnapshotFormatVersion,
-            };
+    private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
+        const { pkg } = await this.getInitialSnapshotDetails();
 
-            await this.realize();
+        const componentAttributes: IComponentAttributes = {
+            pkg: JSON.stringify(pkg),
+            snapshotFormatVersion: currentSnapshotFormatVersion,
+        };
 
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const componentRuntime = this.componentRuntime!;
-            if (componentRuntime.summarize !== undefined) {
-                const summary = await componentRuntime.summarize(fullTree);
-                addBlobToSummary(summary, ".component", JSON.stringify(componentAttributes));
-                return { ...summary, id: this.id };
-            } else {
-                // back-compat: 0.22 summarizerNode - remove this case
-                const entries = await componentRuntime.snapshotInternal(fullTree);
-                entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
-                const summary = convertToSummaryTree({ entries, id: null });
-                return { ...summary, id: this.id };
-            }
-        }, fullTree);
+        await this.realize();
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const componentRuntime = this.componentRuntime!;
+        if (componentRuntime.summarize !== undefined) {
+            const summary = await componentRuntime.summarize(fullTree);
+            addBlobToSummary(summary, ".component", JSON.stringify(componentAttributes));
+            return { ...summary, id: this.id };
+        } else {
+            // back-compat: 0.22 summarizerNode - remove this case
+            const entries = await componentRuntime.snapshotInternal(fullTree);
+            entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
+            const summary = convertToSummaryTree({ entries, id: null });
+            return { ...summary, id: this.id };
+        }
     }
 
     /**
@@ -612,8 +621,12 @@ export abstract class ComponentContext extends EventEmitter implements
         }
     }
 
-    public createChildSummarizerNode(changeSequenceNumber: number, id: string) {
-        return this.summarizerNode.createChild(changeSequenceNumber, id);
+    public getCreateChildSummarizerNodeFn(changeSequenceNumber: number, id: string) {
+        return (summarizeInternal: SummarizeInternal) => this.summarizerNode.createChild(
+            summarizeInternal,
+            changeSequenceNumber,
+            id,
+        );
     }
 }
 
@@ -627,7 +640,7 @@ export class RemotedComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
-        summarizerNode: ISummarizerNode,
+        createSummarizerNode: CreateChildSummarizerNode,
         pkg?: string[],
     ) {
         super(
@@ -637,7 +650,7 @@ export class RemotedComponentContext extends ComponentContext {
             storage,
             scope,
             summaryTracker,
-            summarizerNode,
+            createSummarizerNode,
             BindState.Bound,
             () => {
                 throw new Error("Already attached");
@@ -713,7 +726,7 @@ export class LocalComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
-        summarizerNode: ISummarizerNode,
+        createSummarizerNode: CreateChildSummarizerNode,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
         /**
          * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
@@ -727,7 +740,7 @@ export class LocalComponentContext extends ComponentContext {
             storage,
             scope,
             summaryTracker,
-            summarizerNode,
+            createSummarizerNode,
             BindState.NotBound,
             bindComponent,
             pkg);

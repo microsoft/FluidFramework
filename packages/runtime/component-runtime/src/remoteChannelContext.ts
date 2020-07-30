@@ -23,6 +23,8 @@ import {
     ISummaryTracker,
     ISummarizeResult,
     ISummarizerNode,
+    CreateChildSummarizerNodeFn,
+    ISummarizeInternalResult,
 } from "@fluidframework/runtime-definitions";
 import { convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
@@ -40,6 +42,7 @@ export class RemoteChannelContext implements IChannelContext {
         readonly deltaConnection: ChannelDeltaConnection,
         readonly objectStorage: ChannelStorageService,
     };
+    private readonly summarizerNode: ISummarizerNode;
     constructor(
         private readonly runtime: IComponentRuntime,
         private readonly componentContext: IComponentContext,
@@ -52,7 +55,7 @@ export class RemoteChannelContext implements IChannelContext {
         extraBlobs: Promise<Map<string, string>> | undefined,
         private readonly branch: string,
         private readonly summaryTracker: ISummaryTracker,
-        private readonly summarizerNode: ISummarizerNode,
+        createSummarizerNode: CreateChildSummarizerNodeFn,
         private readonly attachMessageType?: string,
     ) {
         this.services = createServiceEndpoints(
@@ -63,6 +66,8 @@ export class RemoteChannelContext implements IChannelContext {
             storageService,
             Promise.resolve(baseSnapshot),
             extraBlobs);
+        const thisSummarizeInternal = async (fullTree: boolean) => this.summarizeInternal(fullTree);
+        this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -115,12 +120,14 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public async summarize(fullTree: boolean = false): Promise<ISummarizeResult> {
-        return this.summarizerNode.summarize(async () => {
-            const channel = await this.getChannel();
-            const snapshotTree = snapshotChannel(channel);
-            const summaryResult = convertToSummaryTree(snapshotTree, fullTree);
-            return { ...summaryResult, id: this.id };
-        }, fullTree);
+        return this.summarizerNode.summarize(fullTree);
+    }
+
+    private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
+        const channel = await this.getChannel();
+        const snapshotTree = snapshotChannel(channel);
+        const summaryResult = convertToSummaryTree(snapshotTree, fullTree);
+        return { ...summaryResult, id: this.id };
     }
 
     private async loadChannel(): Promise<IChannel> {

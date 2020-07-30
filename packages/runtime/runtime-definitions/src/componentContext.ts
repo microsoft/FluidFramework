@@ -35,7 +35,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IProvideComponentRegistry } from "./componentRegistry";
 import { IInboundSignalMessage } from "./protocol";
-import { ISummaryTreeWithStats, ISummarizerNode } from "./summary";
+import { ISummaryTreeWithStats, ISummarizerNode, SummarizeInternalFn } from "./summary";
 
 /**
  * Runtime flush mode handling
@@ -245,6 +245,8 @@ export interface ISummaryTracker {
     getChild(key: string): ISummaryTracker | undefined;
 }
 
+export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => ISummarizerNode;
+
 /**
  * Represents the context for the component. It is used by the component runtime to
  * get information and call functionality to the container.
@@ -381,7 +383,7 @@ export interface IComponentContext extends EventEmitter {
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
-    createChildSummarizerNode(changeSequenceNumber: number, id: string): ISummarizerNode;
+    getCreateChildSummarizerNodeFn(changeSequenceNumber: number, id: string): CreateChildSummarizerNodeFn;
 }
 
 /**
