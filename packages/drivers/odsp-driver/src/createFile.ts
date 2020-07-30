@@ -66,10 +66,7 @@ export async function createNewFluidFile(
             logger,
             { eventName: "createNewFile" },
             async (event) => {
-                // We do not have name from SPO to provide to callback
-                assert(newFileInfo.callback === undefined);
-
-                const containerSnapshot: ISnapshotTree = convertSummaryIntoContainerSnapshot(createNewSummary);
+                const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
                 const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot`;
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
@@ -126,7 +123,6 @@ function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
         entries: snapshotTree.entries ?? [],
         message: "app",
         sequenceNumber: 1,
-        sha: snapshotTree.id,
         type: SnapshotType.Container,
         ops: [{
             op: {

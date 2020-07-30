@@ -140,5 +140,4 @@ export interface INewFileInfo {
     driveId: string;
     filename: string;
     filePath: string;
-    callback?(itemId: string, filename: string): void;
 }
