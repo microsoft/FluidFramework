@@ -6,8 +6,8 @@
 import { EventEmitter } from "events";
 import { Layout } from "react-grid-layout";
 import {
-    PrimedComponent,
-    PrimedComponentFactory,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { AsSerializable } from "@fluidframework/component-runtime-definitions";
 import { v4 as uuid } from "uuid";
@@ -51,10 +51,10 @@ export interface ISpacesStoredItem<T> {
  * SpacesStorage is a component which maintains a collection of items and a grid-based layout for rendering.
  * The type of the item stored is flexible, as long as it is serializable.
  */
-export class SpacesStorage<T> extends PrimedComponent implements ISpacesStorage<T> {
+export class SpacesStorage<T> extends DataObject implements ISpacesStorage<T> {
     public static get ComponentName() { return "@fluid-example/spaces-storage"; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         SpacesStorage.ComponentName,
         SpacesStorage,
         [],
@@ -94,7 +94,7 @@ export class SpacesStorage<T> extends PrimedComponent implements ISpacesStorage<
         this.root.set(key, model);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.root.on("valueChanged", () => {
             this.emit("itemListChanged", new Map(this.itemList.entries()));
         });

@@ -4,14 +4,11 @@
  */
 
 import {
-    NetworkErrorBasic,
-    GenericNetworkError,
-    NonRetryableError,
-    isOnline,
-    createGenericNetworkError,
     OnlineStatus,
 } from "@fluidframework/driver-utils";
-import { CriticalContainerError, ErrorType } from "@fluidframework/container-definitions";
+import {
+    DriverErrorType,
+} from "@fluidframework/driver-definitions";
 import {
     default as fetch,
     RequestInfo as FetchRequestInfo,
@@ -19,97 +16,13 @@ import {
     Headers as FetchHeaders,
 } from "node-fetch";
 import sha from "sha.js";
-import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
-
-export const offlineFetchFailureStatusCode: number = 709;
-export const fetchFailureStatusCode: number = 710;
-// Status code for invalid file name error in odsp driver.
-export const invalidFileNameStatusCode: number = 711;
-// no response, or can't parse response
-export const fetchIncorrectResponse = 712;
-
-export function createOdspNetworkError(
-    errorMessage: string,
-    statusCode?: number,
-    retryAfterSeconds?: number,
-): CriticalContainerError {
-    let error: CriticalContainerError;
-
-    switch (statusCode) {
-        case 400:
-            error = new GenericNetworkError(errorMessage, false, statusCode);
-            break;
-        case 401:
-        case 403:
-            error = new NetworkErrorBasic(errorMessage, ErrorType.authorizationError, false);
-            break;
-        case 404:
-            error = new NetworkErrorBasic(errorMessage, ErrorType.fileNotFoundOrAccessDeniedError, false);
-            break;
-        case 406:
-            error = new NetworkErrorBasic(errorMessage, ErrorType.unsupportedClientProtocolVersion, false);
-            break;
-        case 413:
-            error = new NonRetryableError(errorMessage, ErrorType.snapshotTooBig, false);
-            break;
-        case 414:
-        case invalidFileNameStatusCode:
-            error = new NonRetryableError(errorMessage, ErrorType.invalidFileNameError, false);
-            break;
-        case 500:
-            error = new GenericNetworkError(errorMessage, true);
-            break;
-        case 501:
-            error = new NonRetryableError(errorMessage, ErrorType.fluidNotEnabled, false);
-            break;
-        case 507:
-            error = new NonRetryableError(errorMessage, ErrorType.outOfStorageError, false);
-            break;
-        case offlineFetchFailureStatusCode:
-            error = new NetworkErrorBasic(errorMessage, ErrorType.offlineError, true);
-            break;
-        case fetchFailureStatusCode:
-        default:
-            error = createGenericNetworkError(errorMessage, true, retryAfterSeconds, statusCode);
-    }
-
-    error.online = OnlineStatus[isOnline()];
-    return error;
-}
-
-/**
- * Throws network error - an object with a bunch of network related properties
- */
-export function throwOdspNetworkError(
-    errorMessage: string,
-    statusCode: number,
-    response?: Response,
-) {
-    let message = errorMessage;
-    let sprequestguid;
-    if (response) {
-        message = `${message}, msg = ${response.statusText}, type = ${response.type}`;
-        sprequestguid = response.headers ? `${response.headers.get("sprequestguid")}` : undefined;
-    }
-
-    const networkError = createOdspNetworkError(
-        message,
-        statusCode,
-        undefined /* retryAfterSeconds */);
-    (networkError as any).sprequestguid = sprequestguid;
-    throw networkError;
-}
-
-/**
- * Returns network error based on error object from ODSP socket (IOdspSocketError)
- */
-export function errorObjectFromSocketError(socketError: IOdspSocketError) {
-    return createOdspNetworkError(
-        socketError.message,
-        socketError.code,
-        socketError.retryAfter);
-}
+import {
+    offlineFetchFailureStatusCode,
+    fetchFailureStatusCode,
+    fetchIncorrectResponse,
+    throwOdspNetworkError,
+} from "./odspError";
 
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
@@ -131,18 +44,20 @@ export function getHashedDocumentId(driveId: string, itemId: string): string {
  */
 export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
     return get(false).catch(async (e) => {
-        // If the error is 401 or 403 refresh the token and try once more.
-        // fetchIncorrectResponse indicates some error on the wire, retry once.
-        if (e.errorType === ErrorType.authorizationError || e.statusCode === fetchIncorrectResponse) {
-            return get(true);
+        switch (e.errorType) {
+            // If the error is 401 or 403 refresh the token and try once more.
+            // fetchIncorrectResponse indicates some error on the wire, retry once.
+            case DriverErrorType.authorizationError:
+            case DriverErrorType.incorrectServerResponse:
+                return get(true);
+            default:
+                // All code paths (deltas, blobs, trees) already throw exceptions.
+                // Throwing is better than returning null as most code paths do not return nullable-objects,
+                // and error reporting is better (for example, getDeltas() will log error to telemetry)
+                // getTree() path is the only potential exception where returning null might result in
+                // document being opened, though there maybe really bad user experience (consuming thousands of ops)
+                throw e;
         }
-
-        // All code paths (deltas, blobs, trees) already throw exceptions.
-        // Throwing is better than returning null as most code paths do not return nullable-objects,
-        // and error reporting is better (for example, getDeltas() will log error to telemetry)
-        // getTree() path is the only potential exception where returning null might result in
-        // document being opened, though there maybe really bad user experience (consuming thousands of ops)
-        throw e;
     });
 }
 
@@ -225,14 +140,4 @@ export interface INewFileInfo {
     driveId: string;
     filename: string;
     filePath: string;
-    callback?(itemId: string, filename: string): void;
-}
-
-export interface INewFileInfoHeader {
-    newFileInfoPromise: Promise<INewFileInfo>,
-}
-
-declare module "@fluidframework/component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IRequestHeader extends Partial<INewFileInfoHeader> { }
 }

@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
+export * from "./driverError";
 export * from "./storage";
 export * from "./urlResolver";

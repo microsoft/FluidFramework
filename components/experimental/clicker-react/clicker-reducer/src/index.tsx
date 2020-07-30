@@ -4,7 +4,7 @@
  */
 
 import {
-    PrimedComponentFactory,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
     IFluidReducerProps,
@@ -19,10 +19,6 @@ import {
 import { SharedCounter } from "@fluidframework/counter";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const ClickerReducerName = pkg.name as string;
 
 // ---- React Functional Component w/ useReducer ----
 
@@ -155,12 +151,12 @@ export class ClickerReducer extends SyncedComponent {
         return div;
     }
 
-    // #endregion IComponentHTMLView
+    // #endregion IFluidHTMLView
 }
 
 // ----- FACTORY SETUP -----
-export const ClickerReducerInstantiationFactory = new PrimedComponentFactory(
-    ClickerReducerName,
+export const ClickerReducerInstantiationFactory = new DataObjectFactory(
+    "clicker-reducer",
     ClickerReducer,
     [SharedCounter.getFactory()],
     {},

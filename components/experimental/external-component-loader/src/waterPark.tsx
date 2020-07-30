@@ -3,22 +3,22 @@
 * Licensed under the MIT License.
 */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
-    IComponentHandle,
+    IFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { IPackage } from "@fluidframework/container-definitions";
-import { RequestParser } from "@fluidframework/container-runtime";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import {
     SpacesStorage,
     SpacesStorageView,
 } from "@fluid-example/spaces";
 import React from "react";
 import ReactDOM from "react-dom";
+import { RequestParser } from "@fluidframework/runtime-utils";
 import { WaterParkToolbar } from "./waterParkToolbar";
 import { ExternalComponentLoader } from "./externalComponentLoader";
 
@@ -64,18 +64,18 @@ if (window.location.hostname === "localhost") {
  * can adapt for rendering purposes.
  */
 export interface IWaterparkItem {
-    handle: IComponentHandle;
+    handle: IFluidHandle;
 }
 
 /**
  * WaterPark assembles the SpacesStorage with the ExternalComponentLoader to load other components.
  */
-export class WaterPark extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class WaterPark extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     public static get ComponentName() { return "@fluid-example/waterpark"; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         WaterPark.ComponentName,
         WaterPark,
         [],
@@ -132,16 +132,16 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
         return super.request(req);
     }
 
-    protected async componentInitializingFirstTime() {
-        const storage = await this.createAndAttachComponent(SpacesStorage.ComponentName);
+    protected async initializingFirstTime() {
+        const storage = await this.createAndAttachDataStore(SpacesStorage.ComponentName);
         this.root.set(storageKey, storage.handle);
-        const loader = await this.createAndAttachComponent(ExternalComponentLoader.ComponentName);
+        const loader = await this.createAndAttachDataStore(ExternalComponentLoader.ComponentName);
         this.root.set(loaderKey, loader.handle);
     }
 
-    protected async componentHasInitialized() {
-        this.storage = await this.root.get<IComponentHandle<SpacesStorage<IWaterparkItem>>>(storageKey)?.get();
-        this.loader = await this.root.get<IComponentHandle<ExternalComponentLoader>>(loaderKey)?.get();
+    protected async hasInitialized() {
+        this.storage = await this.root.get<IFluidHandle<SpacesStorage<IWaterparkItem>>>(storageKey)?.get();
+        this.loader = await this.root.get<IFluidHandle<ExternalComponentLoader>>(loaderKey)?.get();
         // We'll cache this async result on initialization, since we need it synchronously during render.
         this.baseUrl = await this.context.getAbsoluteUrl(this.url);
     }

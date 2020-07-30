@@ -52,9 +52,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
             return 0;
         }
 
-        const attributesHash = ".protocol" in tree.trees ?
-            tree.trees[".protocol"].blobs.attributes
-            : tree.blobs[".attributes"];
+        const attributesHash = tree.trees[".protocol"].blobs.attributes;
         const attrib = await readAndParse<IDocumentAttributes>(documentStorageService, attributesHash);
         return attrib.sequenceNumber;
     }

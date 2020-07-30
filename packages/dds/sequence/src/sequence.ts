@@ -8,7 +8,8 @@ import assert from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 
-import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { Deferred, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { IValueChanged, MapKernel } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import {
@@ -20,8 +21,8 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
-    IObjectStorageService,
+    IFluidDataStoreRuntime,
+    IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
@@ -120,7 +121,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
     private readonly intervalMapKernel: MapKernel;
     constructor(
-        private readonly componentRuntime: IComponentRuntime,
+        private readonly componentRuntime: IFluidDataStoreRuntime,
         public id: string,
         attributes: IChannelAttributes,
         public readonly segmentFromSpec: (spec: MergeTree.IJSONSegment) => MergeTree.ISegment,
@@ -322,8 +323,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
         const translated = makeHandlesSerializable(
             message,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidSerializer,
+            this.runtime.IFluidHandleContext,
             this.handle);
         const metadata = this.client.peekPendingSegmentGroups(
             message.type === MergeTree.MergeTreeDeltaType.GROUP ? message.ops.length : 1);
@@ -487,7 +488,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService) {
+        storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
 
         const data: string = header ? fromBase64ToUtf8(header) : undefined;
@@ -505,11 +506,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             // setup a promise to process the
             // catch up ops, and finishing the loading process
             const loadCatchUpOps = catchupOpsP
-                .then((msgs)=>{
+                .then((msgs) => {
                     msgs.forEach((m) => this.processMergeTreeMsg(m));
                     this.loadFinished();
                 })
-                .catch((error)=>{
+                .catch((error) => {
                     this.loadFinished(error);
                 });
             if (this.componentRuntime.options?.sequenceInitializeFromHeaderOnly !== true) {
@@ -579,8 +580,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         rawMessage: ISequencedDocumentMessage) {
         const message = parseHandles(
             rawMessage,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext);
+            this.runtime.IFluidSerializer,
+            this.runtime.IFluidHandleContext);
 
         const ops: MergeTree.IMergeTreeDeltaOp[] = [];
         function transfromOps(event: SequenceDeltaEvent) {

@@ -4,15 +4,17 @@
  */
 
 import assert from "assert";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import {
+    IRequest,
+    DriverHeader,
+} from "@fluidframework/component-core-interfaces";
 import {
     IUrlResolver,
     IResolvedUrl,
     CreateNewHeader,
 } from "@fluidframework/driver-definitions";
-import { summarizerClientType, LoaderHeader } from "@fluidframework/container-definitions";
 import { IOdspResolvedUrl } from "./contracts";
-import { getHashedDocumentId, INewFileInfoHeader } from "./odspUtils";
+import { getHashedDocumentId } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 
 function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
@@ -36,59 +38,30 @@ export class OdspDriverUrlResolver implements IUrlResolver {
     constructor() { }
 
     public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
-        if (request.headers) {
-            if (request.headers.newFileInfoPromise) {
-                const createNewOptions: INewFileInfoHeader = {
-                    newFileInfoPromise: request.headers.newFileInfoPromise,
-                };
-                const [, queryString] = request.url.split("?");
+        if (request.headers && request.headers[CreateNewHeader.createNew]) {
+            const [siteURL, queryString] = request.url.split("?");
 
-                const searchParams = new URLSearchParams(queryString);
-
-                const uniqueId = searchParams.get("uniqueId");
-                if (uniqueId === null) {
-                    throw new Error("ODSP URL for new file should contain the uniqueId");
-                }
-                return {
-                    type: "fluid",
-                    endpoints: {
-                        snapshotStorageUrl: "",
-                    },
-                    createNewOptions,
-                    tokens: {},
-                    url: `fluid-odsp://placeholder/placeholder/${uniqueId}?version=null`,
-                    hashedDocumentId: "",
-                    siteUrl: "",
-                    driveId: "",
-                    itemId: "",
-                    fileName: "",
-                    summarizer: false,
-                };
-            } else if (request.headers[CreateNewHeader.createNew]) {
-                const [siteURL, queryString] = request.url.split("?");
-
-                const searchParams = new URLSearchParams(queryString);
-                const fileName = request.headers[CreateNewHeader.createNew].fileName;
-                const driveID = searchParams.get("driveId");
-                const filePath = searchParams.get("path");
-                if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
-                    throw new Error("Proper new file params should be there!!");
-                }
-                return {
-                    endpoints: {
-                        snapshotStorageUrl: "",
-                    },
-                    tokens: {},
-                    type: "fluid",
-                    url: `fluid-odsp://${siteURL}?${queryString}&version=null`,
-                    siteUrl: siteURL,
-                    hashedDocumentId: "",
-                    driveId: driveID,
-                    itemId: "",
-                    fileName,
-                    summarizer: false,
-                };
+            const searchParams = new URLSearchParams(queryString);
+            const fileName = request.headers[CreateNewHeader.createNew].fileName;
+            const driveID = searchParams.get("driveId");
+            const filePath = searchParams.get("path");
+            if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
+                throw new Error("Proper new file params should be there!!");
             }
+            return {
+                endpoints: {
+                    snapshotStorageUrl: "",
+                },
+                tokens: {},
+                type: "fluid",
+                url: `fluid-odsp://${siteURL}?${queryString}&version=null`,
+                siteUrl: siteURL,
+                hashedDocumentId: "",
+                driveId: driveID,
+                itemId: "",
+                fileName,
+                summarizer: false,
+            };
         }
         const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
         const hashedDocumentId = getHashedDocumentId(driveId, itemId);
@@ -105,7 +78,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             }
         }
 
-        const clientDetails = request.headers?.[LoaderHeader.clientDetails];
+        const summarizer = request.headers?.[DriverHeader.summarizingClient];
 
         return {
             type: "fluid",
@@ -119,7 +92,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             driveId,
             itemId,
             fileName: "",
-            summarizer: clientDetails?.type === summarizerClientType,
+            summarizer,
         };
     }
 

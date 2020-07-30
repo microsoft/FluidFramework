@@ -6,7 +6,7 @@
 import assert from "assert";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
 /**
  * - Create a new object from the passed SharedString.
@@ -17,14 +17,14 @@ import { IComponentContext } from "@fluidframework/runtime-definitions";
  *   orderSequentially call to batch any operations that might happen in the callback.
  *
  * @param sharedString - The underlying SharedString
- * @param context - The IComponentContext that will be used to call orderSequentially
+ * @param context - The IFluidDataStoreContext that will be used to call orderSequentially
  * @param propertyInterceptionCallback - The interception callback to be called
  *
  * @returns A new SharedString that intercepts the methods modifying the SharedString properties.
  */
 export function createSharedStringWithInterception(
     sharedString: SharedString,
-    context: IComponentContext,
+    context: IFluidDataStoreContext,
     propertyInterceptionCallback: (props?: MergeTree.PropertySet) => MergeTree.PropertySet): SharedString {
     const sharedStringWithInterception = Object.create(sharedString);
 

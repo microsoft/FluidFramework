@@ -4,9 +4,10 @@
  */
 
 import assert from "assert";
-import { fromBase64ToUtf8, ChildLogger } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
@@ -24,16 +25,16 @@ export class SnapshotLoader {
     private readonly logger: ITelemetryLogger;
 
     constructor(
-        private readonly runtime: IComponentRuntime,
+        private readonly runtime: IFluidDataStoreRuntime,
         private readonly client: Client,
         private readonly mergeTree: MergeTree,
         logger: ITelemetryLogger) {
         this.logger = ChildLogger.create(logger, "SnapshotLoader");
     }
 
-    public  async initialize(
+    public async initialize(
         branchId: string,
-        services: IObjectStorageService,
+        services: IChannelStorageService,
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
         // Override branch by default which is derived from document id,
         // as document id isn't stable for spo
@@ -41,7 +42,7 @@ export class SnapshotLoader {
         const branch = this.runtime.options && this.runtime.options.enableBranching
             ? branchId : this.runtime.documentId;
         const headerLoadedP =
-            services.read(SnapshotLegacy.header).then((header)=>{
+            services.read(SnapshotLegacy.header).then((header) => {
                 assert(header);
                 return this.loadHeader(header, branch);
             });
@@ -56,7 +57,7 @@ export class SnapshotLoader {
 
     private async loadBodyAndCatchupOps(
         headerChunkP: Promise<MergeTreeChunkV1>,
-        services: IObjectStorageService,
+        services: IChannelStorageService,
         branch: string,
     ): Promise<ISequencedDocumentMessage[]> {
         const blobsP = services.list("");
@@ -124,8 +125,8 @@ export class SnapshotLoader {
             header,
             this.logger,
             this.mergeTree.options,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext);
+            this.runtime.IFluidSerializer,
+            this.runtime.IFluidHandleContext);
         const segs = chunk.segments.map(this.specToSegment);
         this.mergeTree.reloadFromSegments(segs);
 
@@ -158,7 +159,7 @@ export class SnapshotLoader {
         return chunk;
     }
 
-    private async loadBody(chunk1: MergeTreeChunkV1, services: IObjectStorageService): Promise<void> {
+    private async loadBody(chunk1: MergeTreeChunkV1, services: IChannelStorageService): Promise<void> {
         this.runtime.logger.shipAssert(
             chunk1.length <= chunk1.headerMetadata.totalLength,
             { eventName: "Mismatch in totalLength" });
@@ -178,8 +179,8 @@ export class SnapshotLoader {
                 chunk1.headerMetadata.orderedChunkMetadata[chunkIndex].id,
                 this.logger,
                 this.mergeTree.options,
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext);
+                this.runtime.IFluidSerializer,
+                this.runtime.IFluidHandleContext);
             lengthSofar += chunk.length;
             // Deserialize each chunk segment and append it to the end of the MergeTree.
             segs.push(...chunk.segments.map(this.specToSegment));

@@ -6,7 +6,7 @@
 import { Node } from "prosemirror-model";
 import { EditorView, NodeView } from "prosemirror-view";
 import { ILoader } from "@fluidframework/container-definitions";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 
 export class ComponentView implements NodeView {
@@ -60,11 +60,11 @@ export class ComponentView implements NodeView {
         const loadP = this.loader.request({ url });
         const componentP = loadP.then(
             (result) => {
-                if (result.mimeType !== "fluid/component") {
+                if (result.mimeType !== "fluid/object") {
                     throw new Error("Can't insert a non-fluid component");
                 }
 
-                const component = result.value as IComponent;
+                const component = result.value as IFluidObject;
                 if (!HTMLViewAdapter.canAdapt(component)) {
                     throw new Error("Don't know how to render this component");
                 }

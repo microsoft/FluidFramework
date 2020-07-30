@@ -9,7 +9,7 @@ import {
     IMockContainerRuntimePendingMessage,
     MockContainerRuntime,
     MockContainerRuntimeFactory,
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
 } from "./mocks";
 
 /**
@@ -31,7 +31,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
             this.clientSequenceNumber = 0;
             // We should get a new clientId on reconnection.
             this.clientId = uuid();
-            // Update the clientId in ComponentRuntime.
+            // Update the clientId in FluidDataStoreRuntime.
             this.componentRuntime.clientId = this.clientId;
             // On reconnection, ask the DDSs to resubmit pending messages.
             this.reSubmitMessages();
@@ -50,7 +50,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     private _connected = true;
 
     constructor(
-        componentRuntime: MockComponentRuntime,
+        componentRuntime: MockFluidDataStoreRuntime,
         factory: MockContainerRuntimeFactoryForReconnection) {
         super(componentRuntime, factory);
     }
@@ -81,7 +81,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
  * Specalized implementation of MockContainerRuntimeFactory for testing ops during reconnection.
  */
 export class MockContainerRuntimeFactoryForReconnection extends MockContainerRuntimeFactory {
-    public createContainerRuntime(componentRuntime: MockComponentRuntime): MockContainerRuntimeForReconnection {
+    public createContainerRuntime(componentRuntime: MockFluidDataStoreRuntime): MockContainerRuntimeForReconnection {
         const containerRuntime = new MockContainerRuntimeForReconnection(componentRuntime, this);
         this.runtimes.push(containerRuntime);
         return containerRuntime;

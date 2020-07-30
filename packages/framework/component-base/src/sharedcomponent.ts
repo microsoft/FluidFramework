@@ -4,35 +4,35 @@
  */
 
 import {
-    IComponentHandle,
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidHandle,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
-    IProvideComponentHandle,
+    IProvideFluidHandle,
 } from "@fluidframework/component-core-interfaces";
 import {
-    IComponentContext,
+    IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
 import {
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
 } from "@fluidframework/component-runtime-definitions";
-import { ComponentHandle } from "@fluidframework/component-runtime";
+import { FluidOjectHandle } from "@fluidframework/component-runtime";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
 
-export abstract class SharedComponent<
+export abstract class PureDataObject<
     TRoot extends ISharedObject = ISharedObject,
     TEvents extends IEvent = IEvent>
     extends EventForwarder<TEvents>
-    implements IComponentLoadable, IProvideComponentHandle, IComponentRouter {
-    private _handle?: IComponentHandle<this>;
+    implements IFluidLoadable, IProvideFluidHandle, IFluidRouter {
+    private _handle?: IFluidHandle<this>;
 
-    public get IComponentRouter() { return this; }
-    public get IComponentLoadable() { return this; }
-    public get IComponentHandle() { return this.handle; }
-    public get IProvideComponentHandle() { return this; }
+    public get IFluidRouter() { return this; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidHandle() { return this.handle; }
+    public get IProvideFluidHandle() { return this; }
 
     /**
      * Handle to a shared component
@@ -41,33 +41,33 @@ export abstract class SharedComponent<
     protected readonly root: TRoot;
 
     public constructor(
-        protected readonly context: IComponentContext,
-        protected readonly runtime: IComponentRuntime,
+        protected readonly context: IFluidDataStoreContext,
+        protected readonly runtime: IFluidDataStoreRuntime,
         root: ISharedObject,
     ) {
         super();
         this.root = root as TRoot;
     }
 
-    // #region IComponentRouter
+    // #region IFluidRouter
 
     public async request({ url }: IRequest): Promise<IResponse> {
         return url === "" || url === "/"
-            ? { status: 200, mimeType: "fluid/component", value: this }
+            ? { status: 200, mimeType: "fluid/object", value: this }
             : { status: 404, mimeType: "text/plain", value: `Requested URL '${url}' not found.` };
     }
 
-    // #endregion IComponentRouter
+    // #endregion IFluidRouter
 
-    // #region IComponentLoadable
+    // #region IFluidLoadable
 
-    public get handle(): IComponentHandle<this> {
-        // Lazily create the ComponentHandle when requested.
+    public get handle(): IFluidHandle<this> {
+        // Lazily create the FluidOjectHandle when requested.
         if (!this._handle) {
-            this._handle = new ComponentHandle(
+            this._handle = new FluidOjectHandle(
                 this,
                 "",
-                this.runtime.IComponentHandleContext);
+                this.runtime.IFluidHandleContext);
         }
 
         return this._handle;
@@ -76,9 +76,9 @@ export abstract class SharedComponent<
     /**
      * Absolute URL to the component within the document
      */
-    public get url() { return this.runtime.IComponentHandleContext.path; }
+    public get url() { return this.runtime.IFluidHandleContext.absolutePath; }
 
-    // #endregion IComponentLoadable
+    // #endregion IFluidLoadable
 
     public abstract create(props?: any);
     public abstract async load();

@@ -6,11 +6,11 @@
 import assert from "assert";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { SharedString } from "@fluidframework/sequence";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
+    OpProcessingController,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
@@ -25,7 +25,7 @@ describe("SharedString", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let opProcessingController: OpProcessingController;
     let sharedString1: SharedString;
     let sharedString2: SharedString;
 
@@ -35,9 +35,9 @@ describe("SharedString", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
+    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as ITestFluidComponent;
@@ -47,15 +47,15 @@ describe("SharedString", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
         const container1 = await createContainer();
-        const component1 = await getComponent("default", container1);
+        const component1 = await requestFluidObject("default", container1);
         sharedString1 = await component1.getSharedObject<SharedString>(stringId);
 
         const container2 = await createContainer();
-        const component2 = await getComponent("default", container2);
+        const component2 = await requestFluidObject("default", container2);
         sharedString2 = await component2.getSharedObject<SharedString>(stringId);
 
-        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-        containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime);
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
     });
 
     it("can sync SharedString across multiple containers", async () => {
@@ -64,7 +64,7 @@ describe("SharedString", () => {
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
 
         // Wait for the ops to to be submitted and processed across the containers.
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         assert.equal(sharedString2.getText(), text, "The inserted text should have synced across the containers");
     });
@@ -75,11 +75,11 @@ describe("SharedString", () => {
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
 
         // Wait for the ops to to be submitted and processed across the containers.
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         // Create a initialize a new container with the same id.
         const newContainer = await createContainer();
-        const newComponent = await getComponent("default", newContainer);
+        const newComponent = await requestFluidObject("default", newContainer);
         const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
         assert.equal(newSharedString.getText(), text, "The new container should receive the inserted text on creation");
     });

@@ -4,17 +4,18 @@
  */
 import assert from "assert";
 import {
-    IComponentHandleContext,
-    IComponentHandle,
-    IComponentLoadable,
+    IFluidHandleContext,
+    IFluidHandle,
+    IFluidLoadable,
 } from "@fluidframework/component-core-interfaces";
 import { SummarizerHandle } from "../summarizerHandle";
 
-const mockHandleContext: IComponentHandleContext = {
+const mockHandleContext: IFluidHandleContext = {
     path: "",
+    absolutePath: "",
     isAttached: false,
-    IComponentRouter: undefined as any,
-    IComponentHandleContext: undefined as any,
+    IFluidRouter: undefined as any,
+    IFluidHandleContext: undefined as any,
 
     attachGraph: () => {
         throw new Error("Method not implemented.");
@@ -26,14 +27,14 @@ const mockHandleContext: IComponentHandleContext = {
         throw new Error("Method not implemented.");
     },
 };
-class MockSummarizer implements IComponentLoadable {
-    public get IComponentLoadable() { return this; }
+class MockSummarizer implements IFluidLoadable {
+    public get IFluidLoadable() { return this; }
     public get url() { return "url123"; }
     public get handle() { return new SummarizerHandle(this, "", mockHandleContext); }
 }
 
 describe("SummarizerHandle", () => {
-    let handle: IComponentHandle | undefined;
+    let handle: IFluidHandle | undefined;
     beforeEach(async () => {
         const summarizer = new MockSummarizer();
         handle = summarizer.handle;

@@ -4,10 +4,10 @@
  */
 
 import assert from "assert";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IBlob } from "@fluidframework/protocol-definitions";
 import {
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
     MockSharedObjectServices,
     MockStorage,
@@ -17,10 +17,10 @@ import { MapFactory, SharedMap } from "../map";
 describe("Map", () => {
     let map: SharedMap;
     let factory: MapFactory;
-    let componentRuntime: MockComponentRuntime;
+    let componentRuntime: MockFluidDataStoreRuntime;
 
     beforeEach(async () => {
-        componentRuntime = new MockComponentRuntime();
+        componentRuntime = new MockFluidDataStoreRuntime();
         factory = new MapFactory();
         map = new SharedMap("testMap", componentRuntime, MapFactory.Attributes);
     });
@@ -76,12 +76,12 @@ describe("Map", () => {
                 const parsed = map.getSerializableStorage();
 
                 map.forEach((value, key) => {
-                    if (!value.IComponentHandle) {
+                    if (!value.IFluidHandle) {
                         assert.equal(parsed[key].type, "Plain");
                         assert.equal(parsed[key].value, value);
                     } else {
                         assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value.url, subMap.id);
+                        assert.equal(parsed[key].value.url, subMap.handle.absolutePath);
                     }
                 });
             });
@@ -97,12 +97,12 @@ describe("Map", () => {
                 const parsed = map.getSerializableStorage();
 
                 map.forEach((value, key) => {
-                    if (!value || !value.IComponentHandle) {
+                    if (!value || !value.IFluidHandle) {
                         assert.equal(parsed[key].type, "Plain");
                         assert.equal(parsed[key].value, value);
                     } else {
                         assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value.url, subMap.id);
+                        assert.equal(parsed[key].value.url, subMap.handle.absolutePath);
                     }
                 });
             });
@@ -118,9 +118,11 @@ describe("Map", () => {
                 };
                 map.set("object", containingObject);
 
+                const subMapHandleUrl = subMap.handle.absolutePath;
+                const subMap2HandleUrl = subMap2.handle.absolutePath;
                 const serialized = JSON.stringify(map.getSerializableStorage());
                 // eslint-disable-next-line max-len
-                assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"subMap"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"subMap2"}}}}}`);
+                assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}}}}`);
             });
 
             it("can load old serialization format", async () => {
@@ -241,7 +243,7 @@ describe("Map", () => {
 
             // Load a new SharedMap in connected state from the snapshot of the first one.
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2 = MockSharedObjectServices.createFromTree(map.snapshot());
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
@@ -290,7 +292,7 @@ describe("Map", () => {
             map.connect(services);
 
             // Create and connect a second map
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             map2 = new SharedMap("testMap2", componentRuntime2, MapFactory.Attributes);
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2 = {
@@ -356,16 +358,15 @@ describe("Map", () => {
                 containerRuntimeFactory.processAllMessages();
 
                 // Verify the local SharedMap
-                assert.equal(
-                    map.get<IComponentHandle>("test").path,
-                    subMap.id,
-                    "could not get the set shared object");
+                const localSubMap = map.get<IFluidHandle>("test");
+                assert.equal(localSubMap.absolutePath, subMap.handle.absolutePath, "could not get the handle's path");
 
                 // Verify the remote SharedMap
+                const remoteSubMap = map2.get<IFluidHandle>("test");
                 assert.equal(
-                    map2.get<IComponentHandle>("test").path,
-                    subMap.id,
-                    "could not get the set shared object from remote map");
+                    remoteSubMap.absolutePath,
+                    subMap.handle.absolutePath,
+                    "could not get the handle's path in remote map");
             });
 
             it("Should be able to set and retrieve a plain object with nested handles", async () => {

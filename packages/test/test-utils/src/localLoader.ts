@@ -13,9 +13,9 @@ import {
     IProvideRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { Loader, Container } from "@fluidframework/container-loader";
-import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
+import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { LocalCodeLoader } from "./localCodeLoader";
 
 /**
@@ -26,12 +26,12 @@ import { LocalCodeLoader } from "./localCodeLoader";
 export function createLocalLoader(
     packageEntries: Iterable<[
         IFluidCodeDetails,
-        Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>
+        Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IFluidModule>
     ]>,
     deltaConnectionServer: ILocalDeltaConnectionServer,
 ): ILoader {
-    const urlResolver = new TestResolver();
-    const documentServiceFactory = new TestDocumentServiceFactory(deltaConnectionServer);
+    const urlResolver = new LocalResolver();
+    const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
     const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
 
     return new Loader(

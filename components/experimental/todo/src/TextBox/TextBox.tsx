@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PrimedComponent } from "@fluidframework/aqueduct";
+import { DataObject } from "@fluidframework/aqueduct";
 import { CollaborativeTextArea } from "@fluidframework/react-inputs";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -18,16 +18,15 @@ export const TextBoxName = `${pkg.name as string}-textbox`;
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
  * collaborative textarea.
  */
-export class TextBox extends PrimedComponent<{}, string> implements IComponentHTMLView, IComponentReactViewable {
-    public get IComponentHTMLView() { return this; }
-    public get IComponentReactViewable() { return this; }
+export class TextBox extends DataObject<{}, string> implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private text: SharedString | undefined;
 
     /**
      * Do creation work
      */
-    protected async componentInitializingFirstTime(initialState?: string) {
+    protected async initializingFirstTime(initialState?: string) {
         // if initial state is provided then use it.
         const newItemText = initialState ?? "Important Things";
 
@@ -37,32 +36,18 @@ export class TextBox extends PrimedComponent<{}, string> implements IComponentHT
         this.root.set("text", text.handle);
     }
 
-    protected async componentHasInitialized() {
-        this.text = await this.root.get<IComponentHandle<SharedString>>("text").get();
+    protected async hasInitialized() {
+        this.text = await this.root.get<IFluidHandle<SharedString>>("text").get();
     }
 
-    // start IComponentHTMLView
+    // start IFluidHTMLView
 
     public render(div: HTMLElement) {
         ReactDOM.render(
-            this.createJSXElement(),
+            <CollaborativeTextArea sharedString={this.text} />,
             div,
         );
     }
 
-    // end IComponentHTMLView
-
-    // start IComponentReactViewable
-
-    /**
-     * If our caller supports React they can query against the IComponentReactViewable
-     * Since this returns a JSX.Element it allows for an easier model.
-     */
-    public createJSXElement(): JSX.Element {
-        return (
-            <CollaborativeTextArea sharedString={this.text} />
-        );
-    }
-
-    // end IComponentReactViewable
+    // end IFluidHTMLView
 }

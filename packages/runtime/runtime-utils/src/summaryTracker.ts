@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ISummaryTracker } from "@fluidframework/runtime-definitions";
 
 /**
@@ -26,16 +25,9 @@ export class SummaryTracker implements ISummaryTracker {
         return this._latestSequenceNumber;
     }
 
-    // back-compat: 0.14 uploadSummary
-    public async getSnapshotTree(): Promise<ISnapshotTree | undefined> {
-        return this._getSnapshotTree();
-    }
-
     /**
      * Gets the Id to use when summarizing.
-     * When useContext is true, this will be the full path to the node.
-     * When useContext is false, this will fetch the
-     * id from the previous snapshot tree.
+     * This will be the full path to the node.
      */
     public async getId(): Promise<string | undefined> {
         if (this._latestSequenceNumber > this._referenceSequenceNumber) {
@@ -44,32 +36,19 @@ export class SummaryTracker implements ISummaryTracker {
             // reused the id.
             return undefined;
         }
-        if (this.useContext === true) {
-            return this._fullPath;
-        } else {
-            // back-compat: 0.14 uploadSummary
-            const tree = await this.getSnapshotTree();
-            const id = tree?.id ?? undefined;
-            if (id === undefined) {
-                throw Error("Expected to find parent snapshot tree with id.");
-            }
-            return id;
-        }
+        return this._fullPath;
     }
 
     private readonly children = new Map<string, SummaryTracker>();
 
-    // only async for back-compat: 0.14 uploadSummary
-    public async refreshLatestSummary(
+    public refreshLatestSummary(
         referenceSequenceNumber: number,
-        getSnapshot: () => Promise<ISnapshotTree | undefined>,
     ) {
         this._referenceSequenceNumber = referenceSequenceNumber;
-        this._getSnapshotTree = getSnapshot;
 
         // Propagate update to all child nodes
-        for (const [key, value] of this.children.entries()) {
-            await value.refreshLatestSummary(referenceSequenceNumber, this.formChildGetSnapshotTree(key));
+        for (const [, value] of this.children.entries()) {
+            value.refreshLatestSummary(referenceSequenceNumber);
         }
     }
 
@@ -84,11 +63,9 @@ export class SummaryTracker implements ISummaryTracker {
         }
 
         const newChild = new SummaryTracker(
-            this.useContext,
             `${this._fullPath}/${encodeURIComponent(key)}`,
             this._referenceSequenceNumber,
-            latestSequenceNumber,
-            this.formChildGetSnapshotTree(key));
+            latestSequenceNumber);
 
         this.children.set(key, newChild);
         return newChild;
@@ -99,13 +76,7 @@ export class SummaryTracker implements ISummaryTracker {
     }
 
     public constructor(
-        public readonly useContext: boolean,
         private readonly _fullPath: string,
         private _referenceSequenceNumber: number,
-        private _latestSequenceNumber: number,
-        private _getSnapshotTree: () => Promise<ISnapshotTree | undefined>) { }
-
-    private formChildGetSnapshotTree(key: string): () => Promise<ISnapshotTree | undefined> {
-        return async () => (await this._getSnapshotTree())?.trees[key];
-    }
+        private _latestSequenceNumber: number) { }
 }

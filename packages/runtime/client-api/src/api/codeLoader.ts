@@ -5,7 +5,7 @@
 
 import * as cell from "@fluidframework/cell";
 import { IRequest } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime } from "@fluidframework/component-runtime";
 import {
     ICodeLoader,
     IContainerContext,
@@ -20,25 +20,25 @@ import * as ink from "@fluidframework/ink";
 import * as map from "@fluidframework/map";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import {
-    IComponentContext,
-    IComponentFactory,
-    NamedComponentRegistryEntries,
+    IFluidDataStoreContext,
+    IFluidDataStoreFactory,
+    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { CreateContainerError } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
 import * as sequence from "@fluidframework/sequence";
 import { Document } from "./document";
 
 const rootMapId = "root";
 const insightsMapId = "insights";
 
-export class Chaincode implements IComponentFactory {
+export class Chaincode implements IFluidDataStoreFactory {
     public readonly type = "@fluid-internal/client-api";
 
-    public get IComponentFactory() { return this; }
+    public get IFluidDataStoreFactory() { return this; }
 
     public constructor(private readonly closeFn: () => void) { }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateDataStore(context: IFluidDataStoreContext): void {
         // Create channel factories
         const mapFactory = map.SharedMap.getFactory();
         const sharedStringFactory = sequence.SharedString.getFactory();
@@ -64,7 +64,7 @@ export class Chaincode implements IComponentFactory {
         modules.set(directoryFactory.type, directoryFactory);
         modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
 
-        const runtime = ComponentRuntime.load(context, modules);
+        const runtime = FluidDataStoreRuntime.load(context, modules);
 
         // Initialize core data structures
         let root: map.ISharedMap;
@@ -87,7 +87,7 @@ export class Chaincode implements IComponentFactory {
         runtime.registerRequestHandler(async (request) => {
             const document = await documentP;
             return {
-                mimeType: "fluid/component",
+                mimeType: "fluid/object",
                 status: 200,
                 value: document,
             };
@@ -110,13 +110,13 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
         const componentId = trimmed !== "" ? trimmed : rootMapId;
 
-        const component = await runtime.getComponentRuntime(componentId, true);
+        const component = await runtime.getDataStore(componentId, true);
         return component.request({ url: trimmed.substr(1 + trimmed.length) });
     }
 
     constructor(
         private readonly runtimeOptions: IContainerRuntimeOptions,
-        private readonly registries: NamedComponentRegistryEntries) {
+        private readonly registries: NamedFluidDataStoreRegistryEntries) {
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
@@ -128,12 +128,12 @@ export class ChaincodeFactory implements IRuntimeFactory {
                 [chaincode.type, Promise.resolve(chaincode)],
                 ...this.registries,
             ],
-            [ChaincodeFactory.containerRequestHandler],
+            ChaincodeFactory.containerRequestHandler,
             this.runtimeOptions);
 
         // On first boot create the base component
         if (!runtime.existing) {
-            runtime.createComponent(rootMapId, "@fluid-internal/client-api")
+            runtime._createDataStore(rootMapId, "@fluid-internal/client-api")
                 .then((componentRuntime) => {
                     componentRuntime.bindToContext();
                 })
@@ -151,7 +151,7 @@ export class CodeLoader implements ICodeLoader {
 
     constructor(
         runtimeOptions: IContainerRuntimeOptions,
-        registries: NamedComponentRegistryEntries = [],
+        registries: NamedFluidDataStoreRegistryEntries = [],
     ) {
         this.fluidModule = {
             fluidExport: new ChaincodeFactory(

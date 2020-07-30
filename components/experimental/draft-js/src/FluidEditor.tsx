@@ -4,7 +4,7 @@
  */
 
 import { SharedMap } from "@fluidframework/map";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import { ContentState, Editor, EditorProps, EditorState, RichUtils } from "draft-js";
 import React from "react";
@@ -29,7 +29,7 @@ import "./css/RichEditor.css";
 interface IProps extends Partial<EditorProps> {
     sharedString: SharedString;
     authors: SharedMap;
-    runtime: IComponentRuntime;
+    runtime: IFluidDataStoreRuntime;
 }
 
 interface IState {

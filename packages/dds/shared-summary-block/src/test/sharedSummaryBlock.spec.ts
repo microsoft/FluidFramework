@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IBlob } from "@fluidframework/protocol-definitions";
-import { MockComponentRuntime, MockSharedObjectServices } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime, MockSharedObjectServices } from "@fluidframework/test-runtime-utils";
 import { ISharedSummaryBlock } from "../interfaces";
 import { SharedSummaryBlockFactory } from "../sharedSummaryBlockFactory";
 
@@ -17,12 +17,12 @@ interface ITestInterface {
 }
 
 describe("SharedSummaryBlock", () => {
-    let componentRuntime: MockComponentRuntime;
+    let componentRuntime: MockFluidDataStoreRuntime;
     let factory: SharedSummaryBlockFactory;
     let sharedSummaryBlock: ISharedSummaryBlock;
 
     beforeEach(async () => {
-        componentRuntime = new MockComponentRuntime();
+        componentRuntime = new MockFluidDataStoreRuntime();
         // We only want to test local state of the DDS.
         componentRuntime.local = true;
         factory = new SharedSummaryBlockFactory();

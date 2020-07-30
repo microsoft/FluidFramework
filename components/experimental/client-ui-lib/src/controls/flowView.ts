@@ -7,9 +7,9 @@ import * as SearchMenu from "@fluid-example/search-menu";
 import * as api from "@fluid-internal/client-api";
 import { performanceNow } from "@fluidframework/common-utils";
 import {
-    IComponent,
-    IComponentHandle,
-    IComponentLoadable,
+    IFluidObject,
+    IFluidHandle,
+    IFluidLoadable,
 } from "@fluidframework/component-core-interfaces";
 import { IGenericBlob } from "@fluidframework/container-definitions";
 import {
@@ -19,7 +19,7 @@ import {
     IComponentLayout,
 } from "@fluidframework/framework-experimental";
 import {
-    IComponentCollection,
+    IFluidObjectCollection,
 } from "@fluidframework/framework-interfaces";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -28,7 +28,7 @@ import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
 import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@fluidframework/undo-redo";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
@@ -39,7 +39,7 @@ import { PresenceSignal } from "./presenceSignal";
 import { Status } from "./status";
 
 interface IPersistentElement extends HTMLDivElement {
-    component: IComponent;
+    component: IFluidObject;
 }
 
 interface IMathViewMarker extends MergeTree.Marker {
@@ -56,16 +56,16 @@ function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
 }
 
 interface IBlockViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IComponentHTMLView>;
-    instance?: IComponentHTMLView & IComponent;
+    instanceP?: Promise<IFluidHTMLView>;
+    instance?: IFluidHTMLView & IFluidObject;
 }
 
 interface IComponentViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IComponentHTMLView>;
-    instance?: IComponentHTMLView;
+    instanceP?: Promise<IFluidHTMLView>;
+    instance?: IFluidHTMLView;
 }
 
-interface IMathCollection extends IComponentLoadable {
+interface IMathCollection extends IFluidLoadable {
     createCollectionItem(options?: IMathOptions): IMathInstance;
     getInstance(id: string, options?: IMathOptions): IMathInstance;
 }
@@ -77,9 +77,9 @@ interface IMathOptions {
     display: string;
 }
 
-export interface IMathInstance extends IComponentLoadable, IComponentHTMLView, IComponentCursor,
+export interface IMathInstance extends IFluidLoadable, IFluidHTMLView, IComponentCursor,
     IComponentKeyHandlers, IComponentLayout, SearchMenu.ISearchMenuClient {
-    IComponentLoadable: IComponentLoadable;
+    IFluidLoadable: IFluidLoadable;
     IComponentCursor: IComponentCursor;
     IComponentKeyHandlers: IComponentKeyHandlers;
     IComponentLayout: IComponentLayout;
@@ -816,11 +816,11 @@ function renderSegmentIntoLine(
                         componentMarker.instanceP = lineContext.flowView.collabDocument.context.containerRuntime
                             .request({ url: `/${componentMarker.properties.leafId}` })
                             .then(async (response) => {
-                                if (response.status !== 200 || response.mimeType !== "fluid/component") {
+                                if (response.status !== 200 || response.mimeType !== "fluid/object") {
                                     return Promise.reject(response);
                                 }
 
-                                const component = response.value as IComponent;
+                                const component = response.value as IFluidObject;
                                 if (!HTMLViewAdapter.canAdapt(component)) {
                                     return Promise.reject("component is not viewable");
                                 }
@@ -2324,9 +2324,9 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                     // eslint-disable-next-line @typescript-eslint/no-misused-promises
                     if (!newBlock.instanceP) {
                         newBlock.instanceP = newBlock.properties.leafId.get()
-                            .then(async (component: IComponent) => {
+                            .then(async (component: IFluidObject) => {
                                 // TODO below is a temporary workaround. Should every QI interface also implement
-                                // IComponent. Then you can go from IComponentHTMLView to IComponentLayout.
+                                // IFluidObject. Then you can go from IFluidHTMLView to IComponentLayout.
                                 // Or should you query for each one individually.
                                 if (!HTMLViewAdapter.canAdapt(component)) {
                                     return Promise.reject("component is not viewable");
@@ -3026,7 +3026,7 @@ export interface ISeqTestItem {
 }
 
 export class PersistentComponent {
-    constructor(public component: IComponent, public elm: HTMLDivElement) {
+    constructor(public component: IFluidObject, public elm: HTMLDivElement) {
     }
 }
 
@@ -3057,7 +3057,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public comments: Sequence.IntervalCollection<Sequence.SequenceInterval>;
     public commentsView: Sequence.IntervalCollectionView<Sequence.SequenceInterval>;
     public sequenceTest: Sequence.SharedNumberSequence;
-    public persistentComponents: Map<IComponent, PersistentComponent>;
+    public persistentComponents: Map<IFluidObject, PersistentComponent>;
     public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
     public presenceSignal: PresenceSignal;
     public presenceVector: Map<string, ILocalPresenceInfo> = new Map();
@@ -3078,9 +3078,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public keypressHandler: (e: KeyboardEvent) => void;
     public keydownHandler: (e: KeyboardEvent) => void;
 
-    public videoPlayers: IComponentCollection;
-    public images: IComponentCollection;
-    public progressBars: IComponentCollection;
+    public videoPlayers: IFluidObjectCollection;
+    public images: IFluidObjectCollection;
+    public progressBars: IFluidObjectCollection;
 
     // TODO: 'services' is being used temporarily to smuggle context down to components.
     //       Should be replaced w/component-standardized render context, layout context, etc.
@@ -3200,9 +3200,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     // Remember an element to give to a component; element will be absolutely positioned during render, if needed
-    public addPersistentComponent(elm: HTMLDivElement, component: IComponent) {
+    public addPersistentComponent(elm: HTMLDivElement, component: IFluidObject) {
         if (!this.persistentComponents) {
-            this.persistentComponents = new Map<IComponent, PersistentComponent>();
+            this.persistentComponents = new Map<IFluidObject, PersistentComponent>();
         }
         (elm as IPersistentElement).component = component;
         this.persistentComponents.set(component, new PersistentComponent(component, elm));
@@ -3215,7 +3215,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public getPersistentComponent(component: IComponent) {
+    public getPersistentComponent(component: IFluidObject) {
         if (this.persistentComponents) {
             return this.persistentComponents.get(component);
         }
@@ -4490,7 +4490,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         if (overlappingComments && (overlappingComments.length >= 1)) {
             const commentInterval = overlappingComments[0];
 
-            const commentHandle = commentInterval.properties.story as IComponentHandle<Sequence.SharedString>;
+            const commentHandle = commentInterval.properties.story as IFluidHandle<Sequence.SharedString>;
             commentHandle.get().then(
                 (comment) => {
                     const commentText = comment.getText();
@@ -4500,7 +4500,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     }, (10000));
                 },
                 () => {
-                    console.log(`Failed to fetch ${commentHandle.path}`);
+                    console.log(`Failed to fetch ${commentHandle.absolutePath}`);
                 });
         }
     }
@@ -4523,7 +4523,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public insertComponentNew(prefix: string, chaincode: string, inline = false) {
         const id = `${prefix}-${Date.now()}`;
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.collabDocument.context.createComponent(id, chaincode).then((doc) => doc.bindToContext());
+        this.collabDocument.context._createDataStore(id, chaincode).then((doc) => doc.bindToContext());
         const props = {
             crefTest: {
                 layout: { inline },
@@ -4566,7 +4566,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 } as IReferenceDocType,
                 url: mathInstance.id,
             },
-            // Change this to just use url and IComponentRouter on collection
+            // Change this to just use url and IFluidRouter on collection
             leafId: mathInstance.leafId,
         };
         if (!inline) {
@@ -4584,10 +4584,10 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         mathMarker.instance.enter(ComponentCursorDirection.Left);
     }
 
-    public insertNewCollectionComponent(collection: IComponentCollection, inline = false) {
+    public insertNewCollectionComponent(collection: IFluidObjectCollection, inline = false) {
         // TODO - we may want to have a shared component collection?
         const instance = collection.createCollectionItem();
-        const loadable = instance.IComponentLoadable;
+        const loadable = instance.IFluidLoadable;
 
         const props = {
             crefTest: {
@@ -4628,16 +4628,16 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const root = this.collabDocument.getRoot();
 
         const [progressBars, math, videoPlayers, images] = await Promise.all([
-            root.get<IComponentHandle>("progressBars").get(),
-            root.get<IComponentHandle<IMathCollection>>("math").get(),
-            root.get<IComponentHandle>("videoPlayers").get(),
-            root.get<IComponentHandle>("images").get(),
+            root.get<IFluidHandle>("progressBars").get(),
+            root.get<IFluidHandle<IMathCollection>>("math").get(),
+            root.get<IFluidHandle>("videoPlayers").get(),
+            root.get<IFluidHandle>("images").get(),
         ]);
 
         this.math = math;
-        this.progressBars = progressBars.IComponentCollection;
-        this.videoPlayers = videoPlayers.IComponentCollection;
-        this.images = images.IComponentCollection;
+        this.progressBars = progressBars.IFluidObjectCollection;
+        this.videoPlayers = videoPlayers.IFluidObjectCollection;
+        this.images = images.IFluidObjectCollection;
     }
 
     private insertBlobInternal(blob: IGenericBlob) {
@@ -5084,7 +5084,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.commentsView = await this.comments.getView();
 
         this.sequenceTest = await this.docRoot
-            .get<IComponentHandle<Sequence.SharedNumberSequence>>("sequence-test")
+            .get<IFluidHandle<Sequence.SharedNumberSequence>>("sequence-test")
             .get();
         this.sequenceTest.on("op", (op) => {
             this.showSequenceEntries();

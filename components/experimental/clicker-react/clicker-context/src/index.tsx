@@ -4,7 +4,7 @@
  */
 
 import {
-    PrimedComponentFactory,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
     IFluidFunctionalComponentViewState,
@@ -16,10 +16,6 @@ import {
 } from "@fluidframework/react";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const ClickerContextName = pkg.name as string;
 
 // ----- REACT STUFF -----
 interface ICounterState {
@@ -113,12 +109,12 @@ export class ClickerContext extends SyncedComponent {
         return div;
     }
 
-    // #endregion IComponentHTMLView
+    // #endregion IFluidHTMLView
 }
 
 // ----- FACTORY SETUP -----
-export const ClickerContextInstantiationFactory = new PrimedComponentFactory(
-    ClickerContextName,
+export const ClickerContextInstantiationFactory = new DataObjectFactory(
+    "clicker-context",
     ClickerContext,
     [],
     {},

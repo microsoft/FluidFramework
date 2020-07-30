@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import {
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
     MockStorage,
@@ -25,7 +25,7 @@ describe("Reconnection", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Create the first SharedMap.
-            const componentRuntime1 = new MockComponentRuntime();
+            const componentRuntime1 = new MockFluidDataStoreRuntime();
             containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
             const services1 = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
@@ -35,7 +35,7 @@ describe("Reconnection", () => {
             map1.connect(services1);
 
             // Create the second SharedMap.
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
@@ -127,7 +127,7 @@ describe("Reconnection", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Create the first SharedDirectory.
-            const componentRuntime1 = new MockComponentRuntime();
+            const componentRuntime1 = new MockFluidDataStoreRuntime();
             containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
             const services1 = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
@@ -137,7 +137,7 @@ describe("Reconnection", () => {
             directory1.connect(services1);
 
             // Create the second SharedDirectory.
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),

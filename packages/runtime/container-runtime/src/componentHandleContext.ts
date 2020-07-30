@@ -4,30 +4,39 @@
  */
 
 import {
-    IComponentHandle,
-    IComponentHandleContext,
+    IFluidHandle,
+    IFluidHandleContext,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { IRuntime } from "@fluidframework/container-definitions";
+import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
-export class ComponentHandleContext implements IComponentHandleContext {
-    public get IComponentRouter() { return this; }
-    public get IComponentHandleContext() { return this; }
+export class FluidHandleContext implements IFluidHandleContext {
+    public get IFluidRouter() { return this; }
+    public get IFluidHandleContext() { return this; }
     public readonly isAttached = true;
+    public readonly absolutePath: string;
 
+    /**
+     * Creates a new FluidHandleContext.
+     * @param path - The path to this handle relative to the routeContext.
+     * @param runtime - The IRuntime object this context represents.
+     * @param routeContext - The parent IFluidHandleContext that has a route to this handle.
+     */
     constructor(
         public readonly path: string,
         private readonly runtime: IRuntime,
-        public readonly routeContext?: IComponentHandleContext,
+        public readonly routeContext?: IFluidHandleContext,
     ) {
+        this.absolutePath = generateHandleContextPath(path, this.routeContext);
     }
 
     public attachGraph(): void {
         return;
     }
 
-    public bind(handle: IComponentHandle): void {
+    public bind(handle: IFluidHandle): void {
         if (this.isAttached) {
             handle.attachGraph();
             return;

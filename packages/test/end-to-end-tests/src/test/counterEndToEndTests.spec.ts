@@ -7,10 +7,10 @@ import assert from "assert";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
+    OpProcessingController,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
@@ -25,7 +25,7 @@ describe("SharedCounter", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let opProcessingController: OpProcessingController;
     let component1: ITestFluidComponent;
     let sharedCounter1: ISharedCounter;
     let sharedCounter2: ISharedCounter;
@@ -37,9 +37,9 @@ describe("SharedCounter", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
+    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as ITestFluidComponent;
@@ -49,21 +49,24 @@ describe("SharedCounter", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
         const container1 = await createContainer();
-        component1 = await getComponent("default", container1);
+        component1 = await requestFluidObject("default", container1);
         sharedCounter1 = await component1.getSharedObject<SharedCounter>(counterId);
 
         const container2 = await createContainer();
-        const component2 = await getComponent("default", container2);
+        const component2 = await requestFluidObject("default", container2);
         sharedCounter2 = await component2.getSharedObject<SharedCounter>(counterId);
 
         const container3 = await createContainer();
-        const component3 = await getComponent("default", container3);
+        const component3 = await requestFluidObject("default", container3);
         sharedCounter3 = await component3.getSharedObject<SharedCounter>(counterId);
 
-        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-        containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime, component3.runtime);
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController.addDeltaManagers(
+            component1.runtime.deltaManager,
+            component2.runtime.deltaManager,
+            component3.runtime.deltaManager);
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
     });
 
     function verifyCounterValue(counter: ISharedCounter, expectedValue, index: number) {
@@ -95,12 +98,12 @@ describe("SharedCounter", () => {
 
         it("can increment and decrement the value in 3 containers correctly", async () => {
             sharedCounter2.increment(7);
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
             assert.equal(sharedCounter1.value, 7);
             assert.equal(sharedCounter2.value, 7);
             assert.equal(sharedCounter3.value, 7);
             sharedCounter3.increment(-20);
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
             assert.equal(sharedCounter1.value, -13);
             assert.equal(sharedCounter2.value, -13);
             assert.equal(sharedCounter3.value, -13);
@@ -146,7 +149,7 @@ describe("SharedCounter", () => {
 
                 // do the increment
                 incrementer.increment(incrementAmount);
-                await containerDeltaEventManager.process();
+                await opProcessingController.process();
 
                 // event count is correct
                 assert.equal(eventCount1, expectedEventCount);

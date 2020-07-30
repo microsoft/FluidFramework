@@ -5,11 +5,11 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IComponentHandle,
-    IComponentHandleContext,
-    IComponentSerializer,
+    IFluidHandle,
+    IFluidHandleContext,
+    IFluidSerializer,
 } from "@fluidframework/component-core-interfaces";
-import { ChildLogger } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
@@ -97,14 +97,14 @@ export class SnapshotLegacy {
     }
 
     /**
-     * Emits the snapshot to an ITree. If provided the optional IComponentSerializer will be used when serializing
+     * Emits the snapshot to an ITree. If provided the optional IFluidSerializer will be used when serializing
      * the summary data rather than JSON.stringify.
      */
     emit(
         catchUpMsgs: ISequencedDocumentMessage[],
-        serializer?: IComponentSerializer,
-        context?: IComponentHandleContext,
-        bind?: IComponentHandle,
+        serializer?: IFluidSerializer,
+        context?: IFluidHandleContext,
+        bind?: IFluidHandle,
     ): ITree {
         const chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.chunkSize);
         let length: number = chunk1.chunkLengthChars;

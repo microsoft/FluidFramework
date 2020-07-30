@@ -65,25 +65,10 @@ export class DocumentStorageService implements IDocumentStorageService {
         return value.content;
     }
 
-    public async getContent(version: IVersion, path: string): Promise<string> {
-        const value = await this.manager.getContent(version.id, path);
-        return value.content;
-    }
-
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         const branch = ref ? `components/${this.id}/${ref}` : this.id;
         const commit = await this.manager.write(branch, tree, parents, message);
         return { date: commit.committer.date, id: commit.sha, treeId: commit.tree.sha };
-    }
-
-    // back-compat: 0.14 uploadSummary
-    public async uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
-        const handle = await this.writeSummaryObject(commit, [], "");
-        return {
-            handle,
-            handleType: SummaryType.Tree,
-            type: SummaryType.Handle,
-        };
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
@@ -109,59 +94,6 @@ export class DocumentStorageService implements IDocumentStorageService {
 
     public getRawUrl(blobId: string): string {
         return this.manager.getRawUrl(blobId);
-    }
-
-    // back-compat: 0.14 uploadSummary
-    private async writeSummaryObject(
-        value: SummaryObject,
-        submodule: { path: string; sha: string }[],
-        path: string,
-    ): Promise<string> {
-        switch (value.type) {
-            case SummaryType.Blob:
-                return this.writeSummaryBlob(value.content);
-            case SummaryType.Commit:
-                const commitTreeHandle = await this.writeSummaryObject(
-                    value.tree,
-                    submodule,
-                    path);
-                const newCommit = await this.manager.createCommit({
-                    author: value.author,
-                    message: value.message,
-                    parents: value.parents,
-                    tree: commitTreeHandle,
-                });
-
-                submodule.push({ path, sha: newCommit.sha });
-
-                return newCommit.sha;
-
-            case SummaryType.Handle:
-                return value.handle;
-
-            case SummaryType.Tree:
-                const fullTree = value.tree;
-                const entries = await Promise.all(Object.keys(fullTree).map(async (key) => {
-                    const entry = fullTree[key];
-                    const pathHandle = await this.writeSummaryObject(
-                        entry,
-                        submodule,
-                        `${path}/${encodeURIComponent(key)}`);
-                    const treeEntry: resources.ICreateTreeEntry = {
-                        mode: this.getGitMode(entry),
-                        path: encodeURIComponent(key),
-                        sha: pathHandle,
-                        type: this.getGitType(entry),
-                    };
-                    return treeEntry;
-                }));
-
-                const treeHandle = await this.manager.createGitTree({ tree: entries });
-                return treeHandle.sha;
-
-            default:
-                return Promise.reject();
-        }
     }
 
     private async writeSummaryTree(

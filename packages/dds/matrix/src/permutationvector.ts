@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { ChildLogger } from "@fluidframework/common-utils";
-import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     BaseSegment,
@@ -16,7 +16,7 @@ import {
     IMergeTreeDeltaCallbackArgs,
     MergeTreeDeltaType,
 } from "@fluidframework/merge-tree";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import { HandleTable, Handle } from "./handletable";
@@ -90,7 +90,7 @@ export class PermutationVector extends Client {
     constructor(
         path: string,
         logger: ITelemetryBaseLogger,
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         private readonly deltaCallback: (position: number, numRemoved: number, numInserted: number) => void,
         private readonly handlesRecycledCallback: (handles: Handle[]) => void,
     ) {
@@ -98,8 +98,8 @@ export class PermutationVector extends Client {
             PermutationSegment.fromJSONObject,
             ChildLogger.create(logger, `Matrix.${path}.MergeTreeClient`), {
             ...runtime.options,
-            newMergeTreeSnapshotFormat: true,
-        },
+            newMergeTreeSnapshotFormat: true,   // Temporarily force new snapshot format until it is the default.
+        },                                      // (See https://github.com/microsoft/FluidFramework/issues/84)
         );
 
         this.mergeTreeDeltaCallback = this.onDelta;
@@ -169,7 +169,7 @@ export class PermutationVector extends Client {
     }
 
     // Constructs an ITreeEntry for the cell data.
-    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle): ITree {
+    public snapshot(runtime: IFluidDataStoreRuntime, handle: IFluidHandle): ITree {
         return {
             entries: [
                 {
@@ -185,7 +185,7 @@ export class PermutationVector extends Client {
         };
     }
 
-    public async load(runtime: IComponentRuntime, storage: IObjectStorageService, branchId?: string) {
+    public async load(runtime: IFluidDataStoreRuntime, storage: IChannelStorageService, branchId?: string) {
         const [handleTableData, handles] = await Promise.all([
             await deserializeBlob(runtime, storage, SnapshotPath.handleTable),
             await deserializeBlob(runtime, storage, SnapshotPath.handles),

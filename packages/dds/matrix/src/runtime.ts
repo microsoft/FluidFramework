@@ -5,15 +5,15 @@
 
 import {
     IChannelAttributes,
-    IComponentRuntime,
-    ISharedObjectServices,
+    IFluidDataStoreRuntime,
+    IChannelServices,
     IChannel,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { pkgVersion } from "./packageVersion";
 import { SharedMatrix } from "./matrix";
 
-export class SharedMatrixFactory implements ISharedObjectFactory {
+export class SharedMatrixFactory implements IChannelFactory {
     public static Type = "https://graph.microsoft.com/types/sharedmatrix";
 
     public static readonly Attributes: IChannelAttributes = {
@@ -31,9 +31,9 @@ export class SharedMatrixFactory implements ISharedObjectFactory {
     }
 
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes,
     ): Promise<IChannel> {
@@ -42,7 +42,7 @@ export class SharedMatrixFactory implements ISharedObjectFactory {
         return matrix;
     }
 
-    public create(document: IComponentRuntime, id: string): IChannel {
+    public create(document: IFluidDataStoreRuntime, id: string): IChannel {
         const matrix = new SharedMatrix(document, id, this.attributes);
         matrix.initializeLocal();
         return matrix;

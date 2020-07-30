@@ -153,19 +153,19 @@ export class ProtocolOpHandler {
 
         const summary: ISummaryTree = {
             tree: {
-                ".attributes": {
+                attributes: {
                     content: JSON.stringify(documentAttributes),
                     type: SummaryType.Blob,
                 },
-                "quorumMembers": {
+                quorumMembers: {
                     content: JSON.stringify(quorumSnapshot.members),
                     type: SummaryType.Blob,
                 },
-                "quorumProposals": {
+                quorumProposals: {
                     content: JSON.stringify(quorumSnapshot.proposals),
                     type: SummaryType.Blob,
                 },
-                "quorumValues": {
+                quorumValues: {
                     content: JSON.stringify(quorumSnapshot.values),
                     type: SummaryType.Blob,
                 },

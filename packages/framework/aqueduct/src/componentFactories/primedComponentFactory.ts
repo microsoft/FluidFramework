@@ -4,7 +4,7 @@
  */
 
 import {
-    IComponent,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     DirectoryFactory,
@@ -13,34 +13,34 @@ import {
     SharedMap,
 } from "@fluidframework/map";
 import {
-    NamedComponentRegistryEntries,
+    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { ComponentSymbolProvider } from "@fluidframework/synthesize";
 
-import { PrimedComponent, ISharedComponentProps } from "../components";
-import { SharedComponentFactory } from "./sharedComponentFactory";
+import { DataObject, ISharedComponentProps } from "../components";
+import { PureDataObjectFactory } from "./sharedComponentFactory";
 
 /**
- * PrimedComponentFactory is the IComponentFactory for use with PrimedComponents.
- * It facilitates PrimedComponent's features (such as its shared directory) by
+ * DataObjectFactory is the IFluidDataStoreFactory for use with PrimedComponents.
+ * It facilitates DataObject's features (such as its shared directory) by
  * ensuring relevant shared objects etc are available to the factory.
  *
  * Generics:
  * P - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced component may take during creation
  */
-export class PrimedComponentFactory<
-    P extends IComponent = object,
+export class DataObjectFactory<
+    P extends IFluidObject = object,
     S = undefined>
-    extends SharedComponentFactory<P, S>
+    extends PureDataObjectFactory<P, S>
 {
     constructor(
         type: string,
-        ctor: new (props: ISharedComponentProps<P>) => PrimedComponent<P, S>,
-        sharedObjects: readonly ISharedObjectFactory[] = [],
+        ctor: new (props: ISharedComponentProps<P>) => DataObject<P, S>,
+        sharedObjects: readonly IChannelFactory[] = [],
         optionalProviders: ComponentSymbolProvider<P>,
-        registryEntries?: NamedComponentRegistryEntries,
+        registryEntries?: NamedFluidDataStoreRegistryEntries,
         onDemandInstantiation = true,
     ) {
         const mergedObjects = [...sharedObjects];
@@ -50,7 +50,7 @@ export class PrimedComponentFactory<
             mergedObjects.push(SharedDirectory.getFactory());
         }
 
-        // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed in 0.10
+        // TODO: Remove SharedMap factory when compatibility with SharedMap DataObject is no longer needed in 0.10
         if (!sharedObjects.find((factory) => factory.type === MapFactory.Type)) {
             // User did not register for map
             mergedObjects.push(SharedMap.getFactory());

@@ -6,9 +6,9 @@
 import { EventEmitter } from "events";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IComponentHandleContext,
-    IComponentSerializer,
-    IComponentRouter,
+    IFluidHandleContext,
+    IFluidSerializer,
+    IFluidRouter,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -16,29 +16,30 @@ import {
     IGenericBlob,
     ContainerWarning,
     ILoader,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { IInboundSignalMessage, IProvideComponentRegistry } from "@fluidframework/runtime-definitions";
+import { IInboundSignalMessage, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
 import { IChannel } from ".";
 
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
  */
-export interface IComponentRuntime extends
-    IComponentRouter,
+export interface IFluidDataStoreRuntime extends
+    IFluidRouter,
     EventEmitter,
     IDisposable,
-    Partial<IProvideComponentRegistry> {
+    Partial<IProvideFluidDataStoreRegistry> {
 
     readonly id: string;
 
-    readonly IComponentSerializer: IComponentSerializer;
+    readonly IFluidSerializer: IFluidSerializer;
 
-    readonly IComponentHandleContext: IComponentHandleContext;
+    readonly IFluidHandleContext: IFluidHandleContext;
 
     readonly options: any;
 
@@ -59,12 +60,12 @@ export interface IComponentRuntime extends
     readonly logger: ITelemetryLogger;
 
     /**
-     * Returns if the runtime is bound to container.
+     * Indicates the attachment state of the component to a host service.
      */
-    isBoundToContext: boolean;
+    readonly attachState: AttachState;
 
     on(
-        event: "disconnected" | "dispose" | "leader" | "notleader" | "collaborating",
+        event: "disconnected" | "dispose" | "leader" | "notleader" | "attaching" | "attached",
         listener: () => void,
     ): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
@@ -139,7 +140,4 @@ export interface IComponentRuntime extends
      * Errors raised by distributed data structures
      */
     raiseContainerWarning(warning: ContainerWarning): void;
-
-    // Returns if the runtime is attached or attaching to storage
-    isAttached: boolean;
 }

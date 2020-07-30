@@ -6,8 +6,8 @@
 import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IComponent,
-    IComponentConfiguration,
+    IFluidObject,
+    IFluidConfiguration,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -20,8 +20,9 @@ import {
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
-    CriticalContainerError,
+    ICriticalContainerError,
     ContainerWarning,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -46,7 +47,7 @@ import { NullRuntime } from "./nullRuntime";
 export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
-        scope: IComponent,
+        scope: IFluidObject & IFluidObject,
         codeLoader: ICodeLoader,
         runtimeFactory: IRuntimeFactory,
         baseSnapshot: ISnapshotTree | null,
@@ -59,7 +60,7 @@ export class ContainerContext implements IContainerContext {
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
-        closeFn: (error?: CriticalContainerError) => void,
+        closeFn: (error?: ICriticalContainerError) => void,
         version: string,
         previousRuntimeState: IRuntimeState,
     ): Promise<ContainerContext> {
@@ -136,12 +137,12 @@ export class ContainerContext implements IContainerContext {
         return this.container.options;
     }
 
-    public get configuration(): IComponentConfiguration {
-        const config: Partial<IComponentConfiguration> = {
+    public get configuration(): IFluidConfiguration {
+        const config: Partial<IFluidConfiguration> = {
             canReconnect: this.container.canReconnect,
             scopes: this.container.scopes,
         };
-        return config as IComponentConfiguration;
+        return config as IFluidConfiguration;
     }
 
     public get IMessageScheduler() {
@@ -166,7 +167,7 @@ export class ContainerContext implements IContainerContext {
 
     constructor(
         private readonly container: Container,
-        public readonly scope: IComponent,
+        public readonly scope: IFluidObject & IFluidObject,
         public readonly codeLoader: ICodeLoader,
         public readonly runtimeFactory: IRuntimeFactory,
         private readonly _baseSnapshot: ISnapshotTree | null,
@@ -179,11 +180,25 @@ export class ContainerContext implements IContainerContext {
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly snapshotFn: (message: string) => Promise<void>,
-        public readonly closeFn: (error?: CriticalContainerError) => void,
+        public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
     ) {
         this.logger = container.subLogger;
+        this.attachListener();
+    }
+
+    private attachListener() {
+        this.container.once("attaching", () => {
+            if (this.runtime?.setAttachState !== undefined) {
+                this.runtime.setAttachState(AttachState.Attaching);
+            }
+        });
+        this.container.once("attached", () => {
+            if (this.runtime?.setAttachState !== undefined) {
+                this.runtime.setAttachState(AttachState.Attached);
+            }
+        });
     }
 
     public dispose(error?: Error): void {
@@ -212,13 +227,8 @@ export class ContainerContext implements IContainerContext {
         return this.runtime!.stop();
     }
 
-    // 0.20 back-compat islocal
-    public isLocal(): boolean {
-        return !this.isAttached();
-    }
-
-    public isAttached(): boolean {
-        return this.container.isAttached();
+    public get attachState(): AttachState {
+        return this.container.attachState;
     }
 
     public createSummary(): ISummaryTree {
@@ -271,7 +281,7 @@ export class ContainerContext implements IContainerContext {
         return this.runtime! instanceof NullRuntime;
     }
 
-    public async getAbsoluteUrl?(relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined> {
         return this.container.getAbsoluteUrl(relativeUrl);
     }
 

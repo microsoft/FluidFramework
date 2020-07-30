@@ -5,8 +5,8 @@
 
 import {
     IChannelAttributes,
-    IComponentRuntime,
-    ISharedObjectServices,
+    IFluidDataStoreRuntime,
+    IChannelServices,
 } from "@fluidframework/component-runtime-definitions";
 import { ConsensusRegisterCollection } from "./consensusRegisterCollection";
 import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "./interfaces";
@@ -33,9 +33,9 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
     }
 
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<IConsensusRegisterCollection> {
         const collection = new ConsensusRegisterCollection(id, runtime, attributes);
@@ -43,7 +43,7 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
         return collection;
     }
 
-    public create(document: IComponentRuntime, id: string): IConsensusRegisterCollection {
+    public create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection {
         const collection = new ConsensusRegisterCollection(id, document, ConsensusRegisterCollectionFactory.Attributes);
         collection.initializeLocal();
         return collection;

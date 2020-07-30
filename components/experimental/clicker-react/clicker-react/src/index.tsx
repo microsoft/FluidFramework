@@ -4,7 +4,7 @@
  */
 
 import {
-    PrimedComponentFactory,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
     FluidReactComponent,
@@ -15,10 +15,6 @@ import {
 import { SharedCounter } from "@fluidframework/counter";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const ClickerName = pkg.name as string;
 
 /**
  * Basic Clicker example using new interfaces and stock component classes.
@@ -34,7 +30,7 @@ export class Clicker extends SyncedComponent {
             "clicker",
             {
                 syncedStateId: "clicker",
-                fluidToView:  new Map([
+                fluidToView: new Map([
                     [
                         "counter", {
                             type: SharedCounter.name,
@@ -91,8 +87,8 @@ class CounterReactView extends FluidReactComponent<CounterViewState, CounterFlui
 }
 
 // ----- FACTORY SETUP -----
-export const ClickerInstantiationFactory = new PrimedComponentFactory(
-    ClickerName,
+export const ClickerInstantiationFactory = new DataObjectFactory(
+    "clicker",
     Clicker,
     [SharedCounter.getFactory()],
     {},

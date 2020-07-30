@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import {
     IDirectoryValueChanged,
     SharedMap,
@@ -58,16 +58,16 @@ export async function initializeState<
         syncedStateId,
         syncedState,
     );
-    if (componentSchemaHandles?.storedHandleMapHandle.path === undefined) {
+    if (componentSchemaHandles?.storedHandleMapHandle.absolutePath === undefined) {
         throw Error(`Component schema not initialized prior to render for ${syncedStateId}`);
     }
     const storedHandleMap = dataProps.fluidComponentMap.get(
-        componentSchemaHandles?.storedHandleMapHandle.path,
+        componentSchemaHandles?.storedHandleMapHandle.absolutePath,
     )?.component as SharedMap;
     if (storedHandleMap === undefined) {
         throw Error(`Stored handle map not initialized prior to render for ${syncedStateId}`);
     }
-    const unlistenedHandles: IComponentHandle[] = [];
+    const unlistenedHandles: IFluidHandle[] = [];
     for (const handle of storedHandleMap.values()) {
         unlistenedHandles.push(handle);
     }
@@ -78,16 +78,16 @@ export async function initializeState<
         dataProps.fluidComponentMap,
         fluidToView,
     );
-    if (!currentFluidState) {
+    if (currentFluidState === undefined) {
         throw Error("Synced state update triggered before fluid state was initialized");
     }
 
     for (const fluidStateKey of fluidToView.keys()) {
         const value = fluidToView.get(fluidStateKey);
-        if (!value) {
+        if (value === undefined) {
             throw Error("Cannot find fluidToView value");
         }
-        if (value.sharedObjectCreate) {
+        if (value.sharedObjectCreate !== undefined) {
             const component = currentFluidState[fluidStateKey] as any;
             unlistenedHandles.push(component.handle);
         }
@@ -121,9 +121,9 @@ export async function initializeState<
         change: IDirectoryValueChanged,
         local: boolean,
     ) => {
-        const handle = storedHandleMap.get<IComponentHandle>(change.key);
-        if (handle !== undefined && !state.fluidComponentMap?.has(handle.path)) {
-            state.fluidComponentMap?.set(handle.path, {
+        const handle = storedHandleMap.get<IFluidHandle>(change.key);
+        if (handle !== undefined && !state.fluidComponentMap?.has(handle.absolutePath)) {
+            state.fluidComponentMap?.set(handle.absolutePath, {
                 isListened: false,
             });
             // eslint-disable-next-line @typescript-eslint/no-floating-promises

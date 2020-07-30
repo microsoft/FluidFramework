@@ -5,9 +5,9 @@
 
 import "mocha";
 
-import { ISharedObjectServices, Serializable } from "@fluidframework/component-runtime-definitions";
+import { IChannelServices, Serializable } from "@fluidframework/component-runtime-definitions";
 import {
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
     MockEmptyDeltaConnection,
     MockStorage,
@@ -28,7 +28,7 @@ async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
     const objectStorage = new MockStorage(matrix.snapshot());
 
     // Create a local ComponentRuntime since we only want to load the snapshot for a local client.
-    const componentRuntime = new MockComponentRuntime();
+    const componentRuntime = new MockFluidDataStoreRuntime();
     componentRuntime.local = true;
 
     // Load the snapshot into a newly created 2nd SharedMatrix.
@@ -50,16 +50,16 @@ describe("Big Matrix", function () {
     describe(`Excel-size matrix (${Const.excelMaxRows}x${Const.excelMaxCols})`, () => {
         let matrix1: SharedMatrix;
         let matrix2: SharedMatrix;
-        let componentRuntime1: MockComponentRuntime;
+        let componentRuntime1: MockFluidDataStoreRuntime;
         let containterRuntimeFactory: MockContainerRuntimeFactory;
 
         beforeEach(async () => {
             containterRuntimeFactory = new MockContainerRuntimeFactory();
 
             // Create and connect the first SharedMatrix.
-            componentRuntime1 = new MockComponentRuntime();
+            componentRuntime1 = new MockFluidDataStoreRuntime();
             const containerRuntime1 = containterRuntimeFactory.createContainerRuntime(componentRuntime1);
-            const services1: ISharedObjectServices = {
+            const services1: IChannelServices = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
@@ -67,9 +67,9 @@ describe("Big Matrix", function () {
             matrix1.connect(services1);
 
             // Create and connect the second SharedMatrix.
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containterRuntimeFactory.createContainerRuntime(componentRuntime2);
-            const services2: ISharedObjectServices = {
+            const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
@@ -122,14 +122,14 @@ describe("Big Matrix", function () {
     describe("local client snapshot", () => {
         // MergeTree client expects a either no delta manager or a real delta manager with minimumSequenceNumber and
         // lastSequenceNumber to be updated.
-        // Sp, we test snapshots with local client because MockComponentRuntime has no delta manager and is assigned
+        // Sp, we test snapshots with local client because MockFluidDataStoreRuntime has no delta manager and is assigned
         // one once it is connected.
 
         let matrix: SharedMatrix;
 
         beforeEach(async () => {
             // Create a SharedMatrix in local state.
-            const componentRuntime = new MockComponentRuntime();
+            const componentRuntime = new MockFluidDataStoreRuntime();
             componentRuntime.local = true;
             matrix = new SharedMatrix(componentRuntime, "matrix1", SharedMatrixFactory.Attributes);
         });

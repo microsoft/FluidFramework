@@ -12,10 +12,11 @@ import {
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-    IComponentRuntime,
-    IObjectStorageService,
+    IFluidDataStoreRuntime,
+    IChannelStorageService,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
-import { ISharedObjectFactory, SharedObject } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base";
 import { CounterFactory } from "./counterFactory";
 import { debug } from "./debug";
 import { ISharedCounter, ISharedCounterEvents } from "./interfaces";
@@ -49,7 +50,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * @param id - optional name of the shared counter
      * @returns newly create shared counter (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, CounterFactory.Type) as SharedCounter;
     }
 
@@ -58,7 +59,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      *
      * @returns a factory that creates and load SharedCounter
      */
-    public static getFactory(): ISharedObjectFactory {
+    public static getFactory(): IChannelFactory {
         return new CounterFactory();
     }
 
@@ -135,7 +136,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      */
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService): Promise<void> {
+        storage: IChannelStorageService): Promise<void> {
         const rawContent = await storage.read(snapshotFileName);
 
         const content = rawContent !== undefined

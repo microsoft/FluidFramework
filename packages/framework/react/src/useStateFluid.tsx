@@ -30,7 +30,7 @@ export function useStateFluid<
         throw Error(`Failed to find configuration for synced state ID: ${syncedStateId}`);
     }
     const syncedState = syncedComponent.syncedState;
-    const dataProps = props.dataProps || syncedComponent.dataProps;
+    const dataProps = props.dataProps ?? syncedComponent.dataProps;
     const { fluidToView, viewToFluid } = config as ISyncedStateConfig<SV, SF>;
     // Establish the react state and setState functions using the initialViewState passed in
     const [reactState, reactSetState] = React.useState<SV>(initialViewState);
@@ -55,7 +55,7 @@ export function useStateFluid<
     // update to both the local and Fluid state or just the local state respectively based off of
     // if the state update is coming locally, i.e. not from the root
     const fluidSetState = React.useCallback(
-        (newState: Partial<SV>, fromRootUpdate = false, isLocal = false) => {
+        (newState: Partial<SV>, fromRootUpdate = false, isLocal: boolean = false) => {
             const newCombinedState = {
                 ...reactState,
                 ...newState,

@@ -5,10 +5,10 @@
 
 import {
     IChannelAttributes,
-    IComponentRuntime,
-    ISharedObjectServices,
+    IFluidDataStoreRuntime,
+    IChannelServices,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { SharedCounter } from "./counter";
 import { ISharedCounter } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
@@ -16,7 +16,7 @@ import { pkgVersion } from "./packageVersion";
 /**
  * The factory that defines the counter
  */
-export class CounterFactory implements ISharedObjectFactory {
+export class CounterFactory implements IChannelFactory {
     public static readonly Type = "https://graph.microsoft.com/types/counter";
 
     public static readonly Attributes: IChannelAttributes = {
@@ -34,9 +34,9 @@ export class CounterFactory implements ISharedObjectFactory {
     }
 
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedCounter> {
         const counter = new SharedCounter(id, runtime, attributes);
@@ -44,7 +44,7 @@ export class CounterFactory implements ISharedObjectFactory {
         return counter;
     }
 
-    public create(document: IComponentRuntime, id: string): ISharedCounter {
+    public create(document: IFluidDataStoreRuntime, id: string): ISharedCounter {
         const counter = new SharedCounter(id, document, this.attributes);
         counter.initializeLocal();
         return counter;

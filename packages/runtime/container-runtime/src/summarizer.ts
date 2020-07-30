@@ -6,25 +6,24 @@
 import { EventEmitter } from "events";
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    ChildLogger,
     Deferred,
-    PerformanceEvent,
     PromiseTimer,
     Timer,
     IPromiseTimerResult,
 } from "@fluidframework/common-utils";
+import { ChildLogger, CustomErrorWithProps, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
-    IComponentRouter,
-    IComponentRunnable,
+    IFluidRouter,
+    IFluidRunnable,
     IRequest,
     IResponse,
-    IComponentHandleContext,
-    IComponentHandle,
-    IComponentLoadable,
+    IFluidHandleContext,
+    IFluidHandle,
+    IFluidLoadable,
 } from "@fluidframework/component-core-interfaces";
-import { IDeltaManager, ErrorType, ISummarizingWarning } from "@fluidframework/container-definitions";
+import { IDeltaManager, IErrorBase } from "@fluidframework/container-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
-import { ErrorWithProps, CreateContainerError } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -46,6 +45,8 @@ const minOpsForLastSummary = 50;
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideSummarizer>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideSummarizer>> { }
 }
 
 export const ISummarizer: keyof IProvideSummarizer = "ISummarizer";
@@ -54,8 +55,18 @@ export interface IProvideSummarizer {
     readonly ISummarizer: ISummarizer;
 }
 
-export class SummarizingWarning extends ErrorWithProps implements ISummarizingWarning {
-    readonly errorType = ErrorType.summarizingError;
+const summarizingError = "summarizingError";
+
+export interface ISummarizingWarning extends IErrorBase {
+    readonly errorType: "summarizingError";
+    /**
+     * Whether this error has already been logged. Used to avoid logging errors twice.
+     */
+    readonly logged: boolean;
+}
+
+export class SummarizingWarning extends CustomErrorWithProps implements ISummarizingWarning {
+    readonly errorType = summarizingError;
     readonly canRetry = true;
 
     constructor(errorMessage: string, readonly logged: boolean = false) {
@@ -73,7 +84,7 @@ export interface ISummarizerEvents extends IEvent {
     (event: "summarizingError", listener: (error: ISummarizingWarning) => void);
 }
 export interface ISummarizer
-    extends IEventProvider<ISummarizerEvents>, IComponentRouter, IComponentRunnable, IComponentLoadable {
+    extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidRunnable, IFluidLoadable {
     /**
      * Returns a promise that will be resolved with the next Summarizer after context reload
      */
@@ -554,9 +565,9 @@ export class RunningSummarizer implements IDisposable {
  * It is the main entry point for summary work.
  */
 export class Summarizer extends EventEmitter implements ISummarizer {
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
-    public get IComponentRunnable() { return this; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidRouter() { return this; }
+    public get IFluidRunnable() { return this; }
     public get ISummarizer() { return this; }
 
     private readonly logger: ITelemetryLogger;
@@ -571,9 +582,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     private readonly stopDeferred = new Deferred<void>();
     private _disposed: boolean = false;
 
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
     constructor(
         public readonly url: string,
@@ -581,8 +592,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         private readonly configurationGetter: () => ISummaryConfiguration,
         // eslint-disable-next-line max-len
         private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
-        private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => Promise<void>,
-        handleContext: IComponentHandleContext,
+        private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => void,
+        handleContext: IFluidHandleContext,
         summaryCollection?: SummaryCollection,
     ) {
         super();
@@ -609,7 +620,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             const err2: ISummarizingWarning = {
                 logged: false,
                 ...CreateContainerError(error),
-                errorType: ErrorType.summarizingError,
+                errorType: summarizingError,
             };
             this.emit("summarizingError", err2);
             throw error;
@@ -651,7 +662,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "fluid/component",
+            mimeType: "fluid/object",
             status: 200,
             value: this,
         };
@@ -799,7 +810,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                     ackHandle: ack.summaryAckNack.contents.handle,
                 };
 
-                await this.refreshLatestAck(context, refSequenceNumber);
+                this.refreshLatestAck(context, refSequenceNumber);
                 refSequenceNumber++;
             } catch (error) {
                 this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);

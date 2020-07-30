@@ -30,7 +30,7 @@ const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 function createErrorObject(handler: string, error: any, canRetry = true) {
     // Note: we suspect the incoming error object is either:
     // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
-    // - a socketError: add it to the CriticalContainerError object for driver to be able to parse it and reason
+    // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
     //   over it.
     const errorObj = createGenericNetworkError(
         `socket.io error: ${handler}: ${error}`,
@@ -99,6 +99,15 @@ export class DocumentDeltaConnection
         await deltaConnection.initialize(connectMessage, timeoutMs);
         return deltaConnection;
     }
+
+    /**
+     * Last known sequence number to ordering service at the time of connection
+     * It may lap actual last sequence number (quite a bit, if container  is very active).
+     * But it's best information for client to figure out how far it is behind, at least
+     * for "read" connections. "write" connections may use own "join" op to similar information,
+     * that is likely to be more up-to-date.
+     */
+    public checkpointSequenceNumber: number | undefined;
 
     // Listen for ops sent before we receive a response to connect_document
     protected readonly queuedMessages: ISequencedDocumentMessage[] = [];
@@ -378,19 +387,8 @@ export class DocumentDeltaConnection
                     return;
                 }
 
-                /* Issue #1566: Backward compat */
-                if (response.initialMessages === undefined) {
-                    response.initialMessages = [];
-                }
-                if (response.initialClients === undefined) {
-                    response.initialClients = [];
-                }
-                if (response.initialContents === undefined) {
-                    response.initialContents = [];
-                }
-                if (response.initialSignals === undefined) {
-                    response.initialSignals = [];
-                }
+                // TODO: Get latest server bits
+                this.checkpointSequenceNumber = (response as any).checkpointSequenceNumber;
 
                 this.removeTrackedListeners(true);
                 resolve(response);

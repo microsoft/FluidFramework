@@ -9,7 +9,10 @@ The generator can bootstrap with a beginner or advanced scaf
 To get started ensure you have [Node.js](https://nodejs.org/en/) and [Git](https://git-scm.com/) installed, then install [Yeoman](https://yeoman.io/) and the [Fluid Component Generator](https://www.npmjs.com/package/generator-fluid) with:
 
 ````bash
-npm install -g yo generator-fluid
+npm install -g yo
+cd tools/generator-fluid
+npm install
+npm link
 ````
 
 You're now set up to bootstrap a new Fluid component at any time. Run the generator and fill out a few prompts.

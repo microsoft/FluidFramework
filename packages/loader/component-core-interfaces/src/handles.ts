@@ -3,30 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRouter } from "./componentRouter";
-import { IComponent } from "./components";
-import { IComponentLoadable } from "./componentLoadable";
+import { IFluidRouter } from "./fluidRouter";
+import { IFluidObject } from "./fluidObject";
+import { IFluidLoadable } from "./fluidLoadable";
 
-export const IComponentHandleContext: keyof IProvideComponentHandleContext = "IComponentHandleContext";
+export const IFluidHandleContext: keyof IProvideFluidHandleContext = "IFluidHandleContext";
 
-export interface IProvideComponentHandleContext {
-    readonly IComponentHandleContext: IComponentHandleContext;
+export interface IProvideFluidHandleContext {
+    readonly IFluidHandleContext: IFluidHandleContext;
 }
 
 /**
- * An IComponentHandleContext describes a routing context from which other IComponentHandleContexts are defined
+ * An IFluidHandleContext describes a routing context from which other IFluidHandleContexts are defined
  */
-export interface IComponentHandleContext extends IComponentRouter, IProvideComponentHandleContext {
+export interface IFluidHandleContext extends IFluidRouter, IProvideFluidHandleContext {
     /**
+     * @deprecated - Use `absolutePath` to get the path to the handle context from the root.
      * Path to the handle context relative to the routeContext
      */
     path: string;
 
     /**
-     * The parent IComponentHandleContext that has provided a route path to this IComponentHandleContext or undefined
+     * The absolute path to the handle context from the root.
+     */
+    absolutePath: string;
+
+    /**
+     * The parent IFluidHandleContext that has provided a route path to this IFluidHandleContext or undefined
      * at the root.
      */
-    routeContext?: IComponentHandleContext;
+    routeContext?: IFluidHandleContext;
 
     /**
      * Flag indicating whether or not the entity has services attached.
@@ -42,24 +48,24 @@ export interface IComponentHandleContext extends IComponentRouter, IProvideCompo
      * Binds the given handle to this one or attach the given handle if this handle is attached.
      * A bound handle will also be attached once this handle is attached.
      */
-    bind(handle: IComponentHandle): void;
+    bind(handle: IFluidHandle): void;
 }
 
-export const IComponentHandle: keyof IProvideComponentHandle = "IComponentHandle";
+export const IFluidHandle: keyof IProvideFluidHandle = "IFluidHandle";
 
-export interface IProvideComponentHandle {
-    readonly IComponentHandle: IComponentHandle;
+export interface IProvideFluidHandle {
+    readonly IFluidHandle: IFluidHandle;
 }
 
 /**
- * Handle to a shared component
+ * Handle to a shared FluidObject
  */
-export interface IComponentHandle<
-    // REVIEW: Constrain `T` to `IComponent & IComponentLoadable`?
-    T = IComponent & IComponentLoadable
-    > extends IComponentHandleContext, IProvideComponentHandle {
+export interface IFluidHandle<
+    // REVIEW: Constrain `T` to `IFluidObject & IFluidLoadable`?
+    T = IFluidObject & IFluidLoadable
+    > extends IFluidHandleContext, IProvideFluidHandle {
     /**
-     * Returns a promise to the component referenced by the handle.
+     * Returns a promise to the Fluid Object referenced by the handle.
      */
     get(): Promise<T>;
 }

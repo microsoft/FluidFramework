@@ -11,7 +11,7 @@ import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/commo
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/common-utils";
+import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -311,7 +311,7 @@ class Document {
                 ["@ms/tablero/TableroDocument", Promise.resolve(chaincode)],
                 ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
             ]);
-        const options = { };
+        const options = {};
 
         // Load the Fluid document
         this.docLogger = ChildLogger.create(new Logger(containerDescription, errorHandler));
