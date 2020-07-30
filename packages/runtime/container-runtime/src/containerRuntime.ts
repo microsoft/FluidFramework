@@ -200,7 +200,7 @@ export interface IContainerRuntimeOptions {
     // Flag to enable summarizing with new SummarizerNode strategy.
     // Enabling this feature will allow components that fail to summarize to
     // try to still summarize based on previous successful summary + ops since.
-    // Disabled by default.
+    // Enabled by default.
     enableSummarizerNode?: boolean;
 }
 
@@ -693,9 +693,9 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             )
             : SummarizerNode.createRootWithoutSummary(thisSummarizeInternal, thisChangeSequenceNumber);
 
-        // Use runtimeOptions if provided, otherwise check localStorage
+        // Use runtimeOptions if provided, otherwise check localStorage, defaulting to true/enabled.
         const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode
-            ?? (typeof localStorage === "object" && localStorage?.enableSummarizerNode);
+            ?? (typeof localStorage === "object" && localStorage?.fluidDisableSummarizerNode ? false : true);
         if (enableSummarizerNode) {
             this.summarizerNode = {
                 enabled: true,
