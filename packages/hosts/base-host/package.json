@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/base-host",
-  "version": "0.23.0",
+  "version": "0.25.0",
   "description": "Loader client app",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -53,20 +53,20 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
-    "@fluidframework/common-utils": "^0.21.0-0",
-    "@fluidframework/component-core-interfaces": "^0.23.0",
-    "@fluidframework/container-definitions": "^0.23.0",
-    "@fluidframework/container-loader": "^0.23.0",
-    "@fluidframework/driver-definitions": "^0.23.0",
-    "@fluidframework/protocol-base": "^0.1010.0-34206",
-    "@fluidframework/protocol-definitions": "^0.1010.0-34206",
-    "@fluidframework/telemetry-utils": "^0.23.0",
-    "@fluidframework/web-code-loader": "^0.23.0"
+    "@fluidframework/common-utils": "^0.21.0",
+    "@fluidframework/component-core-interfaces": "^0.25.0",
+    "@fluidframework/container-definitions": "^0.25.0",
+    "@fluidframework/container-loader": "^0.25.0",
+    "@fluidframework/driver-definitions": "^0.25.0",
+    "@fluidframework/protocol-base": "^0.1010.0",
+    "@fluidframework/protocol-definitions": "^0.1010.0",
+    "@fluidframework/telemetry-utils": "^0.25.0",
+    "@fluidframework/web-code-loader": "^0.25.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/test-runtime-utils": "^0.23.0",
+    "@fluidframework/test-runtime-utils": "^0.25.0",
     "@microsoft/api-extractor": "^7.7.2",
     "@mixer/webpack-bundle-compare": "^0.1.0",
     "@types/mocha": "^5.2.5",

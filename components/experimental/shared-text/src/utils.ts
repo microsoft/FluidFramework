@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ISharedMap } from "@fluidframework/map";
 import { default as axios } from "axios";
 
@@ -26,10 +26,10 @@ export async function waitForFullConnection(runtime: any): Promise<void> {
 }
 
 export async function getInsights(map: ISharedMap, id: string): Promise<ISharedMap> {
-    const insightsHandle = await map.wait<IComponentHandle<ISharedMap>>("insights");
+    const insightsHandle = await map.wait<IFluidHandle<ISharedMap>>("insights");
     const insights = await insightsHandle.get();
 
-    const handle = await insights.wait<IComponentHandle<ISharedMap>>(id);
+    const handle = await insights.wait<IFluidHandle<ISharedMap>>(id);
     return handle.get();
 }
 
@@ -40,10 +40,10 @@ export async function setTranslation(
     toLanguage: string,
 ): Promise<void> {
     // Create the translations map
-    const handle = await document.getRoot().wait<IComponentHandle<ISharedMap>>("insights");
+    const handle = await document.getRoot().wait<IFluidHandle<ISharedMap>>("insights");
     const insights = await handle.get();
 
-    const idMapHandle = await insights.wait<IComponentHandle<ISharedMap>>(id);
+    const idMapHandle = await insights.wait<IFluidHandle<ISharedMap>>(id);
     const idMap = await idMapHandle.get();
 
     if (!document.existing) {

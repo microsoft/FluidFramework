@@ -4,9 +4,9 @@
  */
 
 import {
-    PrimedComponent,
+    DataObject,
 } from "@fluidframework/aqueduct";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { SharedMap, IDirectory, IDirectoryValueChanged } from "@fluidframework/map";
@@ -19,8 +19,8 @@ export const PrimitivesName = pkg.name as string;
 /**
  * Basic DDS examples using view interfaces and stock component classes.
  */
-export class PrimitivesCollection extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class PrimitivesCollection extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private internalMapDir: IDirectory | undefined;
     protected get mapDir(): IDirectory { return this.tryGetDds(this.internalMapDir, "mapDir"); }
@@ -31,11 +31,11 @@ export class PrimitivesCollection extends PrimedComponent implements IComponentH
      *
      * This method is used to perform component setup, which can include setting an initial schema or initial values.
      */
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         this.internalMapDir = this.root.createSubDirectory("map");
     }
 
-    protected async componentInitializingFromExisting() {
+    protected async initializingFromExisting() {
         this.internalMapDir = this.root.getSubDirectory("map");
     }
 

@@ -4,20 +4,20 @@
  */
 import assert from "assert";
 import {
-    IComponentRuntimeChannel,
-    IComponentContext,
-    IComponentFactory,
-    IComponentRegistry,
-    ComponentRegistryEntry,
-    NamedComponentRegistryEntries,
+    IFluidDataStoreChannel,
+    IFluidDataStoreContext,
+    IFluidDataStoreFactory,
+    IFluidDataStoreRegistry,
+    FluidDataStoreRegistryEntry,
+    NamedFluidDataStoreRegistryEntries,
     SummarizeInternalFn,
     CreateChildSummarizerNodeFn,
 } from "@fluidframework/runtime-definitions";
-import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker, SummarizerNode } from "@fluidframework/runtime-utils";
-import { LocalComponentContext } from "../componentContext";
+import { LocalFluidDataStoreContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
 
 describe("Component Creation Tests", () => {
@@ -36,8 +36,8 @@ describe("Component Creation Tests", () => {
          */
 
         let storage: IDocumentStorageService;
-        let scope: IComponent & IFluidObject;
-        const attachCb = (mR: IComponentRuntimeChannel) => { };
+        let scope: IFluidObject & IFluidObject;
+        const attachCb = (mR: IFluidDataStoreChannel) => { };
         let containerRuntime: ContainerRuntime;
         const defaultName = "default";
         const componentAName = "componentA";
@@ -46,25 +46,27 @@ describe("Component Creation Tests", () => {
         let summaryTracker: SummaryTracker;
         let getCreateSummarizerNodeFn: (id: string) => CreateChildSummarizerNodeFn;
 
-        // Helper function that creates a ComponentRegistryEntry with the registry entries
+        // Helper function that creates a FluidDataStoreRegistryEntry with the registry entries
         // provided to it.
-        function createComponentRegistryEntry(entries: NamedComponentRegistryEntries): ComponentRegistryEntry {
+        function createComponentRegistryEntry(
+            entries: NamedFluidDataStoreRegistryEntries,
+        ): FluidDataStoreRegistryEntry {
             const registryEntries = new Map(entries);
-            const factory: IComponentFactory = {
-                get IComponentFactory() { return factory; },
-                instantiateComponent: (context: IComponentContext) => {
-                    context.bindRuntime(new MockComponentRuntime());
+            const factory: IFluidDataStoreFactory = {
+                get IFluidDataStoreFactory() { return factory; },
+                instantiateDataStore: (context: IFluidDataStoreContext) => {
+                    context.bindRuntime(new MockFluidDataStoreRuntime());
                 },
             };
-            const registry: IComponentRegistry = {
-                get IComponentRegistry() { return registry; },
+            const registry: IFluidDataStoreRegistry = {
+                get IFluidDataStoreRegistry() { return registry; },
                 // Returns the registry entry as per the entries provided in the param.
                 get: async (pkg) => registryEntries.get(pkg),
             };
 
-            const entry: ComponentRegistryEntry = {
-                get IComponentFactory() { return factory; },
-                get IComponentRegistry() { return registry; },
+            const entry: FluidDataStoreRegistryEntry = {
+                get IFluidDataStoreFactory() { return factory; },
+                get IFluidDataStoreRegistry() { return registry; },
             };
             return entry;
         }
@@ -84,15 +86,15 @@ describe("Component Creation Tests", () => {
 
             // Create the global registry for the container that can only create the default component.
             const globalRegistryEntries = new Map([[defaultName, Promise.resolve(entryDefault)]]);
-            const globalRegistry: IComponentRegistry = {
-                get IComponentRegistry() { return globalRegistry; },
+            const globalRegistry: IFluidDataStoreRegistry = {
+                get IFluidDataStoreRegistry() { return globalRegistry; },
                 get: async (pkg) => globalRegistryEntries.get(pkg),
             };
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
-                IComponentRegistry: globalRegistry,
-                notifyComponentInstantiated: (c) => { },
-                on: (event, listener) => {},
+                IFluidDataStoreRegistry: globalRegistry,
+                notifyDataStoreInstantiated: (c) => { },
+                on: (event, listener) => { },
             } as ContainerRuntime;
             summaryTracker = new SummaryTracker("", 0, 0);
             const summarizerNode = SummarizerNode.createRootWithoutSummary(
@@ -109,7 +111,7 @@ describe("Component Creation Tests", () => {
             let success: boolean = true;
             const componentId = "default-Id";
             // Create the default component that is in the global registry.
-            const context: LocalComponentContext = new LocalComponentContext(
+            const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 componentId,
                 [defaultName],
                 containerRuntime,
@@ -132,7 +134,7 @@ describe("Component Creation Tests", () => {
             let success: boolean = true;
             const componentId = "A-Id";
             // Create component A that is not in the global registry.
-            const context: LocalComponentContext = new LocalComponentContext(
+            const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 componentId,
                 [componentAName],
                 containerRuntime,
@@ -155,7 +157,7 @@ describe("Component Creation Tests", () => {
             let success: boolean = true;
             const componentId = "A-Id";
             // Create component A that is in the registry of the default component.
-            const contextA: LocalComponentContext = new LocalComponentContext(
+            const contextA: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 componentId,
                 [defaultName, componentAName],
                 containerRuntime,
@@ -178,7 +180,7 @@ describe("Component Creation Tests", () => {
             let success: boolean = true;
             const componentId = "B-Id";
             // Create component B that is in not the registry of the default component.
-            const contextB: LocalComponentContext = new LocalComponentContext(
+            const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 componentId,
                 [defaultName, componentBName],
                 containerRuntime,
@@ -201,7 +203,7 @@ describe("Component Creation Tests", () => {
             let success: boolean = true;
             const componentBId = "B-Id";
             // Create component B that is in the registry of component A (which is at depth 2).
-            const contextB: LocalComponentContext = new LocalComponentContext(
+            const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 componentBId,
                 [defaultName, componentAName, componentBName],
                 containerRuntime,
@@ -221,7 +223,7 @@ describe("Component Creation Tests", () => {
 
             const componentCId = "C-Id";
             // Create component C that is in the registry of component A (which is at depth 2).
-            const contextC: LocalComponentContext = new LocalComponentContext(
+            const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 componentCId,
                 [defaultName, componentAName, componentCName],
                 containerRuntime,
@@ -244,7 +246,7 @@ describe("Component Creation Tests", () => {
             let success: boolean = true;
             const componentId = "fake-Id";
             // Create a fake component that is not in the registry of component A (which is at depth 2).
-            const contextFake: LocalComponentContext = new LocalComponentContext(
+            const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 componentId,
                 [defaultName, componentAName, "fake"],
                 containerRuntime,
@@ -267,7 +269,7 @@ describe("Component Creation Tests", () => {
             let success: boolean = true;
             const componentId = "fake-Id";
             // Create a fake component that is not in the registry of component B (which is at depth 3).
-            const contextFake: LocalComponentContext = new LocalComponentContext(
+            const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 componentId,
                 [defaultName, componentAName, componentBName, "fake"],
                 containerRuntime,
@@ -290,7 +292,7 @@ describe("Component Creation Tests", () => {
             let success: boolean = true;
             const componentId = "C-Id";
             // Create component C that is in parent's registry but not in the registry of component B.
-            const contextC: LocalComponentContext = new LocalComponentContext(
+            const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 componentId,
                 [defaultName, componentAName, componentBName, componentCName],
                 containerRuntime,

@@ -4,21 +4,25 @@
  */
 
 import assert from "assert";
-import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
 import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
-    IComponentRuntimeChannel,
-    IComponentContext,
-    IComponentFactory,
-    IComponentRegistry,
+    IFluidDataStoreChannel,
+    IFluidDataStoreContext,
+    IFluidDataStoreFactory,
+    IFluidDataStoreRegistry,
     SummarizeInternalFn,
     CreateChildSummarizerNodeFn,
 } from "@fluidframework/runtime-definitions";
-import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker, SummarizerNode } from "@fluidframework/runtime-utils";
-import { IComponentAttributes, LocalComponentContext, RemotedComponentContext } from "../componentContext";
+import {
+    IFluidDataStoretAttributes,
+    LocalFluidDataStoreContext,
+    RemotedFluidDataStoreContext,
+} from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
 
 describe("Component Context Tests", () => {
@@ -37,31 +41,31 @@ describe("Component Context Tests", () => {
         );
     });
 
-    describe("LocalComponentContext Initialization", () => {
-        let localComponentContext: LocalComponentContext;
+    describe("LocalFluidDataStoreContext Initialization", () => {
+        let localComponentContext: LocalFluidDataStoreContext;
         let storage: IDocumentStorageService;
-        let scope: IComponent & IFluidObject;
-        const attachCb = (mR: IComponentRuntimeChannel) => { };
+        let scope: IFluidObject & IFluidObject;
+        const attachCb = (mR: IFluidDataStoreChannel) => { };
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
-            const factory: IComponentFactory = {
-                get IComponentFactory() { return factory; },
-                instantiateComponent: (context: IComponentContext) => { },
+            const factory: IFluidDataStoreFactory = {
+                get IFluidDataStoreFactory() { return factory; },
+                instantiateDataStore: (context: IFluidDataStoreContext) => { },
             };
-            const registry: IComponentRegistry = {
-                get IComponentRegistry() { return registry; },
+            const registry: IFluidDataStoreRegistry = {
+                get IFluidDataStoreRegistry() { return registry; },
                 get: async (pkg) => Promise.resolve(factory),
             };
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
-                IComponentRegistry: registry,
-                notifyComponentInstantiated: (c) => { },
-                on: (event, listener) => {},
+                IFluidDataStoreRegistry: registry,
+                notifyDataStoreInstantiated: (c) => { },
+                on: (event, listener) => { },
             } as ContainerRuntime;
         });
 
         it("Check LocalComponent Attributes", () => {
-            localComponentContext = new LocalComponentContext(
+            localComponentContext = new LocalFluidDataStoreContext(
                 componentId,
                 ["TestComponent1"],
                 containerRuntime,
@@ -73,13 +77,13 @@ describe("Component Context Tests", () => {
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();
-            localComponentContext.bindRuntime(new MockComponentRuntime());
+            localComponentContext.bindRuntime(new MockFluidDataStoreRuntime());
             const attachMessage = localComponentContext.generateAttachMessage();
 
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
 
-            const contents = JSON.parse(blob.contents) as IComponentAttributes;
-            const componentAttributes: IComponentAttributes = {
+            const contents = JSON.parse(blob.contents) as IFluidDataStoretAttributes;
+            const componentAttributes: IFluidDataStoretAttributes = {
                 pkg: JSON.stringify(["TestComponent1"]),
                 snapshotFormatVersion: "0.1",
             };
@@ -92,9 +96,9 @@ describe("Component Context Tests", () => {
             assert.equal(attachMessage.type, "TestComponent1", "Attach message type does not match.");
         });
 
-        it("Supplying array of packages in LocalComponentContext should create exception", async () => {
+        it("Supplying array of packages in LocalFluidDataStoreContext should create exception", async () => {
             let exception = false;
-            localComponentContext = new LocalComponentContext(
+            localComponentContext = new LocalFluidDataStoreContext(
                 componentId,
                 ["TestComp", "SubComp"],
                 containerRuntime,
@@ -111,20 +115,20 @@ describe("Component Context Tests", () => {
             assert.equal(exception, true, "Exception did not occur.");
         });
 
-        it("Supplying array of packages in LocalComponentContext should not create exception", async () => {
+        it("Supplying array of packages in LocalFluidDataStoreContext should not create exception", async () => {
             const registryWithSubRegistries: { [key: string]: any } = {};
-            registryWithSubRegistries.IComponentFactory = registryWithSubRegistries;
-            registryWithSubRegistries.IComponentRegistry = registryWithSubRegistries;
+            registryWithSubRegistries.IFluidDataStoreFactory = registryWithSubRegistries;
+            registryWithSubRegistries.IFluidDataStoreRegistry = registryWithSubRegistries;
             registryWithSubRegistries.get = async (pkg) => Promise.resolve(registryWithSubRegistries);
-            registryWithSubRegistries.instantiateComponent = (context: IComponentContext) => { };
+            registryWithSubRegistries.instantiateDataStore = (context: IFluidDataStoreContext) => { };
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
-                IComponentRegistry: registryWithSubRegistries,
-                notifyComponentInstantiated: (c) => { },
-                on: (event, listener) => {},
+                IFluidDataStoreRegistry: registryWithSubRegistries,
+                notifyDataStoreInstantiated: (c) => { },
+                on: (event, listener) => { },
             } as ContainerRuntime;
-            localComponentContext = new LocalComponentContext(
+            localComponentContext = new LocalFluidDataStoreContext(
                 componentId,
                 ["TestComp", "SubComp"],
                 containerRuntime,
@@ -136,12 +140,12 @@ describe("Component Context Tests", () => {
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();
-            localComponentContext.bindRuntime(new MockComponentRuntime());
+            localComponentContext.bindRuntime(new MockFluidDataStoreRuntime());
 
             const attachMessage = localComponentContext.generateAttachMessage();
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
-            const contents = JSON.parse(blob.contents) as IComponentAttributes;
-            const componentAttributes: IComponentAttributes = {
+            const contents = JSON.parse(blob.contents) as IFluidDataStoretAttributes;
+            const componentAttributes: IFluidDataStoretAttributes = {
                 pkg: JSON.stringify(["TestComp", "SubComp"]),
                 snapshotFormatVersion: "0.1",
             };
@@ -156,25 +160,25 @@ describe("Component Context Tests", () => {
     });
 
     describe("RemoteComponentContext Initialization", () => {
-        let remotedComponentContext: RemotedComponentContext;
-        let componentAttributes: IComponentAttributes;
+        let remotedComponentContext: RemotedFluidDataStoreContext;
+        let componentAttributes: IFluidDataStoretAttributes;
         const storage: Partial<IDocumentStorageService> = {};
-        let scope: IComponent & IFluidObject;
+        let scope: IFluidObject & IFluidObject;
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
             const factory: { [key: string]: any } = {};
-            factory.IComponentFactory = factory;
-            factory.instantiateComponent =
-                (context: IComponentContext) => { context.bindRuntime(new MockComponentRuntime()); };
+            factory.IFluidDataStoreFactory = factory;
+            factory.instantiateDataStore =
+                (context: IFluidDataStoreContext) => { context.bindRuntime(new MockFluidDataStoreRuntime()); };
             const registry: { [key: string]: any } = {};
-            registry.IComponentRegistry = registry;
+            registry.IFluidDataStoreRegistry = registry;
             registry.get = async (pkg) => Promise.resolve(factory);
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
-                IComponentRegistry: registry,
-                notifyComponentInstantiated: (c) => { },
-                on: (event, listener) => {},
+                IFluidDataStoreRegistry: registry,
+                notifyDataStoreInstantiated: (c) => { },
+                on: (event, listener) => { },
             } as ContainerRuntime;
         });
 
@@ -192,7 +196,7 @@ describe("Component Context Tests", () => {
                 trees: {},
             };
 
-            remotedComponentContext = new RemotedComponentContext(
+            remotedComponentContext = new RemotedFluidDataStoreContext(
                 componentId,
                 Promise.resolve(snapshotTree),
                 containerRuntime,
@@ -204,7 +208,7 @@ describe("Component Context Tests", () => {
             const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
 
-            const contents = JSON.parse(blob.contents) as IComponentAttributes;
+            const contents = JSON.parse(blob.contents) as IFluidDataStoretAttributes;
             assert.equal(contents.pkg, componentAttributes.pkg, "Remote Component package does not match.");
             assert.equal(
                 contents.snapshotFormatVersion,
@@ -225,7 +229,7 @@ describe("Component Context Tests", () => {
                 trees: {},
             };
 
-            remotedComponentContext = new RemotedComponentContext(
+            remotedComponentContext = new RemotedFluidDataStoreContext(
                 componentId,
                 Promise.resolve(snapshotTree),
                 containerRuntime,
@@ -237,7 +241,7 @@ describe("Component Context Tests", () => {
             const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
 
-            const contents = JSON.parse(blob.contents) as IComponentAttributes;
+            const contents = JSON.parse(blob.contents) as IFluidDataStoretAttributes;
             assert.equal(
                 contents.pkg,
                 JSON.stringify([componentAttributes.pkg]),

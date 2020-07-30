@@ -4,9 +4,9 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultComponent,
-    PrimedComponent,
-    PrimedComponentFactory,
+    ContainerRuntimeFactoryWithDefaultDataStore,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 
 export interface ITestConfig {
@@ -28,12 +28,12 @@ export interface ILoadTest {
 
 const wait = async (timeMs: number) => new Promise((resolve) => setTimeout(resolve, timeMs));
 
-class LoadTestComponent extends PrimedComponent implements ILoadTest {
+class LoadTestComponent extends DataObject implements ILoadTest {
     public static ComponentName = "StressTestComponent";
     private opCount = 0;
     private sentCount = 0;
     private state: string = "not started";
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.root.on("op", () => {
             this.opCount++;
         });
@@ -127,14 +127,14 @@ class LoadTestComponent extends PrimedComponent implements ILoadTest {
     }
 }
 
-const LoadTestComponentInstantiationFactory = new PrimedComponentFactory(
+const LoadTestComponentInstantiationFactory = new DataObjectFactory(
     LoadTestComponent.ComponentName,
     LoadTestComponent,
     [],
     {},
 );
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     LoadTestComponent.ComponentName,
     new Map([[LoadTestComponent.ComponentName, Promise.resolve(LoadTestComponentInstantiationFactory)]]),
 );

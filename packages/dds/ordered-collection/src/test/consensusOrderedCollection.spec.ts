@@ -9,7 +9,7 @@ import {
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory";
@@ -162,7 +162,7 @@ describe("ConsensusOrderedCollection", () => {
 
     describe("Detached", () => {
         generate([1, 2], [1, 2], () => {
-            return factory.create(new MockComponentRuntime(), "consensus-ordered-collection");
+            return factory.create(new MockFluidDataStoreRuntime(), "consensus-ordered-collection");
         },
             () => { });
     });
@@ -174,7 +174,7 @@ describe("ConsensusOrderedCollection", () => {
         generate([1, 2], [1, 2],
             () => {
                 containerRuntimeFactory = new MockContainerRuntimeFactory();
-                const componentRuntime = new MockComponentRuntime();
+                const componentRuntime = new MockFluidDataStoreRuntime();
                 const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
                 const services: IChannelServices = {
                     deltaConnection: containerRuntime.createDeltaConnection(),
@@ -200,7 +200,7 @@ describe("ConsensusOrderedCollection", () => {
 
         async function createConsensusOrderedCollection(
             id: string,
-            componentRuntime: MockComponentRuntime,
+            componentRuntime: MockFluidDataStoreRuntime,
             deltaConnection: IDeltaConnection,
         ): Promise<IConsensusOrderedCollection> {
             const services: IChannelServices = {
@@ -217,7 +217,7 @@ describe("ConsensusOrderedCollection", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Create first ConsensusOrderedCollection
-            const componentRuntime1 = new MockComponentRuntime();
+            const componentRuntime1 = new MockFluidDataStoreRuntime();
             containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
             const deltaConnection1 = containerRuntime1.createDeltaConnection();
             testCollection1 = await createConsensusOrderedCollection(
@@ -227,7 +227,7 @@ describe("ConsensusOrderedCollection", () => {
             );
 
             // Create second ConsensusOrderedCollection
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const deltaConnection2 = containerRuntime2.createDeltaConnection();
             testCollection2 = await createConsensusOrderedCollection(

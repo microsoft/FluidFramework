@@ -15,11 +15,11 @@ import {
 import {
     IChannel,
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
 import {
-    IComponentContext,
+    IFluidDataStoreContext,
     ISummaryTracker,
     ISummarizeResult,
     ISummarizerNode,
@@ -44,8 +44,8 @@ export class RemoteChannelContext implements IChannelContext {
     };
     private readonly summarizerNode: ISummarizerNode;
     constructor(
-        private readonly runtime: IComponentRuntime,
-        private readonly componentContext: IComponentContext,
+        private readonly runtime: IFluidDataStoreRuntime,
+        private readonly componentContext: IFluidDataStoreContext,
         storageService: IDocumentStorageService,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,

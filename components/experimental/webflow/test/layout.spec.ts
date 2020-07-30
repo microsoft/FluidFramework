@@ -54,7 +54,7 @@ describe("Layout", () => {
         const container = await initializeLocalContainer(id, loader, codeDetails);
 
         const response = await container.request({ url: "default" });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Default component not found`);
         }
         doc = response.value;

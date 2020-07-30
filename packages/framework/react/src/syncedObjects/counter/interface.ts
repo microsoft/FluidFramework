@@ -39,6 +39,6 @@ export interface ISyncedCounterReducer {
 export interface IFluidSyncedCounterReducer<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
-> extends IFluidReducer<SV, SF, IFluidDataProps> {
+    > extends IFluidReducer<SV, SF, IFluidDataProps> {
     increment: FluidStateUpdateFunction<SV, SF, IFluidDataProps>;
 }

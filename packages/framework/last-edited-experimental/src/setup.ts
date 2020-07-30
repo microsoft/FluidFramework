@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage, IQuorum } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType  } from "@fluidframework/container-runtime";
+import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 import { ILastEditDetails, IFluidLastEditedTracker } from "./interfaces";
@@ -68,7 +68,7 @@ export async function setupLastEditedTrackerForContainer(
         // To check for this, we use the runtime's isMessageDirtyable API. If it is not available, we assume
         // that the message should not be discarded.
         const isDirtyable = runtime.IContainerRuntimeDirtyable === undefined
-        ? true : runtime.IContainerRuntimeDirtyable.isMessageDirtyable(message);
+            ? true : runtime.IContainerRuntimeDirtyable.isMessageDirtyable(message);
         if (shouldDiscardMessageFn(message) || !isDirtyable) {
             return;
         }

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { ITask } from "@fluidframework/runtime-definitions";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { ClickerAgent } from "./agent";
@@ -21,26 +21,26 @@ const counterKey = "counter";
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class Clicker extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private _counter: SharedCounter | undefined;
 
     /**
      * Do setup work here
      */
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const counter = SharedCounter.create(this.runtime);
         this.root.set(counterKey, counter.handle);
     }
 
-    protected async componentHasInitialized() {
-        const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(counterKey);
+    protected async hasInitialized() {
+        const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
         this._counter = await counterHandle.get();
         this.setupAgent();
     }
 
-    // #region IComponentHTMLView
+    // #region IFluidHTMLView
 
     /**
      * Will return a new Clicker view
@@ -54,7 +54,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
         return div;
     }
 
-    // #endregion IComponentHTMLView
+    // #endregion IFluidHTMLView
 
     public setupAgent() {
         const agentTask: ITask = {
@@ -116,7 +116,7 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
 
 // ----- FACTORY SETUP -----
 
-export const ClickerInstantiationFactory = new PrimedComponentFactory(
+export const ClickerInstantiationFactory = new DataObjectFactory(
     ClickerName,
     Clicker,
     [SharedCounter.getFactory()],

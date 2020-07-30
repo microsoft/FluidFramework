@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IResponse, IComponent, IComponentRouter, IRequest } from "@fluidframework/component-core-interfaces";
+import { IResponse, IFluidObject, IFluidRouter, IRequest } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { RequestParser } from "@fluidframework/runtime-utils";
@@ -11,13 +11,13 @@ import { RequestParser } from "@fluidframework/runtime-utils";
 // TODO: should this just be "s"?
 export const serviceRoutePathRoot = "_services";
 
-export type ContainerServiceRegistryEntries = Iterable<[string, (runtime: IContainerRuntime) => Promise<IComponent>]>;
+export type ContainerServiceRegistryEntries = Iterable<[string, (runtime: IContainerRuntime) => Promise<IFluidObject>]>;
 
 /**
  * This class is a simple starter class for building a Container Service. It simply provides routing
  */
-export abstract class BaseContainerService implements IComponentRouter {
-    public get IComponentRouter() { return this; }
+export abstract class BaseContainerService implements IFluidRouter {
+    public get IFluidRouter() { return this; }
 
     constructor(protected readonly runtime: IContainerRuntime) {
     }
@@ -25,7 +25,7 @@ export abstract class BaseContainerService implements IComponentRouter {
     public async request(request: IRequest): Promise<IResponse> {
         return {
             status: 200,
-            mimeType: "fluid/component",
+            mimeType: "fluid/object",
             value: this,
         };
     }
@@ -35,13 +35,13 @@ export abstract class BaseContainerService implements IComponentRouter {
  * ContainerService Factory that will only create one instance of the service for the Container.
  */
 class SingletonContainerServiceFactory {
-    private service: Promise<IComponent> | undefined;
+    private service: Promise<IFluidObject> | undefined;
 
     public constructor(
-        private readonly serviceFn: (runtime: IContainerRuntime) => Promise<IComponent>,
+        private readonly serviceFn: (runtime: IContainerRuntime) => Promise<IFluidObject>,
     ) { }
 
-    public async getService(runtime: IContainerRuntime): Promise<IComponent> {
+    public async getService(runtime: IContainerRuntime): Promise<IFluidObject> {
         if (!this.service) {
             this.service = this.serviceFn(runtime);
         }
@@ -86,7 +86,7 @@ export const generateContainerServicesRequestHandler =
             }
 
             const service = await factory.getService(runtime);
-            const router = service.IComponentRouter;
+            const router = service.IFluidRouter;
             let subRequest = request.createSubRequest(2);
             if (router) {
                 // If the service is also a router then we will route to it
@@ -108,7 +108,7 @@ export const generateContainerServicesRequestHandler =
             // Otherwise we will just return the service
             return {
                 status: 200,
-                mimeType: "fluid/component",
+                mimeType: "fluid/object",
                 value: service,
             };
         };

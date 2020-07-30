@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -21,8 +21,8 @@ const pkg = require("../../package.json");
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class Clicker extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private counter1: SharedCounter | undefined;
     private counter2: SharedCounter | undefined;
@@ -32,7 +32,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     /**
      * Do setup work here
      */
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const counter = SharedCounter.create(this.runtime);
         this.root.set(counter1Key, counter.handle);
         counter.increment(5);
@@ -46,20 +46,20 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
         storedMap.set(counter2Key, counter2.handle);
     }
 
-    protected async componentHasInitialized() {
-        const counter1Handle = this.root.get<IComponentHandle<SharedCounter>>(counter1Key);
+    protected async hasInitialized() {
+        const counter1Handle = this.root.get<IFluidHandle<SharedCounter>>(counter1Key);
         this.counter1 = await counter1Handle.get();
 
-        const storedMap = await this.root.get<IComponentHandle<ISharedMap>>(storedMapKey).get();
-        const counter2Handle = storedMap.get<IComponentHandle<SharedCounter>>(counter2Key);
+        const storedMap = await this.root.get<IFluidHandle<ISharedMap>>(storedMapKey).get();
+        const counter2Handle = storedMap.get<IFluidHandle<SharedCounter>>(counter2Key);
         this.counter2 = await counter2Handle.get();
     }
 
-    // start IComponentHTMLView
+    // start IFluidHTMLView
 
     public render(div: HTMLElement) {
         if (this.counter1 === undefined || this.counter2 === undefined) {
-            throw new Error("componentHasInitialized should be called prior to render");
+            throw new Error("hasInitialized should be called prior to render");
         }
 
         // Get our counter object that we set in initialize and pass it in to the view.
@@ -69,13 +69,13 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
         );
     }
 
-    // end IComponentHTMLView
+    // end IFluidHTMLView
 
     // ----- COMPONENT SETUP STUFF -----
 
     public static getFactory() { return Clicker.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         Clicker.ComponentName,
         Clicker,
         [

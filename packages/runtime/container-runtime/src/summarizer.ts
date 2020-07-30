@@ -13,13 +13,13 @@ import {
 } from "@fluidframework/common-utils";
 import { ChildLogger, CustomErrorWithProps, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
-    IComponentRouter,
-    IComponentRunnable,
+    IFluidRouter,
+    IFluidRunnable,
     IRequest,
     IResponse,
-    IComponentHandleContext,
-    IComponentHandle,
-    IComponentLoadable,
+    IFluidHandleContext,
+    IFluidHandle,
+    IFluidLoadable,
 } from "@fluidframework/component-core-interfaces";
 import { IDeltaManager, IErrorBase } from "@fluidframework/container-definitions";
 import { CreateContainerError } from "@fluidframework/container-utils";
@@ -83,7 +83,7 @@ export interface ISummarizerEvents extends IEvent {
     (event: "summarizingError", listener: (error: ISummarizingWarning) => void);
 }
 export interface ISummarizer
-    extends IEventProvider<ISummarizerEvents>, IComponentRouter, IComponentRunnable, IComponentLoadable {
+    extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidRunnable, IFluidLoadable {
     /**
      * Returns a promise that will be resolved with the next Summarizer after context reload
      */
@@ -564,9 +564,9 @@ export class RunningSummarizer implements IDisposable {
  * It is the main entry point for summary work.
  */
 export class Summarizer extends EventEmitter implements ISummarizer {
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
-    public get IComponentRunnable() { return this; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidRouter() { return this; }
+    public get IFluidRunnable() { return this; }
     public get ISummarizer() { return this; }
 
     private readonly logger: ITelemetryLogger;
@@ -581,9 +581,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     private readonly stopDeferred = new Deferred<void>();
     private _disposed: boolean = false;
 
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
     constructor(
         public readonly url: string,
@@ -596,7 +596,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             ackHandle: string,
             referenceSequenceNumber: number
         ) => Promise<void>,
-        handleContext: IComponentHandleContext,
+        handleContext: IFluidHandleContext,
         summaryCollection?: SummaryCollection,
     ) {
         super();
@@ -665,7 +665,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "fluid/component",
+            mimeType: "fluid/object",
             status: 200,
             value: this,
         };

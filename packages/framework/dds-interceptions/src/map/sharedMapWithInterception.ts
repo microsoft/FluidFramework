@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
 /**
  * - Create a new object from the passed SharedMap.
@@ -14,14 +14,14 @@ import { IComponentContext } from "@fluidframework/runtime-definitions";
  *   orderSequentially call to batch any operations that might happen in the callback.
  *
  * @param sharedMap - The underlying SharedMap
- * @param context - The IComponentContext that will be used to call orderSequentially
+ * @param context - The IFluidDataStoreContext that will be used to call orderSequentially
  * @param setInterceptionCallback - The interception callback to be called
  *
  * @returns A new SharedMap that intercepts the set method and calls the setInterceptionCallback.
  */
 export function createSharedMapWithInterception(
     sharedMap: SharedMap,
-    context: IComponentContext,
+    context: IFluidDataStoreContext,
     setInterceptionCallback: (sharedMap: ISharedMap, key: string, value: any) => void): SharedMap {
     const sharedMapWithInterception = Object.create(sharedMap);
 

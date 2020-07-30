@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 import assert from "assert";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { componentRuntimeRequestHandler, createComponentResponse } from "../requestHandlers";
 
@@ -22,15 +22,15 @@ describe("RequestParser", () => {
         it("Component request without wait", async () => {
             const requestParser = new RequestParser({ url: "/componentId" });
             const runtime: IContainerRuntime = {
-                getComponentRuntime: async (id, wait): Promise<IComponentRuntimeChannel> => {
+                getDataStore: async (id, wait): Promise<IFluidDataStoreChannel> => {
                     assert.equal(id, "componentId");
                     assert.equal(wait, undefined);
-                    return Promise.resolve<IComponentRuntimeChannel>({
+                    return Promise.resolve<IFluidDataStoreChannel>({
                         request: async (r) => {
                             assert.equal(r.url, "");
                             return Promise.resolve(createComponentResponse({}));
                         },
-                    } as IComponentRuntimeChannel);
+                    } as IFluidDataStoreChannel);
                 },
             } as IContainerRuntime;
             const response = await componentRuntimeRequestHandler(requestParser, runtime);
@@ -40,15 +40,15 @@ describe("RequestParser", () => {
         it("Component request with wait", async () => {
             const requestParser = new RequestParser({ url: "/componentId", headers: { wait: true } });
             const runtime: IContainerRuntime = {
-                getComponentRuntime: async (id, wait): Promise<IComponentRuntimeChannel> => {
+                getDataStore: async (id, wait): Promise<IFluidDataStoreChannel> => {
                     assert.equal(id, "componentId");
                     assert.equal(wait, true);
-                    return Promise.resolve<IComponentRuntimeChannel>({
+                    return Promise.resolve<IFluidDataStoreChannel>({
                         request: async (r) => {
                             assert.equal(r.url, "");
                             return Promise.resolve(createComponentResponse({}));
                         },
-                    } as IComponentRuntimeChannel);
+                    } as IFluidDataStoreChannel);
                 },
             } as IContainerRuntime;
             const response = await componentRuntimeRequestHandler(requestParser, runtime);
@@ -58,15 +58,15 @@ describe("RequestParser", () => {
         it("Component request with sub route", async () => {
             const requestParser = new RequestParser({ url: "/componentId/route", headers: { wait: true } });
             const runtime: IContainerRuntime = {
-                getComponentRuntime: async (id, wait): Promise<IComponentRuntimeChannel> => {
+                getDataStore: async (id, wait): Promise<IFluidDataStoreChannel> => {
                     assert.equal(id, "componentId");
                     assert.equal(wait, true);
-                    return Promise.resolve<IComponentRuntimeChannel>({
+                    return Promise.resolve<IFluidDataStoreChannel>({
                         request: async (r) => {
                             assert.equal(r.url, "route");
                             return Promise.resolve(createComponentResponse({}));
                         },
-                    } as IComponentRuntimeChannel);
+                    } as IFluidDataStoreChannel);
                 },
             } as IContainerRuntime;
             const response = await componentRuntimeRequestHandler(requestParser, runtime);

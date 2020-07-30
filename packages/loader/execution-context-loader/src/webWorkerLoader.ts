@@ -4,8 +4,8 @@
  */
 
 import {
-    IComponentRouter,
-    IComponentRunnable,
+    IFluidRouter,
+    IFluidRunnable,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -14,7 +14,7 @@ import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import Comlink from "comlink";
 
 // Proxy loader that proxies request to web worker.
-interface IProxyLoader extends ILoader, IComponentRunnable {
+interface IProxyLoader extends ILoader, IFluidRunnable {
     // eslint-disable-next-line @typescript-eslint/no-misused-new
     new(id: string,
         options: any,
@@ -27,7 +27,7 @@ interface IProxyLoader extends ILoader, IComponentRunnable {
 /**
  * Proxies requests to web worker loader.
  */
-export class WebWorkerLoader implements ILoader, IComponentRunnable, IComponentRouter {
+export class WebWorkerLoader implements ILoader, IFluidRunnable, IFluidRouter {
     public static async load(
         id: string,
         options: any,
@@ -47,8 +47,8 @@ export class WebWorkerLoader implements ILoader, IComponentRunnable, IComponentR
     constructor(private readonly proxy: Comlink.Remote<IProxyLoader>) {
     }
 
-    public get IComponentRouter() { return this; }
-    public get IComponentRunnable() { return this; }
+    public get IFluidRouter() { return this; }
+    public get IFluidRunnable() { return this; }
 
     public async request(request: IRequest): Promise<IResponse> {
         const response = await this.proxy.request(request);
@@ -56,7 +56,7 @@ export class WebWorkerLoader implements ILoader, IComponentRunnable, IComponentR
             || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             return response;
         }
-        return { status: 200, mimeType: "fluid/component", value: this };
+        return { status: 200, mimeType: "fluid/object", value: this };
     }
 
     public async run(...args: any[]): Promise<void> {
