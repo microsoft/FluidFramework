@@ -5,7 +5,7 @@
 
 import * as cell from "@fluidframework/cell";
 import { IRequest } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime } from "@fluidframework/component-runtime";
 import {
     ICodeLoader,
     IContainerContext,
@@ -20,7 +20,7 @@ import * as ink from "@fluidframework/ink";
 import * as map from "@fluidframework/map";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import {
-    IComponentContext,
+    IFluidDataStoreContext,
     IComponentFactory,
     NamedComponentRegistryEntries,
 } from "@fluidframework/runtime-definitions";
@@ -38,7 +38,7 @@ export class Chaincode implements IComponentFactory {
 
     public constructor(private readonly closeFn: () => void) { }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IFluidDataStoreContext): void {
         // Create channel factories
         const mapFactory = map.SharedMap.getFactory();
         const sharedStringFactory = sequence.SharedString.getFactory();
@@ -64,7 +64,7 @@ export class Chaincode implements IComponentFactory {
         modules.set(directoryFactory.type, directoryFactory);
         modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
 
-        const runtime = ComponentRuntime.load(context, modules);
+        const runtime = FluidDataStoreRuntime.load(context, modules);
 
         // Initialize core data structures
         let root: map.ISharedMap;
@@ -110,7 +110,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
         const componentId = trimmed !== "" ? trimmed : rootMapId;
 
-        const component = await runtime.getComponentRuntime(componentId, true);
+        const component = await runtime.getDataStore(componentId, true);
         return component.request({ url: trimmed.substr(1 + trimmed.length) });
     }
 
@@ -133,7 +133,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            runtime.createComponent(rootMapId, "@fluid-internal/client-api")
+            runtime._createDataStore(rootMapId, "@fluid-internal/client-api")
                 .then((componentRuntime) => {
                     componentRuntime.bindToContext();
                 })

@@ -29,7 +29,7 @@ import { IChannel } from ".";
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
  */
-export interface IComponentRuntime extends
+export interface IFluidDataStoreRuntime extends
     IComponentRouter,
     EventEmitter,
     IDisposable,

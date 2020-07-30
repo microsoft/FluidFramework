@@ -41,15 +41,15 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IAttachMessage,
-    IComponentContext,
+    IFluidDataStoreContext,
     IComponentRegistry,
-    IComponentRuntimeChannel,
+    IFluidDataStoreChannel,
     IEnvelope,
     IInboundSignalMessage,
     SchedulerType,
 } from "@fluidframework/runtime-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
-import { IChannel, IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IChannel, IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
@@ -70,8 +70,8 @@ export interface ISharedObjectRegistry {
 /**
  * Base component class
  */
-export class ComponentRuntime extends EventEmitter implements IComponentRuntimeChannel,
-    IComponentRuntime, IComponentHandleContext {
+export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreChannel,
+    IFluidDataStoreRuntime, IComponentHandleContext {
     /**
      * Loads the component runtime
      * @param context - The component context
@@ -80,12 +80,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      * @param componentRegistry - The registry of components created and used by this component
      */
     public static load(
-        context: IComponentContext,
+        context: IFluidDataStoreContext,
         sharedObjectRegistry: ISharedObjectRegistry,
         componentRegistry?: IComponentRegistry,
-    ): ComponentRuntime {
+    ): FluidDataStoreRuntime {
         const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { componentId: uuid() });
-        const runtime = new ComponentRuntime(
+        const runtime = new FluidDataStoreRuntime(
             context,
             context.documentId,
             context.id,
@@ -172,7 +172,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     private _attachState: AttachState;
 
     private constructor(
-        private readonly componentContext: IComponentContext,
+        private readonly componentContext: IFluidDataStoreContext,
         public readonly documentId: string,
         public readonly id: string,
         public readonly parentBranch: string | null,

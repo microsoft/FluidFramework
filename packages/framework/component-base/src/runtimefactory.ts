@@ -57,7 +57,7 @@ export class RuntimeFactory implements IRuntimeFactory {
                 remainingUrl = "";
             }
 
-            const component = await containerRuntime.getComponentRuntime(componentId, true);
+            const component = await containerRuntime.getDataStore(componentId, true);
 
             return component.request({ url: remainingUrl });
         });
@@ -74,7 +74,7 @@ export class RuntimeFactory implements IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing && this.defaultComponent.type) {
             await runtime
-                .createComponent(defaultComponentId, this.defaultComponent.type)
+                ._createDataStore(defaultComponentId, this.defaultComponent.type)
                 .then((componentRuntime) => {
                     componentRuntime.bindToContext();
                 });

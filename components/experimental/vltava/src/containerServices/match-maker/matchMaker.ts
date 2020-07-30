@@ -13,11 +13,11 @@ import {
     IComponentDiscoverInterfaces,
     IComponentDiscoverableInterfaces,
 } from "@fluidframework/framework-interfaces";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
 export const MatchMakerContainerServiceId = "matchMaker";
 
-const getMatchMakerContainerService = async (context: IComponentContext): Promise<IComponentInterfacesRegistry> => {
+const getMatchMakerContainerService = async (context: IFluidDataStoreContext): Promise<IComponentInterfacesRegistry> => {
     const response = await context.containerRuntime.request({
         url: `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
     });
@@ -40,7 +40,7 @@ const getMatchMakerContainerService = async (context: IComponentContext): Promis
  * @param component - Discover/Discoverable instance
  */
 export const registerWithMatchMaker = async (
-    context: IComponentContext,
+    context: IFluidDataStoreContext,
     component: IProvideComponentDiscoverInterfaces | IProvideComponentDiscoverableInterfaces,
 ): Promise<void> => {
     const matchMaker = await getMatchMakerContainerService(context);
@@ -55,7 +55,7 @@ export const registerWithMatchMaker = async (
  * @param component - Discover/Discoverable instance
  */
 export const unregisterWithMatchMaker = async (
-    context: IComponentContext,
+    context: IFluidDataStoreContext,
     component: IProvideComponentDiscoverInterfaces | IProvideComponentDiscoverableInterfaces,
 ): Promise<void> => {
     const matchMaker = await getMatchMakerContainerService(context);

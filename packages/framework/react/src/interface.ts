@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { ISharedMap, IDirectoryValueChanged } from "@fluidframework/map";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import {
     IComponentHandle,
     IComponentLoadable,
@@ -157,7 +157,7 @@ export interface IViewConverter<
      * If this is a fluid DDS SharedObject type (i.e. SharedCounter, SharedMap), supply its create function
      * here and add any events that it will fire to the listenedEvents param below to trigger state updates
      */
-    sharedObjectCreate?: (runtime: IComponentRuntime) => any;
+    sharedObjectCreate?: (runtime: IFluidDataStoreRuntime) => any;
     /**
      * List of events fired on this component that will trigger a state update
      */
@@ -271,7 +271,7 @@ export interface IFluidDataProps {
     /**
      * The Fluid component runtime passed in from component initialization
      */
-    runtime: IComponentRuntime;
+    runtime: IFluidDataStoreRuntime;
     /**
      * The running map of all the Fluid components being used to render the React component. This
      * can be view/data components, and they will be asynchronously loaded here so that they are,

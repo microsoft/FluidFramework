@@ -12,7 +12,7 @@ import {
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
@@ -50,7 +50,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * @param id - optional name of the shared counter
      * @returns newly create shared counter (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, CounterFactory.Type) as SharedCounter;
     }
 

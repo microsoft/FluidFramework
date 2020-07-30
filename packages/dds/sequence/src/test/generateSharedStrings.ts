@@ -24,7 +24,7 @@ export const supportedVersions = new Map<string, any>([
 export function* generateStrings(): Generator<[string, SharedString]> {
     for (const [version, options] of supportedVersions) {
         const documentId = "fakeId";
-        const componentRuntime: mocks.MockComponentRuntime = new mocks.MockComponentRuntime();
+        const componentRuntime: mocks.MockFluidDataStoreRuntime = new mocks.MockFluidDataStoreRuntime();
         for (const key of Object.keys(options)) {
             componentRuntime.options[key] = options[key];
         }

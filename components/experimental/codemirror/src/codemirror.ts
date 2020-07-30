@@ -11,7 +11,7 @@ import {
     IResponse,
     IComponentHandle,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
+import { ComponentHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     MergeTreeDeltaType,
@@ -20,8 +20,8 @@ import {
     reservedTileLabelsKey,
     Marker,
 } from "@fluidframework/merge-tree";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
-import { IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { SharedString, SequenceDeltaEvent } from "@fluidframework/sequence";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import CodeMirror from "codemirror";
@@ -50,7 +50,7 @@ class CodemirrorView implements IComponentHTMLView {
 
     public get IComponentHTMLView() { return this; }
 
-    constructor(private readonly text: SharedString, private readonly runtime: IComponentRuntime) {
+    constructor(private readonly text: SharedString, private readonly runtime: IFluidDataStoreRuntime) {
     }
 
     public remove(): void {
@@ -202,7 +202,7 @@ class CodemirrorView implements IComponentHTMLView {
 export class CodeMirrorComponent
     extends EventEmitter
     implements IComponentLoadable, IComponentRouter, IComponentHTMLView {
-    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
+    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         const collection = new CodeMirrorComponent(runtime, context);
         await collection.initialize();
 
@@ -221,8 +221,8 @@ export class CodeMirrorComponent
     private readonly innerHandle: IComponentHandle<this>;
 
     constructor(
-        private readonly runtime: IComponentRuntime,
-        /* Private */ context: IComponentContext,
+        private readonly runtime: IFluidDataStoreRuntime,
+        /* Private */ context: IFluidDataStoreContext,
     ) {
         super();
         this.url = context.id;
@@ -269,7 +269,7 @@ class SmdeFactory implements IComponentFactory {
 
     public get IComponentFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IFluidDataStoreContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         const sequenceFactory = SharedString.getFactory();
@@ -277,7 +277,7 @@ class SmdeFactory implements IComponentFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(sequenceFactory.type, sequenceFactory);
 
-        const runtime = ComponentRuntime.load(
+        const runtime = FluidDataStoreRuntime.load(
             context,
             dataTypes);
 

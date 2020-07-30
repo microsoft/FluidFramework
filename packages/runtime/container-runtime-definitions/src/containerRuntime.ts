@@ -27,8 +27,8 @@ import {
 import {
     FlushMode,
     IContainerRuntimeBase,
-    IComponentRuntimeChannel,
-    IComponentContext,
+    IFluidDataStoreChannel,
+    IFluidDataStoreContext,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
 import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
@@ -92,7 +92,7 @@ export interface IContainerRuntime extends
      * @param id - Id supplied during creating the component.
      * @param wait - True if you want to wait for it.
      */
-    getComponentRuntime(id: string, wait?: boolean): Promise<IComponentRuntimeChannel>;
+    getDataStore(id: string, wait?: boolean): Promise<IFluidDataStoreChannel>;
 
     /**
      * Creates a new component using an optional realization function.  This API does not allow specifying
@@ -101,10 +101,10 @@ export interface IContainerRuntime extends
      * @param pkg - Package name of the component
      * @param realizationFn - Optional function to call to realize the component over the context default
      */
-    createComponentWithRealizationFn(
+    createDataStoreWithRealizationFn(
         pkg: string[],
-        realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponentRuntimeChannel>;
+        realizationFn?: (context: IFluidDataStoreContext) => void,
+    ): Promise<IFluidDataStoreChannel>;
 
     /**
      * Creates root data store in container. Such store is automatically bound to container, and thus is
@@ -145,9 +145,9 @@ export interface IContainerRuntime extends
     flush(): void;
 
     /**
-     * Used to notify the HostingRuntime that the ComponentRuntime has be instantiated.
+     * Used to notify the HostingRuntime that the FluidDataStoreRuntime has be instantiated.
      */
-    notifyComponentInstantiated(componentContext: IComponentContext): void;
+    notifyDataStoreInstantiated(componentContext: IFluidDataStoreContext): void;
 
     /**
      * Get an absolute url for a provided container-relative request.

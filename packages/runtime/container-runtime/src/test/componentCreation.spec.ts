@@ -4,8 +4,8 @@
  */
 import assert from "assert";
 import {
-    IComponentRuntimeChannel,
-    IComponentContext,
+    IFluidDataStoreChannel,
+    IFluidDataStoreContext,
     IComponentFactory,
     IComponentRegistry,
     ComponentRegistryEntry,
@@ -13,9 +13,9 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker } from "@fluidframework/runtime-utils";
-import { LocalComponentContext } from "../componentContext";
+import { LocalFluidDataStoreContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
 
 describe("Component Creation Tests", () => {
@@ -35,7 +35,7 @@ describe("Component Creation Tests", () => {
 
         let storage: IDocumentStorageService;
         let scope: IComponent & IFluidObject;
-        const attachCb = (mR: IComponentRuntimeChannel) => { };
+        const attachCb = (mR: IFluidDataStoreChannel) => { };
         let containerRuntime: ContainerRuntime;
         const defaultName = "default";
         const componentAName = "componentA";
@@ -49,8 +49,8 @@ describe("Component Creation Tests", () => {
             const registryEntries = new Map(entries);
             const factory: IComponentFactory = {
                 get IComponentFactory() { return factory; },
-                instantiateComponent: (context: IComponentContext) => {
-                    context.bindRuntime(new MockComponentRuntime());
+                instantiateComponent: (context: IFluidDataStoreContext) => {
+                    context.bindRuntime(new MockFluidDataStoreRuntime());
                 },
             };
             const registry: IComponentRegistry = {
@@ -88,7 +88,7 @@ describe("Component Creation Tests", () => {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
                 IComponentRegistry: globalRegistry,
-                notifyComponentInstantiated: (c) => { },
+                notifyDataStoreInstantiated: (c) => { },
                 on: (event, listener) => {},
             } as ContainerRuntime;
             summaryTracker = new SummaryTracker("", 0, 0);
@@ -97,7 +97,7 @@ describe("Component Creation Tests", () => {
         it("Valid global component", async () => {
             let success: boolean = true;
             // Create the default component that is in the global registry.
-            const context: LocalComponentContext = new LocalComponentContext(
+            const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 "default-Id",
                 [defaultName],
                 containerRuntime,
@@ -118,7 +118,7 @@ describe("Component Creation Tests", () => {
         it("Invalid global component", async () => {
             let success: boolean = true;
             // Create component A that is not in the global registry.
-            const context: LocalComponentContext = new LocalComponentContext(
+            const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 "A-Id",
                 [componentAName],
                 containerRuntime,
@@ -139,7 +139,7 @@ describe("Component Creation Tests", () => {
         it("Valid subcomponent from the global component", async () => {
             let success: boolean = true;
             // Create component A that is in the registry of the default component.
-            const contextA: LocalComponentContext = new LocalComponentContext(
+            const contextA: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 "A-Id",
                 [defaultName, componentAName],
                 containerRuntime,
@@ -160,7 +160,7 @@ describe("Component Creation Tests", () => {
         it("Invalid subcomponent from the global component", async () => {
             let success: boolean = true;
             // Create component B that is in not the registry of the default component.
-            const contextB: LocalComponentContext = new LocalComponentContext(
+            const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 "B-Id",
                 [defaultName, componentBName],
                 containerRuntime,
@@ -181,7 +181,7 @@ describe("Component Creation Tests", () => {
         it("Valid subcomponent at depth 2", async () => {
             let success: boolean = true;
             // Create component B that is in the registry of component A (which is at depth 2).
-            const contextB: LocalComponentContext = new LocalComponentContext(
+            const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 "B-Id",
                 [defaultName, componentAName, componentBName],
                 containerRuntime,
@@ -199,7 +199,7 @@ describe("Component Creation Tests", () => {
             assert.strictEqual(success, true);
 
             // Create component C that is in the registry of component A (which is at depth 2).
-            const contextC: LocalComponentContext = new LocalComponentContext(
+            const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 "C-Id",
                 [defaultName, componentAName, componentCName],
                 containerRuntime,
@@ -220,7 +220,7 @@ describe("Component Creation Tests", () => {
         it("Invalid subcomponent at depth 2", async () => {
             let success: boolean = true;
             // Create a fake component that is not in the registry of component A (which is at depth 2).
-            const contextFake: LocalComponentContext = new LocalComponentContext(
+            const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 "fake-Id",
                 [defaultName, componentAName, "fake"],
                 containerRuntime,
@@ -241,7 +241,7 @@ describe("Component Creation Tests", () => {
         it("Invalid subcomponent at depth 3", async () => {
             let success: boolean = true;
             // Create a fake component that is not in the registry of component B (which is at depth 3).
-            const contextFake: LocalComponentContext = new LocalComponentContext(
+            const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 "fake-Id",
                 [defaultName, componentAName, componentBName, "fake"],
                 containerRuntime,
@@ -262,7 +262,7 @@ describe("Component Creation Tests", () => {
         it("Subcomponent which is in the registry of the parent component", async () => {
             let success: boolean = true;
             // Create component C that is in parent's registry but not in the registry of component B.
-            const contextC: LocalComponentContext = new LocalComponentContext(
+            const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
                 "C-Id",
                 [defaultName, componentAName, componentBName, componentCName],
                 containerRuntime,

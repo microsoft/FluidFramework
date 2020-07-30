@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { MockComponentRuntime, MockContainerRuntimeFactory, MockStorage } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime, MockContainerRuntimeFactory, MockStorage } from "@fluidframework/test-runtime-utils";
 import {  ReferenceType } from "@fluidframework/merge-tree";
 import { IChannelServices } from "@fluidframework/component-runtime-definitions";
 import { ITree } from "@fluidframework/protocol-definitions";
@@ -42,7 +42,7 @@ function generateSnapshotTree(
     containerRuntimeFactory: MockContainerRuntimeFactory,
     options: any = {},
 ): [SharedString, ITree] {
-    const componentRuntime1 = new MockComponentRuntime();
+    const componentRuntime1 = new MockFluidDataStoreRuntime();
     componentRuntime1.options = options;
     // Connect the first SharedString.
     const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
@@ -55,7 +55,7 @@ function generateSnapshotTree(
     sharedString.connect(services1);
 
     // Create and connect a second SharedString.
-    const componentRuntime2 = new MockComponentRuntime();
+    const componentRuntime2 = new MockFluidDataStoreRuntime();
     componentRuntime2.options = options;
     const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
     const sharedString2 = new SharedString(componentRuntime2, "shared-string", SharedStringFactory.Attributes);
@@ -82,7 +82,7 @@ describe("SharedString Partial Load", () => {
         const options = { mergeTreeSnapshotChunkSize };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
-        const localComponentRuntime = new MockComponentRuntime();
+        const localComponentRuntime = new MockFluidDataStoreRuntime();
         localComponentRuntime.options = options;
         const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localComponentRuntime);
         const localServices = {
@@ -103,7 +103,7 @@ describe("SharedString Partial Load", () => {
         const options = { newMergeTreeSnapshotFormat: true, mergeTreeSnapshotChunkSize };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
-        const localComponentRuntime = new MockComponentRuntime();
+        const localComponentRuntime = new MockFluidDataStoreRuntime();
         localComponentRuntime.options = options;
         const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localComponentRuntime);
         const localServices = {
@@ -128,7 +128,7 @@ describe("SharedString Partial Load", () => {
         };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
-        const localComponentRuntime = new MockComponentRuntime();
+        const localComponentRuntime = new MockFluidDataStoreRuntime();
         localComponentRuntime.options = options;
         const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localComponentRuntime);
         const localServices = {
@@ -158,7 +158,7 @@ describe("SharedString Partial Load", () => {
             };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
-        const localComponentRuntime = new MockComponentRuntime();
+        const localComponentRuntime = new MockFluidDataStoreRuntime();
         localComponentRuntime.options = options;
         const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localComponentRuntime);
         const localServices = {
@@ -203,7 +203,7 @@ describe("SharedString Partial Load", () => {
             };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
-        const localComponentRuntime = new MockComponentRuntime();
+        const localComponentRuntime = new MockFluidDataStoreRuntime();
         localComponentRuntime.options = options;
         const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localComponentRuntime);
         const localServices = {
@@ -245,7 +245,7 @@ describe("SharedString Partial Load", () => {
             };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
-        const localComponentRuntime = new MockComponentRuntime();
+        const localComponentRuntime = new MockFluidDataStoreRuntime();
         localComponentRuntime.options = options;
         const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localComponentRuntime);
         const localServices = {

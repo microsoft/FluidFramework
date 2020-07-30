@@ -4,16 +4,16 @@
  */
 
 import { IRequest, IComponent } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
 import { ComponentRegistry } from "@fluidframework/container-runtime";
 import {
-    IComponentContext,
+    IFluidDataStoreContext,
     IComponentFactory,
     IComponentRegistry,
     NamedComponentRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
@@ -26,7 +26,7 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
 
     constructor(
         public readonly type: string,
-        private readonly ctor: new (context: IComponentContext, runtime: IComponentRuntime, root: ISharedObject) => T,
+        private readonly ctor: new (context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, root: ISharedObject) => T,
         public readonly root: IChannelFactory,
         sharedObjects: readonly IChannelFactory[] = [],
         components?: readonly IComponentFactory[],
@@ -46,7 +46,7 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
 
     public get IComponentFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IFluidDataStoreContext): void {
         const runtime = this.createRuntime(context);
 
         // Note this may synchronously return an instance or a deferred LazyPromise,
@@ -66,14 +66,14 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
         });
     }
 
-    public async create(parentContext: IComponentContext, props?: any) {
+    public async create(parentContext: IFluidDataStoreContext, props?: any) {
         const { containerRuntime, packagePath } = parentContext;
 
-        const channel = await containerRuntime._createComponentWithProps(packagePath.concat(this.type));
+        const channel = await containerRuntime._createDataStoreWithProps(packagePath.concat(this.type));
         return (await channel.request({ url: "/" })).value as IComponent;
     }
 
-    private instantiate(context: IComponentContext, runtime: IComponentRuntime) {
+    private instantiate(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime) {
         // New component instances are synchronously created.  Loading a previously created
         // component is deferred (via a LazyPromise) until requested by invoking `.then()`.
         return runtime.existing
@@ -81,7 +81,7 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
             : this.createCore(context, runtime);
     }
 
-    private createCore(context: IComponentContext, runtime: IComponentRuntime, props?: any) {
+    private createCore(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, props?: any) {
         const root = runtime.createChannel("root", this.root.type) as ISharedObject;
         const instance = new this.ctor(context, runtime, root);
         instance.create(props);
@@ -89,7 +89,7 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
         return instance;
     }
 
-    private async load(context: IComponentContext, runtime: IComponentRuntime) {
+    private async load(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime) {
         const instance = new this.ctor(
             context,
             runtime,
@@ -99,8 +99,8 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
         return instance;
     }
 
-    private createRuntime(context: IComponentContext) {
-        return ComponentRuntime.load(
+    private createRuntime(context: IFluidDataStoreContext) {
+        return FluidDataStoreRuntime.load(
             context,
             this.ISharedObjectRegistry,
             this.IComponentRegistry,

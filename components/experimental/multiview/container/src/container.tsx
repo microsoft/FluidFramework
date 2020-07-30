@@ -33,7 +33,7 @@ const registryEntries = new Map([
 // Just a little helper, since we're going to create multiple coordinates.
 const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string) => {
     const simpleCoordinateComponentRuntime =
-        await runtime.createComponent(id, Coordinate.ComponentName);
+        await runtime._createDataStore(id, Coordinate.ComponentName);
     const simpleResult = await simpleCoordinateComponentRuntime.request({ url: id });
     if (simpleResult.status !== 200 || simpleResult.mimeType !== "fluid/component") {
         throw new Error("Error in creating the coordinate model.");
@@ -117,7 +117,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
         // Create the constellation component
         const constellationComponentRuntime =
-            await runtime.createComponent(constellationComponentId, Constellation.ComponentName);
+            await runtime._createDataStore(constellationComponentId, Constellation.ComponentName);
         const constellationResult = await constellationComponentRuntime.request({ url: constellationComponentId });
         if (constellationResult.status !== 200 || constellationResult.mimeType !== "fluid/component") {
             throw new Error("Error in creating the constellation model.");

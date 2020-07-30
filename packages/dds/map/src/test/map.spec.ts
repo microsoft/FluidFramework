@@ -7,7 +7,7 @@ import assert from "assert";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IBlob } from "@fluidframework/protocol-definitions";
 import {
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
     MockSharedObjectServices,
     MockStorage,
@@ -17,10 +17,10 @@ import { MapFactory, SharedMap } from "../map";
 describe("Map", () => {
     let map: SharedMap;
     let factory: MapFactory;
-    let componentRuntime: MockComponentRuntime;
+    let componentRuntime: MockFluidDataStoreRuntime;
 
     beforeEach(async () => {
-        componentRuntime = new MockComponentRuntime();
+        componentRuntime = new MockFluidDataStoreRuntime();
         factory = new MapFactory();
         map = new SharedMap("testMap", componentRuntime, MapFactory.Attributes);
     });
@@ -243,7 +243,7 @@ describe("Map", () => {
 
             // Load a new SharedMap in connected state from the snapshot of the first one.
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2 = MockSharedObjectServices.createFromTree(map.snapshot());
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
@@ -292,7 +292,7 @@ describe("Map", () => {
             map.connect(services);
 
             // Create and connect a second map
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             map2 = new SharedMap("testMap2", componentRuntime2, MapFactory.Attributes);
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2 = {

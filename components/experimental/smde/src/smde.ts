@@ -14,7 +14,7 @@ import {
     IComponentHandle,
     IComponent,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime, ComponentHandle } from "@fluidframework/component-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     MergeTreeDeltaType,
@@ -23,8 +23,8 @@ import {
     reservedTileLabelsKey,
     Marker,
 } from "@fluidframework/merge-tree";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
-import { IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import SimpleMDE from "simplemde";
@@ -37,7 +37,7 @@ export class Smde extends EventEmitter implements
     IComponentLoadable,
     IComponentRouter,
     IComponentHTMLView {
-    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
+    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         const collection = new Smde(runtime, context);
         await collection.initialize();
 
@@ -63,7 +63,7 @@ export class Smde extends EventEmitter implements
         assert(this._text);
         return this._text;
     }
-    constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
+    constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {
         super();
 
         this.url = context.id;
@@ -219,7 +219,7 @@ class SmdeFactory implements IComponentFactory {
 
     public get IComponentFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IFluidDataStoreContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         const sequenceFactory = SharedString.getFactory();
@@ -227,7 +227,7 @@ class SmdeFactory implements IComponentFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(sequenceFactory.type, sequenceFactory);
 
-        const runtime = ComponentRuntime.load(
+        const runtime = FluidDataStoreRuntime.load(
             context,
             dataTypes,
         );

@@ -13,8 +13,8 @@ import {
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { AsyncComponentProvider, ComponentKey } from "@fluidframework/synthesize";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { ComponentHandle } from "@fluidframework/component-runtime";
 import { IDirectory } from "@fluidframework/map";
 import { v4 as uuid } from "uuid";
@@ -23,8 +23,8 @@ import { IEvent } from "@fluidframework/common-definitions";
 import { serviceRoutePathRoot } from "../containerServices";
 
 export interface ISharedComponentProps<P extends IComponent = object> {
-    readonly runtime: IComponentRuntime,
-    readonly context: IComponentContext,
+    readonly runtime: IFluidDataStoreRuntime,
+    readonly context: IFluidDataStoreContext,
     readonly providers: AsyncComponentProvider<ComponentKey<P>, ComponentKey<object>>,
 }
 
@@ -45,14 +45,14 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     private _disposed = false;
 
     /**
-     * This is your ComponentRuntime object
+     * This is your FluidDataStoreRuntime object
      */
-    protected readonly runtime: IComponentRuntime;
+    protected readonly runtime: IFluidDataStoreRuntime;
 
     /**
      * This context is used to talk up to the ContainerRuntime
      */
-    protected readonly context: IComponentContext;
+    protected readonly context: IFluidDataStoreContext;
 
     /**
      * Providers are IComponent keyed objects that provide back a promise to the corresponding IComponent or undefined.
@@ -81,7 +81,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
         this.providers = props.providers;
 
         // Create a ComponentHandle with empty string as `path`. This is because reaching this SharedComponent is the
-        // same as reaching its routeContext (ComponentRuntime) so there is so the relative path to it from the
+        // same as reaching its routeContext (FluidDataStoreRuntime) so there is so the relative path to it from the
         // routeContext is empty.
         this.innerHandle = new ComponentHandle(this, "", this.runtime.IComponentHandleContext);
 
@@ -179,7 +179,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     protected async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
         pkg: string, props?: any,
     ): Promise<T> {
-        const componentRuntime = await this.context.createComponent(uuid(), pkg, props);
+        const componentRuntime = await this.context._createDataStore(uuid(), pkg, props);
         const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
         componentRuntime.bindToContext();
         return component;

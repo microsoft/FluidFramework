@@ -10,7 +10,7 @@ import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/tele
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelServices,
 } from "@fluidframework/component-runtime-definitions";
@@ -78,12 +78,12 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     /**
      * @param id - The id of the shared object
-     * @param runtime - The IComponentRuntime which contains the shared object
+     * @param runtime - The IFluidDataStoreRuntime which contains the shared object
      * @param attributes - Attributes of the shared object
      */
     constructor(
         public id: string,
-        protected runtime: IComponentRuntime,
+        protected runtime: IFluidDataStoreRuntime,
         public readonly attributes: IChannelAttributes) {
         super();
 
@@ -284,7 +284,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     /**
      * Promises that are waiting for an ack from the server before resolving should use this instead of new Promise.
-     * It ensures that if something changes that will interrupt that ack (e.g. the ComponentRuntime disposes),
+     * It ensures that if something changes that will interrupt that ack (e.g. the FluidDataStoreRuntime disposes),
      * the Promise will reject.
      * If runtime is disposed when this call is made, executor is not run and promise is rejected right away.
      */
@@ -294,7 +294,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         let rejectBecauseDispose: () => void;
         return new Promise<T>((resolve, reject) => {
             rejectBecauseDispose =
-                () => reject(new Error("ComponentRuntime disposed while this ack-based Promise was pending"));
+                () => reject(new Error("FluidDataStoreRuntime disposed while this ack-based Promise was pending"));
 
             if (this.runtime.disposed) {
                 rejectBecauseDispose();

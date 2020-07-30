@@ -50,7 +50,7 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
      * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const componentRuntime = await runtime.createComponent(
+        const componentRuntime = await runtime._createDataStore(
             ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId,
             this.defaultComponentName,
         );

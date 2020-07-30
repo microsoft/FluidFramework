@@ -173,19 +173,19 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> impleme
         let component: IComponentLoadable;
         switch (type) {
             case "todo":
-                component = await TodoItem.getFactory().createComponent(
+                component = await TodoItem.getFactory()._createDataStore(
                     this.context,
                     { startingText: type },
                 );
                 break;
             case "clicker":
-                component = await ClickerInstantiationFactory.createComponent(this.context);
+                component = await ClickerInstantiationFactory._createDataStore(this.context);
                 break;
             case "textBox":
-                component = await TextBoxInstantiationFactory.createComponent(this.context, type);
+                component = await TextBoxInstantiationFactory._createDataStore(this.context, type);
                 break;
             case "textList":
-                component = await TextListInstantiationFactory.createComponent(this.context);
+                component = await TextListInstantiationFactory._createDataStore(this.context);
                 break;
             default:
         }

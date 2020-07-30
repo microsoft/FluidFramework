@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable, IComponentRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
+import { Serializable, IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 import { FileMode, TreeEntry } from "@fluidframework/protocol-definitions";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 
 export function serializeBlob(
-    runtime: IComponentRuntime,
+    runtime: IFluidDataStoreRuntime,
     handle: IComponentHandle,
     path: string,
     snapshot: Serializable,
@@ -29,7 +29,7 @@ export function serializeBlob(
     };
 }
 
-export async function deserializeBlob(runtime: IComponentRuntime, storage: IChannelStorageService, path: string) {
+export async function deserializeBlob(runtime: IFluidDataStoreRuntime, storage: IChannelStorageService, path: string) {
     const handleTableChunk = await storage.read(path);
     const utf8 = fromBase64ToUtf8(handleTableChunk);
 

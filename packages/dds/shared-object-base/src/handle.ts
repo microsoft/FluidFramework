@@ -16,7 +16,7 @@ import { ISharedObject } from "./types";
  * This object is used for already loaded (in-memory) shared object
  * and is used only for serialization purposes.
  * De-serialization process goes through ComponentHandle and request flow:
- * ComponentRuntime.request() recognizes requests in the form of '/<shared object id>'
+ * FluidDataStoreRuntime.request() recognizes requests in the form of '/<shared object id>'
  * and loads shared object.
  */
 export class SharedObjectComponentHandle extends ComponentHandle<ISharedObject> {

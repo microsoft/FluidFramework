@@ -9,7 +9,7 @@ import { ILoader } from "@fluidframework/container-definitions";
 import { ISharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedString } from "@fluidframework/sequence";
 // eslint-disable-next-line import/no-internal-modules
 import queue from "async/queue";
@@ -97,7 +97,7 @@ export declare type QueueCallback = (metrics: IScribeMetrics, author: IAuthor) =
 export async function typeFile(
     loader: ILoader,
     urlBase: string,
-    runtime: IComponentRuntime,
+    runtime: IFluidDataStoreRuntime,
     ss: ISharedString,
     chunkMap: ISharedMap,
     fileText: string,
@@ -236,7 +236,7 @@ export async function typeFile(
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export async function typeChunk(
     a: IAuthor,
-    runtime: IComponentRuntime,
+    runtime: IFluidDataStoreRuntime,
     chunkKey: string,
     chunk: string,
     intervalTime: number,

@@ -9,7 +9,7 @@ import { IComponent } from "@fluidframework/component-core-interfaces";
 import { ILoader } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedString } from "@fluidframework/sequence";
 import * as author from "./author";
 
@@ -35,7 +35,7 @@ async function conductor(
     loader: ILoader,
     url: string,
     scribeMap: ISharedMap,
-    runtime: IComponentRuntime,
+    runtime: IFluidDataStoreRuntime,
     text,
     intervalTime,
     writers,
@@ -93,7 +93,7 @@ export async function type(
     loader: ILoader,
     urlBase: string,
     scribeMap: ISharedMap,
-    runtime: IComponentRuntime,
+    runtime: IFluidDataStoreRuntime,
     intervalTime: number,
     text: string,
     writers: number,

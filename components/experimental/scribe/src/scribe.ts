@@ -12,7 +12,7 @@ import {
     IResponse,
     IComponentHandle,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime, ComponentHandle } from "@fluidframework/component-runtime";
 import {
     IContainerContext,
     IFluidCodeDetails,
@@ -23,11 +23,11 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IDocumentFactory } from "@fluidframework/host-service-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
 import {
-    IComponentContext,
+    IFluidDataStoreContext,
     IComponentFactory,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -162,8 +162,8 @@ function addLink(element: HTMLDivElement, link: string) {
 
 function initialize(
     div: HTMLDivElement,
-    context: IComponentContext,
-    runtime: IComponentRuntime,
+    context: IFluidDataStoreContext,
+    runtime: IFluidDataStoreRuntime,
     root: ISharedMap,
     template: string,
     speed: number,
@@ -382,7 +382,7 @@ const html =
 export class Scribe
     extends EventEmitter
     implements IComponentLoadable, IComponentRouter, IComponentHTMLView {
-    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
+    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         const collection = new Scribe(runtime, context);
         await collection.initialize();
 
@@ -402,7 +402,7 @@ export class Scribe
     private root: ISharedMap;
     private div: HTMLDivElement;
 
-    constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
+    constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {
         super();
 
         this.url = context.id;
@@ -478,7 +478,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
                 const componentId = requestUrl
                     ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
                     : defaultComponentId;
-                const component = await containerRuntime.getComponentRuntime(componentId, true);
+                const component = await containerRuntime.getDataStore(componentId, true);
 
                 return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
             },
@@ -487,7 +487,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                runtime.createComponent(defaultComponentId, ScribeFactory.type).then((componentRuntime) => {
+                runtime._createDataStore(defaultComponentId, ScribeFactory.type).then((componentRuntime) => {
                     componentRuntime.bindToContext();
                 }),
             ]);
@@ -496,12 +496,12 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         return runtime;
     }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IFluidDataStoreContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
-        const runtime = ComponentRuntime.load(
+        const runtime = FluidDataStoreRuntime.load(
             context,
             dataTypes,
         );

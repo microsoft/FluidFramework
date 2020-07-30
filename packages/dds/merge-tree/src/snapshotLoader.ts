@@ -7,7 +7,7 @@ import assert from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IComponentRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
@@ -25,7 +25,7 @@ export class SnapshotLoader {
     private readonly logger: ITelemetryLogger;
 
     constructor(
-        private readonly runtime: IComponentRuntime,
+        private readonly runtime: IFluidDataStoreRuntime,
         private readonly client: Client,
         private readonly mergeTree: MergeTree,
         logger: ITelemetryLogger) {

@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { IComponentRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performanceNow } from "@fluidframework/common-utils";
 import { IIntegerRange } from "./base";
@@ -890,12 +890,12 @@ export class Client {
 
     // TODO: Remove `catchUpMsgs` once new snapshot format is adopted as default.
     //       (See https://github.com/microsoft/FluidFramework/issues/84)
-    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
+    public snapshot(runtime: IFluidDataStoreRuntime, handle: IComponentHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
         const deltaManager = runtime.deltaManager;
         const minSeq = deltaManager.minimumSequenceNumber;
 
         // Catch up to latest MSN, if we have not had a chance to do it.
-        // Required for case where ComponentRuntime.attachChannel() generates snapshot right after loading component.
+        // Required for case where FluidDataStoreRuntime.attachChannel() generates snapshot right after loading component.
 
         this.updateSeqNumbers(minSeq, deltaManager.lastSequenceNumber);
 
@@ -927,7 +927,7 @@ export class Client {
     }
 
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         storage: IChannelStorageService,
         branchId?: string,
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {

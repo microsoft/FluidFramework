@@ -12,11 +12,11 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
+import { ComponentHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
 import { IComponentCollection } from "@fluidframework/framework-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreContext, IComponentFactory } from "@fluidframework/runtime-definitions";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports,import/no-internal-modules,import/no-unassigned-import
@@ -123,7 +123,7 @@ export class ProgressBar extends EventEmitter implements
 export class ProgressCollection
     extends EventEmitter
     implements IComponentLoadable, IComponentRouter, IComponentCollection {
-    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
+    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         const collection = new ProgressCollection(runtime, context);
         await collection.initialize();
 
@@ -140,7 +140,7 @@ export class ProgressCollection
     private readonly progressBars = new Map<string, ProgressBar>();
     private root: ISharedMap;
 
-    constructor(private readonly runtime: IComponentRuntime, context: IComponentContext) {
+    constructor(private readonly runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         super();
 
         this.url = context.id;
@@ -230,12 +230,12 @@ class ProgressBarsFactory implements IComponentFactory {
 
     public get IComponentFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IFluidDataStoreContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
-        const runtime = ComponentRuntime.load(
+        const runtime = FluidDataStoreRuntime.load(
             context,
             dataTypes,
         );

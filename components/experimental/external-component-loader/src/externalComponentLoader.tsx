@@ -10,7 +10,7 @@ import {
     IResponse,
     IComponent,
 } from "@fluidframework/component-core-interfaces";
-import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { UrlRegistry } from "./urlRegistry";
 
@@ -44,10 +44,10 @@ export class ExternalComponentLoader extends PrimedComponent {
 
         // Calling .get() on the urlReg registry will also add it to the registry if it's not already there.
         const pkgReg = await urlReg.IComponentRegistry.get(componentUrl) as IComponent & IFluidObject;
-        let componentRuntime: IComponentRuntimeChannel;
+        let componentRuntime: IFluidDataStoreChannel;
         const id = uuid();
         if (pkgReg?.IComponentDefaultFactoryName !== undefined) {
-            componentRuntime = await this.context.containerRuntime.createComponent(
+            componentRuntime = await this.context.containerRuntime._createDataStore(
                 id,
                 [
                     ...this.context.packagePath,
@@ -56,7 +56,7 @@ export class ExternalComponentLoader extends PrimedComponent {
                     pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
                 ]);
         } else if (pkgReg?.IComponentFactory !== undefined) {
-            componentRuntime = await this.context.containerRuntime.createComponent(
+            componentRuntime = await this.context.containerRuntime._createDataStore(
                 id,
                 [
                     ...this.context.packagePath,

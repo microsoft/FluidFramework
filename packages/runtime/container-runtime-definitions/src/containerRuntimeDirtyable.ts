@@ -26,7 +26,7 @@ IProvideContainerRuntimeDirtyable {
     /**
      * Will return true for any message that affects the dirty state of this document.
      * This function can be used to filter out any runtime operations that should not be affecting whether or not
-     * the IComponentRuntime.isDocumentDirty call returns true/false
+     * the IFluidDataStoreRuntime.isDocumentDirty call returns true/false
      * @param type - The type of ContainerRuntime message that is being checked
      * @param contents - The contents of the message that is being verified
      */

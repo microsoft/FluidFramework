@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
@@ -100,7 +100,7 @@ export class ConsensusRegisterCollection<T>
      * @param id - optional name of the consensus register collection
      * @returns newly create consensus register collection (but not attached yet)
      */
-    public static create<T>(runtime: IComponentRuntime, id?: string) {
+    public static create<T>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, ConsensusRegisterCollectionFactory.Type) as ConsensusRegisterCollection<T>;
     }
 
@@ -121,7 +121,7 @@ export class ConsensusRegisterCollection<T>
      */
     public constructor(
         id: string,
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);

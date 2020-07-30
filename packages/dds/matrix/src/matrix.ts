@@ -11,7 +11,7 @@ import {
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
     Serializable,
     IChannelAttributes,
@@ -72,7 +72,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
     private annotations = new SparseArray2D<T>();      // Tracks cell annotations.
     private pending = new SparseArray2D<number>();      // Tracks pending writes.
 
-    constructor(runtime: IComponentRuntime, public id: string, attributes: IChannelAttributes) {
+    constructor(runtime: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
 
         this.rows = new PermutationVector(
@@ -90,7 +90,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
             this.onColHandlesRecycled);
     }
 
-    public static create<T extends Serializable = Serializable>(runtime: IComponentRuntime, id?: string) {
+    public static create<T extends Serializable = Serializable>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedMatrixFactory.Type) as SharedMatrix<T>;
     }
 

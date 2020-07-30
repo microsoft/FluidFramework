@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 
-export async function waitForAttach(componentRuntime: IComponentRuntime): Promise<void> {
+export async function waitForAttach(componentRuntime: IFluidDataStoreRuntime): Promise<void> {
     if (componentRuntime.attachState === AttachState.Attached) {
         return;
     }

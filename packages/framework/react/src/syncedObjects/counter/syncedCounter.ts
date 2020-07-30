@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { SharedCounter } from "@fluidframework/counter";
 import { SyncedComponent } from "../..";
 import { ISyncedCounterViewState, ISyncedCounterFluidState, ISyncedCounterReducer } from "./interface";
@@ -21,7 +21,7 @@ export function setSyncedCounterConfig(
     syncedComponent: SyncedComponent,
     syncedStateId: string,
     defaultValue: number = 0,
-    sharedObjectCreate: (runtime: IComponentRuntime) => SharedCounter = SharedCounter.create,
+    sharedObjectCreate: (runtime: IFluidDataStoreRuntime) => SharedCounter = SharedCounter.create,
 ) {
     setFluidSyncedCounterConfig<ISyncedCounterViewState, ISyncedCounterFluidState>(
         syncedComponent,

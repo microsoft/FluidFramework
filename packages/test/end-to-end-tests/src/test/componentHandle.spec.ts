@@ -85,7 +85,7 @@ describe("ComponentHandle", () => {
         const firstContainer = await createContainer();
         firstContainerComponent1 = await getComponent("default", firstContainer);
         firstContainerComponent2 =
-            await TestSharedComponentFactory.createComponent(firstContainerComponent1._context) as TestSharedComponent;
+            await TestSharedComponentFactory._createDataStore(firstContainerComponent1._context) as TestSharedComponent;
 
         const secondContainer = await createContainer();
         secondContainerComponent1 = await getComponent("default", secondContainer);
@@ -110,17 +110,17 @@ describe("ComponentHandle", () => {
         assert.equal(containerRuntime2.absolutePath, absolutePath, "The remote ContainerRuntime's path is incorrect");
     });
 
-    it("should generate the absolute path for ComponentRuntime correctly", () => {
-        // The expected absolute path for the ComponentRuntime.
+    it("should generate the absolute path for FluidDataStoreRuntime correctly", () => {
+        // The expected absolute path for the FluidDataStoreRuntime.
         const absolutePath = `/${firstContainerComponent1._runtime.id}`;
 
-        // Verify that the local client's ComponentRuntime has the correct absolute path.
+        // Verify that the local client's FluidDataStoreRuntime has the correct absolute path.
         const componentRuntime1 = firstContainerComponent1._runtime.IComponentHandleContext;
-        assert.equal(componentRuntime1.absolutePath, absolutePath, "The ComponentRuntime's path is incorrect");
+        assert.equal(componentRuntime1.absolutePath, absolutePath, "The FluidDataStoreRuntime's path is incorrect");
 
-        // Verify that the remote client's ComponentRuntime has the correct absolute path.
+        // Verify that the remote client's FluidDataStoreRuntime has the correct absolute path.
         const componentRuntime2 = secondContainerComponent1._runtime.IComponentHandleContext;
-        assert.equal(componentRuntime2.absolutePath, absolutePath, "The remote ComponentRuntime's path is incorrect");
+        assert.equal(componentRuntime2.absolutePath, absolutePath, "The remote FluidDataStoreRuntime's path is incorrect");
     });
 
     it("can store and retrieve a DDS from handle within same component runtime", async () => {
@@ -166,7 +166,7 @@ describe("ComponentHandle", () => {
         // Verify that the local client's handle has the correct absolute path.
         assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");
 
-        // Add the handle to the root DDS of `firstContainerComponent1` so that the ComponentRuntime is different.
+        // Add the handle to the root DDS of `firstContainerComponent1` so that the FluidDataStoreRuntime is different.
         firstContainerComponent1._root.set("sharedMap", sharedMap.handle);
 
         await opProcessingController.process();
@@ -193,7 +193,7 @@ describe("ComponentHandle", () => {
         assert.equal(componentHandle.absolutePath, absolutePath, "The handle's absolutepath is not correct");
 
         // Add `firstContainerComponent2's` handle to the root DDS of `firstContainerComponent1` so that the
-        // ComponentRuntime is different.
+        // FluidDataStoreRuntime is different.
         firstContainerComponent1._root.set("component2", firstContainerComponent2.handle);
 
         await opProcessingController.process();
