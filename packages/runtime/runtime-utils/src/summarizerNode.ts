@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import {
     ISummarizerNode,
+    ISummarizerNodeConfig,
     ISummarizeInternalResult,
     ISummarizeResult,
     ISummaryTreeWithStats,
@@ -235,12 +236,9 @@ export class SummarizerNode implements ISummarizerNode {
         this.wipReferenceSequenceNumber = referenceSequenceNumber;
     }
 
-    public async summarize(
-        fullTree: boolean,
-        throwOnFailure: boolean = false,
-    ): Promise<ISummarizeResult> {
+    public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
         // Try to reuse the tree if unchanged
-        if (!fullTree && !this.hasChanged()) {
+        if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
             const latestSummary = this.latestSummary;
             if (latestSummary !== undefined) {
                 const stats = mergeStats();
@@ -262,7 +260,7 @@ export class SummarizerNode implements ISummarizerNode {
             this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
             return { summary: result.summary, stats: result.stats };
         } catch (error) {
-            if (this.trackingSequenceNumber < this._changeSequenceNumber || throwOnFailure) {
+            if (this.throwOnError || this.trackingSequenceNumber < this._changeSequenceNumber) {
                 throw error;
             }
             const latestSummary = this.latestSummary;
@@ -522,22 +520,30 @@ export class SummarizerNode implements ISummarizerNode {
         return this._changeSequenceNumber > this.referenceSequenceNumber;
     }
 
+    private readonly canReuseHandle: boolean;
+    private readonly throwOnError: boolean;
     private constructor(
         private readonly summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+        config: ISummarizerNodeConfig,
         private _changeSequenceNumber: number,
         /** Undefined means created without summary */
         private latestSummary?: SummaryNode,
         private trackingSequenceNumber = _changeSequenceNumber,
-    ) {}
+    ) {
+        this.canReuseHandle = config.canReuseHandle ?? true;
+        this.throwOnError = config.throwOnFailure ?? false;
+    }
 
     public static createRootWithoutSummary(
         /** Summarize function */
         summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
         /** Sequence number of latest change to new node/subtree */
         changeSequenceNumber: number,
+        config: ISummarizerNodeConfig = {},
     ): SummarizerNode {
         return new SummarizerNode(
             summarizeInternalFn,
+            config,
             changeSequenceNumber,
             undefined,
         );
@@ -550,9 +556,11 @@ export class SummarizerNode implements ISummarizerNode {
         changeSequenceNumber: number,
         /** Reference sequence number of last acked summary */
         referenceSequenceNumber: number,
+        config: ISummarizerNodeConfig = {},
     ): SummarizerNode {
         return new SummarizerNode(
             summarizeInternalFn,
+            config,
             changeSequenceNumber,
             new SummaryNode({
                 referenceSequenceNumber,
@@ -569,6 +577,7 @@ export class SummarizerNode implements ISummarizerNode {
         changeSequenceNumber: number,
         /** Initial id or path part of this node */
         id: string,
+        config: ISummarizerNodeConfig = {},
     ): ISummarizerNode {
         assert(!this.children.has(id), "Create SummarizerNode child already exists");
 
@@ -582,6 +591,7 @@ export class SummarizerNode implements ISummarizerNode {
         }
         const child = new SummarizerNode(
             summarizeInternalFn,
+            config,
             changeSequenceNumber,
             summary,
         );

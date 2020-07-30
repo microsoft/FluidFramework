@@ -32,6 +32,20 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
 }
 
 export type SummarizeInternalFn = (fullTree: boolean) => Promise<ISummarizeInternalResult>;
+export interface ISummarizerNodeConfig {
+    /**
+     * True to reuse previous handle when unchanged since last acked summary.
+     * Defaults to true.
+     */
+    readonly canReuseHandle?: boolean,
+    /**
+     * True to always stop execution on error during summarize, or false to
+     * attempt creating a summary that is a pointer ot the last acked summary
+     * plus outstanding ops in case of internal summarize failure.
+     * Defaults to false.
+     */
+    readonly throwOnFailure?: boolean,
+}
 
 export interface ISummarizerNode {
     /** Latest successfully acked summary reference sequence number */
@@ -50,7 +64,7 @@ export interface ISummarizerNode {
     /**
      * Calls the internal summarize function and handles internal state tracking.
      * If unchanged and fullTree is false, it will reuse previous summary subtree.
-     * If an error is encountered and trackChanges is enabled, it will try to make
+     * If an error is encountered and throwOnFailure is false, it will try to make
      * a summary with a pointer to the previous summary + a blob of outstanding ops.
      * @param fullTree - true to skip optimizations and always generate the full tree
      */

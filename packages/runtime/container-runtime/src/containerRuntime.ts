@@ -682,6 +682,14 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
                 thisSummarizeInternal,
                 thisChangeSequenceNumber, // latest change sequence number; at this point should = initialSequenceNumber
                 this.deltaManager.initialSequenceNumber, // summary reference sequence number
+                {
+                    // Must set to false to prevent sending summary handle which would be pointing to
+                    // a summary with an older protocol state.
+                    canReuseHandle: false,
+                    // Must set to true to throw on any component failure that was too severe to be handled.
+                    // We also are not decoding the base summaries at the root.
+                    throwOnFailure: true,
+                },
             )
             : SummarizerNode.createRootWithoutSummary(thisSummarizeInternal, thisChangeSequenceNumber);
 
@@ -1359,11 +1367,8 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
      * Returns a summary of the runtime at the current sequence number.
      */
     private async summarize(fullTree = false): Promise<ISummaryTreeWithStats> {
-        // Both fullTree and throwOnFailure should be true for SummarizerNode.summarize args:
-        // fullTree - prevents sending summary handle which would cause protocol to be included
-        // throwOnFailure - want to throw on any component failure that was too severe to be handled
         return this.summarizerNode.enabled
-            ? await this.summarizerNode.node.summarize(true, true) as ISummaryTreeWithStats
+            ? await this.summarizerNode.node.summarize(fullTree) as ISummaryTreeWithStats
             : await this.summarizeInternal(fullTree ?? false) as ISummaryTreeWithStats;
     }
 
