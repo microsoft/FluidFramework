@@ -1,5 +1,142 @@
 # Breaking changes
 
+## 0.24 Breaking Changes
+This release only contains renames. There are no functional changes in this release. You should ensure you have integrated and validated up to release 0.23 before integrating this release.
+
+This is a follow up to the forward compat added in release 0.22: [Forward Compat For Loader IComponent Interfaces](#Forward-Compat-For-Loader-IComponent-Interfaces)
+You should ensure all container and components hosts are running at least 0.22 before integrating this release.
+
+The below json describes all the renames done in this release. If you have a large typescript code base, we have automation that may help. Please contact us if that is the case.
+
+All renames are 1-1, and global case senstive and whole word find replace for all should be safe. For IComponent Interfaces, both the type and property name were re-named.
+
+``` json
+"dataStore":{
+    "types":{
+        "IComponentRuntimeChannel":"IFluidDataStoreChannel",
+        "IComponentAttributes": "IFluidDataStoretAttributes",
+
+        "IComponentContext": "IFluidDataStoreContext",
+        "ComponentContext": "FluidDataStoreContext",
+        "LocalComponentContext":"LocalFluidDataStoreContext",
+        "RemotedComponentContext": "RemotedFluidDataStoreContext ",
+
+        "IComponentRuntime":"IFluidDataStoreRuntime",
+        "ComponentRuntime": "FluidDataStoreRuntime",
+        "MockComponentRuntime": "MockFluidDataStoreRuntime"
+    },
+    "methods":{
+        "createComponent": "_createDataStore",
+        "createComponentContext": "createDataStoreContext",
+        "createComponentWithProps": "createDataStoreWithProps",
+        "_createComponentWithProps": "_createDataStoreWithProps",
+        "createComponentWithRealizationFn": "createDataStoreWithRealizationFn",
+        "getComponentRuntime": "getDataStore",
+        "notifyComponentInstantiated": "notifyDataStoreInstantiated"
+    }
+},
+
+"aquaduct":{
+    "icomponentInterfaces":{
+        "IProvideComponentDefaultFactoryName": "IProvideFluidExportDefaultFactoryName",
+        "IComponentDefaultFactoryName": "IFluidExportDefaultFactoryName"
+    },
+    "types":{
+        "SharedComponentFactory": "PureDataObjectFactory",
+        "SharedComponent": "PureDataObject",
+
+        "PrimedComponentFactory": "DataObjectFactory",
+        "PrimedComponent": "DataObject",
+
+        "ContainerRuntimeFactoryWithDefaultComponent": "ContainerRuntimeFactoryWithDefaultDataStore",
+
+        "defaultComponentRuntimeRequestHandler": "defaultDataStoreRuntimeRequestHandler"
+    },
+    "methods": {
+        "getComponent": "requestFluidObject",
+        "asComponent": "asFluidObject",
+        "createAndAttachComponent": "createAndAttachDataStore",
+        "getComponentFromDirectory": "getFluidObjectFromDirectory",
+        "getComponent_UNSAFE": "requestFluidObject_UNSAFE",
+        "componentInitializingFirstTime": "initializingFirstTime",
+        "componentInitializingFromExisting": "initializingFromExisting",
+        "componentHasInitialized": "hasInitialized"
+    }
+},
+
+"fluidObject":{
+    "icomponentInterfaces":{
+
+        "IProvideComponentRouter": "IProvideFluidRouter",
+        "IComponentRouter": "IFluidRouter",
+
+        "IProvideComponentLoadable": "IProvideFluidLoadable",
+        "IComponentLoadable": "IFluidLoadable",
+
+        "IProvideComponentHandle": "IProvideFluidHandle",
+        "IComponentHandle": "IFluidHandle",
+
+        "IProvideComponentHandleContext": "IProvideFluidHandleContext",
+        "IComponentHandleContext": "IFluidHandleContext",
+
+        "IProvideComponentSerializer": "IProvideFluidSerializer",
+        "IComponentSerializer": "IFluidSerializer",
+
+        "IProvideComponentRunnable": "IProvideFluidRunnable",
+        "IComponentRunnable": "IFluidRunnable",
+
+        "IProvideComponentConfiguration": "IProvideFluidConfiguration",
+        "IComponentConfiguration": "IFluidConfiguration",
+
+        "IProvideComponentHTMLView": "IProvideFluidHTMLView",
+        "IComponentHTMLView": "IFluidHTMLView",
+        "IComponentHTMLOptions": "IFluidHTMLOptions",
+
+        "IProvideComponentMountableView": "IProvideFluidMountableView",
+        "IComponentMountableViewClass": "IFluidMountableViewClass",
+        "IComponentMountableView": "IFluidMountableView",
+
+        "IProvideComponentLastEditedTracker": "IProvideFluidLastEditedTracker",
+        "IComponentLastEditedTracker": "IFluidLastEditedTracker",
+
+        "IProvideComponentRegistry": "IProvideFluidDataStoreRegistry",
+        "IComponentRegistry": "IFluidDataStoreRegistry",
+
+        "IProvideComponentFactory": "IProvideFluidDataStoreFactory",
+        "IComponentFactory": "IFluidDataStoreFactory",
+
+        "IProvideComponentCollection": "IProvideFluidObjectCollection",
+        "IComponentCollection": "IFluidObjectCollection",
+
+        "IProvideComponentDependencySynthesizer": "IProvideFluidDependencySynthesizer",
+        "IComponentDependencySynthesizer": "IFluidDependencySynthesizer",
+
+        "IProvideComponentTokenProvider": "IProvideFluidTokenProvider",
+        "IComponentTokenProvider": "IFluidTokenProvider"
+    },
+    "types":{
+        "IComponent": "IFluidObject",
+        "fluid/component": "fluid/object",
+
+        "SharedObjectComponentHandle": "SharedObjectHandle",
+        "RemoteComponentHandle": "RemoteFluidObjectHandle",
+        "ComponentHandle": "FluidOjectHandle",
+        "ComponentSerializer": "FluidSerializer",
+
+        "ComponentHandleContext": "FluidHandleContext",
+
+        "ComponentRegistryEntry": "FluidDataStoreRegistryEntry",
+        "NamedComponentRegistryEntry": "NamedFluidDataStoreRegistryEntry",
+        "NamedComponentRegistryEntries": "NamedFluidDataStoreRegistryEntries",
+        "ComponentRegistry": "FluidDataStoreRegistry",
+        "ContainerRuntimeComponentRegistry": "ContainerRuntimeDataStoreRegistry"
+    },
+    "methods":{
+        "instantiateComponent": "instantiateDataStore"
+    }
+}
+```
+
 ## 0.23 Breaking Changes
 - [Removed `collaborating` event on IComponentRuntime](#Removed-`collaborating`-event-on-IComponentRuntime)
 - [ISharedObjectFactory rename](#ISharedObjectFactory)
