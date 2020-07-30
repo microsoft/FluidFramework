@@ -29,11 +29,6 @@ export abstract class BaseContainerService implements IFluidRouter {
             value: this,
         };
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRouter() {
-        return this.IFluidRouter;
-    }
 }
 
 /**

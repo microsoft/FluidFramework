@@ -159,9 +159,4 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
             },
         };
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentDependencySynthesizer() {
-        return this.IFluidDependencySynthesizer;
-    }
 }

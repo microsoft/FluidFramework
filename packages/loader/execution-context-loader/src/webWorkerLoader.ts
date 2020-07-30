@@ -74,14 +74,4 @@ export class WebWorkerLoader implements ILoader, IFluidRunnable, IFluidRouter {
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer> {
         return this.proxy.createDetachedContainer(source);
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRouter() {
-        return this.IFluidRouter;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRunnable() {
-        return this.IFluidRunnable;
-    }
 }

@@ -155,24 +155,4 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
             (newContext) => { this.instantiateComponentWithInitialState(newContext, initialState); },
         );
     }
-
-    /** deprecated: backcompat for FDL split */
-    createComponent?(context: IFluidDataStoreContext, initialState?: S) {
-        return this._createDataStore(context, initialState);
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentFactory() {
-        return this.IFluidDataStoreFactory;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRegistry() {
-        return this.IFluidDataStoreRegistry;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    instantiateComponent?(context: IFluidDataStoreContext) {
-        return this.instantiateDataStore(context);
-    }
 }

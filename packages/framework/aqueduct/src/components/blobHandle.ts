@@ -54,19 +54,4 @@ export class BlobHandle implements IFluidHandle {
     public async request(request: IRequest): Promise<IResponse> {
         return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRouter() {
-        return this.IFluidRouter;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentHandleContext() {
-        return this.IFluidHandleContext;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentHandle() {
-        return this.IFluidHandle;
-    }
 }
