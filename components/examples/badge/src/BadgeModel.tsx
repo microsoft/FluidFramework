@@ -10,12 +10,13 @@ import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { SharedMap } from "@fluidframework/map";
 import { SharedObjectSequence } from "@fluidframework/sequence";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
-import { IBadgeModel, IBadgeHistory } from "./Badge.types";
+import { AsSerializable } from "@fluidframework/component-runtime-definitions";
+import { IBadgeModel, IBadgeHistory, IBadgeType } from "./Badge.types";
 import { defaultItems } from "./helpers";
 import { BadgeClient } from "./BadgeClient";
 
 export class Badge extends PrimedComponent implements IBadgeModel, IComponentHTMLView {
-    currentCell: SharedCell;
+    currentCell: SharedCell<AsSerializable<IBadgeType>>;
     optionsMap: SharedMap;
     historySequence: SharedObjectSequence<IBadgeHistory>;
 
