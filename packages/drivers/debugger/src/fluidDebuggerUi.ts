@@ -28,7 +28,7 @@ export interface IDebuggerUI {
      * if file does not exist, has wrong name of wrong format.
      * @param version - version, file name, or undefined if playing ops.
      */
-    versionSelected(seqNumber: number, version?: IVersion | string): void;
+    versionSelected(seqNumber: number, version: IVersion | string): void;
 
     /**
      * Called by controller in response to new ops being downloaded
@@ -65,7 +65,7 @@ export interface IDebuggerController {
 
     /**
      * Called by UI layer when debugger window is closed by user
-     * If called before user makes selection of snapshot/file/no snapshot, original
+     * If called before user makes selection of snapshot/file, original
      * document service is returned to loader (instead of debugger service) and normal document load continues.
      */
     onClose(): void;
@@ -75,7 +75,7 @@ export interface IDebuggerController {
      * On successful load, versionSelected() is called.
      * @param version - Version, undefined (playing ops)
      */
-    onVersionSelection(version?: IVersion): void;
+    onVersionSelection(version: IVersion): void;
 
     /**
      * UI Layer notifies about selection of version to continue.
@@ -98,7 +98,6 @@ const debuggerWindowHtml =
 Please select snapshot or file to start with<br/>
 Close debugger window to proceed to live document<br/><br/>
 <select style='width:250px' id='selector'>
-<option>No snapshot</option>
 </select>
 &nbsp; &nbsp; &nbsp;
 <button id='buttonVers' style='width:60px'>Go</button><br/>
@@ -186,7 +185,7 @@ export class DebuggerUI {
         buttonVers.onclick = () => {
             // Accounting for "no snapshots"
             const index = this.selector!.selectedIndex;
-            controller.onVersionSelection(index === 0 ? undefined : this.versions[index - 1]);
+            controller.onVersionSelection(this.versions[index]);
         };
 
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -219,18 +218,15 @@ export class DebuggerUI {
 
     public updateVersion(index: number, version: IVersion, seqNumber: number) {
         if (this.selector) {
-            const option = this.selector[index + 1] as HTMLOptionElement;
+            const option = this.selector[index] as HTMLOptionElement;
             option.text = `${option.text},  seq = ${seqNumber}`;
-            // Accounting for "no snapshots"
-            this.selector[index + 1] = option;
+            this.selector[index] = option;
         }
     }
 
-    public versionSelected(seqNumber: number, version?: IVersion | string) {
+    public versionSelected(seqNumber: number, version: IVersion | string) {
         let text: string;
-        if (version === undefined) {
-            text = "Playing from seq# 0";
-        } else if (typeof version === "string") {
+        if (typeof version === "string") {
             text = `Playing ${version} file`;
         } else {
             text = `Playing from ${version.id}, seq# ${seqNumber}`;
