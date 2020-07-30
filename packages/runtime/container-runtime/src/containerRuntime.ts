@@ -668,6 +668,12 @@ export class ContainerRuntime extends EventEmitter
 
         this.IFluidHandleContext = new FluidHandleContext("", this);
 
+        this.logger = ChildLogger.create(context.logger, undefined, {
+            runtimeVersion: pkgVersion,
+        });
+
+        this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
+
         this.latestSummaryAck = {
             proposalHandle: undefined,
             ackHandle: this.context.getLoadedFromVersion()?.id,
@@ -682,6 +688,7 @@ export class ContainerRuntime extends EventEmitter
         const thisSummarizeInternal = async (fullTree: boolean) => this.summarizeInternal(fullTree);
         const summarizerNode = context.baseSnapshot
             ? SummarizerNode.createRootFromSummary(
+                this.logger,
                 thisSummarizeInternal,
                 thisChangeSequenceNumber, // latest change sequence number; at this point should = initialSequenceNumber
                 this.deltaManager.initialSequenceNumber, // summary reference sequence number
@@ -694,7 +701,7 @@ export class ContainerRuntime extends EventEmitter
                     throwOnFailure: true,
                 },
             )
-            : SummarizerNode.createRootWithoutSummary(thisSummarizeInternal, thisChangeSequenceNumber);
+            : SummarizerNode.createRootWithoutSummary(this.logger, thisSummarizeInternal, thisChangeSequenceNumber);
 
         // Use runtimeOptions if provided, otherwise check localStorage, defaulting to true/enabled.
         const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode
@@ -754,12 +761,6 @@ export class ContainerRuntime extends EventEmitter
                 this.summarizerNode.getCreateChildFn(this.summarizerNode.referenceSequenceNumber, key));
             this.setNewContext(key, componentContext);
         }
-
-        this.logger = ChildLogger.create(context.logger, undefined, {
-            runtimeVersion: pkgVersion,
-        });
-
-        this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,

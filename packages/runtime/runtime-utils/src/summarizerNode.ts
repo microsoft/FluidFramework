@@ -17,6 +17,7 @@ import {
     ISnapshotTree,
     IDocumentAttributes,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { mergeStats } from "./summaryUtils";
 
 const baseSummaryTreeKey = "_baseSummary";
@@ -112,12 +113,18 @@ interface IDecodedSummary {
  * their base path when necessary.
  * @param snapshot - snapshot tree to decode
  */
-function decodeSummary(snapshot: ISnapshotTree): IDecodedSummary {
+function decodeSummary(snapshot: ISnapshotTree, logger: Pick<ITelemetryLogger, "sendTelemetryEvent">): IDecodedSummary {
     let baseSummary = snapshot;
     const pathParts: string[] = [];
     const opsBlobs: string[] = [];
 
-    for (let i = 0; i < maxDecodeDepth; i++) {
+    for (let i = 0; ; i++) {
+        if (i > maxDecodeDepth) {
+            logger.sendTelemetryEvent({
+                eventName: "DecodeSummaryMaxDepth",
+                maxDecodeDepth,
+            });
+        }
         const outstandingOpsBlob = baseSummary.blobs[outstandingOpsBlobKey];
         const newBaseSummary = baseSummary.trees[baseSummaryTreeKey];
         if (outstandingOpsBlob === undefined && newBaseSummary === undefined) {
@@ -141,7 +148,6 @@ function decodeSummary(snapshot: ISnapshotTree): IDecodedSummary {
         pathParts.push(baseSummaryTreeKey);
         opsBlobs.unshift(outstandingOpsBlob);
     }
-    assert.fail("Exceeded max depth while decoding a base summary");
 }
 
 /**
@@ -420,7 +426,7 @@ export class SummarizerNode implements ISummarizerNode {
     ): void {
         this.refreshLatestSummaryCore(referenceSequenceNumber);
 
-        const { baseSummary, pathParts } = decodeSummary(snapshotTree);
+        const { baseSummary, pathParts } = decodeSummary(snapshotTree, this.logger);
 
         this.latestSummary = new SummaryNode({
             referenceSequenceNumber,
@@ -468,7 +474,7 @@ export class SummarizerNode implements ISummarizerNode {
         snapshot: ISnapshotTree,
         readAndParseBlob: ReadAndParseBlob,
     ): Promise<{ baseSummary: ISnapshotTree, outstandingOps: ISequencedDocumentMessage[] }> {
-        const decodedSummary = decodeSummary(snapshot);
+        const decodedSummary = decodeSummary(snapshot, this.logger);
         const outstandingOps = await decodedSummary.getOutstandingOps(readAndParseBlob);
 
         if (outstandingOps.length > 0) {
@@ -526,6 +532,7 @@ export class SummarizerNode implements ISummarizerNode {
     private readonly canReuseHandle: boolean;
     private readonly throwOnError: boolean;
     private constructor(
+        private readonly logger: ITelemetryLogger,
         private readonly summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
         config: ISummarizerNodeConfig,
         private _changeSequenceNumber: number,
@@ -538,6 +545,7 @@ export class SummarizerNode implements ISummarizerNode {
     }
 
     public static createRootWithoutSummary(
+        logger: ITelemetryLogger,
         /** Summarize function */
         summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
         /** Sequence number of latest change to new node/subtree */
@@ -545,6 +553,7 @@ export class SummarizerNode implements ISummarizerNode {
         config: ISummarizerNodeConfig = {},
     ): SummarizerNode {
         return new SummarizerNode(
+            logger,
             summarizeInternalFn,
             config,
             changeSequenceNumber,
@@ -553,6 +562,7 @@ export class SummarizerNode implements ISummarizerNode {
     }
 
     public static createRootFromSummary(
+        logger: ITelemetryLogger,
         /** Summarize function */
         summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
         /** Sequence number of latest change to new node/subtree */
@@ -562,6 +572,7 @@ export class SummarizerNode implements ISummarizerNode {
         config: ISummarizerNodeConfig = {},
     ): SummarizerNode {
         return new SummarizerNode(
+            logger,
             summarizeInternalFn,
             config,
             changeSequenceNumber,
@@ -593,6 +604,7 @@ export class SummarizerNode implements ISummarizerNode {
             });
         }
         const child = new SummarizerNode(
+            this.logger,
             summarizeInternalFn,
             config,
             changeSequenceNumber,

@@ -17,6 +17,7 @@ import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker, SummarizerNode } from "@fluidframework/runtime-utils";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { LocalFluidDataStoreContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
 
@@ -98,6 +99,7 @@ describe("Component Creation Tests", () => {
             } as ContainerRuntime;
             summaryTracker = new SummaryTracker("", 0, 0);
             const summarizerNode = SummarizerNode.createRootWithoutSummary(
+                new TelemetryNullLogger(),
                 (() => {}) as unknown as SummarizeInternalFn,
                 0);
             getCreateSummarizerNodeFn = (id: string) => (si: SummarizeInternalFn) => summarizerNode.createChild(
