@@ -31,7 +31,6 @@ import {
     HostStoragePolicyInternal,
     ISocketStorageDiscovery,
 } from "./contracts";
-import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
 import { IOdspCache, startingUpdateUsageOpFrequency, updateUsageOpMultiplier } from "./odspCache";
 import { OdspDeltaStorageService } from "./odspDeltaStorageService";
@@ -61,7 +60,6 @@ export class OdspDocumentService implements IDocumentService {
      * @param deltasFetchWrapper - if not provided FetchWrapper will be used
      * @param socketIoClientFactory - A factory that returns a promise to the socket io library required by the driver
      * @param cache - This caches response for joinSession.
-     * @param newFileInfoPromise - promise to supply info needed to create a new file.
      */
     public static async create(
         resolvedUrl: IResolvedUrl,
@@ -72,26 +70,8 @@ export class OdspDocumentService implements IDocumentService {
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
     ): Promise<IDocumentService> {
-        let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        const options = odspResolvedUrl.createNewOptions;
-        if (options) {
-            odspResolvedUrl = await PerformanceEvent.timedExecAsync(
-                logger,
-                {
-                    eventName: "CreateNew",
-                    isWithSummaryUpload: false,
-                },
-                async (event) => {
-                    odspResolvedUrl = await createNewFluidFile(
-                        getStorageToken,
-                        await options.newFileInfoPromise,
-                        logger);
-                    event.end({ docId: odspResolvedUrl.hashedDocumentId });
-                    return odspResolvedUrl;
-                });
-        }
         return new OdspDocumentService(
-            odspResolvedUrl,
+            resolvedUrl as IOdspResolvedUrl,
             getStorageToken,
             getWebsocketToken,
             logger,

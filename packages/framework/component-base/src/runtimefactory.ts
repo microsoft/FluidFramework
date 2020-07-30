@@ -9,8 +9,8 @@ import {
 } from "@fluidframework/container-runtime";
 import { RuntimeRequestHandlerBuilder, RuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
-    NamedComponentRegistryEntries,
-    IComponentFactory,
+    NamedFluidDataStoreRegistryEntries,
+    IFluidDataStoreFactory,
     FlushMode,
 } from "@fluidframework/runtime-definitions";
 import { IRequest } from "@fluidframework/component-core-interfaces";
@@ -18,11 +18,11 @@ import { IRequest } from "@fluidframework/component-core-interfaces";
 const defaultComponentId = "" as const;
 
 export class RuntimeFactory implements IRuntimeFactory {
-    private readonly registry: NamedComponentRegistryEntries;
+    private readonly registry: NamedFluidDataStoreRegistryEntries;
 
     constructor(
-        private readonly defaultComponent: IComponentFactory,
-        components: IComponentFactory[] = [defaultComponent],
+        private readonly defaultComponent: IFluidDataStoreFactory,
+        components: IFluidDataStoreFactory[] = [defaultComponent],
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
     ) {
         this.registry =
@@ -31,7 +31,7 @@ export class RuntimeFactory implements IRuntimeFactory {
                 : components.concat(defaultComponent)
             ).map(
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                (factory) => [factory.type!, factory]) as NamedComponentRegistryEntries;
+                (factory) => [factory.type!, factory]) as NamedFluidDataStoreRegistryEntries;
     }
 
     public get IRuntimeFactory() { return this; }
@@ -57,7 +57,7 @@ export class RuntimeFactory implements IRuntimeFactory {
                 remainingUrl = "";
             }
 
-            const component = await containerRuntime.getComponentRuntime(componentId, true);
+            const component = await containerRuntime.getDataStore(componentId, true);
 
             return component.request({ url: remainingUrl });
         });
@@ -65,7 +65,7 @@ export class RuntimeFactory implements IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             this.registry,
-            async (req,rt) => builder.handleRequest(req, rt),
+            async (req, rt) => builder.handleRequest(req, rt),
         );
 
         // Flush mode to manual to batch operations within a turn
@@ -74,7 +74,7 @@ export class RuntimeFactory implements IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing && this.defaultComponent.type) {
             await runtime
-                .createComponent(defaultComponentId, this.defaultComponent.type)
+                ._createDataStore(defaultComponentId, this.defaultComponent.type)
                 .then((componentRuntime) => {
                     componentRuntime.bindToContext();
                 });

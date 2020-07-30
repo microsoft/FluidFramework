@@ -11,7 +11,7 @@ import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { IComponent, IRequest, IResponse, IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     ICodeLoader,
@@ -134,7 +134,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         serviceFactory: IDocumentServiceFactory,
         codeLoader: ICodeLoader,
         options: any,
-        scope: IComponent & IFluidObject,
+        scope: IFluidObject & IFluidObject,
         loader: ILoader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
@@ -180,18 +180,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         event.end(props);
                         res(container);
                     },
-                    (error) => {
-                        const err = CreateContainerError(error);
-                        onClosed(err);
-                    });
-                });
+                        (error) => {
+                            const err = CreateContainerError(error);
+                            onClosed(err);
+                        });
+            });
         });
     }
 
     public static async create(
         codeLoader: ICodeLoader,
         options: any,
-        scope: IComponent & IFluidObject,
+        scope: IFluidObject & IFluidObject,
         loader: Loader,
         source: IFluidCodeDetails,
         serviceFactory: IDocumentServiceFactory,
@@ -356,7 +356,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     constructor(
         public readonly options: any,
-        private readonly scope: IComponent & IFluidObject,
+        private readonly scope: IFluidObject & IFluidObject,
         private readonly codeLoader: ICodeLoader,
         private readonly loader: ILoader,
         private readonly serviceFactory: IDocumentServiceFactory,
@@ -1268,8 +1268,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         value: ConnectionState,
         oldState: ConnectionState,
         reason: string,
-        opsBehind?: number)
-    {
+        opsBehind?: number) {
         // Log actual event
         const time = performanceNow();
         this.connectionTransitionTimes[value] = time;
@@ -1375,10 +1374,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             case MessageType.Operation:
             case MessageType.RemoteHelp:
             case MessageType.Summarize:
-            // Back-compat: <= 0.21.0
-            // Legacy, to be removed in next version(s)
-            case "attach":
-            case "chunkedOp":
                 break;
             default:
                 this.close(CreateContainerError(`Runtime can't send arbitrary message type: ${type}`));

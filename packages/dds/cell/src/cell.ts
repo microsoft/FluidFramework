@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelFactory,
     Serializable,
@@ -61,7 +61,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
      * @param id - optional name of the shared map
      * @returns newly create shared map (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, CellFactory.Type) as SharedCell;
     }
 
@@ -97,7 +97,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
      * @param runtime - component runtime the shared map belongs to
      * @param id - optional name of the shared map
      */
-    constructor(id: string, runtime: IComponentRuntime, attributes: IChannelAttributes) {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
     }
 
@@ -293,9 +293,9 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
 
         // Stringify to convert to the serialized handle values - and then parse in order to create
         // a POJO for the op
-        const stringified = this.runtime.IComponentSerializer.stringify(
+        const stringified = this.runtime.IFluidSerializer.stringify(
             value,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidHandleContext,
             this.handle);
         return JSON.parse(stringified);
     }
@@ -313,7 +313,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
         }
 
         return value !== undefined
-            ? this.runtime.IComponentSerializer.parse(JSON.stringify(value), this.runtime.IComponentHandleContext)
+            ? this.runtime.IFluidSerializer.parse(JSON.stringify(value), this.runtime.IFluidHandleContext)
             : value;
     }
 }

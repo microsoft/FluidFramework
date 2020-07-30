@@ -4,7 +4,7 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultComponent,
+    ContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/aqueduct";
 
 import { DiceRoller, DiceRollerInstantiationFactory } from "./main";
@@ -12,7 +12,7 @@ import { DiceRoller, DiceRollerInstantiationFactory } from "./main";
 export { DiceRoller, DiceRollerInstantiationFactory } from "./main";
 
 /**
- * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultComponent also enables dynamic loading in
+ * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultDataStore also enables dynamic loading in
  * the EmbeddedComponentLoader.
  *
  * There are two important things here:
@@ -22,7 +22,7 @@ export { DiceRoller, DiceRollerInstantiationFactory } from "./main";
  * In this example, we are only registering a single component, but more complex examples will register multiple
  * components.
  */
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     DiceRoller.ComponentName,
     new Map([
         [DiceRoller.ComponentName, Promise.resolve(DiceRollerInstantiationFactory)],

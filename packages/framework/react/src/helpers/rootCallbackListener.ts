@@ -4,7 +4,7 @@
  */
 
 import { ISharedMap, IDirectoryValueChanged } from "@fluidframework/map";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import {
     FluidComponentMap,
     ViewToFluidMap,
@@ -40,7 +40,7 @@ export const syncedStateCallbackListener = <
     storedHandleMap: ISharedMap,
     syncedStateId,
     syncedState: ISyncedState,
-    runtime: IComponentRuntime,
+    runtime: IFluidDataStoreRuntime,
     state: SV,
     setState: (
         newState: SV,

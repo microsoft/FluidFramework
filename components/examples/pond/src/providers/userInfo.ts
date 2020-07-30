@@ -6,12 +6,12 @@
 import { EventEmitter } from "events";
 
 import {
-    IComponentHandleContext,
-    IComponentSerializer,
+    IFluidHandleContext,
+    IFluidSerializer,
 } from "@fluidframework/component-core-interfaces";
 import { IQuorum } from "@fluidframework/protocol-definitions";
 import { DependencyContainer } from "@fluidframework/synthesize";
-import { IComponentRegistry } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
 
 import { IComponentUserInformation } from "../interfaces";
@@ -69,9 +69,9 @@ export const userInfoFactory = async (dc: DependencyContainer) => {
     const s = dc.synthesize<IContainerRuntime>({
         IContainerRuntime,
         IContainerRuntimeDirtyable,
-        IComponentHandleContext,
-        IComponentSerializer,
-        IComponentRegistry,
+        IFluidHandleContext,
+        IFluidSerializer,
+        IFluidDataStoreRegistry,
     }, {});
     const containerRuntime = await s.IContainerRuntime;
     if (containerRuntime !== undefined) {

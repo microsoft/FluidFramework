@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import { ISharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import * as GraphiQL from "graphiql";
 import React from "react";
 import ReactDOM from "react-dom";
@@ -14,10 +14,10 @@ import { GraphQLService } from "./database";
 
 // Note on defining components - snapshotting does not seem like it should be part of an IChaincodeComponent given
 // these synthetic components don't need it. We may want this to just be "attach"
-export class GraphIQLView extends EventEmitter implements IComponentHTMLView {
+export class GraphIQLView extends EventEmitter implements IFluidHTMLView {
     public readonly id = "graphiql";
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     constructor(private readonly map: ISharedMap, private readonly sharedString: SharedString) {
         super();

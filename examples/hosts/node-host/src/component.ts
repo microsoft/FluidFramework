@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { launchCLI } from "./cli";
@@ -36,11 +36,11 @@ export async function initializeChaincode(document: Container, pkg?: IFluidCodeD
 async function fetchCore(loader: Loader, url: string) {
     const response = await loader.request({ url });
 
-    if (response.status !== 200 || response.mimeType !== "fluid/component") {
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
         return;
     }
 
-    const component = response.value as IComponent;
+    const component = response.value as IFluidObject;
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     launchCLI(component);

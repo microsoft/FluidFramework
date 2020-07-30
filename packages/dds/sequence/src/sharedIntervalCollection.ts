@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelServices,
     IChannelFactory,
@@ -52,7 +52,7 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
     }
 
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
         branchId: string,
@@ -63,7 +63,7 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
         return map;
     }
 
-    public create(runtime: IComponentRuntime, id: string): SharedIntervalCollection {
+    public create(runtime: IFluidDataStoreRuntime, id: string): SharedIntervalCollection {
         const map = new SharedIntervalCollection(
             id,
             runtime,
@@ -88,7 +88,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
      * @param id - optional name of the shared map
      * @returns newly create shared map (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedIntervalCollectionFactory.Type) as SharedIntervalCollection;
     }
 
@@ -110,7 +110,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
      */
     constructor(
         id: string,
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);

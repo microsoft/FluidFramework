@@ -5,15 +5,12 @@
 
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
-import { INewFileInfoHeader } from "./odspUtils";
 
 export interface IOdspResolvedUrl extends IFluidResolvedUrl {
     type: "fluid";
 
     // URL to send to fluid, contains the documentId and the path
     url: string;
-
-    createNewOptions?: INewFileInfoHeader;
 
     // A hashed identifier that is unique to this document
     hashedDocumentId: string;
@@ -229,14 +226,4 @@ export interface ICreateFileResponse {
     itemId: string;
     itemUrl: string;
     sequenceNumber: number;
-}
-
-export interface ICreateFileResponseZeroSize {
-    "@odata.context": string;
-    driveId: string;
-    id: string;
-    itemId: string;
-    itemUrl: string;
-    sequenceNumber: number;
-    name: string;
 }

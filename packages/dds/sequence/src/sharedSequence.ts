@@ -6,7 +6,7 @@
 import {
     BaseSegment, IJSONSegment, ISegment, PropertySet, LocalReferenceCollection,
 } from "@fluidframework/merge-tree";
-import { IChannelAttributes, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
 
 const MaxRun = 128;
@@ -102,7 +102,7 @@ export class SubSequence<T> extends BaseSegment {
 
 export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
     constructor(
-        document: IComponentRuntime,
+        document: IFluidDataStoreRuntime,
         public id: string,
         attributes: IChannelAttributes,
         specToSegment: (spec: IJSONSegment) => ISegment,

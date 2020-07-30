@@ -35,8 +35,7 @@ class OpPerfTelemetry {
     public constructor(
         private clientId: string | undefined,
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        logger: ITelemetryLogger)
-    {
+        logger: ITelemetryLogger) {
         this.logger = ChildLogger.create(logger, "OpPerf");
 
         this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));

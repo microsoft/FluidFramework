@@ -5,7 +5,7 @@
 
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
-    ComponentRegistry,
+    FluidDataStoreRegistry,
     ContainerRuntime,
 } from "@fluidframework/container-runtime";
 import {
@@ -15,9 +15,9 @@ import {
     RuntimeRequestHandler, RuntimeRequestHandlerBuilder, componentRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import {
-    IComponentRegistry,
-    IProvideComponentRegistry,
-    NamedComponentRegistryEntries,
+    IFluidDataStoreRegistry,
+    IProvideFluidDataStoreRegistry,
+    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { DependencyContainer, DependencyContainerRegistry } from "@fluidframework/synthesize";
 
@@ -27,11 +27,11 @@ import { DependencyContainer, DependencyContainerRegistry } from "@fluidframewor
  * it creates.
  */
 export class BaseContainerRuntimeFactory implements
-    IProvideComponentRegistry,
+    IProvideFluidDataStoreRegistry,
     IRuntimeFactory {
-    public get IComponentRegistry() { return this.registry; }
+    public get IFluidDataStoreRegistry() { return this.registry; }
     public get IRuntimeFactory() { return this; }
-    private readonly registry: IComponentRegistry;
+    private readonly registry: IFluidDataStoreRegistry;
 
     /**
      * @param registryEntries - The component registry for containers produced
@@ -39,11 +39,11 @@ export class BaseContainerRuntimeFactory implements
      * @param requestHandlers - Request handlers for containers produced
      */
     constructor(
-        private readonly registryEntries: NamedComponentRegistryEntries,
+        private readonly registryEntries: NamedFluidDataStoreRegistryEntries,
         private readonly providerEntries: DependencyContainerRegistry = [],
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
     ) {
-        this.registry = new ComponentRegistry(registryEntries);
+        this.registry = new FluidDataStoreRegistry(registryEntries);
     }
 
     /**
@@ -52,16 +52,16 @@ export class BaseContainerRuntimeFactory implements
     public async instantiateRuntime(
         context: IContainerContext,
     ): Promise<IRuntime> {
-        const parentDependencyContainer = context.scope.IComponentDependencySynthesizer;
+        const parentDependencyContainer = context.scope.IFluidDependencySynthesizer;
         const dc = new DependencyContainer(parentDependencyContainer);
         for (const entry of Array.from(this.providerEntries)) {
             dc.register(entry.type, entry.provider);
         }
 
-        // Create a scope object that passes through everything except for IComponentDependencySynthesizer
+        // Create a scope object that passes through everything except for IFluidDependencySynthesizer
         // which we will replace with the new one we just created.
         const scope: any = context.scope;
-        scope.IComponentDependencySynthesizer = dc;
+        scope.IFluidDependencySynthesizer = dc;
 
         const builder = new RuntimeRequestHandlerBuilder();
         builder.pushHandler(...this.requestHandlers);
@@ -70,7 +70,7 @@ export class BaseContainerRuntimeFactory implements
         const runtime = await ContainerRuntime.load(
             context,
             this.registryEntries,
-            async (req,rt) => builder.handleRequest(req, rt),
+            async (req, rt) => builder.handleRequest(req, rt),
             undefined,
             scope);
 
@@ -101,4 +101,9 @@ export class BaseContainerRuntimeFactory implements
      * @param runtime - The container runtime for the container being initialized
      */
     protected async containerHasInitialized(runtime: IContainerRuntime) { }
+
+    /** deprecated: backcompat for FDL split */
+    get IComponentRegistry() {
+        return this.IFluidDataStoreRegistry;
+    }
 }
