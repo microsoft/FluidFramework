@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/telemetry-utils",
-  "version": "0.24.1",
+  "version": "0.24.2",
   "description": "Collection of telemetry relates utilities for Fluid",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/service-load-test",
-  "version": "0.24.1",
+  "version": "0.24.2",
   "private": true,
   "description": "End to end tests",
   "repository": "microsoft/FluidFramework",
@@ -49,12 +49,12 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.24.1",
-    "@fluidframework/container-definitions": "^0.24.1",
-    "@fluidframework/container-loader": "^0.24.1",
-    "@fluidframework/odsp-driver": "^0.24.1",
-    "@fluidframework/test-utils": "^0.24.1",
-    "@fluidframework/tool-utils": "^0.24.1",
+    "@fluidframework/aqueduct": "^0.24.2",
+    "@fluidframework/container-definitions": "^0.24.2",
+    "@fluidframework/container-loader": "^0.24.2",
+    "@fluidframework/odsp-driver": "^0.24.2",
+    "@fluidframework/test-utils": "^0.24.2",
+    "@fluidframework/tool-utils": "^0.24.2",
     "commander": "^5.1.0"
   },
   "devDependencies": {
