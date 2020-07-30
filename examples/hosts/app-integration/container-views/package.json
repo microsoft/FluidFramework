@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/app-integration-container-views",
-  "version": "0.23.0",
+  "version": "0.23.1",
   "description": "Minimal Fluid Container & Component sample to implement a collaborative dice roller as a standalone app.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -30,13 +30,13 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.23.0",
-    "@fluidframework/component-core-interfaces": "^0.23.0",
-    "@fluidframework/container-loader": "^0.23.0",
-    "@fluidframework/get-tinylicious-container": "^0.23.0",
-    "@fluidframework/map": "^0.23.0",
-    "@fluidframework/view-adapters": "^0.23.0",
-    "@fluidframework/view-interfaces": "^0.23.0",
+    "@fluidframework/aqueduct": "^0.23.1",
+    "@fluidframework/component-core-interfaces": "^0.23.1",
+    "@fluidframework/container-loader": "^0.23.1",
+    "@fluidframework/get-tinylicious-container": "^0.23.1",
+    "@fluidframework/map": "^0.23.1",
+    "@fluidframework/view-adapters": "^0.23.1",
+    "@fluidframework/view-interfaces": "^0.23.1",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
