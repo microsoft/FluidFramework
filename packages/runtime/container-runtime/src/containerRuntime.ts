@@ -1164,7 +1164,7 @@ export class ContainerRuntime extends EventEmitter
         return this.connected && !this.deltaManager.readonly;
     }
 
-    private _createComponentContext(pkg: string[], props?: any, id = uuid()) {
+    private _createComponentContext(pkg: string[], id = uuid()) {
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), "Creating component with existing ID");
@@ -1177,7 +1177,7 @@ export class ContainerRuntime extends EventEmitter
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             (cr: IFluidDataStoreChannel) => this.bindComponent(cr),
-            props);
+            undefined);
 
         const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
