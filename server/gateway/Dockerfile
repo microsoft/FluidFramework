@@ -11,7 +11,7 @@ ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-RUN apt-get update && apt-get install -y python make
+RUN apt-get update && apt-get install -y python make g++
 
 # Copy over and build the server
 WORKDIR /usr/src/server
