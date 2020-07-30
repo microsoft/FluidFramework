@@ -70,7 +70,7 @@ export const getPushRefreshTokenFn = (server: string, clientConfig: IClientConfi
     getRefreshTokenFn(pushScope, server, clientConfig, tokens);
 export const getRefreshTokenFn = (scope: string, server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
     async () => {
-        await refreshTokens(scope, server, clientConfig, tokens);
+        await refreshTokens(server, scope, clientConfig, tokens);
         return tokens.accessToken;
     };
 
