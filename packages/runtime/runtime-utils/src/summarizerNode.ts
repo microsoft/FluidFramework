@@ -18,85 +18,29 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { mergeStats } from "./summaryUtils";
 
-const baseSummaryTreeKey = ".baseSummary";
-const outstandingOpsBlobKey = ".outstandingOps";
-const maxDecodeDepth = 10000;
+const baseSummaryTreeKey = "_baseSummary";
+const outstandingOpsBlobKey = "_outstandingOps";
+const maxDecodeDepth = 100;
 
-interface IDecodedSummary {
-    readonly baseSummary: ISnapshotTree;
-    readonly pathParts: string[];
-}
+/** Reads a blob from storage and parses it from JSON. */
+export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
 
-type DecodeSummaryBodyResult = {
-    readonly complete: true;
-    readonly baseSummary: ISnapshotTree;
-} | {
-    readonly complete: false;
-    readonly baseSummary: ISnapshotTree;
-    readonly outstandingOpsBlob: string;
-};
-
-function decodeSummaryBody(baseSummary: ISnapshotTree, pathParts: string[]): DecodeSummaryBodyResult {
-    const outstandingOpsBlob = baseSummary.blobs[outstandingOpsBlobKey];
-    const newBaseSummary = baseSummary.trees[baseSummaryTreeKey];
-    if (outstandingOpsBlob === undefined && newBaseSummary === undefined) {
-        return { complete: true, baseSummary };
-    }
-
-    assert(outstandingOpsBlob, "Outstanding ops blob missing, but base summary tree exists");
-    assert(newBaseSummary, "Base summary tree missing, but outstanding ops blob exists");
-    pathParts.push(baseSummaryTreeKey);
-    return { complete: false, baseSummary: newBaseSummary, outstandingOpsBlob };
-}
-
-function decodeSummaryWithoutOps(snapshot: ISnapshotTree): IDecodedSummary {
-    let baseSummary = snapshot;
-    const pathParts: string[] = [];
-
-    for (let i = 0; i < maxDecodeDepth; i++) {
-        const result = decodeSummaryBody(baseSummary, pathParts);
-        baseSummary = result.baseSummary;
-        if (result.complete) {
-            return { baseSummary, pathParts };
-        }
-    }
-    assert.fail("Exceeded max depth while decoding a base summary");
-}
-
+/**
+ * Fetches the sequence number of the snapshot tree by examining the protocol.
+ * @param tree - snapshot tree to examine
+ * @param readAndParseBlob - function to read blob contents from storage
+ * and parse the result from JSON.
+ */
 async function seqFromTree(
     tree: ISnapshotTree,
-    readAndParseBlob: <T>(id: string) => Promise<T>,
+    readAndParseBlob: ReadAndParseBlob,
 ): Promise<number> {
     const attributesHash =  tree.trees[".protocol"].blobs.attributes;
     const attrib = await readAndParseBlob<IDocumentAttributes>(attributesHash);
     return attrib.sequenceNumber;
 }
 
-interface IDecodedSummaryWithOps extends IDecodedSummary {
-    readonly outstandingOps: ISequencedDocumentMessage[];
-}
-
-async function decodeSummary(
-    snapshot: ISnapshotTree,
-    readAndParseBlob: <T>(id: string) => Promise<T>,
-): Promise<IDecodedSummaryWithOps> {
-    let baseSummary = snapshot;
-    const pathParts: string[] = [];
-    let outstandingOps: ISequencedDocumentMessage[] = [];
-
-    for (let i = 0; i < maxDecodeDepth; i++) {
-        const result = decodeSummaryBody(baseSummary, pathParts);
-        baseSummary = result.baseSummary;
-        if (result.complete) {
-            return { baseSummary, pathParts, outstandingOps };
-        }
-
-        const newOutstandingOps = await readAndParseBlob<ISequencedDocumentMessage[]>(result.outstandingOpsBlob);
-        outstandingOps = newOutstandingOps.concat(outstandingOps); // prepend
-    }
-    assert.fail("Exceeded max depth while decoding a base summary");
-}
-
+/** Path for nodes in a tree with escaped special characters */
 class EscapedPath {
     private constructor(public readonly path: string) {}
     public static create(path: string): EscapedPath {
@@ -117,26 +61,103 @@ class EscapedPath {
     }
 }
 
+/** Information about a summary relevant to a specific node in the tree */
+class SummaryNode {
+    public get referenceSequenceNumber(): number {
+        return this.summary.referenceSequenceNumber;
+    }
+    public get basePath(): EscapedPath | undefined {
+        return this.summary.basePath;
+    }
+    public get localPath(): EscapedPath {
+        return this.summary.localPath;
+    }
+    public get additionalPath(): EscapedPath | undefined {
+        return this.summary.additionalPath;
+    }
+    public set additionalPath(additionalPath: EscapedPath | undefined) {
+        this.summary.additionalPath = additionalPath;
+    }
+    constructor(private readonly summary: {
+        readonly referenceSequenceNumber: number,
+        readonly basePath: EscapedPath | undefined,
+        readonly localPath: EscapedPath,
+        additionalPath?: EscapedPath,
+    }) {}
+
+    public get fullPath(): EscapedPath {
+        return this.basePath?.concat(this.localPath) ?? this.localPath;
+    }
+
+    public get fullPathForChildren(): EscapedPath {
+        return this.additionalPath !== undefined
+            ? this.fullPath.concat(this.additionalPath)
+            : this.fullPath;
+    }
+}
+
+interface IDecodedSummary {
+    readonly baseSummary: ISnapshotTree;
+    readonly pathParts: string[];
+    getOutstandingOps(readAndParseBlob: ReadAndParseBlob): Promise<ISequencedDocumentMessage[]>;
+}
+
+/**
+ * Checks if the snapshot is created by referencing a previous successful
+ * summary plus outstanding ops. If so, it will recursively "decode" it until
+ * it gets to the last successful summary (the base summary) and returns that
+ * as well as a function for fetching the outstanding ops. Also returns the
+ * full path to the previous base summary for child summarizer nodes to use as
+ * their base path when necessary.
+ * @param snapshot - snapshot tree to decode
+ */
+function decodeSummary(snapshot: ISnapshotTree): IDecodedSummary {
+    let baseSummary = snapshot;
+    const pathParts: string[] = [];
+    const opsBlobs: string[] = [];
+
+    for (let i = 0; i < maxDecodeDepth; i++) {
+        const outstandingOpsBlob = baseSummary.blobs[outstandingOpsBlobKey];
+        const newBaseSummary = baseSummary.trees[baseSummaryTreeKey];
+        if (outstandingOpsBlob === undefined && newBaseSummary === undefined) {
+            return {
+                baseSummary,
+                pathParts,
+                async getOutstandingOps(readAndParseBlob: ReadAndParseBlob) {
+                    let outstandingOps: ISequencedDocumentMessage[] = [];
+                    for (const opsBlob of opsBlobs) {
+                        const newOutstandingOps = await readAndParseBlob<ISequencedDocumentMessage[]>(opsBlob);
+                        outstandingOps = outstandingOps.concat(newOutstandingOps);
+                    }
+                    return outstandingOps;
+                },
+            };
+        }
+
+        assert(outstandingOpsBlob, "Outstanding ops blob missing, but base summary tree exists");
+        assert(newBaseSummary, "Base summary tree missing, but outstanding ops blob exists");
+        baseSummary = newBaseSummary;
+        pathParts.push(baseSummaryTreeKey);
+        opsBlobs.unshift(outstandingOpsBlob);
+    }
+    assert.fail("Exceeded max depth while decoding a base summary");
+}
+
+/**
+ * Summary tree which is a handle of the previous successfully acked summary
+ * and a blob of the outstanding ops since that summary.
+ */
 interface IEncodedSummary extends ISummaryTreeWithStats {
     readonly additionalPath: EscapedPath;
 }
 
-interface ISummaryNode {
-    readonly referenceSequenceNumber: number;
-    readonly basePath: EscapedPath | undefined;
-    readonly localPath: EscapedPath;
-    /** Additional path for children nodes */
-    additionalPath?: EscapedPath;
-}
-
-const getFullPath = (node: ISummaryNode): EscapedPath =>
-    node.basePath?.concat(node.localPath) ?? node.localPath;
-const getFullPathForChildren = (node: ISummaryNode): EscapedPath => {
-    const fullPath = getFullPath(node);
-    return node.additionalPath !== undefined ? fullPath.concat(node.additionalPath) : fullPath;
-};
-
-function encodeSummary(summaryNode: ISummaryNode, outstandingOps: ISequencedDocumentMessage[]): IEncodedSummary {
+/**
+ * Creates a summary tree which is a handle of the previous successfully acked summary
+ * and a blob of the outstanding ops since that summary.
+ * @param summaryNode - information about last acked summary and paths to encode
+ * @param outstandingOps - outstanding ops since last acked summary
+ */
+function encodeSummary(summaryNode: SummaryNode, outstandingOps: ISequencedDocumentMessage[]): IEncodedSummary {
     const stats = mergeStats();
     stats.handleNodeCount++;
     stats.blobNodeCount++;
@@ -151,7 +172,7 @@ function encodeSummary(summaryNode: ISummaryNode, outstandingOps: ISequencedDocu
             tree: {
                 [baseSummaryTreeKey]: {
                     type: SummaryType.Handle,
-                    handle: getFullPath(summaryNode).path,
+                    handle: summaryNode.fullPath.path,
                     handleType: SummaryType.Tree,
                 },
                 [outstandingOpsBlobKey]: {
@@ -195,7 +216,7 @@ export class SummarizerNode implements ISummarizerNode {
     }
 
     private readonly children = new Map<string, SummarizerNode>();
-    private readonly pendingSummaries = new Map<string, ISummaryNode>();
+    private readonly pendingSummaries = new Map<string, SummaryNode>();
     private outstandingOps: ISequencedDocumentMessage[] = [];
     private wipReferenceSequenceNumber: number | undefined;
     private wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
@@ -229,7 +250,7 @@ export class SummarizerNode implements ISummarizerNode {
                 return {
                     summary: {
                         type: SummaryType.Handle,
-                        handle: getFullPath(latestSummary).path,
+                        handle: latestSummary.fullPath.path,
                         handleType: SummaryType.Tree,
                     },
                     stats,
@@ -305,12 +326,12 @@ export class SummarizerNode implements ISummarizerNode {
         // return before reaching this code.
         assert(localPathsToUse, "Tracked summary local paths not set");
 
-        const summary: ISummaryNode = {
+        const summary = new SummaryNode({
             ...localPathsToUse,
             referenceSequenceNumber: this.wipReferenceSequenceNumber,
             basePath: parentPath,
-        };
-        const fullPathForChildren = getFullPathForChildren(summary);
+        });
+        const fullPathForChildren = summary.fullPathForChildren;
         for (const child of this.children.values()) {
             child.completeSummaryCore(proposalHandle, fullPathForChildren, this.wipIsFailure || parentIsFailure);
         }
@@ -336,7 +357,7 @@ export class SummarizerNode implements ISummarizerNode {
     public async refreshLatestSummary(
         proposalHandle: string | undefined,
         getSnapshot: () => Promise<ISnapshotTree>,
-        readAndParseBlob: <T>(id: string) => Promise<T>,
+        readAndParseBlob: ReadAndParseBlob,
     ): Promise<void> {
         if (proposalHandle !== undefined) {
             const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
@@ -399,19 +420,19 @@ export class SummarizerNode implements ISummarizerNode {
     ): void {
         this.refreshLatestSummaryCore(referenceSequenceNumber);
 
-        const { baseSummary, pathParts } = decodeSummaryWithoutOps(snapshotTree);
+        const { baseSummary, pathParts } = decodeSummary(snapshotTree);
 
-        this.latestSummary = {
+        this.latestSummary = new SummaryNode({
             referenceSequenceNumber,
             basePath,
             localPath,
-        };
+        });
         if (pathParts.length > 0) {
             this.latestSummary.additionalPath = EscapedPath.createAndConcat(pathParts);
         }
 
         // Propagate update to all child nodes
-        const pathForChildren = getFullPathForChildren(this.latestSummary);
+        const pathForChildren = this.latestSummary.fullPathForChildren;
         for (const [id, child] of this.children.entries()) {
             const subtree = baseSummary.trees[id];
             // Assuming subtrees missing from snapshot are newer than the snapshot,
@@ -445,15 +466,19 @@ export class SummarizerNode implements ISummarizerNode {
 
     public async loadBaseSummary(
         snapshot: ISnapshotTree,
-        readAndParseBlob: <T>(id: string) => Promise<T>,
+        readAndParseBlob: ReadAndParseBlob,
     ): Promise<{ baseSummary: ISnapshotTree, outstandingOps: ISequencedDocumentMessage[] }> {
-        const decodedSummary = await decodeSummary(snapshot, readAndParseBlob);
+        const decodedSummary = decodeSummary(snapshot);
+        const outstandingOps = await decodedSummary.getOutstandingOps(readAndParseBlob);
 
-        if (decodedSummary.outstandingOps.length > 0) {
-            this.prependOutstandingOps(decodedSummary.pathParts, decodedSummary.outstandingOps);
+        if (outstandingOps.length > 0) {
+            this.prependOutstandingOps(decodedSummary.pathParts, outstandingOps);
         }
 
-        return decodedSummary;
+        return {
+            baseSummary: decodedSummary.baseSummary,
+            outstandingOps,
+        };
     }
 
     private prependOutstandingOps(pathPartsForChildren: string[], ops: ISequencedDocumentMessage[]): void {
@@ -501,7 +526,7 @@ export class SummarizerNode implements ISummarizerNode {
     private constructor(
         private _changeSequenceNumber: number,
         /** Undefined means created without summary */
-        private latestSummary?: ISummaryNode,
+        private latestSummary?: SummaryNode,
         private trackingSequenceNumber = _changeSequenceNumber,
     ) {}
 
@@ -518,11 +543,11 @@ export class SummarizerNode implements ISummarizerNode {
     ): SummarizerNode {
         return new SummarizerNode(
             changeSequenceNumber,
-            {
+            new SummaryNode({
                 referenceSequenceNumber,
                 basePath: undefined,
                 localPath: EscapedPath.create(""), // root hard-coded to ""
-            },
+            }),
         );
     }
 
@@ -532,13 +557,13 @@ export class SummarizerNode implements ISummarizerNode {
     ): ISummarizerNode {
         assert(!this.children.has(id), "Create SummarizerNode child already exists");
 
-        let summary: ISummaryNode | undefined;
+        let summary: SummaryNode | undefined;
         if (this.latestSummary !== undefined && changeSequenceNumber <= this.latestSummary.referenceSequenceNumber) {
-            summary = {
+            summary = new SummaryNode({
                 referenceSequenceNumber: this.latestSummary.referenceSequenceNumber,
-                basePath: getFullPathForChildren(this.latestSummary),
+                basePath: this.latestSummary.fullPathForChildren,
                 localPath: EscapedPath.create(id),
-            };
+            });
         }
         const child = new SummarizerNode(
             changeSequenceNumber,
