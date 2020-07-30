@@ -40,6 +40,7 @@
     "@fluidframework/react": "^0.23.0",
     "@fluidframework/runtime-definitions": "^0.23.0",
     "@fluidframework/view-interfaces": "^0.23.0",
+    "phaser": "^3.24.1",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
