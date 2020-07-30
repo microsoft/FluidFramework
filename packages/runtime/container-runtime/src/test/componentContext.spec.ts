@@ -13,6 +13,8 @@ import {
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
+    SummarizeInternalFn,
+    CreateChildSummarizerNodeFn,
 } from "@fluidframework/runtime-definitions";
 import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker, SummarizerNode } from "@fluidframework/runtime-utils";
@@ -20,11 +22,19 @@ import { IComponentAttributes, LocalComponentContext, RemotedComponentContext } 
 import { ContainerRuntime } from "../containerRuntime";
 
 describe("Component Context Tests", () => {
+    const componentId = "Test1";
     let summaryTracker: SummaryTracker;
-    let summarizerNode: SummarizerNode;
+    let createSummarizerNodeFn: CreateChildSummarizerNodeFn;
     beforeEach(async () => {
         summaryTracker = new SummaryTracker("", 0, 0);
-        summarizerNode = SummarizerNode.createRootWithoutSummary(0);
+        const summarizerNode = SummarizerNode.createRootWithoutSummary(
+            (() => undefined) as unknown as SummarizeInternalFn,
+            0);
+        createSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => summarizerNode.createChild(
+            summarizeInternal,
+            0,
+            componentId,
+        );
     });
 
     describe("LocalComponentContext Initialization", () => {
@@ -52,13 +62,13 @@ describe("Component Context Tests", () => {
 
         it("Check LocalComponent Attributes", () => {
             localComponentContext = new LocalComponentContext(
-                "Test1",
+                componentId,
                 ["TestComponent1"],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                summarizerNode,
+                createSummarizerNodeFn,
                 attachCb);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -85,13 +95,13 @@ describe("Component Context Tests", () => {
         it("Supplying array of packages in LocalComponentContext should create exception", async () => {
             let exception = false;
             localComponentContext = new LocalComponentContext(
-                "Test1",
+                componentId,
                 ["TestComp", "SubComp"],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                summarizerNode,
+                createSummarizerNodeFn,
                 attachCb);
 
             await localComponentContext.realize()
@@ -115,13 +125,13 @@ describe("Component Context Tests", () => {
                 on: (event, listener) => {},
             } as ContainerRuntime;
             localComponentContext = new LocalComponentContext(
-                "Test1",
+                componentId,
                 ["TestComp", "SubComp"],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                summarizerNode,
+                createSummarizerNodeFn,
                 attachCb);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -183,13 +193,13 @@ describe("Component Context Tests", () => {
             };
 
             remotedComponentContext = new RemotedComponentContext(
-                "Test1",
+                componentId,
                 Promise.resolve(snapshotTree),
                 containerRuntime,
                 new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
                 scope,
                 summaryTracker,
-                summarizerNode,
+                createSummarizerNodeFn,
             );
             const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
@@ -216,13 +226,13 @@ describe("Component Context Tests", () => {
             };
 
             remotedComponentContext = new RemotedComponentContext(
-                "Test1",
+                componentId,
                 Promise.resolve(snapshotTree),
                 containerRuntime,
                 new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
                 scope,
                 summaryTracker,
-                summarizerNode,
+                createSummarizerNodeFn,
             );
             const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;

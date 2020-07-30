@@ -10,6 +10,8 @@ import {
     IComponentRegistry,
     ComponentRegistryEntry,
     NamedComponentRegistryEntries,
+    SummarizeInternalFn,
+    CreateChildSummarizerNodeFn,
 } from "@fluidframework/runtime-definitions";
 import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -42,7 +44,7 @@ describe("Component Creation Tests", () => {
         const componentBName = "componentB";
         const componentCName = "componentC";
         let summaryTracker: SummaryTracker;
-        let summarizerNode: SummarizerNode;
+        let getCreateSummarizerNodeFn: (id: string) => CreateChildSummarizerNodeFn;
 
         // Helper function that creates a ComponentRegistryEntry with the registry entries
         // provided to it.
@@ -93,20 +95,28 @@ describe("Component Creation Tests", () => {
                 on: (event, listener) => {},
             } as ContainerRuntime;
             summaryTracker = new SummaryTracker("", 0, 0);
-            summarizerNode = SummarizerNode.createRootWithoutSummary(0);
+            const summarizerNode = SummarizerNode.createRootWithoutSummary(
+                (() => {}) as unknown as SummarizeInternalFn,
+                0);
+            getCreateSummarizerNodeFn = (id: string) => (si: SummarizeInternalFn) => summarizerNode.createChild(
+                si,
+                0,
+                id,
+            );
         });
 
         it("Valid global component", async () => {
             let success: boolean = true;
+            const componentId = "default-Id";
             // Create the default component that is in the global registry.
             const context: LocalComponentContext = new LocalComponentContext(
-                "default-Id",
+                componentId,
                 [defaultName],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                summarizerNode,
+                getCreateSummarizerNodeFn(componentId),
                 attachCb);
 
             try {
@@ -120,15 +130,16 @@ describe("Component Creation Tests", () => {
 
         it("Invalid global component", async () => {
             let success: boolean = true;
+            const componentId = "A-Id";
             // Create component A that is not in the global registry.
             const context: LocalComponentContext = new LocalComponentContext(
-                "A-Id",
+                componentId,
                 [componentAName],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                summarizerNode,
+                getCreateSummarizerNodeFn(componentId),
                 attachCb);
 
             try {
@@ -142,15 +153,16 @@ describe("Component Creation Tests", () => {
 
         it("Valid subcomponent from the global component", async () => {
             let success: boolean = true;
+            const componentId = "A-Id";
             // Create component A that is in the registry of the default component.
             const contextA: LocalComponentContext = new LocalComponentContext(
-                "A-Id",
+                componentId,
                 [defaultName, componentAName],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                summarizerNode,
+                getCreateSummarizerNodeFn(componentId),
                 attachCb);
 
             try {
@@ -164,15 +176,16 @@ describe("Component Creation Tests", () => {
 
         it("Invalid subcomponent from the global component", async () => {
             let success: boolean = true;
+            const componentId = "B-Id";
             // Create component B that is in not the registry of the default component.
             const contextB: LocalComponentContext = new LocalComponentContext(
-                "B-Id",
+                componentId,
                 [defaultName, componentBName],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                summarizerNode,
+                getCreateSummarizerNodeFn(componentId),
                 attachCb);
 
             try {
@@ -186,15 +199,16 @@ describe("Component Creation Tests", () => {
 
         it("Valid subcomponent at depth 2", async () => {
             let success: boolean = true;
+            const componentBId = "B-Id";
             // Create component B that is in the registry of component A (which is at depth 2).
             const contextB: LocalComponentContext = new LocalComponentContext(
-                "B-Id",
+                componentBId,
                 [defaultName, componentAName, componentBName],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                summarizerNode,
+                getCreateSummarizerNodeFn(componentBId),
                 attachCb);
 
             try {
@@ -205,15 +219,16 @@ describe("Component Creation Tests", () => {
             // Verify that realize was successful.
             assert.strictEqual(success, true);
 
+            const componentCId = "C-Id";
             // Create component C that is in the registry of component A (which is at depth 2).
             const contextC: LocalComponentContext = new LocalComponentContext(
-                "C-Id",
+                componentCId,
                 [defaultName, componentAName, componentCName],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                summarizerNode,
+                getCreateSummarizerNodeFn(componentCId),
                 attachCb);
 
             try {
@@ -227,15 +242,16 @@ describe("Component Creation Tests", () => {
 
         it("Invalid subcomponent at depth 2", async () => {
             let success: boolean = true;
+            const componentId = "fake-Id";
             // Create a fake component that is not in the registry of component A (which is at depth 2).
             const contextFake: LocalComponentContext = new LocalComponentContext(
-                "fake-Id",
+                componentId,
                 [defaultName, componentAName, "fake"],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                summarizerNode,
+                getCreateSummarizerNodeFn(componentId),
                 attachCb);
 
             try {
@@ -249,15 +265,16 @@ describe("Component Creation Tests", () => {
 
         it("Invalid subcomponent at depth 3", async () => {
             let success: boolean = true;
+            const componentId = "fake-Id";
             // Create a fake component that is not in the registry of component B (which is at depth 3).
             const contextFake: LocalComponentContext = new LocalComponentContext(
-                "fake-Id",
+                componentId,
                 [defaultName, componentAName, componentBName, "fake"],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                summarizerNode,
+                getCreateSummarizerNodeFn(componentId),
                 attachCb);
 
             try {
@@ -271,15 +288,16 @@ describe("Component Creation Tests", () => {
 
         it("Subcomponent which is in the registry of the parent component", async () => {
             let success: boolean = true;
+            const componentId = "C-Id";
             // Create component C that is in parent's registry but not in the registry of component B.
             const contextC: LocalComponentContext = new LocalComponentContext(
-                "C-Id",
+                componentId,
                 [defaultName, componentAName, componentBName, componentCName],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                summarizerNode,
+                getCreateSummarizerNodeFn(componentId),
                 attachCb);
 
             try {

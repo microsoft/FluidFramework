@@ -33,11 +33,11 @@ import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/c
 import {
     Deferred,
     Trace,
-    PerformanceEvent,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     raiseConnectedEvent,
+    PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
@@ -80,8 +80,8 @@ import {
     ISummaryTreeWithStats,
     ISummaryStats,
     ISummarizeInternalResult,
-    SummarizeInternal,
-    CreateChildSummarizerNode,
+    SummarizeInternalFn,
+    CreateChildSummarizerNodeFn,
 } from "@fluidframework/runtime-definitions";
 import {
     ComponentSerializer,
@@ -591,7 +591,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         readonly getCreateChildFn: (
             changeSequenceNumber: number,
             id: string,
-        ) => CreateChildSummarizerNode;
+        ) => CreateChildSummarizerNodeFn;
     } & ({ readonly enabled: true; readonly node: SummarizerNode } | { readonly enabled: false });
     private readonly notBoundedComponentContexts = new Set<string>();
 
@@ -697,7 +697,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
                     changeSequenceNumber: number,
                     id: string,
                 ) {
-                    return (summarizeInternal: SummarizeInternal) => this.node.createChild(
+                    return (summarizeInternal: SummarizeInternalFn) => this.node.createChild(
                         summarizeInternal,
                         changeSequenceNumber,
                         id,
@@ -711,7 +711,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
                 getCreateChildFn: (
                     changeSequenceNumber: number,
                     id: string,
-                ) => (summarizeInternal: SummarizeInternal) => summarizerNode.createChild(
+                ) => (summarizeInternal: SummarizeInternalFn) => summarizerNode.createChild(
                     summarizeInternal,
                     changeSequenceNumber,
                     id,

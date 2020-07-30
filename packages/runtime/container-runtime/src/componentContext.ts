@@ -47,9 +47,9 @@ import {
     IInboundSignalMessage,
     ISummarizeResult,
     ISummarizerNode,
-    SummarizeInternal,
     ISummarizeInternalResult,
-    CreateChildSummarizerNode,
+    CreateChildSummarizerNodeFn,
+    SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -180,7 +180,7 @@ export abstract class ComponentContext extends EventEmitter implements
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent & IFluidObject,
         public readonly summaryTracker: SummaryTracker,
-        createSummarizerNode: CreateChildSummarizerNode,
+        createSummarizerNode: CreateChildSummarizerNodeFn,
         private bindState: BindState,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
         protected pkg?: readonly string[],
@@ -622,7 +622,7 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public getCreateChildSummarizerNodeFn(changeSequenceNumber: number, id: string) {
-        return (summarizeInternal: SummarizeInternal) => this.summarizerNode.createChild(
+        return (summarizeInternal: SummarizeInternalFn) => this.summarizerNode.createChild(
             summarizeInternal,
             changeSequenceNumber,
             id,
@@ -640,7 +640,7 @@ export class RemotedComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
-        createSummarizerNode: CreateChildSummarizerNode,
+        createSummarizerNode: CreateChildSummarizerNodeFn,
         pkg?: string[],
     ) {
         super(
@@ -726,7 +726,7 @@ export class LocalComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent & IFluidObject,
         summaryTracker: SummaryTracker,
-        createSummarizerNode: CreateChildSummarizerNode,
+        createSummarizerNode: CreateChildSummarizerNodeFn,
         bindComponent: (componentRuntime: IComponentRuntimeChannel) => void,
         /**
          * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
