@@ -111,10 +111,10 @@ export const ConstellationView: React.FC<IConstellationViewProps> = (props: ICon
     return (
         <div>
             <div className="constellation-view">
-                { starViews }
+                {starViews}
             </div>
             <div className="slider-views">
-                { sliderViews }
+                {sliderViews}
             </div>
         </div>
     );

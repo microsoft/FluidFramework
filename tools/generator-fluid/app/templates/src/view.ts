@@ -1,11 +1,11 @@
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import { IDiceRoller } from "./interface";
 
-export class DiceRollerView implements IComponentHTMLView {
+export class DiceRollerView implements IFluidHTMLView {
     constructor(private readonly model: IDiceRoller) { }
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     public render(div: HTMLElement) {
         const diceSpan = document.createElement("span");

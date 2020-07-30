@@ -40,6 +40,6 @@ export interface ISyncedArrayReducer<T> {
 export interface IFluidSyncedArrayReducer<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
-> extends IFluidReducer<SV, SF, IFluidDataProps> {
+    > extends IFluidReducer<SV, SF, IFluidDataProps> {
     add: FluidStateUpdateFunction<SV, SF, IFluidDataProps>;
 }

@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import {
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
@@ -18,11 +18,11 @@ import { IPen } from "../interfaces";
 
 describe("Ink", () => {
     let ink: Ink;
-    let componentRuntime: MockComponentRuntime;
+    let componentRuntime: MockFluidDataStoreRuntime;
     let pen: IPen;
 
     beforeEach(async () => {
-        componentRuntime = new MockComponentRuntime();
+        componentRuntime = new MockFluidDataStoreRuntime();
         ink = new Ink(componentRuntime, "ink", InkFactory.Attributes);
     });
 
@@ -119,7 +119,7 @@ describe("Ink", () => {
 
             // Load a new Ink in connected state from the snapshot of the first one.
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2 = MockSharedObjectServices.createFromTree(ink.snapshot());
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
@@ -180,7 +180,7 @@ describe("Ink", () => {
             ink.connect(services1);
 
             // Create and connect a second Ink.
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
@@ -312,7 +312,7 @@ describe("Ink", () => {
             ink.connect(services1);
 
             // Create and connect a second Ink.
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),

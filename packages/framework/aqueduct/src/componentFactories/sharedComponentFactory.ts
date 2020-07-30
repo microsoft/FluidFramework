@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentLoadable, IRequest } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
-import { ComponentRegistry } from "@fluidframework/container-runtime";
+import { IFluidObject, IFluidLoadable, IRequest } from "@fluidframework/component-core-interfaces";
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
+import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
-    IComponentContext,
-    IComponentFactory,
-    IComponentRegistry,
-    IProvideComponentRegistry,
-    NamedComponentRegistryEntries,
-    NamedComponentRegistryEntry,
+    IFluidDataStoreContext,
+    IFluidDataStoreFactory,
+    IFluidDataStoreRegistry,
+    IProvideFluidDataStoreRegistry,
+    NamedFluidDataStoreRegistryEntries,
+    NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import {
@@ -22,42 +22,42 @@ import {
 
 import {
     ISharedComponentProps,
-    SharedComponent,
+    PureDataObject,
 } from "../components";
 
 /**
- * SharedComponentFactory is a barebones IComponentFactory for use with SharedComponent.
- * Consumers should typically use PrimedComponentFactory instead unless creating
+ * PureDataObjectFactory is a barebones IFluidDataStoreFactory for use with PureDataObject.
+ * Consumers should typically use DataObjectFactory instead unless creating
  * another base component factory.
  *
  * Generics:
  * P - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced component may take during creation
  */
-export class SharedComponentFactory<P extends IComponent, S = undefined> implements
-    IComponentFactory,
-    Partial<IProvideComponentRegistry>
+export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implements
+    IFluidDataStoreFactory,
+    Partial<IProvideFluidDataStoreRegistry>
 {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
-    private readonly registry: IComponentRegistry | undefined;
+    private readonly registry: IFluidDataStoreRegistry | undefined;
 
     constructor(
         public readonly type: string,
-        private readonly ctor: new (props: ISharedComponentProps<P>) => SharedComponent<P, S>,
+        private readonly ctor: new (props: ISharedComponentProps<P>) => PureDataObject<P, S>,
         sharedObjects: readonly IChannelFactory[],
         private readonly optionalProviders: ComponentSymbolProvider<P>,
-        registryEntries?: NamedComponentRegistryEntries,
+        registryEntries?: NamedFluidDataStoreRegistryEntries,
         private readonly onDemandInstantiation = true,
     ) {
         if (registryEntries !== undefined) {
-            this.registry = new ComponentRegistry(registryEntries);
+            this.registry = new FluidDataStoreRegistry(registryEntries);
         }
         this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
     }
 
-    public get IComponentFactory() { return this; }
+    public get IFluidDataStoreFactory() { return this; }
 
-    public get IComponentRegistry() {
+    public get IFluidDataStoreRegistry() {
         return this.registry;
     }
 
@@ -65,9 +65,9 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
      * Convenience helper to get the component's/factory's component registry entry.
      * The return type hides the factory's generics, easing grouping of registry
      * entries that differ only in this way into the same array.
-     * @returns The NamedComponentRegistryEntry
+     * @returns The NamedFluidDataStoreRegistryEntry
      */
-    public get registryEntry(): NamedComponentRegistryEntry {
+    public get registryEntry(): NamedFluidDataStoreRegistryEntry {
         return [this.type, Promise.resolve(this)];
     }
 
@@ -76,7 +76,7 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
      *
      * @param context - component context used to load a component runtime
      */
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateDataStore(context: IFluidDataStoreContext): void {
         this.instantiateComponentWithInitialState(context, undefined);
     }
 
@@ -86,17 +86,17 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
      * @param initialState  - The initial state to provide the created component
      */
     private instantiateComponentWithInitialState(
-        context: IComponentContext,
+        context: IFluidDataStoreContext,
         initialState?: S): void {
         // Create a new runtime for our component
         // The runtime is what Fluid uses to create DDS' and route to your component
-        const runtime = ComponentRuntime.load(
+        const runtime = FluidDataStoreRuntime.load(
             context,
             this.sharedObjectRegistry,
             this.registry,
         );
 
-        let instanceP: Promise<SharedComponent>;
+        let instanceP: Promise<PureDataObject>;
         // For new runtime, we need to force the component instance to be create
         // run the initialization.
         if (!this.onDemandInstantiation || !runtime.existing) {
@@ -121,11 +121,11 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
      * @param context - component context used to load a component runtime
      */
     private async instantiateInstance(
-        runtime: ComponentRuntime,
-        context: IComponentContext,
+        runtime: FluidDataStoreRuntime,
+        context: IFluidDataStoreContext,
         initialState?: S,
     ) {
-        const dependencyContainer = new DependencyContainer(context.scope.IComponentDependencySynthesizer);
+        const dependencyContainer = new DependencyContainer(context.scope.IFluidDependencySynthesizer);
         const providers = dependencyContainer.synthesize<P>(this.optionalProviders, {});
         // Create a new instance of our component
         const instance = new this.ctor({ runtime, context, providers });
@@ -134,7 +134,7 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
     }
 
     /**
-     * Implementation of IComponentFactory's createComponent method that also exposes an initial
+     * Implementation of IFluidDataStoreFactory's _createDataStore method that also exposes an initial
      * state argument.  Only specific factory instances are intended to take initial state.
      * @param context - The component context being used to create the component
      * (the created component will have its own new context created as well)
@@ -142,15 +142,15 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
      * @returns A promise for a component that will have been initialized. Caller is responsible
      * for attaching the component to the provided runtime's container such as by storing its handle
      */
-    public async createComponent(
-        context: IComponentContext,
+    public async _createDataStore(
+        context: IFluidDataStoreContext,
         initialState?: S,
-    ): Promise<IComponent & IComponentLoadable> {
+    ): Promise<IFluidObject & IFluidLoadable> {
         if (this.type === "") {
             throw new Error("undefined type member");
         }
 
-        return context.createComponentWithRealizationFn(
+        return context.createDataStoreWithRealizationFn(
             this.type,
             (newContext) => { this.instantiateComponentWithInitialState(newContext, initialState); },
         );

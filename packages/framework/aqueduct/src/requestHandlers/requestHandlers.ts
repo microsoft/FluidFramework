@@ -4,7 +4,7 @@
  */
 
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IComponentMountableViewClass } from "@fluidframework/view-interfaces";
+import { IFluidMountableViewClass } from "@fluidframework/view-interfaces";
 import { RuntimeRequestHandler, componentRuntimeRequestHandler } from "@fluidframework/request-handler";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
@@ -19,8 +19,8 @@ import { RequestParser } from "@fluidframework/runtime-utils";
  * without the header, and respond with a mountable view of the given class using the response.
  * @param MountableViewClass - The type of mountable view to use when responding
  */
-export const mountableViewRequestHandler: (MountableViewClass: IComponentMountableViewClass) => RuntimeRequestHandler =
-    (MountableViewClass: IComponentMountableViewClass) => {
+export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableViewClass) => RuntimeRequestHandler =
+    (MountableViewClass: IFluidMountableViewClass) => {
         return async (request: RequestParser, runtime: IContainerRuntime) => {
             if (request.headers?.mountableView === true) {
                 // Reissue the request without the mountableView header.
@@ -36,7 +36,7 @@ export const mountableViewRequestHandler: (MountableViewClass: IComponentMountab
                 if (response.status === 200 && MountableViewClass.canMount(response.value)) {
                     return {
                         status: 200,
-                        mimeType: "fluid/component",
+                        mimeType: "fluid/object",
                         value: new MountableViewClass(response.value),
                     };
                 }
@@ -48,7 +48,7 @@ export const mountableViewRequestHandler: (MountableViewClass: IComponentMountab
  * Reissue empty requests as requests for the component at the ID provided.
  * @param defaultComponentId - The ID of the default component
  */
-export const defaultComponentRuntimeRequestHandler: (defaultComponentId: string) => RuntimeRequestHandler =
+export const defaultDataStoreRuntimeRequestHandler: (defaultComponentId: string) => RuntimeRequestHandler =
     (defaultComponentId: string) => {
         return async (request: RequestParser, runtime: IContainerRuntime) => {
             if (request.pathParts.length === 0) {

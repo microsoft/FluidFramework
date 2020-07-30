@@ -4,7 +4,7 @@
  */
 
 import {
-    PrimedComponentFactory,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
     IFluidReducerProps,
@@ -151,11 +151,11 @@ export class ClickerReducer extends SyncedComponent {
         return div;
     }
 
-    // #endregion IComponentHTMLView
+    // #endregion IFluidHTMLView
 }
 
 // ----- FACTORY SETUP -----
-export const ClickerReducerInstantiationFactory = new PrimedComponentFactory(
+export const ClickerReducerInstantiationFactory = new DataObjectFactory(
     "clicker-reducer",
     ClickerReducer,
     [SharedCounter.getFactory()],

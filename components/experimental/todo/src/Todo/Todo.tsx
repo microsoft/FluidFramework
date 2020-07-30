@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { DataObject } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { ITodoItemInitialState, TodoItem } from "../TodoItem/index";
@@ -24,24 +24,24 @@ export const TodoName = `${pkg.name as string}-todo`;
  * - New todo item entry
  * - List of todo items
  */
-export class Todo extends PrimedComponent implements IComponentHTMLView {
+export class Todo extends DataObject implements IFluidHTMLView {
     // DDS ids stored as variables to minimize simple string mistakes
     private readonly todoItemsKey = "todo-items";
     private readonly todoTitleKey = "todo-title";
 
     private todoItemsMap: ISharedMap;
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     // Would prefer not to hand this out, and instead give back a title component?
     public async getTodoTitleString() {
-        return this.root.get<IComponentHandle<SharedString>>(this.todoTitleKey).get();
+        return this.root.get<IFluidHandle<SharedString>>(this.todoTitleKey).get();
     }
 
     /**
      * Do setup work here
      */
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         // Create a list for of all inner todo item components.
         // We will use this to know what components to load.
         const map = SharedMap.create(this.runtime);
@@ -52,8 +52,8 @@ export class Todo extends PrimedComponent implements IComponentHTMLView {
         this.root.set(this.todoTitleKey, text.handle);
     }
 
-    protected async componentHasInitialized() {
-        this.todoItemsMap = await this.root.get<IComponentHandle<ISharedMap>>(this.todoItemsKey).get();
+    protected async hasInitialized() {
+        this.todoItemsMap = await this.root.get<IFluidHandle<ISharedMap>>(this.todoItemsKey).get();
         // Hide the DDS eventing used by the model, expose a model-specific event interface.
         this.todoItemsMap.on("op", (op, local) => {
             if (!local) {
@@ -62,7 +62,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLView {
         });
     }
 
-    // start IComponentHTMLView
+    // start IFluidHTMLView
 
     /**
      * Creates a new view for a caller that doesn't directly support React
@@ -76,13 +76,13 @@ export class Todo extends PrimedComponent implements IComponentHTMLView {
         );
     }
 
-    // end IComponentHTMLView
+    // end IFluidHTMLView
 
     // start public API surface for the Todo model, used by the view
 
     public async addTodoItemComponent(props?: ITodoItemInitialState) {
         // Create a new todo item
-        const component = await TodoItem.getFactory().createComponent(this.context, props);
+        const component = await TodoItem.getFactory()._createDataStore(this.context, props);
 
         // Store the id of the component in our ids map so we can reference it later
         this.todoItemsMap.set(component.url, component.handle);

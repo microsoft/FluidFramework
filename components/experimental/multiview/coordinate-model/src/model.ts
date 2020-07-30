@@ -4,8 +4,8 @@
  */
 
 import {
-    PrimedComponent,
-    PrimedComponentFactory,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
 
@@ -17,26 +17,26 @@ const yKey = "y";
 /**
  * The Coordinate is our implementation of the ICoordinate interface.
  */
-export class Coordinate extends PrimedComponent implements ICoordinate {
+export class Coordinate extends DataObject implements ICoordinate {
     public static get ComponentName() { return "@fluid-example/coordinate"; }
 
     public static getFactory() {
         return Coordinate.factory;
     }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         Coordinate.ComponentName,
         Coordinate,
         [],
         {},
     );
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         this.root.set(xKey, 0);
         this.root.set(yKey, 0);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.root.on("valueChanged", (changed: IValueChanged) => {
             if (changed.key === xKey || changed.key === yKey) {
                 this.emit("coordinateChanged");

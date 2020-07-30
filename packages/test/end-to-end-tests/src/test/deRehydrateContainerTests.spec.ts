@@ -72,7 +72,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
         const protocolAttributes: IDocumentAttributes =
             JSON.parse(Buffer.from(snapshotTree.trees[".protocol"].blobs[protocolAttributesBlobId],
-            "base64").toString());
+                "base64").toString());
         assert.strictEqual(protocolAttributes.sequenceNumber, 0, "Seq number should be 0");
         assert.strictEqual(protocolAttributes.minimumSequenceNumber, 0, "Min Seq number should be 0");
 
@@ -102,10 +102,10 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const protocolAttributesBlobId2 = snapshotTree2.trees[".protocol"].blobs.attributes;
         const protocolAttributes1: IDocumentAttributes =
             JSON.parse(Buffer.from(snapshotTree1.trees[".protocol"].blobs[protocolAttributesBlobId1],
-            "base64").toString());
+                "base64").toString());
         const protocolAttributes2: IDocumentAttributes =
             JSON.parse(Buffer.from(snapshotTree2.trees[".protocol"].blobs[protocolAttributesBlobId2],
-            "base64").toString());
+                "base64").toString());
         assert.strictEqual(JSON.stringify(protocolAttributes1), JSON.stringify(protocolAttributes2),
             "Protocol attributes should be same as no change happened");
 
