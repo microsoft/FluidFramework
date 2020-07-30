@@ -273,7 +273,7 @@ module.exports = class extends Generator {
     // Update the usage of the component name
     const variableStatement = file.getVariableStatement("fluidExport");
     const varDec = variableStatement.getDeclarations()[0];
-    const initializer = `new ContainerRuntimeFactoryWithDefaultComponent(
+    const initializer = `new ContainerRuntimeFactoryWithDefaultDataStore(
         ${this._componentClassName()}.ComponentName,
         new Map([
             [${this._componentClassName()}.ComponentName, Promise.resolve(${this._componentClassName()}.factory)],

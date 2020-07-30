@@ -11,7 +11,7 @@ import {
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
     Serializable,
     IChannelAttributes,
@@ -72,7 +72,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
     private annotations = new SparseArray2D<T>();      // Tracks cell annotations.
     private pending = new SparseArray2D<number>();      // Tracks pending writes.
 
-    constructor(runtime: IComponentRuntime, public id: string, attributes: IChannelAttributes) {
+    constructor(runtime: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
 
         this.rows = new PermutationVector(
@@ -90,7 +90,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
             this.onColHandlesRecycled);
     }
 
-    public static create<T extends Serializable = Serializable>(runtime: IComponentRuntime, id?: string) {
+    public static create<T extends Serializable = Serializable>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedMatrixFactory.Type) as SharedMatrix<T>;
     }
 
@@ -386,11 +386,11 @@ export class SharedMatrix<T extends Serializable = Serializable>
         //       (See https://github.com/microsoft/FluidFramework/issues/2559)
         assert.equal(this.isAttached(), true);
 
-        const cliSeq = super.submitLocalMessage(
+        super.submitLocalMessage(
             makeHandlesSerializable(
                 message,
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
+                this.runtime.IFluidSerializer,
+                this.runtime.IFluidHandleContext,
                 this.handle,
             ),
             localOpMetadata,
@@ -401,10 +401,6 @@ export class SharedMatrix<T extends Serializable = Serializable>
             this.rows.getCollabWindow().localSeq,
             this.cols.getCollabWindow().localSeq,
         );
-
-        // TODO: The returned 'cliSeq' is no longer used, but we need to return a value until the
-        //       signature of SharedObject.submitLocalMessage changes.
-        return cliSeq;
     }
 
     protected didAttach() {
@@ -481,7 +477,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        const msg = parseHandles(rawMessage, this.runtime.IComponentSerializer, this.runtime.IComponentHandleContext);
+        const msg = parseHandles(rawMessage, this.runtime.IFluidSerializer, this.runtime.IFluidHandleContext);
 
         const contents = msg.contents;
 

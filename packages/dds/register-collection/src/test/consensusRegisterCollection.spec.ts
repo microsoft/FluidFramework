@@ -14,7 +14,7 @@ import {
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { IDeltaConnection, IChannelServices } from "@fluidframework/component-runtime-definitions";
@@ -26,12 +26,12 @@ describe("ConsensusRegisterCollection", () => {
     describe("Api", () => {
         const componentId = "consensus-register-collection";
         let crc: IConsensusRegisterCollection;
-        let componentRuntime: MockComponentRuntime;
+        let componentRuntime: MockFluidDataStoreRuntime;
         let services: IChannelServices;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
 
         beforeEach(() => {
-            componentRuntime = new MockComponentRuntime();
+            componentRuntime = new MockFluidDataStoreRuntime();
             containerRuntimeFactory = new MockContainerRuntimeFactory();
             const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
             services = {
@@ -166,13 +166,13 @@ describe("ConsensusRegisterCollection", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Create first ConsensusOrderedCollection
-            const componentRuntime1 = new MockComponentRuntime();
+            const componentRuntime1 = new MockFluidDataStoreRuntime();
             containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
             deltaConnection1 = containerRuntime1.createDeltaConnection();
             testCollection1 = crcFactory.create(componentRuntime1, "consenses-register-collection1");
 
             // Create second ConsensusOrderedCollection
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             deltaConnection2 = containerRuntime2.createDeltaConnection();
             testCollection2 = crcFactory.create(componentRuntime2, "consenses-register-collection2");

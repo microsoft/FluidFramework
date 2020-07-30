@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
@@ -73,7 +73,7 @@ describe("Document Dirty", () => {
         );
 
         const runtimeFactory =
-            new ContainerRuntimeFactoryWithDefaultComponent(
+            new ContainerRuntimeFactoryWithDefaultDataStore(
                 "default",
                 [
                     ["default", Promise.resolve(factory)],
@@ -94,10 +94,10 @@ describe("Document Dirty", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function getComponent(componentId: string, fromContainer: Container):
+    async function requestFluidObject(componentId: string, fromContainer: Container):
         Promise<ITestFluidComponent> {
         const response = await fromContainer.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as ITestFluidComponent;
@@ -109,7 +109,7 @@ describe("Document Dirty", () => {
 
         // Create the first container, component and DDSes.
         container = await createContainer();
-        containerComp = await getComponent("default", container);
+        containerComp = await requestFluidObject("default", container);
         containerCompContainerRuntime = containerComp.context.containerRuntime as IContainerRuntime;
         containerCompMap = await containerComp.getSharedObject<SharedMap>(mapId);
         opProcessingController = new OpProcessingController(deltaConnectionServer);

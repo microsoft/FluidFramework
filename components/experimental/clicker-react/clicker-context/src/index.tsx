@@ -4,7 +4,7 @@
  */
 
 import {
-    PrimedComponentFactory,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
     IFluidFunctionalComponentViewState,
@@ -109,11 +109,11 @@ export class ClickerContext extends SyncedComponent {
         return div;
     }
 
-    // #endregion IComponentHTMLView
+    // #endregion IFluidHTMLView
 }
 
 // ----- FACTORY SETUP -----
-export const ClickerContextInstantiationFactory = new PrimedComponentFactory(
+export const ClickerContextInstantiationFactory = new DataObjectFactory(
     "clicker-context",
     ClickerContext,
     [],

@@ -6,13 +6,13 @@
 // eslint-disable-next-line import/no-unassigned-import
 import { } from "@fluidframework/component-core-interfaces";
 import * as MergeTree from "@fluidframework/merge-tree";
-import { IComponentRuntime, IChannelAttributes } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/component-runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
 import { SharedStringFactory } from "./sequenceFactory";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideSharedString>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideSharedString>> { }
 }
 
 export const ISharedString: keyof IProvideSharedString = "ISharedString";
@@ -42,7 +42,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
      * @param id - optional name of the shared string
      * @returns newly create shared string (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedStringFactory.Type) as SharedString;
     }
 
@@ -61,7 +61,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
 
     private readonly mergeTreeTextHelper: MergeTree.MergeTreeTextHelper;
 
-    constructor(document: IComponentRuntime, public id: string, attributes: IChannelAttributes) {
+    constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(document, id, attributes, SharedStringFactory.segmentFromSpec);
         this.mergeTreeTextHelper = this.client.createTextHelper();
     }

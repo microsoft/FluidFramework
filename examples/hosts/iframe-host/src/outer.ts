@@ -67,7 +67,7 @@ export async function loadFrame(iframeId: string, logId: string) {
 }
 
 async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
-    const component = await baseHost.getComponent(url);
+    const component = await baseHost.requestFluidObject(url);
     if (component === undefined) {
         return;
     }

@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IDirectory } from "@fluidframework/map";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
 /**
  * - Create a new object from the passed subDirectory.
@@ -19,7 +19,7 @@ import { IComponentContext } from "@fluidframework/runtime-definitions";
  *
  * @param baseDirectory - The base directory in the directory structure that is passed to the interception callback
  * @param subDirectory - The underlying object that is to be intercepted
- * @param context - The IComponentContext that will be used to call orderSequentially
+ * @param context - The IFluidDataStoreContext that will be used to call orderSequentially
  * @param setInterceptionCallback - The interception callback to be called
  *
  * @returns A new sub directory that intercepts the set method and calls the setInterceptionCallback.
@@ -27,7 +27,7 @@ import { IComponentContext } from "@fluidframework/runtime-definitions";
 function createSubDirectoryWithInterception<T extends IDirectory>(
     baseDirectory: T,
     subDirectory: T,
-    context: IComponentContext,
+    context: IFluidDataStoreContext,
     setInterceptionCallback: (
         baseDirectory: IDirectory,
         subDirectory: IDirectory,
@@ -111,7 +111,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
  *   the interception callback.
  *
  * @param baseDirectory - The underlying object that is to be intercepted
- * @param context - The IComponentContext that will be used to call orderSequentially
+ * @param context - The IFluidDataStoreContext that will be used to call orderSequentially
  * @param setInterceptionCallback - The interception callback to be called
  *
  * @returns A new IDirectory object that intercepts the set method and calls the setInterceptionCallback.
@@ -119,7 +119,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function createDirectoryWithInterception<T extends IDirectory>(
     baseDirectory: T,
-    context: IComponentContext,
+    context: IFluidDataStoreContext,
     setInterceptionCallback: (
         baseDirectory: IDirectory,
         subDirectory: IDirectory,

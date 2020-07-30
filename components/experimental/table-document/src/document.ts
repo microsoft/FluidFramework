@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@fluidframework/merge-tree";
 import {
     positionToRowCol,
@@ -29,10 +29,10 @@ export interface ITableDocumentEvents extends IEvent {
         listener: (delta: SequenceDeltaEvent, target: SharedNumberSequence | SparseMatrix) => void);
 }
 
-export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents> implements ITable {
+export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         TableDocumentType,
         TableDocument,
         [
@@ -76,7 +76,7 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
         minCol: number,
         maxRow: number,
         maxCol: number): Promise<ITable> {
-        const component = await TableSlice.getFactory().createComponent(
+        const component = await TableSlice.getFactory()._createDataStore(
             this.context,
             { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol },
         ) as TableSlice;
@@ -137,7 +137,7 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
         this.maybeCols.remove(startCol, startCol + numCols);
     }
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const rows = SharedNumberSequence.create(this.runtime, "rows");
         this.root.set("rows", rows.handle);
 
@@ -150,11 +150,11 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
         this.root.set(ConfigKey.docId, this.runtime.id);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         const [maybeMatrixHandle, maybeRowsHandle, maybeColsHandle] = await Promise.all([
-            this.root.wait<IComponentHandle<SparseMatrix>>("matrix"),
-            this.root.wait<IComponentHandle<SharedNumberSequence>>("rows"),
-            this.root.wait<IComponentHandle<SharedNumberSequence>>("cols"),
+            this.root.wait<IFluidHandle<SparseMatrix>>("matrix"),
+            this.root.wait<IFluidHandle<SharedNumberSequence>>("rows"),
+            this.root.wait<IFluidHandle<SharedNumberSequence>>("cols"),
         ]);
 
         this.maybeMatrix = await maybeMatrixHandle.get();

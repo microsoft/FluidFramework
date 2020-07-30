@@ -79,22 +79,10 @@ export class PendingStateManager {
     // the correct batch metadata.
     private pendingBatchBeginMessage: ISequencedDocumentMessage | undefined;
 
+    private clientId: string | undefined;
+
     private get connected(): boolean {
         return this.containerRuntime.connected;
-    }
-
-    /**
-     * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
-     * states in its queue.
-     * @param connected - true if we got connected, false if we got disconnected.
-     */
-    public setConnectionState(connected: boolean) {
-        assert(this.connected === connected, "The connection state is not consistent with the runtime");
-
-        // If we got connected, replay the pending states that have not been ack'd yet.
-        if (connected) {
-            this.replayPendingStates();
-        }
     }
 
     /**
@@ -307,10 +295,16 @@ export class PendingStateManager {
     }
 
     /**
-     * Replays all the pending states that are currently in the queue. This includes setting the FlushMode and
-     * trigerring resubmission of unacked ops. This typically happens when we reconnect.
+     * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
+     * states in its queue. This includes setting the FlushMode and trigerring resubmission of unacked ops.
      */
-    private replayPendingStates() {
+    public replayPendingStates() {
+        assert(this.connected, "The connection state is not consistent with the runtime");
+
+        // This assert suggests we are about to send same ops twice, which will result in data loss.
+        assert(this.clientId !== this.containerRuntime.clientId, "replayPendingStates called twice for same clientId!");
+        this.clientId = this.containerRuntime.clientId;
+
         let pendingStatesCount = this.pendingStates.length;
         if (pendingStatesCount === 0) {
             return;
