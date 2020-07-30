@@ -59,9 +59,4 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
         await componentRuntime.request({ url: "/" });
         componentRuntime.bindToContext();
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentDefaultFactoryName() {
-        return this.IFluidExportDefaultFactoryName;
-    }
 }

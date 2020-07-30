@@ -93,16 +93,6 @@ export class Chaincode implements IFluidDataStoreFactory {
             };
         });
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentFactory() {
-        return this.IFluidDataStoreFactory;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    instantiateComponent?(context: IFluidDataStoreContext) {
-        return this.instantiateDataStore(context);
-    }
 }
 
 export class ChaincodeFactory implements IRuntimeFactory {

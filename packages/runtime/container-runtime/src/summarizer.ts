@@ -817,31 +817,4 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             }
         }
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentLoadable() {
-        this.logger.send({
-            category: "warning", eventName: "deprecated",
-            message: "Summarizer.IComponentLoadable",
-        });
-        return this.IFluidLoadable;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRouter() {
-        this.logger.send({
-            category: "warning", eventName: "deprecated",
-            message: "Summarizer.IComponentRouter",
-        });
-        return this.IFluidRouter;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRunnable() {
-        this.logger.send({
-            category: "warning", eventName: "deprecated",
-            message: "Summarizer.IComponentRunnable",
-        });
-        return this.IFluidRunnable;
-    }
 }

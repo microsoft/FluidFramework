@@ -82,24 +82,4 @@ export abstract class PureDataObject<
 
     public abstract create(props?: any);
     public abstract async load();
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRouter() {
-        return this.IFluidRouter;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentLoadable() {
-        return this.IFluidLoadable;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentHandle() {
-        return this.IFluidHandle;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IProvideComponentHandle() {
-        return this.IProvideFluidHandle;
-    }
 }

@@ -381,21 +381,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IFluidRout
     private sendErrorEvent(eventName: string, error: any, key?: string) {
         this.runtime.logger.sendErrorEvent({ eventName, key }, error);
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentHandle() {
-        return this.IFluidHandle;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentLoadable() {
-        return this.IFluidLoadable;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRouter() {
-        return this.IFluidRouter;
-    }
 }
 
 export class TaskManager implements ITaskManager {
@@ -488,21 +473,6 @@ export class TaskManager implements ITaskManager {
 
         return agent.run();
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentHandle() {
-        return this.IFluidHandle;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentLoadable() {
-        return this.IFluidLoadable;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRouter() {
-        return this.IFluidRouter;
-    }
 }
 
 export class AgentSchedulerFactory implements IFluidDataStoreFactory {
@@ -530,15 +500,5 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
             const taskManager = await taskManagerP;
             return taskManager.request(request);
         });
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentFactory() {
-        return this.IFluidDataStoreFactory;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    instantiateComponent?(context: IFluidDataStoreContext) {
-        return this.instantiateDataStore(context);
     }
 }

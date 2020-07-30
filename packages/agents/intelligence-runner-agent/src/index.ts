@@ -40,14 +40,4 @@ export class TextAnalyzer implements IFluidRouter, IFluidRunnable {
             value: this,
         };
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRouter() {
-        return this.IFluidRouter;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRunnable() {
-        return this.IFluidRunnable;
-    }
 }

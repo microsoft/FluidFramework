@@ -101,9 +101,4 @@ export class BaseHost {
 
         return response.value as IFluidObject & IFluidObject;
     }
-
-    /** deprecated: backcompat for FDL split */
-    getComponent?(url: string) {
-        return this.requestFluidObject(url);
-    }
 }

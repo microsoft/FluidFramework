@@ -108,19 +108,4 @@ export class PureDataObjectFactory<T extends PureDataObject> implements IFluidDa
             this.IFluidDataStoreRegistry,
         );
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentFactory() {
-        return this.IFluidDataStoreFactory;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRegistry() {
-        return this.IFluidDataStoreRegistry;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    instantiateComponent?(context: IFluidDataStoreContext) {
-        return this.instantiateDataStore(context);
-    }
 }

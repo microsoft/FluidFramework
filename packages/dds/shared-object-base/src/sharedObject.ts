@@ -394,13 +394,4 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     private reSubmit(content: any, localOpMetadata: unknown) {
         this.reSubmitCore(content, localOpMetadata);
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentLoadable() {
-        this.logger.send({
-            category: "warning", eventName: "deprecated",
-            message: "SharedObject.IComponentLoadable",
-        });
-        return this.IFluidLoadable;
-    }
 }

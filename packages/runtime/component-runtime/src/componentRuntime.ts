@@ -681,24 +681,4 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             throw new Error("Runtime is closed");
         }
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRouter() {
-        return this.IFluidRouter;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentSerializer() {
-        return this.IFluidSerializer;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentHandleContext() {
-        return this.IFluidHandleContext;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRegistry() {
-        return this.IFluidDataStoreRegistry;
-    }
 }
