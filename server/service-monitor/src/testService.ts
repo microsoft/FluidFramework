@@ -10,7 +10,7 @@ import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { NodeCodeLoader, NodeWhiteList } from "@fluidframework/server-services";
+import { NodeCodeLoader, NodeAllowList } from "@fluidframework/server-services";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
@@ -145,7 +145,7 @@ export async function testFluidService(config: Provider): Promise<void> {
         new NodeCodeLoader(
             params.component.installPath,
             params.component.timeoutMS,
-            new NodeWhiteList()),
+            new NodeAllowList()),
         config,
         {},
         new Map<string, IProxyLoaderFactory>(),
