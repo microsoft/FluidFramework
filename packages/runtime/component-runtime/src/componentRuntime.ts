@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -504,15 +504,31 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.emit("signal", message, local);
     }
 
+    private isChannelAttached(id: string): boolean {
+        return (
+            // Added in createChannel
+            // Removed when bindChannel is called
+            !this.notBoundedChannelContextSet.has(id)
+            // Added in bindChannel only if this is not attached yet
+            // Removed when this is attached by calling attachGraph
+            && !this.localChannelContextQueue.has(id)
+            // Added in attachChannel called by bindChannel
+            // Removed when attach op is broadcast
+            && !this.pendingAttach.has(id)
+        );
+    }
+
     public async snapshotInternal(fullTree: boolean = false): Promise<ITreeEntry[]> {
         // Craft the .attributes file for each shared object
         const entries = await Promise.all(Array.from(this.contexts)
-            .filter(([key, value]) =>
+            .filter(([key, _]) => {
+                const isAttached = this.isChannelAttached(key);
+                // We are not expecting local dds! Summary may not capture local state.
+                assert(isAttached, "Not expecting detached channels during summarize");
                 // If the object is registered - and we have received the sequenced op creating the object
                 // (i.e. it has a base mapping) - then we go ahead and snapshot
-                !this.notBoundedChannelContextSet.has(key),
-            )
-            .map(async ([key, value]) => {
+                return isAttached;
+            }).map(async ([key, value]) => {
                 const snapshot = await value.snapshot(fullTree);
 
                 // And then store the tree
@@ -522,17 +538,19 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return entries;
     }
 
-    public async summarize(fullTree: boolean = false): Promise<ISummaryTreeWithStats> {
+    public async summarize(fullTree = false): Promise<ISummaryTreeWithStats> {
         const builder = new SummaryTreeBuilder();
 
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts)
-            .filter(([key, value]) =>
+            .filter(([key, _]) => {
+                const isAttached = this.isChannelAttached(key);
+                // We are not expecting local dds! Summary may not capture local state.
+                assert(isAttached, "Not expecting detached channels during summarize");
                 // If the object is registered - and we have received the sequenced op creating the object
                 // (i.e. it has a base mapping) - then we go ahead and snapshot
-                !this.notBoundedChannelContextSet.has(key),
-            )
-            .map(async ([key, value]) => {
+                return isAttached;
+            }).map(async ([key, value]) => {
                 const channelSummary = await value.summarize(fullTree);
                 builder.addWithStats(key, channelSummary);
             }));

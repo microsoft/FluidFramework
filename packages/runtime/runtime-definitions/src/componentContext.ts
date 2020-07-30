@@ -185,7 +185,7 @@ export interface IComponentRuntimeChannel extends
 
     /**
      * Generates a summary for the component.
-     * Introduced in 0.22 summarizerNode - will be required in a future release.
+     * Introduced with summarizerNode - will be required in a future release.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      */
     summarize?(fullTree?: boolean): Promise<ISummaryTreeWithStats>;

@@ -265,7 +265,10 @@ export class SummarizerNode implements ISummarizerNode {
             }
             const latestSummary = this.latestSummary;
             if (latestSummary === undefined) {
-                // TODO: use attach op snapshot
+                // TODO: Not having latest summary means there has not yet been a
+                // successfully acked summary since this node was attached. We could
+                // probably use the initial snapshot found in the attach op as the
+                // base summary in this case, but needs conversion from ITree to ISummaryTree.
                 throw error;
             }
 

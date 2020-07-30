@@ -1381,8 +1381,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
                 // Summarizer works only with clients with no local changes!
                 assert(value.attachState !== AttachState.Attaching);
                 return value.attachState === AttachState.Attached;
-            })
-            .map(async ([key, value]) => {
+            }).map(async ([key, value]) => {
                 const componentSummary = this.summarizerNode.enabled
                     ? await value.summarize(fullTree)
                     : convertToSummaryTree(await value.snapshot(fullTree), fullTree);
