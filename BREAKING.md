@@ -1,5 +1,12 @@
 # Breaking changes
 
+## 0.25 Breaking Changes
+- [Removed IComponentRuntime._createDataStoreWithProps](#Removed-IComponentRuntime._createDataStoreWithProps)
+
+### Removed IComponentRuntime._createDataStoreWithProps
+`IComponentRuntime._createDataStoreWithProps()` has been removed. Please use `IComponentRuntime.createDataStore()` if possible (returns IFluidRouter). Otherwise use `IComponentRuntime._createDataStore()`, which is identical to `_createDataStoreWithProps()` other than props argument that has been deprecated for many versions.
+If you need to pass props to data store, either use request() route to pass initial props directly, or to query fluid object to interact with it (pass props / call methods to configure object).
+
 ## 0.24 Breaking Changes
 This release only contains renames. There are no functional changes in this release. You should ensure you have integrated and validated up to release 0.23 before integrating this release.
 

@@ -18,6 +18,7 @@ import {
     IFluidLoadable,
     IRequest,
     IResponse,
+    IFluidRouter,
 } from "@fluidframework/component-core-interfaces";
 import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/component-runtime";
 import { Ink } from "@fluidframework/ink";
@@ -27,7 +28,6 @@ import {
 } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import {
-    IFluidDataStoreChannel,
     IFluidDataStoreContext,
     ITask,
     ITaskManager,
@@ -39,6 +39,7 @@ import {
     SharedObjectSequence,
     SharedString,
 } from "@fluidframework/sequence";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
@@ -48,15 +49,8 @@ const debug = registerDebug("fluid:shared-text");
 /**
  * Helper function to retrieve the handle for the default component route
  */
-async function getHandle(runtimeP: Promise<IFluidDataStoreChannel>): Promise<IFluidHandle> {
-    const runtime = await runtimeP;
-    const request = await runtime.request({ url: "" });
-
-    if (request.status !== 200 || request.mimeType !== "fluid/object") {
-        return Promise.reject("Not found");
-    }
-
-    const component = request.value as IFluidObject & IFluidObject;
+async function getHandle(runtimeP: Promise<IFluidRouter>): Promise<IFluidHandle> {
+    const component = await requestFluidObject(await runtimeP, "");
     return component.IFluidLoadable.handle;
 }
 
@@ -157,10 +151,10 @@ export class SharedTextRunner
 
             const containerRuntime = this.context.containerRuntime;
             const [progressBars, math, videoPlayers, images] = await Promise.all([
-                getHandle(containerRuntime._createDataStoreWithProps("@fluid-example/progress-bars")),
-                getHandle(containerRuntime._createDataStoreWithProps("@fluid-example/math")),
-                getHandle(containerRuntime._createDataStoreWithProps("@fluid-example/video-players")),
-                getHandle(containerRuntime._createDataStoreWithProps("@fluid-example/image-collection")),
+                getHandle(containerRuntime.createDataStore("@fluid-example/progress-bars")),
+                getHandle(containerRuntime.createDataStore("@fluid-example/math")),
+                getHandle(containerRuntime.createDataStore("@fluid-example/video-players")),
+                getHandle(containerRuntime.createDataStore("@fluid-example/image-collection")),
             ]);
 
             this.rootView.set("progressBars", progressBars);

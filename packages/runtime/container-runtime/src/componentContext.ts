@@ -214,7 +214,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     public async _createDataStore(
         pkgOrId: string | undefined,
         pkg?: string,
-        props?: any,
     ): Promise<IFluidDataStoreChannel> {
         // pkgOrId can't be undefined if pkg is undefined
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -224,7 +223,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
         const packagePath: string[] = await this.composeSubpackagePath(pkgName);
 
-        return this.containerRuntime._createDataStoreWithProps(packagePath, props, id);
+        return this.containerRuntime._createDataStore(id, packagePath);
     }
 
     public async createDataStoreWithRealizationFn(

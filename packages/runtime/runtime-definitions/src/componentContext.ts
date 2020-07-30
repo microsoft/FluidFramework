@@ -95,20 +95,6 @@ export interface IContainerRuntimeBase extends
     on(event: "leader" | "notleader", listener: () => void): this;
 
     /**
-     * @deprecated 0.16 Issue #1537
-     *  Properties should be passed to the component factory method rather than to the runtime
-     * Creates a new component with props
-     * @param pkg - Package name of the component
-     * @param props - properties to be passed to the instantiateDataStore thru the context
-     * @param id - Only supplied if the component is explicitly passing its ID, only used for default components
-     * @remarks
-     * Only used by aqueduct DataObject to pass param to the instantiateDataStore function thru the context.
-     * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
-     * @internal
-     */
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IFluidDataStoreChannel>;
-
-    /**
      * @deprecated
      * Creates a new component.
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
@@ -323,12 +309,10 @@ export interface IFluidDataStoreContext extends EventEmitter {
      *                  ID is being deprecated, so prefer passing undefined instead (the runtime will
      *                  generate an ID in this case).
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
-     * @param props - Properties to be passed to the instantiateDataStore through the context.
      */
     _createDataStore(
         pkgOrId: string | undefined,
         pkg?: string | string[],
-        props?: any,
     ): Promise<IFluidDataStoreChannel>;
 
     /**

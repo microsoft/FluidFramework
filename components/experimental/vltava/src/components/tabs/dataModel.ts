@@ -44,7 +44,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         public root: ISharedDirectory,
         private readonly internalRegistry: IComponentInternalRegistry,
         private readonly createAndAttachDataStore: <T extends IFluidObject & IFluidLoadable>
-            (pkg: string, props?: any) => Promise<T>,
+            (pkg: string) => Promise<T>,
         private readonly getFluidObjectFromDirectory: <T extends IFluidObject & IFluidLoadable>(
             id: string,
             directory: IDirectory,

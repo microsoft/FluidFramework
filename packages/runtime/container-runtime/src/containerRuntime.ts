@@ -1146,7 +1146,7 @@ export class ContainerRuntime extends EventEmitter
     public async _createDataStore(idOrPkg: string, maybePkg: string | string[]) {
         const id = maybePkg === undefined ? uuid() : idOrPkg;
         const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
-        return this._createDataStoreWithProps(pkg, undefined, id);
+        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], id).realize();
     }
 
     public async createDataStore(pkg: string | string[]): Promise<IFluidRouter> {
@@ -1160,16 +1160,11 @@ export class ContainerRuntime extends EventEmitter
         return component;
     }
 
-    public async _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string):
-        Promise<IFluidDataStoreChannel> {
-        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
-    }
-
     private canSendOps() {
         return this.connected && !this.deltaManager.readonly;
     }
 
-    private _createComponentContext(pkg: string[], props?: any, id = uuid()) {
+    private _createComponentContext(pkg: string[], id = uuid()) {
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), "Creating component with existing ID");
@@ -1182,7 +1177,7 @@ export class ContainerRuntime extends EventEmitter
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             (cr: IFluidDataStoreChannel) => this.bindComponent(cr),
-            props);
+            undefined);
 
         const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
