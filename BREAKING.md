@@ -2,14 +2,15 @@
 
 ## 0.25 Breaking Changes
 - [Removed IComponentRuntime._createDataStoreWithProps](#Removed-IComponentRuntime._createDataStoreWithProps)
-- [Removed IFluidDataStoreContext.createDataStoreWithRealizationFn(](#Removed-IFluidDataStoreContext.createDataStoreWithRealizationFn)
+- [createDataStoreWithRealizationFn() APIs moved](#createDataStoreWithRealizationFn()-APIs-moved)
 
 ### Removed IComponentRuntime._createDataStoreWithProps
 `IComponentRuntime._createDataStoreWithProps()` has been removed. Please use `IComponentRuntime.createDataStore()` if possible (returns IFluidRouter). Otherwise use `IComponentRuntime._createDataStore()`, which is identical to `_createDataStoreWithProps()` other than props argument that has been deprecated for many versions.
 If you need to pass props to data store, either use request() route to pass initial props directly, or to query fluid object to interact with it (pass props / call methods to configure object).
 
-### Removed IFluidDataStoreContext.createDataStoreWithRealizationFn
-API moved to IContainerRuntimeBase. The intent is to remove it altogether in same release (more info to follow)
+### createDataStoreWithRealizationFn() APIs moved
+Removed from IFluidDataStoreContext  & IContainerRuntime.
+Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altogether in same release (more info to follow)
 
 ## 0.24 Breaking Changes
 This release only contains renames. There are no functional changes in this release. You should ensure you have integrated and validated up to release 0.23 before integrating this release.
