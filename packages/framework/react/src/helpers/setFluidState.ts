@@ -4,8 +4,8 @@
  */
 
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import {
     FluidComponentMap,
     IViewConverter,
@@ -26,14 +26,14 @@ import {
 export function setFluidState<SV, SF>(
     syncedStateId: string,
     syncedState: ISyncedState,
-    runtime: IComponentRuntime,
+    runtime: IFluidDataStoreRuntime,
     componentMap: FluidComponentMap,
     fluidToView: Map<keyof SF, IViewConverter<SV, SF>>,
     newViewState: SV,
     newFluidState?: SF,
     viewToFluid?: Map<keyof SV, IFluidConverter<SV, SF>>,
-): IComponentHandle {
-    const storedStateHandle = syncedState.get<IComponentHandle>(
+): IFluidHandle {
+    const storedStateHandle = syncedState.get<IFluidHandle>(
         `syncedState-${syncedStateId}`,
     );
     let storedState = componentMap.get(storedStateHandle?.absolutePath)
@@ -54,35 +54,35 @@ export function setFluidState<SV, SF>(
         const syncedStateKey = fluidToView?.get(fluidKey as keyof SF)?.rootKey;
         const createCallback = fluidToView?.get(fluidKey as keyof SF)
             ?.sharedObjectCreate;
-        if (createCallback) {
+        if (createCallback !== undefined) {
             if (storedState.get(fluidKey) === undefined) {
                 const sharedObject = createCallback(runtime);
                 componentMap.set(sharedObject.handle.absolutePath, {
                     component: sharedObject,
                     listenedEvents: fluidToView?.get(fluidKey as keyof SF)
-                        ?.listenedEvents || ["valueChanged"],
+                        ?.listenedEvents ?? ["valueChanged"],
                 });
                 storedState.set(fluidKey, sharedObject.handle);
-                if (syncedStateKey) {
+                if (syncedStateKey !== undefined) {
                     syncedState.set(syncedStateKey, sharedObject.handle);
                 }
             } else {
                 storedState.set(fluidKey, storedState.get(fluidKey));
-                if (syncedStateKey) {
+                if (syncedStateKey !== undefined) {
                     syncedState.set(
                         syncedStateKey,
                         syncedState.get(syncedStateKey),
                     );
                 }
             }
-        } else if (syncedStateKey) {
-            const value = newFluidState
+        } else if (syncedStateKey !== undefined) {
+            const value = newFluidState !== undefined
                 ? newFluidState[fluidKey]
                 : syncedState.get(syncedStateKey);
             syncedState.set(syncedStateKey, value);
             storedState.set(fluidKey, value);
         } else {
-            const value = newFluidState
+            const value = newFluidState !== undefined
                 ? newFluidState[fluidKey]
                 : storedState.get(fluidKey);
             storedState.set(fluidKey, value);
@@ -95,7 +95,7 @@ export function setFluidState<SV, SF>(
                 ?.fluidConverter;
             const fluidKey = viewToFluid?.get(viewKey as keyof SV)
                 ?.fluidKey;
-            if (fluidConverter && fluidKey) {
+            if (fluidConverter !== undefined && fluidKey !== undefined) {
                 const value = fluidConverter(newViewState, newFluidState);
                 // Write this value to the stored state if it doesn't match the name of a view value
                 if (

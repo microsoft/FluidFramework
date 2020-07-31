@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedMap } from "@fluidframework/map";
 import {
     FluidComponentMap,
@@ -43,7 +43,7 @@ export function syncState<
     isSyncedStateUpdate: boolean,
     syncedStateId: string,
     syncedState: ISyncedState,
-    runtime: IComponentRuntime,
+    runtime: IFluidDataStoreRuntime,
     viewState: SV,
     setState: (
         newState: SV,
@@ -94,7 +94,7 @@ export function syncState<
     Object.entries(viewState).forEach(([viewKey, viewValue]) => {
         const needsConverter = viewMatchingMap.get(viewKey);
         let partialRootState = {};
-        if (needsConverter) {
+        if (needsConverter !== undefined) {
             partialRootState = getFluidFromView(
                 viewState,
                 viewKey as keyof SV,
@@ -119,7 +119,7 @@ export function syncState<
     Object.entries(currentFluidState).forEach(([fluidKey, fluidValue]) => {
         const needsConverter = fluidMatchingMap.get(fluidKey);
         let partialViewState = {};
-        if (needsConverter) {
+        if (needsConverter !== undefined) {
             partialViewState = getViewFromFluid(
                 syncedStateId,
                 syncedState,

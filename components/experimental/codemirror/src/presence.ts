@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import CodeMirror from "codemirror";
 
@@ -31,7 +31,7 @@ class PresenceManager extends EventEmitter {
     private readonly presenceKey: string;
     private readonly presenceMap: Map<string, IPresenceInfo> = new Map();
 
-    public constructor(private readonly runtime: IComponentRuntime) {
+    public constructor(private readonly runtime: IFluidDataStoreRuntime) {
         super();
         this.presenceKey = `presence-${runtime.id}`;
 
@@ -136,7 +136,7 @@ export class CodeMirrorPresenceManager extends EventEmitter {
         return this.codeMirror.getDoc();
     }
 
-    public constructor(private readonly codeMirror: CodeMirror.EditorFromTextArea, runtime: IComponentRuntime) {
+    public constructor(private readonly codeMirror: CodeMirror.EditorFromTextArea, runtime: IFluidDataStoreRuntime) {
         super();
         this.presenceManager = new PresenceManager(runtime);
 

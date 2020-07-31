@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedString } from "@fluidframework/sequence";
 import { TextListName } from "./TextList";
 import { TextList } from "./index";
 
-export const TextListInstantiationFactory = new PrimedComponentFactory(
+export const TextListInstantiationFactory = new DataObjectFactory(
     TextListName,
     TextList,
     [

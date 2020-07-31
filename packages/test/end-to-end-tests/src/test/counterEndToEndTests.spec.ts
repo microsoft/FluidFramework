@@ -37,9 +37,9 @@ describe("SharedCounter", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
+    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as ITestFluidComponent;
@@ -49,15 +49,15 @@ describe("SharedCounter", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
         const container1 = await createContainer();
-        component1 = await getComponent("default", container1);
+        component1 = await requestFluidObject("default", container1);
         sharedCounter1 = await component1.getSharedObject<SharedCounter>(counterId);
 
         const container2 = await createContainer();
-        const component2 = await getComponent("default", container2);
+        const component2 = await requestFluidObject("default", container2);
         sharedCounter2 = await component2.getSharedObject<SharedCounter>(counterId);
 
         const container3 = await createContainer();
-        const component3 = await getComponent("default", container3);
+        const component3 = await requestFluidObject("default", container3);
         sharedCounter3 = await component3.getSharedObject<SharedCounter>(counterId);
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);

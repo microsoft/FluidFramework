@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { IComponent, IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IFluidHandle, IFluidLoadable } from "@fluidframework/component-core-interfaces";
 import {
     ISharedDirectory,
     IDirectory,
@@ -27,11 +27,11 @@ export interface ITabsTypes {
 
 export interface ITabsModel {
     type: string;
-    handleOrId?: IComponentHandle | string;
+    handleOrId?: IFluidHandle | string;
 }
 
 export interface ITabsDataModel extends EventEmitter {
-    getComponentTab(id: string): Promise<IComponent | undefined>;
+    getComponentTab(id: string): Promise<IFluidObject | undefined>;
     getTabIds(): string[];
     createTab(type: string): Promise<string>;
     getNewTabTypes(): ITabsTypes[];
@@ -43,12 +43,12 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
     constructor(
         public root: ISharedDirectory,
         private readonly internalRegistry: IComponentInternalRegistry,
-        private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>
-            (pkg: string, props?: any) => Promise<T>,
-        private readonly getComponentFromDirectory: <T extends IComponent & IComponentLoadable>(
+        private readonly createAndAttachDataStore: <T extends IFluidObject & IFluidLoadable>
+            (pkg: string) => Promise<T>,
+        private readonly getFluidObjectFromDirectory: <T extends IFluidObject & IFluidLoadable>(
             id: string,
             directory: IDirectory,
-            getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IComponentHandle | undefined) =>
+            getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IFluidHandle | undefined) =>
             Promise<T | undefined>,
     ) {
         super();
@@ -75,7 +75,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     public async createTab(type: string): Promise<string> {
         const newKey = uuid();
-        const component = await this.createAndAttachComponent<IComponent & IComponentLoadable>(type);
+        const component = await this.createAndAttachDataStore<IFluidObject & IFluidLoadable>(type);
         this.tabs.set(newKey, {
             type,
             handleOrId: component.handle,
@@ -85,19 +85,19 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         return newKey;
     }
 
-    private getObjectFromDirectory(id: string, directory: IDirectory): string | IComponentHandle | undefined {
+    private getObjectFromDirectory(id: string, directory: IDirectory): string | IFluidHandle | undefined {
         const data = directory.get<ITabsModel>(id);
         return data?.handleOrId;
     }
 
-    public async getComponentTab(id: string): Promise<IComponent | undefined> {
+    public async getComponentTab(id: string): Promise<IFluidObject | undefined> {
         this.tabs = this.root.getSubDirectory("tab-ids");
-        return this.getComponentFromDirectory(id, this.tabs, this.getObjectFromDirectory);
+        return this.getFluidObjectFromDirectory(id, this.tabs, this.getObjectFromDirectory);
     }
 
     public getNewTabTypes(): ITabsTypes[] {
         const response: ITabsTypes[] = [];
-        this.internalRegistry.getFromCapability("IComponentHTMLView").forEach((e) => {
+        this.internalRegistry.getFromCapability("IFluidHTMLView").forEach((e) => {
             response.push({
                 type: e.type,
                 friendlyName: e.friendlyName,

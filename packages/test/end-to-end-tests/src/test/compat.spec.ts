@@ -19,9 +19,10 @@ import {
 import * as old from "./oldVersion";
 
 describe("loader/runtime compatibility", () => {
-    async function getComponent<T>(componentId: string, container: Container | old.Container): Promise<T> {
+    async function requestFluidObject<T>(componentId: string, container: Container | old.Container): Promise<T> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200
+            || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as T;
@@ -37,7 +38,7 @@ describe("loader/runtime compatibility", () => {
             container.on("warning", () => containerError = true);
             container.on("closed", (error) => containerError = containerError || error !== undefined);
 
-            component = await getComponent<TestComponent>("default", container);
+            component = await requestFluidObject<TestComponent>("default", container);
 
             this.opProcessingController.addDeltaManagers(component._runtime.deltaManager);
         });
@@ -91,7 +92,7 @@ describe("loader/runtime compatibility", () => {
             ];
 
             const components = await Promise.all(containersP.map(async (containerP) => containerP.then(
-                async (c) => getComponent<TestComponent | OldTestComponent>("default", c))));
+                async (c) => requestFluidObject<TestComponent | OldTestComponent>("default", c))));
 
             // get initial test value from each component
             components.map(async (c) => assert.strictEqual(await c._root.wait(test[0]), test[1]));

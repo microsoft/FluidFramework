@@ -23,9 +23,9 @@ const codeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
+async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
     const response = await container.request({ url: componentId });
-    if (response.status !== 200 || response.mimeType !== "fluid/component") {
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
         throw new Error(`Component with id: ${componentId} not found`);
     }
     return response.value as ITestFluidComponent;
@@ -37,10 +37,10 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
 
     beforeEach(async function() {
         const container1 = await makeTestContainer();
-        component1 = await getComponent("default", container1);
+        component1 = await requestFluidObject("default", container1);
 
         const container2 = await makeTestContainer();
-        component2 = await getComponent("default", container2);
+        component2 = await requestFluidObject("default", container2);
 
         this.opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
     });

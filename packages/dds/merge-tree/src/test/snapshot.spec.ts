@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { IMergeTreeOp } from "../ops";
 import { SnapshotV1 } from "../snapshotV1";
@@ -15,12 +15,12 @@ import { TestClient } from ".";
 async function loadSnapshot(tree: ITree) {
     const services = new MockStorage(tree);
     const client2 = new TestClient(undefined);
-    const runtime: Partial<IComponentRuntime> = {
+    const runtime: Partial<IFluidDataStoreRuntime> = {
         logger: client2.logger,
         clientId: "1",
     };
 
-    const { catchupOpsP } = await client2.load(runtime as IComponentRuntime, services);
+    const { catchupOpsP } = await client2.load(runtime as IFluidDataStoreRuntime, services);
     await catchupOpsP;
     return client2;
 }

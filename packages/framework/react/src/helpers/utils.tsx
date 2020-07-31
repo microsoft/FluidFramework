@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IDirectoryValueChanged, SharedMap } from "@fluidframework/map";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import {
@@ -26,9 +26,9 @@ export function getByFluidKey<
 }
 
 export async function asyncForEach(
-    array: IComponentHandle[],
+    array: IFluidHandle[],
     callback: (
-        handle: IComponentHandle,
+        handle: IFluidHandle,
         fluidComponentMap: FluidComponentMap,
         syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
         refreshView: () => void,
@@ -52,7 +52,7 @@ export const addComponent = async <
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
 >(
-    handle: IComponentHandle,
+    handle: IFluidHandle,
     fluidComponentMap: FluidComponentMap,
     syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
     refreshView: () => void,
@@ -79,7 +79,7 @@ export const addComponent = async <
     return handle.get().then((component) => {
         if (value.isRuntimeMap) {
             (component as SharedMap).on("valueChanged", syncedStateCallback);
-        } else if (value.listenedEvents) {
+        } else if (value.listenedEvents !== undefined) {
             for (const event of value.listenedEvents) {
                 (component as SharedObject).on(event, refreshView);
             }

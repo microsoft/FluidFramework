@@ -1215,10 +1215,10 @@ async function main() {
     console.log(`Repo: ${resolvedRoot}`);
     const gitRepo = new GitRepo(resolvedRoot);
     const remotes = await gitRepo.getRemotes();
-    const url = "https://github.com/microsoft/fluidframework";
+    const url = "github.com/microsoft/fluidframework";
     let remote: string | undefined;
     for (const r of remotes) {
-        if (r[1] && r[1].toLowerCase().startsWith(url)) {
+        if (r[1] && r[1].toLowerCase().includes(url)) {
             remote = r[0];
             break;
         }

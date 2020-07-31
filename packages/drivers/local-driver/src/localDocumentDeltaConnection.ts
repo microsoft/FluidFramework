@@ -20,8 +20,8 @@ import {
     ITokenClaims,
     NackErrorType,
 } from "@fluidframework/protocol-definitions";
+import { LocalWebSocketServer } from "@fluidframework/server-local-server";
 import * as core from "@fluidframework/server-services-core";
-import { TestWebSocketServer } from "@fluidframework/server-test-utils";
 import { debug } from "./debug";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
@@ -34,7 +34,7 @@ export class LocalDocumentDeltaConnection
         token: string,
         client: IClient,
         webSocketServer: core.IWebSocketServer): Promise<LocalDocumentDeltaConnection> {
-        const socket = (webSocketServer as TestWebSocketServer).createConnection();
+        const socket = (webSocketServer as LocalWebSocketServer).createConnection();
 
         const connectMessage: IConnect = {
             client,

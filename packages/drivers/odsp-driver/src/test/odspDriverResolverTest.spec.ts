@@ -35,7 +35,6 @@ describe("Odsp Driver Resolver", () => {
         assert.equal(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
         assert.equal(resolvedUrl.itemId, "", "Item id should be absent");
         assert.equal(resolvedUrl.hashedDocumentId, "", "No doc id should be present");
-        assert.equal(resolvedUrl.createNewOptions, undefined, "Create new options should be undefined");
         assert.equal(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be empty");
 
         const [, queryString] = request.url.split("?");
@@ -70,7 +69,6 @@ describe("Odsp Driver Resolver", () => {
         assert.equal(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
         assert.equal(resolvedUrl.itemId, "", "Item id should be absent");
         assert.equal(resolvedUrl.hashedDocumentId, "", "No doc id should be present");
-        assert.equal(resolvedUrl.createNewOptions, undefined, "Create new options should be undefined");
         assert.equal(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be empty");
 
         const [, queryString] = request.url.split("?");

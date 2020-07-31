@@ -4,8 +4,8 @@
  */
 
 import assert from "assert";
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { ISharedDirectory } from "@fluidframework/map";
@@ -18,18 +18,18 @@ const PrimedType = "@fluidframework/primedComponent";
 /**
  * My sample component
  */
-class Component extends PrimedComponent {
+class Component extends DataObject {
     public get root(): ISharedDirectory {
         return super.root;
     }
-    public async writeBlob(blob: string): Promise<IComponentHandle<string>> {
+    public async writeBlob(blob: string): Promise<IFluidHandle<string>> {
         return super.writeBlob(blob);
     }
 }
 
-async function getComponent(componentId: string, container: Container): Promise<Component> {
+async function requestFluidObject(componentId: string, container: Container): Promise<Component> {
     const response = await container.request({ url: componentId });
-    if (response.status !== 200 || response.mimeType !== "fluid/component") {
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
         throw new Error(`Component with id: ${componentId} not found`);
     }
     return response.value as Component;
@@ -40,7 +40,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
 
     beforeEach(async function() {
         const container = await makeTestContainer();
-        component = await getComponent("default", container);
+        component = await requestFluidObject("default", container);
     });
 
     it("Blob support", async () => {
@@ -48,18 +48,18 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         assert(await handle.get() === "aaaa", "Could not write blob to component");
         component.root.set("key", handle);
 
-        const handle2 = component.root.get<IComponentHandle<string>>("key");
+        const handle2 = component.root.get<IFluidHandle<string>>("key");
         const value2 = await handle2.get();
         assert(value2 === "aaaa", "Could not get blob from shared object in the component");
 
         const container2 = await makeTestContainer();
-        const component2 = await getComponent("default", container2);
-        const value = await component2.root.get<IComponentHandle<string>>("key").get();
+        const component2 = await requestFluidObject("default", container2);
+        const value = await component2.root.get<IFluidHandle<string>>("key").get();
         assert(value === "aaaa", "Blob value not synced across containers");
     });
 };
 
-describe("PrimedComponent", () => {
+describe("DataObject", () => {
     describe("Blob support", () => {
         const id = "fluid-test://localhost/primedComponentTest";
         const codeDetails: IFluidCodeDetails = {
@@ -69,7 +69,7 @@ describe("PrimedComponent", () => {
         let deltaConnectionServer: ILocalDeltaConnectionServer;
 
         async function createContainer(): Promise<Container> {
-            const factory = new PrimedComponentFactory(PrimedType, Component, [], {});
+            const factory = new DataObjectFactory(PrimedType, Component, [], {});
             const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
             return initializeLocalContainer(id, loader, codeDetails);
         }

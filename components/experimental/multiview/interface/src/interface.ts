@@ -17,3 +17,17 @@ export interface ICoordinate extends EventEmitter {
      */
     on(event: "coordinateChanged", listener: () => void): this;
 }
+
+/**
+ * IConstellation describes the public API surface for our Constellation component.
+ */
+export interface IConstellation extends EventEmitter {
+    stars: ICoordinate[];
+
+    addStar(x: number, y: number): Promise<void>;
+
+    /**
+     * The constellationChanged event will fire whenever someone changes any star, either locally or remotely.
+     */
+    on(event: "constellationChanged", listener: () => void): this;
+}

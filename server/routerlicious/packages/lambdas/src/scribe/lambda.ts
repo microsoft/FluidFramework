@@ -86,6 +86,7 @@ export class ScribeLambda extends SequencedLambda {
         private protocolHead: number,
         messages: ISequencedDocumentMessage[],
         private readonly generateServiceSummary: boolean,
+        private readonly clearCacheAfterServiceSummary: boolean,
         private readonly nackOnSummarizeException?: boolean,
     ) {
         super(context);
@@ -115,7 +116,10 @@ export class ScribeLambda extends SequencedLambda {
                     if (value.operation.term < this.term) {
                         continue;
                     } else if (value.operation.term > this.term) {
-                        const lastSummary = await fetchLatestSummaryState(this.storage, this.documentId);
+                        const lastSummary = await fetchLatestSummaryState(
+                            this.storage,
+                            this.documentId,
+                            this.context.log);
                         if (!lastSummary.fromSummary) {
                             throw Error(`Required summary can't be fetched`);
                         }
@@ -140,6 +144,11 @@ export class ScribeLambda extends SequencedLambda {
                     continue;
                 }
 
+                if (this.pendingMessages.length > 0 &&
+                    value.operation.sequenceNumber <= this.pendingMessages.peekBack().sequenceNumber) {
+                    continue;
+                }
+
                 // Add the message to the list of pending for this document and those that we need
                 // to include in the checkpoint
                 this.pendingMessages.push(value.operation);
@@ -155,6 +164,10 @@ export class ScribeLambda extends SequencedLambda {
                     this.processFromPending(this.minSequenceNumber);
                 }
 
+                const messageMetaData = {
+                    documentId: this.documentId,
+                    tenantId: this.tenantId,
+                };
                 this.clearCache = false;
                 if (value.operation.type === MessageType.Summarize) {
                     const summarySequenceNumber = value.operation.sequenceNumber;
@@ -183,8 +196,7 @@ export class ScribeLambda extends SequencedLambda {
                             this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                         } else {
                             this.protocolHead = this.protocolHandler.sequenceNumber;
-                            this.context.log.info(
-                                `Client summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`);
+                            this.context.log.info(`Client summary @seq${summarySequenceNumber}`, { messageMetaData });
                         }
                     } catch (ex) {
                         this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
@@ -217,9 +229,10 @@ export class ScribeLambda extends SequencedLambda {
                             scribeCheckpoint);
 
                         if (success) {
-                            this.clearCache = true;
-                            this.context.log.info(
-                                `Service summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`);
+                            if (this.clearCacheAfterServiceSummary) {
+                                this.clearCache = true;
+                            }
+                            this.context.log.info(`Service summary @seq${summarySequenceNumber}`, { messageMetaData });
                         }
                     }
                 } else if (value.operation.type === MessageType.SummaryAck) {
@@ -322,7 +335,11 @@ export class ScribeLambda extends SequencedLambda {
                 "operation.sequenceNumber": lte ? { $lte: sequenceNumber } : { $gte: sequenceNumber },
                 "tenantId": this.tenantId,
             });
-        this.context.log.info(`Scribe cache is cleared for ${this.tenantId}/${this.documentId}`);
+            const messageMetaData = {
+                documentId: this.documentId,
+                tenantId: this.tenantId,
+            };
+            this.context.log.info(`Scribe cache is cleared`, { messageMetaData });
     }
 
     /**
@@ -380,7 +397,7 @@ export class ScribeLambda extends SequencedLambda {
         await this.messageCollection
             .deleteMany({
                 "documentId": this.documentId,
-                "operation.sequenceNumber": { $lte: this.protocolHead },
+                "operation.sequenceNumber": { $lte: checkpoint.protocolState.sequenceNumber },
                 "tenantId": this.tenantId,
             });
     }
@@ -586,7 +603,7 @@ export class ScribeLambda extends SequencedLambda {
         const commit = await this.storage.createCommit(commitParams);
         await this.storage.upsertRef(this.documentId, commit.sha);
 
-        await this.sendSummaryConfirmationMessage(sequenceNumber, true);
+        await this.sendSummaryConfirmationMessage(sequenceNumber, this.clearCacheAfterServiceSummary);
         return true;
     }
 
