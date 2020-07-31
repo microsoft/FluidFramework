@@ -4,7 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle, IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
 import { CellRange } from "./cellrange";
 import { ConfigKey } from "./configKey";
@@ -100,7 +100,7 @@ export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITa
         this.doc.removeCols(startCol, numCols);
     }
 
-    protected async initializingFirstTime(_scope?: IFluidObject, initialState?: ITableSliceConfig) {
+    protected async initializingFirstTime(initialState?: ITableSliceConfig) {
         if (!initialState) {
             throw new Error("TableSlice must be created with initial state");
         }

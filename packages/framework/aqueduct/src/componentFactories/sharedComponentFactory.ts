@@ -120,7 +120,7 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
         const providers = dependencyContainer.synthesize<P>(this.optionalProviders, {});
         // Create a new instance of our component
         const instance = new this.ctor({ runtime, context, providers });
-        await instance.initializeInternal(scope);
+        await instance.initializeInternal((scope as any)?.PureDataObjectInitialState);
         return instance;
     }
 

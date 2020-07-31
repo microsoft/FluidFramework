@@ -7,7 +7,7 @@ import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { DataObject, DataObjectFactory, waitForAttach } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import {
-    IFluidHandle, IFluidLoadable, IFluidObject,
+    IFluidHandle, IFluidLoadable,
 } from "@fluidframework/component-core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
@@ -50,7 +50,7 @@ export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements I
     /**
      * Do creation work
      */
-    protected async initializingFirstTime(_scope?: IFluidObject, initialState?: ITodoItemInitialState) {
+    protected async initializingFirstTime(initialState?: ITodoItemInitialState) {
         // Set initial state if it was provided
         const newItemText = initialState?.startingText ?? "New Item";
 

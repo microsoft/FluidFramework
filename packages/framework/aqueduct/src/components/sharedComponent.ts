@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import {
     IFluidObject,
     IFluidHandle,
@@ -133,11 +134,12 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * Calls initializingFirstTime, initializingFromExisting, and hasInitialized. Caller is
      * responsible for ensuring this is only invoked once.
      */
-    public async initializeInternal(scope?: IFluidObject): Promise<void> {
+    public async initializeInternal(props?: S): Promise<void> {
         if (this.runtime.existing) {
+            assert(props === undefined);
             await this.initializingFromExisting();
         } else {
-            await this.initializingFirstTime(scope, (scope as any)?.PureDataObjectInitialState);
+            await this.initializingFirstTime(props);
         }
         await this.hasInitialized();
     }
@@ -206,9 +208,8 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * component runtime)
      *
      * @param props - Optional props to be passed in on create
-     * @param scope = optional scope provided by instantiator at creation time.
      */
-    protected async initializingFirstTime(scope?: IFluidObject, props?: S): Promise<void> { }
+    protected async initializingFirstTime(props?: S): Promise<void> { }
 
     /**
      * Called every time but the first time the component is initialized (creations
