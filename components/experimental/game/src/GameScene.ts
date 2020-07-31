@@ -38,7 +38,7 @@ export class GameScene extends phaser.Scene {
     };
 
     private handleSignal(signal: IInboundSignalMessage) {
-        const { clientId, type } = signal;
+        const { clientId, type, content } = signal;
         const player = this.players.get(clientId);
         if (player !== undefined && clientId !== this.userId) {
             switch (type) {
@@ -57,6 +57,9 @@ export class GameScene extends phaser.Scene {
                     player.setVelocityX(0);
                     player.anims.play("turn");
                     break;
+                case "score":
+                    const scoreText = this.scoreTexts.get(clientId);
+                    scoreText?.setText('Score: ' + content);
                 default:
                     break;
             }
@@ -189,15 +192,14 @@ export class GameScene extends phaser.Scene {
 
     collectStar(player, star, userId) {
         star.disableBody(true, true);
-        const currentScore = this.gameState?.get(userId);
-        const newScore = currentScore + 10;
         if (userId === this.userId) {
+            const currentScore = this.gameState?.get(userId);
+            const newScore = currentScore + 10;
             this.gameState?.set(userId, newScore);
+            const scoreText = this.scoreTexts.get(userId);
+            scoreText?.setText('Score: ' + newScore);
+            this.runtime?.submitSignal("score", newScore);
         }
-        const scoreText = this.scoreTexts.get(userId);
-        scoreText?.setText('Score: ' + newScore);
-
-        this.runtime?.submitSignal("score", newScore);
 
         if (this.stars.countActive(true) === 0) {
             this.stars.children.iterate(function (child) {
