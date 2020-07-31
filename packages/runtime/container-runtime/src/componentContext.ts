@@ -558,8 +558,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public abstract generateAttachMessage(): IAttachMessage;
 
-    public abstract attachGraph(): void;
-
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
@@ -603,10 +601,6 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 
     public generateAttachMessage(): IAttachMessage {
         throw new Error("Cannot attach remote component");
-    }
-
-    public attachGraph(): void {
-        throw new Error("Cannot attach graph on remote component");
     }
 
     // This should only be called during realize to get the baseSnapshot,
@@ -685,11 +679,6 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
             assert.strictEqual(this.attachState, AttachState.Attaching, "Should move from attaching to attached");
             this._attachState = AttachState.Attached;
         });
-    }
-
-    public attachGraph(): void {
-        assert(this.componentRuntime, "Component should be loaded for local component");
-        this.componentRuntime.attachGraph();
     }
 
     public generateAttachMessage(): IAttachMessage {

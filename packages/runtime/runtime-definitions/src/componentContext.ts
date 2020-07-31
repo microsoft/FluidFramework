@@ -150,11 +150,6 @@ export interface IFluidDataStoreChannel extends
     getAttachSnapshot(): ITreeEntry[];
 
     /**
-     * Attaches the graph of the component.
-     */
-    attachGraph(): void;
-
-    /**
      * Processes the op.
      */
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;

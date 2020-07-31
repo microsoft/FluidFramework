@@ -1393,7 +1393,6 @@ export class ContainerRuntime extends EventEmitter
         // we will summarize it while uploading the create new summary and make it known to other
         // clients but we do need to submit op if container forced us to do so.
         if (this.attachState !== AttachState.Detached) {
-            context.attachGraph();
             context.emit("attaching");
             const message = context.generateAttachMessage();
 
@@ -1460,32 +1459,28 @@ export class ContainerRuntime extends EventEmitter
             type: SummaryType.Tree,
         };
 
-        // Attaching graph of some components can cause other components to get bound too.
-        // So do that before taking the summary.
-        Array.from(this.contexts)
-            .filter(([key, value]) =>
-                // Attach graph for bounded components.
-                !this.notBoundedComponentContexts.has(key),
-            )
-            .map(([key, value]) => {
-                value.attachGraph();
-            });
+        // Attaching graph of some components can cause other components to get bind too.
+        // So keep taking summary until no new components get binded.
+        let notBoundedComponentContextsLength: number;
+        do {
+            notBoundedComponentContextsLength = this.notBoundedComponentContexts.size;
+            // Iterate over each component and ask it to snapshot
+            Array.from(this.contexts)
+                .filter(([key, value]) =>
+                    // Take summary of bounded components only and make sure we haven't summarized them already.
+                    !(this.notBoundedComponentContexts.has(key) || summaryTree.tree[key]),
+                )
+                .map(([key, value]) => {
+                    const snapshot = value.generateAttachMessage().snapshot;
+                    const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+                        snapshot,
+                        `/${encodeURIComponent(key)}`,
+                        true,
+                    );
+                    summaryTree.tree[key] = treeWithStats.summaryTree;
+                });
+        } while (notBoundedComponentContextsLength !== this.notBoundedComponentContexts.size);
 
-        // Iterate over each component and ask it to snapshot
-        Array.from(this.contexts)
-            .filter(([key, value]) =>
-                // Take summary of bounded components.
-                !this.notBoundedComponentContexts.has(key),
-            )
-            .map(([key, value]) => {
-                const snapshot = value.generateAttachMessage().snapshot;
-                const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-                    snapshot,
-                    `/${encodeURIComponent(key)}`,
-                    true,
-                );
-                summaryTree.tree[key] = treeWithStats.summaryTree;
-            });
         this.serializeContainerBlobs(summaryTree);
 
         return summaryTree;
