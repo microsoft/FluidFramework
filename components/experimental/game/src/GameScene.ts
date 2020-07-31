@@ -14,6 +14,7 @@ export class GameScene extends phaser.Scene {
     private platforms: any;
     private stars: any;
     private players: Map<string, phaser.Physics.Arcade.Sprite> = new Map();
+    private scoreTexts: Map<string, any> = new Map();
     private userId: string = "";
     private gameState: SharedMap | undefined;
     private quorum: IQuorum | undefined;
@@ -37,7 +38,7 @@ export class GameScene extends phaser.Scene {
     private handleSignal(signal: IInboundSignalMessage) {
         const { clientId, type } = signal;
         const player = this.players.get(clientId);
-        if (player !== undefined) {
+        if (player !== undefined && clientId !== this.userId) {
             switch (type) {
                 case "left":
                     player.setVelocityX(-160);
@@ -76,7 +77,7 @@ export class GameScene extends phaser.Scene {
         player.setCollideWorldBounds(true);
 
         this.physics.add.collider(player, this.platforms);
-        this.physics.add.overlap(player, this.stars, this.collectStar, undefined, this);
+        this.physics.add.overlap(player, this.stars, (player, star) => this.collectStar(player, star, newId), undefined, this);
 
         this.players.set(newId, player);
         return player;
@@ -114,6 +115,7 @@ export class GameScene extends phaser.Scene {
         });
 
         const player = this._addPlayer(this.userId);
+        this.gameState?.set(this.userId, 0);
         const leftButton = new TextButton(this, 100, 100, 'Left', { fill: '#0f0' }, () => {
             player.setVelocityX(-160);
             player.anims.play("left", true);
@@ -142,10 +144,13 @@ export class GameScene extends phaser.Scene {
         }, () => { });
 
         this.add.existing(upButton);
-
+        let scoreY = 16;
         setTimeout(() => {
             if (this.quorum !== undefined) {
                 for (const otherUserId of this.quorum.getMembers().keys()) {
+                    const scoreText = this.add.text(16, scoreY, 'Score: 0', { fontSize: '32px', fill: '#000' });
+                    this.scoreTexts.set(otherUserId, scoreText);
+                    scoreY += 20;
                     if (this.players.get(otherUserId) === undefined) {
                         this._addPlayer(otherUserId);
                     }
@@ -165,7 +170,7 @@ export class GameScene extends phaser.Scene {
 
         this.physics.add.collider(this.stars, this.platforms);
 
-        this.physics.add.overlap(player, this.stars, this.collectStar, undefined, this);
+        this.physics.add.overlap(player, this.stars, (player, star) => this.collectStar(player, star, this.userId), undefined, this);
     }
 
     update() {
@@ -175,8 +180,16 @@ export class GameScene extends phaser.Scene {
         }
     }
 
-    collectStar(player, star) {
+    collectStar(player, star, userId) {
         star.disableBody(true, true);
-        this.runtime?.submitSignal("score", { x: star.x, y: star.y });
+        const currentScore = this.gameState?.get(userId);
+        const newScore = currentScore + 10;
+        if (userId === this.userId) {
+            this.gameState?.set(userId, newScore);
+        }
+        const scoreText = this.scoreTexts.get(userId);
+        scoreText?.setText('Score: ' + newScore);
+
+        this.runtime?.submitSignal("score", newScore);
     }
 }
