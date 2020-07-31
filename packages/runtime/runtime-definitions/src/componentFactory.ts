@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IFluidDataStoreContext } from "./componentContext";
 
 declare module "@fluidframework/component-core-interfaces" {
@@ -31,6 +32,11 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
     /**
      * Generates runtime for the component from the component context. Once created should be bound to the context.
      * @param context - Context for the component.
+     * @param scope - scope object provided by instantiator of data store on creation. It defines an environment for
+     * data store. It may contain various background services, factories, etc. It's responsibility of data store to
+     * serialize enough state in data store itself for future invocations to have same environment.
+     * Usually this is done by working with IFluidLoadable objects and storing handles to those objects in root
+     * directory for future reference.
      */
-    instantiateDataStore(context: IFluidDataStoreContext): void;
+    instantiateDataStore(context: IFluidDataStoreContext, scope?: IFluidObject): void;
 }

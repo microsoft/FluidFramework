@@ -4,7 +4,7 @@
  */
 import { DataObject } from "@fluidframework/aqueduct";
 import { CollaborativeTextArea } from "@fluidframework/react-inputs";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle, IFluidObject } from "@fluidframework/component-core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
@@ -26,7 +26,7 @@ export class TextBox extends DataObject<{}, string> implements IFluidHTMLView {
     /**
      * Do creation work
      */
-    protected async initializingFirstTime(initialState?: string) {
+    protected async initializingFirstTime(_scope?: IFluidObject, initialState?: string) {
         // if initial state is provided then use it.
         const newItemText = initialState ?? "Important Things";
 

@@ -1137,8 +1137,8 @@ export class ContainerRuntime extends EventEmitter
         }
     }
 
-    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter> {
-        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg]).realize();
+    public async createDataStore(pkg: string | string[], scope?: IFluidObject): Promise<IFluidRouter> {
+        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg]).realize(scope);
     }
 
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
@@ -1172,36 +1172,6 @@ export class ContainerRuntime extends EventEmitter
         this.contexts.set(id, context);
 
         return context;
-    }
-
-    public async createDataStoreWithRealizationFn(
-        pkg: string[],
-        realizationFn?: (context: IFluidDataStoreContext) => void,
-    ): Promise<IFluidDataStoreChannel> {
-        this.verifyNotClosed();
-
-        // tslint:disable-next-line: no-unsafe-any
-        const id: string = uuid();
-        this.notBoundedComponentContexts.add(id);
-        const context = new LocalFluidDataStoreContext(
-            id,
-            pkg,
-            this,
-            this.storage,
-            this.containerScope,
-            this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            (cr: IFluidDataStoreChannel) => this.bindComponent(cr),
-            undefined /* #1635: Remove LocalFluidDataStoreContext createProps */);
-
-        const deferred = new Deferred<FluidDataStoreContext>();
-        this.contextsDeferred.set(id, deferred);
-        this.contexts.set(id, context);
-
-        if (realizationFn) {
-            return context.realizeWithFn(realizationFn);
-        } else {
-            return context.realize();
-        }
     }
 
     public getQuorum(): IQuorum {

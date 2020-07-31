@@ -24,6 +24,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ISharedComponentProps,
     PureDataObject,
+    PureDataObjectInitialState,
 } from "../components";
 
 /**
@@ -77,18 +78,7 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
      *
      * @param context - component context used to load a component runtime
      */
-    public instantiateDataStore(context: IFluidDataStoreContext): void {
-        this.instantiateComponentWithInitialState(context, undefined);
-    }
-
-    /**
-     * Private method for component instantiation that exposes initial state
-     * @param context - Component context used to load a component runtime
-     * @param initialState  - The initial state to provide the created component
-     */
-    private instantiateComponentWithInitialState(
-        context: IFluidDataStoreContext,
-        initialState?: S): void {
+    public instantiateDataStore(context: IFluidDataStoreContext, scope?: IFluidObject): void {
         // Create a new runtime for our component
         // The runtime is what Fluid uses to create DDS' and route to your component
         const runtime = FluidDataStoreRuntime.load(
@@ -102,14 +92,14 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
         // run the initialization.
         if (!this.onDemandInstantiation || !runtime.existing) {
             // Create a new instance of our component up front
-            instanceP = this.instantiateInstance(runtime, context, initialState);
+            instanceP = this.instantiateInstance(runtime, context, scope);
         }
 
         runtime.registerRequestHandler(async (request: IRequest) => {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             if (!instanceP) {
                 // Create a new instance of our component on demand
-                instanceP = this.instantiateInstance(runtime, context, initialState);
+                instanceP = this.instantiateInstance(runtime, context, scope);
             }
             const instance = await instanceP;
             return instance.request(request);
@@ -124,13 +114,13 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
     private async instantiateInstance(
         runtime: FluidDataStoreRuntime,
         context: IFluidDataStoreContext,
-        initialState?: S,
+        scope?: IFluidObject,
     ) {
         const dependencyContainer = new DependencyContainer(context.scope.IFluidDependencySynthesizer);
         const providers = dependencyContainer.synthesize<P>(this.optionalProviders, {});
         // Create a new instance of our component
         const instance = new this.ctor({ runtime, context, providers });
-        await instance.initialize(initialState);
+        await instance.initializeInternal(scope);
         return instance;
     }
 
@@ -150,14 +140,10 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
         if (this.type === "") {
             throw new Error("undefined type member");
         }
-
         const packagePath = await context.composeSubpackagePath(this.type);
 
-        const router = await context.containerRuntime.createDataStoreWithRealizationFn(
-            packagePath,
-            (newContext) => { this.instantiateComponentWithInitialState(newContext, initialState); },
-        );
-
+        const scope = { [PureDataObjectInitialState]: initialState };
+        const router = await context.containerRuntime.createDataStore(packagePath, scope as IFluidObject);
         return requestFluidObject<PureDataObject<P, S>>(router, "/");
     }
 }

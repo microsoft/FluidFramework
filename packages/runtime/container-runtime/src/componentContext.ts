@@ -216,7 +216,10 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return deferred.promise;
     }
 
-    public async realize(): Promise<IFluidDataStoreChannel> {
+    public async realize(scope?: IFluidObject): Promise<IFluidDataStoreChannel> {
+        // scope can be provided only on creation path, where first realize() call is guaranteed to be bring it
+        assert(scope === undefined || this.componentRuntimeDeferred === undefined);
+
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred<IFluidDataStoreChannel>();
             const details = await this.getInitialSnapshotDetails();
@@ -246,18 +249,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             }
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred
-            factory.instantiateDataStore(this);
-        }
-
-        return this.componentRuntimeDeferred.promise;
-    }
-
-    public async realizeWithFn(
-        realizationFn: (context: IFluidDataStoreContext) => void,
-    ): Promise<IFluidDataStoreChannel> {
-        if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IFluidDataStoreChannel>();
-            realizationFn(this);
+            factory.instantiateDataStore(this, scope);
         }
 
         return this.componentRuntimeDeferred.promise;

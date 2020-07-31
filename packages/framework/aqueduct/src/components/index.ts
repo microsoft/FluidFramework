@@ -8,4 +8,5 @@ export { DataObject } from "./primedComponent";
 export {
     ISharedComponentProps,
     PureDataObject,
+    PureDataObjectInitialState,
 } from "./sharedComponent";
