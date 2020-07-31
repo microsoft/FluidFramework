@@ -17,6 +17,7 @@ import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
 class DemoScene extends phaser.Scene {
     private platforms: any;
+    private stars: any;
     private players: Map<string, phaser.Physics.Arcade.Sprite> = new Map();
     private userId: string = "";
     private gameState: SharedMap | undefined;
@@ -82,6 +83,8 @@ class DemoScene extends phaser.Scene {
         player.setCollideWorldBounds(true);
 
         this.physics.add.collider(player, this.platforms);
+        this.physics.add.overlap(player, this.stars, this.collectStar, undefined, this);
+
         this.players.set(newId, player);
         return player;
     }
@@ -157,6 +160,19 @@ class DemoScene extends phaser.Scene {
             }
         }, 500);
 
+        this.stars = this.physics.add.group({
+            key: 'star',
+            repeat: 11,
+            setXY: { x: 12, y: 0, stepX: 70 }
+        });
+
+        this.stars.children.iterate(function (child) {
+            child.setBounceY(Phaser.Math.FloatBetween(0.1, 0.3));
+        });
+
+        this.physics.add.collider(this.stars, this.platforms);
+
+        this.physics.add.overlap(player, this.stars, this.collectStar, undefined, this);
     }
 
     update() {
@@ -164,6 +180,12 @@ class DemoScene extends phaser.Scene {
         if (currentPlayer === undefined) {
             throw Error("Failed to find player");
         }
+    }
+
+    collectStar(player, star)
+    {
+        star.disableBody(true, true);
+        this.runtime?.submitSignal("score", { x: star.x, y: star.y });
     }
 }
 
