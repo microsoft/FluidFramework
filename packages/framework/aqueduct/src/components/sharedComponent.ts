@@ -100,7 +100,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
     public async initialize(initialState?: S): Promise<void> {
         // We want to ensure if this gets called more than once it only executes the initialize code once.
         if (!this.initializeP) {
-            this.initializeP = this.initializeInternal(this.context.createProps as S ?? initialState);
+            this.initializeP = this.initializeInternal(initialState);
         }
 
         await this.initializeP;

@@ -1165,7 +1165,7 @@ export class ContainerRuntime extends EventEmitter
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             (cr: IFluidDataStoreChannel) => this.bindComponent(cr),
-            undefined);
+        );
 
         const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
@@ -1191,7 +1191,7 @@ export class ContainerRuntime extends EventEmitter
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             (cr: IFluidDataStoreChannel) => this.bindComponent(cr),
-            undefined /* #1635: Remove LocalFluidDataStoreContext createProps */);
+        );
 
         const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
