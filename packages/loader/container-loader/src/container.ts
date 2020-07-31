@@ -11,7 +11,7 @@ import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { IFluidObject, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IRequest, IResponse, IFluidRouter } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     ICodeLoader,
@@ -250,6 +250,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private lastVisible: number | undefined;
 
     private _closed = false;
+
+    public get IFluidRouter(): IFluidRouter { return this; }
 
     public get resolvedUrl(): IResolvedUrl | undefined {
         return this._resolvedUrl;

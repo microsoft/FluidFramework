@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
-    IFluidLoadable,
     IFluidRouter,
     IProvideFluidHandleContext,
     IProvideFluidSerializer,
@@ -111,6 +110,18 @@ export interface IContainerRuntimeBase extends
      * @param pkg - Package name of the data store factory
      */
     createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
+
+    /**
+     * Creates a new component using an optional realization function.  This API does not allow specifying
+     * the component's id and instead generates a uuid.  Consumers must save another reference to the
+     * component, such as the handle.
+     * @param pkg - Package name of the component
+     * @param realizationFn - Optional function to call to realize the component over the context default
+     */
+    createDataStoreWithRealizationFn(
+        pkg: string[],
+        realizationFn?: (context: IFluidDataStoreContext) => void,
+    ): Promise<IFluidDataStoreChannel>;
 
     /**
      * Get an absolute url for a provided container-relative request.
@@ -316,18 +327,6 @@ export interface IFluidDataStoreContext extends EventEmitter {
     ): Promise<IFluidDataStoreChannel>;
 
     /**
-     * Create a new component using subregistries with fallback.
-     * @param pkg - Package name of the component
-     * @param realizationFn - Optional function to call to realize the component over the context default
-     * @returns A promise for a component that will have been initialized. Caller is responsible
-     * for attaching the component to the provided runtime's container such as by storing its handle
-     */
-    createDataStoreWithRealizationFn(
-        pkg: string,
-        realizationFn?: (context: IFluidDataStoreContext) => void,
-    ): Promise<IFluidObject & IFluidLoadable>;
-
-    /**
      * Binds a runtime to the context.
      */
     bindRuntime(componentRuntime: IFluidDataStoreChannel): void;
@@ -350,6 +349,15 @@ export interface IFluidDataStoreContext extends EventEmitter {
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+
+    /**
+     * Take a package name and transform it into a path that can be used to find it
+     * from this context, such as by looking into subregistries
+     * @param subpackage - The subpackage to find in this context
+     * @returns A list of packages to the subpackage destination if found,
+     * otherwise the original subpackage
+     */
+    composeSubpackagePath(subpackage: string): Promise<string[]>;
 }
 
 /**
