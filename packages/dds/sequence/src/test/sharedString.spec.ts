@@ -185,7 +185,7 @@ describe("SharedString", () => {
                 sharedString.insertText(0, `${insertText}${i}`);
             }
 
-            // Get snapshot and verift its correct.
+            // Get snapshot and verify its correct.
             let tree = sharedString.snapshot();
             assert(tree.entries.length === 2);
             assert(tree.entries[0].path === "header");
