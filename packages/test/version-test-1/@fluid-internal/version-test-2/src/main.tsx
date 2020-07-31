@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -13,7 +12,7 @@ import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 const pkg = require("../package.json");
 const pkgversion = pkg.version as string;
 const versionTest2Name = pkg.name as string;
@@ -94,7 +93,7 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
             ).catch((error) => {
                 console.error(error);
             });
-        },3000);
+        }, 3000);
     }
 }
 

@@ -18,7 +18,7 @@ import { LesscTask, CopyfilesTask, EchoTask, GenVerTask } from "./leaf/miscTasks
 // Map of executable name to LeafTasks
 const executableToLeafTask: { [key: string]: new (node: BuildPackage, command: string) => LeafTask } = {
     tsc: TscTask,
-    tslint:TsLintTask,
+    tslint: TsLintTask,
     eslint: EsLintTask,
     tsfmt: TsFormatTask,
     webpack: WebpackTask,

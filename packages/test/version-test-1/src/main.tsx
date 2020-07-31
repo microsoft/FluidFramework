@@ -92,9 +92,12 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
     }
 
     private sendUpgradeSignal(highPriority: boolean) {
-        this.runtime.submitSignal(highPriority
-            ? signalKey.upgradeHighPriority
-            : signalKey.upgradeLowPriority, undefined);
+        this.runtime.submitSignal(
+            highPriority
+                ? signalKey.upgradeHighPriority
+                : signalKey.upgradeLowPriority,
+            undefined,
+        );
     }
 
     private async upgradeManagerProposeCode(highPriority: boolean) {
