@@ -127,7 +127,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
 
     protected async initializingFirstTime() {
         const storageComponent =
-            await this.createAndAttachDataStore<SpacesStorage<ISpacesItem>>(SpacesStorage.ComponentName);
+            await this.createFluidObject<SpacesStorage<ISpacesItem>>(SpacesStorage.ComponentName);
         this.root.set(SpacesStorageKey, storageComponent.handle);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
@@ -184,8 +184,8 @@ export class Spaces extends DataObject implements IFluidHTMLView {
             throw new Error("Unknown item, can't add");
         }
 
-        // Don't really want to hand out createAndAttachDataStore here, see spacesItemMap.ts for more info.
-        const serializableObject = await itemMapEntry.create(this.createAndAttachDataStore.bind(this));
+        // Don't really want to hand out createFluidObject here, see spacesItemMap.ts for more info.
+        const serializableObject = await itemMapEntry.create(this.createFluidObject.bind(this));
         return this.storageComponent.addItem(
             {
                 serializableObject,

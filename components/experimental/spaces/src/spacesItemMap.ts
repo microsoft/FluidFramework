@@ -25,8 +25,8 @@ interface ISingleHandleItem {
 }
 
 const createSingleHandleItem = (type: string) => {
-    return async (createAndAttachDataStore: ICreateAndAttachComponentFunction): Promise<ISingleHandleItem> => {
-        const component = await createAndAttachDataStore(type);
+    return async (createFluidObject: ICreateAndAttachComponentFunction): Promise<ISingleHandleItem> => {
+        const component = await createFluidObject(type);
         return {
             handle: component.handle,
         };
@@ -51,7 +51,7 @@ const getSliderCoordinateView = async (serializableObject: ISingleHandleItem) =>
 export interface ISpacesItemEntry<T extends Serializable = AsSerializable<any>> {
     // Would be better if items to bring their own subregistries, and their own ability to create components
     // This might be done by integrating these items with the Spaces subcomponent registry?
-    create: (createAndAttachDataStore: ICreateAndAttachComponentFunction) => Promise<T>;
+    create: (createFluidObject: ICreateAndAttachComponentFunction) => Promise<T>;
     getView: (serializableObject: T) => Promise<JSX.Element>;
     friendlyName: string;
     fabricIconName: string;

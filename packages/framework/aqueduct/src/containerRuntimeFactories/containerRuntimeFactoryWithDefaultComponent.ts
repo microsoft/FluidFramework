@@ -50,13 +50,12 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
      * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const componentRuntime = await runtime._createDataStore(
-            ContainerRuntimeFactoryWithDefaultDataStore.defaultComponentId,
+        const router = await runtime.createRootDataStore(
             this.defaultComponentName,
+            ContainerRuntimeFactoryWithDefaultDataStore.defaultComponentId,
         );
         // We need to request the component before attaching to ensure it
         // runs through its entire instantiation flow.
-        await componentRuntime.request({ url: "/" });
-        componentRuntime.bindToContext();
+        await router.request({ url: "/" });
     }
 }

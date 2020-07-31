@@ -17,9 +17,9 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { FluidOjectHandle } from "@fluidframework/component-runtime";
 import { IDirectory } from "@fluidframework/map";
-import { v4 as uuid } from "uuid";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { serviceRoutePathRoot } from "../containerServices";
 
 export interface ISharedComponentProps<P extends IFluidObject = object> {
@@ -139,20 +139,6 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
     // #endregion IFluidLoadable
 
     /**
-     * Given a request response will return a component if a component was in the response.
-     */
-    protected async asFluidObject<T extends IFluidObject>(response: Promise<IResponse>): Promise<T> {
-        const result = await response;
-
-        if (result.status === 200
-            && (result.mimeType === "fluid/component" || result.mimeType === "fluid/object")) {
-            return result.value as T;
-        }
-
-        return Promise.reject("response does not contain fluid component");
-    }
-
-    /**
      * Internal initialize implementation. Overwriting this will change the flow of the PureDataObject and should
      * generally not be done.
      *
@@ -178,13 +164,12 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * @param pkg - package name for the new component
      * @param props - optional props to be passed in
      */
-    protected async createAndAttachDataStore<T extends IFluidObject & IFluidLoadable>(
+    protected async createFluidObject<T extends IFluidObject & IFluidLoadable>(
         pkg: string,
     ): Promise<T> {
-        const componentRuntime = await this.context._createDataStore(uuid(), pkg);
-        const component = await this.asFluidObject<T>(componentRuntime.request({ url: "/" }));
-        componentRuntime.bindToContext();
-        return component;
+        const packagePath = await this.context.composeSubpackagePath(pkg);
+        const router = await this.context.containerRuntime.createDataStore(packagePath);
+        return requestFluidObject<T>(router, "/");
     }
 
     /**
@@ -220,13 +205,8 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * Gets the component of a given id. Will follow the pattern of the container for waiting.
      * @param id - component id
      */
-    protected async requestFluidObject_UNSAFE<T extends IFluidObject>(id: string, wait: boolean = true): Promise<T> {
-        const request = {
-            headers: [[wait]],
-            url: `/${id}`,
-        };
-
-        return this.asFluidObject<T>(this.context.containerRuntime.request(request));
+    protected async requestFluidObject_UNSAFE<T extends IFluidObject>(id: string): Promise<T> {
+        return requestFluidObject(this.context.containerRuntime, `/${id}`);
     }
 
     /**
@@ -234,11 +214,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * @param id - service id
      */
     protected async getService<T extends IFluidObject>(id: string): Promise<T> {
-        const request = {
-            url: `/${serviceRoutePathRoot}/${id}`,
-        };
-
-        return this.asFluidObject<T>(this.context.containerRuntime.request(request));
+        return requestFluidObject(this.context.containerRuntime, `/${serviceRoutePathRoot}/${id}`);
     }
 
     /**
