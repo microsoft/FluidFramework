@@ -92,16 +92,6 @@ export class NullRuntime extends EventEmitter implements IRuntime {
         // Null runtime can receive signals but it's okay to miss those.
         return;
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentSerializer() {
-        return this.IFluidSerializer;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentHandleContext() {
-        return this.IFluidHandleContext;
-    }
 }
 
 export class NullChaincode implements IRuntimeFactory {

@@ -61,6 +61,7 @@
     "@fluidframework/container-runtime": "^0.25.0",
     "@fluidframework/request-handler": "^0.25.0",
     "@fluidframework/runtime-definitions": "^0.25.0",
+    "@fluidframework/runtime-utils": "^0.25.0",
     "@fluidframework/shared-object-base": "^0.25.0"
   },
   "devDependencies": {

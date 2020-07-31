@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/component-core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
@@ -18,6 +18,7 @@ import {
 } from "@fluidframework/component-runtime-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { LazyPromise } from "@fluidframework/common-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { PureDataObject } from "./sharedcomponent";
 
 export class PureDataObjectFactory<T extends PureDataObject> implements IFluidDataStoreFactory {
@@ -70,8 +71,8 @@ export class PureDataObjectFactory<T extends PureDataObject> implements IFluidDa
     public async create(parentContext: IFluidDataStoreContext, props?: any) {
         const { containerRuntime, packagePath } = parentContext;
 
-        const channel = await containerRuntime._createDataStoreWithProps(packagePath.concat(this.type));
-        return (await channel.request({ url: "/" })).value as IFluidObject;
+        const router = await containerRuntime.createDataStore(packagePath.concat(this.type));
+        return requestFluidObject(router, "/");
     }
 
     private instantiate(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime) {
@@ -106,20 +107,5 @@ export class PureDataObjectFactory<T extends PureDataObject> implements IFluidDa
             this.ISharedObjectRegistry,
             this.IFluidDataStoreRegistry,
         );
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentFactory() {
-        return this.IFluidDataStoreFactory;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRegistry() {
-        return this.IFluidDataStoreRegistry;
-    }
-
-    /** deprecated: backcompat for FDL split */
-    instantiateComponent?(context: IFluidDataStoreContext) {
-        return this.instantiateDataStore(context);
     }
 }

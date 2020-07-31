@@ -154,9 +154,4 @@ export class FluidSerializer implements IFluidSerializer {
             url,
         };
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentSerializer() {
-        return this.IFluidSerializer;
-    }
 }

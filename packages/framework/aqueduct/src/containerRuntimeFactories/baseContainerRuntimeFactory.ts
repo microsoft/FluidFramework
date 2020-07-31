@@ -101,9 +101,4 @@ export class BaseContainerRuntimeFactory implements
      * @param runtime - The container runtime for the container being initialized
      */
     protected async containerHasInitialized(runtime: IContainerRuntime) { }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRegistry() {
-        return this.IFluidDataStoreRegistry;
-    }
 }

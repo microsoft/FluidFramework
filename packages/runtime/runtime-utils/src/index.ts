@@ -10,3 +10,4 @@ export * from "./utils";
 export * from "./objectstoragepartition";
 export * from "./objectstorageutils";
 export * from "./requestParser";
+export * from "./dataStoreHelpers";

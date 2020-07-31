@@ -24,9 +24,4 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
 
         return undefined;
     }
-
-    /** deprecated: backcompat for FDL split */
-    get IComponentRegistry() {
-        return this.IFluidDataStoreRegistry;
-    }
 }
