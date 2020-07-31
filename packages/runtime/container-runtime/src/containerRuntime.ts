@@ -660,7 +660,7 @@ export class ContainerRuntime extends EventEmitter
         if (context.baseSnapshot) {
             const baseSnapshot = context.baseSnapshot;
             Object.keys(baseSnapshot.trees).forEach((value) => {
-                if (value !== ".protocol") {
+                if (value !== ".protocol" && value !== ".logTail" && value !== ".serviceProtocol") {
                     const tree = baseSnapshot.trees[value];
                     components.set(value, tree);
                 }
