@@ -1339,6 +1339,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         // we will summarize it while uploading the create new summary and make it known to other
         // clients but we do need to submit op if container forced us to do so.
         if (this.attachState !== AttachState.Detached) {
+            context.attachGraph();
             context.emit("attaching");
             const message = context.generateAttachMessage();
 
@@ -1405,32 +1406,32 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             type: SummaryType.Tree,
         };
 
-        // 0.22 back-compat attachingEventBeforeSummary
-        // After removing back-compat we should always collect summary twice. Reason below.
-        let limit = 1;
-        if (this.attachState === AttachState.Detached) {
-            limit = 2;
-        }
         // Attaching graph of some components can cause other components to get bound too.
-        // So need to iterate twice for collecting the summary.
-        for (let i = 0; i < limit; ++i) {
-            // Iterate over each component and ask it to snapshot
-            Array.from(this.contexts)
-                .filter(([key, value]) =>
-                    // Take summary of bounded components.
-                    !(this.notBoundedComponentContexts.has(key) || summaryTree.tree[key]),
-                )
-                .map(async ([key, value]) => {
-                    const snapshot = value.generateAttachMessage().snapshot;
-                    const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-                        snapshot,
-                        `/${encodeURIComponent(key)}`,
-                        true,
-                    );
-                    summaryTree.tree[key] = treeWithStats.summaryTree;
-                });
-        }
+        // So do that before taking the summary.
+        Array.from(this.contexts)
+            .filter(([key, value]) =>
+                // Attach graph for bounded components.
+                !this.notBoundedComponentContexts.has(key),
+            )
+            .map(([key, value]) => {
+                value.attachGraph();
+            });
 
+        // Iterate over each component and ask it to snapshot
+        Array.from(this.contexts)
+            .filter(([key, value]) =>
+                // Take summary of bounded components.
+                !this.notBoundedComponentContexts.has(key),
+            )
+            .map(([key, value]) => {
+                const snapshot = value.generateAttachMessage().snapshot;
+                const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+                    snapshot,
+                    `/${encodeURIComponent(key)}`,
+                    true,
+                );
+                summaryTree.tree[key] = treeWithStats.summaryTree;
+            });
         this.serializeContainerBlobs(summaryTree);
 
         return summaryTree;

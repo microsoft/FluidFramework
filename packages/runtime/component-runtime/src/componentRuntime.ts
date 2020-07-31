@@ -520,8 +520,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     public getAttachSnapshot(): ITreeEntry[] {
         const entries: ITreeEntry[] = [];
 
-        this.attachGraph();
-
         // Craft the .attributes file for each shared object
         for (const [objectId, value] of this.contexts) {
             if (!(value instanceof LocalChannelContext)) {
