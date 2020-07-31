@@ -1,4 +1,11 @@
-export class TextButton extends Phaser.GameObjects.Text {
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import phaser from "phaser";
+
+export class TextButton extends phaser.GameObjects.Text {
     constructor(scene, x, y, text, style, callback, endCallback) {
       super(scene, x, y, text, style);
 
