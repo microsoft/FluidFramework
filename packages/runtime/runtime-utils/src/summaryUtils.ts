@@ -36,6 +36,42 @@ export function mergeStats(...stats: ISummaryStats[]): ISummaryStats {
     return results;
 }
 
+export function getBlobSize(content: ISummaryBlob["content"]): number {
+    if (typeof content === "string") {
+        return Buffer.byteLength(content);
+    } else {
+        return content.byteLength;
+    }
+}
+
+function calculateStatsCore(summaryObject: SummaryObject, stats: ISummaryStats): void {
+    switch (summaryObject.type) {
+        case SummaryType.Tree: {
+            stats.treeNodeCount++;
+            for (const value of Object.values(summaryObject.tree)) {
+                calculateStatsCore(value, stats);
+            }
+            return;
+        }
+        case SummaryType.Handle: {
+            stats.handleNodeCount++;
+            return;
+        }
+        case SummaryType.Blob: {
+            stats.blobNodeCount++;
+            stats.totalBlobSize += getBlobSize(summaryObject.content);
+            return;
+        }
+        default: return;
+    }
+}
+
+export function calculateStats(summary: ISummaryTree): ISummaryStats {
+    const stats = mergeStats();
+    calculateStatsCore(summary, stats);
+    return stats;
+}
+
 export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Buffer): void {
     const blob: ISummaryBlob = {
         type: SummaryType.Blob,
@@ -43,11 +79,7 @@ export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, co
     };
     summary.summary.tree[key] = blob;
     summary.stats.blobNodeCount++;
-    if (typeof content === "string") {
-        summary.stats.totalBlobSize += Buffer.byteLength(content);
-    } else {
-        summary.stats.totalBlobSize += content.byteLength;
-    }
+    summary.stats.totalBlobSize += getBlobSize(content);
 }
 
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {

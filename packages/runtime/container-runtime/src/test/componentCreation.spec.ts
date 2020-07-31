@@ -103,11 +103,12 @@ describe("Component Creation Tests", () => {
                 new TelemetryNullLogger(),
                 (() => {}) as unknown as SummarizeInternalFn,
                 0,
-                0);
+                0,
+                true);
             getCreateSummarizerNodeFn = (id: string) => (si: SummarizeInternalFn) => summarizerNode.createChild(
                 si,
                 id,
-                { type: CreateSummarizerNodeSource.Local }, // use local to throw on summarize calls
+                { type: CreateSummarizerNodeSource.Local },
             );
         });
 

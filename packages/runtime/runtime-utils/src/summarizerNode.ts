@@ -21,7 +21,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { unreachableCase } from "@fluidframework/common-utils";
-import { mergeStats, SummaryTreeBuilder, convertToSummaryTree } from "./summaryUtils";
+import { mergeStats, SummaryTreeBuilder, convertToSummaryTree, calculateStats } from "./summaryUtils";
 
 const baseSummaryTreeKey = "_baseSummary";
 const outstandingOpsBlobKey = "_outstandingOps";
@@ -210,6 +210,12 @@ function encodeSummary(summaryParam: EncodeSummaryParam, outstandingOps: ISequen
     };
 }
 
+interface IInitialSummary {
+    sequenceNumber: number;
+    id: string;
+    summary: ISummaryTreeWithStats | undefined;
+}
+
 /**
  * Encapsulates the summarizing work and state of an individual tree node in the
  * summary tree. It tracks changes and allows for optimizations when unchanged, or
@@ -224,13 +230,6 @@ function encodeSummary(summaryParam: EncodeSummaryParam, outstandingOps: ISequen
  * latest successful summary.
  */
 export class SummarizerNode implements ISummarizerNode {
-    /**
-     * The latest sequence number of change to this node or subtree.
-     */
-    public get changeSequenceNumber() {
-        return this._changeSequenceNumber;
-    }
-
     /**
      * The reference sequence number of the most recent acked summary.
      * Returns 0 if there is not yet an acked summary.
@@ -247,6 +246,8 @@ export class SummarizerNode implements ISummarizerNode {
     private wipIsFailure = false;
 
     public startSummary(referenceSequenceNumber: number) {
+        assert(!this.disabled, "Unsupported: cannot call startSummary on disabled SummarizerNode");
+
         assert.strictEqual(
             this.wipReferenceSequenceNumber,
             undefined,
@@ -260,7 +261,7 @@ export class SummarizerNode implements ISummarizerNode {
     }
 
     public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
-        assert(!this.isLocal, "Unsupported: cannot call summarize on local SummarizerNode");
+        assert(!this.disabled, "Unsupported: cannot call summarize on disabled SummarizerNode");
 
         // Try to reuse the tree if unchanged
         if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
@@ -300,13 +301,13 @@ export class SummarizerNode implements ISummarizerNode {
                     summaryNode: latestSummary,
                 };
                 localPath = latestSummary.localPath;
-            } else if (initialSummary !== undefined) {
+            } else if (initialSummary?.summary !== undefined) {
                 // Create using initial summary from attach op
                 encodeParam = {
                     fromSummary: false,
                     initialSummary: initialSummary.summary,
                 };
-                localPath = initialSummary.localPath;
+                localPath = EscapedPath.create(initialSummary.id);
             } else {
                 // No base summary to reference
                 throw error;
@@ -334,6 +335,7 @@ export class SummarizerNode implements ISummarizerNode {
     }
 
     public completeSummary(proposalHandle: string) {
+        assert(!this.disabled, "Unsupported: cannot call completeSummary on disabled SummarizerNode");
         this.completeSummaryCore(proposalHandle);
     }
 
@@ -385,6 +387,8 @@ export class SummarizerNode implements ISummarizerNode {
     }
 
     public clearSummary() {
+        assert(!this.disabled, "Unsupported: cannot call clearSummary on disabled SummarizerNode");
+
         this.wipReferenceSequenceNumber = undefined;
         this.wipLocalPaths = undefined;
         this.wipIsFailure = false;
@@ -398,6 +402,8 @@ export class SummarizerNode implements ISummarizerNode {
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
     ): Promise<void> {
+        assert(!this.disabled, "Unsupported: cannot call refreshLatestSummary on disabled SummarizerNode");
+
         if (proposalHandle !== undefined) {
             const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
 
@@ -525,6 +531,10 @@ export class SummarizerNode implements ISummarizerNode {
         if (pathPartsForChildren.length > 0) {
             this.latestSummary.additionalPath = EscapedPath.createAndConcat(pathPartsForChildren);
         }
+        if (this.disabled) {
+            // Do not track ops when disabled
+            return;
+        }
         if (ops.length > 0 && this.outstandingOps.length > 0) {
             const newOpsLatestSeq = ops[ops.length - 1].sequenceNumber;
             const prevOpsEarliestSeq = this.outstandingOps[0].sequenceNumber;
@@ -548,8 +558,11 @@ export class SummarizerNode implements ISummarizerNode {
             );
         }
         this.invalidate(op.sequenceNumber);
-        this.trackingSequenceNumber = op.sequenceNumber;
-        this.outstandingOps.push(op);
+        if (!this.disabled) {
+            // Do not track ops when disabled
+            this.trackingSequenceNumber = op.sequenceNumber;
+            this.outstandingOps.push(op);
+        }
     }
 
     public invalidate(sequenceNumber: number): void {
@@ -567,12 +580,12 @@ export class SummarizerNode implements ISummarizerNode {
     private constructor(
         private readonly logger: ITelemetryLogger,
         private readonly summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+        private readonly disabled: boolean,
         config: ISummarizerNodeConfig,
         private _changeSequenceNumber: number,
         /** Undefined means created without summary */
         private latestSummary?: SummaryNode,
-        private readonly initialSummary?: { localPath: EscapedPath; summary: ISummaryTreeWithStats; },
-        private readonly isLocal = false,
+        private readonly initialSummary?: IInitialSummary,
         private trackingSequenceNumber = _changeSequenceNumber,
     ) {
         this.canReuseHandle = config.canReuseHandle ?? true;
@@ -590,6 +603,8 @@ export class SummarizerNode implements ISummarizerNode {
          * or undefined if not loaded from summary.
          */
         referenceSequenceNumber: number | undefined,
+        /** Disabled propagates to child nodes, and will cause errors on calls to summarize */
+        disabled: boolean,
         config: ISummarizerNodeConfig = {},
     ): SummarizerNode {
         const maybeSummaryNode = referenceSequenceNumber === undefined ? undefined : new SummaryNode({
@@ -600,6 +615,7 @@ export class SummarizerNode implements ISummarizerNode {
         return new SummarizerNode(
             logger,
             summarizeInternalFn,
+            disabled,
             config,
             changeSequenceNumber,
             maybeSummaryNode,
@@ -615,7 +631,7 @@ export class SummarizerNode implements ISummarizerNode {
          * Information needed to create the node.
          * If it is from a base summary, it will assert that a summary has been seen.
          * Attach information if it is created from an attach op.
-         * If it is local, it will throw unsupported errors on calls to summarize.
+         * If it is disabled, it will throw unsupported errors on calls to summarize.
          */
         createParam: CreateChildSummarizerNodeParam,
         config: ISummarizerNodeConfig = {},
@@ -625,20 +641,9 @@ export class SummarizerNode implements ISummarizerNode {
         const latestSummary = this.latestSummary;
         let child: SummarizerNode;
         switch (createParam.type) {
-            case CreateSummarizerNodeSource.FromSummary: {
-                assert(latestSummary, "Cannot create child from summary if parent does not have latest summary");
-                child = new SummarizerNode(
-                    this.logger,
-                    summarizeInternalFn,
-                    config,
-                    latestSummary.referenceSequenceNumber,
-                    latestSummary.createForChild(id),
-                );
-                break;
-            }
             case CreateSummarizerNodeSource.FromAttach: {
                 let summaryNode: SummaryNode | undefined;
-                let initialSummary: { localPath: EscapedPath; summary: ISummaryTreeWithStats; } | undefined;
+                let initialSummary: IInitialSummary | undefined;
                 if (
                     latestSummary !== undefined
                     && createParam.sequenceNumber <= latestSummary.referenceSequenceNumber
@@ -648,13 +653,15 @@ export class SummarizerNode implements ISummarizerNode {
                 } else {
                     const summary = convertToSummaryTree(createParam.snapshot) as ISummaryTreeWithStats;
                     initialSummary = {
-                        localPath: EscapedPath.create(id),
+                        sequenceNumber: createParam.sequenceNumber,
+                        id,
                         summary,
                     };
                 }
                 child = new SummarizerNode(
                     this.logger,
                     summarizeInternalFn,
+                    this.disabled,
                     config,
                     createParam.sequenceNumber,
                     summaryNode,
@@ -662,15 +669,46 @@ export class SummarizerNode implements ISummarizerNode {
                 );
                 break;
             }
+            case CreateSummarizerNodeSource.FromSummary: {
+                if (!this.disabled && this.initialSummary === undefined) {
+                    assert(latestSummary, "Cannot create child from summary if parent does not have latest summary");
+                }
+                // fallthrough to local
+            }
             case CreateSummarizerNodeSource.Local: {
+                const initialSummary = this.initialSummary;
+                let childInitialSummary: IInitialSummary | undefined;
+                if (initialSummary !== undefined) {
+                    const childSummary = initialSummary.summary?.summary.tree[id];
+                    if (createParam.type === CreateSummarizerNodeSource.FromSummary) {
+                        // Locally created would not have subtree.
+                        assert(childSummary, "Missing child summary tree");
+                    }
+                    let childSummaryWithStats: ISummaryTreeWithStats | undefined;
+                    if (childSummary !== undefined) {
+                        assert(
+                            childSummary.type === SummaryType.Tree,
+                            "Child summary object is not a tree",
+                        );
+                        childSummaryWithStats = {
+                            summary: childSummary,
+                            stats: calculateStats(childSummary),
+                        };
+                    }
+                    childInitialSummary = {
+                        sequenceNumber: initialSummary.sequenceNumber,
+                        id,
+                        summary: childSummaryWithStats,
+                    };
+                }
                 child = new SummarizerNode(
                     this.logger,
                     summarizeInternalFn,
+                    this.disabled || createParam.type === CreateSummarizerNodeSource.Local,
                     config,
                     latestSummary?.referenceSequenceNumber ?? -1,
                     latestSummary?.createForChild(id),
-                    undefined, // no initial summary
-                    true, // local is true; cause summarize calls to fail
+                    childInitialSummary,
                 );
                 break;
             }

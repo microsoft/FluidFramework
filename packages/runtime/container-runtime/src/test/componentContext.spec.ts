@@ -37,11 +37,12 @@ describe("Component Context Tests", () => {
             new TelemetryNullLogger(),
             (() => undefined) as unknown as SummarizeInternalFn,
             0,
-            0);
+            0,
+            true);
         createSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => summarizerNode.createChild(
             summarizeInternal,
             componentId,
-            { type: CreateSummarizerNodeSource.Local }, // use local to throw on summarize calls
+            { type: CreateSummarizerNodeSource.Local },
         );
     });
 

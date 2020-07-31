@@ -100,7 +100,7 @@ import { FluidHandleContext } from "./componentHandleContext";
 import { FluidDataStoreRegistry } from "./componentRegistry";
 import { debug } from "./debug";
 import { ISummarizerRuntime, Summarizer } from "./summarizer";
-import { SummaryManager } from "./summaryManager";
+import { SummaryManager, summarizerClientType } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
@@ -687,6 +687,10 @@ export class ContainerRuntime extends EventEmitter
         );
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
+        const isSummarizerClient = this.clientDetails.type === summarizerClientType;
+        // Use runtimeOptions if provided, otherwise check localStorage, defaulting to true/enabled.
+        const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode
+            ?? (typeof localStorage === "object" && localStorage?.fluidDisableSummarizerNode ? false : true);
         const summarizerNode = SummarizerNode.createRoot(
                 this.logger,
                 // Summarize function to call when summarize is called
@@ -695,6 +699,8 @@ export class ContainerRuntime extends EventEmitter
                 loadedFromSequenceNumber,
                 // Summary reference sequence number, undefined if no summary yet
                 context.baseSnapshot ? loadedFromSequenceNumber : undefined,
+                // Disable calls to summarize if not summarizer client, or if runtimeOption is disabled
+                !isSummarizerClient || !enableSummarizerNode,
                 {
                     // Must set to false to prevent sending summary handle which would be pointing to
                     // a summary with an older protocol state.
@@ -705,9 +711,6 @@ export class ContainerRuntime extends EventEmitter
                 },
             );
 
-        // Use runtimeOptions if provided, otherwise check localStorage, defaulting to true/enabled.
-        const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode
-            ?? (typeof localStorage === "object" && localStorage?.fluidDisableSummarizerNode ? false : true);
         const getCreateChildFn = (id: string, createParam: CreateChildSummarizerNodeParam) =>
             (summarizeInternal: SummarizeInternalFn) =>
             summarizerNode.createChild(summarizeInternal, id, createParam);
