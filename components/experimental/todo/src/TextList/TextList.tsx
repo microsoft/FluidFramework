@@ -26,7 +26,7 @@ export class TextList extends DataObject implements IFluidHTMLView {
     /**
      * Do creation work
      */
-    protected async initializingFirstTime(_props?: any) {
+    protected async initializingFirstTime() {
         this.textDirectory = this.root.createSubDirectory("textDirectory");
 
         // We want to populate the list of items with an initial shared string
