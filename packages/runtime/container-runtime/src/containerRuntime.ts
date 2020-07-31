@@ -1447,21 +1447,27 @@ export class ContainerRuntime extends EventEmitter
             type: SummaryType.Tree,
         };
 
-        // Iterate over each component and ask it to snapshot
-        Array.from(this.contexts)
-            .filter(([key, value]) =>
-                // Take summary of bounded components.
-                !this.notBoundedComponentContexts.has(key),
-            )
-            .map(async ([key, value]) => {
-                const snapshot = value.generateAttachMessage().snapshot;
-                const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-                    snapshot,
-                    `/${encodeURIComponent(key)}`,
-                    true,
-                );
-                summaryTree.tree[key] = treeWithStats.summaryTree;
-            });
+        // Attaching graph of some components can cause other components to get bind too.
+        // So keep taking summary until no new components get binded.
+        let notBoundedComponentContextsLength: number;
+        do {
+            notBoundedComponentContextsLength = this.notBoundedComponentContexts.size;
+            // Iterate over each component and ask it to snapshot
+            Array.from(this.contexts)
+                .filter(([key, value]) =>
+                    // Take summary of bounded components only and make sure we haven't summarized them already.
+                    !(this.notBoundedComponentContexts.has(key) || summaryTree.tree[key]),
+                )
+                .map(([key, value]) => {
+                    const snapshot = value.generateAttachMessage().snapshot;
+                    const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+                        snapshot,
+                        `/${encodeURIComponent(key)}`,
+                        true,
+                    );
+                    summaryTree.tree[key] = treeWithStats.summaryTree;
+                });
+        } while (notBoundedComponentContextsLength !== this.notBoundedComponentContexts.size);
 
         this.serializeContainerBlobs(summaryTree);
 

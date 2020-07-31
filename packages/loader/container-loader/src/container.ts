@@ -487,9 +487,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Inbound queue for ops should be empty
         assert(!this.deltaManager.inbound.length);
 
-        // Set the state as attaching as we are starting the process of attaching container.
-        this._attachState = AttachState.Attaching;
-        this.emit("attaching");
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
         const appSummary: ISummaryTree = this.context.createSummary();
@@ -505,6 +502,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             };
         }
 
+        // Set the state as attaching as we are starting the process of attaching container.
+        // This should be fired after taking the summary because it is the place where we are
+        // starting to attach the container to storage.
+        this._attachState = AttachState.Attaching;
+        this.emit("attaching");
         try {
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
