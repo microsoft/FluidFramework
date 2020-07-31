@@ -47,7 +47,7 @@ export class TabsComponent extends DataObject implements IFluidHTMLView {
             new TabsDataModel(
                 this.root,
                 registryDetails,
-                this.createAndAttachDataStore.bind(this),
+                this.createFluidObject.bind(this),
                 this.getFluidObjectFromDirectory.bind(this),
             );
     }

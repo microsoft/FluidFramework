@@ -429,6 +429,7 @@ export class ContainerRuntime extends EventEmitter
     implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
     public get IContainerRuntime() { return this; }
     public get IContainerRuntimeDirtyable() { return this; }
+    public get IFluidRouter() { return this; }
 
     /**
      * Load the components from a snapshot and returns the runtime.
@@ -469,10 +470,7 @@ export class ContainerRuntime extends EventEmitter
 
         // Create all internal components in first load.
         if (!context.existing) {
-            await runtime._createDataStore(schedulerId, schedulerId)
-                .then((componentRuntime) => {
-                    componentRuntime.bindToContext();
-                });
+            await runtime.createRootDataStore(schedulerId, schedulerId);
         }
 
         runtime.subscribeToLeadership();
@@ -660,7 +658,7 @@ export class ContainerRuntime extends EventEmitter
         if (context.baseSnapshot) {
             const baseSnapshot = context.baseSnapshot;
             Object.keys(baseSnapshot.trees).forEach((value) => {
-                if (value !== ".protocol") {
+                if (value !== ".protocol" && value !== ".logTail" && value !== ".serviceProtocol") {
                     const tree = baseSnapshot.trees[value];
                     components.set(value, tree);
                 }
@@ -1137,16 +1135,6 @@ export class ContainerRuntime extends EventEmitter
                 this.setFlushMode(savedFlushMode);
             }
         }
-    }
-
-    /**
-     * @deprecated
-     * Remove once issue #1756 is closed
-     */
-    public async _createDataStore(idOrPkg: string, maybePkg: string | string[]) {
-        const id = maybePkg === undefined ? uuid() : idOrPkg;
-        const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
-        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], id).realize();
     }
 
     public async createDataStore(pkg: string | string[]): Promise<IFluidRouter> {

@@ -39,13 +39,11 @@ import {
     IFluidDataStoreChannel,
     IAttachMessage,
     IFluidDataStoreContext,
-    IComponentContextLegacy,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker } from "@fluidframework/runtime-utils";
-import { v4 as uuid } from "uuid";
 import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in component attributes.
@@ -76,7 +74,6 @@ interface ComponentMessage {
  */
 export abstract class FluidDataStoreContext extends EventEmitter implements
     IFluidDataStoreContext,
-    IComponentContextLegacy,
     IDisposable {
     public get documentId(): string {
         return this._containerRuntime.id;
@@ -204,25 +201,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
                     error);
             });
         }
-    }
-
-    /**
-     * @deprecated
-     * Remove once issue #1756 is closed
-     */
-    public async _createDataStore(
-        pkgOrId: string | undefined,
-        pkg?: string,
-    ): Promise<IFluidDataStoreChannel> {
-        // pkgOrId can't be undefined if pkg is undefined
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const pkgName = pkg ?? pkgOrId!;
-        assert(pkgName);
-        const id = pkg ? (pkgOrId ?? uuid()) : uuid();
-
-        const packagePath: string[] = await this.composeSubpackagePath(pkgName);
-
-        return this.containerRuntime._createDataStore(id, packagePath);
     }
 
     private async rejectDeferredRealize(reason: string) {

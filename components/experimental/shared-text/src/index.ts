@@ -137,10 +137,7 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
 
         // On first boot create the base component
         if (!runtime.existing) {
-            await Promise.all([
-                runtime._createDataStore(DefaultComponentName, SharedTextFactoryComponent.type)
-                    .then((componentRuntime) => componentRuntime.bindToContext()),
-            ]);
+            await runtime.createRootDataStore(SharedTextFactoryComponent.type, DefaultComponentName);
         }
 
         return runtime;

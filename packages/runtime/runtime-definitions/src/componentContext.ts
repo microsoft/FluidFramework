@@ -58,6 +58,7 @@ export interface IContainerRuntimeBase extends
     EventEmitter,
     IProvideFluidHandleContext,
     IProvideFluidSerializer,
+    IFluidRouter,
     /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
     IProvideFluidDataStoreRegistry {
 
@@ -92,15 +93,6 @@ export interface IContainerRuntimeBase extends
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
     on(event: "leader" | "notleader", listener: () => void): this;
-
-    /**
-     * @deprecated
-     * Creates a new component.
-     * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
-     * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
-     * Remove once issue #1756 is closed
-     */
-    _createDataStore(pkgOrId: string, pkg?: string | string[]): Promise<IFluidDataStoreChannel>;
 
     /**
      * Creates data store. Returns router of data store. Data store is not bound to container,
@@ -313,20 +305,6 @@ export interface IFluidDataStoreContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
-     * @deprecated 0.16 Issue #1537, issue #1756 Components
-     *      should be created using IFluidDataStoreFactory methods instead
-     * Creates a new component by using subregistries.
-     * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
-     *                  ID is being deprecated, so prefer passing undefined instead (the runtime will
-     *                  generate an ID in this case).
-     * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
-     */
-    _createDataStore(
-        pkgOrId: string | undefined,
-        pkg?: string | string[],
-    ): Promise<IFluidDataStoreChannel>;
-
-    /**
      * Binds a runtime to the context.
      */
     bindRuntime(componentRuntime: IFluidDataStoreChannel): void;
@@ -358,20 +336,4 @@ export interface IFluidDataStoreContext extends EventEmitter {
      * otherwise the original subpackage
      */
     composeSubpackagePath(subpackage: string): Promise<string[]>;
-}
-
-/**
- * Legacy API to be removed from IFluidDataStoreContext
- *
- * Moving out of the main interface to force compilation error.
- * But the implementation is still in place as a transition so user can case to
- * the legacy interface and use it temporary if changing their code take some time.
- */
-export interface IComponentContextLegacy extends IFluidDataStoreContext {
-    /**
-     * @deprecated 0.18. Should call IFluidDataStoreChannel.request directly
-     * Make request to the component.
-     * @param request - Request.
-     */
-    request(request: IRequest): Promise<IResponse>;
 }
