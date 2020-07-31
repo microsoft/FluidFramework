@@ -8,6 +8,7 @@ import {
     ISummaryTree,
     ISequencedDocumentMessage,
     ISnapshotTree,
+    ITree,
 } from "@fluidframework/protocol-definitions";
 
 export interface ISummaryStats {
@@ -46,6 +47,21 @@ export interface ISummarizerNodeConfig {
      */
     readonly throwOnFailure?: boolean,
 }
+
+export enum CreateSummarizerNodeSource {
+    FromSummary,
+    FromAttach,
+    Local,
+}
+export type CreateChildSummarizerNodeParam = {
+    type: CreateSummarizerNodeSource.FromSummary;
+} | {
+    type: CreateSummarizerNodeSource.FromAttach;
+    sequenceNumber: number;
+    snapshot: ITree;
+} | {
+    type: CreateSummarizerNodeSource.Local;
+};
 
 export interface ISummarizerNode {
     /** Latest successfully acked summary reference sequence number */
@@ -89,11 +105,19 @@ export interface ISummarizerNode {
 
     createChild(
         /** Summarize function */
-        summarizeInternalFn: SummarizeInternalFn,
-        /** Sequence number of latest change to new node/subtree */
-        changeSequenceNumber: number,
+        summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
         /** Initial id or path part of this node */
         id: string,
+        /**
+         * Information needed to create the node.
+         * If it is from a base summary, it will assert that a summary has been seen.
+         * Attach information if it is created from an attach op.
+         * If it is local, it will throw unsupported errors on calls to summarize.
+         */
+        createParam: CreateChildSummarizerNodeParam,
+        /** Optional configuration affecting summarize behavior */
+        config?: ISummarizerNodeConfig,
     ): ISummarizerNode;
+
     getChild(id: string): ISummarizerNode | undefined
 }

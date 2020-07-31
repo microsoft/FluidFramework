@@ -10,6 +10,8 @@ import {
     ISummarizeInternalResult,
     ISummarizeResult,
     ISummaryTreeWithStats,
+    CreateChildSummarizerNodeParam,
+    CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
 import {
     ISequencedDocumentMessage,
@@ -18,7 +20,8 @@ import {
     IDocumentAttributes,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { mergeStats } from "./summaryUtils";
+import { unreachableCase } from "@fluidframework/common-utils";
+import { mergeStats, SummaryTreeBuilder, convertToSummaryTree } from "./summaryUtils";
 
 const baseSummaryTreeKey = "_baseSummary";
 const outstandingOpsBlobKey = "_outstandingOps";
@@ -96,6 +99,14 @@ class SummaryNode {
             ? this.fullPath.concat(this.additionalPath)
             : this.fullPath;
     }
+
+    public createForChild(id: string): SummaryNode {
+        return new SummaryNode({
+            referenceSequenceNumber: this.referenceSequenceNumber,
+            basePath: this.fullPathForChildren,
+            localPath: EscapedPath.create(id),
+        });
+    }
 }
 
 interface IDecodedSummary {
@@ -158,37 +169,43 @@ interface IEncodedSummary extends ISummaryTreeWithStats {
     readonly additionalPath: EscapedPath;
 }
 
+type EncodeSummaryParam = {
+    fromSummary: true;
+    summaryNode: SummaryNode;
+} | {
+    fromSummary: false;
+    initialSummary: ISummaryTreeWithStats;
+};
+
 /**
  * Creates a summary tree which is a handle of the previous successfully acked summary
- * and a blob of the outstanding ops since that summary.
- * @param summaryNode - information about last acked summary and paths to encode
+ * and a blob of the outstanding ops since that summary. If there is no acked summary yet,
+ * it will create with the tree found in the initial attach op and the blob of outstanding ops.
+ * @param summaryParam - information about last acked summary and paths to encode if from summary,
+ * otherwise the initial summary from the attach op.
  * @param outstandingOps - outstanding ops since last acked summary
  */
-function encodeSummary(summaryNode: SummaryNode, outstandingOps: ISequencedDocumentMessage[]): IEncodedSummary {
-    const stats = mergeStats();
-    stats.handleNodeCount++;
-    stats.blobNodeCount++;
-    stats.treeNodeCount++;
+function encodeSummary(summaryParam: EncodeSummaryParam, outstandingOps: ISequencedDocumentMessage[]): IEncodedSummary {
     let additionalPath = EscapedPath.create(baseSummaryTreeKey);
-    if (summaryNode.additionalPath !== undefined) {
-        additionalPath = additionalPath.concat(summaryNode.additionalPath);
+
+    const builder = new SummaryTreeBuilder();
+    builder.addBlob(outstandingOpsBlobKey, JSON.stringify(outstandingOps));
+
+    if (summaryParam.fromSummary) {
+        // Create using handle of latest acked summary
+        const summaryNode = summaryParam.summaryNode;
+        if (summaryNode.additionalPath !== undefined) {
+            additionalPath = additionalPath.concat(summaryNode.additionalPath);
+        }
+        builder.addHandle(baseSummaryTreeKey, SummaryType.Tree, summaryNode.fullPath.path);
+    } else {
+        // Create using initial summary from attach op
+        builder.addWithStats(baseSummaryTreeKey, summaryParam.initialSummary);
     }
+
+    const summary = builder.getSummaryTree();
     return {
-        summary: {
-            type: SummaryType.Tree,
-            tree: {
-                [baseSummaryTreeKey]: {
-                    type: SummaryType.Handle,
-                    handle: summaryNode.fullPath.path,
-                    handleType: SummaryType.Tree,
-                },
-                [outstandingOpsBlobKey]: {
-                    type: SummaryType.Blob,
-                    content: JSON.stringify(outstandingOps),
-                },
-            },
-        },
-        stats,
+        ...summary,
         additionalPath,
     };
 }
@@ -243,6 +260,8 @@ export class SummarizerNode implements ISummarizerNode {
     }
 
     public async summarize(fullTree: boolean): Promise<ISummarizeResult> {
+        assert(!this.isLocal, "Unsupported: cannot call summarize on local SummarizerNode");
+
         // Try to reuse the tree if unchanged
         if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
             const latestSummary = this.latestSummary;
@@ -270,17 +289,31 @@ export class SummarizerNode implements ISummarizerNode {
                 throw error;
             }
             const latestSummary = this.latestSummary;
-            if (latestSummary === undefined) {
-                // TODO: Not having latest summary means there has not yet been a
-                // successfully acked summary since this node was attached. We could
-                // probably use the initial snapshot found in the attach op as the
-                // base summary in this case, but needs conversion from ITree to ISummaryTree.
+            const initialSummary = this.initialSummary;
+
+            let encodeParam: EncodeSummaryParam;
+            let localPath: EscapedPath;
+            if (latestSummary !== undefined) {
+                // Create using handle of latest acked summary
+                encodeParam = {
+                    fromSummary: true,
+                    summaryNode: latestSummary,
+                };
+                localPath = latestSummary.localPath;
+            } else if (initialSummary !== undefined) {
+                // Create using initial summary from attach op
+                encodeParam = {
+                    fromSummary: false,
+                    initialSummary: initialSummary.summary,
+                };
+                localPath = initialSummary.localPath;
+            } else {
+                // No base summary to reference
                 throw error;
             }
-
-            const summary = encodeSummary(latestSummary, this.outstandingOps);
+            const summary = encodeSummary(encodeParam, this.outstandingOps);
             this.wipLocalPaths = {
-                localPath: latestSummary.localPath,
+                localPath,
                 additionalPath: summary.additionalPath,
             };
             this.wipIsFailure = true;
@@ -538,78 +571,115 @@ export class SummarizerNode implements ISummarizerNode {
         private _changeSequenceNumber: number,
         /** Undefined means created without summary */
         private latestSummary?: SummaryNode,
+        private readonly initialSummary?: { localPath: EscapedPath; summary: ISummaryTreeWithStats; },
+        private readonly isLocal = false,
         private trackingSequenceNumber = _changeSequenceNumber,
     ) {
         this.canReuseHandle = config.canReuseHandle ?? true;
         this.throwOnError = config.throwOnFailure ?? false;
     }
 
-    public static createRootWithoutSummary(
+    public static createRoot(
         logger: ITelemetryLogger,
         /** Summarize function */
         summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
         /** Sequence number of latest change to new node/subtree */
         changeSequenceNumber: number,
+        /**
+         * Reference sequence number of last acked summary,
+         * or undefined if not loaded from summary.
+         */
+        referenceSequenceNumber: number | undefined,
         config: ISummarizerNodeConfig = {},
     ): SummarizerNode {
+        const maybeSummaryNode = referenceSequenceNumber === undefined ? undefined : new SummaryNode({
+            referenceSequenceNumber,
+            basePath: undefined,
+            localPath: EscapedPath.create(""), // root hard-coded to ""
+        });
         return new SummarizerNode(
             logger,
             summarizeInternalFn,
             config,
             changeSequenceNumber,
-            undefined,
-        );
-    }
-
-    public static createRootFromSummary(
-        logger: ITelemetryLogger,
-        /** Summarize function */
-        summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
-        /** Sequence number of latest change to new node/subtree */
-        changeSequenceNumber: number,
-        /** Reference sequence number of last acked summary */
-        referenceSequenceNumber: number,
-        config: ISummarizerNodeConfig = {},
-    ): SummarizerNode {
-        return new SummarizerNode(
-            logger,
-            summarizeInternalFn,
-            config,
-            changeSequenceNumber,
-            new SummaryNode({
-                referenceSequenceNumber,
-                basePath: undefined,
-                localPath: EscapedPath.create(""), // root hard-coded to ""
-            }),
+            maybeSummaryNode,
         );
     }
 
     public createChild(
         /** Summarize function */
         summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
-        /** Sequence number of latest change to new node/subtree */
-        changeSequenceNumber: number,
         /** Initial id or path part of this node */
         id: string,
+        /**
+         * Information needed to create the node.
+         * If it is from a base summary, it will assert that a summary has been seen.
+         * Attach information if it is created from an attach op.
+         * If it is local, it will throw unsupported errors on calls to summarize.
+         */
+        createParam: CreateChildSummarizerNodeParam,
         config: ISummarizerNodeConfig = {},
     ): ISummarizerNode {
         assert(!this.children.has(id), "Create SummarizerNode child already exists");
 
-        let summary: SummaryNode | undefined;
-        if (this.latestSummary !== undefined && changeSequenceNumber <= this.latestSummary.referenceSequenceNumber) {
-            summary = new SummaryNode({
-                referenceSequenceNumber: this.latestSummary.referenceSequenceNumber,
-                basePath: this.latestSummary.fullPathForChildren,
-                localPath: EscapedPath.create(id),
-            });
+        const latestSummary = this.latestSummary;
+        let child: SummarizerNode;
+        switch (createParam.type) {
+            case CreateSummarizerNodeSource.FromSummary: {
+                assert(latestSummary, "Cannot create child from summary if parent does not have latest summary");
+                child = new SummarizerNode(
+                    this.logger,
+                    summarizeInternalFn,
+                    config,
+                    latestSummary.referenceSequenceNumber,
+                    latestSummary.createForChild(id),
+                );
+                break;
+            }
+            case CreateSummarizerNodeSource.FromAttach: {
+                let summaryNode: SummaryNode | undefined;
+                let initialSummary: { localPath: EscapedPath; summary: ISummaryTreeWithStats; } | undefined;
+                if (
+                    latestSummary !== undefined
+                    && createParam.sequenceNumber <= latestSummary.referenceSequenceNumber
+                ) {
+                    // Prioritize latest summary if it was after this node was attached.
+                    summaryNode = latestSummary.createForChild(id);
+                } else {
+                    const summary = convertToSummaryTree(createParam.snapshot) as ISummaryTreeWithStats;
+                    initialSummary = {
+                        localPath: EscapedPath.create(id),
+                        summary,
+                    };
+                }
+                child = new SummarizerNode(
+                    this.logger,
+                    summarizeInternalFn,
+                    config,
+                    createParam.sequenceNumber,
+                    summaryNode,
+                    initialSummary,
+                );
+                break;
+            }
+            case CreateSummarizerNodeSource.Local: {
+                child = new SummarizerNode(
+                    this.logger,
+                    summarizeInternalFn,
+                    config,
+                    latestSummary?.referenceSequenceNumber ?? -1,
+                    latestSummary?.createForChild(id),
+                    undefined, // no initial summary
+                    true, // local is true; cause summarize calls to fail
+                );
+                break;
+            }
+            default: {
+                const type = (createParam as unknown as CreateChildSummarizerNodeParam).type;
+                unreachableCase(createParam, `Unexpected CreateSummarizerNodeSource: ${type}`);
+            }
         }
-        const child = new SummarizerNode(
-            this.logger,
-            summarizeInternalFn,
-            config,
-            changeSequenceNumber,
-            summary,
-        );
+
         // If created while summarizing, relay that information down
         if (this.wipReferenceSequenceNumber !== undefined) {
             child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;

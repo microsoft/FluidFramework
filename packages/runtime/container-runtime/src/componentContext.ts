@@ -49,6 +49,7 @@ import {
     ISummarizeInternalResult,
     CreateChildSummarizerNodeFn,
     SummarizeInternalFn,
+    CreateChildSummarizerNodeParam,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -420,7 +421,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return { entries, id: null };
     }
 
-    public async summarize(fullTree: boolean = false): Promise<ISummarizeResult> {
+    public async summarize(fullTree = false): Promise<ISummarizeResult> {
         return this.summarizerNode.summarize(fullTree);
     }
 
@@ -441,7 +442,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             addBlobToSummary(summary, ".component", JSON.stringify(componentAttributes));
             return { ...summary, id: this.id };
         } else {
-            // back-compat: 0.22 summarizerNode - remove this case
+            // back-compat summarizerNode - remove this case
             const entries = await componentRuntime.snapshotInternal(fullTree);
             entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
             const summary = convertToSummaryTree({ entries, id: null });
@@ -619,11 +620,11 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         }
     }
 
-    public getCreateChildSummarizerNodeFn(changeSequenceNumber: number, id: string) {
+    public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
         return (summarizeInternal: SummarizeInternalFn) => this.summarizerNode.createChild(
             summarizeInternal,
-            changeSequenceNumber,
             id,
+            createParam,
         );
     }
 }

@@ -34,7 +34,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IProvideFluidDataStoreRegistry } from "./componentRegistry";
 import { IInboundSignalMessage } from "./protocol";
-import { ISummaryTreeWithStats, ISummarizerNode, SummarizeInternalFn } from "./summary";
+import { ISummaryTreeWithStats, ISummarizerNode, SummarizeInternalFn, CreateChildSummarizerNodeParam } from "./summary";
 
 /**
  * Runtime flush mode handling
@@ -381,7 +381,17 @@ export interface IFluidDataStoreContext extends EventEmitter {
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
-    getCreateChildSummarizerNodeFn(changeSequenceNumber: number, id: string): CreateChildSummarizerNodeFn;
+    getCreateChildSummarizerNodeFn(
+        /** Initial id or path part of this node */
+        id: string,
+        /**
+         * Information needed to create the node.
+         * If it is from a base summary, it will assert that a summary has been seen.
+         * Attach information if it is created from an attach op.
+         * If it is local, it will throw unsupported errors on calls to summarize.
+         */
+        createParam: CreateChildSummarizerNodeParam,
+    ): CreateChildSummarizerNodeFn;
 }
 
 /**

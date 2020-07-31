@@ -12,6 +12,7 @@ import {
     NamedFluidDataStoreRegistryEntries,
     SummarizeInternalFn,
     CreateChildSummarizerNodeFn,
+    CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
 import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -98,14 +99,15 @@ describe("Component Creation Tests", () => {
                 on: (event, listener) => { },
             } as ContainerRuntime;
             summaryTracker = new SummaryTracker("", 0, 0);
-            const summarizerNode = SummarizerNode.createRootWithoutSummary(
+            const summarizerNode = SummarizerNode.createRoot(
                 new TelemetryNullLogger(),
                 (() => {}) as unknown as SummarizeInternalFn,
+                0,
                 0);
             getCreateSummarizerNodeFn = (id: string) => (si: SummarizeInternalFn) => summarizerNode.createChild(
                 si,
-                0,
                 id,
+                { type: CreateSummarizerNodeSource.Local }, // use local to throw on summarize calls
             );
         });
 

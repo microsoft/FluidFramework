@@ -48,6 +48,7 @@ import {
     IInboundSignalMessage,
     SchedulerType,
     ISummaryTreeWithStats,
+    CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
 import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IChannel, IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
@@ -211,8 +212,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                         this.deltaManager.lastSequenceNumber,
                     ),
                     this.componentContext.getCreateChildSummarizerNodeFn(
-                        this.deltaManager.lastSequenceNumber,
                         path,
+                        { type: CreateSummarizerNodeSource.FromSummary },
                     ));
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -476,7 +477,14 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                             id,
                             message.sequenceNumber,
                         ),
-                        this.componentContext.getCreateChildSummarizerNodeFn(message.sequenceNumber, id),
+                        this.componentContext.getCreateChildSummarizerNodeFn(
+                            id,
+                            {
+                                type: CreateSummarizerNodeSource.FromAttach,
+                                sequenceNumber: message.sequenceNumber,
+                                snapshot: attachMessage.snapshot,
+                            },
+                        ),
                         attachMessage.type);
 
                     this.contexts.set(id, remoteChannelContext);

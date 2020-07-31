@@ -12,7 +12,6 @@ import {
     IBlob,
     ISummaryBlob,
     TreeEntry,
-    ISummaryHandle,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats, ISummarizeResult, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
@@ -82,8 +81,12 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
         }, key, content);
     }
 
-    public addHandle(key: string, handle: ISummaryHandle): void {
-        this.summaryTree[key] = handle;
+    public addHandle(key: string, handleType: SummaryType, handle: string): void {
+        this.summaryTree[key] = {
+            type: SummaryType.Handle,
+            handleType,
+            handle,
+        };
         this.summaryStats.handleNodeCount++;
     }
 

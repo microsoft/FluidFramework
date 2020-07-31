@@ -83,6 +83,8 @@ import {
     ISummarizeInternalResult,
     SummarizeInternalFn,
     CreateChildSummarizerNodeFn,
+    CreateChildSummarizerNodeParam,
+    CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
 import {
     FluidSerializer,
@@ -592,8 +594,8 @@ export class ContainerRuntime extends EventEmitter
     private readonly summarizerNode: {
         readonly referenceSequenceNumber: number;
         readonly getCreateChildFn: (
-            changeSequenceNumber: number,
             id: string,
+            createParam: CreateChildSummarizerNodeParam,
         ) => CreateChildSummarizerNodeFn;
     } & ({ readonly enabled: true; readonly node: SummarizerNode } | { readonly enabled: false });
     private readonly notBoundedComponentContexts = new Set<string>();
@@ -684,14 +686,15 @@ export class ContainerRuntime extends EventEmitter
             this.deltaManager.initialSequenceNumber, // latestSequenceNumber - latest sequence number seen
         );
 
-        const thisChangeSequenceNumber = this.deltaManager.lastSequenceNumber;
-        const thisSummarizeInternal = async (fullTree: boolean) => this.summarizeInternal(fullTree);
-        const summarizerNode = context.baseSnapshot
-            ? SummarizerNode.createRootFromSummary(
+        const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
+        const summarizerNode = SummarizerNode.createRoot(
                 this.logger,
-                thisSummarizeInternal,
-                thisChangeSequenceNumber, // latest change sequence number; at this point should = initialSequenceNumber
-                this.deltaManager.initialSequenceNumber, // summary reference sequence number
+                // Summarize function to call when summarize is called
+                async (fullTree: boolean) => this.summarizeInternal(fullTree),
+                // Latest change sequence number, no changes since summary applied yet
+                loadedFromSequenceNumber,
+                // Summary reference sequence number, undefined if no summary yet
+                context.baseSnapshot ? loadedFromSequenceNumber : undefined,
                 {
                     // Must set to false to prevent sending summary handle which would be pointing to
                     // a summary with an older protocol state.
@@ -700,40 +703,26 @@ export class ContainerRuntime extends EventEmitter
                     // We also are not decoding the base summaries at the root.
                     throwOnFailure: true,
                 },
-            )
-            : SummarizerNode.createRootWithoutSummary(this.logger, thisSummarizeInternal, thisChangeSequenceNumber);
+            );
 
         // Use runtimeOptions if provided, otherwise check localStorage, defaulting to true/enabled.
         const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode
             ?? (typeof localStorage === "object" && localStorage?.fluidDisableSummarizerNode ? false : true);
+        const getCreateChildFn = (id: string, createParam: CreateChildSummarizerNodeParam) =>
+            (summarizeInternal: SummarizeInternalFn) =>
+            summarizerNode.createChild(summarizeInternal, id, createParam);
         if (enableSummarizerNode) {
             this.summarizerNode = {
                 enabled: true,
                 node: summarizerNode,
                 get referenceSequenceNumber() { return this.node.referenceSequenceNumber; },
-                getCreateChildFn(
-                    changeSequenceNumber: number,
-                    id: string,
-                ) {
-                    return (summarizeInternal: SummarizeInternalFn) => this.node.createChild(
-                        summarizeInternal,
-                        changeSequenceNumber,
-                        id,
-                    );
-                },
+                getCreateChildFn,
             };
         } else {
             this.summarizerNode = {
                 enabled: false,
                 get referenceSequenceNumber() { return summarizerNode.referenceSequenceNumber; },
-                getCreateChildFn: (
-                    changeSequenceNumber: number,
-                    id: string,
-                ) => (summarizeInternal: SummarizeInternalFn) => summarizerNode.createChild(
-                    summarizeInternal,
-                    changeSequenceNumber,
-                    id,
-                ),
+                getCreateChildFn,
             };
         }
 
@@ -758,7 +747,7 @@ export class ContainerRuntime extends EventEmitter
                 this.storage,
                 this.containerScope,
                 this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber),
-                this.summarizerNode.getCreateChildFn(this.summarizerNode.referenceSequenceNumber, key));
+                this.summarizerNode.getCreateChildFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
             this.setNewContext(key, componentContext);
         }
 
@@ -1256,7 +1245,7 @@ export class ContainerRuntime extends EventEmitter
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            this.summarizerNode.getCreateChildFn(this.deltaManager.lastSequenceNumber, id),
+            this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindComponent(cr),
             props);
 
@@ -1283,7 +1272,7 @@ export class ContainerRuntime extends EventEmitter
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            this.summarizerNode.getCreateChildFn(this.deltaManager.lastSequenceNumber, id),
+            this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindComponent(cr),
             undefined /* #1635: Remove LocalFluidDataStoreContext createProps */);
 
@@ -1441,7 +1430,13 @@ export class ContainerRuntime extends EventEmitter
             new BlobCacheStorageService(this.storage, flatBlobsP),
             this.containerScope,
             this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
-            this.summarizerNode.getCreateChildFn(message.sequenceNumber, attachMessage.id),
+            this.summarizerNode.getCreateChildFn(
+                attachMessage.id,
+                {
+                    type: CreateSummarizerNodeSource.FromAttach,
+                    sequenceNumber: message.sequenceNumber,
+                    snapshot: attachMessage.snapshot,
+                }),
             [attachMessage.type]);
 
         // If a non-local operation then go and create the object, otherwise mark it as officially attached.

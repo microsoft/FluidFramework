@@ -15,6 +15,7 @@ import {
     IFluidDataStoreRegistry,
     SummarizeInternalFn,
     CreateChildSummarizerNodeFn,
+    CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker, SummarizerNode } from "@fluidframework/runtime-utils";
@@ -32,14 +33,15 @@ describe("Component Context Tests", () => {
     let createSummarizerNodeFn: CreateChildSummarizerNodeFn;
     beforeEach(async () => {
         summaryTracker = new SummaryTracker("", 0, 0);
-        const summarizerNode = SummarizerNode.createRootWithoutSummary(
+        const summarizerNode = SummarizerNode.createRoot(
             new TelemetryNullLogger(),
             (() => undefined) as unknown as SummarizeInternalFn,
+            0,
             0);
         createSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => summarizerNode.createChild(
             summarizeInternal,
-            0,
             componentId,
+            { type: CreateSummarizerNodeSource.Local }, // use local to throw on summarize calls
         );
     });
 
