@@ -519,7 +519,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
     public getAttachSnapshot(): ITreeEntry[] {
         const entries: ITreeEntry[] = [];
-
         this.attachGraph();
         // Craft the .attributes file for each shared object
         for (const [objectId, value] of this.contexts) {
