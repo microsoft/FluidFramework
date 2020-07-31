@@ -5,8 +5,8 @@
 
 import {
     IChannelAttributes,
-    IComponentRuntime,
-    ISharedObjectServices,
+    IFluidDataStoreRuntime,
+    IChannelServices,
 } from "@fluidframework/component-runtime-definitions";
 import { ConsensusQueue } from "./consensusQueue";
 import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces";
@@ -33,9 +33,9 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
     }
 
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<IConsensusOrderedCollection> {
         const collection = new ConsensusQueue(id, runtime, attributes);
@@ -43,7 +43,7 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
         return collection;
     }
 
-    public create(document: IComponentRuntime, id: string): IConsensusOrderedCollection {
+    public create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection {
         const collection = new ConsensusQueue(id, document, this.attributes);
         collection.initializeLocal();
         return collection;

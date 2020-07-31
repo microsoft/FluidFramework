@@ -4,36 +4,22 @@
  */
 
 import {
-    IComponentHandle,
-    IComponentHandleContext,
+    IFluidHandleContext,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { AttachState } from "@fluidframework/container-definitions";
-import { generateHandleContextPath } from "@fluidframework/runtime-utils";
+import { FluidOjectHandle } from "@fluidframework/component-runtime";
 import { ISharedObject } from "./types";
 
 /**
  * Component handle for shared object
  * This object is used for already loaded (in-memory) shared object
  * and is used only for serialization purposes.
- * De-serialization process goes through ComponentHandle and request flow:
- * ComponentRuntime.request() recognizes requests in the form of '/<shared object id>'
+ * De-serialization process goes through FluidOjectHandle and request flow:
+ * FluidDataStoreRuntime.request() recognizes requests in the form of '/<shared object id>'
  * and loads shared object.
  */
-export class SharedObjectComponentHandle implements IComponentHandle {
-    // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
-    private graphAttachState: AttachState = AttachState.Detached;
-    /**
-     * The set of handles to other shared objects that should be registered before this one.
-     */
-    private bound: Set<IComponentHandle> | undefined;
-    public readonly absolutePath: string;
-
-    public get IComponentHandle() { return this; }
-    public get IComponentRouter() { return this; }
-    public get IComponentHandleContext() { return this; }
-
+export class SharedObjectHandle extends FluidOjectHandle<ISharedObject> {
     /**
      * Whether services have been attached for the associated shared object.
      */
@@ -42,24 +28,17 @@ export class SharedObjectComponentHandle implements IComponentHandle {
     }
 
     /**
-     * Creates a new SharedObjectComponentHandle.
+     * Creates a new SharedObjectHandle.
      * @param value - The shared object this handle is for.
      * @param path - The id of the shared object. It is also the path to this object relative to the routeContext.
-     * @param routeContext - The parent IComponentHandleContext that has a route to this handle.
+     * @param routeContext - The parent IFluidHandleContext that has a route to this handle.
      */
     constructor(
-        private readonly value: ISharedObject,
-        public readonly path: string,
-        public readonly routeContext: IComponentHandleContext,
+        value: ISharedObject,
+        path: string,
+        routeContext: IFluidHandleContext,
     ) {
-        this.absolutePath = generateHandleContextPath(path, this.routeContext);
-    }
-
-    /**
-     * Gets the shared object for this handle.
-     */
-    public async get(): Promise<any> {
-        return this.value;
+        super(value, path, routeContext);
     }
 
     /**
@@ -67,39 +46,8 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      * When attaching the handle, it registers the associated shared object.
      */
     public attachGraph(): void {
-        // If this handle is already in attaching state in the graph or attached, no need to attach again.
-        if (this.graphAttachState !== AttachState.Detached) {
-            return;
-        }
-        this.graphAttachState = AttachState.Attaching;
-        if (this.bound !== undefined) {
-            for (const handle of this.bound) {
-                handle.attachGraph();
-            }
-
-            this.bound = undefined;
-        }
-        this.routeContext.attachGraph();
         this.value.bindToContext();
-        this.graphAttachState = AttachState.Attached;
-    }
-
-    /**
-     * Add a handle to the list of handles to attach before this one when attach is called.
-     * @param handle - The handle to bind
-     */
-    public bind(handle: IComponentHandle): void {
-        // If the dds is already attached or its graph is already in attaching or attached state,
-        // then attach the incoming handle too.
-        if (this.isAttached || this.graphAttachState !== AttachState.Detached) {
-            handle.attachGraph();
-            return;
-        }
-        if (this.bound === undefined) {
-            this.bound = new Set<IComponentHandle>();
-        }
-
-        this.bound.add(handle);
+        super.attachGraph();
     }
 
     /**

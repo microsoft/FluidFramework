@@ -4,14 +4,14 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultComponent,
-    PrimedComponent,
-    PrimedComponentFactory,
+    ContainerRuntimeFactoryWithDefaultDataStore,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { SharedDirectory } from "@fluidframework/map";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import {
     Clicker,
@@ -32,37 +32,37 @@ export const PondName = pkg.name as string;
  *  - Component creation with initial state
  *  - Component creation and storage using Handles
  */
-export class Pond extends PrimedComponent implements IComponentHTMLView {
+export class Pond extends DataObject implements IFluidHTMLView {
     private clickerView: HTMLViewAdapter | undefined;
     private clickerUsingProvidersView: HTMLViewAdapter | undefined;
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     /**
    * Do setup work here
    */
-    protected async componentInitializingFirstTime() {
-        const clickerComponent = await Clicker.getFactory().createComponent(this.context);
+    protected async initializingFirstTime() {
+        const clickerComponent = await Clicker.getFactory()._createDataStore(this.context);
         this.root.set(Clicker.ComponentName, clickerComponent.handle);
 
-        const clickerComponentUsingProvider = await ExampleUsingProviders.getFactory().createComponent(this.context);
+        const clickerComponentUsingProvider = await ExampleUsingProviders.getFactory()._createDataStore(this.context);
         this.root.set(ExampleUsingProviders.ComponentName, clickerComponentUsingProvider.handle);
     }
 
-    protected async componentHasInitialized() {
-        const clicker = await this.root.get<IComponentHandle>(Clicker.ComponentName).get();
+    protected async hasInitialized() {
+        const clicker = await this.root.get<IFluidHandle>(Clicker.ComponentName).get();
         this.clickerView = new HTMLViewAdapter(clicker);
 
         const clickerUsingProviders
-            = await this.root.get<IComponentHandle>(ExampleUsingProviders.ComponentName).get();
+            = await this.root.get<IFluidHandle>(ExampleUsingProviders.ComponentName).get();
         this.clickerUsingProvidersView = new HTMLViewAdapter(clickerUsingProviders);
     }
 
-    // start IComponentHTMLView
+    // start IFluidHTMLView
 
     public render(div: HTMLElement) {
-        if (!this.clickerView ||
-            !this.clickerUsingProvidersView) {
+        if (this.clickerView === undefined ||
+            this.clickerUsingProvidersView === undefined) {
             throw new Error(`Pond not initialized correctly`);
         }
 
@@ -93,13 +93,13 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
         return div;
     }
 
-    // end IComponentHTMLView
+    // end IFluidHTMLView
 
     // ----- COMPONENT SETUP STUFF -----
 
     public static getFactory() { return Pond.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         PondName,
         Pond,
         [SharedDirectory.getFactory()],
@@ -113,7 +113,7 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
 
 // ----- CONTAINER SETUP STUFF -----
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     Pond.getFactory().type,
     new Map([
         Pond.getFactory().registryEntry,

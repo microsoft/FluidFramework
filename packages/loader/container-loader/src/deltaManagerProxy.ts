@@ -100,6 +100,10 @@ export class DeltaManagerProxy
         return this.deltaManager.lastSequenceNumber;
     }
 
+    public get lastKnownSeqNumber() {
+        return this.deltaManager.lastKnownSeqNumber;
+    }
+
     // Back-compat: <= 0.18
     public get referenceSequenceNumber(): number {
         return this.lastSequenceNumber;

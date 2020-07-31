@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IComponent, IComponentLoadable, IResponse } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IFluidLoadable, IResponse } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
@@ -23,7 +23,7 @@ export const componentRuntimeRequestHandler: RuntimeRequestHandler =
                 wait = request.headers.wait;
             }
 
-            const component = await runtime.getComponentRuntime(request.pathParts[0], wait);
+            const component = await runtime.getDataStore(request.pathParts[0], wait);
             const subRequest = request.createSubRequest(1);
             if (subRequest !== undefined) {
                 return component.request(subRequest);
@@ -32,11 +32,11 @@ export const componentRuntimeRequestHandler: RuntimeRequestHandler =
         return undefined;
     };
 
-export const createComponentResponse = (component: IComponent) => {
-    return { status: 200, mimeType: "fluid/component", value: component };
+export const createComponentResponse = (component: IFluidObject) => {
+    return { status: 200, mimeType: "fluid/object", value: component };
 };
 
-export function createLoadableComponentRuntimeRequestHandler(component: IComponentLoadable): RuntimeRequestHandler {
+export function createLoadableComponentRuntimeRequestHandler(component: IFluidLoadable): RuntimeRequestHandler {
     const pathParts = RequestParser.getPathParts(component.url);
     return async (request: RequestParser, runtime: IContainerRuntime) => {
         for (let i = 0; i < pathParts.length; i++) {

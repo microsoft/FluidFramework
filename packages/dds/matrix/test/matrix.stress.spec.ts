@@ -7,9 +7,9 @@ import "mocha";
 
 import { strict as assert } from "assert";
 import { Random } from "best-random";
-import { ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { IChannelServices } from "@fluidframework/component-runtime-definitions";
 import {
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockStorage,
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
@@ -76,9 +76,9 @@ describe("Matrix", () => {
 
                 // Create matrices for this stress run.
                 for (let i = 0; i < numClients; i++) {
-                    const componentRuntimeN = new MockComponentRuntime();
+                    const componentRuntimeN = new MockFluidDataStoreRuntime();
                     const containerRuntimeN = containerRuntimeFactory.createContainerRuntime(componentRuntimeN);
-                    const servicesN: ISharedObjectServices = {
+                    const servicesN: IChannelServices = {
                         deltaConnection: containerRuntimeN.createDeltaConnection(),
                         objectStorage: new MockStorage(),
                     };

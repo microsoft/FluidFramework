@@ -6,123 +6,246 @@
 name: $(Build.BuildId)
 
 variables:
+  - name: skipComponentGovernanceDetection
+    value: true
   - group: doc-versions
-  - name: DOCKERTARGET
-    value: docs
-  - name: containerName
-    value: fluid-docs
+  - group: storage-vars
+  - name: latestPipeline
+    value: ${{ or(
+      eq(variables['Build.SourceBranchName'], 'master'),
+      eq(variables['Build.SourceBranchName'], 'pl-test')
+      )}}
+  - name: n1Branch
+    value: ${{ join('/refs/heads/release/', variables['N1_BRANCH']) }}
+  - name: n1Pipeline
+    value: ${{ eq(variables['Build.SourceBranchName'], variables['N1_BRANCH']) }}
+  - name: releasePipeline
+    value: ${{ eq(variables['Build.SourceBranchName'], variables['RELEASE_BRANCH']) }}
+  - name: validRun
+    value: ${{ or(variables.releasePipeline, variables.n1Pipeline, variables.latestPipeline) }}
+
+# no branch and PR triggers
+trigger: none
+pr: none
 
 resources:
   pipelines:
+  - pipeline: test
+    source: test - trigger
+    trigger:
+      branches:
+        include:
+        - pl-test
   - pipeline: common_definitions
     source: Build - common-definitions
     trigger:
       branches:
-      - release/*
-      - master
+        include:
+        - release/*
+        - master
   - pipeline: common_utils
     source: Build - common-utils
     trigger:
       branches:
-      - release/*
-      - master
+        include:
+        - release/*
+        - master
   - pipeline: client
     source: Build - client packages
     trigger:
       branches:
-      - release/*
-      - master
+        include:
+        - release/*
+        - master
   - pipeline: server
     source: server-routerlicious
     trigger:
       branches:
-      - release/*
-      - master
+        include:
+        - release/*
+        - master
 
-trigger:
-  branches:
-    include:
-    - release/*
-    - master
-  paths:
-    exclude:
-    - packages
-    - server/routerlicious
-    - common/lib/common-utils
-    - common/lib/common-definitions
-
-# no PR triggers
-pr: none
-
-jobs:
-  - job: build
-    displayName: Build
-    pool: Default
-    workspace:
-      clean: all
+stages:
+- stage: build
+  displayName: 'Build docs'
+  pool: Default
+  jobs:
+  - job:
+    displayName: Component Detection
+    pool: Shared
     steps:
-    - checkout: self
-      clean: true
-
-    # Download the api-extractor outputs
-    - download: common_definitions
-      artifact: _api-extractor-temp
-    - download: common_utils
-      artifact: _api-extractor-temp
-    - download: client
-      artifact: _api-extractor-temp
-    - download: server
-      artifact: _api-extractor-temp
-
-    # Copy and merge the api-extractor outputs to a central location
-    - task: CopyFiles@2
-      displayName: 'Copy _api-extractor-temp'
-      enabled: true
+    - script: |
+        echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
+        echo BASE_URL: $(BASE_URL)
+        echo RELEASE_VERSION: $(RELEASE_VERSION)
+        echo MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+        echo N1_VERSION: $(N1_VERSION)
+        echo releasePipeline ${{ variables.releasePipeline }}
+        echo latestPipeline ${{ variables.latestPipeline }}
+        echo n1Pipeline ${{ variables.n1Pipeline }}
+      displayName: 'Show Variables'
+    - task: ComponentGovernanceComponentDetection@0
+      displayName: Component Detection
       inputs:
-        SourceFolder: $(Pipeline.Workspace)
-        Contents: '**/*.api.json'
-        TargetFolder: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
-        OverWrite: false
-        flattenFolders: true
-        CleanTargetFolder: true
+        sourceScanPath: docs
+        verbosity: Verbose
+        scanType: Register
+        alertWarningLevel: High
+ 
+  # current release
+  - ${{ if eq(variables.releasePipeline, true) }}:
+    - job: current_release
+      displayName: 'Current release'
+      steps:
+      - template: templates/build-docs-steps.yml
+        parameters:
+          BASE_URL: $(BASE_URL)
+          THIS_VERSION: $(RELEASE_VERSION)
+          MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+          RELEASE_VERSION: $(RELEASE_VERSION)
+          N1_VERSION: $(N1_VERSION)
+          VUEPRESS_BASE: '/'
+    - job: current_release_versioned
+      displayName: 'Current release (/versions/)'
+      steps:
+      - template: templates/build-docs-steps.yml
+        parameters:
+          BASE_URL: $(BASE_URL)
+          THIS_VERSION: $(RELEASE_VERSION)
+          MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+          RELEASE_VERSION: $(RELEASE_VERSION)
+          N1_VERSION: $(N1_VERSION)
+          VUEPRESS_BASE: '/versions/$(RELEASE_VERSION)/'
+          artifactName: fluid-docs-version-path
 
-    - task: npmAuthenticate@0
-      displayName: 'npm Authenticate root .npmrc'
-      inputs:
-        workingFile: .npmrc
+  # latest - master branch
+  - ${{ if eq(variables.latestPipeline, true) }}:
+    - job: latest_release
+      displayName: 'Main branch'
+      steps:
+      - template: templates/build-docs-steps.yml
+        parameters:
+          BASE_URL: $(BASE_URL)
+          THIS_VERSION: $(MASTER_BRANCH_VERSION)
+          MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+          RELEASE_VERSION: $(RELEASE_VERSION)
+          N1_VERSION: $(N1_VERSION)
+          VUEPRESS_BASE: '/versions/latest/'
 
-    - task: Npm@1
-      displayName: npm ci
-      inputs:
-        command: 'custom'
-        customCommand: 'ci --ignore-scripts'
-        customRegistry: 'useFeed'
-        customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+    - job: latest_release_versioned
+      displayName: 'Main branch (/versions/)'
+      steps:
+      - template: templates/build-docs-steps.yml
+        parameters:
+          BASE_URL: $(BASE_URL)
+          THIS_VERSION: $(MASTER_BRANCH_VERSION)
+          MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+          RELEASE_VERSION: $(RELEASE_VERSION)
+          N1_VERSION: $(N1_VERSION)
+          VUEPRESS_BASE: '/versions/$(MASTER_BRANCH_VERSION)/'
+          artifactName: fluid-docs-version-path
 
-    # Build the docs site
-    - task: Docker@2
-      displayName: 'Build docs site via docker image'
-      inputs:
-        repository: $(containerName)
-        command: build
-        dockerFile: docs/Dockerfile
-        buildContext: $(Build.SourcesDirectory)
-        arguments: '--target $(DOCKERTARGET) --build-arg DOCSGITPASSWORD=$(DOCSGITPASSWORD) --build-arg VUEPRESS_BASE=$(VUEPRESS_BASE) --build-arg THIS_VERSION=$(THIS_VERSION) --build-arg MASTER_BRANCH_VERSION=$(MASTER_BRANCH_VERSION) --build-arg RELEASE_VERSION=$(RELEASE_VERSION) --build-arg N1_VERSION=$(N1_VERSION)'
-        tags: |
-          $(Build.BuildId)
+  # n-1 release
+  - ${{ if eq(variables.n1Pipeline, true) }}:
+    - job: old_release
+      displayName: 'N-1 release (/versions/)'
+      steps:
+      - template: templates/build-docs-steps.yml
+        parameters:
+          BASE_URL: $(BASE_URL)
+          THIS_VERSION: $(N1_VERSION)
+          MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+          N1_VERSION: $(N1_VERSION)
+          RELEASE_VERSION: $(RELEASE_VERSION)
+          VUEPRESS_BASE: '/versions/$(N1_VERSION)/'
+          artifactName: fluid-docs-version-path
 
-    - task: Docker@0
-      displayName: 'Copy built docs from container'
-      inputs:
-        action: 'Run a Docker command'
-        customCommand: 'run --rm -v $(System.DefaultWorkingDirectory)/fluid-docs:/usr/src/fluid-docs -t $(containerName):$(Build.BuildId) cp -R docs/dist /usr/src/fluid-docs'
+- stage: deploy
+  displayName: Deploy Stage
+  pool:
+    vmImage: 'ubuntu-latest'
+  dependsOn: build
+  jobs:
+    # current release
+    - ${{ if eq(variables.releasePipeline, true) }}:
+      - deployment: current_release
+        displayName: 'Current release'
+        environment: 'fluid-docs-cdn'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - template: templates/deploy-docs-steps.yml
+                parameters:
+                  STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+                  STORAGE_KEY: $(STORAGE_KEY)
+                  DEST_PATH: '/'
 
-    # Publish the static site as a pipeline artifact
-    - publish: $(System.DefaultWorkingDirectory)/fluid-docs/dist
-      artifact: fluid-docs
+      - deployment: current_release_versioned
+        displayName: 'Current release (/versions/)'
+        environment: 'fluid-docs-cdn'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - template: templates/deploy-docs-steps.yml
+                parameters:
+                  STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+                  STORAGE_KEY: $(STORAGE_KEY)
+                  DEST_PATH: '/versions/$(RELEASE_VERSION)/'
+                  artifactName: fluid-docs-version-path
 
-    - task: Docker@0
-      displayName: 'Remove docker image'
-      inputs:
-        action: 'Run a Docker command'
-        customCommand: 'rmi $(containerName):$(Build.BuildId)'
+    # latest - master branch
+    - ${{ if eq(variables.latestPipeline, true) }}:
+      - deployment: latest_release
+        displayName: 'Main branch'
+        environment: 'fluid-docs-cdn'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - script: |
+                  echo $(resources.pipeline.docs.pipelineID)
+                  echo $(resources.pipeline.docs.runName)
+                  echo $(resources.pipeline.docs.runID)
+                  echo $(resources.pipeline.docs.runURI)
+                  echo $(resources.pipeline.docs.sourceBranch)
+                  echo $(resources.pipeline.docs.sourceCommit)
+                  echo $(resources.pipeline.docs.sourceProvider)
+                  echo $(resources.pipeline.docs.requestedFor)
+                  echo $(resources.pipeline.docs.requestedForID)
+
+              - template: templates/deploy-docs-steps.yml
+                parameters:
+                  STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+                  STORAGE_KEY: $(STORAGE_KEY)
+                  DEST_PATH: '/versions/latest/'
+
+      - deployment: latest_release_versioned
+        displayName: 'Main branch (/versions/)'
+        environment: 'fluid-docs-cdn'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - template: templates/deploy-docs-steps.yml
+                parameters:
+                  STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+                  STORAGE_KEY: $(STORAGE_KEY)
+                  DEST_PATH: '/versions/$(MASTER_BRANCH_VERSION)/'
+                  artifactName: fluid-docs-version-path
+
+    # n-1 release
+    - ${{ if eq(variables.n1Pipeline, true) }}:
+      - deployment: old_release
+        displayName: 'N-1 release (/versions/)'
+        environment: 'fluid-docs-cdn'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - template: templates/deploy-docs-steps.yml
+                parameters:
+                  STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+                  STORAGE_KEY: $(STORAGE_KEY)
+                  DEST_PATH: '/versions/$(N1_VERSION)/'

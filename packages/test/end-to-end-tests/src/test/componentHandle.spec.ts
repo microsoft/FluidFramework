@@ -5,11 +5,11 @@
 
 import assert from "assert";
 import {
-    ContainerRuntimeFactoryWithDefaultComponent,
-    PrimedComponent,
-    PrimedComponentFactory,
+    ContainerRuntimeFactoryWithDefaultDataStore,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { SharedMap } from "@fluidframework/map";
@@ -22,9 +22,9 @@ import {
 } from "@fluidframework/test-utils";
 
 /**
- * Test component that extends PrimedComponent so that we can test the ComponentHandle created by SharedComponent.
+ * Test component that extends DataObject so that we can test the FluidOjectHandle created by PureDataObject.
  */
-class TestSharedComponent extends PrimedComponent {
+class TestSharedComponent extends DataObject {
     public get _root() {
         return this.root;
     }
@@ -38,13 +38,13 @@ class TestSharedComponent extends PrimedComponent {
     }
 }
 
-const TestSharedComponentFactory = new PrimedComponentFactory(
+const TestSharedComponentFactory = new DataObjectFactory(
     "TestSharedComponent",
     TestSharedComponent,
     [SharedMap.getFactory()],
     []);
 
-describe("ComponentHandle", () => {
+describe("FluidOjectHandle", () => {
     const id = "fluid-test://localhost/componentHandleTest";
     const codeDetails: IFluidCodeDetails = {
         package: "componentHandleTestPackage",
@@ -57,9 +57,9 @@ describe("ComponentHandle", () => {
     let firstContainerComponent2: TestSharedComponent;
     let secondContainerComponent1: TestSharedComponent;
 
-    async function getComponent(componentId: string, container: Container): Promise<TestSharedComponent> {
+    async function requestFluidObject(componentId: string, container: Container): Promise<TestSharedComponent> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as TestSharedComponent;
@@ -67,7 +67,7 @@ describe("ComponentHandle", () => {
 
     async function createContainer(): Promise<Container> {
         const runtimeFactory =
-            new ContainerRuntimeFactoryWithDefaultComponent(
+            new ContainerRuntimeFactoryWithDefaultDataStore(
                 "default",
                 [
                     ["default", Promise.resolve(TestSharedComponentFactory)],
@@ -83,12 +83,12 @@ describe("ComponentHandle", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
         const firstContainer = await createContainer();
-        firstContainerComponent1 = await getComponent("default", firstContainer);
+        firstContainerComponent1 = await requestFluidObject("default", firstContainer);
         firstContainerComponent2 =
-            await TestSharedComponentFactory.createComponent(firstContainerComponent1._context) as TestSharedComponent;
+            await TestSharedComponentFactory._createDataStore(firstContainerComponent1._context) as TestSharedComponent;
 
         const secondContainer = await createContainer();
-        secondContainerComponent1 = await getComponent("default", secondContainer);
+        secondContainerComponent1 = await requestFluidObject("default", secondContainer);
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);
         opProcessingController.addDeltaManagers(
@@ -102,25 +102,28 @@ describe("ComponentHandle", () => {
         const absolutePath = "";
 
         // Verify that the local client's ContainerRuntime has the correct absolute path.
-        const containerRuntime1 = firstContainerComponent1._context.containerRuntime.IComponentHandleContext;
+        const containerRuntime1 = firstContainerComponent1._context.containerRuntime.IFluidHandleContext;
         assert.equal(containerRuntime1.absolutePath, absolutePath, "The ContainerRuntime's path is incorrect");
 
         // Verify that the remote client's ContainerRuntime has the correct absolute path.
-        const containerRuntime2 = secondContainerComponent1._context.containerRuntime.IComponentHandleContext;
+        const containerRuntime2 = secondContainerComponent1._context.containerRuntime.IFluidHandleContext;
         assert.equal(containerRuntime2.absolutePath, absolutePath, "The remote ContainerRuntime's path is incorrect");
     });
 
-    it("should generate the absolute path for ComponentRuntime correctly", () => {
-        // The expected absolute path for the ComponentRuntime.
+    it("should generate the absolute path for FluidDataStoreRuntime correctly", () => {
+        // The expected absolute path for the FluidDataStoreRuntime.
         const absolutePath = `/${firstContainerComponent1._runtime.id}`;
 
-        // Verify that the local client's ComponentRuntime has the correct absolute path.
-        const componentRuntime1 = firstContainerComponent1._runtime.IComponentHandleContext;
-        assert.equal(componentRuntime1.absolutePath, absolutePath, "The ComponentRuntime's path is incorrect");
+        // Verify that the local client's FluidDataStoreRuntime has the correct absolute path.
+        const componentRuntime1 = firstContainerComponent1._runtime.IFluidHandleContext;
+        assert.equal(componentRuntime1.absolutePath, absolutePath, "The FluidDataStoreRuntime's path is incorrect");
 
-        // Verify that the remote client's ComponentRuntime has the correct absolute path.
-        const componentRuntime2 = secondContainerComponent1._runtime.IComponentHandleContext;
-        assert.equal(componentRuntime2.absolutePath, absolutePath, "The remote ComponentRuntime's path is incorrect");
+        // Verify that the remote client's FluidDataStoreRuntime has the correct absolute path.
+        const componentRuntime2 = secondContainerComponent1._runtime.IFluidHandleContext;
+        assert.equal(
+            componentRuntime2.absolutePath,
+            absolutePath,
+            "The remote FluidDataStoreRuntime's path is incorrect");
     });
 
     it("can store and retrieve a DDS from handle within same component runtime", async () => {
@@ -142,7 +145,7 @@ describe("ComponentHandle", () => {
         await opProcessingController.process();
 
         // Get the handle in the remote client.
-        const remoteSharedMapHandle = secondContainerComponent1._root.get<IComponentHandle<SharedMap>>("sharedMap");
+        const remoteSharedMapHandle = secondContainerComponent1._root.get<IFluidHandle<SharedMap>>("sharedMap");
 
         // Verify that the remote client's handle has the correct absolute path.
         assert.equal(remoteSharedMapHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
@@ -166,13 +169,13 @@ describe("ComponentHandle", () => {
         // Verify that the local client's handle has the correct absolute path.
         assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");
 
-        // Add the handle to the root DDS of `firstContainerComponent1` so that the ComponentRuntime is different.
+        // Add the handle to the root DDS of `firstContainerComponent1` so that the FluidDataStoreRuntime is different.
         firstContainerComponent1._root.set("sharedMap", sharedMap.handle);
 
         await opProcessingController.process();
 
         // Get the handle in the remote client.
-        const remoteSharedMapHandle = secondContainerComponent1._root.get<IComponentHandle<SharedMap>>("sharedMap");
+        const remoteSharedMapHandle = secondContainerComponent1._root.get<IFluidHandle<SharedMap>>("sharedMap");
 
         // Verify that the remote client's handle has the correct absolute path.
         assert.equal(remoteSharedMapHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
@@ -183,7 +186,7 @@ describe("ComponentHandle", () => {
         assert.equal(remoteSharedMap.get("key1"), "value1", "The map does not have the value that was set");
     });
 
-    it("can store and retrieve a SharedComponent from handle in different component runtime", async () => {
+    it("can store and retrieve a PureDataObject from handle in different component runtime", async () => {
         // The expected absolute path.
         const absolutePath = `/${firstContainerComponent2._runtime.id}`;
 
@@ -193,14 +196,14 @@ describe("ComponentHandle", () => {
         assert.equal(componentHandle.absolutePath, absolutePath, "The handle's absolutepath is not correct");
 
         // Add `firstContainerComponent2's` handle to the root DDS of `firstContainerComponent1` so that the
-        // ComponentRuntime is different.
+        // FluidDataStoreRuntime is different.
         firstContainerComponent1._root.set("component2", firstContainerComponent2.handle);
 
         await opProcessingController.process();
 
         // Get the handle in the remote client.
         const remoteComponentHandle =
-            secondContainerComponent1._root.get<IComponentHandle<TestFluidComponent>>("component2");
+            secondContainerComponent1._root.get<IFluidHandle<TestFluidComponent>>("component2");
 
         // Verify that the remote client's handle has the correct absolute path.
         assert.equal(remoteComponentHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");

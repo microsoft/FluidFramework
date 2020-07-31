@@ -14,11 +14,12 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
-    IObjectStorageService,
-    ISharedObjectServices,
+    IFluidDataStoreRuntime,
+    IChannelStorageService,
+    IChannelServices,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
-import { ISharedObjectFactory, SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { debug } from "./debug";
 import {
     IDirectory,
@@ -300,12 +301,12 @@ function serializeDirectory(root: SubDirectory): ITree {
  */
 export class DirectoryFactory {
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
      */
     public static readonly Type = "https://graph.microsoft.com/types/directory";
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
      */
     public static readonly Attributes: IChannelAttributes = {
         type: DirectoryFactory.Type,
@@ -314,26 +315,26 @@ export class DirectoryFactory {
     };
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
      */
     public get type() {
         return DirectoryFactory.Type;
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
      */
     public get attributes() {
         return DirectoryFactory.Attributes;
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.load}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.load}
      */
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedDirectory> {
         const directory = new SharedDirectory(id, runtime, attributes);
@@ -343,9 +344,9 @@ export class DirectoryFactory {
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.create}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
      */
-    public create(runtime: IComponentRuntime, id: string): ISharedDirectory {
+    public create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory {
         const directory = new SharedDirectory(id, runtime, DirectoryFactory.Attributes);
         directory.initializeLocal();
 
@@ -375,7 +376,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * @param id - Optional name of the shared directory
      * @returns Newly create shared directory (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string): SharedDirectory {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory {
         return runtime.createChannel(id, DirectoryFactory.Type) as SharedDirectory;
     }
 
@@ -384,7 +385,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      *
      * @returns A factory that creates and load SharedDirectory
      */
-    public static getFactory(): ISharedObjectFactory {
+    public static getFactory(): IChannelFactory {
         return new DirectoryFactory();
     }
 
@@ -424,7 +425,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      */
     constructor(
         id: string,
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);
@@ -653,7 +654,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      */
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService) {
+        storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
         const data = JSON.parse(fromBase64ToUtf8(header));
         const newFormat = data as IDirectoryNewStorageFormat;
@@ -895,8 +896,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
-                    const translatedValue = this.runtime.IComponentSerializer.parse(
-                        JSON.stringify(op.value.value), this.runtime.IComponentHandleContext);
+                    const translatedValue = this.runtime.IFluidSerializer.parse(
+                        JSON.stringify(op.value.value), this.runtime.IFluidHandleContext);
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IDirectoryValueChanged = { key: op.key, path: op.path, previousValue };
                     this.emit("valueChanged", event, local, message);
@@ -958,7 +959,7 @@ class SubDirectory implements IDirectory {
      */
     constructor(
         private readonly directory: SharedDirectory,
-        private readonly runtime: IComponentRuntime,
+        private readonly runtime: IFluidDataStoreRuntime,
         public readonly absolutePath: string) {
     }
 
@@ -1017,8 +1018,8 @@ class SubDirectory implements IDirectory {
         const localValue = this.directory.localValueMaker.fromInMemory(value);
         const serializableValue = makeSerializable(
             localValue,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidSerializer,
+            this.runtime.IFluidHandleContext,
             this.directory.handle);
 
         // Set the value locally.
@@ -1403,8 +1404,8 @@ class SubDirectory implements IDirectory {
     public *getSerializedStorage() {
         for (const [key, localValue] of this._storage) {
             const value = localValue.makeSerialized(
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
+                this.runtime.IFluidSerializer,
+                this.runtime.IFluidHandleContext,
                 this.directory.handle);
             const res: [string, ISerializedValue] = [key, value];
             yield res;

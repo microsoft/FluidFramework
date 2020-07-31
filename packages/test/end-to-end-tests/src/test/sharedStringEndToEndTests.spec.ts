@@ -35,9 +35,9 @@ describe("SharedString", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
+    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as ITestFluidComponent;
@@ -47,11 +47,11 @@ describe("SharedString", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
         const container1 = await createContainer();
-        const component1 = await getComponent("default", container1);
+        const component1 = await requestFluidObject("default", container1);
         sharedString1 = await component1.getSharedObject<SharedString>(stringId);
 
         const container2 = await createContainer();
-        const component2 = await getComponent("default", container2);
+        const component2 = await requestFluidObject("default", container2);
         sharedString2 = await component2.getSharedObject<SharedString>(stringId);
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);
@@ -79,7 +79,7 @@ describe("SharedString", () => {
 
         // Create a initialize a new container with the same id.
         const newContainer = await createContainer();
-        const newComponent = await getComponent("default", newContainer);
+        const newComponent = await requestFluidObject("default", newContainer);
         const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
         assert.equal(newSharedString.getText(), text, "The new container should receive the inserted text on creation");
     });

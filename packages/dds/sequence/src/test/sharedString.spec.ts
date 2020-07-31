@@ -5,9 +5,9 @@
 
 import assert from "assert";
 import { ITree } from "@fluidframework/protocol-definitions";
-import { ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { IChannelServices } from "@fluidframework/component-runtime-definitions";
 import {
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
@@ -27,10 +27,10 @@ import { SharedStringFactory } from "../sequenceFactory";
 
 describe("SharedString", () => {
     let sharedString: SharedString;
-    let componentRuntime1: MockComponentRuntime;
+    let componentRuntime1: MockFluidDataStoreRuntime;
 
     beforeEach(() => {
-        componentRuntime1 = new MockComponentRuntime();
+        componentRuntime1 = new MockFluidDataStoreRuntime();
         sharedString = new SharedString(componentRuntime1, "shared-string-1", SharedStringFactory.Attributes);
     });
 
@@ -41,11 +41,11 @@ describe("SharedString", () => {
 
         // Creates a new SharedString and loads it from the passed snaphost tree.
         async function CreateStringAndCompare(tree: ITree): Promise<void> {
-            const services: ISharedObjectServices = {
+            const services: IChannelServices = {
                 deltaConnection: new MockEmptyDeltaConnection(),
                 objectStorage: new MockStorage(tree),
             };
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             const sharedString2 = new SharedString(
                 componentRuntime2,
                 "shared-string-2",
@@ -234,9 +234,9 @@ describe("SharedString", () => {
 
             // Load a new Ink in connected state from the snapshot of the first one.
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
-            const services2: ISharedObjectServices = {
+            const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(sharedString.snapshot()),
             };
@@ -289,7 +289,7 @@ describe("SharedString", () => {
             sharedString.connect(services1);
 
             // Create and connect a second SharedString.
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
@@ -466,7 +466,7 @@ describe("SharedString", () => {
 
             // Connect the first SharedString.
             containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
-            const services1: ISharedObjectServices = {
+            const services1: IChannelServices = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
@@ -474,10 +474,10 @@ describe("SharedString", () => {
             sharedString.connect(services1);
 
             // Create and connect a second SharedString.
-            const runtime2 = new MockComponentRuntime();
+            const runtime2 = new MockFluidDataStoreRuntime();
             containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
             sharedString2 = new SharedString(runtime2, "shared-string-2", SharedStringFactory.Attributes);
-            const services2: ISharedObjectServices = {
+            const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };

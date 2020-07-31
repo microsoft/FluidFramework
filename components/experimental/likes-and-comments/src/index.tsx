@@ -4,7 +4,7 @@
  */
 
 import {
-    PrimedComponentFactory,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
     SyncedComponent,
@@ -133,7 +133,7 @@ export class LikesAndComments extends SyncedComponent {
 }
 
 // ----- FACTORY SETUP -----
-export const LikesAndCommentsInstantiationFactory = new PrimedComponentFactory(
+export const LikesAndCommentsInstantiationFactory = new DataObjectFactory(
     "likes-and-comments",
     LikesAndComments,
     [

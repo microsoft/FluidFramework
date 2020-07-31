@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedMap } from "@fluidframework/map";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideTestFluidComponent>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideTestFluidComponent>> { }
 }
 
 export interface IProvideTestFluidComponent {
@@ -18,7 +20,7 @@ export interface IProvideTestFluidComponent {
 
 export interface ITestFluidComponent extends IProvideTestFluidComponent {
     root: ISharedMap;
-    readonly runtime: IComponentRuntime;
-    readonly context: IComponentContext;
+    readonly runtime: IFluidDataStoreRuntime;
+    readonly context: IFluidDataStoreContext;
     getSharedObject<T = any>(id: string): Promise<T>;
 }

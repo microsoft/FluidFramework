@@ -14,29 +14,29 @@ import {
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { Loader, Container } from "@fluidframework/container-loader";
-import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
-import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { initializeContainerCode } from "@fluidframework/base-host";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 
 export async function createLocalContainerFactory(
-    entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>,
+    entryPoint: Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IFluidModule>,
 ): Promise<() => Promise<Container>> {
     const urlResolver = new LocalResolver();
 
     const deltaConn = LocalDeltaConnectionServer.create();
     const documentServiceFactory = new LocalDocumentServiceFactory(deltaConn);
 
-    const factory: Partial<IProvideRuntimeFactory & IProvideComponentFactory> =
+    const factory: Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory> =
         entryPoint.fluidExport ? entryPoint.fluidExport : entryPoint;
 
     const runtimeFactory: IProvideRuntimeFactory =
         factory.IRuntimeFactory ?
             factory.IRuntimeFactory :
-            new ContainerRuntimeFactoryWithDefaultComponent(
+            new ContainerRuntimeFactoryWithDefaultDataStore(
                 "default",
-                [["default", Promise.resolve(factory.IComponentFactory)]],
+                [["default", Promise.resolve(factory.IFluidDataStoreFactory)]],
             );
 
     const codeLoader: ICodeLoader = {
@@ -82,7 +82,7 @@ export async function renderDefaultComponent(container: Container, div: HTMLElem
     }
 
     // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
-    const component = response.value as IComponent & IFluidObject;
+    const component = response.value as IFluidObject & IFluidObject;
     const embed = new HTMLViewAdapter(component);
     embed.render(div, { display: "block" });
 }

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/protocol-definitions",
-  "version": "0.1010.0",
+  "version": "0.1011.0",
   "description": "Fluid protocol definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -47,7 +47,7 @@
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
     "rimraf": "^2.6.2",
-    "typescript": "~3.7.4",
+    "typescript": "~3.8.2",
     "typescript-formatter": "7.1.0"
   }
 }

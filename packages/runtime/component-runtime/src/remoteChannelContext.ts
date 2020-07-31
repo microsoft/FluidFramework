@@ -15,13 +15,13 @@ import {
 import {
     IChannel,
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
 import {
-    IComponentContext,
+    IFluidDataStoreContext,
     ISummaryTracker,
 } from "@fluidframework/runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
@@ -38,10 +38,10 @@ export class RemoteChannelContext implements IChannelContext {
         readonly objectStorage: ChannelStorageService,
     };
     constructor(
-        private readonly runtime: IComponentRuntime,
-        private readonly componentContext: IComponentContext,
+        private readonly runtime: IFluidDataStoreRuntime,
+        private readonly componentContext: IFluidDataStoreContext,
         storageService: IDocumentStorageService,
-        submitFn: (content: any, localOpMetadata: unknown) => number,
+        submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
         private readonly id: string,
         baseSnapshot: Promise<ISnapshotTree> | ISnapshotTree,
@@ -119,7 +119,7 @@ export class RemoteChannelContext implements IChannelContext {
                 ".attributes");
         }
 
-        let factory: ISharedObjectFactory | undefined;
+        let factory: IChannelFactory | undefined;
         // this is a back-compat case where
         // the attach message doesn't include
         // the attributes. Since old attach messages

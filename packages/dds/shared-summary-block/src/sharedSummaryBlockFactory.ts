@@ -5,12 +5,12 @@
 
 import {
     IChannelAttributes,
-    IComponentRuntime,
-    ISharedObjectServices,
+    IFluidDataStoreRuntime,
+    IChannelServices,
+    IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
 import {
     ISharedObject,
-    ISharedObjectFactory,
 } from "@fluidframework/shared-object-base";
 import { pkgVersion } from "./packageVersion";
 import { SharedSummaryBlock } from "./sharedSummaryBlock";
@@ -19,14 +19,14 @@ import { SharedSummaryBlock } from "./sharedSummaryBlock";
  * The factory that defines the shared summary block.
  * @sealed
  */
-export class SharedSummaryBlockFactory implements ISharedObjectFactory {
+export class SharedSummaryBlockFactory implements IChannelFactory {
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
      */
     public static readonly Type = "https://graph.microsoft.com/types/shared-summary-block";
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
      */
     public static readonly Attributes: IChannelAttributes = {
         type: SharedSummaryBlockFactory.Type,
@@ -35,26 +35,26 @@ export class SharedSummaryBlockFactory implements ISharedObjectFactory {
     };
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
      */
     public get type() {
         return SharedSummaryBlockFactory.Type;
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
      */
     public get attributes() {
         return SharedSummaryBlockFactory.Attributes;
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.load}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.load}
      */
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedObject> {
         const sharedSummaryBlock = new SharedSummaryBlock(id, runtime, attributes);
@@ -64,9 +64,9 @@ export class SharedSummaryBlockFactory implements ISharedObjectFactory {
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.create}
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
      */
-    public create(runtime: IComponentRuntime, id: string): ISharedObject {
+    public create(runtime: IFluidDataStoreRuntime, id: string): ISharedObject {
         const sharedSummaryBlock = new SharedSummaryBlock(id, runtime, SharedSummaryBlockFactory.Attributes);
         sharedSummaryBlock.initializeLocal();
 

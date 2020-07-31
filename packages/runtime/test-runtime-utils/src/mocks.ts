@@ -7,14 +7,13 @@ import assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IComponentHandle,
-    IComponentHandleContext,
+    IFluidHandle,
+    IFluidHandleContext,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
-    IDeltaManager,
     IGenericBlob,
     ContainerWarning,
     ILoader,
@@ -28,7 +27,6 @@ import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     IBlob,
     ICommittedProposal,
-    IDocumentMessage,
     IQuorum,
     ISequencedClient,
     ISequencedDocumentMessage,
@@ -39,14 +37,14 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannel,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IDeltaConnection,
     IDeltaHandler,
-    IObjectStorageService,
-    ISharedObjectServices,
+    IChannelStorageService,
+    IChannelServices,
 } from "@fluidframework/component-runtime-definitions";
-import { ComponentSerializer, getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
-import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
+import { FluidSerializer, getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
+import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 
@@ -113,13 +111,13 @@ export class MockContainerRuntime {
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
 
     constructor(
-        protected readonly componentRuntime: MockComponentRuntime,
+        protected readonly componentRuntime: MockFluidDataStoreRuntime,
         protected readonly factory: MockContainerRuntimeFactory,
     ) {
         this.deltaManager = new MockDeltaManager();
-        // Set ComponentRuntime's deltaManager to ours so that they are in sync.
+        // Set FluidDataStoreRuntime's deltaManager to ours so that they are in sync.
         this.componentRuntime.deltaManager = this.deltaManager;
-        // ComponentRuntime already creates a clientId, reuse that so they are in sync.
+        // FluidDataStoreRuntime already creates a clientId, reuse that so they are in sync.
         this.clientId = this.componentRuntime.clientId;
     }
 
@@ -210,7 +208,7 @@ export class MockContainerRuntimeFactory {
         return minSeq ? minSeq : 0;
     }
 
-    public createContainerRuntime(componentRuntime: MockComponentRuntime): MockContainerRuntime {
+    public createContainerRuntime(componentRuntime: MockFluidDataStoreRuntime): MockContainerRuntime {
         const containerRuntime =
             new MockContainerRuntime(componentRuntime, this);
         this.runtimes.push(containerRuntime);
@@ -360,12 +358,12 @@ export class MockQuorum implements IQuorum, EventEmitter {
 /**
  * Mock implementation of IRuntime for testing that does nothing
  */
-export class MockComponentRuntime extends EventEmitter
-    implements IComponentRuntime, IComponentRuntimeChannel, IComponentHandleContext {
-    public get IComponentHandleContext(): IComponentHandleContext { return this; }
-    public get IComponentRouter() { return this; }
+export class MockFluidDataStoreRuntime extends EventEmitter
+    implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
+    public get IFluidHandleContext(): IFluidHandleContext { return this; }
+    public get IFluidRouter() { return this; }
 
-    public readonly IComponentSerializer = new ComponentSerializer();
+    public readonly IFluidSerializer = new FluidSerializer();
 
     public readonly documentId: string;
     public readonly id: string = uuid();
@@ -376,9 +374,9 @@ export class MockComponentRuntime extends EventEmitter
     public readonly path = "";
     public readonly connected = true;
     public readonly leader: boolean;
-    public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> = new MockDeltaManager();
+    public deltaManager = new MockDeltaManager();
     public readonly loader: ILoader;
-    public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockComponentRuntime");
+    public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockFluidDataStoreRuntime");
     private readonly activeDeferred = new Deferred<void>();
     public readonly quorum = new MockQuorum();
 
@@ -435,7 +433,7 @@ export class MockComponentRuntime extends EventEmitter
         return;
     }
 
-    public bind(handle: IComponentHandle): void {
+    public bind(handle: IFluidHandle): void {
         return;
     }
 
@@ -544,9 +542,9 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 }
 
 /**
- * Mock implementation of IObjectStorageService
+ * Mock implementation of IChannelStorageService
  */
-export class MockObjectStorageService implements IObjectStorageService {
+export class MockObjectStorageService implements IChannelStorageService {
     public constructor(private readonly contents: { [key: string]: string }) {
     }
     public async read(path: string): Promise<string> {
@@ -569,9 +567,9 @@ export class MockObjectStorageService implements IObjectStorageService {
 }
 
 /**
- * Mock implementation of ISharedObjectServices
+ * Mock implementation of IChannelServices
  */
-export class MockSharedObjectServices implements ISharedObjectServices {
+export class MockSharedObjectServices implements IChannelServices {
     public static createFromTree(tree: ITree) {
         const contents: { [key: string]: string } = {};
         for (const entry of tree.entries) {

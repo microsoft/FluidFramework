@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import {
     IFluidCodeDetails,
     IProxyLoaderFactory,
@@ -87,7 +87,7 @@ export class BaseHost {
         return container;
     }
 
-    public async getComponent(url: string) {
+    public async requestFluidObject(url: string) {
         const loader = await this.getLoader();
         const response = await loader.request({ url });
 
@@ -99,6 +99,6 @@ export class BaseHost {
             return undefined;
         }
 
-        return response.value as IComponent & IFluidObject;
+        return response.value as IFluidObject & IFluidObject;
     }
 }

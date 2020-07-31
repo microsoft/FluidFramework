@@ -5,15 +5,18 @@
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentDefaultFactoryName>> { }
+    export interface IComponent extends Readonly<Partial<IProvideFluidExportDefaultFactoryName>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideFluidExportDefaultFactoryName>> { }
 }
 
-export const IComponentDefaultFactoryName: keyof IProvideComponentDefaultFactoryName = "IComponentDefaultFactoryName";
+export const IFluidExportDefaultFactoryName: keyof IProvideFluidExportDefaultFactoryName =
+    "IFluidExportDefaultFactoryName";
 
-export interface IProvideComponentDefaultFactoryName {
-    readonly IComponentDefaultFactoryName: IComponentDefaultFactoryName;
+export interface IProvideFluidExportDefaultFactoryName {
+    readonly IFluidExportDefaultFactoryName: IFluidExportDefaultFactoryName;
 }
 
-export interface IComponentDefaultFactoryName extends IProvideComponentDefaultFactoryName {
+export interface IFluidExportDefaultFactoryName extends IProvideFluidExportDefaultFactoryName {
     getDefaultFactoryName(): string;
 }
