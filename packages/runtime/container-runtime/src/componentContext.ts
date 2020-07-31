@@ -620,10 +620,6 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
         scope: IFluidObject & IFluidObject,
         summaryTracker: SummaryTracker,
         bindComponent: (componentRuntime: IFluidDataStoreChannel) => void,
-        /**
-         * @deprecated 0.16 Issue #1635 Use the IFluidDataStoreFactory creation methods instead to specify initial state
-         */
-        public readonly createProps?: any,
     ) {
         super(runtime, id, false, storage, scope, summaryTracker, BindState.NotBound, bindComponent, pkg);
         this.attachListeners();

@@ -259,11 +259,6 @@ export interface IFluidDataStoreContext extends EventEmitter {
     readonly snapshotFn: (message: string) => Promise<void>;
 
     /**
-     * @deprecated 0.16 Issue #1635 Use the IFluidDataStoreFactory creation methods instead to specify initial state
-     */
-    readonly createProps?: any;
-
-    /**
      * Ambient services provided with the context
      */
     readonly scope: IFluidObject & IFluidObject;
