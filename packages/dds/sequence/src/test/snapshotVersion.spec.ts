@@ -8,7 +8,7 @@ import fs from "fs";
 import path from "path";
 import {
     MockContainerRuntimeFactory,
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
@@ -35,7 +35,7 @@ describe("SharedString Snapshot Version", () => {
             // load snapshot into sharedString
             const documentId = "fakeId";
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const componentRuntime = new MockComponentRuntime();
+            const componentRuntime = new MockFluidDataStoreRuntime();
             const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
             const services = {
                 deltaConnection: containerRuntime.createDeltaConnection(),

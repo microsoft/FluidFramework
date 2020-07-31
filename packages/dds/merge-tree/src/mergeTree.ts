@@ -810,7 +810,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
             pbuf += JSON.stringify(this.properties, (key, value) => {
                 // Avoid circular reference when stringifying makers containing handles.
                 // (Substitute a debug string instead.)
-                const handle = !!value && value.IComponentHandle;
+                const handle = !!value && value.IFluidHandle;
                 return handle
                     ? `#Handle(${handle.routeContext.path}/${handle.path})`
                     : value;

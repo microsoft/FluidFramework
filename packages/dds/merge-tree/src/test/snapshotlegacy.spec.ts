@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { SnapshotLegacy } from "../snapshotlegacy";
 import { TestClient } from ".";
@@ -26,11 +26,11 @@ describe("snapshot", () => {
         const services = new MockStorage(snapshotTree);
 
         const client2 = new TestClient(undefined);
-        const runtime: Partial<IComponentRuntime> = {
+        const runtime: Partial<IFluidDataStoreRuntime> = {
             logger: client2.logger,
             clientId: "1",
         };
-        await client2.load(runtime as IComponentRuntime, services);
+        await client2.load(runtime as IFluidDataStoreRuntime, services);
 
         assert.equal(client2.getLength(), client1.getLength());
         assert.equal(client2.getText(), client1.getText());
@@ -55,11 +55,11 @@ describe("snapshot", () => {
             snapshot.extractSync();
             const snapshotTree = snapshot.emit([]);
             const services = new MockStorage(snapshotTree);
-            const runtime: Partial<IComponentRuntime> = {
+            const runtime: Partial<IFluidDataStoreRuntime> = {
                 logger: client2.logger,
                 clientId: (i + 1).toString(),
             };
-            await client2.load(runtime as IComponentRuntime, services);
+            await client2.load(runtime as IFluidDataStoreRuntime, services);
 
             const client2Len = client2.getLength();
             assert.equal(

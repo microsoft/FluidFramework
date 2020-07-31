@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-client",
-  "version": "0.1010.0",
+  "version": "0.1011.0",
   "description": "Isomorphic services for communicating with Fluid",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -48,10 +48,10 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.20.0",
-    "@fluidframework/gitresources": "^0.1010.0",
-    "@fluidframework/protocol-base": "^0.1010.0",
-    "@fluidframework/protocol-definitions": "^0.1010.0",
+    "@fluidframework/common-utils": "^0.21.0",
+    "@fluidframework/gitresources": "^0.1011.0",
+    "@fluidframework/protocol-base": "^0.1011.0",
+    "@fluidframework/protocol-definitions": "^0.1011.0",
     "@types/node": "^10.17.24",
     "axios": "^0.18.0",
     "debug": "^4.1.1",

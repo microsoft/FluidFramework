@@ -3,32 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
-import { SharedComponentFactory, SharedComponent } from "@fluidframework/component-base";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { PureDataObjectFactory, PureDataObject } from "@fluidframework/component-base";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { FlowDocument } from "../document";
 import { hostType } from "../package";
 import { WebflowView } from "./host";
 import { importDoc } from "./import";
 
-export class WebFlow extends SharedComponent<ISharedDirectory> implements IComponentHTMLView {
-    private static readonly factory = new SharedComponentFactory<WebFlow>(
+export class WebFlow extends PureDataObject<ISharedDirectory> implements IFluidHTMLView {
+    private static readonly factory = new PureDataObjectFactory<WebFlow>(
         hostType,
         WebFlow,
         /* root: */ SharedDirectory.getFactory(),
         [],
         [FlowDocument.getFactory()]);
 
-    public static getFactory(): IComponentFactory { return WebFlow.factory; }
+    public static getFactory(): IFluidDataStoreFactory { return WebFlow.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
+    public static async create(parentContext: IFluidDataStoreContext, props?: any) {
         return WebFlow.factory.create(parentContext, props);
     }
 
-    public create() {
-        const doc = FlowDocument.create(this.context);
+    public async create() {
+        const doc = await FlowDocument.create(this.context) as FlowDocument;
         this.root.set("doc", doc.handle);
 
         const url = new URL(window.location.href);
@@ -41,16 +41,16 @@ export class WebFlow extends SharedComponent<ISharedDirectory> implements ICompo
 
     public async load() { }
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
-    // #region IComponentHTMLView
+    // #region IFluidHTMLView
 
     public render(elm: HTMLElement): void {
-        const view = new WebflowView(this.root.get<IComponentHandle<FlowDocument>>("doc").get());
+        const view = new WebflowView(this.root.get<IFluidHandle<FlowDocument>>("doc").get());
         view.render(elm);
     }
 
-    // #endregion IComponentHTMLView
+    // #endregion IFluidHTMLView
 
-    protected async componentInitializingFirstTime() { this.create(); }
+    protected async initializingFirstTime() { await this.create(); }
 }

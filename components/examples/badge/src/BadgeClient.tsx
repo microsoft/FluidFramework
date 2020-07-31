@@ -7,11 +7,11 @@ import { IColor } from "office-ui-fabric-react";
 import { BadgeView } from "./BadgeView";
 import { IBadgeClientProps, IBadgeType } from "./Badge.types";
 
- /**
- * The BadgeClient is a stateful, functional component that stores Fluid getters in state
- * and passes those getters and setters to the BadgeView. The state is updated each time that
- * the Fluid DDS's are modified.
- */
+/**
+* The BadgeClient is a stateful, functional component that stores Fluid getters in state
+* and passes those getters and setters to the BadgeView. The state is updated each time that
+* the Fluid DDS's are modified.
+*/
 
 export const BadgeClient: React.FC<IBadgeClientProps> = ({ model }: IBadgeClientProps) => {
     // Setters

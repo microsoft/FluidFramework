@@ -47,7 +47,7 @@ extends:
   template: templates/build-npm-package.yml
   parameters:
     buildDirectory: .
-    poolBuild: Default
+    poolBuild: Main
     cgSubDirectory: packages
     checkoutSubmodules: true
     preCG:

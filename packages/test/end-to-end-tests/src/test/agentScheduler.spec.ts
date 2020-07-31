@@ -30,9 +30,9 @@ describe("AgentScheduler", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function getComponent(componentId: string, container: Container): Promise<TaskManager> {
+    async function requestFluidObject(componentId: string, container: Container): Promise<TaskManager> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as TaskManager;
@@ -45,7 +45,7 @@ describe("AgentScheduler", () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
 
             const container = await createContainer();
-            scheduler = await getComponent(`${SchedulerType}`, container)
+            scheduler = await requestFluidObject(`${SchedulerType}`, container)
                 .then((taskManager) => taskManager.IAgentScheduler);
 
             // Make sure all initial ops (around leadership) are processed.
@@ -132,11 +132,11 @@ describe("AgentScheduler", () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
 
             container1 = await createContainer();
-            scheduler1 = await getComponent(`${SchedulerType}`, container1)
+            scheduler1 = await requestFluidObject(`${SchedulerType}`, container1)
                 .then((taskManager) => taskManager.IAgentScheduler);
 
             container2 = await createContainer();
-            scheduler2 = await getComponent(`${SchedulerType}`, container2)
+            scheduler2 = await requestFluidObject(`${SchedulerType}`, container2)
                 .then((taskManager) => taskManager.IAgentScheduler);
 
             // Make sure all initial ops (around leadership) are processed.

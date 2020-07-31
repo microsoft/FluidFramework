@@ -4,7 +4,7 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultComponent
+    ContainerRuntimeFactoryWithDefaultDataStore
 } from "@fluidframework/aqueduct";
 
 import { VersiontestInstantiationFactory } from "./main";
@@ -12,7 +12,7 @@ import { VersiontestInstantiationFactory } from "./main";
 const pkg = require("../package.json");
 const fluidPackageName = pkg.name as string;
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     fluidPackageName,
     new Map([
         [fluidPackageName, Promise.resolve(VersiontestInstantiationFactory)],

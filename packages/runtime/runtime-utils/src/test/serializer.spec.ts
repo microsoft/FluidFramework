@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ComponentSerializer } from "../serializer";
+import { FluidSerializer } from "../serializer";
 import {
     handle,
     makeJson,
@@ -19,7 +19,7 @@ const serHandle = {
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function printHandle(target: any) {
     return JSON.stringify(target, (key, value) => {
-        return value?.IComponentHandle !== undefined
+        return value?.IFluidHandle !== undefined
             ? "#HANDLE"
             : value;
     });
@@ -41,9 +41,9 @@ simple.push(
 // Add an array that contains each of our constructed test cases.
 simple.push([...simple]);
 
-const ser = new ComponentSerializer();
+const ser = new FluidSerializer();
 
-describe("ComponentSerializer", () => {
+describe("FluidSerializer", () => {
     describe("vanilla JSON", () => {
         // Verify that `replaceHandles` is a no-op for these simple cases.
         for (const input of simple) {

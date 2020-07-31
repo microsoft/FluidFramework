@@ -4,10 +4,10 @@
  */
 
 import {
-    PrimedComponent,
-    PrimedComponentFactory,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 
 import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";
@@ -18,7 +18,7 @@ const starListKey = "stars";
 /**
  * The Constellation is our implementation of the IConstellation interface.
  */
-export class Constellation extends PrimedComponent implements IConstellation {
+export class Constellation extends DataObject implements IConstellation {
     public static get ComponentName() { return "@fluid-example/constellation"; }
 
     private _stars: ICoordinate[] = [];
@@ -27,7 +27,7 @@ export class Constellation extends PrimedComponent implements IConstellation {
         return Constellation.factory;
     }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         Constellation.ComponentName,
         Constellation,
         [],
@@ -37,11 +37,11 @@ export class Constellation extends PrimedComponent implements IConstellation {
         ]),
     );
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         this.root.set(starListKey, []);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         await this.updateStarsFromRoot();
         this.root.on("valueChanged", (changed: IValueChanged) => {
             if (changed.key === starListKey) {
@@ -57,13 +57,13 @@ export class Constellation extends PrimedComponent implements IConstellation {
     }
 
     private async updateStarsFromRoot() {
-        const starHandles = this.root.get<IComponentHandle<ICoordinate>[]>(starListKey);
+        const starHandles = this.root.get<IFluidHandle<ICoordinate>[]>(starListKey);
         this._stars = await Promise.all(starHandles.map(async (starHandle) => starHandle.get()));
     }
 
     public async addStar(x: number, y: number): Promise<void> {
-        const starHandles = this.root.get<IComponentHandle<ICoordinate>[]>(starListKey);
-        const newStar: Coordinate = (await Coordinate.getFactory().createComponent(this.context)) as Coordinate;
+        const starHandles = this.root.get<IFluidHandle<ICoordinate>[]>(starListKey);
+        const newStar: Coordinate = (await Coordinate.getFactory()._createDataStore(this.context)) as Coordinate;
         newStar.x = x;
         newStar.y = y;
         starHandles.push(newStar.handle);

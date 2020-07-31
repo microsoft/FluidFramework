@@ -3,10 +3,10 @@
 * Licensed under the MIT License.
 */
 
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { WaterPark } from "./waterPark";
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     WaterPark.ComponentName,
     new Map([
         [WaterPark.ComponentName, Promise.resolve(WaterPark.getFactory())],

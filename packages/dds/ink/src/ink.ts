@@ -12,7 +12,7 @@ import {
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelAttributes,
 } from "@fluidframework/component-runtime-definitions";
@@ -48,7 +48,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      * @param id - Optional name of the Ink; will be assigned a unique ID if not provided
      * @returns Newly create Ink object (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, InkFactory.Type) as Ink;
     }
 
@@ -70,7 +70,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      * @param runtime - The runtime the Ink will be associated with
      * @param id - Unique ID for the Ink
      */
-    constructor(runtime: IComponentRuntime, id: string, attributes: IChannelAttributes) {
+    constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
     }
 
@@ -200,8 +200,8 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      * @param operation - The operation object
      */
     private executeClearOperation(operation: IClearOperation): void {
-        this.emit("clear", operation);
         this.inkData.clear();
+        this.emit("clear", operation);
     }
 
     /**

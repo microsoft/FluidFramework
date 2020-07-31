@@ -8,17 +8,17 @@ import { EventEmitter } from "events";
 import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IComponent,
-    IComponentHandleContext,
-    IComponentSerializer,
+    IFluidObject,
+    IFluidRouter,
+    IFluidHandleContext,
+    IFluidSerializer,
     IRequest,
     IResponse,
-    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
-    IComponentTokenProvider,
+    IFluidTokenProvider,
     IContainerContext,
     IDeltaManager,
     IDeltaSender,
@@ -33,6 +33,7 @@ import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/c
 import {
     Deferred,
     Trace,
+    unreachableCase,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
@@ -68,27 +69,27 @@ import {
 import {
     FlushMode,
     IAttachMessage,
-    IComponentContext,
-    IComponentRegistry,
-    IComponentRuntimeChannel,
+    IFluidDataStoreContext,
+    IFluidDataStoreRegistry,
+    IFluidDataStoreChannel,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelop,
-    NamedComponentRegistryEntries,
+    NamedFluidDataStoreRegistryEntries,
     SchedulerType,
 } from "@fluidframework/runtime-definitions";
-import { ComponentSerializer, SummaryTracker, unreachableCase, RequestParser } from "@fluidframework/runtime-utils";
+import { FluidSerializer, SummaryTracker, RequestParser } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
-import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
-import { ComponentHandleContext } from "./componentHandleContext";
-import { ComponentRegistry } from "./componentRegistry";
+import { FluidDataStoreContext, LocalFluidDataStoreContext, RemotedFluidDataStoreContext } from "./componentContext";
+import { FluidHandleContext } from "./componentHandleContext";
+import { FluidDataStoreRegistry } from "./componentRegistry";
 import { debug } from "./debug";
 import { ISummarizerRuntime, Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
-import { ReportConnectionTelemetry } from "./connectionTelemetry";
+import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
@@ -411,8 +412,8 @@ export class ScheduleManager {
 export const schedulerId = SchedulerType;
 
 // Wraps the provided list of packages and augments with some system level services.
-class ContainerRuntimeComponentRegistry extends ComponentRegistry {
-    constructor(namedEntries: NamedComponentRegistryEntries) {
+class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
+    constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
         super([
             ...namedEntries,
             [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
@@ -425,7 +426,7 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * It will define the component level mappings.
  */
 export class ContainerRuntime extends EventEmitter
-implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
+    implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
     public get IContainerRuntime() { return this; }
     public get IContainerRuntimeDirtyable() { return this; }
 
@@ -438,10 +439,10 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
      */
     public static async load(
         context: IContainerContext,
-        registryEntries: NamedComponentRegistryEntries,
+        registryEntries: NamedFluidDataStoreRegistryEntries,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
-        containerScope: IComponent & IFluidObject = context.scope,
+        containerScope: IFluidObject & IFluidObject = context.scope,
     ): Promise<ContainerRuntime> {
         // Back-compat: <= 0.18 loader
         if (context.deltaManager.lastSequenceNumber === undefined) {
@@ -450,7 +451,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             });
         }
 
-        const componentRegistry = new ContainerRuntimeComponentRegistry(registryEntries);
+        const componentRegistry = new ContainerRuntimeDataStoreRegistry(registryEntries);
 
         const chunkId = context.baseSnapshot?.blobs[chunksBlobName];
         const chunks = chunkId
@@ -468,7 +469,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         // Create all internal components in first load.
         if (!context.existing) {
-            await runtime.createComponent(schedulerId, schedulerId)
+            await runtime._createDataStore(schedulerId, schedulerId)
                 .then((componentRuntime) => {
                     componentRuntime.bindToContext();
                 });
@@ -543,11 +544,11 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         return this._flushMode;
     }
 
-    public get scope(): IComponent & IFluidObject {
+    public get scope(): IFluidObject & IFluidObject {
         return this.containerScope;
     }
 
-    public get IComponentRegistry(): IComponentRegistry {
+    public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
         return this.registry;
     }
 
@@ -562,10 +563,13 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     public nextSummarizerP?: Promise<Summarizer>;
     public nextSummarizerD?: Deferred<Summarizer>;
 
-    public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
+    public readonly IFluidSerializer: IFluidSerializer = new FluidSerializer();
 
-    public readonly IComponentHandleContext: IComponentHandleContext;
+    public readonly IFluidHandleContext: IFluidHandleContext;
 
+    // internal logger for ContainerRuntime
+    private readonly _logger: ITelemetryLogger;
+    // publicly visible logger, to be used by components, summarize, etc.
     public readonly logger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
@@ -586,8 +590,10 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     // Always matched IAgentScheduler.leader property
     private _leader = false;
 
+    private _connected: boolean;
+
     public get connected(): boolean {
-        return this.context.connected;
+        return this._connected;
     }
 
     public get leader(): boolean {
@@ -619,24 +625,25 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     private readonly chunkMap: Map<string, string[]>;
 
     // Attached and loaded context proxies
-    private readonly contexts = new Map<string, ComponentContext>();
+    private readonly contexts = new Map<string, FluidDataStoreContext>();
     // List of pending contexts (for the case where a client knows a component will exist and is waiting
     // on its creation). This is a superset of contexts.
-    private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
+    private readonly contextsDeferred = new Map<string, Deferred<FluidDataStoreContext>>();
 
     private constructor(
         private readonly context: IContainerContext,
-        private readonly registry: IComponentRegistry,
+        private readonly registry: IFluidDataStoreRegistry,
         chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: true, enableWorker: false },
-        private readonly containerScope: IComponent & IFluidObject,
+        private readonly containerScope: IFluidObject & IFluidObject,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
     ) {
         super();
 
+        this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
 
-        this.IComponentHandleContext = new ComponentHandleContext("", this);
+        this.IFluidHandleContext = new FluidHandleContext("", this);
 
         this.latestSummaryAck = {
             proposalHandle: undefined,
@@ -662,7 +669,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         // Create a context for each of them
         for (const [key, value] of components) {
-            const componentContext = new RemotedComponentContext(
+            const componentContext = new RemotedFluidDataStoreContext(
                 key,
                 typeof value === "string" ? value : Promise.resolve(value),
                 this,
@@ -675,6 +682,8 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         this.logger = ChildLogger.create(context.logger, undefined, {
             runtimeVersion: pkgVersion,
         });
+
+        this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
@@ -706,7 +715,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             () => this.summaryConfiguration,
             async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
             (summContext, refSeq) => this.refreshLatestSummaryAck(summContext, refSeq),
-            this.IComponentHandleContext,
+            this.IFluidHandleContext,
             this.previousState.summaryCollection);
 
         // Create the SummaryManager and mark the initial state
@@ -720,12 +729,36 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             !!this.previousState.reload,
             this.runtimeOptions.initialSummarizerDelayMs);
 
-        if (this.context.connected) {
+        if (this.connected) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.summaryManager.setConnected(this.context.clientId!);
         }
 
-        ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
+        this.deltaManager.on("readonly", (readonly: boolean) => {
+            // we accumulate ops while being in read-only state.
+            // once user gets write permissions and we have active connection, flush all pending ops.
+            assert(readonly === this.deltaManager.readonly, "inconsistent readonly property/event state");
+
+            // We need to be very careful with when we (re)send pending ops, to ensure that we only send ops
+            // when we either never send an op, or attempted to send it but we know for sure it was not
+            // sequenced by server and will never be sequenced (i.e. was lost)
+            // For loss of connection, we wait for our own "join" op and use it a a barrier to know all the
+            // ops that maid it from previous connection, before switching clientId and raising "connected" event
+            // But with read-only permissions, if we transition between read-only and r/w states while on same
+            // connection, then we have no good signal to tell us when it's safe to send ops we accumulated while
+            // being in read-only state.
+            // For that reason, we support getting to read-only state only when disconnected. This ensures that we
+            // can reply on same safety mechanism and resend ops only when we establish new connection.
+            // This is applicable for read-only permissions (event is raised before connection is properly registered),
+            // but it's an extra requirement for Container.forceReadonly() API
+            assert(!readonly || !this.connected, "Unsafe to transition to read-only state!");
+
+            if (this.canSendOps()) {
+                this.pendingStateManager.replayPendingStates();
+            }
+        });
+
+        ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
     public dispose(): void {
@@ -742,7 +775,11 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             contextD.promise.then((context) => {
                 context.dispose();
             }).catch((contextError) => {
-                this.logger.sendErrorEvent({ eventName: "ComponentContextDisposeError", componentId }, contextError);
+                this._logger.sendErrorEvent({
+                    eventName: "ComponentContextDisposeError",
+                    componentId,
+                },
+                    contextError);
             });
         }
 
@@ -750,17 +787,17 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         this.removeAllListeners();
     }
 
-    public get IComponentTokenProvider() {
+    public get IFluidTokenProvider() {
         if (this.options && this.options.intelligence) {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             return {
                 intelligence: this.options.intelligence,
-            } as IComponentTokenProvider;
+            } as IFluidTokenProvider;
         }
         return undefined;
     }
 
-    public get IComponentConfiguration() {
+    public get IFluidConfiguration() {
         return this.context.configuration;
     }
 
@@ -774,23 +811,23 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         if (requestParser.pathParts.length === 1 && requestParser.pathParts[0] === "_summarizer") {
             return {
                 status: 200,
-                mimeType: "fluid/component",
+                mimeType: "fluid/object",
                 value: this.summarizer,
             };
         } else if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === schedulerId) {
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const component = await this.getComponentRuntime(requestParser.pathParts[0], wait) as IComponent;
+            const component = await this.getDataStore(requestParser.pathParts[0], wait) as IFluidObject;
             if (component) {
                 const subRequest = requestParser.createSubRequest(1);
                 if (subRequest !== undefined) {
-                    assert(component.IComponentRouter);
-                    return component.IComponentRouter.request(subRequest);
+                    assert(component.IFluidRouter);
+                    return component.IFluidRouter.request(subRequest);
                 } else {
                     return {
                         status: 200,
-                        mimeType: "fluid/component",
+                        mimeType: "fluid/object",
                         value: component,
                     };
                 }
@@ -890,7 +927,9 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
-        assert(this.connected === connected);
+        // There might be no change of state due to Container calling this API after loading runtime.
+        const changeOfState = this._connected !== connected;
+        this._connected = connected;
 
         if (connected) {
             // Once we are connected, all acks are accounted.
@@ -899,13 +938,15 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             this.updateDocumentDirtyState(false);
         }
 
-        this.pendingStateManager.setConnectionState(connected);
+        if (changeOfState && this.canSendOps()) {
+            this.pendingStateManager.replayPendingStates();
+        }
 
         for (const [component, componentContext] of this.contexts) {
             try {
                 componentContext.setConnectionState(connected, clientId);
             } catch (error) {
-                this.logger.sendErrorEvent({
+                this._logger.sendErrorEvent({
                     eventName: "ChangeConnectionStateError",
                     clientId,
                     component,
@@ -913,7 +954,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             }
         }
 
-        raiseConnectedEvent(this.logger, this, connected, clientId);
+        raiseConnectedEvent(this._logger, this, connected, clientId);
 
         if (connected) {
             assert(clientId);
@@ -1003,14 +1044,17 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         if (!context) {
             // Attach message may not have been processed yet
             assert(!local);
-            this.logger.sendTelemetryEvent({ eventName: "SignalComponentNotFound", componentId: envelope.address });
+            this._logger.sendTelemetryEvent({
+                eventName: "SignalComponentNotFound",
+                componentId: envelope.address,
+            });
             return;
         }
 
         context.processSignal(transformed, local);
     }
 
-    public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntimeChannel> {
+    public async getDataStore(id: string, wait = true): Promise<IFluidDataStoreChannel> {
         // Ensure deferred if it doesn't exist which will resolve once the process ID arrives
         const deferredContext = this.ensureContextDeferred(id);
 
@@ -1022,7 +1066,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         return componentContext.realize();
     }
 
-    public notifyComponentInstantiated(componentContext: IComponentContext) {
+    public notifyDataStoreInstantiated(componentContext: IFluidDataStoreContext) {
         const componentPkgName = componentContext.packagePath[componentContext.packagePath.length - 1];
         const registryPath =
             `/${componentContext.packagePath.slice(0, componentContext.packagePath.length - 1).join("/")}`;
@@ -1099,19 +1143,30 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
      * @deprecated
      * Remove once issue #1756 is closed
      */
-    public async createComponent(idOrPkg: string, maybePkg: string | string[]) {
+    public async _createDataStore(idOrPkg: string, maybePkg: string | string[]) {
         const id = maybePkg === undefined ? uuid() : idOrPkg;
         const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
-        return this._createComponentWithProps(pkg, undefined, id);
+        return this._createDataStoreWithProps(pkg, undefined, id);
     }
 
-    public async _createComponentWithProps(pkg: string | string[], props?: any, id?: string):
-        Promise<IComponentRuntimeChannel> {
+    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter> {
+        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg]).realize();
+    }
+
+    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
+        const context = this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], rootDataStoreId);
+        const component = await context.realize();
+        component.bindToContext();
+        return component;
+    }
+
+    public async _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string):
+        Promise<IFluidDataStoreChannel> {
         return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
     }
 
-    public createComponentContext(pkg: string[], props?: any): IComponentContext {
-        return this._createComponentContext(pkg, props);
+    private canSendOps() {
+        return this.connected && !this.deltaManager.readonly;
     }
 
     private _createComponentContext(pkg: string[], props?: any, id = uuid()) {
@@ -1119,41 +1174,41 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         assert(!this.contexts.has(id), "Creating component with existing ID");
         this.notBoundedComponentContexts.add(id);
-        const context = new LocalComponentContext(
+        const context = new LocalFluidDataStoreContext(
             id,
             pkg,
             this,
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            (cr: IComponentRuntimeChannel) => this.bindComponent(cr),
+            (cr: IFluidDataStoreChannel) => this.bindComponent(cr),
             props);
 
-        const deferred = new Deferred<ComponentContext>();
+        const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
         this.contexts.set(id, context);
 
         return context;
     }
 
-    public async createComponentWithRealizationFn(
+    public async createDataStoreWithRealizationFn(
         pkg: string[],
-        realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponentRuntimeChannel> {
+        realizationFn?: (context: IFluidDataStoreContext) => void,
+    ): Promise<IFluidDataStoreChannel> {
         this.verifyNotClosed();
         const id: string = uuid();
         this.notBoundedComponentContexts.add(id);
-        const context = new LocalComponentContext(
+        const context = new LocalFluidDataStoreContext(
             id,
             pkg,
             this,
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            (cr: IComponentRuntimeChannel) => this.bindComponent(cr),
-            undefined /* #1635: Remove LocalComponentContext createProps */);
+            (cr: IFluidDataStoreChannel) => this.bindComponent(cr),
+            undefined /* #1635: Remove LocalFluidDataStoreContext createProps */);
 
-        const deferred = new Deferred<ComponentContext>();
+        const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
         this.contexts.set(id, context);
 
@@ -1206,7 +1261,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     /**
      * Will return true for any message that affect the dirty state of this document
      * This function can be used to filter out any runtime operations that should not be affecting whether or not
-     * the IComponentRuntime.isDocumentDirty call returns true/false
+     * the IFluidDataStoreRuntime.isDocumentDirty call returns true/false
      * @param type - The type of ContainerRuntime message that is being checked
      * @param contents - The contents of the message that is being verified
      */
@@ -1303,8 +1358,8 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         }
 
         // Include the type of attach message which is the pkg of the component to be
-        // used by RemotedComponentContext in case it is not in the snapshot.
-        const remotedComponentContext = new RemotedComponentContext(
+        // used by RemotedFluidDataStoreContext  in case it is not in the snapshot.
+        const remotedComponentContext = new RemotedFluidDataStoreContext(
             attachMessage.id,
             snapshotTreeP,
             this,
@@ -1331,12 +1386,12 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         componentContext.process(transformed, local, localMessageMetadata);
     }
 
-    private bindComponent(componentRuntime: IComponentRuntimeChannel): void {
+    private bindComponent(componentRuntime: IFluidDataStoreChannel): void {
         this.verifyNotClosed();
         assert(this.notBoundedComponentContexts.has(componentRuntime.id),
             "Component to be binded should be in not bounded set");
         this.notBoundedComponentContexts.delete(componentRuntime.id);
-        const context = this.getContext(componentRuntime.id) as LocalComponentContext;
+        const context = this.getContext(componentRuntime.id) as LocalFluidDataStoreContext;
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients but we do need to submit op if container forced us to do so.
@@ -1353,22 +1408,22 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         deferred.resolve(context);
     }
 
-    private ensureContextDeferred(id: string): Deferred<ComponentContext> {
+    private ensureContextDeferred(id: string): Deferred<FluidDataStoreContext> {
         const deferred = this.contextsDeferred.get(id);
         if (deferred) { return deferred; }
-        const newDeferred = new Deferred<ComponentContext>();
+        const newDeferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, newDeferred);
         return newDeferred;
     }
 
-    private getContextDeferred(id: string): Deferred<ComponentContext> {
+    private getContextDeferred(id: string): Deferred<FluidDataStoreContext> {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const deferred = this.contextsDeferred.get(id)!;
         assert(deferred);
         return deferred;
     }
 
-    private setNewContext(id: string, context?: ComponentContext) {
+    private setNewContext(id: string, context?: FluidDataStoreContext) {
         assert(context);
         assert(!this.contexts.has(id));
         this.contexts.set(id, context);
@@ -1376,7 +1431,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         deferred.resolve(context);
     }
 
-    private getContext(id: string): ComponentContext {
+    private getContext(id: string): FluidDataStoreContext {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const context = this.contexts.get(id)!;
         assert(context);
@@ -1447,7 +1502,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
 
         // TODO: Issue-2171 Support for Branch Snapshots
         if (this.parentBranch) {
-            this.logger.sendTelemetryEvent({
+            this._logger.sendTelemetryEvent({
                 eventName: "SkipGenerateSummaryParentBranch",
                 parentBranch: this.parentBranch,
             });
@@ -1574,23 +1629,23 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     public submitComponentOp(
         id: string,
         contents: any,
-        localOpMetadata: unknown = undefined): number {
+        localOpMetadata: unknown = undefined): void {
         const envelope: IEnvelope = {
             address: id,
             contents,
         };
-        return this.submit(ContainerMessageType.ComponentOp, envelope, localOpMetadata);
+        this.submit(ContainerMessageType.ComponentOp, envelope, localOpMetadata);
     }
 
     private submit(
         type: ContainerMessageType,
         content: any,
-        localOpMetadata: unknown = undefined): number {
+        localOpMetadata: unknown = undefined): void {
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
 
-        if (this.connected) {
+        if (this.canSendOps()) {
             const serializedContent = JSON.stringify(content);
             const maxOpSize = this.context.deltaManager.maxMessageSize;
 
@@ -1629,8 +1684,6 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }
-
-        return clientSequenceNumber;
     }
 
     private submitChunkedMessage(type: ContainerMessageType, content: string, maxOpSize: number): number {
@@ -1665,7 +1718,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         // That might be not what caller hopes to get, but we can look deeper if telemetry tells us it's a problem.
         const middleOfBatch = this.flushMode === FlushMode.Manual && this.needsFlush;
         if (middleOfBatch) {
-            this.logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
+            this._logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
         }
 
         return this.context.submitFn(
@@ -1678,8 +1731,7 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
         type: ContainerMessageType,
         contents: any,
         batch: boolean,
-        appData?: any)
-    {
+        appData?: any) {
         const payload: ContainerRuntimeMessage = { type, contents };
         return this.context.submitFn(
             MessageType.Operation,
@@ -1714,12 +1766,10 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
             case ContainerMessageType.Attach:
                 this.submit(type, content, localOpMetadata);
                 break;
-            default:
-                unreachableCase(type);
-                break;
             case ContainerMessageType.ChunkedOp:
-                unreachableCase(type as never);
-                break;
+                throw new Error(`chunkedOp not expected here`);
+            default:
+                unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
         }
     }
 
@@ -1762,9 +1812,9 @@ implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerR
     }
 
     private async getScheduler() {
-        const schedulerRuntime = await this.getComponentRuntime(schedulerId, true);
+        const schedulerRuntime = await this.getDataStore(schedulerId, true);
         const schedulerResponse = await schedulerRuntime.request({ url: "" });
-        const schedulerComponent = schedulerResponse.value as IComponent;
+        const schedulerComponent = schedulerResponse.value as IFluidObject;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return schedulerComponent.IAgentScheduler!;
     }

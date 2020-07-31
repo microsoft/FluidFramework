@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelServices,
     IChannelFactory,
@@ -75,7 +75,7 @@ export class MapFactory implements IChannelFactory {
    * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.load}
    */
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
         branchId: string,
@@ -89,7 +89,7 @@ export class MapFactory implements IChannelFactory {
     /**
    * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
    */
-    public create(runtime: IComponentRuntime, id: string): ISharedMap {
+    public create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap {
         const map = new SharedMap(id, runtime, MapFactory.Attributes);
         map.initializeLocal();
 
@@ -107,7 +107,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
    * @param id - Optional name of the shared map
    * @returns Newly create shared map (but not attached yet)
    */
-    public static create(runtime: IComponentRuntime, id?: string): SharedMap {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap {
         return runtime.createChannel(id, MapFactory.Type) as SharedMap;
     }
 
@@ -137,7 +137,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
    */
     constructor(
         id: string,
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);

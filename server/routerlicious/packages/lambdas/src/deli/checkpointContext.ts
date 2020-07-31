@@ -75,7 +75,12 @@ export class CheckpointContext {
             },
             (error) => {
                 // TODO flag context as error
-                this.context.log.error(`Error writing checkpoint to MongoDB: ${JSON.stringify(error)}`);
+                const messageMetaData = {
+                    documentId: this.id,
+                    tenantId: this.tenantId,
+                };
+                this.context.log.error(
+                    `Error writing checkpoint to MongoDB: ${JSON.stringify(error)}`, { messageMetaData });
             });
     }
 
@@ -111,7 +116,12 @@ export class CheckpointContext {
         // Retry the checkpoint on error
         // eslint-disable-next-line @typescript-eslint/promise-function-async
         return updateP.catch((error) => {
-            this.context.log.error(`Error writing checkpoint to MongoDB: ${JSON.stringify(error)}`);
+            const messageMetaData = {
+                documentId: this.id,
+                tenantId: this.tenantId,
+            };
+            this.context.log.error(
+                `Error writing checkpoint to MongoDB: ${JSON.stringify(error)}`, { messageMetaData });
             return new Promise<void>((resolve, reject) => {
                 resolve(this.checkpointCore(checkpoint));
             });

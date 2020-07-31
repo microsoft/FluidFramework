@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
- // keep the old types for back-compat
- // for those that need to support both
+// keep the old types for back-compat
+// for those that need to support both
 export { IComponent } from "./legacy/components";
 export * from "./legacy";
 

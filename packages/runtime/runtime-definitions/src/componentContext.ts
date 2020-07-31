@@ -6,14 +6,13 @@
 import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
-    IComponent,
-    IComponentLoadable,
-    IComponentRouter,
-    IProvideComponentHandleContext,
-    IProvideComponentSerializer,
+    IFluidObject,
+    IFluidLoadable,
+    IFluidRouter,
+    IProvideFluidHandleContext,
+    IProvideFluidSerializer,
     IRequest,
     IResponse,
-    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -33,7 +32,7 @@ import {
     ISnapshotTree,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IProvideComponentRegistry } from "./componentRegistry";
+import { IProvideFluidDataStoreRegistry } from "./componentRegistry";
 import { IInboundSignalMessage } from "./protocol";
 
 /**
@@ -54,14 +53,14 @@ export enum FlushMode {
 
 /**
  * A reduced set of functionality of IContainerRuntime that a component/component runtime will need
- * TODO: this should be merged into IComponentContext
+ * TODO: this should be merged into IFluidDataStoreContext
  */
 export interface IContainerRuntimeBase extends
     EventEmitter,
-    IProvideComponentHandleContext,
-    IProvideComponentSerializer,
+    IProvideFluidHandleContext,
+    IProvideFluidSerializer,
     /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
-    IProvideComponentRegistry {
+    IProvideFluidDataStoreRegistry {
 
     readonly logger: ITelemetryLogger;
     readonly clientDetails: IClientDetails;
@@ -96,29 +95,18 @@ export interface IContainerRuntimeBase extends
     on(event: "leader" | "notleader", listener: () => void): this;
 
     /**
-     * Creates a new IComponentContext instance.  The caller completes construction of the the component by
-     * calling IComponentContext.bindRuntime() when the component is prepared to begin processing ops.
-     *
-     * @param pkg - Package path for the component to be created
-     * @param props - Properties to be passed to the instantiateComponent thru the context
-     *  @deprecated 0.16 Issue #1537 Properties should be passed directly to the component's initialization
-     *  or to the factory method rather than be stored in/passed from the context
-     */
-    createComponentContext(pkg: string[], props?: any): IComponentContext;
-
-    /**
      * @deprecated 0.16 Issue #1537
      *  Properties should be passed to the component factory method rather than to the runtime
      * Creates a new component with props
      * @param pkg - Package name of the component
-     * @param props - properties to be passed to the instantiateComponent thru the context
+     * @param props - properties to be passed to the instantiateDataStore thru the context
      * @param id - Only supplied if the component is explicitly passing its ID, only used for default components
      * @remarks
-     * Only used by aqueduct PrimedComponent to pass param to the instantiateComponent function thru the context.
+     * Only used by aqueduct DataObject to pass param to the instantiateDataStore function thru the context.
      * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
      * @internal
      */
-    _createComponentWithProps(pkg: string | string[], props?: any, id?: string): Promise<IComponentRuntimeChannel>;
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IFluidDataStoreChannel>;
 
     /**
      * @deprecated
@@ -127,7 +115,16 @@ export interface IContainerRuntimeBase extends
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      * Remove once issue #1756 is closed
      */
-    createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntimeChannel>;
+    _createDataStore(pkgOrId: string, pkg?: string | string[]): Promise<IFluidDataStoreChannel>;
+
+    /**
+     * Creates data store. Returns router of data store. Data store is not bound to container,
+     * store in such state is not persisted to storage (file). Storing a handle to this store
+     * (or any of its parts, like DDS) into already attached DDS (or non-attached DDS that will eventually
+     * gets attached to storage) will result in this store being attached to storage.
+     * @param pkg - Package name of the data store factory
+     */
+    createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
 
     /**
      * Get an absolute url for a provided container-relative request.
@@ -138,14 +135,14 @@ export interface IContainerRuntimeBase extends
 }
 
 /**
- * Minimal interface a component runtime need to provide for IComponentContext to bind to control
+ * Minimal interface a component runtime need to provide for IFluidDataStoreContext to bind to control
  *
  * Functionality include attach, snapshot, op/signal processing, request routes,
  * and connection state notifications
  */
-export interface IComponentRuntimeChannel extends
-    IComponentRouter,
-    Partial<IProvideComponentRegistry>,
+export interface IFluidDataStoreChannel extends
+    IFluidRouter,
+    Partial<IProvideFluidDataStoreRegistry>,
     IDisposable {
 
     readonly id: string;
@@ -237,7 +234,7 @@ export interface ISummaryTracker {
  * Represents the context for the component. It is used by the component runtime to
  * get information and call functionality to the container.
  */
-export interface IComponentContext extends EventEmitter {
+export interface IFluidDataStoreContext extends EventEmitter {
     readonly documentId: string;
     readonly id: string;
     /**
@@ -273,14 +270,14 @@ export interface IComponentContext extends EventEmitter {
     readonly snapshotFn: (message: string) => Promise<void>;
 
     /**
-     * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
+     * @deprecated 0.16 Issue #1635 Use the IFluidDataStoreFactory creation methods instead to specify initial state
      */
     readonly createProps?: any;
 
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IComponent & IFluidObject;
+    readonly scope: IFluidObject & IFluidObject;
     readonly summaryTracker: ISummaryTracker;
 
     on(event: "leader" | "notleader" | "attaching" | "attached", listener: () => void): this;
@@ -309,7 +306,7 @@ export interface IComponentContext extends EventEmitter {
      * the server. This will be sent back when this message is received back from the server. This is also sent if
      * we are asked to resubmit the message.
      */
-    submitMessage(type: string, content: any, localOpMetadata: unknown): number;
+    submitMessage(type: string, content: any, localOpMetadata: unknown): void;
 
     /**
      * Submits the signal to be sent to other clients.
@@ -319,19 +316,20 @@ export interface IComponentContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
-     * @deprecated 0.16 Issue #1537, issue #1756 Components should be created using IComponentFactory methods instead
+     * @deprecated 0.16 Issue #1537, issue #1756 Components
+     *      should be created using IFluidDataStoreFactory methods instead
      * Creates a new component by using subregistries.
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
      *                  ID is being deprecated, so prefer passing undefined instead (the runtime will
      *                  generate an ID in this case).
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
-     * @param props - Properties to be passed to the instantiateComponent through the context.
+     * @param props - Properties to be passed to the instantiateDataStore through the context.
      */
-    createComponent(
+    _createDataStore(
         pkgOrId: string | undefined,
         pkg?: string | string[],
         props?: any,
-    ): Promise<IComponentRuntimeChannel>;
+    ): Promise<IFluidDataStoreChannel>;
 
     /**
      * Create a new component using subregistries with fallback.
@@ -340,24 +338,24 @@ export interface IComponentContext extends EventEmitter {
      * @returns A promise for a component that will have been initialized. Caller is responsible
      * for attaching the component to the provided runtime's container such as by storing its handle
      */
-    createComponentWithRealizationFn(
+    createDataStoreWithRealizationFn(
         pkg: string,
-        realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponent & IComponentLoadable>;
+        realizationFn?: (context: IFluidDataStoreContext) => void,
+    ): Promise<IFluidObject & IFluidLoadable>;
 
     /**
      * Binds a runtime to the context.
      */
-    bindRuntime(componentRuntime: IComponentRuntimeChannel): void;
+    bindRuntime(componentRuntime: IFluidDataStoreChannel): void;
 
     /**
      * Register the runtime to the container
      * @param componentRuntime - runtime to attach
      */
-    bindToContext(componentRuntime: IComponentRuntimeChannel): void;
+    bindToContext(componentRuntime: IFluidDataStoreChannel): void;
 
     /**
-     * Call by IComponentRuntimeChannel, indicates that a channel is dirty and needs to be part of the summary.
+     * Call by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
      * @param address - The address of the channe that is dirty.
      */
     setChannelDirty(address: string): void;
@@ -371,15 +369,15 @@ export interface IComponentContext extends EventEmitter {
 }
 
 /**
- * Legacy API to be removed from IComponentContext
+ * Legacy API to be removed from IFluidDataStoreContext
  *
  * Moving out of the main interface to force compilation error.
  * But the implementation is still in place as a transition so user can case to
  * the legacy interface and use it temporary if changing their code take some time.
  */
-export interface IComponentContextLegacy extends IComponentContext {
+export interface IComponentContextLegacy extends IFluidDataStoreContext {
     /**
-     * @deprecated 0.18. Should call IComponentRuntimeChannel.request directly
+     * @deprecated 0.18. Should call IFluidDataStoreChannel.request directly
      * Make request to the component.
      * @param request - Request.
      */

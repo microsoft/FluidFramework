@@ -4,8 +4,8 @@
  */
 
 import {
-    PrimedComponent,
-    PrimedComponentFactory,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { UpgradeManager } from "@fluidframework/base-host"
@@ -22,18 +22,18 @@ const signalKey = {
 };
 const versionTest1Name = pkg.name as string;
 
-export class VersionTest extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class VersionTest extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
     private upgradeManager: UpgradeManager | undefined;
     private upgradeToPkg: string = "@fluid-internal/version-test-2";
     private upgradeToVersion: string = "0.2.x";
     private cdn: string = "http://localhost:8080/file";
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         this.root.set("title", "version 1");
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.upgradeManager = new UpgradeManager(this.runtime);
 
         this.runtime.on("signal", (message) => {
@@ -120,4 +120,4 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
     }
 }
 
-export const VersiontestInstantiationFactory = new PrimedComponentFactory(versionTest1Name, VersionTest, [], {});
+export const VersiontestInstantiationFactory = new DataObjectFactory(versionTest1Name, VersionTest, [], {});

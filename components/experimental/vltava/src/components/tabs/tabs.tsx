@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidObject } from "@fluidframework/component-core-interfaces";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -15,10 +15,10 @@ import { TabsView } from "./view";
 
 export const TabsName = "tabs";
 
-export class TabsComponent extends PrimedComponent implements IComponentHTMLView {
+export class TabsComponent extends DataObject implements IFluidHTMLView {
     private dataModelInternal: ITabsDataModel | undefined;
 
-    private static readonly factory = new PrimedComponentFactory(TabsName, TabsComponent, [], {});
+    private static readonly factory = new DataObjectFactory(TabsName, TabsComponent, [], {});
 
     public static getFactory() {
         return TabsComponent.factory;
@@ -32,23 +32,23 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
         return this.dataModelInternal;
     }
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         // create the tabs directory
         this.root.createSubDirectory("tab-ids");
     }
 
-    protected async componentHasInitialized() {
-        const registry = await this.context.containerRuntime.IComponentRegistry.get("");
+    protected async hasInitialized() {
+        const registry = await this.context.containerRuntime.IFluidDataStoreRegistry.get("");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const registryDetails = (registry as IFluidObject).IComponentInternalRegistry!;
         this.dataModelInternal =
             new TabsDataModel(
                 this.root,
                 registryDetails,
-                this.createAndAttachComponent.bind(this),
-                this.getComponentFromDirectory.bind(this),
+                this.createAndAttachDataStore.bind(this),
+                this.getFluidObjectFromDirectory.bind(this),
             );
     }
 

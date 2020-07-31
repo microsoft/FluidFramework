@@ -10,7 +10,7 @@ declare module "@fluidframework/component-core-interfaces" {
         & IProvideComponentCursor
         & IProvideComponentKeyHandlers>> {
     }
-        // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<
         IProvideComponentLayout
         & IProvideComponentCursor

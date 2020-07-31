@@ -9,7 +9,7 @@ import {
     IComponentMountableView,
     IFluidHTMLView,
     IFluidMountableView,
- } from "@fluidframework/view-interfaces";
+} from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 

@@ -4,8 +4,8 @@
  */
 
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
-import { PrimedComponent } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { DataObject } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IComponentLayout } from "@fluidframework/framework-experimental";
 import {
     IMergeTreeGroupMsg,
@@ -15,7 +15,7 @@ import {
     MergeTreeDeltaType,
 } from "@fluidframework/merge-tree";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-unresolved
 import * as monaco from "monaco-editor";
 
@@ -58,10 +58,10 @@ const defaultCompilerOptions = {
 /**
  * Component for using the Monaco text editor.
  */
-export class MonacoRunner extends PrimedComponent implements
-    IComponentHTMLView, IComponentLayout {
-    public get IComponentHTMLView() { return this; }
-    public get IComponentLoadable() { return this; }
+export class MonacoRunner extends DataObject implements
+    IFluidHTMLView, IComponentLayout {
+    public get IFluidHTMLView() { return this; }
+    public get IFluidLoadable() { return this; }
     public get IComponentLayout() { return this; }
 
     /**
@@ -92,7 +92,7 @@ export class MonacoRunner extends PrimedComponent implements
      */
     private codeEditor: monaco.editor.IStandaloneCodeEditor;
 
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         if (!this.mapHost) {
             this.mapHost = document.createElement("div");
             elm.appendChild(this.mapHost);
@@ -109,7 +109,7 @@ export class MonacoRunner extends PrimedComponent implements
      * Creates the SharedString and inserts some sample text. create() is called only once
      * per component.
      */
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const codeString = SharedString.create(this.runtime);
         codeString.insertText(0, 'console.log("Hello, world!");');
         this.root.set("text", codeString.handle);
@@ -130,7 +130,7 @@ export class MonacoRunner extends PrimedComponent implements
         // outputDiv.style.width = "50%";
         // hostWrapper.appendChild(outputDiv);
 
-        const textHandle = await this.root.wait<IComponentHandle<SharedString>>("text");
+        const textHandle = await this.root.wait<IFluidHandle<SharedString>>("text");
         const text = await textHandle.get();
 
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
