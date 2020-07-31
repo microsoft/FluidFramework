@@ -9,7 +9,7 @@ import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframe
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { IFluidDataStoreContext, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
@@ -21,7 +21,6 @@ import { Deferred } from "@fluidframework/common-utils";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
 import { Ink, IColor } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { SharedCell } from "@fluidframework/cell";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
@@ -290,31 +289,31 @@ describe("Detached Container", () => {
 
     it("Fire component attach ops during container attach", async () => {
         const testComponentType = "default";
-        // eslint-disable-next-line prefer-const
-        let peerComponentRuntimeChannel: IFluidDataStoreChannel;
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
-            assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
-            assert.strictEqual(contents.contents.id,
-                peerComponentRuntimeChannel.id, "Component id should match");
-            assert.strictEqual(contents.contents.type,
-                testComponentType, "Component type should match");
-            defPromise.resolve();
-            return 0;
-        };
 
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
         const component = response.value as ITestFluidComponent;
 
         const containerP = container.attach(request);
-        peerComponentRuntimeChannel = await (component.context.containerRuntime as IContainerRuntime)
-            .createDataStoreWithRealizationFn([testComponentType]);
+        const router = await component.context.containerRuntime.createDataStore([testComponentType]);
+        const comp2 = await requestFluidObject<ITestFluidComponent>(router, "/");
+
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        container.deltaManager.submit = (type, contents, batch, metadata) => {
+            assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
+            assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
+            assert.strictEqual(contents.contents.id,
+                comp2.context.id, "Component id should match");
+            assert.strictEqual(contents.contents.type,
+                testComponentType, "Component type should match");
+            defPromise.resolve();
+            return 0;
+        };
+
         // Fire attach op
-        peerComponentRuntimeChannel.bindToContext();
+        component.root.set("attachComp", comp2.handle);
         await containerP;
         await defPromise.promise;
     });

@@ -27,6 +27,7 @@ import {
     isRuntimeMessage,
     unpackRuntimeMessage,
 } from "@fluidframework/container-runtime";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 describe("Ops on Reconnect", () => {
     const id = `fluid-test://localhost/opsOnReconnectTest`;
@@ -91,15 +92,6 @@ describe("Ops on Reconnect", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function requestFluidObject(componentId: string, fromContainer: Container):
-        Promise<ITestFluidComponent & IFluidLoadable> {
-        const response = await fromContainer.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
-        }
-        return response.value as ITestFluidComponent & IFluidLoadable;
-    }
-
     async function setupSecondContainersComponent(): Promise<ITestFluidComponent> {
         const secondContainer = await createContainer();
         secondContainer.on("op", (containerMessage: ISequencedDocumentMessage) => {
@@ -133,7 +125,9 @@ describe("Ops on Reconnect", () => {
         });
 
         // Get component1 on the second container.
-        const secondContainerComp1 = await requestFluidObject("default", secondContainer);
+        const secondContainerComp1 = await requestFluidObject<ITestFluidComponent & IFluidLoadable>(
+            secondContainer,
+            "default");
         opProcessingController.addDeltaManagers(secondContainerComp1.runtime.deltaManager);
 
         return secondContainerComp1;
@@ -145,7 +139,9 @@ describe("Ops on Reconnect", () => {
 
         // Create the first container, component and DDSes.
         firstContainer = await createContainer();
-        firstContainerComp1 = await requestFluidObject("default", firstContainer);
+        firstContainerComp1 = await requestFluidObject<ITestFluidComponent & IFluidLoadable>(
+            firstContainer,
+            "default");
         firstContainerComp1Map1 = await firstContainerComp1.getSharedObject<SharedMap>(map1Id);
         firstContainerComp1Map2 = await firstContainerComp1.getSharedObject<SharedMap>(map2Id);
         firstContainerComp1Directory = await firstContainerComp1.getSharedObject<SharedDirectory>(directoryId);
@@ -273,10 +269,9 @@ describe("Ops on Reconnect", () => {
             firstContainerClientId = firstContainer.clientId;
 
             // Create component2 in the first container.
-            const firstContainerComp2 =
-                await firstContainerComp1.context.createDataStoreWithRealizationFn(
-                    "component2",
-                ) as unknown as ITestFluidComponent & IFluidLoadable;
+            const firstContainerComp2 = await requestFluidObject<ITestFluidComponent & IFluidLoadable>(
+                await firstContainerComp1.context.containerRuntime.createDataStore("component2"),
+                "/");
 
             // Get the maps in component2.
             const firstContainerComp2Map1 = await firstContainerComp2.getSharedObject<SharedMap>(map1Id);
@@ -378,10 +373,9 @@ describe("Ops on Reconnect", () => {
             firstContainerClientId = firstContainer.clientId;
 
             // Create component2 in the first container.
-            const firstContainerComp2 =
-                await firstContainerComp1.context.createDataStoreWithRealizationFn(
-                    "component2",
-                ) as unknown as ITestFluidComponent & IFluidLoadable;
+            const firstContainerComp2 = await requestFluidObject<ITestFluidComponent & IFluidLoadable>(
+                await firstContainerComp1.context.containerRuntime.createDataStore("component2"),
+                "/");
 
             // Get the maps in component2.
             const firstContainerComp2Map1 = await firstContainerComp2.getSharedObject<SharedMap>(map1Id);

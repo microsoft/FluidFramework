@@ -224,7 +224,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * @param props - Optional props to be passed in on create
      * @deprecated 0.16 Issue #1635 Initial props should be provided through a factory override
      */
-    protected async initializingFirstTime(props?: any): Promise<void> { }
+    protected async initializingFirstTime(props?: S): Promise<void> { }
 
     /**
      * Called every time but the first time the component is initialized (creations

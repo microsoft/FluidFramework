@@ -96,7 +96,7 @@ export abstract class DataObject<P extends IFluidObject = object, S = undefined,
      * Initializes internal objects and calls initialization overrides.
      * Caller is responsible for ensuring this is only invoked once.
      */
-    protected async initializeInternal(props?: any): Promise<void> {
+    protected async initializeInternal(props?: S): Promise<void> {
         // Initialize task manager.
         this.internalTaskManager = await requestFluidObject<ITaskManager>(
             this.context.containerRuntime,

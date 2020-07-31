@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
-    IFluidLoadable,
     IFluidRouter,
     IProvideFluidHandleContext,
     IProvideFluidSerializer,
@@ -103,6 +102,18 @@ export interface IContainerRuntimeBase extends
      * @param pkg - Package name of the data store factory
      */
     createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
+
+    /**
+     * Creates a new component using an optional realization function.  This API does not allow specifying
+     * the component's id and instead generates a uuid.  Consumers must save another reference to the
+     * component, such as the handle.
+     * @param pkg - Package name of the component
+     * @param realizationFn - Optional function to call to realize the component over the context default
+     */
+    createDataStoreWithRealizationFn(
+        pkg: string[],
+        realizationFn?: (context: IFluidDataStoreContext) => void,
+    ): Promise<IFluidDataStoreChannel>;
 
     /**
      * Get an absolute url for a provided container-relative request.
@@ -292,18 +303,6 @@ export interface IFluidDataStoreContext extends EventEmitter {
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
-
-    /**
-     * Create a new component using subregistries with fallback.
-     * @param pkg - Package name of the component
-     * @param realizationFn - Optional function to call to realize the component over the context default
-     * @returns A promise for a component that will have been initialized. Caller is responsible
-     * for attaching the component to the provided runtime's container such as by storing its handle
-     */
-    createDataStoreWithRealizationFn(
-        pkg: string,
-        realizationFn?: (context: IFluidDataStoreContext) => void,
-    ): Promise<IFluidObject & IFluidLoadable>;
 
     /**
      * Binds a runtime to the context.

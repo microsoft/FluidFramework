@@ -8,7 +8,6 @@ import EventEmitter from "events";
 import { IDisposable } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
-    IFluidLoadable,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -202,24 +201,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
                     error);
             });
         }
-    }
-
-    public async createDataStoreWithRealizationFn(
-        pkg: string,
-        realizationFn?: (context: IFluidDataStoreContext) => void,
-    ): Promise<IFluidObject & IFluidLoadable> {
-        const packagePath = await this.composeSubpackagePath(pkg);
-
-        const componentRuntime = await this.containerRuntime.createDataStoreWithRealizationFn(
-            packagePath,
-            realizationFn,
-        );
-        const response = await componentRuntime.request({ url: "/" });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error("Failed to create component");
-        }
-
-        return response.value;
     }
 
     private async rejectDeferredRealize(reason: string) {

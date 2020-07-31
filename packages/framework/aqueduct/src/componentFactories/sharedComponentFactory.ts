@@ -19,6 +19,7 @@ import {
     ComponentSymbolProvider,
     DependencyContainer,
 } from "@fluidframework/synthesize";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import {
     ISharedComponentProps,
@@ -150,9 +151,13 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
             throw new Error("undefined type member");
         }
 
-        return context.createDataStoreWithRealizationFn(
-            this.type,
+        const packagePath = await context.composeSubpackagePath(this.type);
+
+        const router = await context.containerRuntime.createDataStoreWithRealizationFn(
+            packagePath,
             (newContext) => { this.instantiateComponentWithInitialState(newContext, initialState); },
         );
+
+        return requestFluidObject<PureDataObject<P, S>>(router, "/");
     }
 }
