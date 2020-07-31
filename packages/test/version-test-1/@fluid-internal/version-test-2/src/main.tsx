@@ -22,7 +22,7 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
     private upgradeToPkg: string = "@fluid-internal/version-test-3";
     private upgradeToVersion: string = "0.3.x";
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         if (this.root.get("diceValue") === undefined) {
             this.root.set("diceValue", 0);
         }
