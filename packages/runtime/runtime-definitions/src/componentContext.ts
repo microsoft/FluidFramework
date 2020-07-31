@@ -59,6 +59,7 @@ export interface IContainerRuntimeBase extends
     EventEmitter,
     IProvideFluidHandleContext,
     IProvideFluidSerializer,
+    IFluidRouter,
     /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
     IProvideFluidDataStoreRegistry {
 
@@ -93,15 +94,6 @@ export interface IContainerRuntimeBase extends
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
     on(event: "leader" | "notleader", listener: () => void): this;
-
-    /**
-     * @deprecated
-     * Creates a new component.
-     * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
-     * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
-     * Remove once issue #1756 is closed
-     */
-    _createDataStore(pkgOrId: string, pkg?: string | string[]): Promise<IFluidDataStoreChannel>;
 
     /**
      * Creates data store. Returns router of data store. Data store is not bound to container,
@@ -302,20 +294,6 @@ export interface IFluidDataStoreContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
-     * @deprecated 0.16 Issue #1537, issue #1756 Components
-     *      should be created using IFluidDataStoreFactory methods instead
-     * Creates a new component by using subregistries.
-     * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
-     *                  ID is being deprecated, so prefer passing undefined instead (the runtime will
-     *                  generate an ID in this case).
-     * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
-     */
-    _createDataStore(
-        pkgOrId: string | undefined,
-        pkg?: string | string[],
-    ): Promise<IFluidDataStoreChannel>;
-
-    /**
      * Create a new component using subregistries with fallback.
      * @param pkg - Package name of the component
      * @param realizationFn - Optional function to call to realize the component over the context default
@@ -350,20 +328,13 @@ export interface IFluidDataStoreContext extends EventEmitter {
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-}
 
-/**
- * Legacy API to be removed from IFluidDataStoreContext
- *
- * Moving out of the main interface to force compilation error.
- * But the implementation is still in place as a transition so user can case to
- * the legacy interface and use it temporary if changing their code take some time.
- */
-export interface IComponentContextLegacy extends IFluidDataStoreContext {
     /**
-     * @deprecated 0.18. Should call IFluidDataStoreChannel.request directly
-     * Make request to the component.
-     * @param request - Request.
+     * Take a package name and transform it into a path that can be used to find it
+     * from this context, such as by looking into subregistries
+     * @param subpackage - The subpackage to find in this context
+     * @returns A list of packages to the subpackage destination if found,
+     * otherwise the original subpackage
      */
-    request(request: IRequest): Promise<IResponse>;
+    composeSubpackagePath(subpackage: string): Promise<string[]>;
 }

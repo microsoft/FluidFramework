@@ -134,7 +134,7 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
     }
 
     /**
-     * Implementation of IFluidDataStoreFactory's _createDataStore method that also exposes an initial
+     * Implementation of IFluidDataStoreFactory's createInstance method that also exposes an initial
      * state argument.  Only specific factory instances are intended to take initial state.
      * @param context - The component context being used to create the component
      * (the created component will have its own new context created as well)
@@ -142,7 +142,7 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
      * @returns A promise for a component that will have been initialized. Caller is responsible
      * for attaching the component to the provided runtime's container such as by storing its handle
      */
-    public async _createDataStore(
+    public async createInstance(
         context: IFluidDataStoreContext,
         initialState?: S,
     ): Promise<IFluidObject & IFluidLoadable> {

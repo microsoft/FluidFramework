@@ -8,7 +8,7 @@ import assert from "assert";
     IFluidRouter,
 } from "@fluidframework/component-core-interfaces";
 
-export async function requestFluidObject<T extends IFluidObject = IFluidObject>(
+export async function requestFluidObject<T = IFluidObject>(
     router: IFluidRouter, url: string): Promise<T>
 {
     const request = await router.request({ url });

@@ -6,6 +6,7 @@
 import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedMap } from "@fluidframework/map";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { IFluidLoadable } from "@fluidframework/component-core-interfaces";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -18,7 +19,7 @@ export interface IProvideTestFluidComponent {
     readonly ITestFluidComponent: ITestFluidComponent;
 }
 
-export interface ITestFluidComponent extends IProvideTestFluidComponent {
+export interface ITestFluidComponent extends IProvideTestFluidComponent, IFluidLoadable {
     root: ISharedMap;
     readonly runtime: IFluidDataStoreRuntime;
     readonly context: IFluidDataStoreContext;

@@ -63,7 +63,7 @@ export class Constellation extends DataObject implements IConstellation {
 
     public async addStar(x: number, y: number): Promise<void> {
         const starHandles = this.root.get<IFluidHandle<ICoordinate>[]>(starListKey);
-        const newStar: Coordinate = (await Coordinate.getFactory()._createDataStore(this.context)) as Coordinate;
+        const newStar: Coordinate = (await Coordinate.getFactory().createInstance(this.context)) as Coordinate;
         newStar.x = x;
         newStar.y = y;
         starHandles.push(newStar.handle);

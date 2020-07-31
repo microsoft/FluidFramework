@@ -117,7 +117,7 @@ describe("LocalLoader", () => {
         });
 
         it("opened", async () => {
-            assert(component instanceof TestComponent, "_createDataStore() must return the expected component type.");
+            assert(component instanceof TestComponent, "requestFluidObject() must return the expected component type.");
         });
 
         afterEach(async () => {
