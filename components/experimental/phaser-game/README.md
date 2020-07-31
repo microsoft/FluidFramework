@@ -1,10 +1,7 @@
-# @fluid-example/clicker-function
+# @fluid-example/phaser-game
 
-**Clicker** is a Fluid Component that displays a number with a button. Pressing the button
-increments the counter. This is a basic example component using the interface model and stock
-classes.
+**phaser-game** is a Fluid Component that converts the Hello World example for the Phaser HTML game engine into a multiplayer game powered by Fluid
 
-**Clicker-Function** contains an implementation of Clicker using the useStateFluid hook
 
 ## Getting Started
 
