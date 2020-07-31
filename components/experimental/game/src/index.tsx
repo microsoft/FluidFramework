@@ -11,6 +11,7 @@ import phaser from "phaser";
 import { SharedMap } from "@fluidframework/map";
 import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { Game } from "./Game";
+import { IFluidGameConfig } from "./interfaces";
 
 /**
  * Basic PhaserGame example showing how Fluid can be used as net code for Phaser
@@ -47,7 +48,7 @@ export class PhaserGame extends DataObject implements IFluidHTMLView {
         const quorum = this.runtime.getQuorum();
         const userId = this.runtime.clientId ?? "";
         const parent = document.getElementById("content") as HTMLDivElement;
-        const config = {
+        const phaserConfig = {
             type: phaser.AUTO,
             width: 800,
             height: 600,
@@ -60,7 +61,14 @@ export class PhaserGame extends DataObject implements IFluidHTMLView {
             },
         };
 
-        new Game(parent, config, { userId, gameState, quorum, runtime: this.runtime });
+        const fluidConfig: IFluidGameConfig = {
+            userId,
+            gameState,
+            quorum,
+            runtime: this.runtime,
+        }
+
+        new Game(parent, phaserConfig, fluidConfig);
         return div;
     }
 }

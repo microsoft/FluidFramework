@@ -11,14 +11,16 @@ import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-defini
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
 export class GameScene extends phaser.Scene {
-    private platforms: any;
-    private stars: any;
-    private players: Map<string, phaser.Physics.Arcade.Sprite> = new Map();
-    private scoreTexts: Map<string, any> = new Map();
     private userId: string = "";
     private gameState: SharedMap | undefined;
     private quorum: IQuorum | undefined;
     private runtime: IFluidDataStoreRuntime | undefined
+
+    private platforms: any;
+    private stars: any;
+    private players: Map<string, phaser.Physics.Arcade.Sprite> = new Map();
+    private scoreTexts: Map<string, any> = new Map();
+    private bombs: any;
 
     constructor() {
         super({
@@ -77,6 +79,7 @@ export class GameScene extends phaser.Scene {
         player.setCollideWorldBounds(true);
 
         this.physics.add.collider(player, this.platforms);
+        this.physics.add.collider(player, this.bombs, this.hitBomb, undefined, this);
         this.physics.add.overlap(player, this.stars, (player, star) => this.collectStar(player, star, newId), undefined, this);
 
         this.players.set(newId, player);
@@ -168,8 +171,12 @@ export class GameScene extends phaser.Scene {
             child.setBounceY(Phaser.Math.FloatBetween(0.1, 0.3));
         });
 
+        this.bombs = this.physics.add.group();
+        this.physics.add.collider(this.bombs, this.platforms);
+
         this.physics.add.collider(this.stars, this.platforms);
 
+        this.physics.add.collider(player, this.bombs, this.hitBomb, undefined, this);
         this.physics.add.overlap(player, this.stars, (player, star) => this.collectStar(player, star, this.userId), undefined, this);
     }
 
@@ -191,5 +198,33 @@ export class GameScene extends phaser.Scene {
         scoreText?.setText('Score: ' + newScore);
 
         this.runtime?.submitSignal("score", newScore);
+
+        if (this.stars.countActive(true) === 0) {
+            this.stars.children.iterate(function (child) {
+                child.enableBody(true, child.x, 0, true, true);
+
+            });
+            var x = (player.x < 400) ? 800 : 300;
+            var bomb = this.bombs.create(x, 16, 'bomb');
+            bomb.setBounce(1);
+            bomb.setCollideWorldBounds(true);
+            bomb.setVelocity(100, 80);
+            bomb.allowGravity = false;
+
+            bomb = this.bombs.create(-x, 80, 'bomb');
+            bomb.setBounce(1);
+            bomb.setCollideWorldBounds(true);
+            bomb.setVelocity(200, 80);
+            bomb.allowGravity = false;
+        }
+    }
+
+    hitBomb (player, bomb)
+    {
+        this.physics.pause();
+
+        player.setTint(0xff0000);
+
+        player.anims.play('turn');
     }
 }
