@@ -183,7 +183,6 @@ export class DebuggerUI {
         this.versionText = doc.getElementById("versionText") as HTMLDivElement;
 
         buttonVers.onclick = () => {
-            // Accounting for "no snapshots"
             const index = this.selector!.selectedIndex;
             controller.onVersionSelection(this.versions[index]);
         };
