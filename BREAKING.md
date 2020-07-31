@@ -2,14 +2,14 @@
 
 ## 0.25 Breaking Changes
 - [IComponentContextLegacy is removed](#IComponentContextLegacy-is-removed)
-- [IComponentRuntime._createDataStoreWithProps() is removed](#IComponentRuntime._createDataStoreWithProps-is-removed)
+- [IContainerRuntimeBase._createDataStoreWithProps() is removed](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
 - [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
 
 ### IComponentContextLegacy is removed
 Deprecated in 0.18, removed. 
 
-### IComponentRuntime._createDataStoreWithProps is removed
-`IComponentRuntime._createDataStoreWithProps()` has been removed. Please use `IComponentRuntime.createDataStore()` if possible (returns IFluidRouter). Otherwise use `IComponentRuntime._createDataStore()`, which is identical to `_createDataStoreWithProps()` other than props argument that has been deprecated for many versions.
+### IContainerRuntimeBase._createDataStoreWithProps is removed
+`IContainerRuntimeBase._createDataStoreWithProps()` has been removed. Please use `IContainerRuntimeBase.createDataStore()` (returns IFluidRouter).
 If you need to pass props to data store, either use request() route to pass initial props directly, or to query fluid object to interact with it (pass props / call methods to configure object).
 
 ### _createDataStore APIs are removed
