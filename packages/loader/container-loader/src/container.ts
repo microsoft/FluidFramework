@@ -552,10 +552,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public async request(path: IRequest): Promise<IResponse> {
         return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
-            if (!path) {
-                return { mimeType: "fluid/container", status: 200, value: this };
-            }
-
             return this.context!.request(path);
         });
     }
@@ -761,7 +757,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Pull in the prior version and snapshot tree to store against
         const lastVersion = await this.getVersion(this.id);
 
-        const parents = lastVersion ? [lastVersion.id] : [];
+        const parents = lastVersion !== undefined ? [lastVersion.id] : [];
 
         // Write the full snapshot
         return this.storageService!.write(root, parents, message, "");
@@ -836,7 +832,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return root;
     }
 
-    private async getVersion(version: string): Promise<IVersion> {
+    private async getVersion(version: string): Promise<IVersion | undefined> {
         const versions = await this.storageService!.getVersions(version, 1);
         return versions[0];
     }
@@ -949,7 +945,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return {
             existing: this._existing,
             sequenceNumber: attributes.sequenceNumber,
-            version: maybeSnapshotTree && maybeSnapshotTree.id !== null ? maybeSnapshotTree.id : undefined,
+            version: maybeSnapshotTree?.id ?? undefined,
         };
     }
 
@@ -1439,7 +1435,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async fetchSnapshotTree(specifiedVersion?: string): Promise<ISnapshotTree | undefined> {
         const version = await this.getVersion(specifiedVersion ?? this.id);
 
-        if (version) {
+        if (version !== undefined) {
             this._loadedFromVersion = version;
             return await this.storageService!.getSnapshotTree(version) ?? undefined;
         } else if (specifiedVersion !== undefined) {
