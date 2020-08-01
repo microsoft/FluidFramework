@@ -10,8 +10,6 @@ import {
     IFluidRouter,
     IProvideFluidHandleContext,
     IProvideFluidSerializer,
-    IRequest,
-    IResponse,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -58,7 +56,6 @@ export interface IContainerRuntimeBase extends
     EventEmitter,
     IProvideFluidHandleContext,
     IProvideFluidSerializer,
-    IFluidRouter,
     /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
     IProvideFluidDataStoreRegistry {
 
@@ -75,11 +72,6 @@ export interface IContainerRuntimeBase extends
      * Sets the flush mode for operations on the document.
      */
     setFlushMode(mode: FlushMode): void;
-
-    /**
-     * Executes a request against the container runtime
-     */
-    request(request: IRequest): Promise<IResponse>;
 
     /**
      * Submits a container runtime level signal to be sent to other clients.

@@ -56,7 +56,7 @@ export interface IRuntime extends IDisposable {
     /**
      * Executes a request against the runtime
      */
-    request(request: IRequest): Promise<IResponse>;
+    externalRequest(request: IRequest): Promise<IResponse>;
 
     /**
      * Snapshots the runtime

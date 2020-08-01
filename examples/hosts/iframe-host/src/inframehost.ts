@@ -29,7 +29,7 @@ class ProxyRuntime implements IRuntime {
         this._disposed = true;
     }
 
-    async request(request: IRequest): Promise<IResponse> {
+    async externalRequest(request: IRequest): Promise<IResponse> {
         throw new Error("Method not implemented.");
     }
     async snapshot(tagMessage: string, fullTree?: boolean | undefined): Promise<ITree | null> {

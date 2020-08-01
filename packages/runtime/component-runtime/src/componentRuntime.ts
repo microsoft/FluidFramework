@@ -46,7 +46,6 @@ import {
     IFluidDataStoreChannel,
     IEnvelope,
     IInboundSignalMessage,
-    SchedulerType,
 } from "@fluidframework/runtime-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { IChannel, IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
@@ -237,11 +236,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        // System routes
-        if (request.url === `/${SchedulerType}`) {
-            return this.componentContext.containerRuntime.request(request);
-        }
-
         // Parse out the leading slash
         const id = request.url.startsWith("/") ? request.url.substr(1) : request.url;
 

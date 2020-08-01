@@ -803,24 +803,45 @@ export class ContainerRuntime extends EventEmitter
      * Notifies this object about the request made to the container.
      * @param request - Request made to the handler.
      */
-    public async request(request: IRequest): Promise<IResponse> {
-        const requestParser = new RequestParser(request);
-
-        if (requestParser.pathParts.length === 1 && requestParser.pathParts[0] === "_summarizer") {
+    public async externalRequest(request: IRequest): Promise<IResponse> {
+        if (request.url === "_summarizer" || request.url === "/_summarizer") {
             return {
                 status: 200,
                 mimeType: "fluid/object",
                 value: this.summarizer,
             };
-        } else if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === schedulerId) {
+        }
+        if (this.requestHandler !== undefined) {
+            return this.requestHandler(request, this);
+        }
+
+        return {
+            status: 404,
+            mimeType: "text/plain",
+            value: "resource not found",
+        };
+    }
+
+    // Back-compat: <= 0.24
+    protected async request(request: IRequest): Promise<IResponse> {
+        return this.externalRequest(request);
+    }
+
+    /**
+     * Notifies this object about the request made to the container.
+     * @param request - Request made to the handler.
+     */
+    public async internalRequest(request: IRequest): Promise<IResponse> {
+        const requestParser = new RequestParser(request);
+
+        if (requestParser.pathParts.length > 0) {
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const component = await this.getDataStore(requestParser.pathParts[0], wait) as IFluidObject;
+            const component = await this.getDataStore(requestParser.pathParts[0], wait);
             if (component) {
                 const subRequest = requestParser.createSubRequest(1);
                 if (subRequest !== undefined) {
-                    assert(component.IFluidRouter);
                     return component.IFluidRouter.request(subRequest);
                 } else {
                     return {
@@ -829,17 +850,7 @@ export class ContainerRuntime extends EventEmitter
                         value: component,
                     };
                 }
-            } else {
-                return {
-                    status: 404,
-                    mimeType: "text/plain",
-                    value: `${schedulerId} not found`,
-                };
             }
-        }
-
-        if (this.requestHandler !== undefined) {
-            return this.requestHandler(request, this);
         }
 
         return {

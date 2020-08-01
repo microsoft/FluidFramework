@@ -79,8 +79,7 @@ export class NullRuntime extends EventEmitter implements IRuntime {
         throw new Error("Null Runtime should not be attached");
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public request(request: IRequest): Promise<IResponse> {
+    public async externalRequest(request: IRequest): Promise<IResponse> {
         return Promise.resolve({ status: 404, mimeType: "text/plain", value: null });
     }
 

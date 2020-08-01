@@ -262,7 +262,11 @@ export class ContainerContext implements IContainerContext {
     }
 
     public async request(path: IRequest): Promise<IResponse> {
-        return this.runtime!.request(path);
+        // back-compat: <= 0.24
+        if (this.runtime!.externalRequest === undefined) {
+            return (this.runtime! as any).request(path);
+        }
+        return this.runtime!.externalRequest(path);
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {

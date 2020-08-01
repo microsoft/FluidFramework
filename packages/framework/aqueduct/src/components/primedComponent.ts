@@ -40,9 +40,7 @@ export abstract class DataObject<P extends IFluidObject = object, S = undefined,
 
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;
-        if (this.internalTaskManager && url.startsWith(this.taskManager.url)) {
-            return this.internalTaskManager.request(request);
-        } else if (url.startsWith(this.bigBlobs)) {
+        if (url.startsWith(this.bigBlobs)) {
             const value = this.root.get<string>(url);
             if (value === undefined) {
                 return { mimeType: "fluid/object", status: 404, value: `request ${url} not found` };

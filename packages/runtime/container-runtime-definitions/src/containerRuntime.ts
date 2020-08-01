@@ -6,6 +6,8 @@
 import {
     IFluidObject,
     IFluidRouter,
+    IRequest,
+    IResponse,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -142,4 +144,10 @@ export interface IContainerRuntime extends
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+
+    /**
+     * Serves internal requests in container, i.e. mostly about resolving handles
+     * @param request - request to resolve
+     */
+    internalRequest(request: IRequest): Promise<IResponse>;
 }

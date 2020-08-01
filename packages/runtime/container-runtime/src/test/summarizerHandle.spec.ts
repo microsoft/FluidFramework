@@ -20,9 +20,6 @@ const mockHandleContext: IFluidHandleContext = {
     attachGraph: () => {
         throw new Error("Method not implemented.");
     },
-    bind: () => {
-        throw new Error("Method not implemented.");
-    },
     request: () => {
         throw new Error("Method not implemented.");
     },

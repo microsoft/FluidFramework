@@ -43,12 +43,6 @@ export interface IFluidHandleContext extends IFluidRouter, IProvideFluidHandleCo
      * Runs through the graph and attach the bounded handles.
      */
     attachGraph(): void;
-
-    /**
-     * Binds the given handle to this one or attach the given handle if this handle is attached.
-     * A bound handle will also be attached once this handle is attached.
-     */
-    bind(handle: IFluidHandle): void;
 }
 
 export const IFluidHandle: keyof IProvideFluidHandle = "IFluidHandle";
@@ -68,4 +62,10 @@ export interface IFluidHandle<
      * Returns a promise to the Fluid Object referenced by the handle.
      */
     get(): Promise<T>;
+
+    /**
+     * Binds the given handle to this one or attach the given handle if this handle is attached.
+     * A bound handle will also be attached once this handle is attached.
+     */
+    bind(handle: IFluidHandle): void;
 }

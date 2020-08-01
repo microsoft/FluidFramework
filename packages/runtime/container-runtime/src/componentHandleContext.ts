@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import {
-    IFluidHandle,
     IFluidHandleContext,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { IRuntime } from "@fluidframework/container-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
 export class FluidHandleContext implements IFluidHandleContext {
     public get IFluidRouter() { return this; }
     public get IFluidHandleContext() { return this; }
-    public readonly isAttached = true;
     public readonly absolutePath: string;
 
     /**
@@ -26,25 +26,22 @@ export class FluidHandleContext implements IFluidHandleContext {
      */
     constructor(
         public readonly path: string,
-        private readonly runtime: IRuntime,
+        private readonly runtime: IContainerRuntime,
         public readonly routeContext?: IFluidHandleContext,
     ) {
         this.absolutePath = generateHandleContextPath(path, this.routeContext);
     }
 
     public attachGraph(): void {
+        assert(false);
         return;
     }
 
-    public bind(handle: IFluidHandle): void {
-        if (this.isAttached) {
-            handle.attachGraph();
-            return;
-        }
-        throw new Error("Cannot bind to an attached handle");
+    public get isAttached() {
+        return this.runtime.attachState !== AttachState.Detached;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return this.runtime.request(request);
+        return this.runtime.internalRequest(request);
     }
 }
