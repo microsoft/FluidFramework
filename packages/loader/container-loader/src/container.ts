@@ -994,7 +994,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async getDocumentStorageService(): Promise<IDocumentStorageService> {
-        if (!this.service) {
+        if (this.service === undefined) {
             throw new Error("Not attached");
         }
         const storageService = await this.service.connectToStorage();
@@ -1005,7 +1005,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         storage: IDocumentStorageService,
         tree: ISnapshotTree | undefined,
     ): Promise<IDocumentAttributes> {
-        if (!tree) {
+        if (tree === undefined) {
             return {
                 branch: this.id,
                 minimumSequenceNumber: 0,
@@ -1038,7 +1038,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         let proposals: [number, ISequencedProposal, string[]][] = [];
         let values: [string, any][] = [];
 
-        if (snapshot) {
+        if (snapshot !== undefined) {
             const baseTree = ".protocol" in snapshot.trees ? snapshot.trees[".protocol"] : snapshot;
             [members, proposals, values] = await Promise.all([
                 readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers!),
@@ -1118,8 +1118,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         storage: IDocumentStorageService,
         tree: ISnapshotTree | undefined,
     ): Promise<BlobManager> {
-        const blobHash = tree && tree.blobs[".blobs"];
-        const blobs: IGenericBlob[] = blobHash
+        const blobHash = tree?.blobs[".blobs"];
+        const blobs: IGenericBlob[] = blobHash !== undefined
             ? await readAndParse<IGenericBlob[]>(storage, blobHash)
             : [];
 
@@ -1135,7 +1135,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         let pkg = quorum.get("code");
 
         // Back compat
-        if (!pkg) {
+        if (pkg === undefined) {
             pkg = quorum.get("code2");
         }
 
@@ -1151,14 +1151,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
 
         const factory = component.fluidExport.IRuntimeFactory;
-        if (!factory) {
+        if (factory === undefined) {
             throw new Error(PackageNotFactoryError);
         }
         return factory;
     }
 
     private get client(): IClient {
-        const client: IClient = this.options && this.options.client
+        const client: IClient = this.options?.client !== undefined
             ? (this.options.client as IClient)
             : {
                 details: {
@@ -1173,7 +1173,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Client info from headers overrides client info from loader options
         const headerClientDetails = this.originalRequest?.headers?.[LoaderHeader.clientDetails];
 
-        if (headerClientDetails) {
+        if (headerClientDetails !== undefined) {
             merge(client.details, headerClientDetails);
         }
 
@@ -1313,7 +1313,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             autoReconnect,
             opsBehind,
             online: OnlineStatus[isOnline()],
-            lastVisible: this.lastVisible ? performanceNow() - this.lastVisible : undefined,
+            lastVisible: this.lastVisible !== undefined ? performanceNow() - this.lastVisible : undefined,
         });
 
         if (value === ConnectionState.Connected) {
@@ -1418,7 +1418,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private processSignal(message: ISignalMessage) {
         // No clientId indicates a system signal message.
-        if (message.clientId === null && this._audience) {
+        if (message.clientId === null) {
             const innerContent = message.content as { content: any; type: string };
             if (innerContent.type === MessageType.ClientJoin) {
                 const newClient = innerContent.content as ISignalClient;
@@ -1439,12 +1439,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @returns The snapshot requested, or the latest snapshot if no version was specified
      */
     private async fetchSnapshotTree(specifiedVersion?: string): Promise<ISnapshotTree | undefined> {
-        const version = await this.getVersion(specifiedVersion || this.id);
+        const version = await this.getVersion(specifiedVersion ?? this.id);
 
         if (version) {
             this._loadedFromVersion = version;
-            return await this.storageService!.getSnapshotTree(version) || undefined;
-        } else if (specifiedVersion) {
+            return await this.storageService!.getSnapshotTree(version) ?? undefined;
+        } else if (specifiedVersion !== undefined) {
             // We should have a defined version to load from if specified version requested
             this.logger.sendErrorEvent({ eventName: "NoVersionFoundWhenSpecified", specifiedVersion });
         }
@@ -1458,7 +1458,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         previousRuntimeState: IRuntimeState = {},
     ) {
         this.pkg = this.getCodeDetailsFromQuorum();
-        const chaincode = this.pkg ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
+        const chaincode = this.pkg !== undefined ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
@@ -1493,7 +1493,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      */
     private async createDetachedContext(attributes: IDocumentAttributes) {
         this.pkg = this.getCodeDetailsFromQuorum();
-        if (!this.pkg) {
+        if (this.pkg === undefined) {
             throw new Error("pkg should be provided in create flow!!");
         }
         const runtimeFactory = await this.loadRuntimeFactory(this.pkg);
