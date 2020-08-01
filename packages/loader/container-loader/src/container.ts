@@ -159,8 +159,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         return PerformanceEvent.timedExecAsync(container.logger, { eventName: "Load" }, async (event) => {
             return new Promise<Container>((res, rej) => {
-                const version = request.headers && request.headers[LoaderHeader.version];
-                const pause = request.headers && request.headers[LoaderHeader.pause];
+                const version = request.headers?.[LoaderHeader.version];
+                const pause = request.headers?.[LoaderHeader.pause];
 
                 const onClosed = (err?: ICriticalContainerError) => {
                     // Depending where error happens, we can be attempting to connect to web socket
@@ -172,7 +172,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 };
                 container.on("closed", onClosed);
 
-                container.load(version, !!pause)
+                container.load(version, pause === true)
                     .finally(() => {
                         container.removeListener("closed", onClosed);
                     })
@@ -380,7 +380,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Create logger for components to use
         const type = this.client.details.type;
         const interactive = this.client.details.capabilities.interactive;
-        const clientType = `${interactive ? "interactive" : "noninteractive"}${type ? `/${type}` : ""}`;
+        const clientType = `${interactive ? "interactive" : "noninteractive"}${type !== undefined ? `/${type}` : ""}`;
         // Need to use the property getter for docId because for detached flow we don't have the docId initially.
         // We assign the id later so property getter is used.
         this.subLogger = ChildLogger.create(
@@ -402,7 +402,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._deltaManager = this.createDeltaManager();
 
         // keep track of last time page was visible for telemetry
-        if (typeof document === "object" && document) {
+        if (typeof document === "object" && document !== null) {
             this.lastVisible = document.hidden ? performanceNow() : undefined;
             document.addEventListener("visibilitychange", () => {
                 if (document.hidden) {
@@ -430,11 +430,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._deltaManager.close(error);
 
-        if (this.protocolHandler) {
-            this.protocolHandler.close();
-        }
+        this.protocolHandler?.close();
 
-        this.context?.dispose(error ? new Error(error.message) : undefined);
+        this.context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
@@ -464,14 +462,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public serialize(): string {
-        if (!this.context) {
+        if (this.context === undefined) {
             throw new Error("Context is undefined");
         }
 
         assert(this.attachState === AttachState.Detached, "Should only be called in detached container");
 
         const appSummary: ISummaryTree = this.context.createSummary();
-        if (!this.protocolHandler) {
+        if (this.protocolHandler === undefined) {
             throw new Error("Protocol Handler is undefined");
         }
         const protocolSummary = this.protocolHandler.captureSummary();
@@ -480,22 +478,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
-        if (!this.context) {
+        if (this.context === undefined) {
             throw new Error("Context is undefined");
         }
 
         // Inbound queue for ops should be empty
-        assert(!this.deltaManager.inbound.length);
+        assert(this.deltaManager.inbound.length === 0);
 
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
         const appSummary: ISummaryTree = this.context.createSummary();
-        if (!this.protocolHandler) {
+        if (this.protocolHandler === undefined) {
             throw new Error("Protocol Handler is undefined");
         }
         const protocolSummary = this.protocolHandler.captureSummary();
 
-        if (!request.headers?.[CreateNewHeader.createNew]) {
+        if (request.headers?.[CreateNewHeader.createNew] === undefined) {
             request.headers = {
                 ...request.headers,
                 [CreateNewHeader.createNew]: {},
@@ -524,7 +522,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.originalRequest = { url };
             this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
             const parsedUrl = parseUrl(resolvedUrl.url);
-            if (!parsedUrl) {
+            if (parsedUrl === undefined) {
                 throw new Error("Unable to parse Url");
             }
             const [, docId] = parsedUrl.id.split("/");
@@ -564,7 +562,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<void> {
         // TODO: Issue-2171 Support for Branch Snapshots
-        if (tagMessage.includes("ReplayTool Snapshot") === false && this.parentBranch) {
+        if (tagMessage.includes("ReplayTool Snapshot") === false && this.parentBranch !== null) {
             // The below debug ruins the chrome debugging session
             // Tracked (https://bugs.chromium.org/p/chromium/issues/detail?id=659515)
             debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
@@ -650,7 +648,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get storage(): IDocumentStorageService | null | undefined {
-        return this.blobsCacheStorageService || this.storageService;
+        return this.blobsCacheStorageService ?? this.storageService;
     }
 
     /**
@@ -723,7 +721,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();
-        if (previousContextState.snapshot) {
+        if (previousContextState.snapshot !== undefined) {
             snapshot = await buildSnapshotTree(previousContextState.snapshot.entries, blobs);
         }
 
@@ -751,7 +749,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const componentEntries = await this.context!.snapshot(tagMessage, fullTree);
 
         // And then combine
-        if (componentEntries) {
+        if (componentEntries !== null) {
             root.entries.push(...componentEntries.entries);
         }
 
@@ -915,12 +913,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
         // the initial details
-        if (maybeSnapshotTree) {
+        if (maybeSnapshotTree !== undefined) {
             this._existing = true;
             this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
             loadDetailsP = Promise.resolve();
         } else {
-            if (!startConnectionP) {
+            if (startConnectionP === undefined) {
                 startConnectionP = this.connectToDeltaStream(connectionArgs);
             }
             // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
