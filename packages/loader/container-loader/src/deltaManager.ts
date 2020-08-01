@@ -591,11 +591,15 @@ export class DeltaManager
             this.clientSequenceNumberObserved = 0;
         }
 
+        const service = this.clientDetails.type === undefined || this.clientDetails.type === ""
+            ? "unknown"
+            : this.clientDetails.type;
+
         // Start adding trace for the op.
         const traces: ITrace[] = [
             {
                 action: "start",
-                service: this.clientDetails.type ?? "unknown",
+                service,
                 timestamp: Date.now(),
             }];
 
@@ -1210,9 +1214,12 @@ export class DeltaManager
 
         // Add final ack trace.
         if (message.traces?.length > 0) {
+            const service = this.clientDetails.type === undefined || this.clientDetails.type === ""
+                ? "unknown"
+                : this.clientDetails.type;
             message.traces.push({
                 action: "end",
-                service: this.clientDetails.type ?? "unknown",
+                service,
                 timestamp: Date.now(),
             });
         }
