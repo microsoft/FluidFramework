@@ -51,7 +51,7 @@ export function waitForConnectedState(minDelay: number): Promise<void> {
         let listener: () => void = resolve;
         let delay = minDelay;
         if (isOnline() === OnlineStatus.Offline) {
-            if (typeof window === "object" && window !== null && window.addEventListener !== undefined) {
+            if (window?.addEventListener !== undefined) {
                 listener = () => {
                     resolve();
                     window.removeEventListener("online", listener);
