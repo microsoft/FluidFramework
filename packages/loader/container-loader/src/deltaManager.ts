@@ -1208,7 +1208,11 @@ export class DeltaManager
         }
 
         // TODO Remove after SPO picks up the latest build.
-        if (message.contents && typeof message.contents === "string" && message.type !== MessageType.ClientLeave) {
+        if (
+            typeof message.contents === "string"
+            && message.contents !== ""
+            && message.type !== MessageType.ClientLeave
+        ) {
             message.contents = JSON.parse(message.contents);
         }
 
