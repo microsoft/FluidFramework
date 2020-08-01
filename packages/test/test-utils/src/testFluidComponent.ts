@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidHandle, IFluidLoadable } from "@fluidframework/component-core-interfaces";
+import { IRequest, IResponse, IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
-import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import {
+    IFluidDataStoreContext,
+    IFluidDataStoreFactory,
+    IFluidDataStoreChannel,
+} from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
 import { ITestFluidComponent } from "./interfaces";
 
@@ -15,12 +19,13 @@ import { ITestFluidComponent } from "./interfaces";
  * The shared objects can be retrieved by passing the key of the entry to getSharedObject.
  * It exposes the IFluidDataStoreContext and IFluidDataStoreRuntime.
  */
-export class TestFluidComponent implements ITestFluidComponent, IFluidLoadable {
+export class TestFluidComponent implements ITestFluidComponent {
     public static async load(
         runtime: IFluidDataStoreRuntime,
+        channel: IFluidDataStoreChannel,
         context: IFluidDataStoreContext,
         factoryEntries: Map<string, IChannelFactory>) {
-        const component = new TestFluidComponent(runtime, context, factoryEntries);
+        const component = new TestFluidComponent(runtime, channel, context, factoryEntries);
         await component.initialize();
 
         return component;
@@ -49,6 +54,7 @@ export class TestFluidComponent implements ITestFluidComponent, IFluidLoadable {
      */
     constructor(
         public readonly runtime: IFluidDataStoreRuntime,
+        public readonly channel: IFluidDataStoreChannel,
         public readonly context: IFluidDataStoreContext,
         private readonly factoryEntriesMap: Map<string, IChannelFactory>,
     ) {
@@ -158,7 +164,7 @@ export class TestFluidComponentFactory implements IFluidDataStoreFactory {
             }
         }
 
-        const testFluidComponentP = TestFluidComponent.load(runtime, context, factoryEntriesMapForComponent);
+        const testFluidComponentP = TestFluidComponent.load(runtime, runtime, context, factoryEntriesMapForComponent);
         runtime.registerRequestHandler(async (request: IRequest) => {
             const testFluidComponent = await testFluidComponentP;
             return testFluidComponent.request(request);

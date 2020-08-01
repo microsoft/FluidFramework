@@ -133,9 +133,9 @@ export class WaterPark extends DataObject implements IFluidHTMLView {
     }
 
     protected async initializingFirstTime() {
-        const storage = await this.createAndAttachDataStore(SpacesStorage.ComponentName);
+        const storage = await this.createFluidObject(SpacesStorage.ComponentName);
         this.root.set(storageKey, storage.handle);
-        const loader = await this.createAndAttachDataStore(ExternalComponentLoader.ComponentName);
+        const loader = await this.createFluidObject(ExternalComponentLoader.ComponentName);
         this.root.set(loaderKey, loader.handle);
     }
 

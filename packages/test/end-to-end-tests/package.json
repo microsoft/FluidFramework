@@ -81,6 +81,7 @@
     "@fluidframework/register-collection": "^0.25.0",
     "@fluidframework/request-handler": "^0.25.0",
     "@fluidframework/runtime-definitions": "^0.25.0",
+    "@fluidframework/runtime-utils": "^0.25.0",
     "@fluidframework/sequence": "^0.25.0",
     "@fluidframework/server-local-server": "^0.1010.0",
     "@fluidframework/shared-object-base": "^0.25.0",

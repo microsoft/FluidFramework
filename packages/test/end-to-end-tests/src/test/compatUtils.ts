@@ -91,9 +91,7 @@ export const createRuntimeFactory = (
                 runtimeOptions,
             );
             if (!runtime.existing) {
-                const componentRuntime = await runtime._createDataStore("default", type);
-                await componentRuntime.request({ url: "/" });
-                componentRuntime.bindToContext();
+                await runtime.createRootDataStore(type, "default");
             }
             return runtime;
         },
