@@ -1203,6 +1203,11 @@ export class DeltaManager
             this.clientSequenceNumberObserved = clientSequenceNumber;
         }
 
+        // TODO Remove after SPO picks up the latest build.
+        if (message.contents && typeof message.contents === "string" && message.type !== MessageType.ClientLeave) {
+            message.contents = JSON.parse(message.contents);
+        }
+
         // Add final ack trace.
         if (message.traces?.length > 0) {
             message.traces.push({
