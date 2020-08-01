@@ -9,13 +9,13 @@ import { isOnline, OnlineStatus } from "@fluidframework/driver-utils";
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any) {
     const newEvent = { ...event };
     newEvent.online = isOnline();
-    if (error && typeof error === "object" && (error).online !== undefined) {
-        newEvent.online = (error).online as string;
+    if (error?.online !== undefined) {
+        newEvent.online = error.online as string;
     }
 
     if (typeof navigator === "object" && navigator !== null) {
         const nav = navigator as any;
-        const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
+        const connection = nav.connection ?? nav.mozConnection ?? nav.webkitConnection;
         if (connection !== null && typeof connection === "object") {
             newEvent.connectionType = connection.type;
         }
@@ -51,7 +51,7 @@ export function waitForConnectedState(minDelay: number): Promise<void> {
         let listener: () => void = resolve;
         let delay = minDelay;
         if (isOnline() === OnlineStatus.Offline) {
-            if (typeof window === "object" && window !== null && window.addEventListener) {
+            if (typeof window === "object" && window !== null && window.addEventListener !== undefined) {
                 listener = () => {
                     resolve();
                     window.removeEventListener("online", listener);
