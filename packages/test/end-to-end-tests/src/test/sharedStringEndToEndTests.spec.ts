@@ -15,7 +15,7 @@ import {
     OpProcessingController,
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
-import { compatTest, testFluidObjectKeys } from "./compatUtils";
+import { compatTest, ICompatTestArgs, testFluidObjectKeys } from "./compatUtils";
 
 const id = "fluid-test://localhost/sharedStringTest";
 const stringId = testFluidObjectKeys.sharedString;
@@ -32,20 +32,22 @@ async function requestFluidObject(componentId: string, container: Container): Pr
     return response.value as ITestFluidComponent;
 }
 
-const tests = (makeTestContainer: () => Promise<Container>) => {
+const tests = (args: ICompatTestArgs) => {
     let sharedString1: SharedString;
     let sharedString2: SharedString;
+    let opProcessingController: OpProcessingController;
 
     beforeEach(async function() {
-        const container1 = await makeTestContainer();
+        const container1 = await args.makeTestContainer() as Container;
         const component1 = await requestFluidObject("default", container1);
         sharedString1 = await component1.getSharedObject<SharedString>(stringId);
 
-        const container2 = await makeTestContainer();
+        const container2 = await args.makeTestContainer() as Container;
         const component2 = await requestFluidObject("default", container2);
         sharedString2 = await component2.getSharedObject<SharedString>(stringId);
 
-        this.opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
+        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
+        opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
     });
 
     it("can sync SharedString across multiple containers", async function() {
@@ -54,7 +56,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
 
         // Wait for the ops to to be submitted and processed across the containers.
-        await this.opProcessingController.process();
+        await opProcessingController.process();
 
         assert.equal(sharedString2.getText(), text, "The inserted text should have synced across the containers");
     });
@@ -65,10 +67,10 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
 
         // Wait for the ops to to be submitted and processed across the containers.
-        await this.opProcessingController.process();
+        await opProcessingController.process();
 
         // Create a initialize a new container with the same id.
-        const newContainer = await makeTestContainer();
+        const newContainer = await args.makeTestContainer() as Container;
         const newComponent = await requestFluidObject("default", newContainer);
         const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
         assert.equal(newSharedString.getText(), text, "The new container should receive the inserted text on creation");
@@ -77,7 +79,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
 
 describe("SharedString", () => {
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    async function createContainer(): Promise<Container> {
+    async function makeTestContainer(): Promise<Container> {
         const factory = new TestFluidComponentFactory([[stringId, SharedString.getFactory()]]);
         const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
@@ -85,16 +87,18 @@ describe("SharedString", () => {
 
     beforeEach(async function() {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-        this.opProcessingController = new OpProcessingController(deltaConnectionServer);
     });
 
-    tests(createContainer);
+    tests({
+        makeTestContainer,
+        get deltaConnectionServer() { return deltaConnectionServer; },
+    });
 
     afterEach(async function() {
         await deltaConnectionServer.webSocketServer.close();
     });
 
     describe("compatibility", () => {
-        compatTest(tests as any, true);
+        compatTest(tests, { testFluidComponent: true });
     });
 });

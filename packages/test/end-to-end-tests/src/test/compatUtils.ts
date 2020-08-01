@@ -5,11 +5,7 @@
 
 /* eslint-disable import/no-extraneous-dependencies */
 
-import {
-    defaultDataStoreRuntimeRequestHandler,
-    DataObject,
-    DataObjectFactory,
-} from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory, defaultDataStoreRuntimeRequestHandler } from "@fluidframework/aqueduct";
 import {
     IContainerContext,
     IFluidCodeDetails,
@@ -25,12 +21,7 @@ import { componentRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "@f
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import {
-    createLocalLoader,
-    initializeLocalContainer,
-    OpProcessingController,
-    TestFluidComponentFactory,
-} from "@fluidframework/test-utils";
+import { createLocalLoader, initializeLocalContainer, TestFluidComponentFactory } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
 
 /* eslint-enable import/no-extraneous-dependencies */
@@ -156,16 +147,31 @@ export async function createContainerWithOldLoader(
     return old.initializeLocalContainer(id, loader, codeDetails);
 }
 
+export interface ICompatTestArgs {
+    /**
+     * Used to create a test Container. In compatTest(), this Container and its runtime will be arbitrarily-versioned.
+     */
+    makeTestContainer: () => Promise<Container | old.Container>,
+    deltaConnectionServer?: ILocalDeltaConnectionServer,
+}
+
+export interface ICompatTestOptions {
+    /**
+     * Use TestFluidComponent instead of PrimedComponent
+     */
+    testFluidComponent?: boolean,
+}
+
 export const compatTest = (
-    tests: (makeTestContainer: () => Promise<Container | old.Container>) => void,
-    testFluidComponent: boolean = false,
+    tests: (compatArgs: ICompatTestArgs) => void,
+    options: ICompatTestOptions = {},
 ) => {
     describe("old loader, new runtime", function() {
         let deltaConnectionServer: ILocalDeltaConnectionServer;
         const makeTestContainer = async () => createContainerWithOldLoader(
             { fluidExport: createRuntimeFactory(
                 TestComponent.type,
-                testFluidComponent
+                options.testFluidComponent
                     ? createTestFluidComponentFactory()
                     : createPrimedComponentFactory(),
             ) },
@@ -178,15 +184,17 @@ export const compatTest = (
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 { summary: { maxOps: 1 } as ISummaryConfiguration },
             );
-            this.deltaConnectionServer = deltaConnectionServer;
-
-            this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
         });
 
-        tests(makeTestContainer);
+        tests({
+            makeTestContainer,
+            // This is a getter because tests() is called before the beforeEach()
+            // callback, at which point deltaConnectionServer is undefined.
+            get deltaConnectionServer() { return deltaConnectionServer; },
+        });
 
         afterEach(async function() {
-            await this.deltaConnectionServer.webSocketServer.close();
+            await deltaConnectionServer.webSocketServer.close();
         });
     });
 
@@ -195,7 +203,7 @@ export const compatTest = (
         const makeTestContainer = async () => createContainer(
             { fluidExport: createOldRuntimeFactory(
                 OldTestComponent.type,
-                testFluidComponent
+                options.testFluidComponent
                     ? createOldTestFluidComponentFactory()
                     : createOldPrimedComponentFactory(),
             ) },
@@ -208,15 +216,15 @@ export const compatTest = (
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 { summary: { maxOps: 1 } as ISummaryConfiguration },
             );
-            this.deltaConnectionServer = deltaConnectionServer;
-
-            this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
         });
 
-        tests(makeTestContainer);
+        tests({
+            makeTestContainer,
+            get deltaConnectionServer() { return deltaConnectionServer; },
+        });
 
         afterEach(async function() {
-            await this.deltaConnectionServer.webSocketServer.close();
+            await deltaConnectionServer.webSocketServer.close();
         });
     });
 
@@ -225,7 +233,7 @@ export const compatTest = (
         const makeTestContainer = async () => createContainer(
             { fluidExport: createRuntimeFactory(
                 OldTestComponent.type,
-                testFluidComponent
+                options.testFluidComponent
                     ? createOldTestFluidComponentFactory()
                     : createOldPrimedComponentFactory(),
             ) },
@@ -238,15 +246,15 @@ export const compatTest = (
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 { summary: { maxOps: 1 } as ISummaryConfiguration },
             );
-            this.deltaConnectionServer = deltaConnectionServer;
-
-            this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
         });
 
-        tests(makeTestContainer);
+        tests({
+            makeTestContainer,
+            get deltaConnectionServer() { return deltaConnectionServer; },
+        });
 
         afterEach(async function() {
-            await this.deltaConnectionServer.webSocketServer.close();
+            await deltaConnectionServer.webSocketServer.close();
         });
     });
 };

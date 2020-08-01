@@ -12,12 +12,12 @@ import { MessageType } from "@fluidframework/protocol-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
-    OpProcessingController,
-    ITestFluidComponent,
     initializeLocalContainer,
+    ITestFluidComponent,
+    OpProcessingController,
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
-import { compatTest, testFluidObjectKeys } from "./compatUtils";
+import { compatTest, ICompatTestArgs, testFluidObjectKeys } from "./compatUtils";
 
 const id = "fluid-test://localhost/mapTest";
 const mapId = testFluidObjectKeys.map;
@@ -34,26 +34,28 @@ async function requestFluidObject(componentId: string, container: Container): Pr
     return response.value as ITestFluidComponent;
 }
 
-const tests = (makeTestContainer: () => Promise<Container>) => {
+const tests = (args: ICompatTestArgs) => {
+    let opProcessingController: OpProcessingController;
     let component1: ITestFluidComponent;
     let sharedMap1: ISharedMap;
     let sharedMap2: ISharedMap;
     let sharedMap3: ISharedMap;
 
     beforeEach(async function() {
-        const container1 = await makeTestContainer();
+        const container1 = await args.makeTestContainer() as Container;
         component1 = await requestFluidObject("default", container1);
         sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
 
-        const container2 = await makeTestContainer();
+        const container2 = await args.makeTestContainer() as Container;
         const component2 = await requestFluidObject("default", container2);
         sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
 
-        const container3 = await makeTestContainer();
+        const container3 = await args.makeTestContainer() as Container;
         const component3 = await requestFluidObject("default", container3);
         sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
 
-        this.opProcessingController.addDeltaManagers(
+        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
+        opProcessingController.addDeltaManagers(
             component1.runtime.deltaManager,
             component2.runtime.deltaManager,
             component3.runtime.deltaManager,
@@ -61,7 +63,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
 
         sharedMap1.set("testKey1", "testValue");
 
-        await this.opProcessingController.process();
+        await opProcessingController.process();
     });
 
     function expectAllValues(msg, key, value1, value2, value3) {
@@ -102,7 +104,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         sharedMap2.set("testKey1", undefined);
         sharedMap2.set("testKey2", undefined);
 
-        await this.opProcessingController.process();
+        await opProcessingController.process();
 
         expectAllAfterValues("testKey1", undefined);
         expectAllAfterValues("testKey2", undefined);
@@ -111,7 +113,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
     it("Should delete values in 3 containers correctly", async function() {
         sharedMap2.delete("testKey1");
 
-        await this.opProcessingController.process();
+        await opProcessingController.process();
 
         const hasKey1 = sharedMap1.has("testKey1");
         assert.equal(hasKey1, false, "testKey1 not deleted in container 1");
@@ -126,7 +128,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
     it("Should check if three containers has same number of keys", async function() {
         sharedMap3.set("testKey3", true);
 
-        await this.opProcessingController.process();
+        await opProcessingController.process();
 
         expectAllSize(2);
     });
@@ -162,7 +164,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
 
         sharedMap1.set("testKey1", "updatedValue");
 
-        await this.opProcessingController.process();
+        await opProcessingController.process();
 
         assert.equal(user1ValueChangedCount, 0, "Incorrect number of valueChanged op received in container 1");
         assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 2");
@@ -179,7 +181,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
 
         expectAllBeforeValues("testKey1", "value1", "value2", "value3");
 
-        await this.opProcessingController.process();
+        await opProcessingController.process();
 
         expectAllAfterValues("testKey1", "value3");
     });
@@ -192,7 +194,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
 
         expectAllBeforeValues("testKey1", "value1.1", undefined, "value1.3");
 
-        await this.opProcessingController.process();
+        await opProcessingController.process();
 
         expectAllAfterValues("testKey1", "value1.3");
     });
@@ -204,12 +206,12 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         sharedMap3.set("testKey2", "value2.3");
 
         // drain the outgoing so that the next set will come after
-        await this.opProcessingController.processOutgoing();
+        await opProcessingController.processOutgoing();
 
         sharedMap2.set("testKey2", "value2.2");
         expectAllBeforeValues("testKey2", "value2.1", "value2.2", "value2.3");
 
-        await this.opProcessingController.process();
+        await opProcessingController.process();
 
         expectAllAfterValues("testKey2", "value2.2");
     });
@@ -222,7 +224,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
 
         expectAllBeforeValues("testKey3", "value3.1", "value3.2", undefined);
 
-        await this.opProcessingController.process();
+        await opProcessingController.process();
 
         expectAllAfterValues("testKey3", undefined);
     });
@@ -235,7 +237,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         expectAllBeforeValues("testKey1", "value1.1", "value1.2", undefined);
         assert.equal(sharedMap3.size, 0, "Incorrect map size after clear");
 
-        await this.opProcessingController.process();
+        await opProcessingController.process();
 
         expectAllAfterValues("testKey1", undefined);
         expectAllSize(0);
@@ -248,12 +250,12 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         sharedMap3.set("testKey2", "value2.3");
 
         // drain the outgoing so that the next set will come after
-        await this.opProcessingController.processOutgoing();
+        await opProcessingController.processOutgoing();
 
         sharedMap2.set("testKey2", "value2.2");
         expectAllBeforeValues("testKey2", "value2.1", "value2.2", "value2.3");
 
-        await this.opProcessingController.process();
+        await opProcessingController.process();
 
         expectAllAfterValues("testKey2", "value2.2");
         expectAllSize(1);
@@ -266,7 +268,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         sharedMap3.set("testKey3", "value3.3");
         expectAllBeforeValues("testKey3", "value3.1", undefined, "value3.3");
 
-        await this.opProcessingController.process();
+        await opProcessingController.process();
 
         expectAllAfterValues("testKey3", "value3.3");
         expectAllSize(1);
@@ -294,7 +296,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         // Now add the handle to an attached map so the new map gets attached too.
         sharedMap1.set("newSharedMap", newSharedMap1.handle);
 
-        await this.opProcessingController.process();
+        await opProcessingController.process();
 
         // The new map should be availble in the remote client and it should contain that key that was
         // set in local state.
@@ -304,7 +306,7 @@ const tests = (makeTestContainer: () => Promise<Container>) => {
         // Set a new value for the same key in the remote map.
         newSharedMap2.set("newKey", "anotherNewValue");
 
-        await this.opProcessingController.process();
+        await opProcessingController.process();
 
         // Verify that the new value is updated in both the maps.
         assert.equal(newSharedMap2.get("newKey"), "anotherNewValue", "The new value is not updated in map 2");
@@ -322,16 +324,18 @@ describe("Map", function() {
 
     beforeEach(async function() {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-        this.opProcessingController = new OpProcessingController(deltaConnectionServer);
     });
 
-    tests(makeTestContainer);
+    tests({
+        makeTestContainer,
+        get deltaConnectionServer() { return deltaConnectionServer; },
+    });
 
     afterEach(async function() {
         await deltaConnectionServer.webSocketServer.close();
     });
 
     describe("compatibility", function() {
-        compatTest(tests as any, true);
+        compatTest(tests, { testFluidComponent: true });
     });
 });

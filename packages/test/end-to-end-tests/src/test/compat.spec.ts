@@ -5,16 +5,18 @@
 
 import assert from "assert";
 import { Container } from "@fluidframework/container-loader";
+import { OpProcessingController } from "@fluidframework/test-utils";
 import {
     compatTest,
-    createPrimedComponentFactory,
     createContainer,
     createContainerWithOldLoader,
     createOldPrimedComponentFactory,
     createOldRuntimeFactory,
+    createPrimedComponentFactory,
     createRuntimeFactory,
-    TestComponent,
+    ICompatTestArgs,
     OldTestComponent,
+    TestComponent,
 } from "./compatUtils";
 import * as old from "./oldVersion";
 
@@ -28,19 +30,22 @@ describe("loader/runtime compatibility", () => {
         return response.value as T;
     }
 
-    const tests = function(makeTestContainer: () => Promise<Container | old.Container>) {
+    const tests = function(args: ICompatTestArgs) {
         let container: Container | old.Container;
         let component: TestComponent | OldTestComponent;
+        let opProcessingController: OpProcessingController;
         let containerError: boolean = false;
 
         beforeEach(async function() {
-            container = await makeTestContainer();
+            assert(args.deltaConnectionServer !== undefined);
+            container = await args.makeTestContainer();
             container.on("warning", () => containerError = true);
             container.on("closed", (error) => containerError = containerError || error !== undefined);
 
             component = await requestFluidObject<TestComponent>("default", container);
 
-            this.opProcessingController.addDeltaManagers(component._runtime.deltaManager);
+            opProcessingController = new OpProcessingController(args.deltaConnectionServer);
+            opProcessingController.addDeltaManagers(component._runtime.deltaManager);
         });
 
         afterEach(async function() {
@@ -48,7 +53,7 @@ describe("loader/runtime compatibility", () => {
         });
 
         it("loads", async function() {
-            await this.opProcessingController.process();
+            await opProcessingController.process();
         });
 
         it("can set/get on root directory", async function() {
@@ -76,19 +81,19 @@ describe("loader/runtime compatibility", () => {
             const containersP: Promise<Container | old.Container>[] = [
                 createContainer( // new everything
                     { fluidExport: createRuntimeFactory(TestComponent.type, createPrimedComponentFactory()) },
-                    this.deltaConnectionServer),
+                    args.deltaConnectionServer),
                 createContainerWithOldLoader( // old loader, new container/component runtimes
                     { fluidExport: createRuntimeFactory(TestComponent.type, createPrimedComponentFactory()) },
-                    this.deltaConnectionServer),
+                    args.deltaConnectionServer),
                 createContainerWithOldLoader( // old everything
                     { fluidExport: createOldRuntimeFactory(TestComponent.type, createOldPrimedComponentFactory()) },
-                    this.deltaConnectionServer),
+                    args.deltaConnectionServer),
                 createContainer( // new loader, old container/component runtimes
                     { fluidExport: createOldRuntimeFactory(TestComponent.type, createOldPrimedComponentFactory()) },
-                    this.deltaConnectionServer),
+                    args.deltaConnectionServer),
                 createContainer( // new loader/container runtime, old component runtime
                     { fluidExport: createRuntimeFactory(TestComponent.type, createOldPrimedComponentFactory()) },
-                    this.deltaConnectionServer),
+                    args.deltaConnectionServer),
             ];
 
             const components = await Promise.all(containersP.map(async (containerP) => containerP.then(
