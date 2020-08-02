@@ -434,11 +434,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             throw new Error("runtime already bound");
         }
 
-        // If this FluidDataStoreContext was created via `IContainerRuntime.createDataStoreContext`, the
-        // `componentRuntimeDeferred` promise hasn't yet been initialized.  Do so now.
-        if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred();
-        }
+        assert (this.componentRuntimeDeferred !== undefined);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pending = this.pending!;
