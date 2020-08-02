@@ -10,10 +10,10 @@ const process = require("process");
 const INCLUDE_PATH = ".vuepress/includes/";
 const BASE_URL = process.env.BASE_URL || "https://fluid-docs.azurewebsites.net";
 const DOCS_AUDIENCE = process.env.DOCS_AUDIENCE || "";
-const THIS_VERSION = process.env.THIS_VERSION || "0.23";
-const MASTER_BRANCH_VERSION = process.env.MASTER_BRANCH_VERSION || "0.23";
-const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.22";
-const N1_VERSION = process.env.N1_VERSION || "0.21";
+const THIS_VERSION = process.env.THIS_VERSION || "0.25";
+const MASTER_BRANCH_VERSION = process.env.MASTER_BRANCH_VERSION || "0.25";
+const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.24";
+const N1_VERSION = process.env.N1_VERSION || "0.23";
 const VUEPRESS_BASE = process.env.VUEPRESS_BASE || `/versions/${THIS_VERSION}/`;
 const RELEASE_URL = BASE_URL;
 const N1_URL = `${BASE_URL}/versions/${N1_VERSION}/`;
@@ -93,10 +93,7 @@ const packageFromFilePath = (filepath) => {
 const getNav = () => {
     const nav = [
         { text: "What is Fluid?", link: "/what-is-fluid.md" },
-        // { text: "Get Started", link: "/docs/getting-started.md" },
         { text: "Docs", link: "/docs/" },
-        // { text: "Tutorials", link: "/tutorials/" },
-        // { text: "Ecosystem", link: "/ecosystem/" },
         { text: "API", link: "/api/" },
         { text: "Community", link: "/community/" },
         {
@@ -187,9 +184,6 @@ const getDocsSidebar = () => {
             title: "Roadmap",
             collapsable: false,
             path: "roadmap.md",
-            // children: [
-            //     "roadmap.md",
-            // ]
         },
         {
             title: "Getting started",
