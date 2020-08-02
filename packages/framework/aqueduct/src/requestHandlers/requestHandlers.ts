@@ -31,7 +31,7 @@ export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableVi
                     url: request.url,
                     headers,
                 });
-                const response = await runtime.request(newRequest);
+                const response = await runtime.IFluidHandleContext.request(newRequest);
 
                 if (response.status === 200 && MountableViewClass.canMount(response.value)) {
                     return {

@@ -11,6 +11,7 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
 import { IQuorum, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 export interface IVltavaUserDetails {
     name: string,
@@ -32,7 +33,7 @@ export interface IVltavaDataModel extends EventEmitter {
 export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     private readonly quorum: IQuorum;
     private users: IVltavaUserDetails[] = [];
-    private lastEditedTracker: IFluidLastEditedTracker | undefined;
+    private readonly lastEditedTracker: IFluidLastEditedTracker | undefined;
 
     public on(event: "membersChanged", listener: (users: Map<string, ISequencedClient>) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -117,10 +118,7 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     }
 
     private async setupLastEditedTracker() {
-        const response = await this.context.containerRuntime.request({ url: "default" });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error("Can't find last edited component");
-        }
-        this.lastEditedTracker = response.value.IFluidLastEditedTracker;
+        const object = await requestFluidObject(this.context.containerRuntime.IFluidHandleContext, "default");
+        return object.IFluidLastEditedTracker;
     }
 }

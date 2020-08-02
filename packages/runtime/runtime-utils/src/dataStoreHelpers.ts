@@ -6,17 +6,19 @@ import assert from "assert";
  import {
     IFluidObject,
     IFluidRouter,
+    IRequest,
 } from "@fluidframework/component-core-interfaces";
 
 export async function requestFluidObject<T = IFluidObject>(
-    router: IFluidRouter, url: string): Promise<T>
+    router: IFluidRouter, url: string | IRequest): Promise<T>
 {
-    const request = await router.request({ url });
+    const request = typeof url === "string" ? { url } : url;
+    const response = await router.request(request);
 
-    if (request.status !== 200 || request.mimeType !== "fluid/object") {
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
         return Promise.reject("Not found");
     }
 
-    assert(request.value);
-    return request.value as T;
+    assert(response.value);
+    return response.value as T;
 }

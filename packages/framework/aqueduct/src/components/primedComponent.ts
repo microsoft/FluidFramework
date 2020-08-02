@@ -97,7 +97,7 @@ export abstract class DataObject<P extends IFluidObject = object, S = undefined,
     protected async initializeInternal(props?: S): Promise<void> {
         // Initialize task manager.
         this.internalTaskManager = await requestFluidObject<ITaskManager>(
-            this.context.containerRuntime,
+            this.context.containerRuntime.IFluidHandleContext,
             `/${SchedulerType}`);
 
         if (!this.runtime.existing) {

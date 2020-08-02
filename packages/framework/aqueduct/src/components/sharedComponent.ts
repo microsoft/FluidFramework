@@ -206,7 +206,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * @param id - component id
      */
     protected async requestFluidObject_UNSAFE<T extends IFluidObject>(id: string): Promise<T> {
-        return requestFluidObject(this.context.containerRuntime, `/${id}`);
+        return requestFluidObject(this.context.containerRuntime.IFluidHandleContext, `/${id}`);
     }
 
     /**
@@ -214,7 +214,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * @param id - service id
      */
     protected async getService<T extends IFluidObject>(id: string): Promise<T> {
-        return requestFluidObject(this.context.containerRuntime, `/${serviceRoutePathRoot}/${id}`);
+        return requestFluidObject(this.context.containerRuntime.IFluidHandleContext, `/${serviceRoutePathRoot}/${id}`);
     }
 
     /**
