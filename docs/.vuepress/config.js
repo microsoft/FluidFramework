@@ -216,10 +216,13 @@ const getDocsSidebar = () => {
             collapsable: false,
             children: [
                 "guide.md",
+                "architecture.md",
                 "dds.md",
-                "components.md",
+                "interfaces.md",
                 "aqueduct.md",
-                "component-interfaces.md",
+                "hosts.md",
+                "containers-runtime.md",
+                "server.md",
             ]
         },
         {
@@ -230,8 +233,8 @@ const getDocsSidebar = () => {
                 // "overview",
                 "SharedDirectory.md",
                 "SharedMap.md",
-                "SharedCounter.md",
                 "SharedCell.md",
+                "SharedCounter.md",
                 {
                     title: "Sequences",
                     path: "sequences",
@@ -246,43 +249,22 @@ const getDocsSidebar = () => {
             ]
         },
         {
-            title: "Component model",
+            title: "Testing",
             collapsable: false,
             children: [
-                "component-design-principles.md",
+                "testing.md",
             ]
         },
         {
-            title: "Guides",
-            collapsable: false,
-            children: [
-                "visual-component.md",
-                // "data-component.md",
-                // "embed-components.md",
-                // "cross-component.md",
-                // "component-patterns.md",
-                // "component-collections.md",
-                // "bots.md",
-                // "component-best-practices.md",
-            ]
-        },
-        {
-            title: "Advanced",
+            title: "For contributors",
             collapsable: true,
             children: [
-                "tob.md",
-                "dds-anatomy.md",
-                "container-and-component-loading.md",
-            ]
-        },
-        {
-            title: "Misc",
-            collapsable: true,
-            // path: "",
-            children: [
+                "conduct.md",
                 "release-process.md",
                 "breaking-changes.md",
                 "compatibility.md",
+                "tob.md",
+                "dds-anatomy.md",
                 "doc-system.md",
             ]
         },
