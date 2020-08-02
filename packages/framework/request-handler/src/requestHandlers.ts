@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidObject, IFluidLoadable, IResponse } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IResponse, IRequest } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
@@ -15,35 +15,30 @@ import { RequestParser } from "@fluidframework/runtime-utils";
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime)
     => Promise<IResponse | undefined>;
 
-export const componentRuntimeRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IContainerRuntime) => {
-        if (request.pathParts.length > 0) {
-            let wait: boolean | undefined;
-            if (typeof request.headers?.wait === "boolean") {
-                wait = request.headers.wait;
+/**
+ * Pipe through container request into internal request.
+ * If request is empty and default url is provided, redirect request to such default url.
+ *
+ * @deprecated - This request handler exposes internal container structure and allows external requests
+ * to get to internal objects. It is build for demo purposes only. It's recommended to never expose internal
+ * structure and have mapping of external URIs to internal handles, and only use handles internally (not requests),
+ * thus having more control over lifetime of external URIs and GC policy of objects that were ever exposed
+ * through external URIs.
+ *
+ * @param defaultUrl - optional default url in case request is empty.
+ */
+export const defaultContainerRequestHandler = (defaultUrl?: string) => {
+    return async (request: IRequest, runtime: IContainerRuntime) => {
+        if (request.url === "" || request.url === "/") {
+            if (defaultUrl !== undefined) {
+                return runtime.internalRequest({ url: defaultUrl, headers: request.headers });
             }
-
-            const component = await runtime.getDataStore(request.pathParts[0], wait);
-            const subRequest = request.createSubRequest(1);
-            if (subRequest !== undefined) {
-                return component.request(subRequest);
-            }
+            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
-        return undefined;
+        return runtime.internalRequest(request);
     };
+};
 
 export const createComponentResponse = (component: IFluidObject) => {
     return { status: 200, mimeType: "fluid/object", value: component };
 };
-
-export function createLoadableComponentRuntimeRequestHandler(component: IFluidLoadable): RuntimeRequestHandler {
-    const pathParts = RequestParser.getPathParts(component.url);
-    return async (request: RequestParser, runtime: IContainerRuntime) => {
-        for (let i = 0; i < pathParts.length; i++) {
-            if (pathParts[i] !== request.pathParts[i]) {
-                return undefined;
-            }
-        }
-        return createComponentResponse(component);
-    };
-}

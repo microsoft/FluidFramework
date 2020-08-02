@@ -12,7 +12,7 @@ import {
     IContainerRuntime,
 } from "@fluidframework/container-runtime-definitions";
 import {
-    RuntimeRequestHandler, RuntimeRequestHandlerBuilder, componentRuntimeRequestHandler,
+    RuntimeRequestHandler, RuntimeRequestHandlerBuilder, defaultContainerRequestHandler,
 } from "@fluidframework/request-handler";
 import {
     IFluidDataStoreRegistry,
@@ -65,7 +65,7 @@ export class BaseContainerRuntimeFactory implements
 
         const builder = new RuntimeRequestHandlerBuilder();
         builder.pushHandler(...this.requestHandlers);
-        builder.pushHandler(componentRuntimeRequestHandler);
+        builder.pushHandler(defaultContainerRequestHandler());
 
         const runtime = await ContainerRuntime.load(
             context,

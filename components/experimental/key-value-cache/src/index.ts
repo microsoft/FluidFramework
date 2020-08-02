@@ -26,9 +26,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
-import {
-    IContainerRuntime,
-} from "@fluidframework/container-runtime-definitions";
+import { defaultContainerRequestHandler } from "@fluidframework/request-handler";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
@@ -116,26 +114,6 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
     public get IRuntimeFactory() { return this; }
     public get IFluidDataStoreFactory() { return this; }
 
-    /**
-     * A request handler for a container runtime
-     * @param request - The request
-     * @param runtime - Container Runtime instance
-     */
-    private static async containerRequestHandler(request: IRequest, runtime: IContainerRuntime): Promise<IResponse> {
-        const requestUrl = request.url.length > 0 && request.url.startsWith("/")
-            ? request.url.substr(1)
-            : request.url;
-        const trailingSlash = requestUrl.indexOf("/");
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        const componentId = requestUrl
-            ? decodeURIComponent(requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash))
-            : ComponentName;
-
-        const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
-        const component = await runtime.getDataStore(componentId, true);
-        return component.request({ url: pathForComponent });
-    }
-
     public instantiateDataStore(context: IFluidDataStoreContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
@@ -154,10 +132,10 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await ContainerRuntime.load(
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             new Map([[ComponentName, Promise.resolve(this)]]),
-            KeyValueFactoryComponent.containerRequestHandler,
+            defaultContainerRequestHandler(ComponentName),
         );
 
         if (!runtime.existing) {

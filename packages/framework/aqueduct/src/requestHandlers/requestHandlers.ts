@@ -5,7 +5,7 @@
 
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidMountableViewClass } from "@fluidframework/view-interfaces";
-import { RuntimeRequestHandler, componentRuntimeRequestHandler } from "@fluidframework/request-handler";
+import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
 /**
@@ -40,24 +40,6 @@ export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableVi
                         value: new MountableViewClass(response.value),
                     };
                 }
-            }
-        };
-    };
-
-/**
- * Reissue empty requests as requests for the component at the ID provided.
- * @param defaultComponentId - The ID of the default component
- */
-export const defaultDataStoreRuntimeRequestHandler: (defaultComponentId: string) => RuntimeRequestHandler =
-    (defaultComponentId: string) => {
-        return async (request: RequestParser, runtime: IContainerRuntime) => {
-            if (request.pathParts.length === 0) {
-                return componentRuntimeRequestHandler(
-                    new RequestParser({
-                        url: defaultComponentId,
-                        headers: request.headers,
-                    }),
-                    runtime);
             }
             return undefined;
         };

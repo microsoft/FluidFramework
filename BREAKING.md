@@ -75,7 +75,7 @@ All renames are 1-1, and global case senstive and whole word find replace for al
 
             "ContainerRuntimeFactoryWithDefaultComponent": "ContainerRuntimeFactoryWithDefaultDataStore",
 
-            "defaultComponentRuntimeRequestHandler": "defaultDataStoreRuntimeRequestHandler"
+            "defaultComponentRuntimeRequestHandler": "defaultContainerRequestHandler"
         },
         "methods": {
             "getComponent": "requestFluidObject",
@@ -211,7 +211,7 @@ example:
 ``` typescript
     const builder = new RuntimeRequestHandlerBuilder();
     builder.pushHandler(...this.requestHandlers);
-    builder.pushHandler(componentRuntimeRequestHandler);
+    builder.pushHandler(defaultContainerRequestHandler());
 
     const runtime = await ContainerRuntime.load(
         context,

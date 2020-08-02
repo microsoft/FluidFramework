@@ -5,7 +5,6 @@
 
 import assert from "assert";
 import {
-    defaultDataStoreRuntimeRequestHandler,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
@@ -24,8 +23,8 @@ import {
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { componentRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
 import { createLocalLoader, OpProcessingController, initializeLocalContainer } from "@fluidframework/test-utils";
+import { defaultContainerRequestHandler } from "@fluidframework/request-handler";
 import * as old from "./oldVersion";
 
 class TestComponent extends DataObject {
@@ -65,18 +64,13 @@ describe("loader/runtime compatibility", () => {
         componentFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
         runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): IRuntimeFactory => {
-        const builder = new RuntimeRequestHandlerBuilder();
-        builder.pushHandler(
-            componentRuntimeRequestHandler,
-            defaultDataStoreRuntimeRequestHandler("default"));
-
         return {
             get IRuntimeFactory() { return this; },
             instantiateRuntime: async (context: IContainerContext) => {
-                const runtime = await ContainerRuntime.load(
+                const runtime: ContainerRuntime = await ContainerRuntime.load(
                     context,
                     [[type, Promise.resolve(componentFactory as IFluidDataStoreFactory)]],
-                    async (req, rt) => builder.handleRequest(req, rt),
+                    defaultContainerRequestHandler("default"),
                     runtimeOptions,
                 );
                 if (!runtime.existing) {
@@ -87,23 +81,27 @@ describe("loader/runtime compatibility", () => {
         };
     };
 
+    // back-compatL <= 0.24: This function should be removed in favor or defaultContainerRequestHandler.
+    function old_defaultContainerRequestHandler(defaultUrl?: string) {
+        const builder = new old.RuntimeRequestHandlerBuilder();
+        builder.pushHandler(
+            old.componentRuntimeRequestHandler,
+            old.defaultDataStoreRuntimeRequestHandler("default"));
+        return async (req, rt) => builder.handleRequest(req, rt);
+    }
+
     const createOldRuntimeFactory = (
         type: string,
         componentFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
         runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): old.IRuntimeFactory => {
-        const builder = new old.RuntimeRequestHandlerBuilder();
-        builder.pushHandler(
-            old.componentRuntimeRequestHandler,
-            old.defaultDataStoreRuntimeRequestHandler("default"));
-
         return {
             get IRuntimeFactory() { return this; },
             instantiateRuntime: async (context: old.IContainerContext) => {
-                const runtime = await old.ContainerRuntime.load(
+                const runtime: old.ContainerRuntime = await old.ContainerRuntime.load(
                     context,
                     [[type, Promise.resolve(componentFactory as old.IFluidDataStoreFactory)]],
-                    async (req, rt) => builder.handleRequest(req, rt),
+                    old_defaultContainerRequestHandler("default"),
                     runtimeOptions,
                 );
                 if (!runtime.existing) {

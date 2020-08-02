@@ -839,17 +839,15 @@ export class ContainerRuntime extends EventEmitter
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
             const component = await this.getDataStore(requestParser.pathParts[0], wait);
-            if (component) {
-                const subRequest = requestParser.createSubRequest(1);
-                if (subRequest !== undefined) {
-                    return component.IFluidRouter.request(subRequest);
-                } else {
-                    return {
-                        status: 200,
-                        mimeType: "fluid/object",
-                        value: component,
-                    };
-                }
+            const subRequest = requestParser.createSubRequest(1);
+            if (subRequest !== undefined) {
+                return component.IFluidRouter.request(subRequest);
+            } else {
+                return {
+                    status: 200,
+                    mimeType: "fluid/object",
+                    value: component,
+                };
             }
         }
 

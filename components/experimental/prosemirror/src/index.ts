@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
     IContainerContext,
     IRuntime,
@@ -11,6 +10,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
+import { defaultContainerRequestHandler } from "@fluidframework/request-handler";
 import { fluidExport as smde } from "./prosemirror";
 
 const defaultComponent = smde.type;
@@ -28,21 +28,7 @@ class ProseMirrorFactory implements IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
-            async (request: IRequest, containerRuntime) => {
-                console.log(request.url);
-
-                const requestUrl = request.url.length > 0 && request.url.startsWith("/")
-                    ? request.url.substr(1)
-                    : request.url;
-                const trailingSlash = requestUrl.indexOf("/");
-
-                const componentId = requestUrl
-                    ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-                    : defaultComponentId;
-                const component = await containerRuntime.getDataStore(componentId, true);
-
-                return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
-            },
+            defaultContainerRequestHandler(defaultComponentId),
             { generateSummaries: true });
 
         // Flush mode to manual to batch operations within a turn

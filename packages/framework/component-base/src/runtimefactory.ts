@@ -7,13 +7,16 @@ import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/co
 import {
     ContainerRuntime,
 } from "@fluidframework/container-runtime";
-import { RuntimeRequestHandlerBuilder, RuntimeRequestHandler } from "@fluidframework/request-handler";
+import {
+    RuntimeRequestHandlerBuilder,
+    RuntimeRequestHandler,
+    defaultContainerRequestHandler,
+} from "@fluidframework/request-handler";
 import {
     NamedFluidDataStoreRegistryEntries,
     IFluidDataStoreFactory,
     FlushMode,
 } from "@fluidframework/runtime-definitions";
-import { IRequest } from "@fluidframework/component-core-interfaces";
 
 const defaultComponentId = "" as const;
 
@@ -39,28 +42,7 @@ export class RuntimeFactory implements IRuntimeFactory {
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const builder = new RuntimeRequestHandlerBuilder();
         builder.pushHandler(...this.requestHandlers);
-        builder.pushHandler(async (request: IRequest, containerRuntime) => {
-            const requestUrl = request.url.startsWith("/")
-                ? request.url.substr(1)
-                : request.url;
-
-            const trailingSlash = requestUrl.indexOf("/");
-
-            let componentId: string;
-            let remainingUrl: string;
-
-            if (trailingSlash >= 0) {
-                componentId = requestUrl.slice(0, trailingSlash);
-                remainingUrl = requestUrl.slice(trailingSlash + 1);
-            } else {
-                componentId = requestUrl;
-                remainingUrl = "";
-            }
-
-            const component = await containerRuntime.getDataStore(componentId, true);
-
-            return component.request({ url: remainingUrl });
-        });
+        builder.pushHandler(defaultContainerRequestHandler());
 
         const runtime = await ContainerRuntime.load(
             context,
