@@ -152,7 +152,7 @@ export interface IChannelFactory {
      * Loads the given channel. This call is only ever invoked internally as the only thing
      * that is ever directly loaded is the document itself. Load will then only be called on documents that
      * were created and added to a channel.
-     * @param runtime - Component runtime containing state/info/helper methods about the component.
+     * @param runtime - Data store runtime containing state/info/helper methods about the data store.
      * @param id - ID of the channel.
      * @param services - Services to read objects at a given path using the delta connection.
      * @param branchId - The branch ID.

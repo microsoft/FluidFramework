@@ -27,7 +27,7 @@ import { IInboundSignalMessage, IProvideFluidDataStoreRegistry } from "@fluidfra
 import { IChannel } from ".";
 
 /**
- * Represents the runtime for the component. Contains helper functions/state of the component.
+ * Represents the runtime for the data store. Contains helper functions/state of the data store.
  */
 export interface IFluidDataStoreRuntime extends
     IFluidRouter,
@@ -60,7 +60,7 @@ export interface IFluidDataStoreRuntime extends
     readonly logger: ITelemetryLogger;
 
     /**
-     * Indicates the attachment state of the component to a host service.
+     * Indicates the attachment state of the data store to a host service.
      */
     readonly attachState: AttachState;
 
@@ -85,13 +85,13 @@ export interface IFluidDataStoreRuntime extends
     createChannel(id: string | undefined, type: string): IChannel;
 
     /**
-     * Bind the channel with the component runtime. If the runtime
+     * Bind the channel with the data store runtime. If the runtime
      * is attached then we attach the channel to make it live.
      */
     bindChannel(channel: IChannel): void;
 
     /**
-     * Api for generating the snapshot of the component.
+     * Api for generating the snapshot of the data store.
      * @param message - Message for the snapshot.
      */
     snapshot(message: string): Promise<void>;
@@ -132,7 +132,7 @@ export interface IFluidDataStoreRuntime extends
     getAudience(): IAudience;
 
     /**
-     * Resolves when a local component is attached.
+     * Resolves when a local data store is attached.
      */
     waitAttached(): Promise<void>;
 

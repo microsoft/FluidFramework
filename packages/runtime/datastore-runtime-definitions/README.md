@@ -1,8 +1,8 @@
 # @fluidframework/datastore-runtime-definitions
 
-Interface `IComponentRuntime` specifies the component developer API.
+Interface `IDatastoreRuntime` specifies the data store developer API.
 
-## Capabilities exposed on `IComponentRuntime`
+## Capabilities exposed on `IDatastoreRuntime`
 
 _TODO: The full set of functionality is under review_
 
@@ -23,5 +23,5 @@ Use signals where possible to avoid storing unnecessary ops, e.g. to transmit pr
 Signals are not persisted, ordered, or guaranteed. If a client is behind, the op state can be behind the signal state.
 For this reason people usually stick the currentSeq on the signal, so other clients can wait to process if they are behind.
 
-You can send a signal via the container or component runtime. The container will emit the signal event on all signals,
-but a component will emit the signal event only on signals emitted on that component runtime.
+You can send a signal via the container or data store runtime. The container will emit the signal event on all signals,
+but a data store will emit the signal event only on signals emitted on that data store runtime.
