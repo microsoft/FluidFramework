@@ -43,8 +43,8 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
     constructor(
         public root: ISharedDirectory,
         private readonly internalRegistry: IComponentInternalRegistry,
-        private readonly createAndAttachDataStore: <T extends IFluidObject & IFluidLoadable>
-            (pkg: string, props?: any) => Promise<T>,
+        private readonly createFluidObject: <T extends IFluidObject & IFluidLoadable>
+            (pkg: string) => Promise<T>,
         private readonly getFluidObjectFromDirectory: <T extends IFluidObject & IFluidLoadable>(
             id: string,
             directory: IDirectory,
@@ -75,7 +75,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     public async createTab(type: string): Promise<string> {
         const newKey = uuid();
-        const component = await this.createAndAttachDataStore<IFluidObject & IFluidLoadable>(type);
+        const component = await this.createFluidObject<IFluidObject & IFluidLoadable>(type);
         this.tabs.set(newKey, {
             type,
             handleOrId: component.handle,

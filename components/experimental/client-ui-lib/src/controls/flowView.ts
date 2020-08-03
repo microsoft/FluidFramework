@@ -29,6 +29,7 @@ import * as Sequence from "@fluidframework/sequence";
 import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@fluidframework/undo-redo";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
@@ -473,6 +474,7 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             f.insertComponentNew("code", "@fluid-example/monaco");
         },
         key: "insert new monaco",
@@ -4520,19 +4522,20 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public insertComponentNew(prefix: string, chaincode: string, inline = false) {
-        const id = `${prefix}-${Date.now()}`;
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.collabDocument.context._createDataStore(id, chaincode).then((doc) => doc.bindToContext());
+    public async insertComponentNew(prefix: string, chaincode: string, inline = false) {
+        const router = await this.collabDocument.context.containerRuntime.createDataStore(chaincode);
+        const object = await requestFluidObject(router, "");
+        const loadable = object.IFluidLoadable;
+
         const props = {
             crefTest: {
                 layout: { inline },
                 type: {
                     name: "component",
                 } as IReferenceDocType,
-                url: id,
+                url: loadable.handle,
             },
-            leafId: id,
+            leafId: loadable.handle,
         };
 
         if (!inline) {

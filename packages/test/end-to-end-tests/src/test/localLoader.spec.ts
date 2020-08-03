@@ -20,6 +20,7 @@ import {
     initializeLocalContainer,
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 const counterKey = "count";
 
@@ -99,25 +100,17 @@ describe("LocalLoader", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function requestFluidObject<T>(componentId: string, container: Container): Promise<T> {
-        const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
-        }
-        return response.value as T;
-    }
-
     describe("1 component", () => {
         let component: TestComponent;
 
         beforeEach(async () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
             const container = await createContainer(testComponentFactory);
-            component = await requestFluidObject<TestComponent>("default", container);
+            component = await requestFluidObject<TestComponent>(container, "default");
         });
 
         it("opened", async () => {
-            assert(component instanceof TestComponent, "_createDataStore() must return the expected component type.");
+            assert(component instanceof TestComponent, "requestFluidObject() must return the expected component type.");
         });
 
         afterEach(async () => {
@@ -138,10 +131,10 @@ describe("LocalLoader", () => {
         it("early open / late close", async () => {
             // Create/open both instance of TestComponent before applying ops.
             const container1 = await createContainer(testComponentFactory);
-            const component1 = await requestFluidObject<TestComponent>("default", container1);
+            const component1 = await requestFluidObject<TestComponent>(container1, "default");
 
             const container2 = await createContainer(testComponentFactory);
-            const component2 = await requestFluidObject<TestComponent>("default", container2);
+            const component2 = await requestFluidObject<TestComponent>(container2, "default");
 
             assert(component1 !== component2, "Each container must return a separate TestComponent instance.");
 
@@ -168,14 +161,14 @@ describe("LocalLoader", () => {
 
         it("late open / early close", async () => {
             const container1 = await createContainer(testComponentFactory);
-            const component1 = await requestFluidObject<TestComponent>("default", container1);
+            const component1 = await requestFluidObject<TestComponent>(container1, "default");
 
             component1.increment();
             assert.equal(component1.value, 1, "Local update by 'component1' must be promptly observable");
 
             // Wait until ops are pending before opening second TestComponent instance.
             const container2 = await createContainer(testComponentFactory);
-            const component2 = await requestFluidObject<TestComponent>("default", container2);
+            const component2 = await requestFluidObject<TestComponent>(container2, "default");
             assert(component1 !== component2, "Each container must return a separate TestComponent instance.");
 
             opProcessingController.addDeltaManagers(
@@ -208,7 +201,7 @@ describe("LocalLoader", () => {
 
                 const factory = new TestFluidComponentFactory([["text", SharedString.getFactory()]]);
                 const container = await createContainer(factory);
-                const component = await requestFluidObject<ITestFluidComponent>("default", container);
+                const component = await requestFluidObject<ITestFluidComponent>(container, "default");
                 text = await component.getSharedObject("text");
             });
 
@@ -234,11 +227,11 @@ describe("LocalLoader", () => {
                 const factory = new TestFluidComponentFactory([["text", SharedString.getFactory()]]);
 
                 const container1 = await createContainer(factory);
-                component1 = await requestFluidObject<ITestFluidComponent>("default", container1);
+                component1 = await requestFluidObject<ITestFluidComponent>(container1, "default");
                 text1 = await component1.getSharedObject<SharedString>("text");
 
                 const container2 = await createContainer(factory);
-                component2 = await requestFluidObject<ITestFluidComponent>("default", container2);
+                component2 = await requestFluidObject<ITestFluidComponent>(container2, "default");
                 text2 = await component2.getSharedObject<SharedString>("text");
 
                 opProcessingController.addDeltaManagers(
@@ -271,10 +264,10 @@ describe("LocalLoader", () => {
                 deltaConnectionServer = LocalDeltaConnectionServer.create();
 
                 const container1 = await createContainer(testComponentFactory);
-                component1 = await requestFluidObject<TestComponent>("default", container1);
+                component1 = await requestFluidObject<TestComponent>(container1, "default");
 
                 const container2 = await createContainer(testComponentFactory);
-                component2 = await requestFluidObject<TestComponent>("default", container2);
+                component2 = await requestFluidObject<TestComponent>(container2, "default");
             });
 
             it("Controlled inbounds and outbounds", async () => {

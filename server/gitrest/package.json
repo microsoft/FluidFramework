@@ -20,7 +20,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/gitresources": "^0.1006.0-0",
+    "@fluidframework/gitresources": "^0.1010.0 ",
     "body-parser": "^1.17.2",
     "compression": "^1.7.3",
     "cors": "^2.8.5",

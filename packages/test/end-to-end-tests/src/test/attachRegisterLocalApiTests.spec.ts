@@ -7,7 +7,6 @@ import assert from "assert";
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -20,6 +19,7 @@ import {
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 describe(`Attach/Bind Api Tests For Attached Container`, () => {
     const documentId = "detachedContainerTest";
@@ -51,13 +51,11 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
     const createPeerComponent = async (
         containerRuntime: IContainerRuntimeBase,
     ) => {
-        const peerComponentRuntimeChannel = await (containerRuntime as IContainerRuntime)
-            .createDataStoreWithRealizationFn(["default"]);
-        const peerComponent =
-            (await peerComponentRuntimeChannel.request({ url: "/" })).value as ITestFluidComponent;
+        const router = await containerRuntime.createDataStore(["default"]);
+        const peerComponent = await requestFluidObject<ITestFluidComponent>(router, "/");
         return {
             peerComponent,
-            peerComponentRuntimeChannel,
+            peerComponentRuntimeChannel: peerComponent.channel,
         };
     };
 

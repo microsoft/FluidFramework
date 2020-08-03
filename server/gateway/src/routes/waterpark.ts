@@ -19,7 +19,7 @@ import { getConfig, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
 const defaultChaincode =
-    `@fluidframework/external-component-loader@^0.20.0-0`;
+    `@fluidframework/external-component-loader@^0.25.0-0`;
 
 export function create(
     config: Provider,

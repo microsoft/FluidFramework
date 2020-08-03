@@ -37,7 +37,7 @@ export class Vltava extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
     protected async initializingFirstTime() {
-        const tabsComponent = await this.createAndAttachDataStore("tabs");
+        const tabsComponent = await this.createFluidObject("tabs");
         this.root.set("tabs-component-id", tabsComponent.handle);
     }
 

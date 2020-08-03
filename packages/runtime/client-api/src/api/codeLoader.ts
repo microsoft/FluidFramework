@@ -24,7 +24,6 @@ import {
     IFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { CreateContainerError } from "@fluidframework/container-utils";
 import * as sequence from "@fluidframework/sequence";
 import { Document } from "./document";
 
@@ -133,13 +132,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            runtime._createDataStore(rootMapId, "@fluid-internal/client-api")
-                .then((componentRuntime) => {
-                    componentRuntime.bindToContext();
-                })
-                .catch((error: any) => {
-                    context.closeFn(CreateContainerError(error));
-                });
+            await runtime.createRootDataStore("@fluid-internal/client-api", rootMapId);
         }
 
         return runtime;

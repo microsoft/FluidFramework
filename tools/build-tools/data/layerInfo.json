@@ -88,6 +88,7 @@
                     "@fluidframework/tool-utils"
                 ],
                 "deps": [
+                    "Base-Utils",
                     "Other-Utils"
                 ]
             },

@@ -42,10 +42,10 @@ export class Pond extends DataObject implements IFluidHTMLView {
    * Do setup work here
    */
     protected async initializingFirstTime() {
-        const clickerComponent = await Clicker.getFactory()._createDataStore(this.context);
+        const clickerComponent = await Clicker.getFactory().createInstance(this.context);
         this.root.set(Clicker.ComponentName, clickerComponent.handle);
 
-        const clickerComponentUsingProvider = await ExampleUsingProviders.getFactory()._createDataStore(this.context);
+        const clickerComponentUsingProvider = await ExampleUsingProviders.getFactory().createInstance(this.context);
         this.root.set(ExampleUsingProviders.ComponentName, clickerComponentUsingProvider.handle);
     }
 
