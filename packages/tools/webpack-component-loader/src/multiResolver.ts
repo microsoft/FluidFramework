@@ -107,8 +107,7 @@ export class MultiUrlResolver implements IUrlResolver {
 
             case "spo":
             case "spo-df":
-                const request = await (this.urlResolver as OdspUrlResolver).createCreateNewRequest(fileName);
-                return request;
+                return (this.urlResolver as OdspUrlResolver).createCreateNewRequest(fileName);
 
             default: // Local
                 return (this.urlResolver as LocalResolver).createCreateNewRequest(fileName);

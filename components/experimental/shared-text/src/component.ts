@@ -83,6 +83,7 @@ export class SharedTextRunner
     private collabDoc: Document;
     private taskManager: ITaskManager;
     private uiInitialized = false;
+    private readonly title: string = "Shared Text";
 
     private constructor(
         private readonly runtime: FluidDataStoreRuntime,
@@ -171,9 +172,6 @@ export class SharedTextRunner
             this.rootView.set("flowContainerMap", flowContainerMap.handle);
 
             insights.set(newString.id, this.collabDoc.createMap().handle);
-
-            // Set the an id for this component that is used to display UI.
-            this.rootView.set("sharedTextId", "SharedText");
         }
 
         debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
@@ -238,10 +236,9 @@ export class SharedTextRunner
         containerDiv.id = "flow-container";
         containerDiv.style.touchAction = "none";
         containerDiv.style.overflow = "hidden";
-        const sharedTextId = this.rootView.get("sharedTextId");
         const container = new controls.FlowContainer(
             containerDiv,
-            sharedTextId,
+            this.title,
             // API.Document should not be used here. This should be removed once #2915 is fixed.
             new API.Document(
                 this.runtime,

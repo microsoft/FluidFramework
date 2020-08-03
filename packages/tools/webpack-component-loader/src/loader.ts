@@ -171,15 +171,15 @@ export async function start(
     let url = window.location.href;
 
     /**
-     * For new documents, the `url` is of the format - http://localhost:8080/<autoCreate/manualCreate>.
-     * So, we create a new `documentId` and replace the last part in the `url` with the `documentId`.
-     * We will replace the url in the browser with this `url` once loading is complete.
+     * For new documents, the `url` is of the format - http://localhost:8080/new or http://localhost:8080/manualAttach.
+     * So, we create a new `id` and use that as the `documentId`.
+     * We will also replace the url in the browser with a new url of format - http://localhost:8080/doc/<documentId>.
      */
-    const autoCreate: boolean = id === "autoCreate";
-    const manualCreate: boolean = id === "manualCreate";
-    if (autoCreate || manualCreate) {
+    const autoAttach: boolean = id === "new";
+    const manualAttach: boolean = id === "manualAttach";
+    if (autoAttach || manualAttach) {
         documentId = moniker.choose();
-        url = url.replace(id, documentId);
+        url = url.replace(id, `doc/${documentId}`);
     }
 
     const codeDetails: IFluidCodeDetails = {
@@ -192,12 +192,13 @@ export async function start(
     const loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
 
     let container1: Container;
-    if (autoCreate || manualCreate) {
+    if (autoAttach || manualAttach) {
         // For new documents, create a detached container which will be attached later.
         container1 = await loader1.createDetachedContainer(codeDetails);
     } else {
-        // For existing documents, we try to load the container with the document id in the `url`.
-        container1 = await loader1.resolve({ url });
+        // For existing documents, we try to load the container with the given documentId.
+        const documentUrl = `${window.location.origin}/${documentId}`;
+        container1 = await loader1.resolve({ url: documentUrl });
 
         /**
          * For existing documents, the container should already exist. If it doesn't, we treat this as the new
@@ -223,7 +224,7 @@ export async function start(
     }
 
     const reqParser = new RequestParser({ url });
-    const componentUrl = `/${reqParser.createSubRequest(3).url}`;
+    const componentUrl = `/${reqParser.createSubRequest(4).url}`;
 
     // Load and render the component.
     await getComponentAndRender(container1, componentUrl, leftDiv);
@@ -233,8 +234,8 @@ export async function start(
     });
 
     // Now that we have rendered the component, if this is a new document, we have to attach the container.
-    if (autoCreate || manualCreate) {
-        await attachContainer(container1, urlResolver, documentId, url, rightDiv, manualCreate);
+    if (autoAttach || manualAttach) {
+        await attachContainer(container1, urlResolver, documentId, url, rightDiv, manualAttach);
     }
 
     // For side by side mode, we need to create a second container and component.

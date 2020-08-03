@@ -29,7 +29,7 @@ const getThisOrigin = (options: RouteOptions): string => `http://localhost:${opt
 
 export const before = async (app: express.Application) => {
     app.get("/getclientsidewebparts", async (req, res) => res.send(await createManifestResponse()));
-    app.get("/", (req, res) => res.redirect(`/autoCreate`));
+    app.get("/", (req, res) => res.redirect(`/new`));
 };
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: RouteOptions) => {
@@ -189,7 +189,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         res.end(buffer);
     });
 
-    app.get("/:id*", async (req, res) => {
+    const isReady = async (req, res) => {
         if (readyP !== undefined) {
             let canContinue = false;
             try {
@@ -205,11 +205,44 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 if (!res.finished) {
                     res.end();
                 }
-                return;
+                return false;
             }
         }
 
-        fluid(req, res, baseDir, options);
+        return true;
+    };
+
+    app.get("/doc/:id*", async (req, res) => {
+        const ready = await isReady(req, res);
+        if (ready) {
+            fluid(req, res, baseDir, options);
+        }
+    });
+
+    app.get("/:id*", async (req, res) => {
+        // Ignore favicon.ico urls.
+        if (req.url === "/favicon.ico") {
+            res.end();
+            return;
+        }
+
+        // For new documents, we only support - http://localhost:8080/new or http://localhsot:8080/manualAttach.
+        // For existing documents, the url should be of the format - http://localhost:8080/doc/<documentId>.
+        const documentId = req.params.id;
+        if (documentId !== "new" && documentId !== "manualAttach") {
+            res.write(`
+                Invalid url.
+                For new document, use "http://localhost:<port>".
+                For new document with manual attach, use "http://locahost:<port>/manualAttach".
+                For loading existing docs, use "http://localhost:<port>/doc/<documentId>".`);
+            res.end();
+            return;
+        }
+
+        const ready = await isReady(req, res);
+        if (ready) {
+            fluid(req, res, baseDir, options);
+        }
     });
 };
 
