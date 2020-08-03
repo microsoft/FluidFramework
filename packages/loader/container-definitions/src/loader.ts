@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IRequest, IResponse, IFluidRouter } from "@fluidframework/component-core-interfaces";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -84,7 +84,7 @@ export interface IContainerEvents extends IEvent {
     (event: "pong" | "processTime", listener: (latency: number) => void);
 }
 
-export interface IContainer extends IEventProvider<IContainerEvents> {
+export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
 
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 

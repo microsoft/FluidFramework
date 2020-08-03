@@ -48,10 +48,10 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
     }
 
     protected async initializingFirstTime() {
-        const defaultComponent = await this.createAndAttachDataStore("vltava");
+        const defaultComponent = await this.createFluidObject("vltava");
         this.root.set(this.defaultComponentId, defaultComponent.handle);
 
-        const lastEditedComponent = await this.createAndAttachDataStore(LastEditedTrackerComponentName);
+        const lastEditedComponent = await this.createFluidObject(LastEditedTrackerComponentName);
         this.root.set(this.lastEditedComponentId, lastEditedComponent.handle);
     }
 

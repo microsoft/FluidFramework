@@ -195,10 +195,9 @@ describe("Loader", () => {
                     emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
                         // we can ignore our own op
                         if (
-                            messages
-                            && messages.length === 1
+                            messages.length === 1
                             && messages[0].type === MessageType.Operation
-                            && messages[0].contents
+                            && messages[0].contents !== undefined
                             && JSON.parse(messages[0].contents as string) === ignoreContent
                             && canIgnore
                         ) {

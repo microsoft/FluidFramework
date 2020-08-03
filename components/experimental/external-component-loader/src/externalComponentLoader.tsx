@@ -7,10 +7,9 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
     IFluidObject,
     IFluidLoadable,
-    IResponse,
+    IFluidRouter,
 } from "@fluidframework/component-core-interfaces";
-import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
-import { v4 as uuid } from "uuid";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { UrlRegistry } from "./urlRegistry";
 
 /**
@@ -43,11 +42,9 @@ export class ExternalComponentLoader extends DataObject {
 
         // Calling .get() on the urlReg registry will also add it to the registry if it's not already there.
         const pkgReg = await urlReg.IFluidDataStoreRegistry.get(componentUrl) as IFluidObject & IFluidObject;
-        let componentRuntime: IFluidDataStoreChannel;
-        const id = uuid();
+        let router: IFluidRouter;
         if (pkgReg?.IFluidExportDefaultFactoryName !== undefined) {
-            componentRuntime = await this.context.containerRuntime._createDataStore(
-                id,
+            router = await this.context.containerRuntime.createDataStore(
                 [
                     ...this.context.packagePath,
                     "url",
@@ -55,8 +52,7 @@ export class ExternalComponentLoader extends DataObject {
                     pkgReg.IFluidExportDefaultFactoryName.getDefaultFactoryName(),
                 ]);
         } else if (pkgReg?.IFluidDataStoreFactory !== undefined) {
-            componentRuntime = await this.context.containerRuntime._createDataStore(
-                id,
+            router = await this.context.containerRuntime.createDataStore(
                 [
                     ...this.context.packagePath,
                     "url",
@@ -66,19 +62,17 @@ export class ExternalComponentLoader extends DataObject {
             throw new Error(`${componentUrl} is not a factory, and does not provide default component name`);
         }
 
-        const response: IResponse = await componentRuntime.request({ url: "/" });
-        let component = response.value as IFluidObject & IFluidObject;
-        if (component.IFluidLoadable === undefined) {
+        let obj = await requestFluidObject(router, "/");
+        if (obj.IFluidLoadable === undefined) {
             throw new Error(`${componentUrl} must implement the IFluidLoadable interface to be loaded here`);
         }
-        componentRuntime.bindToContext();
-        if (component.IFluidObjectCollection !== undefined) {
-            component = component.IFluidObjectCollection.createCollectionItem();
-            if (component.IFluidLoadable === undefined) {
+        if (obj.IFluidObjectCollection !== undefined) {
+            obj = obj.IFluidObjectCollection.createCollectionItem();
+            if (obj.IFluidLoadable === undefined) {
                 throw new Error(`${componentUrl} must implement the IFluidLoadable interface to be loaded here`);
             }
         }
 
-        return component.IFluidLoadable;
+        return obj.IFluidLoadable;
     }
 }

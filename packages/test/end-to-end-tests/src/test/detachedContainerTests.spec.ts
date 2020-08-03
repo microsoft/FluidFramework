@@ -9,20 +9,18 @@ import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframe
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { IFluidDataStoreContext, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
     ITestFluidComponent,
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
-import { v4 as uuid } from "uuid";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { Deferred } from "@fluidframework/common-utils";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
 import { Ink, IColor } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { SharedCell } from "@fluidframework/cell";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
@@ -30,6 +28,7 @@ import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { ComponentMessageType } from "@fluidframework/component-runtime";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 describe("Detached Container", () => {
     const documentId = "detachedContainerTest";
@@ -52,13 +51,13 @@ describe("Detached Container", () => {
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let loader: Loader;
 
-    const createAndAttachDataStore = (async (
+    const createFluidObject = (async (
         componentContext: IFluidDataStoreContext,
-        componentId: string,
         type: string,
     ) => {
-        const doc = await componentContext._createDataStore(componentId, type);
-        doc.bindToContext();
+        return requestFluidObject<ITestFluidComponent>(
+            await componentContext.containerRuntime.createDataStore(type),
+            "");
     });
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
@@ -125,13 +124,8 @@ describe("Detached Container", () => {
         const component = response.value as ITestFluidComponent;
 
         // Create a sub component of type TestFluidComponent and verify that it is attached.
-        const subCompId = uuid();
-        await createAndAttachDataStore(component.context, subCompId, "default");
-        const subResponse = await container.request({ url: `/${subCompId}` });
-        if (subResponse.mimeType !== "fluid/object" && subResponse.status !== 200) {
-            assert.fail("New components should be created in detached container");
-        }
-        const subComponent = subResponse.value as ITestFluidComponent;
+        const subComponent = await createFluidObject(component.context, "default");
+        component.root.set("attachKey", subComponent.handle);
         assert.strictEqual(subComponent.context.storage, undefined, "No storage should be there!!");
 
         // Get the sub component's root channel and verify that it is attached.
@@ -147,18 +141,12 @@ describe("Detached Container", () => {
         const component = response.value as ITestFluidComponent;
 
         // Create a sub component of type TestFluidComponent.
-        const newComponentId = uuid();
-        await createAndAttachDataStore(component.context, newComponentId, "default");
+        const testComponent = await createFluidObject(component.context, "default");
+        component.root.set("attachKey", testComponent.handle);
 
         // Now attach the container
         await container.attach(request);
 
-        // Get the sub component and verify that it is attached.
-        const testResponse = await container.request({ url: `/${newComponentId}` });
-        if (testResponse.mimeType !== "fluid/object" && testResponse.status !== 200) {
-            assert.fail("New components should be created in detached container");
-        }
-        const testComponent = testResponse.value as ITestFluidComponent;
         assert.strictEqual(testComponent.runtime.IFluidHandleContext.isAttached, true,
             "Component should be attached!!");
 
@@ -176,13 +164,11 @@ describe("Detached Container", () => {
         const component = response.value as ITestFluidComponent;
 
         // Create a sub component of type TestFluidComponent.
-        const subCompId = uuid();
-        await createAndAttachDataStore(component.context, subCompId, "default");
+        const subComponent1 = await createFluidObject(component.context, "default");
+        component.root.set("attachKey", subComponent1.handle);
 
         // Now attach the container and get the sub component.
         await container.attach(request);
-        const response1 = await container.request({ url: `/${subCompId}` });
-        const subComponent1 = response1.value as ITestFluidComponent;
 
         // Now load the container from another loader.
         const urlResolver2 = new LocalResolver();
@@ -192,7 +178,7 @@ describe("Detached Container", () => {
         const container2 = await loader2.resolve({ url: requestUrl2 });
 
         // Get the sub component and assert that it is attached.
-        const response2 = await container2.request({ url: `/${subCompId}` });
+        const response2 = await container2.request({ url: `/${subComponent1.context.id}` });
         const subComponent2 = response2.value as ITestFluidComponent;
         assert.strictEqual(subComponent2.runtime.IFluidHandleContext.isAttached, true,
             "Component should be attached!!");
@@ -303,31 +289,31 @@ describe("Detached Container", () => {
 
     it("Fire component attach ops during container attach", async () => {
         const testComponentType = "default";
-        // eslint-disable-next-line prefer-const
-        let peerComponentRuntimeChannel: IFluidDataStoreChannel;
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
-            assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
-            assert.strictEqual(contents.contents.id,
-                peerComponentRuntimeChannel.id, "Component id should match");
-            assert.strictEqual(contents.contents.type,
-                testComponentType, "Component type should match");
-            defPromise.resolve();
-            return 0;
-        };
 
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
         const component = response.value as ITestFluidComponent;
 
         const containerP = container.attach(request);
-        peerComponentRuntimeChannel = await (component.context.containerRuntime as IContainerRuntime)
-            .createDataStoreWithRealizationFn([testComponentType]);
+        const router = await component.context.containerRuntime.createDataStore([testComponentType]);
+        const comp2 = await requestFluidObject<ITestFluidComponent>(router, "/");
+
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        container.deltaManager.submit = (type, contents, batch, metadata) => {
+            assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
+            assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
+            assert.strictEqual(contents.contents.id,
+                comp2.context.id, "Component id should match");
+            assert.strictEqual(contents.contents.type,
+                testComponentType, "Component type should match");
+            defPromise.resolve();
+            return 0;
+        };
+
         // Fire attach op
-        peerComponentRuntimeChannel.bindToContext();
+        component.root.set("attachComp", comp2.handle);
         await containerP;
         await defPromise.promise;
     });
