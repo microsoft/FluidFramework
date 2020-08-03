@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { IOdspAuthRequestInfo } from "./odspAuth";
 import {
     getAsync,
     createErrorFromResponse,
     putAsync,
-    IOdspAuthRequestInfo,
 } from "./odspRequest";
 
 interface IOdspUser {
