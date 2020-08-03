@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./componentRuntime";
-export * from "./componentHandle";
+export * from "./dataStoreRuntime";
+export * from "./fluidHandle";
