@@ -55,7 +55,7 @@ import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
 
-export enum ComponentMessageType {
+export enum DataStoreMessageType {
     // Creates a new channel
     Attach = "attach",
     ChannelOp = "op",
@@ -68,23 +68,23 @@ export interface ISharedObjectRegistry {
 }
 
 /**
- * Base component class
+ * Base data store class
  */
 export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreChannel,
     IFluidDataStoreRuntime, IFluidHandleContext {
     /**
-     * Loads the component runtime
-     * @param context - The component context
-     * @param sharedObjectRegistry - The registry of shared objects used by this component
-     * @param activeCallback - The callback called when the component runtime in active
-     * @param componentRegistry - The registry of components created and used by this component
+     * Loads the data store runtime
+     * @param context - The data store context
+     * @param sharedObjectRegistry - The registry of shared objects used by this data store
+     * @param activeCallback - The callback called when the data store runtime in active
+     * @param dataStoreRegistry - The registry of data store created and used by this data store
      */
     public static load(
         context: IFluidDataStoreContext,
         sharedObjectRegistry: ISharedObjectRegistry,
-        componentRegistry?: IFluidDataStoreRegistry,
+        dataStoreRegistry?: IFluidDataStoreRegistry,
     ): FluidDataStoreRuntime {
-        const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { componentId: uuid() });
+        const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { dataStoreId: uuid() });
         const runtime = new FluidDataStoreRuntime(
             context,
             context.documentId,
@@ -98,7 +98,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             context.getAudience(),
             context.snapshotFn,
             sharedObjectRegistry,
-            componentRegistry,
+            dataStoreRegistry,
             logger);
 
         context.bindRuntime(runtime);
@@ -108,23 +108,23 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     public get IFluidRouter() { return this; }
 
     public get connected(): boolean {
-        return this.componentContext.connected;
+        return this.dataStoreContext.connected;
     }
 
     public get leader(): boolean {
-        return this.componentContext.leader;
+        return this.dataStoreContext.leader;
     }
 
     public get clientId(): string | undefined {
-        return this.componentContext.clientId;
+        return this.dataStoreContext.clientId;
     }
 
     public get clientDetails(): IClientDetails {
-        return this.componentContext.containerRuntime.clientDetails;
+        return this.dataStoreContext.containerRuntime.clientDetails;
     }
 
     public get loader(): ILoader {
-        return this.componentContext.loader;
+        return this.dataStoreContext.loader;
     }
 
     public get isAttached(): boolean {
@@ -147,13 +147,13 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     }
 
     public get routeContext(): IFluidHandleContext {
-        return this.componentContext.containerRuntime.IFluidHandleContext;
+        return this.dataStoreContext.containerRuntime.IFluidHandleContext;
     }
 
-    public get IFluidSerializer() { return this.componentContext.containerRuntime.IFluidSerializer; }
+    public get IFluidSerializer() { return this.dataStoreContext.containerRuntime.IFluidSerializer; }
 
     public get IFluidHandleContext() { return this; }
-    public get IFluidDataStoreRegistry() { return this.componentRegistry; }
+    public get IFluidDataStoreRegistry() { return this.dataStoreRegistry; }
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
@@ -172,7 +172,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     private _attachState: AttachState;
 
     private constructor(
-        private readonly componentContext: IFluidDataStoreContext,
+        private readonly dataStoreContext: IFluidDataStoreContext,
         public readonly documentId: string,
         public readonly id: string,
         public readonly parentBranch: string | null,
@@ -184,28 +184,28 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         private readonly audience: IAudience,
         private readonly snapshotFn: (message: string) => Promise<void>,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
-        private readonly componentRegistry: IFluidDataStoreRegistry | undefined,
+        private readonly dataStoreRegistry: IFluidDataStoreRegistry | undefined,
         public readonly logger: ITelemetryLogger,
     ) {
         super();
 
-        const tree = componentContext.baseSnapshot;
+        const tree = dataStoreContext.baseSnapshot;
 
-        // Must always receive the component type inside of the attributes
+        // Must always receive the data store type inside of the attributes
         if (tree?.trees !== undefined) {
             Object.keys(tree.trees).forEach((path) => {
                 const channelContext = new RemoteChannelContext(
                     this,
-                    componentContext,
-                    componentContext.storage,
+                    dataStoreContext,
+                    dataStoreContext.storage,
                     (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
                     (address: string) => this.setChannelDirty(address),
                     path,
                     tree.trees[path],
                     this.sharedObjectRegistry,
                     undefined /* extraBlobs */,
-                    componentContext.branch,
-                    this.componentContext.summaryTracker.createOrGetChild(
+                    dataStoreContext.branch,
+                    this.dataStoreContext.summaryTracker.createOrGetChild(
                         path,
                         this.deltaManager.lastSequenceNumber,
                     ));
@@ -239,7 +239,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     public async request(request: IRequest): Promise<IResponse> {
         // System routes
         if (request.url === `/${SchedulerType}`) {
-            return this.componentContext.containerRuntime.request(request);
+            return this.dataStoreContext.containerRuntime.request(request);
         }
 
         // Parse out the leading slash
@@ -293,8 +293,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             this.sharedObjectRegistry,
             type,
             this,
-            this.componentContext,
-            this.componentContext.storage,
+            this.dataStoreContext,
+            this.dataStoreContext.storage,
             (content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
             (address: string) => this.setChannelDirty(address));
         this.contexts.set(id, context);
@@ -319,14 +319,14 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     public bindChannel(channel: IChannel): void {
         assert(this.notBoundedChannelContextSet.has(channel.id), "Channel to be binded should be in not bounded set");
         this.notBoundedChannelContextSet.delete(channel.id);
-        // If our Component is attached, then attach the channel.
+        // If our data store is attached, then attach the channel.
         if (this.isAttached) {
             this.attachChannel(channel);
             return;
         } else {
             this.bind(channel.handle);
 
-            // If our Component is local then add the channel to the queue
+            // If our data store is local then add the channel to the queue
             if (!this.localChannelContextQueue.has(channel.id)) {
                 this.localChannelContextQueue.set(channel.id, this.contexts.get(channel.id) as LocalChannelContext);
             }
@@ -347,8 +347,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
         // Flush the queue to set any pre-existing channels to local
         this.localChannelContextQueue.forEach((channel) => {
-            // When we are attaching the component we don't need to send attach for the registered services.
-            // This is because they will be captured as part of the Attach component snapshot
+            // When we are attaching the data store we don't need to send attach for the registered services.
+            // This is because they will be captured as part of the Attach data store snapshot
             channel.attach();
         });
 
@@ -361,7 +361,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
      * Binds this runtime to the container
      * This includes the following:
      * 1. Sending an Attach op that includes all existing state
-     * 2. Attaching the graph if the component becomes attached.
+     * 2. Attaching the graph if the data store becomes attached.
      */
     public bindToContext() {
         if (this.bindState !== BindState.NotBound) {
@@ -369,13 +369,13 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         }
         this.bindState = BindState.Binding;
         // Attach the runtime to the container via this callback
-        this.componentContext.bindToContext(this);
+        this.dataStoreContext.bindToContext(this);
 
         this.bindState = BindState.Bound;
     }
 
     public bind(handle: IFluidHandle): void {
-        // If the component is already attached or its graph is already in attaching or attached state,
+        // If the data store is already attached or its graph is already in attaching or attached state,
         // then attach the incoming handle too.
         if (this.isAttached || this.graphAttachState !== AttachState.Detached) {
             handle.attachGraph();
@@ -436,7 +436,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.verifyNotClosed();
         switch (message.type) {
-            case ComponentMessageType.Attach: {
+            case DataStoreMessageType.Attach: {
                 const attachMessage = message.contents as IAttachMessage;
                 const id = attachMessage.id;
 
@@ -458,8 +458,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
                     const remoteChannelContext = new RemoteChannelContext(
                         this,
-                        this.componentContext,
-                        this.componentContext.storage,
+                        this.dataStoreContext,
+                        this.dataStoreContext.storage,
                         (content, localContentMetadata) => this.submitChannelOp(id, content, localContentMetadata),
                         (address: string) => this.setChannelDirty(address),
                         id,
@@ -467,7 +467,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                         this.sharedObjectRegistry,
                         flatBlobsP,
                         origin,
-                        this.componentContext.summaryTracker.createOrGetChild(
+                        this.dataStoreContext.summaryTracker.createOrGetChild(
                             id,
                             message.sequenceNumber,
                         ),
@@ -486,7 +486,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                 break;
             }
 
-            case ComponentMessageType.ChannelOp:
+            case DataStoreMessageType.ChannelOp:
                 this.processChannelOp(message, local, localOpMetadata);
                 break;
             default:
@@ -538,28 +538,28 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         return entries;
     }
 
-    public submitMessage(type: ComponentMessageType, content: any, localOpMetadata: unknown) {
+    public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
         this.submit(type, content, localOpMetadata);
     }
 
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        return this.componentContext.submitSignal(type, content);
+        return this.dataStoreContext.submitSignal(type, content);
     }
 
     /**
-     * Will return when the component is attached.
+     * Will return when the data store is attached.
      */
     public async waitAttached(): Promise<void> {
         return this.deferredAttached.promise;
     }
 
     public raiseContainerWarning(warning: ContainerWarning): void {
-        this.componentContext.raiseContainerWarning(warning);
+        this.dataStoreContext.raiseContainerWarning(warning);
     }
 
     /**
-     * Attach channel should only be called after the componentRuntime has been attached
+     * Attach channel should only be called after the data store has been attached
      */
     private attachChannel(channel: IChannel): void {
         this.verifyNotClosed();
@@ -570,9 +570,9 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
         channel.handle.attachGraph();
 
-        assert(this.isAttached, "Component should be attached to attach the channel.");
-        // Get the object snapshot only if the component is Bound and its graph is attached too,
-        // because if the graph is attaching, then it would get included in the component snapshot.
+        assert(this.isAttached, "Data store should be attached to attach the channel.");
+        // Get the object snapshot only if the data store is Bound and its graph is attached too,
+        // because if the graph is attaching, then it would get included in the data store snapshot.
         if (this.bindState === BindState.Bound && this.graphAttachState === AttachState.Attached) {
             const snapshot = snapshotChannel(channel);
 
@@ -582,7 +582,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                 type: channel.attributes.type,
             };
             this.pendingAttach.set(channel.id, message);
-            this.submit(ComponentMessageType.Attach, message);
+            this.submit(DataStoreMessageType.Attach, message);
         }
 
         const context = this.contexts.get(channel.id) as LocalChannelContext;
@@ -591,15 +591,15 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
     private submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
         const envelope: IEnvelope = { address, contents };
-        this.submit(ComponentMessageType.ChannelOp, envelope, localOpMetadata);
+        this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata);
     }
 
     private submit(
-        type: ComponentMessageType,
+        type: DataStoreMessageType,
         content: any,
         localOpMetadata: unknown = undefined): void {
         this.verifyNotClosed();
-        this.componentContext.submitMessage(type, content, localOpMetadata);
+        this.dataStoreContext.submitMessage(type, content, localOpMetadata);
     }
 
     /**
@@ -609,11 +609,11 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    public reSubmit(type: ComponentMessageType, content: any, localOpMetadata: unknown) {
+    public reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
         this.verifyNotClosed();
 
         switch (type) {
-            case ComponentMessageType.ChannelOp:
+            case DataStoreMessageType.ChannelOp:
                 {
                     // For Operations, find the right channel and trigger resubmission on it.
                     const envelope = content as IEnvelope;
@@ -622,7 +622,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                     channelContext.reSubmit(envelope.contents, localOpMetadata);
                     break;
                 }
-            case ComponentMessageType.Attach:
+            case DataStoreMessageType.Attach:
                 // For Attach messages, just submit them again.
                 this.submit(type, content, localOpMetadata);
                 break;
@@ -633,7 +633,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
     private setChannelDirty(address: string): void {
         this.verifyNotClosed();
-        this.componentContext.setChannelDirty(address);
+        this.dataStoreContext.setChannelDirty(address);
     }
 
     private processChannelOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
@@ -655,21 +655,21 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
     private attachListener() {
         this.setMaxListeners(Number.MAX_SAFE_INTEGER);
-        this.componentContext.on("leader", () => {
+        this.dataStoreContext.on("leader", () => {
             this.emit("leader");
         });
-        this.componentContext.on("notleader", () => {
+        this.dataStoreContext.on("notleader", () => {
             this.emit("notleader");
         });
-        this.componentContext.once("attaching", () => {
-            assert(this.bindState !== BindState.NotBound, "Component attaching should not occur if it is not bound");
+        this.dataStoreContext.once("attaching", () => {
+            assert(this.bindState !== BindState.NotBound, "Data store attaching should not occur if it is not bound");
             this._attachState = AttachState.Attaching;
             // This promise resolution will be moved to attached event once we fix the scheduler.
             this.deferredAttached.resolve();
             this.emit("attaching");
         });
-        this.componentContext.once("attached", () => {
-            assert(this.bindState === BindState.Bound, "Component should only be attached after it is bound");
+        this.dataStoreContext.once("attached", () => {
+            assert(this.bindState === BindState.Bound, "Data store should only be attached after it is bound");
             this._attachState = AttachState.Attached;
             this.emit("attached");
         });
