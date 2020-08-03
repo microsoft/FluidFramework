@@ -6,7 +6,7 @@
 import {
     BaseSegment, IJSONSegment, ISegment, PropertySet, LocalReferenceCollection,
 } from "@fluidframework/merge-tree";
-import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
 
 const MaxRun = 128;

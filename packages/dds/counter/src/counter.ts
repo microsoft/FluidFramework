@@ -15,7 +15,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-runtime-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { CounterFactory } from "./counterFactory";
 import { debug } from "./debug";

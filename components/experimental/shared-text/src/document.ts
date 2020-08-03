@@ -4,7 +4,7 @@
  */
 
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
 const rootMapId = "root";

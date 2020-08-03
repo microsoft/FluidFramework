@@ -40,7 +40,7 @@
     "@fluid-example/spaces": "^0.25.0",
     "@fluidframework/aqueduct": "^0.25.0",
     "@fluidframework/component-core-interfaces": "^0.25.0",
-    "@fluidframework/component-runtime-definitions": "^0.25.0",
+    "@fluidframework/datastore-runtime-definitions": "^0.25.0",
     "@fluidframework/container-runtime": "^0.25.0",
     "@fluidframework/container-runtime-definitions": "^0.25.0",
     "@fluidframework/framework-interfaces": "^0.25.0",

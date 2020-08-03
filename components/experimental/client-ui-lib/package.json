@@ -50,7 +50,7 @@
     "@fluid-internal/client-api": "^0.25.0",
     "@fluidframework/common-utils": "^0.21.0",
     "@fluidframework/component-core-interfaces": "^0.25.0",
-    "@fluidframework/component-runtime-definitions": "^0.25.0",
+    "@fluidframework/datastore-runtime-definitions": "^0.25.0",
     "@fluidframework/container-definitions": "^0.25.0",
     "@fluidframework/framework-experimental": "^0.25.0",
     "@fluidframework/framework-interfaces": "^0.25.0",

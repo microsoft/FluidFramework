@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AsJsonable, Jsonable } from "@fluidframework/component-runtime-definitions";
+import { AsJsonable, Jsonable } from "@fluidframework/datastore-runtime-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 
 /**

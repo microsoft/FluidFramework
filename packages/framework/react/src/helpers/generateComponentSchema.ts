@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import {
     IFluidFunctionalComponentFluidState,

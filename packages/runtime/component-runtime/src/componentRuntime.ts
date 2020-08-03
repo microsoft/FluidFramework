@@ -49,7 +49,7 @@ import {
     SchedulerType,
 } from "@fluidframework/runtime-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
-import { IChannel, IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IChannel, IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";

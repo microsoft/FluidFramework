@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-runtime-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
 const presenceKey = "presence";

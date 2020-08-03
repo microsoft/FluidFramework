@@ -7,7 +7,7 @@ import {
     Serializable,
     IFluidDataStoreRuntime,
     IChannelStorageService,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-runtime-definitions";
 import { FileMode, TreeEntry } from "@fluidframework/protocol-definitions";
 import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";

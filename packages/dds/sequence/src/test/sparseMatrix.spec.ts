@@ -6,7 +6,7 @@
 /* eslint-disable no-null/no-null */
 
 import assert from "assert";
-import { IChannelServices } from "@fluidframework/component-runtime-definitions";
+import { IChannelServices } from "@fluidframework/datastore-runtime-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,

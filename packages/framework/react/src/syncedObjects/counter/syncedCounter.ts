@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-runtime-definitions";
 import { SharedCounter } from "@fluidframework/counter";
 import { SyncedComponent } from "../..";
 import { ISyncedCounterViewState, ISyncedCounterFluidState, ISyncedCounterReducer } from "./interface";

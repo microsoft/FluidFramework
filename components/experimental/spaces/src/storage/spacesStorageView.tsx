@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AsSerializable } from "@fluidframework/component-runtime-definitions";
+import { AsSerializable } from "@fluidframework/datastore-runtime-definitions";
 
 import React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";

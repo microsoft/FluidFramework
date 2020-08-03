@@ -15,7 +15,7 @@ import {
 import {
     IFluidDataStoreRuntime,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-runtime-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { LazyPromise } from "@fluidframework/common-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";

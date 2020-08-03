@@ -6,7 +6,7 @@
 // eslint-disable-next-line import/no-unassigned-import
 import { } from "@fluidframework/component-core-interfaces";
 import * as MergeTree from "@fluidframework/merge-tree";
-import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
 import { SharedStringFactory } from "./sequenceFactory";
 

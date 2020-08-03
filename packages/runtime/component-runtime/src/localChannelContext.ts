@@ -9,7 +9,7 @@ import {
     ISequencedDocumentMessage,
     ITree,
 } from "@fluidframework/protocol-definitions";
-import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-runtime-definitions";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";

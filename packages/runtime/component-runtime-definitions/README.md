@@ -1,4 +1,4 @@
-# @fluidframework/component-runtime-definitions
+# @fluidframework/datastore-runtime-definitions
 
 Interface `IComponentRuntime` specifies the component developer API.
 
