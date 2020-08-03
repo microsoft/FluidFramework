@@ -9,7 +9,7 @@ import {
     IFluidSerializer,
     ISerializedHandle,
 } from "@fluidframework/component-core-interfaces";
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-runtime-definitions";
 import {
     ISharedObject,
     parseHandles,

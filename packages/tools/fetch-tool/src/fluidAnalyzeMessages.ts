@@ -18,7 +18,7 @@ import {
     isRuntimeMessage,
     unpackRuntimeMessage,
 } from "@fluidframework/container-runtime";
-import { ComponentMessageType } from "@fluidframework/component-runtime";
+import { ComponentMessageType } from "@fluidframework/datastore-runtime";
 
 const noClientName = "No Client";
 const objectTypePrefix = "https://graph.microsoft.com/types/";

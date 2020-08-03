@@ -12,7 +12,7 @@ import {
     IResponse,
     IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
-import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore-runtime";
 import {
     IContainerContext,
     IFluidCodeDetails,
@@ -25,7 +25,7 @@ import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IFluidDataStoreRuntime,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-runtime-definitions";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,

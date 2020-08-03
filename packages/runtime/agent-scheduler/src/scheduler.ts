@@ -13,11 +13,11 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore-runtime";
 import { LoaderHeader, AttachState } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-runtime-definitions";
 import {
     IAgentScheduler,
     IFluidDataStoreContext,

@@ -18,7 +18,7 @@ import {
     IChannelStorageService,
     IChannelServices,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-runtime-definitions";
 import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { debug } from "./debug";
 import {

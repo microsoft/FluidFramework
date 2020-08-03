@@ -7,7 +7,7 @@ import React from "react";
 
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-runtime-definitions";
 import { CharacterMetadata, CompositeDecorator, ContentBlock } from "draft-js";
 import { List } from "immutable";
 

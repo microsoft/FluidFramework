@@ -9,7 +9,7 @@ import { ILoader } from "@fluidframework/container-definitions";
 import { ISharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-runtime-definitions";
 import { ISharedString } from "@fluidframework/sequence";
 // eslint-disable-next-line import/no-internal-modules
 import queue from "async/queue";

@@ -17,7 +17,7 @@ import {
     Jsonable,
     AsJsonable,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-runtime-definitions";
 import {
     SharedObject,
 } from "@fluidframework/shared-object-base";

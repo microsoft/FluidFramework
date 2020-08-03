@@ -10,7 +10,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { FluidDataStoreRuntime } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore-runtime";
 import {
     IContainerContext,
     IRuntime,
@@ -25,7 +25,7 @@ import {
 import {
     IFluidDataStoreRuntime,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-runtime-definitions";
 import {
     IContainerRuntime,
 } from "@fluidframework/container-runtime-definitions";

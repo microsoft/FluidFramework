@@ -1,4 +1,4 @@
-# @fluidframework/component-runtime
+# @fluidframework/datastore-runtime
 
 # Component Handle
 A Component Handle is a handle to a fluid object like a `Component` or a `SharedObject` (DDS). It can be used to represent the object in the system and has the capability to get the underlying object by calling `get()` on it.

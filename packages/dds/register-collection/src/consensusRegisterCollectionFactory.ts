@@ -7,7 +7,7 @@ import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelServices,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-runtime-definitions";
 import { ConsensusRegisterCollection } from "./consensusRegisterCollection";
 import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "./interfaces";
 import { pkgVersion } from "./packageVersion";

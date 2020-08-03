@@ -11,7 +11,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { FluidOjectHandle } from "@fluidframework/component-runtime";
+import { FluidOjectHandle } from "@fluidframework/datastore-runtime";
 import { IComponentLayout } from "@fluidframework/framework-experimental";
 import { IFluidObjectCollection } from "@fluidframework/framework-interfaces";
 import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";

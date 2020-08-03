@@ -14,8 +14,8 @@ import {
 } from "@fluidframework/component-core-interfaces";
 import { AsyncComponentProvider, ComponentKey } from "@fluidframework/synthesize";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
-import { FluidOjectHandle } from "@fluidframework/component-runtime";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-runtime-definitions";
+import { FluidOjectHandle } from "@fluidframework/datastore-runtime";
 import { IDirectory } from "@fluidframework/map";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";

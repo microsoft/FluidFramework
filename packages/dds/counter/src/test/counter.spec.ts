@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IChannelFactory } from "@fluidframework/datastore-runtime-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,

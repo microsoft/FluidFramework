@@ -26,7 +26,7 @@ import { SharedCell } from "@fluidframework/cell";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { ComponentMessageType } from "@fluidframework/component-runtime";
+import { ComponentMessageType } from "@fluidframework/datastore-runtime";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 

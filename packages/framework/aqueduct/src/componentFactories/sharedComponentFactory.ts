@@ -4,7 +4,7 @@
  */
 
 import { IFluidObject, IFluidLoadable, IRequest } from "@fluidframework/component-core-interfaces";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore-runtime";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
@@ -14,7 +14,7 @@ import {
     NamedFluidDataStoreRegistryEntries,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
-import { IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IChannelFactory } from "@fluidframework/datastore-runtime-definitions";
 import {
     ComponentSymbolProvider,
     DependencyContainer,
