@@ -5,9 +5,9 @@
 - [IContainerRuntimeBase._createDataStoreWithProps() is removed](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
 - [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
 - [createDataStoreWithRealizationFn() APIs moved](#createDataStoreWithRealizationFn()-APIs-moved)
-
+- [Package Renames](#package-renames)
 ### IComponentContextLegacy is removed
-Deprecated in 0.18, removed. 
+Deprecated in 0.18, removed.
 
 ### IContainerRuntimeBase._createDataStoreWithProps is removed
 `IContainerRuntimeBase._createDataStoreWithProps()` has been removed. Please use `IContainerRuntimeBase.createDataStore()` (returns IFluidRouter).
@@ -22,6 +22,10 @@ Please switch to using one of the following APIs:
 ### createDataStoreWithRealizationFn() APIs moved
 Removed from IFluidDataStoreContext  & IContainerRuntime.
 Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altogether in same release (more info to follow)
+
+### Package Renames
+As a follow up to the changes in 0.24 we are updating a number of package names
+- `@fluidframework/component-runtime` is renamed to `@fluidframework/datastore-runtime`
 
 ## 0.24 Breaking Changes
 This release only contains renames. There are no functional changes in this release. You should ensure you have integrated and validated up to release 0.23 before integrating this release.
