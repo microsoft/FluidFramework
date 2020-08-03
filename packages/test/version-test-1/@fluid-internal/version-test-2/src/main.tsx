@@ -82,6 +82,9 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
 
     private quorumProposeCode() {
         setTimeout(() => {
+            // The eslint exception here is a temporary solution. We still need something to handle the
+            // floating promises.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.runtime.getQuorum().propose(
                 "code",
                 {
@@ -90,9 +93,7 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
                     },
                     package: `${this.upgradeToPkg}@${this.upgradeToVersion}`,
                 },
-            ).catch((error) => {
-                console.error(error);
-            });
+            );
         }, 3000);
     }
 }

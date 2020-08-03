@@ -8,7 +8,7 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { UpgradeManager } from "@fluidframework/base-host"
+import { UpgradeManager } from "@fluidframework/base-host";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -38,13 +38,13 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
 
         this.runtime.on("signal", (message) => {
             if (message.type === signalKey.upgradeHighPriority) {
-                this.upgradeManagerProposeCode(true).catch((error) => {
-                    console.error(error);
-                });
+                // The eslint exceptions here is a temporary solution. We still need something to handle the
+                // floating promises.
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                this.upgradeManagerProposeCode(true);
             } else if (message.type === signalKey.upgradeLowPriority) {
-                this.upgradeManagerProposeCode(false).catch((error) => {
-                    console.error(error);
-                });
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                this.upgradeManagerProposeCode(false);
             }
         });
     }
@@ -111,12 +111,13 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
     }
 
     private quorumProposeCode() {
+        // The eslint exception here is a temporary solution. We still need something to handle the
+        // floating promises.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.runtime.getQuorum().propose(
             "code",
             { config: { cdn: `${this.cdn}/@fluid-internal/version-test-2` }, package: `${this.upgradeToPkg}` },
-        ).catch((error) => {
-            console.error(error);
-        });
+        );
     }
 }
 
