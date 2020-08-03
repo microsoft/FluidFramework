@@ -47,8 +47,8 @@
   "dependencies": {
     "@fluidframework/component-core-interfaces": "^0.25.0",
     "@fluidframework/component-runtime": "^0.25.0",
-    "@fluidframework/datastore-runtime-definitions": "^0.25.0",
     "@fluidframework/container-definitions": "^0.25.0",
+    "@fluidframework/datastore-runtime-definitions": "^0.25.0",
     "@fluidframework/map": "^0.25.0",
     "@fluidframework/register-collection": "^0.25.0",
     "@fluidframework/runtime-definitions": "^0.25.0",
