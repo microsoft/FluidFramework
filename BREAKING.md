@@ -6,6 +6,7 @@
 - [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
 - [createDataStoreWithRealizationFn() APIs moved](#createDataStoreWithRealizationFn()-APIs-moved)
 - [IComponent and IComponent Interfaces Removed](#IComponent-and-IComponent-Interfaces-Removed)
+- [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
 
 ### IComponentContextLegacy is removed
 Deprecated in 0.18, removed.
@@ -26,6 +27,9 @@ Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altoget
 
 ### IComponent and IComponent Interfaces Removed
 In 0.24 IComponent and IComponent interfaces we're deprecated, they are being removed in this build. Please move to IFluidObject and IFluidObject interfaces.
+
+### odsp-utils Changes
+To support additional authentication scenarios, the signature and/or name of a few auth-related functions was modified.
 
 ## 0.24 Breaking Changes
 This release only contains renames. There are no functional changes in this release. You should ensure you have integrated and validated up to release 0.23 before integrating this release.
