@@ -26,9 +26,10 @@ The following environment variables can be defined when running webpack-dev-serv
 | `spo` | Use SharePoint server with your personal OneDrive for storage |
 
 ### Manually attach the container
-In all modes you can start a detached container that you can later attach by appending `/manualCreate` to the url. For example - http://localhost:8080/manualCreate.
 
-You can interact with the component and do any number of operations before clicking the attach buttom to attach the container.
+In all modes you can start a detached container that you can later attach by appending `/manualAttach` to the url. For example - http://localhost:8080/manualAttach.
+
+You can interact with the component and do any number of operations before clicking the `Attach Container` button to attach the container.
 
 If in side by side mode, only one side will be visible until attached.
 

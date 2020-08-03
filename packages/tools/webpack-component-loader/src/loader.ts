@@ -7,6 +7,7 @@ import * as moniker from "moniker";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { Deferred } from "@fluidframework/common-utils";
 import {
+    AttachState,
     IFluidModule,
     IFluidPackage,
     IFluidCodeDetails,
@@ -186,7 +187,8 @@ export async function start(
         package: packageJson,
         config: {},
     };
-    const urlResolver = new MultiUrlResolver(window.location.origin, documentId, options);
+
+    const urlResolver = new MultiUrlResolver(window.location.origin, options);
 
     // Create the loader that is used to load the Container.
     const loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
@@ -202,13 +204,18 @@ export async function start(
 
         /**
          * For existing documents, the container should already exist. If it doesn't, we treat this as the new
-         * document scenario. Replace the `documentId` with `autoCreate` and reload the page.
-         * Note that we have to reload the page because we can't use the same `documentId` as it is already created
-         * in `loader.resolve`.
+         * document scenario.
+         * Create a new `documentId`, a new Loader and a new detached container.
          */
         if (!container1.existing) {
+            console.log(`Document with id ${documentId} not found. Falling back to creating a new document.`);
             container1.close();
-            window.location.href = window.location.href.replace(documentId, "autoCreate");
+
+            documentId = moniker.choose();
+            url = url.replace(id, documentId);
+
+            const newLoader = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
+            container1 = await newLoader.createDetachedContainer(codeDetails);
         }
     }
 
@@ -233,8 +240,8 @@ export async function start(
         getComponentAndRender(container1, componentUrl, leftDiv).catch(() => { });
     });
 
-    // Now that we have rendered the component, if this is a new document, we have to attach the container.
-    if (autoAttach || manualAttach) {
+    // We have rendered the component. If the container is detached, attach it now.
+    if (container1.attachState === AttachState.Detached) {
         await attachContainer(container1, urlResolver, documentId, url, rightDiv, manualAttach);
     }
 
