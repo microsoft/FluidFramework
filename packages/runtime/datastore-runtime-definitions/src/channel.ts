@@ -6,7 +6,7 @@
 import { IFluidLoadable } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelAttributes } from "./storage";
-import { IFluidDataStoreRuntime } from "./componentRuntime";
+import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
