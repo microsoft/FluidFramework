@@ -6,6 +6,7 @@
 - [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
 - [createDataStoreWithRealizationFn() APIs moved](#createDataStoreWithRealizationFn()-APIs-moved)
 - [Package Renames](#package-renames)
+- [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
 
 ### IComponentContextLegacy is removed
 Deprecated in 0.18, removed.
@@ -27,6 +28,8 @@ Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altoget
 ### Package Renames
 As a follow up to the changes in 0.24 we are updating a number of package names
 - `@fluidframework/component-runtime-definitions` is renamed to `@fluidframework/datastore-runtime-definitions`
+### odsp-utils Changes
+To support additional authentication scenarios, the signature and/or name of a few auth-related functions was modified.
 
 ## 0.24 Breaking Changes
 This release only contains renames. There are no functional changes in this release. You should ensure you have integrated and validated up to release 0.23 before integrating this release.
