@@ -38,11 +38,11 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
 
         this.runtime.on("signal", (message) => {
             if (message.type === signalKey.upgradeHighPriority) {
-                // The eslint exceptions here is a temporary solution. We still need something to handle the
-                // floating promises.
+                // If this promise rejects, the test should fail but currently it may not.
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.upgradeManagerProposeCode(true);
             } else if (message.type === signalKey.upgradeLowPriority) {
+                // If this promise rejects, the test should fail but currently it may not.
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.upgradeManagerProposeCode(false);
             }
@@ -111,8 +111,7 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
     }
 
     private quorumProposeCode() {
-        // The eslint exception here is a temporary solution. We still need something to handle the
-        // floating promises.
+        // If this promise rejects, the test should fail but currently it may not.
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.runtime.getQuorum().propose(
             "code",
