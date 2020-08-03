@@ -7,8 +7,6 @@ import { IFluidObject } from "@fluidframework/component-core-interfaces";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideFluidObjectCollection>> { }
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideFluidObjectCollection>> { }
 }
 

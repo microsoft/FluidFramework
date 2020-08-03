@@ -111,10 +111,6 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IFluidRouter, I
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends
-        Readonly<Partial<IProvideTaskManager & IProvideAgentScheduler>> { }
-
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends
         Readonly<Partial<IProvideTaskManager & IProvideAgentScheduler>> { }
 }

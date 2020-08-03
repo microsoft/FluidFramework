@@ -7,8 +7,6 @@ import { IFluidDataStoreContext } from "./componentContext";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideFluidDataStoreFactory>> { }
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideFluidDataStoreFactory>> { }
 }
 

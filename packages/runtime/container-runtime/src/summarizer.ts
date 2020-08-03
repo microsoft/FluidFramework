@@ -44,8 +44,6 @@ const minOpsForLastSummary = 50;
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideSummarizer>> { }
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideSummarizer>> { }
 }
 
