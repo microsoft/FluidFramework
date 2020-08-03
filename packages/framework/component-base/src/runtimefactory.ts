@@ -73,11 +73,7 @@ export class RuntimeFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing && this.defaultComponent.type) {
-            await runtime
-                ._createDataStore(defaultComponentId, this.defaultComponent.type)
-                .then((componentRuntime) => {
-                    componentRuntime.bindToContext();
-                });
+            await runtime.createRootDataStore(this.defaultComponent.type, defaultComponentId);
         }
 
         return runtime;
