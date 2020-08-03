@@ -625,6 +625,8 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             summarizeInternal,
             id,
             createParam,
+            // DDS will not create failure summaries
+            { throwOnFailure: true },
         );
     }
 }

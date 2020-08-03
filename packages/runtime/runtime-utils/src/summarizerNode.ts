@@ -243,7 +243,7 @@ export class SummarizerNode implements ISummarizerNode {
     private outstandingOps: ISequencedDocumentMessage[] = [];
     private wipReferenceSequenceNumber: number | undefined;
     private wipLocalPaths: { localPath: EscapedPath, additionalPath?: EscapedPath } | undefined;
-    private wipIsFailure = false;
+    private wipSkipRecursion = false;
 
     public startSummary(referenceSequenceNumber: number) {
         assert(!this.disabled, "Unsupported: cannot call startSummary on disabled SummarizerNode");
@@ -267,9 +267,13 @@ export class SummarizerNode implements ISummarizerNode {
         if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
             const latestSummary = this.latestSummary;
             if (latestSummary !== undefined) {
+                this.wipLocalPaths = {
+                    localPath: latestSummary.localPath,
+                    additionalPath: latestSummary.additionalPath,
+                };
+                this.wipSkipRecursion = true;
                 const stats = mergeStats();
                 stats.handleNodeCount++;
-                this.markReused();
                 return {
                     summary: {
                         type: SummaryType.Handle,
@@ -317,38 +321,33 @@ export class SummarizerNode implements ISummarizerNode {
                 localPath,
                 additionalPath: summary.additionalPath,
             };
-            this.wipIsFailure = true;
+            this.wipSkipRecursion = true;
             return { summary: summary.summary, stats: summary.stats };
-        }
-    }
-
-    private markReused(): void {
-        const latestSummary = this.latestSummary;
-        assert(latestSummary, "Latest summary should exist if summary of this or parent node is reused");
-        this.wipLocalPaths = {
-            localPath: latestSummary.localPath,
-            additionalPath: latestSummary.additionalPath,
-        };
-        for (const child of this.children.values()) {
-            child.markReused();
         }
     }
 
     public completeSummary(proposalHandle: string) {
         assert(!this.disabled, "Unsupported: cannot call completeSummary on disabled SummarizerNode");
-        this.completeSummaryCore(proposalHandle);
+        this.completeSummaryCore(proposalHandle, undefined, false);
     }
 
-    private completeSummaryCore(proposalHandle: string, parentPath?: EscapedPath, parentIsFailure = false) {
+    private completeSummaryCore(
+        proposalHandle: string,
+        parentPath: EscapedPath | undefined,
+        parentSkipRecursion: boolean,
+    ) {
         assert(this.wipReferenceSequenceNumber, "Not tracking a summary");
         let localPathsToUse = this.wipLocalPaths;
 
-        if (parentIsFailure === true) {
+        if (parentSkipRecursion) {
             const latestSummary = this.latestSummary;
             if (latestSummary !== undefined) {
-                // This case the parent node created a failure summary.
-                // This node and all children should only try to reference their last
-                // good state.
+                // This case the parent node created a failure summary or was reused.
+                // This node and all children should only try to reference their path
+                // by its last known good state in the actual summary tree.
+                // If parent fails or is reused, the child summarize is not called so
+                // it did not get a chance to change its paths.
+                // In this case, essentially only propagate the new summary ref seq num.
                 localPathsToUse = {
                     localPath: latestSummary.localPath,
                     additionalPath: latestSummary.additionalPath,
@@ -357,14 +356,17 @@ export class SummarizerNode implements ISummarizerNode {
                 // This case the child is added after the latest non-failure summary.
                 // This node and all children should consider themselves as still not
                 // having a successful summary yet.
+                // We cannot "reuse" this node if unchanged since that summary, because
+                // handles will be unable to point to that node. It never made it to the
+                // tree itself, and only exists as an attach op in the _outstandingOps.
                 this.clearSummary();
                 return;
             }
         }
 
         // This should come from wipLocalPaths in normal cases, or from the latestSummary
-        // if parentIsFailure is true. If there is no latestSummary, clearSummary and
-        // return before reaching this code.
+        // if parentIsFailure or parentIsReused is true.
+        // If there is no latestSummary, clearSummary and return before reaching this code.
         assert(localPathsToUse, "Tracked summary local paths not set");
 
         const summary = new SummaryNode({
@@ -374,7 +376,11 @@ export class SummarizerNode implements ISummarizerNode {
         });
         const fullPathForChildren = summary.fullPathForChildren;
         for (const child of this.children.values()) {
-            child.completeSummaryCore(proposalHandle, fullPathForChildren, this.wipIsFailure || parentIsFailure);
+            child.completeSummaryCore(
+                proposalHandle,
+                fullPathForChildren,
+                this.wipSkipRecursion || parentSkipRecursion,
+            );
         }
         // Note that this overwrites existing pending summary with
         // the same proposalHandle. If proposalHandle is something like
@@ -391,7 +397,7 @@ export class SummarizerNode implements ISummarizerNode {
 
         this.wipReferenceSequenceNumber = undefined;
         this.wipLocalPaths = undefined;
-        this.wipIsFailure = false;
+        this.wipSkipRecursion = false;
         for (const child of this.children.values()) {
             child.clearSummary();
         }
@@ -429,6 +435,7 @@ export class SummarizerNode implements ISummarizerNode {
     ): void {
         const summaryNode = this.pendingSummaries.get(proposalHandle);
         if (summaryNode === undefined) {
+            // This should only happen if parent skipped recursion AND no prior summary existed.
             assert.strictEqual(
                 this.latestSummary,
                 undefined,
