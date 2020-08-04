@@ -5,7 +5,7 @@
 
 import { IDirectoryValueChanged, SharedMap } from "@fluidframework/map";
 import { IFluidHandle } from "@fluidframework/component-core-interfaces";
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
     FluidComponentMap,
     IFluidFunctionalComponentFluidState,

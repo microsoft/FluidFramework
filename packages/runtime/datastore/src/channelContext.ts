@@ -10,7 +10,7 @@ import {
     ISnapshotTree,
     ITree,
 } from "@fluidframework/protocol-definitions";
-import { IChannel } from "@fluidframework/component-runtime-definitions";
+import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISummarizeResult } from "@fluidframework/runtime-definitions";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";

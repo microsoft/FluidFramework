@@ -7,7 +7,6 @@ import { CharCode } from "./charcode";
 
 export function findToken(tokenList: string, token: string) {
     if (tokenList) {
-        // tslint:disable-next-line:no-conditional-assignment
         for (let start = 0; start >= 0; start = tokenList.indexOf(" ", start + 1)) {
             start = tokenList.indexOf(token, start);
             if (start < 0) {

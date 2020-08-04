@@ -8,7 +8,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelServices,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { SharedCounter } from "./counter";
 import { ISharedCounter } from "./interfaces";
 import { pkgVersion } from "./packageVersion";

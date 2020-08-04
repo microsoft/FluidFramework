@@ -15,8 +15,6 @@ import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { generateStrings, LocationBase } from "./generateSharedStrings";
 
-/* tslint:disable:non-literal-fs-path */
-
 describe("SharedString Snapshot Version", () => {
     let filebase: string;
     const message = "SharedString snapshot format has changed." +

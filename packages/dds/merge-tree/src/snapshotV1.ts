@@ -18,7 +18,7 @@ import {
     TreeEntry,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IChannelStorageService } from "@fluidframework/component-runtime-definitions";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as Properties from "./properties";

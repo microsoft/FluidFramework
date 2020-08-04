@@ -1,4 +1,4 @@
-# @@fluidframework/component-runtime-definitions
+# @@fluidframework/datastore-definitions
 
 Interface `IDatastoreRuntime` specifies the data store developer API.
 
