@@ -5,7 +5,7 @@ import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-contain
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 import {
     DraftJsExample,
-    DraftInstantiationFactory,
+    fluidExport,
 } from "./component";
 
 // I'm choosing to put the docId in the hash just for my own convenience.  There should be no requirements on the
@@ -21,7 +21,10 @@ const documentId = window.location.hash.substring(1);
  */
 async function start() {
     // Get the Fluid Container associated with the provided id
-    const container = await getTinyliciousContainer(documentId, DraftInstantiationFactory);
+    const container = await getTinyliciousContainer(documentId, fluidExport);
+
+    console.log(`Has Null Runtime - ${container.hasNullRuntime()}`);
+
     // Get the Default Object from the Container (DiceRoller)
     const defaultObject = await getDefaultObjectFromContainer<DraftJsExample>(container);
 

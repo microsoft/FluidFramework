@@ -18,8 +18,8 @@ export async function getDefaultObjectFromContainer<T = IFluidObject>(container:
     const response = await container.request({ url });
 
     // Verify the response
-    if (response.status !== 200 || response.mimeType !== "fluid/component") {
-        throw new Error(`Unable to retrieve component at URL: "${url}"`);
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        throw new Error(`Unable to retrieve fluid object at URL: "${url}"`);
     } else if (response.value === undefined) {
         throw new Error(`Empty response from URL: "${url}"`);
     }
@@ -41,8 +41,8 @@ export async function getObjectWithIdFromContainer<T = IFluidObject>(id: string,
     const response = await container.request({ url });
 
     // Verify the response
-    if (response.status !== 200 || response.mimeType !== "fluid/component") {
-        throw new Error(`Unable to retrieve component with ID: "${id}" from URL: "${url}"`);
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        throw new Error(`Unable to retrieve fluid object with ID: "${id}" from URL: "${url}"`);
     } else if (response.value === undefined) {
         throw new Error(`Empty response for ID: "${id}" from URL: "${url}"`);
     }
@@ -62,9 +62,8 @@ export async function getObjectWithIdFromContainer<T = IFluidObject>(id: string,
 export async function getObjectFromContainer<T = IFluidObject>(path: string, container: Container): Promise<T> {
     const response = await container.request({ url: path });
 
-    // Verify the response
-    if (response.status !== 200 || response.mimeType !== "fluid/component") {
-        throw new Error(`Unable to retrieve component with from URL: "${path}"`);
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        throw new Error(`Unable to retrieve fluid object with from URL: "${path}"`);
     } else if (response.value === undefined) {
         throw new Error(`Empty response for from URL: "${path}"`);
     }
