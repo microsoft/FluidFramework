@@ -10,7 +10,7 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run build:compile",
+    "build": "concurrently npm:build:compile npm:lint",
     "build-v2": "cd @fluid-internal/version-test-2 && test -e dist/main.bundle.js || npm run webpack",
     "build:compile": "npm run tsc",
     "build:compile:min": "npm run build:compile",
@@ -42,8 +42,6 @@
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@typescript-eslint/eslint-plugin": "~2.17.0",
-    "@typescript-eslint/parser": "~2.17.0",
     "@fluidframework/test-tools": "^0.1.0",
     "@fluidframework/webpack-component-loader": "^0.25.0",
     "@types/jest": "22.2.3",
@@ -51,6 +49,9 @@
     "@types/node": "^10.17.24",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",
+    "@typescript-eslint/eslint-plugin": "~2.17.0",
+    "@typescript-eslint/parser": "~2.17.0",
+    "concurrently": "^5.2.0",
     "eslint": "~6.8.0",
     "eslint-plugin-eslint-comments": "~3.1.2",
     "eslint-plugin-import": "2.20.0",
@@ -59,6 +60,7 @@
     "eslint-plugin-prefer-arrow": "~1.1.7",
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
+
     "jest": "^24.9.0",
     "jest-junit": "^10.0.0",
     "jest-puppeteer": "^4.3.0",
