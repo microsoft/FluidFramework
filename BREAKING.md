@@ -26,6 +26,7 @@ Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altoget
 
 ### odsp-utils Changes
 To support additional authentication scenarios, the signature and/or name of a few auth-related functions was modified.
+Several type names were also changed to remove the I prefix since these types are data types, not interfaces to be implemented.
 
 ## 0.24 Breaking Changes
 This release only contains renames. There are no functional changes in this release. You should ensure you have integrated and validated up to release 0.23 before integrating this release.
@@ -170,7 +171,7 @@ All renames are 1-1, and global case senstive and whole word find replace for al
 ## 0.23 Breaking Changes
 - [Removed `collaborating` event on IComponentRuntime](#Removed-`collaborating`-event-on-IComponentRuntime)
 - [ISharedObjectFactory rename](#ISharedObjectFactory)
-- [odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
+- [LocalSessionStorageDbFactory moved to @fluidframework/local-driver](LocalSessionStorageDbFactory-moved-to-@fluidframework/local-driver)
 
 ### Removed `collaborating` event on IComponentRuntime
 Component Runtime no longer fires the collaborating event on attaching. Now it fires `attaching` event.
@@ -178,8 +179,8 @@ Component Runtime no longer fires the collaborating event on attaching. Now it f
 ### ISharedObjectFactory
 `ISharedObjectFactory` renamed to `IChannelFactory` and moved from `@fluidframework/shared-object-base` to `@fluidframework/component-runtime-definitions`
 
-### odsp-utils Changes
-
+### LocalSessionStorageDbFactory moved to @fluidframework/local-driver
+Previously, `LocalSessionStorageDbFactory` was part of the `@fluidframework/webpack-component-loader` package.  It has been moved to the `@fluidframework/local-driver` package.
 
 ## 0.22 Breaking Changes
 - [Deprecated `path` from `IComponentHandleContext`](#Deprecated-`path`-from-`IComponentHandleContext`)
