@@ -52,12 +52,12 @@ import {
 import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
 
-// Snapshot Format Version to be used in Fluid data store attributes.
+// Snapshot Format Version to be used in store attributes.
 const currentSnapshotFormatVersion = "0.1";
 
 /**
  * Added IFluidDataStoreAttributes similar to IChannelAttributes which will tell
- * the attributes of a Fluid data store like the package, snapshotFormatVersion to
+ * the attributes of a store like the package, snapshotFormatVersion to
  * take different decisions based on a particular snapshotFormatVersion.
  */
 export interface IFluidDataStoreAttributes {
@@ -76,7 +76,7 @@ interface FluidDataStoreMessage {
 }
 
 /**
- * Represents the context for the Fluid data store. This context is passed to the Fluid data store runtime.
+ * Represents the context for the store. This context is passed to the store runtime.
  */
 export abstract class FluidDataStoreContext extends EventEmitter implements
     IFluidDataStoreContext,
@@ -86,7 +86,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     }
 
     public get packagePath(): readonly string[] {
-        // The Fluid data store must be loaded before the path is accessed.
+        // The store must be loaded before the path is accessed.
         assert(this.loaded);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.pkg!;
@@ -120,7 +120,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this._containerRuntime.leader;
     }
 
-    // Back-compat: supporting <= 0.16 Fluid data stores
+    // Back-compat: supporting <= 0.16 stores
     public get connectionState(): ConnectionState {
         return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
@@ -178,7 +178,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         public readonly summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private bindState: BindState,
-        bindFluidDataStore: (channel: IFluidDataStoreChannel) => void,
+        bindChannel: (channel: IFluidDataStoreChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
@@ -188,7 +188,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         this.bindToContext = (channel: IFluidDataStoreChannel) => {
             assert(this.bindState === BindState.NotBound);
             this.bindState = BindState.Binding;
-            bindFluidDataStore(channel);
+            bindChannel(channel);
             this.bindState = BindState.Bound;
         };
 
@@ -320,7 +320,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         if (this.loaded) {
             return this.channel?.process(message, local, localOpMetadata);
         } else {
-            assert(!local, "local Fluid data store is not loaded");
+            assert(!local, "local store channel is not loaded");
             this.pending?.push(message);
         }
     }
@@ -328,7 +328,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     public processSignal(message: IInboundSignalMessage, local: boolean): void {
         this.verifyNotClosed();
 
-        // Signals are ignored if the Fluid data store is not yet loaded
+        // Signals are ignored if the store is not yet loaded
         if (!this.loaded) {
             return;
         }
@@ -349,7 +349,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     }
 
     /**
-     * Notifies the object to take snapshot of a Fluid data store.
+     * Notifies the object to take snapshot of a store.
      * @deprecated in 0.22 summarizerNode
      */
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
@@ -362,7 +362,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
         const { pkg } = await this.getInitialSnapshotDetails();
 
-        const fluidDataStoreAttributes: IFluidDataStoreAttributes = {
+        const attributes: IFluidDataStoreAttributes = {
             pkg: JSON.stringify(pkg),
             snapshotFormatVersion: currentSnapshotFormatVersion,
         };
@@ -373,7 +373,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         const entries = await this.channel!.snapshotInternal(fullTree);
 
         // TODO: Verify that this is okay
-        entries.push(new BlobTreeEntry(".component", JSON.stringify(fluidDataStoreAttributes)));
+        entries.push(new BlobTreeEntry(".component", JSON.stringify(attributes)));
 
         return { entries, id: null };
     }
@@ -385,7 +385,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
         const { pkg } = await this.getInitialSnapshotDetails();
 
-        const fluidDataStoreAttributes: IFluidDataStoreAttributes = {
+        const attributes: IFluidDataStoreAttributes = {
             pkg: JSON.stringify(pkg),
             snapshotFormatVersion: currentSnapshotFormatVersion,
         };
@@ -396,12 +396,12 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         const channel = this.channel!;
         if (channel.summarize !== undefined) {
             const summary = await channel.summarize(fullTree);
-            addBlobToSummary(summary, ".component", JSON.stringify(fluidDataStoreAttributes));
+            addBlobToSummary(summary, ".component", JSON.stringify(attributes));
             return { ...summary, id: this.id };
         } else {
             // back-compat summarizerNode - remove this case
             const entries = await channel.snapshotInternal(fullTree);
-            entries.push(new BlobTreeEntry(".component", JSON.stringify(fluidDataStoreAttributes)));
+            entries.push(new BlobTreeEntry(".component", JSON.stringify(attributes)));
             const summary = convertToSummaryTree({ entries, id: null });
             return { ...summary, id: this.id };
         }
@@ -432,7 +432,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
      * This is called from a SharedSummaryBlock that does not generate ops but only wants to be part of the summary.
      * It indicates that there is data in the object that needs to be summarized.
      * We will update the latestSequenceNumber of the summary tracker of this
-     * Fluid data store and of the object's channel.
+     * store and of the object's channel.
      *
      * @param address - The address of the channel that is dirty.
      *
@@ -473,7 +473,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
      * @param leadership - Whether this client is the new leader or not.
      */
     public updateLeader(leadership: boolean) {
-        // Leader events are ignored if the Fluid data store is not yet loaded
+        // Leader events are ignored if the store is not yet loaded
         if (!this.loaded) {
             return;
         }
@@ -618,12 +618,12 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     }
 
     public generateAttachMessage(): IAttachMessage {
-        throw new Error("Cannot attach remote Fluid data store");
+        throw new Error("Cannot attach remote store");
     }
 
     // This should only be called during realize to get the baseSnapshot,
     // or it can be called at any time to get the pkg, but that assumes the
-    // pkg can never change for a Fluid data store.
+    // pkg can never change for a store.
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         if (!this.details) {
             let tree: ISnapshotTree | null;
@@ -714,7 +714,7 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
     }
 
     public generateAttachMessage(): IAttachMessage {
-        const fluidDataStoreAttributes: IFluidDataStoreAttributes = {
+        const attributes: IFluidDataStoreAttributes = {
             pkg: JSON.stringify(this.pkg),
             snapshotFormatVersion: currentSnapshotFormatVersion,
         };
@@ -725,7 +725,7 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
         const snapshot: ITree = { entries, id: null };
 
         // TODO: Verify that this is okay to change entry path
-        snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(fluidDataStoreAttributes)));
+        snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(attributes)));
 
         const message: IAttachMessage = {
             id: this.id,
