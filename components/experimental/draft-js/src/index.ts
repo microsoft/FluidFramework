@@ -23,8 +23,6 @@ async function start() {
     // Get the Fluid Container associated with the provided id
     const container = await getTinyliciousContainer(documentId, fluidExport);
 
-    console.log(`Has Null Runtime - ${container.hasNullRuntime()}`);
-
     // Get the Default Object from the Container (DiceRoller)
     const defaultObject = await getDefaultObjectFromContainer<DraftJsExample>(container);
 
