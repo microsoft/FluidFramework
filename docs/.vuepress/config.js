@@ -28,7 +28,7 @@ const packagesToExclude = [
 
 const apiMapping = new Map([
     ["aqueduct", "Framework"],
-    ["component-core-interfaces", "Framework"],
+    ["core-interfaces", "Framework"],
     ["framework-interfaces", "Framework"],
     ["undo-redo", "Framework"],
     ["cell", "Distributed Data Structures"],

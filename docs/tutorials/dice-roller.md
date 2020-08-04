@@ -45,7 +45,7 @@ First we will declare all our imports. Here is a quick description and use cases
 
 `PrimedComponent` and `PrimedComponentFactory` from [@fluidframework/aqueduct](../api/aqueduct.md) provide helper
 functionality. `IComponentHTMLView` from
-[@fluidframework/core-interfaces](../api/component-core-interfaces.md) provides the interface for
+[@fluidframework/core-interfaces](../api/core-interfaces.md) provides the interface for
 enabling rendering. `React` and `ReactDOM` enable React use.
 
 ```typescript
@@ -81,7 +81,7 @@ behavior as well as additional helpers to make component development easier.
 
 #### IComponentHTMLView
 
-Implementing the [IComponentHTMLView](../api/component-core-interfaces.icomponenthtmlview.md) interface
+Implementing the [IComponentHTMLView](../api/core-interfaces.icomponenthtmlview.md) interface
 denotes that our component can render an HTML view. Throughout the Fluid Framework we define interfaces as a way to
 state our behavior. Whoever is attempting to use this component can know we support this interface and therefore it will
 have a `render(...)` function. View rendering is explained more below.

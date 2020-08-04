@@ -9,7 +9,7 @@ The dependencies between layers are enforced by the layer-check command._
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [@fluidframework/common-definitions](/common/lib/common-definitions)</br>- [@fluidframework/core-interfaces](/packages/loader/component-core-interfaces)</br>- [@fluidframework/gitresources](/server/routerlicious/packages/gitresources) | &nbsp;</br>&nbsp;</br>&nbsp; |
+| - [@fluidframework/common-definitions](/common/lib/common-definitions)</br>- [@fluidframework/core-interfaces](/packages/loader/core-interfaces)</br>- [@fluidframework/gitresources](/server/routerlicious/packages/gitresources) | &nbsp;</br>&nbsp;</br>&nbsp; |
 
 ### Protocol-Definitions
 
