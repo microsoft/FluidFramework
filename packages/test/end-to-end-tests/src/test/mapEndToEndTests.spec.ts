@@ -11,16 +11,18 @@ import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    ChannelFactoryRegistry,
     createLocalLoader,
     initializeLocalContainer,
     ITestFluidComponent,
     OpProcessingController,
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
-import { compatTest, ICompatTestArgs, testFluidObjectKeys } from "./compatUtils";
+import { compatTest, ICompatTestArgs } from "./compatUtils";
 
 const id = "fluid-test://localhost/mapTest";
-const mapId = testFluidObjectKeys.map;
+const mapId = "mapKey";
+const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 const codeDetails: IFluidCodeDetails = {
     package: "sharedMapTestPackage",
     config: {},
@@ -42,15 +44,15 @@ const tests = (args: ICompatTestArgs) => {
     let sharedMap3: ISharedMap;
 
     beforeEach(async function() {
-        const container1 = await args.makeTestContainer() as Container;
+        const container1 = await args.makeTestContainer(registry) as Container;
         component1 = await requestFluidObject("default", container1);
         sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
 
-        const container2 = await args.makeTestContainer() as Container;
+        const container2 = await args.makeTestContainer(registry) as Container;
         const component2 = await requestFluidObject("default", container2);
         sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
 
-        const container3 = await args.makeTestContainer() as Container;
+        const container3 = await args.makeTestContainer(registry) as Container;
         const component3 = await requestFluidObject("default", container3);
         sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
 
@@ -317,7 +319,7 @@ const tests = (args: ICompatTestArgs) => {
 describe("Map", function() {
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     const makeTestContainer = async () => {
-        const factory = new TestFluidComponentFactory([[mapId, SharedMap.getFactory()]]);
+        const factory = new TestFluidComponentFactory(registry);
         const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     };

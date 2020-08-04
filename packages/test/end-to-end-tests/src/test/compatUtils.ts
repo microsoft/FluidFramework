@@ -21,7 +21,12 @@ import { componentRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "@f
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer, TestFluidComponentFactory } from "@fluidframework/test-utils";
+import {
+    ChannelFactoryRegistry,
+    createLocalLoader,
+    initializeLocalContainer,
+    TestFluidComponentFactory,
+} from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
 
 /* eslint-enable import/no-extraneous-dependencies */
@@ -32,9 +37,36 @@ const codeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-export const enum testFluidObjectKeys {
-    map = "mapKey",
-    sharedString = "sharedStringKey",
+export interface ICompatTestArgs {
+    /**
+     * Used to create a test Container. In compatTest(), this Container and its runtime will be arbitrarily-versioned.
+     */
+    makeTestContainer: (testFluidComponentFactoryRegistry?) => Promise<Container | old.Container>,
+    deltaConnectionServer?: ILocalDeltaConnectionServer,
+}
+
+export interface ICompatTestOptions {
+    /**
+     * Use TestFluidComponent instead of PrimedComponent
+     */
+    testFluidComponent?: boolean,
+}
+
+// TODO: once 0.25 is released this can be replaced with the old imported type
+type OldChannelFactoryRegistry = Iterable<[string | undefined, old.IChannelFactory]>;
+
+// convert a channel factory registry for TestFluidComponentFactory to one with old channel factories
+function convertRegistry(registry: ChannelFactoryRegistry = []): OldChannelFactoryRegistry {
+    const oldRegistry = [];
+    for (const [key, factory] of registry) {
+        switch (factory.type) {
+            case SharedMap.getFactory().type: oldRegistry.push([key, old.SharedMap.getFactory()]); break;
+            case SharedString.getFactory().type: oldRegistry.push([key, old.SharedString.getFactory()]); break;
+            default: throw Error("Invalid or unimplemented channel factory");
+        }
+    }
+
+    return oldRegistry;
 }
 
 export class TestComponent extends DataObject {
@@ -57,18 +89,12 @@ export const createOldPrimedComponentFactory = (): old.IFluidDataStoreFactory =>
     return new old.DataObjectFactory(OldTestComponent.type, OldTestComponent, [], {});
 };
 
-export const createTestFluidComponentFactory = (): IFluidDataStoreFactory => {
-    return new TestFluidComponentFactory([
-        [testFluidObjectKeys.map, SharedMap.getFactory()],
-        [testFluidObjectKeys.sharedString, SharedString.getFactory()],
-    ]);
+export const createTestFluidComponentFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
+    return new TestFluidComponentFactory(registry);
 };
 
-export const createOldTestFluidComponentFactory = (): old.IFluidDataStoreFactory => {
-    return new old.TestFluidComponentFactory([
-        [testFluidObjectKeys.map, old.SharedMap.getFactory()],
-        [testFluidObjectKeys.sharedString, old.SharedString.getFactory()],
-    ]);
+export const createOldTestFluidComponentFactory = (registry?: ChannelFactoryRegistry): old.IFluidDataStoreFactory => {
+    return new old.TestFluidComponentFactory(convertRegistry(registry));
 };
 
 export const createRuntimeFactory = (
@@ -145,34 +171,21 @@ export async function createContainerWithOldLoader(
     return old.initializeLocalContainer(id, loader, codeDetails);
 }
 
-export interface ICompatTestArgs {
-    /**
-     * Used to create a test Container. In compatTest(), this Container and its runtime will be arbitrarily-versioned.
-     */
-    makeTestContainer: () => Promise<Container | old.Container>,
-    deltaConnectionServer?: ILocalDeltaConnectionServer,
-}
-
-export interface ICompatTestOptions {
-    /**
-     * Use TestFluidComponent instead of PrimedComponent
-     */
-    testFluidComponent?: boolean,
-}
-
 export const compatTest = (
     tests: (compatArgs: ICompatTestArgs) => void,
     options: ICompatTestOptions = {},
 ) => {
     describe("old loader, new runtime", function() {
         let deltaConnectionServer: ILocalDeltaConnectionServer;
-        const makeTestContainer = async () => createContainerWithOldLoader(
-            { fluidExport: createRuntimeFactory(
-                TestComponent.type,
-                options.testFluidComponent
-                    ? createTestFluidComponentFactory()
-                    : createPrimedComponentFactory(),
-            ) },
+        const makeTestContainer = async (registry?: ChannelFactoryRegistry) => createContainerWithOldLoader(
+            {
+                fluidExport: createRuntimeFactory(
+                    TestComponent.type,
+                    options.testFluidComponent
+                        ? createTestFluidComponentFactory(registry)
+                        : createPrimedComponentFactory(),
+                ),
+            },
             deltaConnectionServer,
         );
 
@@ -198,13 +211,15 @@ export const compatTest = (
 
     describe("new loader, old runtime", function() {
         let deltaConnectionServer: ILocalDeltaConnectionServer;
-        const makeTestContainer = async () => createContainer(
-            { fluidExport: createOldRuntimeFactory(
-                OldTestComponent.type,
-                options.testFluidComponent
-                    ? createOldTestFluidComponentFactory()
-                    : createOldPrimedComponentFactory(),
-            ) },
+        const makeTestContainer = async (registry: ChannelFactoryRegistry) => createContainer(
+            {
+                fluidExport: createOldRuntimeFactory(
+                    OldTestComponent.type,
+                    options.testFluidComponent
+                        ? createOldTestFluidComponentFactory(registry)
+                        : createOldPrimedComponentFactory(),
+                ),
+            },
             deltaConnectionServer,
         );
 
@@ -228,13 +243,15 @@ export const compatTest = (
 
     describe("new ContainerRuntime, old DataStoreRuntime", function() {
         let deltaConnectionServer: ILocalDeltaConnectionServer;
-        const makeTestContainer = async () => createContainer(
-            { fluidExport: createRuntimeFactory(
-                OldTestComponent.type,
-                options.testFluidComponent
-                    ? createOldTestFluidComponentFactory()
-                    : createOldPrimedComponentFactory(),
-            ) },
+        const makeTestContainer = async (registry: ChannelFactoryRegistry) => createContainer(
+            {
+                fluidExport: createRuntimeFactory(
+                    OldTestComponent.type,
+                    options.testFluidComponent
+                        ? createOldTestFluidComponentFactory(registry)
+                        : createOldPrimedComponentFactory(),
+                ),
+            },
             deltaConnectionServer,
         );
 

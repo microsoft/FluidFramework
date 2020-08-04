@@ -108,6 +108,7 @@
     "nock": "^10.0.1",
     "nyc": "^15.0.0",
     "old-aqueduct": "npm:@fluidframework/aqueduct@^0.24.0",
+    "old-component-runtime-definitions": "npm:@fluidframework/component-runtime-definitions@^0.24.0",
     "old-container-definitions": "npm:@fluidframework/container-definitions@^0.24.0",
     "old-container-loader": "npm:@fluidframework/container-loader@^0.24.0",
     "old-container-runtime": "npm:@fluidframework/container-runtime@^0.24.0",

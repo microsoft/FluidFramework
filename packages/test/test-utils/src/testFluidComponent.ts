@@ -105,6 +105,8 @@ export class TestFluidComponent implements ITestFluidComponent {
     }
 }
 
+export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
+
 /**
  * Creates a factory for a TestFluidComponent with the given object factory entries. It creates a component runtime
  * with the object factories in the entry list. All the entries with an id other than undefined are passed to the
@@ -134,7 +136,7 @@ export class TestFluidComponentFactory implements IFluidDataStoreFactory {
      * IChannelFactory. Entries with string ids are passed to the component so that it can create a shared object
      * for it.
      */
-    constructor(private readonly factoryEntries: Iterable<[string | undefined, IChannelFactory]>) { }
+    constructor(private readonly factoryEntries: ChannelFactoryRegistry) { }
 
     public instantiateDataStore(context: IFluidDataStoreContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
