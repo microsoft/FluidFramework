@@ -29,7 +29,7 @@
   "dependencies": {
     "@fluidframework/component-base": "^0.25.0",
     "@fluidframework/component-core-interfaces": "^0.25.0",
-    "@fluidframework/datastore-runtime": "^0.25.0",
+    "@fluidframework/datastore": "^0.25.0",
     "@fluidframework/framework-experimental": "^0.25.0",
     "@fluidframework/framework-interfaces": "^0.25.0",
     "@fluidframework/map": "^0.25.0",

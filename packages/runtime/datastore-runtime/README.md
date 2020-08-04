@@ -1,4 +1,4 @@
-# @fluidframework/datastore-runtime
+# @fluidframework/datastore
 
 # Fluid Handle
 A Fluid Handle is a handle to a fluid object like a `DataStore` or a `SharedObject` (DDS). It can be used to represent the object in the system and has the capability to get the underlying object by calling `get()` on it.

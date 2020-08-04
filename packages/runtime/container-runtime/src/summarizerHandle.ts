@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { FluidOjectHandle } from "@fluidframework/datastore-runtime";
+import { FluidOjectHandle } from "@fluidframework/datastore";
 import { IFluidHandle, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 
 // TODO #2425 Expose Summarizer handle as FluidOjectHandle w/ tests

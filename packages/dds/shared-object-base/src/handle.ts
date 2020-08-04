@@ -8,7 +8,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { FluidOjectHandle } from "@fluidframework/datastore-runtime";
+import { FluidOjectHandle } from "@fluidframework/datastore";
 import { ISharedObject } from "./types";
 
 /**

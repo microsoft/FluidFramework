@@ -20,7 +20,7 @@ import {
     IResponse,
     IFluidRouter,
 } from "@fluidframework/component-core-interfaces";
-import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore-runtime";
+import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore";
 import { Ink } from "@fluidframework/ink";
 import {
     ISharedMap,
