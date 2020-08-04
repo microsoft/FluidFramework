@@ -211,7 +211,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                         path,
                         this.deltaManager.lastSequenceNumber,
                     ),
-                    this.componentContext.getCreateChildSummarizerNodeFn(
+                    this.dataStoreContext.getCreateChildSummarizerNodeFn(
                         path,
                         { type: CreateSummarizerNodeSource.FromSummary },
                     ));
@@ -477,7 +477,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                             id,
                             message.sequenceNumber,
                         ),
-                        this.componentContext.getCreateChildSummarizerNodeFn(
+                        this.dataStoreContext.getCreateChildSummarizerNodeFn(
                             id,
                             {
                                 type: CreateSummarizerNodeSource.FromAttach,
