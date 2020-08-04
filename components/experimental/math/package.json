@@ -30,12 +30,12 @@
   },
   "dependencies": {
     "@fluid-example/client-ui-lib": "^0.25.0",
+    "@fluid-example/client-ui-lib": "^0.25.0",
     "@fluid-example/flow-util-lib": "^0.25.0",
     "@fluid-example/search-menu": "^0.25.0",
     "@fluidframework/component-base": "^0.25.0",
     "@fluidframework/component-core-interfaces": "^0.25.0",
     "@fluidframework/datastore": "^0.25.0",
-    "@fluidframework/framework-experimental": "^0.25.0",
     "@fluidframework/framework-interfaces": "^0.25.0",
     "@fluidframework/map": "^0.25.0",
     "@fluidframework/merge-tree": "^0.25.0",
