@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MergeTree, MergeTreeDeltaType, MergeTreeMaintenanceType, TextSegment } from "../";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { countOperations } from "./testUtils";
@@ -46,6 +47,47 @@ describe("MergeTree", () => {
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.REMOVE]: 1,
                 [MergeTreeMaintenanceType.SPLIT]: 2,
+            });
+        });
+
+        // Verify that zamboni unlinks a removed segment and raises the appropriate maintenance event.
+        it("Event on Unlink", () => {
+            const count = countOperations(mergeTree);
+
+            const start = 4;
+            const end = 6;
+
+            mergeTree.markRangeRemoved(
+                start,
+                end,
+                /* refSeq: */ currentSequenceNumber,
+                /* clientId: */ localClientId,
+                /* seq: */ UnassignedSequenceNumber,
+                /* overwrite: */ false,
+                /* opArgs */ undefined);
+
+            // In order for the removed segment to unlinked by zamboni, we need to ACK the segment
+            // and advance the collaboration window's minSeq past the removedSeq.
+            mergeTree.ackPendingSegment({
+                op: {
+                    pos1: start,
+                    pos2: end,
+                    type: MergeTreeDeltaType.REMOVE,
+                },
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                sequencedMessage: {
+                    sequenceNumber: ++currentSequenceNumber,
+                } as ISequencedDocumentMessage,
+            });
+
+            // Move currentSeq/minSeq past the seq# at which the removal was ACKed.
+            mergeTree.getCollabWindow().currentSeq = currentSequenceNumber;
+            mergeTree.setMinSeq(currentSequenceNumber);
+
+            assert.deepStrictEqual(count, {
+                [MergeTreeDeltaType.REMOVE]: 1,
+                [MergeTreeMaintenanceType.SPLIT]: 2,
+                [MergeTreeMaintenanceType.UNLINK]: 1,
             });
         });
 
