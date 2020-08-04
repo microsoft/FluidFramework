@@ -1,5 +1,12 @@
 # Hello World
 
+::: danger
+
+OUTDATED
+
+:::
+
+
 Our Hello World example consists of building a collaborative **Dice Roller**.
 
 ![Image 2](./dice-roller-gif.gif)
@@ -267,21 +274,3 @@ remote changes from other clients. We do this by setting an event listener on th
 Whenever a change is made to the root it will emit a `"valueChanged"` event. This event notifies that there is a new
 value and we can use it to change our die character. To do this we set a callback function that says
 whenever the root changes get the die character `getDiceChar()` and set the response to the text of our `diceSpan`.
-
-
-It displays a die and a button to roll it. You can try it below.
-
----
-
-**Try the Dice roller [Doesn't work yet]**
-
-<style>
-  iframe#diceroller {
-    height: 95px;
-    width: 200px;
-  }
-</style>
-
-<iframe id="diceroller" src="/fluid/diceroller.html"></iframe>
-
----
