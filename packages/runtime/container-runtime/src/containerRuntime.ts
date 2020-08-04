@@ -112,7 +112,7 @@ const chunksBlobName = ".chunks";
 
 export enum ContainerMessageType {
     // An op to be delivered to Fluid data store
-    FluidDataStoreOp = "fluidDataStore",
+    FluidDataStoreOp = "component",
 
     // Creates a new Fluid data store
     Attach = "attach",

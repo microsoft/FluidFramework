@@ -196,7 +196,7 @@ describe("Component Context Tests", () => {
             const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
             const snapshotTree: ISnapshotTree = {
                 id: "dummy",
-                blobs: { [".fluidDataStore"]: "fluidDataStoreAttributes" },
+                blobs: { [".component"]: "fluidDataStoreAttributes" },
                 commits: {},
                 trees: {},
             };
@@ -229,7 +229,7 @@ describe("Component Context Tests", () => {
             const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
             const snapshotTree: ISnapshotTree = {
                 id: "dummy",
-                blobs: { [".fluidDataStore"]: "fluidDataStoreAttributes" },
+                blobs: { [".component"]: "fluidDataStoreAttributes" },
                 commits: {},
                 trees: {},
             };

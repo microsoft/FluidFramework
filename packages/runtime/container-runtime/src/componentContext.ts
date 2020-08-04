@@ -376,7 +376,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         const entries = await this.fluidDataStoreRuntime!.snapshotInternal(fullTree);
 
         // TODO: Verify that this is okay
-        entries.push(new BlobTreeEntry(".fluidDataStore", JSON.stringify(fluidDataStoreAttributes)));
+        entries.push(new BlobTreeEntry(".component", JSON.stringify(fluidDataStoreAttributes)));
 
         return { entries, id: null };
     }
@@ -399,12 +399,12 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         const fluidDataStoreRuntime = this.fluidDataStoreRuntime!;
         if (fluidDataStoreRuntime.summarize !== undefined) {
             const summary = await fluidDataStoreRuntime.summarize(fullTree);
-            addBlobToSummary(summary, ".fluidDataStore", JSON.stringify(fluidDataStoreAttributes));
+            addBlobToSummary(summary, ".component", JSON.stringify(fluidDataStoreAttributes));
             return { ...summary, id: this.id };
         } else {
             // back-compat summarizerNode - remove this case
             const entries = await fluidDataStoreRuntime.snapshotInternal(fullTree);
-            entries.push(new BlobTreeEntry(".fluidDataStore", JSON.stringify(fluidDataStoreAttributes)));
+            entries.push(new BlobTreeEntry(".component", JSON.stringify(fluidDataStoreAttributes)));
             const summary = convertToSummaryTree({ entries, id: null });
             return { ...summary, id: this.id };
         }
@@ -647,10 +647,10 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                 this.pending = loadedSummary.outstandingOps.concat(this.pending!);
             }
 
-            if (tree !== null && tree.blobs[".fluidDataStore"] !== undefined) {
+            if (tree !== null && tree.blobs[".component"] !== undefined) {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion } =
-                    await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[".fluidDataStore"]);
+                    await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[".component"]);
 
                 let pkgFromSnapshot: string[];
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
@@ -728,7 +728,7 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
         const snapshot: ITree = { entries, id: null };
 
         // TODO: Verify that this is okay to change entry path
-        snapshot.entries.push(new BlobTreeEntry(".fluidDataStore", JSON.stringify(fluidDataStoreAttributes)));
+        snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(fluidDataStoreAttributes)));
 
         const message: IAttachMessage = {
             id: this.id,
