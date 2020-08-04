@@ -11,7 +11,7 @@ import {
     IResponse,
     IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
-import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
+import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     MergeTreeDeltaType,

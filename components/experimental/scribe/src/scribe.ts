@@ -12,7 +12,7 @@ import {
     IResponse,
     IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
-import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore";
 import {
     IContainerContext,
     IFluidCodeDetails,

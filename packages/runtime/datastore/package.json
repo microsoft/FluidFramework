@@ -1,5 +1,5 @@
 {
-  "name": "@fluidframework/component-runtime",
+  "name": "@fluidframework/datastore",
   "version": "0.25.0",
   "description": "Fluid component API",
   "repository": "microsoft/FluidFramework",

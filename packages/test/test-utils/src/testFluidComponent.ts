@@ -4,7 +4,7 @@
  */
 
 import { IRequest, IResponse, IFluidHandle } from "@fluidframework/component-core-interfaces";
-import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
+import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import {
     IFluidDataStoreContext,

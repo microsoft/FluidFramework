@@ -29,7 +29,7 @@ import {
 import { convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
-import { ISharedObjectRegistry } from "./componentRuntime";
+import { ISharedObjectRegistry } from "./dataStoreRuntime";
 import { debug } from "./debug";
 import { ChannelStorageService } from "./channelStorageService";
 
@@ -45,7 +45,7 @@ export class RemoteChannelContext implements IChannelContext {
     private readonly summarizerNode: ISummarizerNode;
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
-        private readonly componentContext: IFluidDataStoreContext,
+        private readonly dataStoreContext: IFluidDataStoreContext,
         storageService: IDocumentStorageService,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
@@ -60,7 +60,7 @@ export class RemoteChannelContext implements IChannelContext {
     ) {
         this.services = createServiceEndpoints(
             this.id,
-            this.componentContext.connected,
+            this.dataStoreContext.connected,
             submitFn,
             () => dirtyFn(this.id),
             storageService,
@@ -80,7 +80,7 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
-        // Connection events are ignored if the component is not yet loaded
+        // Connection events are ignored if the data store is not yet loaded
         if (!this.isLoaded) {
             return;
         }
@@ -201,7 +201,7 @@ export class RemoteChannelContext implements IChannelContext {
 
         // Because have some await between we created the service and here, the connection state might have changed
         // and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
-        this.services.deltaConnection.setConnectionState(this.componentContext.connected);
+        this.services.deltaConnection.setConnectionState(this.dataStoreContext.connected);
         return this.channel;
     }
 }
