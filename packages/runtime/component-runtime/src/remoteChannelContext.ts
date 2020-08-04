@@ -21,7 +21,12 @@ import {
 import {
     IFluidDataStoreContext,
     ISummaryTracker,
+    ISummarizeResult,
+    ISummarizerNode,
+    CreateChildSummarizerNodeFn,
+    ISummarizeInternalResult,
 } from "@fluidframework/runtime-definitions";
+import { convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
@@ -37,6 +42,7 @@ export class RemoteChannelContext implements IChannelContext {
         readonly deltaConnection: ChannelDeltaConnection,
         readonly objectStorage: ChannelStorageService,
     };
+    private readonly summarizerNode: ISummarizerNode;
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly componentContext: IFluidDataStoreContext,
@@ -49,6 +55,7 @@ export class RemoteChannelContext implements IChannelContext {
         extraBlobs: Promise<Map<string, string>> | undefined,
         private readonly branch: string,
         private readonly summaryTracker: ISummaryTracker,
+        createSummarizerNode: CreateChildSummarizerNodeFn,
         private readonly attachMessageType?: string,
     ) {
         this.services = createServiceEndpoints(
@@ -59,6 +66,8 @@ export class RemoteChannelContext implements IChannelContext {
             storageService,
             Promise.resolve(baseSnapshot),
             extraBlobs);
+        const thisSummarizeInternal = async (fullTree: boolean) => this.summarizeInternal(fullTree);
+        this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -81,6 +90,7 @@ export class RemoteChannelContext implements IChannelContext {
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
+        this.summarizerNode.invalidate(message.sequenceNumber);
 
         if (this.isLoaded) {
             this.services.deltaConnection.process(message, local, localOpMetadata);
@@ -107,6 +117,17 @@ export class RemoteChannelContext implements IChannelContext {
 
         const channel = await this.getChannel();
         return snapshotChannel(channel);
+    }
+
+    public async summarize(fullTree: boolean = false): Promise<ISummarizeResult> {
+        return this.summarizerNode.summarize(fullTree);
+    }
+
+    private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
+        const channel = await this.getChannel();
+        const snapshotTree = snapshotChannel(channel);
+        const summaryResult = convertToSummaryTree(snapshotTree, fullTree);
+        return { ...summaryResult, id: this.id };
     }
 
     private async loadChannel(): Promise<IChannel> {
