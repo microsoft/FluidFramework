@@ -37,10 +37,10 @@
   "dependencies": {
     "@fluid-example/spaces": "^0.25.0",
     "@fluidframework/aqueduct": "^0.25.0",
-    "@fluidframework/core-interfaces": "^0.25.0",
     "@fluidframework/container-definitions": "^0.25.0",
     "@fluidframework/container-runtime": "^0.25.0",
     "@fluidframework/container-runtime-definitions": "^0.25.0",
+    "@fluidframework/core-interfaces": "^0.25.0",
     "@fluidframework/runtime-definitions": "^0.25.0",
     "@fluidframework/runtime-utils": "^0.25.0",
     "@fluidframework/view-adapters": "^0.25.0",

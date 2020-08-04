@@ -16,7 +16,7 @@ import {
     IResponse,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { FluidOjectHandle } from "@fluidframework/component-runtime";
+import { FluidOjectHandle } from "@fluidframework/datastore";
 import {
     IComponentLayout,
     ComponentCursorDirection,
