@@ -1,12 +1,15 @@
-export * from "./component";
-
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
-
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
-import {
-    DraftJsExample,
-    fluidExport,
-} from "./component";
+
+import { DraftJsObject } from "./fluid-object";
+import { DraftJsContainer } from "./container";
+
+// Re-export everything from component
+export { DraftJsObject as DraftJsExample, DraftJsContainer };
 
 // I'm choosing to put the docId in the hash just for my own convenience.  There should be no requirements on the
 // page's URL format deeper in the system.
@@ -21,10 +24,10 @@ const documentId = window.location.hash.substring(1);
  */
 async function start() {
     // Get the Fluid Container associated with the provided id
-    const container = await getTinyliciousContainer(documentId, fluidExport);
+    const container = await getTinyliciousContainer(documentId, DraftJsContainer);
 
     // Get the Default Object from the Container (DiceRoller)
-    const defaultObject = await getDefaultObjectFromContainer<DraftJsExample>(container);
+    const defaultObject = await getDefaultObjectFromContainer<DraftJsObject>(container);
 
     // For now we will just reach into the component to render it
     defaultObject.render(document.getElementById("content"));

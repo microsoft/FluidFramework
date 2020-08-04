@@ -4,7 +4,6 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
@@ -18,10 +17,17 @@ import { FluidEditor } from "./FluidEditor";
 import { insertBlockStart } from "./RichTextAdapter";
 import { MemberList } from "./MemberList";
 
-export const DraftJsName = "@fluidframework/draft-js";
-
-export class DraftJsExample extends DataObject implements IFluidHTMLView {
+export class DraftJsObject extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
+
+    public static get ComponentName() { return "@fluid-example/draft-js"; }
+
+    public static readonly factory = new DataObjectFactory(
+        DraftJsObject.ComponentName,
+        DraftJsObject,
+        [SharedMap.getFactory(), SharedString.getFactory()],
+        {},
+    );
 
     /**
      * Do setup work here
@@ -51,16 +57,3 @@ export class DraftJsExample extends DataObject implements IFluidHTMLView {
         return div;
     }
 }
-
-// ----- COMPONENT SETUP STUFF -----
-export const DraftInstantiationFactory = new DataObjectFactory(
-    DraftJsName,
-    DraftJsExample,
-    [SharedMap.getFactory(), SharedString.getFactory()],
-    {},
-);
-
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DraftJsName,
-    new Map([[DraftJsName, Promise.resolve(DraftInstantiationFactory)]]),
-);
