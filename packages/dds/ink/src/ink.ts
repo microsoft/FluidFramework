@@ -44,7 +44,7 @@ const snapshotFileName = "header";
 export class Ink extends SharedObject<IInkEvents> implements IInk {
     /**
      * Create a new Ink.
-     * @param runtime - Component runtime the new Ink belongs to
+     * @param runtime - Data Store runtime the new Ink belongs to
      * @param id - Optional name of the Ink; will be assigned a unique ID if not provided
      * @returns Newly create Ink object (but not attached yet)
      */
@@ -53,7 +53,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     }
 
     /**
-     * Get a factory for Ink to register with the component.
+     * Get a factory for Ink to register with the data store.
      * @returns A factory that creates and loads Ink
      */
     public static getFactory() {
