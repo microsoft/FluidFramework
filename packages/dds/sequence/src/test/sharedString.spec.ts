@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ITree } from "@fluidframework/protocol-definitions";
-import { IChannelServices } from "@fluidframework/datastore-runtime-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,

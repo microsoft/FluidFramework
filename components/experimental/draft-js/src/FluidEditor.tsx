@@ -4,7 +4,7 @@
  */
 
 import { SharedMap } from "@fluidframework/map";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import { ContentState, Editor, EditorProps, EditorState, RichUtils } from "draft-js";
 import React from "react";

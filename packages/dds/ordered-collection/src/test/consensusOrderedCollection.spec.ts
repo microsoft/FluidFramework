@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IDeltaConnection, IChannelServices } from "@fluidframework/datastore-runtime-definitions";
+import { IDeltaConnection, IChannelServices } from "@fluidframework/datastore-definitions";
 import {
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,

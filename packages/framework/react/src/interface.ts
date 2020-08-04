@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { ISharedMap, IDirectoryValueChanged } from "@fluidframework/map";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
     IFluidHandle,
     IFluidLoadable,

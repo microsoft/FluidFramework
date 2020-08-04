@@ -28,7 +28,7 @@ Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altoget
 
 ### Package Renames
 As a follow up to the changes in 0.24 we are updating a number of package names
-- `@fluidframework/component-runtime-definitions` is renamed to `@fluidframework/datastore-runtime-definitions`
+- `@fluidframework/component-runtime-definitions` is renamed to `@fluidframework/datastore-definitions`
 
 ### IComponent and IComponent Interfaces Removed
 In 0.24 IComponent and IComponent interfaces were deprecated, they are being removed in this build. Please move to IFluidObject and IFluidObject interfaces.

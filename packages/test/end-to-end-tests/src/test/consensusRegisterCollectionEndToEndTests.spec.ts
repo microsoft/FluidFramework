@@ -13,7 +13,7 @@ import {
     IConsensusRegisterCollection,
     ReadPolicy,
 } from "@fluidframework/register-collection";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,

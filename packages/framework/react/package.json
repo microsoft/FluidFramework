@@ -31,7 +31,7 @@
     "@fluidframework/common-utils": "^0.21.0",
     "@fluidframework/component-core-interfaces": "^0.25.0",
     "@fluidframework/counter": "^0.25.0",
-    "@fluidframework/datastore-runtime-definitions": "^0.25.0",
+    "@fluidframework/datastore-definitions": "^0.25.0",
     "@fluidframework/map": "^0.25.0",
     "@fluidframework/runtime-definitions": "^0.25.0",
     "@fluidframework/sequence": "^0.25.0",

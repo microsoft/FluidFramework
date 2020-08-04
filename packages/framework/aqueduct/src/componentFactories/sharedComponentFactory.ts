@@ -14,7 +14,7 @@ import {
     NamedFluidDataStoreRegistryEntries,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
-import { IChannelFactory } from "@fluidframework/datastore-runtime-definitions";
+import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
     ComponentSymbolProvider,
     DependencyContainer,

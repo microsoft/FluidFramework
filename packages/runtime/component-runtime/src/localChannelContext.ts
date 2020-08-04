@@ -9,7 +9,7 @@ import {
     ISequencedDocumentMessage,
     ITree,
 } from "@fluidframework/protocol-definitions";
-import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-runtime-definitions";
+import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreContext, ISummarizeResult } from "@fluidframework/runtime-definitions";
 import { convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";

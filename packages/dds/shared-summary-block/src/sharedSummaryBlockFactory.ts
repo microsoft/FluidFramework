@@ -8,7 +8,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelServices,
     IChannelFactory,
-} from "@fluidframework/datastore-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import {
     ISharedObject,
 } from "@fluidframework/shared-object-base";

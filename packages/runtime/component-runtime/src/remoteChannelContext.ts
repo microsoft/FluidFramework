@@ -17,7 +17,7 @@ import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelFactory,
-} from "@fluidframework/datastore-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import {
     IFluidDataStoreContext,
     ISummaryTracker,

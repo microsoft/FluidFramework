@@ -4,7 +4,7 @@
  */
 
 import { ITree, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IChannel, IChannelServices } from "@fluidframework/datastore-runtime-definitions";
+import { IChannel, IChannelServices } from "@fluidframework/datastore-definitions";
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
 declare module "@fluidframework/component-core-interfaces" {

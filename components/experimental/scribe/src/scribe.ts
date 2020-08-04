@@ -25,7 +25,7 @@ import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IFluidDataStoreRuntime,
     IChannelFactory,
-} from "@fluidframework/datastore-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,

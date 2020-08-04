@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 
 export async function waitForAttach(componentRuntime: IFluidDataStoreRuntime): Promise<void> {

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IChannelStorageService } from "@fluidframework/datastore-runtime-definitions";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 
 /**
  * Returns a new IChannelStorageService that resolves the given `path` as root.

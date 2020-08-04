@@ -4,7 +4,7 @@
  */
 
 import { IFluidObject, IFluidHandle, IFluidLoadable } from "@fluidframework/component-core-interfaces";
-import { AsSerializable, Serializable } from "@fluidframework/datastore-runtime-definitions";
+import { AsSerializable, Serializable } from "@fluidframework/datastore-definitions";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";

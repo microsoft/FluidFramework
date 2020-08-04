@@ -8,7 +8,7 @@ import {
     IChannelServices,
     IChannelAttributes,
     IChannelFactory,
-} from "@fluidframework/datastore-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 export enum ConsensusResult {

@@ -19,7 +19,7 @@ fluid-doc-stats _api-extractor-temp/doc-models
                               driver-base.api.json:   19/  31  61.29%
                        ordered-collection.api.json:   27/  45  60.00%
                        driver-definitions.api.json:   44/  76  57.89%
-            datastore-runtime-definitions.api.json:   41/  71  57.75%
+            datastore-definitions.api.json:   41/  71  57.75%
                                  aqueduct.api.json:   45/  80  56.25%
                       runtime-definitions.api.json:   65/ 119  54.62%
                                client-api.api.json:   32/  69  46.38%
