@@ -12,7 +12,9 @@ import { DiceRollerContainerRuntimeFactory } from "../container";
 
 // I'm choosing to put the docId in the hash just for my own convenience.  There should be no requirements on the
 // page's URL format deeper in the system.
+let createNew = false;
 if (window.location.hash.length === 0) {
+    createNew = true;
     window.location.hash = Date.now().toString();
 }
 const documentId = window.location.hash.substring(1);
@@ -63,7 +65,7 @@ async function mountDefaultComponentFromContainer(container: Container): Promise
 // Just a helper function to kick things off.  Making it async allows us to use await.
 async function start(): Promise<void> {
     // Get the container to use.  Associate the data with the provided documentId, and run the provided code within.
-    const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory);
+    const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
     await mountDefaultComponentFromContainer(container);
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line dot-notation
