@@ -17,7 +17,7 @@ import {
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker } from "@fluidframework/runtime-utils";
 import {
-    IFluidDataStoretAttributes,
+    IFluidDataStoreAttributes,
     LocalFluidDataStoreContext,
     RemotedFluidDataStoreContext,
 } from "../componentContext";
@@ -69,8 +69,8 @@ describe("Component Context Tests", () => {
 
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
 
-            const contents = JSON.parse(blob.contents) as IFluidDataStoretAttributes;
-            const componentAttributes: IFluidDataStoretAttributes = {
+            const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
+            const componentAttributes: IFluidDataStoreAttributes = {
                 pkg: JSON.stringify(["TestComponent1"]),
                 snapshotFormatVersion: "0.1",
             };
@@ -129,8 +129,8 @@ describe("Component Context Tests", () => {
 
             const attachMessage = localComponentContext.generateAttachMessage();
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
-            const contents = JSON.parse(blob.contents) as IFluidDataStoretAttributes;
-            const componentAttributes: IFluidDataStoretAttributes = {
+            const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
+            const componentAttributes: IFluidDataStoreAttributes = {
                 pkg: JSON.stringify(["TestComp", "SubComp"]),
                 snapshotFormatVersion: "0.1",
             };
@@ -146,7 +146,7 @@ describe("Component Context Tests", () => {
 
     describe("RemoteComponentContext Initialization", () => {
         let remotedComponentContext: RemotedFluidDataStoreContext;
-        let componentAttributes: IFluidDataStoretAttributes;
+        let componentAttributes: IFluidDataStoreAttributes;
         const storage: Partial<IDocumentStorageService> = {};
         let scope: IFluidObject & IFluidObject;
         let containerRuntime: ContainerRuntime;
@@ -173,10 +173,10 @@ describe("Component Context Tests", () => {
                 snapshotFormatVersion: "0.1",
             };
             const buffer = Buffer.from(JSON.stringify(componentAttributes), "utf-8");
-            const blobCache = new Map<string, string>([["componentAttribtues", buffer.toString("base64")]]);
+            const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
             const snapshotTree: ISnapshotTree = {
                 id: "dummy",
-                blobs: { [".component"]: "componentAttribtues" },
+                blobs: { [".fluidDataStore"]: "fluidDataStoreAttributes" },
                 commits: {},
                 trees: {},
             };
@@ -192,7 +192,7 @@ describe("Component Context Tests", () => {
             const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
 
-            const contents = JSON.parse(blob.contents) as IFluidDataStoretAttributes;
+            const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
             assert.equal(contents.pkg, componentAttributes.pkg, "Remote Component package does not match.");
             assert.equal(
                 contents.snapshotFormatVersion,
@@ -205,10 +205,10 @@ describe("Component Context Tests", () => {
                 pkg: "TestComponent1",
             };
             const buffer = Buffer.from(JSON.stringify(componentAttributes), "utf-8");
-            const blobCache = new Map<string, string>([["componentAttribtues", buffer.toString("base64")]]);
+            const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
             const snapshotTree: ISnapshotTree = {
                 id: "dummy",
-                blobs: { [".component"]: "componentAttribtues" },
+                blobs: { [".fluidDataStore"]: "fluidDataStoreAttributes" },
                 commits: {},
                 trees: {},
             };
@@ -224,7 +224,7 @@ describe("Component Context Tests", () => {
             const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
 
-            const contents = JSON.parse(blob.contents) as IFluidDataStoretAttributes;
+            const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
             assert.equal(
                 contents.pkg,
                 JSON.stringify([componentAttributes.pkg]),

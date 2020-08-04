@@ -46,15 +46,15 @@ import {
 import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
 
-// Snapshot Format Version to be used in component attributes.
+// Snapshot Format Version to be used in fluid data store attributes.
 const currentSnapshotFormatVersion = "0.1";
 
 /**
- * Added IFluidDataStoretAttributes similar to IChannelAttributes which will tell
- * the attributes of a component like the package, snapshotFormatVersion to
- * take different decisions based on a particular snapshotForamtVersion.
+ * Added IFluidDataStoreAttributes similar to IChannelAttributes which will tell
+ * the attributes of a fluid data store like the package, snapshotFormatVersion to
+ * take different decisions based on a particular snapshotFormatVersion.
  */
-export interface IFluidDataStoretAttributes {
+export interface IFluidDataStoreAttributes {
     pkg: string;
     readonly snapshotFormatVersion?: string;
 }
@@ -64,13 +64,13 @@ interface ISnapshotDetails {
     snapshot?: ISnapshotTree;
 }
 
-interface ComponentMessage {
+interface FluidDataStoreMessage {
     content: any;
     type: string;
 }
 
 /**
- * Represents the context for the component. This context is passed to the component runtime.
+ * Represents the context for the fluid data store. This context is passed to the fluid data store runtime.
  */
 export abstract class FluidDataStoreContext extends EventEmitter implements
     IFluidDataStoreContext,
@@ -80,7 +80,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     }
 
     public get packagePath(): readonly string[] {
-        // The component must be loaded before the path is accessed.
+        // The fluid data store must be loaded before the path is accessed.
         assert(this.loaded);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.pkg!;
@@ -114,7 +114,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this._containerRuntime.leader;
     }
 
-    // Back-compat: supporting <= 0.16 components
+    // Back-compat: supporting <= 0.16 fluid data stores
     public get connectionState(): ConnectionState {
         return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
@@ -154,11 +154,11 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this._attachState;
     }
 
-    public readonly bindToContext: (componentRuntime: IFluidDataStoreChannel) => void;
-    protected componentRuntime: IFluidDataStoreChannel | undefined;
+    public readonly bindToContext: (fluidDataStoreRuntime: IFluidDataStoreChannel) => void;
+    protected fluidDataStoreRuntime: IFluidDataStoreChannel | undefined;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
-    private componentRuntimeDeferred: Deferred<IFluidDataStoreChannel> | undefined;
+    private fluidDataStoreRuntimeDeferred: Deferred<IFluidDataStoreChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
 
@@ -170,17 +170,17 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         public readonly scope: IFluidObject & IFluidObject,
         public readonly summaryTracker: SummaryTracker,
         private bindState: BindState,
-        bindComponent: (componentRuntime: IFluidDataStoreChannel) => void,
+        bindFluidDataStore: (fluidDataStoreRuntime: IFluidDataStoreChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
         this._attachState = existing ? AttachState.Attached : AttachState.Detached;
 
-        this.bindToContext = (componentRuntime: IFluidDataStoreChannel) => {
+        this.bindToContext = (fluidDataStoreRuntime: IFluidDataStoreChannel) => {
             assert(this.bindState === BindState.NotBound);
             this.bindState = BindState.Binding;
-            bindComponent(componentRuntime);
+            bindFluidDataStore(fluidDataStoreRuntime);
             this.bindState = BindState.Bound;
         };
     }
@@ -192,12 +192,13 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         this._disposed = true;
 
         // Dispose any pending runtime after it gets fulfilled
-        if (this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred.promise.then((runtime) => {
+        if (this.fluidDataStoreRuntimeDeferred) {
+            this.fluidDataStoreRuntimeDeferred.promise.then((runtime) => {
                 runtime.dispose();
             }).catch((error) => {
+                // TODO: Verify that it is okay to change the event name
                 this._containerRuntime.logger.sendErrorEvent(
-                    { eventName: "ComponentRuntimeDisposeError", componentId: this.id },
+                    { eventName: "FluidDataStoreRuntimeDisposeError", fluidDataStoreId: this.id },
                     error);
             });
         }
@@ -209,16 +210,16 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         // Mark it as such, so that if it ever reaches telemetry pipeline, it has a chance to remove it.
         (error as any).containsPII = true;
 
-        // This is always called with a componentRuntimeDeferred in realize();
+        // This is always called with a fluidDataStoreRuntimeDeferred in realize();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const deferred = this.componentRuntimeDeferred!;
+        const deferred = this.fluidDataStoreRuntimeDeferred!;
         deferred.reject(error);
         return deferred.promise;
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
-        if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IFluidDataStoreChannel>();
+        if (!this.fluidDataStoreRuntimeDeferred) {
+            this.fluidDataStoreRuntimeDeferred = new Deferred<IFluidDataStoreChannel>();
             const details = await this.getInitialSnapshotDetails();
             // Base snapshot is the baseline where pending ops are applied to.
             // It is important that this be in sync with the pending ops, and also
@@ -245,22 +246,22 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
                 return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
             }
             // During this call we will invoke the instantiate method - which will call back into us
-            // via the bindRuntime call to resolve componentRuntimeDeferred
+            // via the bindRuntime call to resolve fluidDataStoreRuntimeDeferred
             factory.instantiateDataStore(this);
         }
 
-        return this.componentRuntimeDeferred.promise;
+        return this.fluidDataStoreRuntimeDeferred.promise;
     }
 
     public async realizeWithFn(
         realizationFn: (context: IFluidDataStoreContext) => void,
     ): Promise<IFluidDataStoreChannel> {
-        if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IFluidDataStoreChannel>();
+        if (!this.fluidDataStoreRuntimeDeferred) {
+            this.fluidDataStoreRuntimeDeferred = new Deferred<IFluidDataStoreChannel>();
             realizationFn(this);
         }
 
-        return this.componentRuntimeDeferred.promise;
+        return this.fluidDataStoreRuntimeDeferred.promise;
     }
 
     /**
@@ -272,7 +273,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
-        // Connection events are ignored if the component is not yet loaded
+        // Connection events are ignored if the fluidDataStore is not yet loaded
         if (!this.loaded) {
             return;
         }
@@ -280,9 +281,9 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         assert(this.connected === connected);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const runtime: IFluidDataStoreChannel = this.componentRuntime!;
+        const runtime: IFluidDataStoreChannel = this.fluidDataStoreRuntime!;
 
-        // Back-compat: supporting <= 0.16 components
+        // Back-compat: supporting <= 0.16 fluidDataStores
         if (runtime.setConnectionState) {
             runtime.setConnectionState(connected, clientId);
         } else if (runtime.changeConnectionState) {
@@ -295,7 +296,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     public process(messageArg: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         this.verifyNotClosed();
 
-        const innerContents = messageArg.contents as ComponentMessage;
+        const innerContents = messageArg.contents as FluidDataStoreMessage;
         const message = {
             ...messageArg,
             type: innerContents.type,
@@ -306,9 +307,9 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
         if (this.loaded) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.componentRuntime!.process(message, local, localOpMetadata);
+            return this.fluidDataStoreRuntime!.process(message, local, localOpMetadata);
         } else {
-            assert(!local, "local component is not loaded");
+            assert(!local, "local fluid data store is not loaded");
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.pending!.push(message);
         }
@@ -317,13 +318,13 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     public processSignal(message: IInboundSignalMessage, local: boolean): void {
         this.verifyNotClosed();
 
-        // Signals are ignored if the component is not yet loaded
+        // Signals are ignored if the fluid data store is not yet loaded
         if (!this.loaded) {
             return;
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.componentRuntime!.processSignal(message, local);
+        this.fluidDataStoreRuntime!.processSignal(message, local);
     }
 
     public getQuorum(): IQuorum {
@@ -339,7 +340,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     }
 
     /**
-     * Notifies the object to take snapshot of a component.
+     * Notifies the object to take snapshot of a fluid data store.
      */
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
         if (!fullTree) {
@@ -351,7 +352,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
         const { pkg } = await this.getInitialSnapshotDetails();
 
-        const componentAttributes: IFluidDataStoretAttributes = {
+        const fluidDataStoreAttributes: IFluidDataStoreAttributes = {
             pkg: JSON.stringify(pkg),
             snapshotFormatVersion: currentSnapshotFormatVersion,
         };
@@ -359,9 +360,10 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         await this.realize();
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const entries = await this.componentRuntime!.snapshotInternal(fullTree);
+        const entries = await this.fluidDataStoreRuntime!.snapshotInternal(fullTree);
 
-        entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
+        // TODO: Verify that this is okay
+        entries.push(new BlobTreeEntry(".fluidDataStore", JSON.stringify(fluidDataStoreAttributes)));
 
         return { entries, id: null };
     }
@@ -376,21 +378,22 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
         this.verifyNotClosed();
-        assert(this.componentRuntime);
-        const componentContent: ComponentMessage = {
+        assert(this.fluidDataStoreRuntime);
+        const fluidDataStoreContent: FluidDataStoreMessage = {
             content,
             type,
         };
-        this._containerRuntime.submitComponentOp(
+        this._containerRuntime.submitFluidDataStoreOp(
             this.id,
-            componentContent,
+            fluidDataStoreContent,
             localOpMetadata);
     }
 
     /**
      * This is called from a SharedSummaryBlock that does not generate ops but only wants to be part of the summary.
      * It indicates that there is data in the object that needs to be summarized.
-     * We will update the latestSequenceNumber of the summary tracker of this component and of the object's channel.
+     * We will update the latestSequenceNumber of the summary tracker of this
+     * fluid data store and of the object's channel.
      *
      * @param address - The address of the channel that is dirty.
      *
@@ -413,8 +416,8 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        assert(this.componentRuntime);
-        return this._containerRuntime.submitComponentSignal(this.id, type, content);
+        assert(this.fluidDataStoreRuntime);
+        return this._containerRuntime.submitFluidDataStoreSignal(this.id, type, content);
     }
 
     public raiseContainerWarning(warning: ContainerWarning): void {
@@ -426,7 +429,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
      * @param leadership - Whether this client is the new leader or not.
      */
     public updateLeader(leadership: boolean) {
-        // Leader events are ignored if the component is not yet loaded
+        // Leader events are ignored if the fluid data store is not yet loaded
         if (!this.loaded) {
             return;
         }
@@ -437,15 +440,15 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         }
     }
 
-    public bindRuntime(componentRuntime: IFluidDataStoreChannel) {
-        if (this.componentRuntime) {
+    public bindRuntime(fluidDataStoreRuntime: IFluidDataStoreChannel) {
+        if (this.fluidDataStoreRuntime) {
             throw new Error("runtime already bound");
         }
 
         // If this FluidDataStoreContext was created via `IContainerRuntime.createDataStoreContext`, the
-        // `componentRuntimeDeferred` promise hasn't yet been initialized.  Do so now.
-        if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred();
+        // `fluidDataStoreRuntimeDeferred` promise hasn't yet been initialized.  Do so now.
+        if (!this.fluidDataStoreRuntimeDeferred) {
+            this.fluidDataStoreRuntimeDeferred = new Deferred();
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -454,7 +457,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         if (pending.length > 0) {
             // Apply all pending ops
             for (const op of pending) {
-                componentRuntime.process(op, false, undefined /* localOpMetadata */);
+                fluidDataStoreRuntime.process(op, false, undefined /* localOpMetadata */);
             }
         }
 
@@ -462,14 +465,14 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
         // And now mark the runtime active
         this.loaded = true;
-        this.componentRuntime = componentRuntime;
+        this.fluidDataStoreRuntime = fluidDataStoreRuntime;
 
         // Freeze the package path to ensure that someone doesn't modify it when it is
         // returned in packagePath().
         Object.freeze(this.pkg);
 
         // And notify the pending promise it is now available
-        this.componentRuntimeDeferred.resolve(this.componentRuntime);
+        this.fluidDataStoreRuntimeDeferred.resolve(this.fluidDataStoreRuntime);
 
         // notify the runtime if they want to propagate up. Used for logging.
         this.containerRuntime.notifyDataStoreInstantiated(this);
@@ -502,7 +505,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
         // to the packagePath. If not, look into the global registry and the packagePath becomes just the
         // passed package.
-        if (await this.componentRuntime?.IFluidDataStoreRegistry?.get(subpackage)) {
+        if (await this.fluidDataStoreRuntime?.IFluidDataStoreRegistry?.get(subpackage)) {
             packagePath.push(subpackage);
         } else {
             if (!(await this._containerRuntime.IFluidDataStoreRegistry.get(subpackage))) {
@@ -520,9 +523,9 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
-        assert(this.componentRuntime, "FluidDataStoreRuntime must exist when resubmitting ops");
-        const innerContents = contents as ComponentMessage;
-        this.componentRuntime.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
+        assert(this.fluidDataStoreRuntime, "FluidDataStoreRuntime must exist when resubmitting ops");
+        const innerContents = contents as FluidDataStoreMessage;
+        this.fluidDataStoreRuntime.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
 
     private verifyNotClosed() {
@@ -559,12 +562,12 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     }
 
     public generateAttachMessage(): IAttachMessage {
-        throw new Error("Cannot attach remote component");
+        throw new Error("Cannot attach remote fluid data store");
     }
 
     // This should only be called during realize to get the baseSnapshot,
     // or it can be called at any time to get the pkg, but that assumes the
-    // pkg can never change for a component.
+    // pkg can never change for a fluid data store.
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         if (!this.details) {
             let tree: ISnapshotTree | null;
@@ -576,12 +579,12 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                 tree = await this.initSnapshotValue;
             }
 
-            if (tree !== null && tree.blobs[".component"] !== undefined) {
+            if (tree !== null && tree.blobs[".fluidDataStore"] !== undefined) {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion } =
-                    await readAndParse<IFluidDataStoretAttributes>(
+                    await readAndParse<IFluidDataStoreAttributes>(
                         this.storage,
-                        tree.blobs[".component"]);
+                        tree.blobs[".fluidDataStore"]);
 
                 let pkgFromSnapshot: string[];
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
@@ -619,9 +622,9 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
         storage: IDocumentStorageService,
         scope: IFluidObject & IFluidObject,
         summaryTracker: SummaryTracker,
-        bindComponent: (componentRuntime: IFluidDataStoreChannel) => void,
+        bindFluidDataStore: (fluidDataStoreRuntime: IFluidDataStoreChannel) => void,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, BindState.NotBound, bindComponent, pkg);
+        super(runtime, id, false, storage, scope, summaryTracker, BindState.NotBound, bindFluidDataStore, pkg);
         this.attachListeners();
     }
 
@@ -637,17 +640,18 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
     }
 
     public generateAttachMessage(): IAttachMessage {
-        const componentAttributes: IFluidDataStoretAttributes = {
+        const fluidDataStoreAttributes: IFluidDataStoreAttributes = {
             pkg: JSON.stringify(this.pkg),
             snapshotFormatVersion: currentSnapshotFormatVersion,
         };
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const entries = this.componentRuntime!.getAttachSnapshot();
+        const entries = this.fluidDataStoreRuntime!.getAttachSnapshot();
 
         const snapshot: ITree = { entries, id: null };
 
-        snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
+        // TODO: Verify that this is okay to change entry path
+        snapshot.entries.push(new BlobTreeEntry(".fluidDataStore", JSON.stringify(fluidDataStoreAttributes)));
 
         const message: IAttachMessage = {
             id: this.id,

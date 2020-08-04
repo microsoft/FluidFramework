@@ -1284,7 +1284,7 @@ export class ContainerRuntime extends EventEmitter
         return this.context.submitSignalFn(envelope);
     }
 
-    public submitComponentSignal(address: string, type: string, content: any) {
+    public submitFluidDataStoreSignal(address: string, type: string, content: any) {
         const envelope: ISignalEnvelop = { address, contents: { type, content } };
         return this.context.submitSignalFn(envelope);
     }
@@ -1617,7 +1617,7 @@ export class ContainerRuntime extends EventEmitter
         this.emit(dirty ? "dirtyDocument" : "savedDocument");
     }
 
-    public submitComponentOp(
+    public submitFluidDataStoreOp(
         id: string,
         contents: any,
         localOpMetadata: unknown = undefined): void {
