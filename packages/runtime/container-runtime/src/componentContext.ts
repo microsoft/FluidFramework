@@ -160,11 +160,11 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this._attachState;
     }
 
-    public readonly bindToContext: (fluidDataStoreRuntime: IFluidDataStoreChannel) => void;
-    protected fluidDataStoreRuntime: IFluidDataStoreChannel | undefined;
+    public readonly bindToContext: (channel: IFluidDataStoreChannel) => void;
+    protected channel: IFluidDataStoreChannel | undefined;
     private loaded = false;
     protected pending: ISequencedDocumentMessage[] | undefined = [];
-    private fluidDataStoreRuntimeDeferred: Deferred<IFluidDataStoreChannel> | undefined;
+    private channelDeferred: Deferred<IFluidDataStoreChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNode;
@@ -178,17 +178,17 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         public readonly summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private bindState: BindState,
-        bindFluidDataStore: (fluidDataStoreRuntime: IFluidDataStoreChannel) => void,
+        bindFluidDataStore: (channel: IFluidDataStoreChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
         this._attachState = existing ? AttachState.Attached : AttachState.Detached;
 
-        this.bindToContext = (fluidDataStoreRuntime: IFluidDataStoreChannel) => {
+        this.bindToContext = (channel: IFluidDataStoreChannel) => {
             assert(this.bindState === BindState.NotBound);
             this.bindState = BindState.Binding;
-            bindFluidDataStore(fluidDataStoreRuntime);
+            bindFluidDataStore(channel);
             this.bindState = BindState.Bound;
         };
 
@@ -203,13 +203,13 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         this._disposed = true;
 
         // Dispose any pending runtime after it gets fulfilled
-        if (this.fluidDataStoreRuntimeDeferred) {
-            this.fluidDataStoreRuntimeDeferred.promise.then((runtime) => {
+        if (this.channelDeferred) {
+            this.channelDeferred.promise.then((runtime) => {
                 runtime.dispose();
             }).catch((error) => {
                 // TODO: Verify that it is okay to change the event name
                 this._containerRuntime.logger.sendErrorEvent(
-                    { eventName: "FluidDataStoreRuntimeDisposeError", fluidDataStoreId: this.id },
+                    { eventName: "ChannelDisposeError", fluidDataStoreId: this.id },
                     error);
             });
         }
@@ -221,16 +221,16 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         // Mark it as such, so that if it ever reaches telemetry pipeline, it has a chance to remove it.
         (error as any).containsPII = true;
 
-        // This is always called with a fluidDataStoreRuntimeDeferred in realize();
+        // This is always called with a channelDeferred in realize();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const deferred = this.fluidDataStoreRuntimeDeferred!;
+        const deferred = this.channelDeferred!;
         deferred.reject(error);
         return deferred.promise;
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
-        if (!this.fluidDataStoreRuntimeDeferred) {
-            this.fluidDataStoreRuntimeDeferred = new Deferred<IFluidDataStoreChannel>();
+        if (!this.channelDeferred) {
+            this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             const details = await this.getInitialSnapshotDetails();
             // Base snapshot is the baseline where pending ops are applied to.
             // It is important that this be in sync with the pending ops, and also
@@ -257,22 +257,22 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
                 return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
             }
             // During this call we will invoke the instantiate method - which will call back into us
-            // via the bindRuntime call to resolve fluidDataStoreRuntimeDeferred
+            // via the bindRuntime call to resolve channelDeferred
             factory.instantiateDataStore(this);
         }
 
-        return this.fluidDataStoreRuntimeDeferred.promise;
+        return this.channelDeferred.promise;
     }
 
     public async realizeWithFn(
         realizationFn: (context: IFluidDataStoreContext) => void,
     ): Promise<IFluidDataStoreChannel> {
-        if (!this.fluidDataStoreRuntimeDeferred) {
-            this.fluidDataStoreRuntimeDeferred = new Deferred<IFluidDataStoreChannel>();
+        if (!this.channelDeferred) {
+            this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             realizationFn(this);
         }
 
-        return this.fluidDataStoreRuntimeDeferred.promise;
+        return this.channelDeferred.promise;
     }
 
     /**
@@ -292,13 +292,13 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         assert(this.connected === connected);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const runtime: IFluidDataStoreChannel = this.fluidDataStoreRuntime!;
+        const channel: IFluidDataStoreChannel = this.channel!;
 
         // Back-compat: supporting <= 0.16 fluidDataStores
-        if (runtime.setConnectionState) {
-            runtime.setConnectionState(connected, clientId);
-        } else if (runtime.changeConnectionState) {
-            runtime.changeConnectionState(this.connectionState, clientId);
+        if (channel.setConnectionState) {
+            channel.setConnectionState(connected, clientId);
+        } else if (channel.changeConnectionState) {
+            channel.changeConnectionState(this.connectionState, clientId);
         } else {
             assert(false);
         }
@@ -318,12 +318,10 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         this.summarizerNode.recordChange(message);
 
         if (this.loaded) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.fluidDataStoreRuntime!.process(message, local, localOpMetadata);
+            return this.channel?.process(message, local, localOpMetadata);
         } else {
             assert(!local, "local Fluid data store is not loaded");
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.pending!.push(message);
+            this.pending?.push(message);
         }
     }
 
@@ -335,8 +333,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.fluidDataStoreRuntime!.processSignal(message, local);
+        this.channel?.processSignal(message, local);
     }
 
     public getQuorum(): IQuorum {
@@ -373,7 +370,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         await this.realize();
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const entries = await this.fluidDataStoreRuntime!.snapshotInternal(fullTree);
+        const entries = await this.channel!.snapshotInternal(fullTree);
 
         // TODO: Verify that this is okay
         entries.push(new BlobTreeEntry(".component", JSON.stringify(fluidDataStoreAttributes)));
@@ -396,14 +393,14 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         await this.realize();
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const fluidDataStoreRuntime = this.fluidDataStoreRuntime!;
-        if (fluidDataStoreRuntime.summarize !== undefined) {
-            const summary = await fluidDataStoreRuntime.summarize(fullTree);
+        const channel = this.channel!;
+        if (channel.summarize !== undefined) {
+            const summary = await channel.summarize(fullTree);
             addBlobToSummary(summary, ".component", JSON.stringify(fluidDataStoreAttributes));
             return { ...summary, id: this.id };
         } else {
             // back-compat summarizerNode - remove this case
-            const entries = await fluidDataStoreRuntime.snapshotInternal(fullTree);
+            const entries = await channel.snapshotInternal(fullTree);
             entries.push(new BlobTreeEntry(".component", JSON.stringify(fluidDataStoreAttributes)));
             const summary = convertToSummaryTree({ entries, id: null });
             return { ...summary, id: this.id };
@@ -420,7 +417,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
         this.verifyNotClosed();
-        assert(this.fluidDataStoreRuntime);
+        assert(this.channel);
         const fluidDataStoreContent: FluidDataStoreMessage = {
             content,
             type,
@@ -463,7 +460,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        assert(this.fluidDataStoreRuntime);
+        assert(this.channel);
         return this._containerRuntime.submitFluidDataStoreSignal(this.id, type, content);
     }
 
@@ -487,15 +484,15 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         }
     }
 
-    public bindRuntime(fluidDataStoreRuntime: IFluidDataStoreChannel) {
-        if (this.fluidDataStoreRuntime) {
+    public bindRuntime(channel: IFluidDataStoreChannel) {
+        if (this.channel) {
             throw new Error("runtime already bound");
         }
 
         // If this FluidDataStoreContext was created via `IContainerRuntime.createDataStoreContext`, the
-        // `fluidDataStoreRuntimeDeferred` promise hasn't yet been initialized.  Do so now.
-        if (!this.fluidDataStoreRuntimeDeferred) {
-            this.fluidDataStoreRuntimeDeferred = new Deferred();
+        // `channelDeferred` promise hasn't yet been initialized.  Do so now.
+        if (!this.channelDeferred) {
+            this.channelDeferred = new Deferred();
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -504,7 +501,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         if (pending.length > 0) {
             // Apply all pending ops
             for (const op of pending) {
-                fluidDataStoreRuntime.process(op, false, undefined /* localOpMetadata */);
+                channel.process(op, false, undefined /* localOpMetadata */);
             }
         }
 
@@ -512,14 +509,14 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
         // And now mark the runtime active
         this.loaded = true;
-        this.fluidDataStoreRuntime = fluidDataStoreRuntime;
+        this.channel = channel;
 
         // Freeze the package path to ensure that someone doesn't modify it when it is
         // returned in packagePath().
         Object.freeze(this.pkg);
 
         // And notify the pending promise it is now available
-        this.fluidDataStoreRuntimeDeferred.resolve(this.fluidDataStoreRuntime);
+        this.channelDeferred.resolve(this.channel);
 
         // notify the runtime if they want to propagate up. Used for logging.
         this.containerRuntime.notifyDataStoreInstantiated(this);
@@ -552,7 +549,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
         // to the packagePath. If not, look into the global registry and the packagePath becomes just the
         // passed package.
-        if (await this.fluidDataStoreRuntime?.IFluidDataStoreRegistry?.get(subpackage)) {
+        if (await this.channel?.IFluidDataStoreRegistry?.get(subpackage)) {
             packagePath.push(subpackage);
         } else {
             if (!(await this._containerRuntime.IFluidDataStoreRegistry.get(subpackage))) {
@@ -570,9 +567,9 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
-        assert(this.fluidDataStoreRuntime, "FluidDataStoreRuntime must exist when resubmitting ops");
+        assert(this.channel, "Channel must exist when resubmitting ops");
         const innerContents = contents as FluidDataStoreMessage;
-        this.fluidDataStoreRuntime.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
+        this.channel.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
 
     private verifyNotClosed() {
@@ -689,7 +686,7 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
         scope: IFluidObject & IFluidObject,
         summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
-        bindFluidDataStore: (fluidDataStoreRuntime: IFluidDataStoreChannel) => void,
+        bindFluidDataStore: (channel: IFluidDataStoreChannel) => void,
     ) {
         super(
             runtime,
@@ -723,7 +720,7 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
         };
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const entries = this.fluidDataStoreRuntime!.getAttachSnapshot();
+        const entries = this.channel!.getAttachSnapshot();
 
         const snapshot: ITree = { entries, id: null };
 
