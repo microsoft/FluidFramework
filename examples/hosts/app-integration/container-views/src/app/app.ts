@@ -10,8 +10,11 @@ import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import { DiceRollerContainerRuntimeFactory } from "../container";
 
-// I'm choosing to put the docId in the hash just for my own convenience.  There should be no requirements on the
-// page's URL format deeper in the system.
+// I'm choosing to put the docId in the hash just for my own convenience, so the URL will end up looking something
+// like http://localhost:8080/#1596520748752.  This is not crucial to the scenario -- there should be no requirements
+// on the page's URL format deeper in the system, so you're free to change this however you'd like.
+// Additionally, I'm choosing to create a new document when navigating directly to http://localhost:8080 -- this is
+// also open for customization.
 let createNew = false;
 if (window.location.hash.length === 0) {
     createNew = true;
