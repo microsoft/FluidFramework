@@ -20,7 +20,6 @@ export function pointwise<T>(name: string | undefined, arr: IArray2D<T>) {
                 : "empty"
         }) Pointwise Read ${rowCount}x${colCount} @${row},${col}`,
         () => {
-            debugger;
             let sum = 0;
             for (let r = row; r < rowCount; r++) {
                 for (let c = col; c < colCount; c++) {
