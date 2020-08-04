@@ -18,17 +18,17 @@ import { IPen } from "../interfaces";
 
 describe("Ink", () => {
     let ink: Ink;
-    let datastoreRuntime: MockFluidDataStoreRuntime;
+    let dataStoreRuntime: MockFluidDataStoreRuntime;
     let pen: IPen;
 
     beforeEach(async () => {
-        datastoreRuntime = new MockFluidDataStoreRuntime();
-        ink = new Ink(datastoreRuntime, "ink", InkFactory.Attributes);
+        dataStoreRuntime = new MockFluidDataStoreRuntime();
+        ink = new Ink(dataStoreRuntime, "ink", InkFactory.Attributes);
     });
 
     describe("Ink in local state", () => {
         beforeEach(() => {
-            datastoreRuntime.local = true;
+            dataStoreRuntime.local = true;
             pen = {
                 color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
                 thickness: 7,
@@ -99,7 +99,7 @@ describe("Ink", () => {
 
             // Load a new Ink from the snapshot of the first one.
             const services = MockSharedObjectServices.createFromTree(ink.snapshot());
-            const ink2 = new Ink(datastoreRuntime, "ink2", InkFactory.Attributes);
+            const ink2 = new Ink(dataStoreRuntime, "ink2", InkFactory.Attributes);
             await ink2.load("branchId", services);
 
             // Verify that the new Ink has the stroke and the point.
@@ -112,24 +112,24 @@ describe("Ink", () => {
     describe("Ink op processing in local state", () => {
         it("should correctly process operations sent in local state", async () => {
             // Set the data store runtime to local.
-            datastoreRuntime.local = true;
+            dataStoreRuntime.local = true;
 
             // Create a stroke in local state.
             const strokeId = ink.createStroke(pen).id;
 
             // Load a new Ink in connected state from the snapshot of the first one.
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const datastoreRuntime2 = new MockFluidDataStoreRuntime();
-            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(datastoreRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = MockSharedObjectServices.createFromTree(ink.snapshot());
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
-            const ink2 = new Ink(datastoreRuntime2, "ink2", InkFactory.Attributes);
+            const ink2 = new Ink(dataStoreRuntime2, "ink2", InkFactory.Attributes);
             await ink2.load("branchId", services2);
 
             // Now connect the first Ink
-            datastoreRuntime.local = false;
-            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(datastoreRuntime);
+            dataStoreRuntime.local = false;
+            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
             const services1 = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(undefined),
@@ -171,8 +171,8 @@ describe("Ink", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactory();
 
             // Connect the first Ink.
-            datastoreRuntime.local = false;
-            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(datastoreRuntime);
+            dataStoreRuntime.local = false;
+            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
             const services1 = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
@@ -180,14 +180,14 @@ describe("Ink", () => {
             ink.connect(services1);
 
             // Create and connect a second Ink.
-            const datastoreRuntime2 = new MockFluidDataStoreRuntime();
-            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(datastoreRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
 
-            ink2 = new Ink(datastoreRuntime2, "ink2", InkFactory.Attributes);
+            ink2 = new Ink(dataStoreRuntime2, "ink2", InkFactory.Attributes);
             ink2.connect(services2);
         });
 
@@ -303,8 +303,8 @@ describe("Ink", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Connect the first Ink.
-            datastoreRuntime.local = false;
-            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(datastoreRuntime);
+            dataStoreRuntime.local = false;
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
             const services1 = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
@@ -312,14 +312,14 @@ describe("Ink", () => {
             ink.connect(services1);
 
             // Create and connect a second Ink.
-            const datastoreRuntime2 = new MockFluidDataStoreRuntime();
-            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(datastoreRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
 
-            ink2 = new Ink(datastoreRuntime2, "ink2", InkFactory.Attributes);
+            ink2 = new Ink(dataStoreRuntime2, "ink2", InkFactory.Attributes);
             ink2.connect(services2);
         });
 
