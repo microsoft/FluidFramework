@@ -11,8 +11,8 @@ import { DraftJsContainer } from "./container";
 // Re-export everything from component
 export { DraftJsObject as DraftJsExample, DraftJsContainer };
 
-// I'm choosing to put the docId in the hash just for my own convenience.  There should be no requirements on the
-// page's URL format deeper in the system.
+// Since this is a single page fluid application we are generating a new document id
+// if one was not provided
 if (window.location.hash.length === 0) {
     window.location.hash = Date.now().toString();
 }
@@ -26,7 +26,7 @@ async function start() {
     // Get the Fluid Container associated with the provided id
     const container = await getTinyliciousContainer(documentId, DraftJsContainer);
 
-    // Get the Default Object from the Container (DiceRoller)
+    // Get the Default Object from the Container
     const defaultObject = await getDefaultObjectFromContainer<DraftJsObject>(container);
 
     // For now we will just reach into the component to render it
