@@ -212,6 +212,10 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         return true;
     };
 
+    /**
+     * For urls of format - http://localhost:8080/doc/<id>.
+     * This is when user is trying to load an existing document. We try to load a Container with `id` as documentId.
+     */
     app.get("/doc/:id*", async (req, res) => {
         const ready = await isReady(req, res);
         if (ready) {
@@ -219,6 +223,12 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         }
     });
 
+    /**
+     * For urls of format - http://localhost:8080/<id>.
+     * If the `id` is "new" or "manualAttach", the user is trying to create a new document.
+     * For other `ids`, we treat this as the user trying to load an existing document. We redirect to
+     * http://localhost:8080/doc/<id>.
+     */
     app.get("/:id*", async (req, res) => {
         // Ignore favicon.ico urls.
         if (req.url === "/favicon.ico") {
@@ -226,16 +236,13 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             return;
         }
 
-        // For new documents, we only support - http://localhost:8080/new or http://localhsot:8080/manualAttach.
-        // For existing documents, the url should be of the format - http://localhost:8080/doc/<documentId>.
         const documentId = req.params.id;
         if (documentId !== "new" && documentId !== "manualAttach") {
-            res.write(`
-                Invalid url.
-                For new document, use "http://localhost:<port>".
-                For new document with manual attach, use "http://locahost:<port>/manualAttach".
-                For loading existing docs, use "http://localhost:<port>/doc/<documentId>".`);
-            res.end();
+            // The `id` is not for a new document. We assume the user is trying to load an existing document and
+            // redirect them to - http://localhost:8080/doc/<id>.
+            const reqUrl = req.url.replace(documentId, `doc/${documentId}`);
+            const newUrl = `${getThisOrigin(options)}${reqUrl}`;
+            res.redirect(newUrl);
             return;
         }
 

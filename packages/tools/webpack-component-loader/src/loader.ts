@@ -208,7 +208,7 @@ export async function start(
          * Create a new `documentId`, a new Loader and a new detached container.
          */
         if (!container1.existing) {
-            console.log(`Document with id ${documentId} not found. Falling back to creating a new document.`);
+            console.warn(`Document with id ${documentId} not found. Falling back to creating a new document.`);
             container1.close();
 
             documentId = moniker.choose();
