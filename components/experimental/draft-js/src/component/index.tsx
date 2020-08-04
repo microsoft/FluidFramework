@@ -18,9 +18,7 @@ import { FluidEditor } from "./FluidEditor";
 import { insertBlockStart } from "./RichTextAdapter";
 import { MemberList } from "./MemberList";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const DraftJsName = pkg.name as string;
+export const DraftJsName = "@fluidframework/draft-js";
 
 export class DraftJsExample extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
