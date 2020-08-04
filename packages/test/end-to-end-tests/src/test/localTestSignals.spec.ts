@@ -36,7 +36,7 @@ const tests = (args: ICompatTestArgs) => {
     let component2: ITestFluidComponent;
     let opProcessingController: OpProcessingController;
 
-    beforeEach(async function() {
+    beforeEach(async () => {
         const container1 = await args.makeTestContainer() as Container;
         component1 = await requestFluidObject("default", container1);
 
@@ -47,8 +47,8 @@ const tests = (args: ICompatTestArgs) => {
         opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
     });
 
-    describe("Attach signal Handlers on Both Clients", function() {
-        it("Validate component runtime signals", async function() {
+    describe("Attach signal Handlers on Both Clients", () => {
+        it("Validate component runtime signals", async () => {
             let user1SignalReceivedCount = 0;
             let user2SignalReceivedCount = 0;
 
@@ -75,7 +75,7 @@ const tests = (args: ICompatTestArgs) => {
             assert.equal(user2SignalReceivedCount, 2, "client 2 did not received signal");
         });
 
-        it("Validate host runtime signals", async function() {
+        it("Validate host runtime signals", async () => {
             let user1SignalReceivedCount = 0;
             let user2SignalReceivedCount = 0;
             const user1ContainerRuntime = component1.context.containerRuntime;
@@ -105,7 +105,7 @@ const tests = (args: ICompatTestArgs) => {
         });
     });
 
-    it("Validate signal events are raised on the correct runtime", async function() {
+    it("Validate signal events are raised on the correct runtime", async () => {
         let user1HostSignalReceivedCount = 0;
         let user2HostSignalReceivedCount = 0;
         let user1CompSignalReceivedCount = 0;
@@ -163,7 +163,7 @@ describe("TestSignals", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     };
 
-    beforeEach(async function() {
+    beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
     });
 
@@ -176,7 +176,7 @@ describe("TestSignals", () => {
         await deltaConnectionServer.webSocketServer.close();
     });
 
-    describe("compatibility", function() {
+    describe("compatibility", () => {
         compatTest(tests, { testFluidComponent: true });
     });
 });

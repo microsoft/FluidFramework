@@ -39,7 +39,7 @@ const tests = (args: ICompatTestArgs) => {
     let sharedString2: SharedString;
     let opProcessingController: OpProcessingController;
 
-    beforeEach(async function() {
+    beforeEach(async () => {
         const container1 = await args.makeTestContainer(registry) as Container;
         const component1 = await requestFluidObject("default", container1);
         sharedString1 = await component1.getSharedObject<SharedString>(stringId);
@@ -52,7 +52,7 @@ const tests = (args: ICompatTestArgs) => {
         opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
     });
 
-    it("can sync SharedString across multiple containers", async function() {
+    it("can sync SharedString across multiple containers", async () => {
         const text = "syncSharedString";
         sharedString1.insertText(0, text);
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
@@ -63,7 +63,7 @@ const tests = (args: ICompatTestArgs) => {
         assert.equal(sharedString2.getText(), text, "The inserted text should have synced across the containers");
     });
 
-    it("can sync SharedString to a newly loaded container", async function() {
+    it("can sync SharedString to a newly loaded container", async () => {
         const text = "syncToNewContainer";
         sharedString1.insertText(0, text);
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
@@ -87,7 +87,7 @@ describe("SharedString", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    beforeEach(async function() {
+    beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
     });
 
@@ -96,7 +96,7 @@ describe("SharedString", () => {
         get deltaConnectionServer() { return deltaConnectionServer; },
     });
 
-    afterEach(async function() {
+    afterEach(async () => {
         await deltaConnectionServer.webSocketServer.close();
     });
 

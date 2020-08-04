@@ -38,7 +38,7 @@ async function requestFluidObject(componentId: string, container: Container): Pr
 const tests = (args: ICompatTestArgs) => {
     let component: Component;
 
-    beforeEach(async function() {
+    beforeEach(async () => {
         const container = await args.makeTestContainer();
         component = await requestFluidObject("default", container as Container);
     });
@@ -85,7 +85,7 @@ describe("DataObject", () => {
         });
     });
 
-    describe("compatibility", function() {
+    describe("compatibility", () => {
         compatTest(tests);
     });
 });

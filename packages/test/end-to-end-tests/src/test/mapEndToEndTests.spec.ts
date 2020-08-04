@@ -43,7 +43,7 @@ const tests = (args: ICompatTestArgs) => {
     let sharedMap2: ISharedMap;
     let sharedMap3: ISharedMap;
 
-    beforeEach(async function() {
+    beforeEach(async () => {
         const container1 = await args.makeTestContainer(registry) as Container;
         component1 = await requestFluidObject("default", container1);
         sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
@@ -102,7 +102,7 @@ const tests = (args: ICompatTestArgs) => {
         expectAllAfterValues("testKey1", "testValue");
     });
 
-    it("should set key value to undefined in three containers correctly", async function() {
+    it("should set key value to undefined in three containers correctly", async () => {
         sharedMap2.set("testKey1", undefined);
         sharedMap2.set("testKey2", undefined);
 
@@ -112,7 +112,7 @@ const tests = (args: ICompatTestArgs) => {
         expectAllAfterValues("testKey2", undefined);
     });
 
-    it("Should delete values in 3 containers correctly", async function() {
+    it("Should delete values in 3 containers correctly", async () => {
         sharedMap2.delete("testKey1");
 
         await opProcessingController.process();
@@ -127,7 +127,7 @@ const tests = (args: ICompatTestArgs) => {
         assert.equal(hasKey3, false, "testKey1 not deleted in container 1");
     });
 
-    it("Should check if three containers has same number of keys", async function() {
+    it("Should check if three containers has same number of keys", async () => {
         sharedMap3.set("testKey3", true);
 
         await opProcessingController.process();
@@ -135,7 +135,7 @@ const tests = (args: ICompatTestArgs) => {
         expectAllSize(2);
     });
 
-    it("Should update value and trigger onValueChanged on other two containers", async function() {
+    it("Should update value and trigger onValueChanged on other two containers", async () => {
         let user1ValueChangedCount: number = 0;
         let user2ValueChangedCount: number = 0;
         let user3ValueChangedCount: number = 0;
@@ -175,7 +175,7 @@ const tests = (args: ICompatTestArgs) => {
         expectAllAfterValues("testKey1", "updatedValue");
     });
 
-    it("Simultaneous set should reach eventual consistency with the same value", async function() {
+    it("Simultaneous set should reach eventual consistency with the same value", async () => {
         sharedMap1.set("testKey1", "value1");
         sharedMap2.set("testKey1", "value2");
         sharedMap3.set("testKey1", "value0");
@@ -188,7 +188,7 @@ const tests = (args: ICompatTestArgs) => {
         expectAllAfterValues("testKey1", "value3");
     });
 
-    it("Simultaneous delete/set should reach eventual consistency with the same value", async function() {
+    it("Simultaneous delete/set should reach eventual consistency with the same value", async () => {
         // set after delete
         sharedMap1.set("testKey1", "value1.1");
         sharedMap2.delete("testKey1");
@@ -201,7 +201,7 @@ const tests = (args: ICompatTestArgs) => {
         expectAllAfterValues("testKey1", "value1.3");
     });
 
-    it("Simultaneous delete/set on same map should reach eventual consistency with the same value", async function() {
+    it("Simultaneous delete/set on same map should reach eventual consistency with the same value", async () => {
         // delete and then set on the same map
         sharedMap1.set("testKey2", "value2.1");
         sharedMap2.delete("testKey2");
@@ -218,7 +218,7 @@ const tests = (args: ICompatTestArgs) => {
         expectAllAfterValues("testKey2", "value2.2");
     });
 
-    it("Simultaneous set/delete should reach eventual consistency with the same value", async function() {
+    it("Simultaneous set/delete should reach eventual consistency with the same value", async () => {
         // delete after set
         sharedMap1.set("testKey3", "value3.1");
         sharedMap2.set("testKey3", "value3.2");
@@ -231,7 +231,7 @@ const tests = (args: ICompatTestArgs) => {
         expectAllAfterValues("testKey3", undefined);
     });
 
-    it("Simultaneous set/clear on a key should reach eventual consistency with the same value", async function() {
+    it("Simultaneous set/clear on a key should reach eventual consistency with the same value", async () => {
         // clear after set
         sharedMap1.set("testKey1", "value1.1");
         sharedMap2.set("testKey1", "value1.2");
@@ -245,7 +245,7 @@ const tests = (args: ICompatTestArgs) => {
         expectAllSize(0);
     });
 
-    it("Simultaneous clear/set on same map should reach eventual consistency with the same value", async function() {
+    it("Simultaneous clear/set on same map should reach eventual consistency with the same value", async () => {
         // set after clear on the same map
         sharedMap1.set("testKey2", "value2.1");
         sharedMap2.clear();
@@ -263,7 +263,7 @@ const tests = (args: ICompatTestArgs) => {
         expectAllSize(1);
     });
 
-    it("Simultaneous clear/set should reach eventual consistency and resolve to the same value", async function() {
+    it("Simultaneous clear/set should reach eventual consistency and resolve to the same value", async () => {
         // set after clear
         sharedMap1.set("testKey3", "value3.1");
         sharedMap2.clear();
@@ -276,7 +276,7 @@ const tests = (args: ICompatTestArgs) => {
         expectAllSize(1);
     });
 
-    it("should load new map with data from local state and can then process ops", async function() {
+    it("should load new map with data from local state and can then process ops", async () => {
         /**
          * This tests test the scenario found in the following bug:
          * https://github.com/microsoft/FluidFramework/issues/2400
@@ -316,7 +316,7 @@ const tests = (args: ICompatTestArgs) => {
     });
 };
 
-describe("Map", function() {
+describe("Map", () => {
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     const makeTestContainer = async () => {
         const factory = new TestFluidComponentFactory(registry);
@@ -324,7 +324,7 @@ describe("Map", function() {
         return initializeLocalContainer(id, loader, codeDetails);
     };
 
-    beforeEach(async function() {
+    beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
     });
 
@@ -333,11 +333,11 @@ describe("Map", function() {
         get deltaConnectionServer() { return deltaConnectionServer; },
     });
 
-    afterEach(async function() {
+    afterEach(async () => {
         await deltaConnectionServer.webSocketServer.close();
     });
 
-    describe("compatibility", function() {
+    describe("compatibility", () => {
         compatTest(tests, { testFluidComponent: true });
     });
 });
