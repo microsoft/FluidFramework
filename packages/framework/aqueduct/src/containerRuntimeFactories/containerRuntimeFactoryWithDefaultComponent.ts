@@ -37,8 +37,8 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
                 // The mountable view request handler must go before any other request handlers that we might
                 // want to return mountable views, so it can correctly handle the header and reissue the request.
                 mountableViewRequestHandler(MountableView),
-                defaultContainerRequestHandler(defaultComponentId),
                 ...requestHandlers,
+                defaultContainerRequestHandler(defaultComponentId),
             ],
         );
     }

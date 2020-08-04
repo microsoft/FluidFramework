@@ -99,7 +99,7 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
                     Promise.resolve(new MyRegistry(context, "https://pragueauspkn.azureedge.net")),
                 ],
             ],
-            defaultContainerRequestHandler("text"),
+            defaultContainerRequestHandler(DefaultComponentName),
         );
 
         // On first boot create the base component
