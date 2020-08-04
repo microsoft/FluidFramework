@@ -10,7 +10,7 @@ import { configurableUrlResolver } from "@fluidframework/driver-utils";
 import { FluidAppOdspUrlResolver } from "@fluidframework/fluidapp-odsp-urlresolver";
 import * as odsp from "@fluidframework/odsp-driver";
 import { OdspUrlResolver } from "@fluidframework/odsp-urlresolver";
-import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-utils";
+import { OAuthClientConfig, OdspAuthRequestInfo } from "@fluidframework/odsp-utils";
 import * as r11s from "@fluidframework/routerlicious-driver";
 import { RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver";
 import { getMicrosoftConfiguration } from "@fluidframework/tool-utils";
@@ -32,7 +32,7 @@ export const fluidFetchWebNavigator = (url: string) => {
 async function initializeODSPCore(
     odspResolvedUrl: odsp.IOdspResolvedUrl,
     server: string,
-    clientConfig: IClientConfig,
+    clientConfig: OAuthClientConfig,
 ) {
     const { driveId, itemId } = odspResolvedUrl;
 
@@ -56,7 +56,7 @@ async function initializeODSPCore(
 
     const getStorageTokenStub = async (siteUrl: string, refresh: boolean) => {
         return resolveWrapper(
-            async (authRequestInfo: IOdspAuthRequestInfo) => {
+            async (authRequestInfo: OdspAuthRequestInfo) => {
                 if ((refresh || !authRequestInfo.accessToken) && authRequestInfo.refreshTokenFn) {
                     return authRequestInfo.refreshTokenFn();
                 }

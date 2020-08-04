@@ -6,7 +6,7 @@
 import { unreachableCase } from "@fluidframework/common-utils";
 import {
     OdspTokens,
-    OdspClientConfig,
+    OAuthClientConfig,
     fetchTokens,
     refreshTokens,
     getOdspScope,
@@ -21,7 +21,7 @@ const odspAuthRedirectPort = 7000;
 const odspAuthRedirectOrigin = `http://localhost:${odspAuthRedirectPort}`;
 const odspAuthRedirectUri = new URL("/auth/callback", odspAuthRedirectOrigin).href;
 
-export const getMicrosoftConfiguration = (): OdspClientConfig => ({
+export const getMicrosoftConfiguration = (): OAuthClientConfig => ({
     get clientId() {
         if (!process.env.login__microsoft__clientId) {
             throw new Error("Client ID environment variable not set: login__microsoft__clientId.");
@@ -57,7 +57,7 @@ export class OdspTokenManager {
 
     public async getOdspTokens(
         server: string,
-        clientConfig: OdspClientConfig,
+        clientConfig: OAuthClientConfig,
         tokenConfig: OdspTokenConfig,
         forceRefresh = false,
         forceReauth = false,
@@ -74,7 +74,7 @@ export class OdspTokenManager {
 
     public async getPushTokens(
         server: string,
-        clientConfig: OdspClientConfig,
+        clientConfig: OAuthClientConfig,
         tokenConfig: OdspTokenConfig,
         forceRefresh = false,
         forceReauth = false,
@@ -91,7 +91,7 @@ export class OdspTokenManager {
     private async getTokens(
         isPush: boolean,
         server: string,
-        clientConfig: OdspClientConfig,
+        clientConfig: OAuthClientConfig,
         tokenConfig: OdspTokenConfig,
         forceRefresh: boolean,
         forceReauth: boolean,
@@ -124,7 +124,7 @@ export class OdspTokenManager {
     private async getTokensCore(
         isPush: boolean,
         server: string,
-        clientConfig: OdspClientConfig,
+        clientConfig: OAuthClientConfig,
         tokenConfig: OdspTokenConfig,
         forceRefresh,
         forceReauth,
@@ -186,7 +186,7 @@ export class OdspTokenManager {
     private async acquireTokensWithPassword(
         server: string,
         scope: string,
-        clientConfig: OdspClientConfig,
+        clientConfig: OAuthClientConfig,
         username: string,
         password: string,
     ): Promise<OdspTokens> {
@@ -201,7 +201,7 @@ export class OdspTokenManager {
     private async acquireTokensViaBrowserLogin(
         loginPageUrl: string,
         server: string,
-        clientConfig: OdspClientConfig,
+        clientConfig: OAuthClientConfig,
         scope: string,
         navigator: (url: string) => void,
         redirectUriCallback?: (tokens: OdspTokens) => Promise<string>,

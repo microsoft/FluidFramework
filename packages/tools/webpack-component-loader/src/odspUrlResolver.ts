@@ -7,7 +7,7 @@ import { IUrlResolver, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import { OdspDriverUrlResolver, createOdspUrl } from "@fluidframework/odsp-driver";
 import {
-    IOdspAuthRequestInfo,
+    OdspAuthRequestInfo,
     getDriveItemByRootFileName,
 } from "@fluidframework/odsp-utils";
 
@@ -16,7 +16,7 @@ export class OdspUrlResolver implements IUrlResolver {
 
     constructor(
         private readonly server: string,
-        private readonly authRequestInfo: IOdspAuthRequestInfo,
+        private readonly authRequestInfo: OdspAuthRequestInfo,
     ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
