@@ -1,8 +1,4 @@
----
-uid: component-model
----
-
-# Fluid component model
+# Fluid objects and interfaces
 
 In the previous section we introduced distributed data structures and demonstrated how to use them. The Fluid component
 model enables us to combine those distributed data structures and our own code (business logic) into a modular, reusable
@@ -17,8 +13,6 @@ The key things to understand are:
 
 ---
 
-## What makes a component a 'Fluid Component?'
-
 A Fluid component is at its core a JavaScript object. Or, stated differently, any JavaScript object _could_ be a Fluid
 component. What makes that object "Fluid" is the interfaces that it exposes through the Fluid component model's feature
 detection mechanism.
@@ -27,7 +21,7 @@ Wow, that was a mouthful! What it means is that Fluid components are just JavaSc
 interfaces. The Fluid Framework defines an interface, IComponent, which is then augmented using [TypeScript's interface
 merging capabilities](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#merging-interfaces). The
 specifics of how these interfaces are declared is not relevant until you want to define your own interfaces. We'll cover
-that [in a later section.]()
+that in a later section.
 
 One of the primary design principles in the Fluid component design is to support delegation and feature detection
 patterns. **Feature detection** is a technique to dynamically determine the capabilities of another component, while

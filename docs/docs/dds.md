@@ -48,21 +48,4 @@ This is important because it influences the data model.
 
 :::
 
-
-## Map-like data structures
-
-::: danger TODO
-
-Map, Directory
-
-:::
-
-
-## Sequence-like data structures
-
-## Consensus-based data structures
-
-## Quorum data structure
-
-
 !!!include(links.md)!!!
