@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export * from "./htmlView";
-export * from "./mountableView";
-export * from "./reactView";
+module.exports = {
+    "extends": [
+        "@fluidframework/eslint-config-fluid"
+    ]
+}

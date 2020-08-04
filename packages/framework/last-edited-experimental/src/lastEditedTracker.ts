@@ -4,7 +4,6 @@
  */
 
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
-import { IComponentLastEditedTracker } from "./legacy";
 import { IFluidLastEditedTracker, ILastEditDetails } from "./interfaces";
 
 /**
@@ -12,7 +11,7 @@ import { IFluidLastEditedTracker, ILastEditDetails } from "./interfaces";
  * details should be updated (via updateLastEditDetails) in response to a remote op since it uses shared summary block
  * as storage.
  */
-export class LastEditedTracker implements IComponentLastEditedTracker, IFluidLastEditedTracker {
+export class LastEditedTracker implements IFluidLastEditedTracker {
     private readonly lastEditedDetailsKey = "lastEditDetailsKey";
 
     /**
@@ -21,23 +20,19 @@ export class LastEditedTracker implements IComponentLastEditedTracker, IFluidLas
      */
     constructor(private readonly sharedSummaryBlock: SharedSummaryBlock) { }
 
-    public get IComponentLastEditedTracker() {
-        return this;
-    }
-
     public get IFluidLastEditedTracker() {
         return this;
     }
 
     /**
-     * {@inheritDoc (IComponentLastEditedTracker:interface).getLastEditDetails}
+     * {@inheritDoc (IFluidLastEditedTracker:interface).getLastEditDetails}
      */
     public getLastEditDetails(): ILastEditDetails | undefined {
         return this.sharedSummaryBlock.get<ILastEditDetails>(this.lastEditedDetailsKey);
     }
 
     /**
-     * {@inheritDoc (IComponentLastEditedTracker:interface).updateLastEditDetails}
+     * {@inheritDoc (IFluidLastEditedTracker:interface).updateLastEditDetails}
      */
     public updateLastEditDetails(lastEditDetails: ILastEditDetails) {
         this.sharedSummaryBlock.set(this.lastEditedDetailsKey, lastEditDetails);

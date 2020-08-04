@@ -10,9 +10,6 @@ import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    interface IComponent extends Readonly<Partial<IProvideChannel>> { }
-
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IFluidObject extends Readonly<Partial<IProvideChannel>> { }
 }
 
