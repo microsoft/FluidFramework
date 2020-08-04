@@ -486,7 +486,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public bindRuntime(channel: IFluidDataStoreChannel) {
         if (this.channel) {
-            throw new Error("runtime already bound");
+            throw new Error("Runtime already bound");
         }
 
         // If this FluidDataStoreContext was created via `IContainerRuntime.createDataStoreContext`, the
@@ -686,7 +686,7 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
         scope: IFluidObject & IFluidObject,
         summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
-        bindFluidDataStore: (channel: IFluidDataStoreChannel) => void,
+        bindChannel: (channel: IFluidDataStoreChannel) => void,
     ) {
         super(
             runtime,
@@ -697,7 +697,7 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
             summaryTracker,
             createSummarizerNode,
             BindState.NotBound,
-            bindFluidDataStore,
+            bindChannel,
             pkg);
         this.attachListeners();
     }
