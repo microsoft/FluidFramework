@@ -196,13 +196,13 @@ export class BuildGraph {
 
     private populateLevel() {
         // level is not strictly necessary, except for circular reference.
-        const getLevel = (node: BuildPackage) => {
-            if (node.level === -2) { throw new Error("Circular Reference detected"); }
+        const getLevel = (node: BuildPackage, parent?: BuildPackage) => {
+            if (node.level === -2) { throw new Error(`Circular Reference detected ${parent? parent.pkg.nameColored : "<none>"} -> ${node.pkg.nameColored}`); }
             if (node.level !== -1) { return node.level; } // populated
             node.level = -2;
             let maxChildrenLevel = -1;
             node.dependentPackages.forEach((child) => {
-                maxChildrenLevel = Math.max(maxChildrenLevel, getLevel(child));
+                maxChildrenLevel = Math.max(maxChildrenLevel, getLevel(child, node));
             });
             node.level = maxChildrenLevel + 1;
             return maxChildrenLevel + 1;
