@@ -7,7 +7,7 @@ import {
     getChildrenByDriveItem,
     getDriveItemByServerRelativePath,
     OAuthClientConfig,
-    IOdspDriveItem,
+    OdspDriveItem,
     getOdspRefreshTokenFn,
     OdspAuthRequestInfo,
 } from "@fluidframework/odsp-utils";
@@ -66,7 +66,7 @@ export async function resolveDriveItemByServerRelativePath(
     serverRelativePath: string,
     clientConfig: OAuthClientConfig,
 ) {
-    return resolveWrapper<IOdspDriveItem>(
+    return resolveWrapper<OdspDriveItem>(
         // eslint-disable-next-line @typescript-eslint/promise-function-async
         (authRequestInfo) => getDriveItemByServerRelativePath(
             server,
@@ -79,10 +79,10 @@ export async function resolveDriveItemByServerRelativePath(
 
 async function resolveChildrenByDriveItem(
     server: string,
-    folderDriveItem: IOdspDriveItem,
+    folderDriveItem: OdspDriveItem,
     clientConfig: OAuthClientConfig,
 ) {
-    return resolveWrapper<IOdspDriveItem[]>(
+    return resolveWrapper<OdspDriveItem[]>(
         // eslint-disable-next-line @typescript-eslint/promise-function-async
         (authRequestInfo) => getChildrenByDriveItem(folderDriveItem, server, authRequestInfo),
         server, clientConfig);
@@ -93,8 +93,8 @@ export async function getSharepointFiles(server: string, serverRelativePath: str
 
     const fileInfo = await resolveDriveItemByServerRelativePath(server, serverRelativePath, clientConfig);
     console.log(fileInfo);
-    const pendingFolder: { path: string, folder: IOdspDriveItem }[] = [];
-    const files: IOdspDriveItem[] = [];
+    const pendingFolder: { path: string, folder: OdspDriveItem }[] = [];
+    const files: OdspDriveItem[] = [];
     if (fileInfo.isFolder) {
         pendingFolder.push({ path: serverRelativePath, folder: fileInfo });
     } else {
