@@ -31,6 +31,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IProvideFluidDataStoreRegistry } from "./componentRegistry";
 import { IInboundSignalMessage } from "./protocol";
+import { ISummaryTreeWithStats, ISummarizerNode, SummarizeInternalFn, CreateChildSummarizerNodeParam } from "./summary";
 
 /**
  * Runtime flush mode handling
@@ -156,8 +157,16 @@ export interface IFluidDataStoreChannel extends
 
     /**
      * Generates a snapshot of the given component
+     * @deprecated in 0.22 summarizerNode
      */
     snapshotInternal(fullTree?: boolean): Promise<ITreeEntry[]>;
+
+    /**
+     * Generates a summary for the component.
+     * Introduced with summarizerNode - will be required in a future release.
+     * @param fullTree - true to bypass optimizations and force a full summary tree
+     */
+    summarize?(fullTree?: boolean): Promise<ISummaryTreeWithStats>;
 
     /**
      * Notifies this object about changes in the connection state.
@@ -179,6 +188,9 @@ export interface IFluidDataStoreChannel extends
     reSubmit(type: string, content: any, localOpMetadata: unknown);
 }
 
+/**
+ * @deprecated 0.21 summarizerNode - use ISummarizerNode instead
+ */
 export interface ISummaryTracker {
     /**
      * The reference sequence number of the most recent acked summary.
@@ -210,6 +222,8 @@ export interface ISummaryTracker {
      */
     getChild(key: string): ISummaryTracker | undefined;
 }
+
+export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => ISummarizerNode;
 
 /**
  * Represents the context for the component. It is used by the component runtime to
@@ -314,6 +328,18 @@ export interface IFluidDataStoreContext extends EventEmitter {
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+
+    getCreateChildSummarizerNodeFn(
+        /** Initial id or path part of this node */
+        id: string,
+        /**
+         * Information needed to create the node.
+         * If it is from a base summary, it will assert that a summary has been seen.
+         * Attach information if it is created from an attach op.
+         * If it is local, it will throw unsupported errors on calls to summarize.
+         */
+        createParam: CreateChildSummarizerNodeParam,
+    ): CreateChildSummarizerNodeFn;
 
     /**
      * Take a package name and transform it into a path that can be used to find it

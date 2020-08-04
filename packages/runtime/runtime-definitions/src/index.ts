@@ -8,3 +8,4 @@ export * from "./componentFactory";
 export * from "./componentRegistry";
 export * from "./componentContext";
 export * from "./protocol";
+export * from "./summary";
