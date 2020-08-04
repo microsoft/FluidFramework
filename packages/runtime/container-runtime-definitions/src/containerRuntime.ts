@@ -4,7 +4,8 @@
  */
 
 import {
-    IComponent,
+    IFluidObject,
+    IFluidRouter,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
@@ -12,6 +13,7 @@ import {
     IDeltaManager,
     ContainerWarning,
     ILoader,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -24,14 +26,15 @@ import {
 import {
     FlushMode,
     IContainerRuntimeBase,
-    IComponentRuntimeChannel,
-    IComponentContext,
+    IFluidDataStoreChannel,
+    IFluidDataStoreContext,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
+import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideContainerRuntime>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideContainerRuntime>> { }
 }
 
 export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
@@ -45,6 +48,7 @@ export interface IProvideContainerRuntime {
  */
 export interface IContainerRuntime extends
     IProvideContainerRuntime,
+    Partial<IProvideContainerRuntimeDirtyable>,
     IContainerRuntimeBase {
     readonly id: string;
     readonly existing: boolean;
@@ -61,14 +65,18 @@ export interface IContainerRuntime extends
     readonly loader: ILoader;
     readonly flushMode: FlushMode;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly scope: IComponent;
+    readonly scope: IFluidObject & IFluidObject;
+    /**
+     * Indicates the attachment state of the container to a host service.
+     */
+    readonly attachState: AttachState;
 
     on(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): this;
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
     on(
-        event: "dirtyDocument" | "disconnected" | "dispose" | "joining" | "savedDocument" | "leader" | "notleader",
+        event: "dirtyDocument" | "disconnected" | "dispose" | "savedDocument" | "leader" | "notleader",
         listener: () => void): this;
     on(event: "connected", listener: (clientId: string) => void): this;
     on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
@@ -81,19 +89,19 @@ export interface IContainerRuntime extends
      * @param id - Id supplied during creating the component.
      * @param wait - True if you want to wait for it.
      */
-    getComponentRuntime(id: string, wait?: boolean): Promise<IComponentRuntimeChannel>;
+    getDataStore(id: string, wait?: boolean): Promise<IFluidDataStoreChannel>;
 
     /**
-     * Creates a new component using an optional realization function.  This API does not allow specifying
-     * the component's id and instead generates a uuid.  Consumers must save another reference to the
-     * component, such as the handle.
-     * @param pkg - Package name of the component
-     * @param realizationFn - Optional function to call to realize the component over the context default
+     * Creates root data store in container. Such store is automatically bound to container, and thus is
+     * attached to storage when/if container is attached to storage. Such stores are never garbage collected
+     * and can be found / loaded by name.
+     * Majority of data stores in container should not be roots, and should be reachable (directly or indirectly)
+     * through one of the roots.
+     * @param pkg - Package name of the data store factory
+     * @param rootDataStoreId - data store ID. IDs naming space is global in container. If collision on name occurs,
+     * it results in container corruption - loading this file after that will always result in error.
      */
-    createComponentWithRealizationFn(
-        pkg: string[],
-        realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponentRuntimeChannel>;
+    createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
 
     /**
      * Returns the current quorum.
@@ -122,19 +130,14 @@ export interface IContainerRuntime extends
     flush(): void;
 
     /**
-     * Used to notify the HostingRuntime that the ComponentRuntime has be instantiated.
+     * Used to notify the HostingRuntime that the FluidDataStoreRuntime has be instantiated.
      */
-    notifyComponentInstantiated(componentContext: IComponentContext): void;
-
-    /**
-     * Flag indicating if the given container has been attached to a host service.
-     * False if the container is attached to storage.
-     */
-    isLocal(): boolean;
+    notifyDataStoreInstantiated(componentContext: IFluidDataStoreContext): void;
 
     /**
      * Get an absolute url for a provided container-relative request.
+     * Returns undefined if the container isn't attached to storage.
      * @param relativeUrl - A relative request within the container
      */
-    getAbsoluteUrl(relativeUrl: string): Promise<string>;
+    getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 }

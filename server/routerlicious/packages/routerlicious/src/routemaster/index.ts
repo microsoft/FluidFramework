@@ -17,6 +17,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
     const maxMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
+    const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
 
     const kafkaClientId = config.get("routemaster:clientId");
     const sendTopic = config.get("routemaster:topics:send");
@@ -29,7 +30,14 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const collection = await client.collection(documentsCollectionName);
     // eslint-disable-next-line @typescript-eslint/await-thenable
     const deltas = await client.collection(deltasCollectionName);
-    const producer = services.createProducer(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic, maxMessageSize);
+    const producer = services.createProducer(
+        kafkaLibrary,
+        kafkaEndpoint,
+        kafkaClientId,
+        sendTopic,
+        maxMessageSize,
+        false,
+        kafkaProducerPollIntervalMs);
 
     return new RouteMasterLambdaFactory(mongoManager, collection, deltas, producer);
 }

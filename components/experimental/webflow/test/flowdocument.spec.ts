@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { TagName } from "@fluid-example/flow-util-lib";
-import { createLocalLoader, initializeLocalContainer } from "@fluid-internal/test-utils";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 import { Marker, ReferenceType } from "@fluidframework/merge-tree";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { FlowDocument } from "../src/document";
@@ -24,7 +24,7 @@ describe("FlowDocument", () => {
         const container = await initializeLocalContainer(id, loader, codeDetails);
 
         const response = await container.request({ url: "default" });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Default component not found`);
         }
         doc = response.value;

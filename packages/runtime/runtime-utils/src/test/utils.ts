@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle, IComponentHandleContext } from "@fluidframework/component-core-interfaces";
-import { ComponentHandle } from "../componentHandle";
+import { IFluidHandle, IFluidHandleContext } from "@fluidframework/component-core-interfaces";
+import { RemoteFluidObjectHandle } from "../remoteComponentHandle";
 
-export const mockHandleContext: IComponentHandleContext = {
+export const mockHandleContext: IFluidHandleContext = {
     path: "",
+    absolutePath: "",
     isAttached: false,
-    IComponentRouter: undefined as any,
-    IComponentHandleContext: undefined as any,
+    IFluidRouter: undefined as any,
+    IFluidHandleContext: undefined as any,
 
-    attach: () => {
+    attachGraph: () => {
         throw new Error("Method not implemented.");
     },
     bind: () => {
@@ -23,7 +24,7 @@ export const mockHandleContext: IComponentHandleContext = {
     },
 };
 
-export const handle: IComponentHandle = new ComponentHandle("", mockHandleContext);
+export const handle: IFluidHandle = new RemoteFluidObjectHandle("", mockHandleContext);
 
 /**
  * Creates a Jsonable object graph of a specified breadth/depth.  The 'createLeaf' callback

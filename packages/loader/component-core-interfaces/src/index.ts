@@ -4,9 +4,10 @@
  */
 
 // when merging declarations the module path must match exactly. Because of this we need to explicitly export
-// IComponent as opposed to an export *
-export { IComponent } from "./components";
-export * from "./componentLoadable";
-export * from "./componentRouter";
+// IFluidObject as opposed to an export *
+export { IFluidObject } from "./fluidObject";
+
+export * from "./fluidLoadable";
+export * from "./fluidRouter";
 export * from "./handles";
 export * from "./serializer";

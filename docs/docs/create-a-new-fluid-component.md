@@ -2,15 +2,6 @@
 
 **yo fluid** is a tool that helps create a scaffold for a Fluid component called **diceroller**.
 
-<style>
-  iframe#diceroller {
-    height: 95px;
-    width: 200px;
-  }
-</style>
-
-<iframe id="diceroller" src="/fluid/diceroller.html"></iframe>
-
 First, [clone the Fluid Framework repo locally](https://github.com/microsoft/FluidFramework).
 
 Once you've cloned the repo, you can set up the `yo fluid` bootstrapper:

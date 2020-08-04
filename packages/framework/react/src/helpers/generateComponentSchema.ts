@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedMap } from "@fluidframework/map";
 import {
     IFluidFunctionalComponentFluidState,
@@ -13,16 +12,12 @@ import {
     FluidToViewMap,
     IFluidSchema,
 } from "../interface";
-import { isEquivalent } from "./utils";
 
 /**
  * Identifies which values within the Fluid and view states match
- * The component key map identifies Fluid components within the Fluid state
  * The view and Fluid matching map identify if the value in the respective states
  * needs a converter or not
  * @param runtime - The component runtime used to create the SharedMap objects
- * @param viewState - A representative view state object
- * @param fluidState - A representative Fluid state object
  * @param fluidToView - The fluid to view state conversion mapping
  * @param viewToFluid - The view to fluid conversion state mapping
  * */
@@ -30,142 +25,71 @@ export function generateComponentSchema<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
 >(
-    runtime: IComponentRuntime,
-    viewState: SV,
-    fluidState: SF,
+    runtime: IFluidDataStoreRuntime,
+    defaultViewState: SV,
     fluidToView: FluidToViewMap<SV, SF>,
     viewToFluid?: ViewToFluidMap<SV, SF>,
 ): IFluidSchema {
-    // matched components w/ matching keys and their handles
-    const componentKeyMap = SharedMap.create(runtime);
     // matching primitives w/ the same key in view and fluid
     // true if needs converter or is component, false if not
     const viewMatchingMap = SharedMap.create(runtime);
     const fluidMatchingMap = SharedMap.create(runtime);
-    // (k,v) => (handle of component found in view, view key it was found in)
-    const unmatchedViewKeys = new Map<IComponentHandle, string>();
-
-    Object.entries(viewState).forEach(([viewKey, viewValue]) => {
-        if (isEquivalent(viewValue, fluidState[viewKey])) {
-            viewMatchingMap.set(viewKey, false);
-        } else if (viewToFluid?.get(viewKey as keyof SV) !== undefined) {
-            // It is an object but the types don't match, need a root converter
-            viewMatchingMap.set(viewKey, true);
-        } else {
-            // The values are actually different and we dont have a root converter
-            const viewType = typeof viewState[viewKey];
-            const fluidType = typeof fluidState[viewKey];
-            if (viewValue !== Object(viewValue)) {
-                // This value is a primitive
-                if (viewType !== fluidType) {
-                    throw new Error(
-                        "Unmatched primitive view keys found with no root converter",
-                    );
-                } else {
-                    // It is an object but the types match
-                    viewMatchingMap.set(viewKey, false);
-                }
+    const storedHandleMap = SharedMap.create(runtime);
+    for (const fluidStateKey of fluidToView.keys()) {
+        const value = fluidToView.get(fluidStateKey);
+        if (value === undefined) {
+            throw Error("Cannot find fluidToView value");
+        }
+        const {
+            type,
+            viewKey,
+            viewConverter,
+        } = value;
+        const fluidConverter = viewToFluid?.get(viewKey);
+        if (fluidConverter === undefined) {
+            if (
+                defaultViewState[viewKey] !== undefined
+                && typeof (defaultViewState[viewKey]) !== type
+                && type !== "any"
+            ) {
+                throw Error(`Failed to find fluid converter for key ${viewKey}`);
             } else {
-                // This view value is an object
-                if (viewType !== fluidType) {
-                    // Object and the types are not the same
-                    if (
-                        viewValue.IComponent &&
-                        viewValue.IComponentLoadable &&
-                        viewValue.IComponentLoadable.handle
-                    ) {
-                        // Types are not the same but it is a Fluid component
-                        const loadableComponentHandle =
-                            viewValue.IComponentLoadable.handle;
-                        if (
-                            isEquivalent(
-                                loadableComponentHandle,
-                                fluidState[viewKey],
-                            )
-                        ) {
-                            // Types are not the same but the component in the view matches the handle in root
-                            componentKeyMap.set(viewKey, viewKey as keyof SF);
-                            viewMatchingMap.set(viewKey, true);
-                        } else {
-                            // Not this component's handle
-                            // Maybe its handle is stored somewhere under a different key
-                            unmatchedViewKeys.set(
-                                loadableComponentHandle,
-                                viewKey,
-                            );
-                        }
-                    }
-                }
+                continue;
             }
         }
-    });
-
-    Object.entries(fluidState).forEach(([fluidKey, fluidValue]) => {
-        const viewValueOnFluidKey = viewState[fluidKey];
-        if (isEquivalent(fluidValue, viewValueOnFluidKey)) {
-            fluidMatchingMap.set(fluidKey, false);
-        } else if (
-            fluidToView?.get(fluidKey as keyof SF)?.viewConverter !== undefined
-        ) {
-            fluidMatchingMap.set(fluidKey, true);
+        if (type === fluidConverter.type) {
+            fluidMatchingMap.set(fluidStateKey as string, false);
+        } else if (viewConverter !== undefined) {
+            fluidMatchingMap.set(fluidStateKey as string, true);
         } else {
-            // The values are actually different and we dont have a view converter
-            const viewType = typeof viewState[fluidKey];
-            const fluidType = typeof fluidState[fluidKey];
-            if (fluidValue !== Object(fluidValue)) {
-                // This value is a primitive
-                if (viewType !== fluidType) {
-                    throw new Error(
-                        "Unmatched primitive fluid keys found with no view converter",
-                    );
-                }
+            throw Error(`Failed to find view converter for fluid key ${fluidStateKey}`);
+        }
+    }
+
+    if (viewToFluid !== undefined) {
+        for (const viewStateKey of viewToFluid.keys()) {
+            const value = viewToFluid.get(viewStateKey);
+            if (value === undefined) {
+                throw Error("Cannot find viewToFluid value");
+            }
+            const {
+                type,
+                fluidKey,
+                fluidConverter,
+            } = value;
+            const viewConverter = fluidToView.get(fluidKey);
+            if (viewConverter === undefined) {
+                throw Error(`Failed to find view converter for key ${fluidKey}`);
+            }
+            if (type === viewConverter.type) {
+                viewMatchingMap.set(viewStateKey as string, false);
+            } else if (fluidConverter !== undefined) {
+                viewMatchingMap.set(viewStateKey as string, true);
             } else {
-                // This view value is an object
-                if (viewType !== fluidType) {
-                    // Object and the types are not the same
-                    if (fluidValue.IComponentHandle) {
-                        // This is a fluid handle on the root
-                        const possibleMatchingKey = unmatchedViewKeys.get(
-                            fluidValue.IComponentHandle,
-                        );
-                        if (possibleMatchingKey) {
-                            // The handle matched with an earlier one found on the view state
-                            componentKeyMap.set(possibleMatchingKey, fluidKey);
-                            viewMatchingMap.set(fluidKey, true);
-                            fluidMatchingMap.set(fluidKey, true);
-                            unmatchedViewKeys.delete(
-                                fluidValue.IComponentHandle,
-                            );
-                        } else if (
-                            viewValueOnFluidKey &&
-                            viewValueOnFluidKey.IComponentLoadable &&
-                            viewValueOnFluidKey.IComponentLoadable.handle
-                        ) {
-                            // Corresponding view value is a component
-                            const viewHandle =
-                                viewValueOnFluidKey.IComponentLoadable.handle;
-                            const fluidHandle = fluidValue.IComponentHandle;
-                            if (isEquivalent(viewHandle, fluidHandle)) {
-                                componentKeyMap.set(fluidKey, fluidKey);
-                                fluidMatchingMap.set(fluidKey, true);
-                            } else {
-                                throw new Error(
-                                    "Unmatched handle fluid keys found with no view converter," +
-                                    "yet corresponding view key has a component",
-                                );
-                            }
-                        } else {
-                            throw new Error(
-                                "Unmatched fluid keys found for a handle with no component converter",
-                            );
-                        }
-                    }
-                } else {
-                    fluidMatchingMap.set(fluidKey, false);
-                }
+                throw Error(`Failed to find fluid converter for view key ${viewStateKey}`);
             }
         }
-    });
+    }
 
-    return { componentKeyMap, viewMatchingMap, fluidMatchingMap };
+    return { viewMatchingMap, fluidMatchingMap, storedHandleMap };
 }

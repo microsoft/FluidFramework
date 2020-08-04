@@ -8,16 +8,17 @@ import { EventEmitter } from "events";
 import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IComponent,
-    IComponentHandleContext,
-    IComponentSerializer,
+    IFluidObject,
+    IFluidRouter,
+    IFluidHandleContext,
+    IFluidSerializer,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
-    IComponentTokenProvider,
+    IFluidTokenProvider,
     IContainerContext,
     IDeltaManager,
     IDeltaSender,
@@ -25,23 +26,27 @@ import {
     IRuntime,
     IRuntimeState,
     ContainerWarning,
-    CriticalContainerError,
+    ICriticalContainerError,
+    AttachState,
 } from "@fluidframework/container-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntime, IContainerRuntimeDirtyable } from "@fluidframework/container-runtime-definitions";
 import {
     Deferred,
     Trace,
-    LazyPromise,
+    unreachableCase,
+} from "@fluidframework/common-utils";
+import {
     ChildLogger,
     raiseConnectedEvent,
-} from "@fluidframework/common-utils";
+    PerformanceEvent,
+} from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
     BlobCacheStorageService,
-    CreateContainerError,
     buildSnapshotTree,
     readAndParse,
 } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     BlobTreeEntry,
     TreeTreeEntry,
@@ -60,38 +65,45 @@ import {
     ISummaryTree,
     ITree,
     MessageType,
-    SummaryType,
+    IVersion,
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
     IAttachMessage,
-    IComponentContext,
-    IComponentRegistry,
-    IComponentRuntimeChannel,
+    IFluidDataStoreContext,
+    IFluidDataStoreRegistry,
+    IFluidDataStoreChannel,
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelop,
-    NamedComponentRegistryEntries,
+    NamedFluidDataStoreRegistryEntries,
+    SchedulerType,
+    ISummaryTreeWithStats,
+    ISummaryStats,
+    ISummarizeInternalResult,
+    SummarizeInternalFn,
+    CreateChildSummarizerNodeFn,
+    CreateChildSummarizerNodeParam,
+    CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { ComponentSerializer, SummaryTracker } from "@fluidframework/runtime-utils";
-import { v4 as uuid } from "uuid";
-import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
-import { ComponentHandleContext } from "./componentHandleContext";
-import { ComponentRegistry } from "./componentRegistry";
-import { debug } from "./debug";
 import {
-    componentRuntimeRequestHandler,
-    createLoadableComponentRuntimeRequestHandler,
-    RuntimeRequestHandler,
-} from "./requestHandlers";
-import { RequestParser } from "./requestParser";
-import { RuntimeRequestHandlerBuilder } from "./runtimeRequestHandlerBuilder";
+    FluidSerializer,
+    SummaryTracker,
+    SummaryTreeBuilder,
+    SummarizerNode,
+    convertToSummaryTree,
+    RequestParser,
+} from "@fluidframework/runtime-utils";
+import { v4 as uuid } from "uuid";
+import { FluidDataStoreContext, LocalFluidDataStoreContext, RemotedFluidDataStoreContext } from "./componentContext";
+import { FluidHandleContext } from "./componentHandleContext";
+import { FluidDataStoreRegistry } from "./componentRegistry";
+import { debug } from "./debug";
 import { ISummarizerRuntime, Summarizer } from "./summarizer";
-import { SummaryManager } from "./summaryManager";
-import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
+import { SummaryManager, summarizerClientType } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
-import { ReportConnectionTelemetry } from "./connectionTelemetry";
+import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
@@ -119,9 +131,9 @@ export interface IChunkedOp {
     originalType: MessageType | ContainerMessageType;
 }
 
-interface ISummaryTreeWithStats {
-    summaryStats: ISummaryStats;
-    summaryTree: ISummaryTree;
+export interface ContainerRuntimeMessage {
+    contents: any;
+    type: ContainerMessageType;
 }
 
 export interface IPreviousState {
@@ -186,13 +198,19 @@ export interface IContainerRuntimeOptions {
 
     // Delay before first attempt to spawn summarizing container
     initialSummarizerDelayMs?: number;
+
+    // Flag to enable summarizing with new SummarizerNode strategy.
+    // Enabling this feature will allow components that fail to summarize to
+    // try to still summarize based on previous successful summary + ops since.
+    // Enabled by default.
+    enableSummarizerNode?: boolean;
 }
 
 interface IRuntimeMessageMetadata {
     batch?: boolean;
 }
 
-function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
+export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     switch (message.type) {
         case ContainerMessageType.ComponentOp:
         case ContainerMessageType.ChunkedOp:
@@ -204,12 +222,25 @@ function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     }
 }
 
-function assertNever(arg: never, message: string): never {
-    throw new Error(message);
-}
-
-function assertNeverMessageType(messageType: never): never {
-    assertNever(messageType, `Never: unknown message type: ${messageType}`);
+export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
+    if (message.type === MessageType.Operation) {
+        // legacy op format?
+        if (message.contents.address !== undefined && message.contents.type === undefined) {
+            message.type = ContainerMessageType.ComponentOp;
+        } else {
+            // new format
+            const innerContents = message.contents as ContainerRuntimeMessage;
+            assert(innerContents.type !== undefined);
+            message.type = innerContents.type;
+            message.contents = innerContents.contents;
+        }
+        assert(isRuntimeMessage(message));
+    } else {
+        // Legacy format, but it's already "unpacked",
+        // i.e. message.type is actually ContainerMessageType.
+        // Nothing to do in such case.
+    }
+    return message;
 }
 
 export class ScheduleManager {
@@ -393,18 +424,11 @@ export class ScheduleManager {
     }
 }
 
-export const schedulerId = "_scheduler";
-const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IContainerRuntime) => {
-        if (request.pathParts.length > 0 && request.pathParts[0] === schedulerId) {
-            return componentRuntimeRequestHandler(request, runtime);
-        }
-        return undefined;
-    };
+export const schedulerId = SchedulerType;
 
 // Wraps the provided list of packages and augments with some system level services.
-class ContainerRuntimeComponentRegistry extends ComponentRegistry {
-    constructor(namedEntries: NamedComponentRegistryEntries) {
+class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
+    constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
         super([
             ...namedEntries,
             [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
@@ -416,8 +440,11 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime, ISummarizerRuntime {
+export class ContainerRuntime extends EventEmitter
+    implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
     public get IContainerRuntime() { return this; }
+    public get IContainerRuntimeDirtyable() { return this; }
+    public get IFluidRouter() { return this; }
 
     /**
      * Load the components from a snapshot and returns the runtime.
@@ -428,10 +455,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
      */
     public static async load(
         context: IContainerContext,
-        registryEntries: NamedComponentRegistryEntries,
-        requestHandlers: RuntimeRequestHandler[] = [],
+        registryEntries: NamedFluidDataStoreRegistryEntries,
+        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
-        containerScope: IComponent = context.scope,
+        containerScope: IFluidObject & IFluidObject = context.scope,
     ): Promise<ContainerRuntime> {
         // Back-compat: <= 0.18 loader
         if (context.deltaManager.lastSequenceNumber === undefined) {
@@ -440,7 +467,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             });
         }
 
-        const componentRegistry = new ContainerRuntimeComponentRegistry(registryEntries);
+        const componentRegistry = new ContainerRuntimeDataStoreRegistry(registryEntries);
 
         const chunkId = context.baseSnapshot?.blobs[chunksBlobName];
         const chunks = chunkId
@@ -453,19 +480,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             componentRegistry,
             chunks,
             runtimeOptions,
-            containerScope);
-
-        runtime.requestHandler.pushHandler(
-            createLoadableComponentRuntimeRequestHandler(runtime.summarizer),
-            schedulerRuntimeRequestHandler,
-            ...requestHandlers);
+            containerScope,
+            requestHandler);
 
         // Create all internal components in first load.
         if (!context.existing) {
-            await runtime.createComponent(schedulerId, schedulerId)
-                .then((componentRuntime) => {
-                    componentRuntime.attach();
-                });
+            await runtime.createRootDataStore(schedulerId, schedulerId);
         }
 
         runtime.subscribeToLeadership();
@@ -525,7 +545,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.reSubmit;
     }
 
-    public get closeFn(): (error?: CriticalContainerError) => void {
+    public get closeFn(): (error?: ICriticalContainerError) => void {
         return this.context.closeFn;
     }
 
@@ -537,31 +557,46 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this._flushMode;
     }
 
-    public get scope(): IComponent {
+    public get scope(): IFluidObject & IFluidObject {
         return this.containerScope;
     }
 
-    public get IComponentRegistry(): IComponentRegistry {
+    public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
         return this.registry;
     }
 
-    public isLocal(): boolean {
-        return this.context.isLocal();
+    public get attachState(): AttachState {
+        if (this.context.attachState !== undefined) {
+            return this.context.attachState;
+        }
+        // 0.21 back-compat isAttached
+        return (this.context as any).isAttached() ? AttachState.Attached : AttachState.Detached;
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
     public nextSummarizerD?: Deferred<Summarizer>;
 
-    public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
+    public readonly IFluidSerializer: IFluidSerializer = new FluidSerializer();
 
-    public readonly IComponentHandleContext: IComponentHandleContext;
+    public readonly IFluidHandleContext: IFluidHandleContext;
 
+    // internal logger for ContainerRuntime
+    private readonly _logger: ITelemetryLogger;
+    // publicly visible logger, to be used by components, summarize, etc.
     public readonly logger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
-    private readonly summaryTreeConverter: SummaryTreeConverter;
     private latestSummaryAck: ISummaryContext;
+    // back-compat: summarizerNode - remove all summary trackers
     private readonly summaryTracker: SummaryTracker;
+    private readonly summarizerNode: {
+        readonly referenceSequenceNumber: number;
+        readonly getCreateChildFn: (
+            id: string,
+            createParam: CreateChildSummarizerNodeParam,
+        ) => CreateChildSummarizerNodeFn;
+    } & ({ readonly enabled: true; readonly node: SummarizerNode } | { readonly enabled: false });
+    private readonly notBoundedComponentContexts = new Set<string>();
 
     private tasks: string[] = [];
 
@@ -575,8 +610,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     // Always matched IAgentScheduler.leader property
     private _leader = false;
 
+    private _connected: boolean;
+
     public get connected(): boolean {
-        return this.context.connected;
+        return this._connected;
     }
 
     public get leader(): boolean {
@@ -602,52 +639,100 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     private readonly summarizer: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
-    private readonly requestHandler = new RuntimeRequestHandlerBuilder();
     private readonly pendingStateManager: PendingStateManager;
 
     // Local copy of incomplete received chunks.
     private readonly chunkMap: Map<string, string[]>;
 
     // Attached and loaded context proxies
-    private readonly contexts = new Map<string, ComponentContext>();
+    private readonly contexts = new Map<string, FluidDataStoreContext>();
     // List of pending contexts (for the case where a client knows a component will exist and is waiting
     // on its creation). This is a superset of contexts.
-    private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
+    private readonly contextsDeferred = new Map<string, Deferred<FluidDataStoreContext>>();
 
     private constructor(
         private readonly context: IContainerContext,
-        private readonly registry: IComponentRegistry,
+        private readonly registry: IFluidDataStoreRegistry,
         chunks: [string, string[]][],
-        private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: true, enableWorker: false },
-        private readonly containerScope: IComponent,
+        private readonly runtimeOptions: IContainerRuntimeOptions = {
+            generateSummaries: true,
+            enableWorker: false,
+        },
+        private readonly containerScope: IFluidObject & IFluidObject,
+        private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
     ) {
         super();
 
+        this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
 
-        this.IComponentHandleContext = new ComponentHandleContext("", this);
+        this.IFluidHandleContext = new FluidHandleContext("", this);
 
-        // useContext - back-compat: 0.14 uploadSummary
-        const useContext: boolean = this.isLocal() ? true : this.storage.uploadSummaryWithContext !== undefined;
+        this.logger = ChildLogger.create(context.logger, undefined, {
+            runtimeVersion: pkgVersion,
+        });
+
+        this._logger = ChildLogger.create(this.logger, "ContainerRuntime");
+
         this.latestSummaryAck = {
             proposalHandle: undefined,
             ackHandle: this.context.getLoadedFromVersion()?.id,
         };
         this.summaryTracker = new SummaryTracker(
-            useContext,
             "", // fullPath - the root is unnamed
             this.deltaManager.initialSequenceNumber, // referenceSequenceNumber - last acked summary ref seq number
             this.deltaManager.initialSequenceNumber, // latestSequenceNumber - latest sequence number seen
-            async () => undefined, // getSnapshotTree - this will be replaced on summary ack
         );
-        this.summaryTreeConverter = new SummaryTreeConverter(useContext);
+
+        const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
+        const isSummarizerClient = this.clientDetails.type === summarizerClientType;
+        // Use runtimeOptions if provided, otherwise check localStorage, defaulting to true/enabled.
+        const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode
+            ?? (typeof localStorage === "object" && localStorage?.fluidDisableSummarizerNode ? false : true);
+        const summarizerNode = SummarizerNode.createRoot(
+                this.logger,
+                // Summarize function to call when summarize is called
+                async (fullTree: boolean) => this.summarizeInternal(fullTree),
+                // Latest change sequence number, no changes since summary applied yet
+                loadedFromSequenceNumber,
+                // Summary reference sequence number, undefined if no summary yet
+                context.baseSnapshot ? loadedFromSequenceNumber : undefined,
+                // Disable calls to summarize if not summarizer client, or if runtimeOption is disabled
+                !isSummarizerClient || !enableSummarizerNode,
+                {
+                    // Must set to false to prevent sending summary handle which would be pointing to
+                    // a summary with an older protocol state.
+                    canReuseHandle: false,
+                    // Must set to true to throw on any component failure that was too severe to be handled.
+                    // We also are not decoding the base summaries at the root.
+                    throwOnFailure: true,
+                },
+            );
+
+        const getCreateChildFn = (id: string, createParam: CreateChildSummarizerNodeParam) =>
+            (summarizeInternal: SummarizeInternalFn) =>
+            summarizerNode.createChild(summarizeInternal, id, createParam);
+        if (enableSummarizerNode) {
+            this.summarizerNode = {
+                enabled: true,
+                node: summarizerNode,
+                get referenceSequenceNumber() { return this.node.referenceSequenceNumber; },
+                getCreateChildFn,
+            };
+        } else {
+            this.summarizerNode = {
+                enabled: false,
+                get referenceSequenceNumber() { return summarizerNode.referenceSequenceNumber; },
+                getCreateChildFn,
+            };
+        }
 
         // Extract components stored inside the snapshot
         const components = new Map<string, ISnapshotTree | string>();
         if (context.baseSnapshot) {
             const baseSnapshot = context.baseSnapshot;
             Object.keys(baseSnapshot.trees).forEach((value) => {
-                if (value !== ".protocol") {
+                if (value !== ".protocol" && value !== ".logTail" && value !== ".serviceProtocol") {
                     const tree = baseSnapshot.trees[value];
                     components.set(value, tree);
                 }
@@ -656,19 +741,16 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         // Create a context for each of them
         for (const [key, value] of components) {
-            const componentContext = new RemotedComponentContext(
+            const componentContext = new RemotedFluidDataStoreContext(
                 key,
                 typeof value === "string" ? value : Promise.resolve(value),
                 this,
                 this.storage,
                 this.containerScope,
-                this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber));
+                this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber),
+                this.summarizerNode.getCreateChildFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
             this.setNewContext(key, componentContext);
         }
-
-        this.logger = ChildLogger.create(context.logger, undefined, {
-            runtimeVersion: pkgVersion,
-        });
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
@@ -699,8 +781,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this,
             () => this.summaryConfiguration,
             async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
-            async (summContext, refSeq) => this.refreshLatestSummaryAck(summContext, refSeq),
-            this.IComponentHandleContext,
+            async (propHandle, ackHandle, refSeq) => this.refreshLatestSummaryAck(propHandle, ackHandle, refSeq),
+            this.IFluidHandleContext,
             this.previousState.summaryCollection);
 
         // Create the SummaryManager and mark the initial state
@@ -714,12 +796,36 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             !!this.previousState.reload,
             this.runtimeOptions.initialSummarizerDelayMs);
 
-        if (this.context.connected) {
+        if (this.connected) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.summaryManager.setConnected(this.context.clientId!);
         }
 
-        ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
+        this.deltaManager.on("readonly", (readonly: boolean) => {
+            // we accumulate ops while being in read-only state.
+            // once user gets write permissions and we have active connection, flush all pending ops.
+            assert(readonly === this.deltaManager.readonly, "inconsistent readonly property/event state");
+
+            // We need to be very careful with when we (re)send pending ops, to ensure that we only send ops
+            // when we either never send an op, or attempted to send it but we know for sure it was not
+            // sequenced by server and will never be sequenced (i.e. was lost)
+            // For loss of connection, we wait for our own "join" op and use it a a barrier to know all the
+            // ops that maid it from previous connection, before switching clientId and raising "connected" event
+            // But with read-only permissions, if we transition between read-only and r/w states while on same
+            // connection, then we have no good signal to tell us when it's safe to send ops we accumulated while
+            // being in read-only state.
+            // For that reason, we support getting to read-only state only when disconnected. This ensures that we
+            // can reply on same safety mechanism and resend ops only when we establish new connection.
+            // This is applicable for read-only permissions (event is raised before connection is properly registered),
+            // but it's an extra requirement for Container.forceReadonly() API
+            assert(!readonly || !this.connected, "Unsafe to transition to read-only state!");
+
+            if (this.canSendOps()) {
+                this.pendingStateManager.replayPendingStates();
+            }
+        });
+
+        ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
     public dispose(): void {
@@ -736,7 +842,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             contextD.promise.then((context) => {
                 context.dispose();
             }).catch((contextError) => {
-                this.logger.sendErrorEvent({ eventName: "ComponentContextDisposeError", componentId }, contextError);
+                this._logger.sendErrorEvent({
+                    eventName: "ComponentContextDisposeError",
+                    componentId,
+                },
+                    contextError);
             });
         }
 
@@ -744,17 +854,17 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.removeAllListeners();
     }
 
-    public get IComponentTokenProvider() {
+    public get IFluidTokenProvider() {
         if (this.options && this.options.intelligence) {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             return {
                 intelligence: this.options.intelligence,
-            } as IComponentTokenProvider;
+            } as IFluidTokenProvider;
         }
         return undefined;
     }
 
-    public get IComponentConfiguration() {
+    public get IFluidConfiguration() {
         return this.context.configuration;
     }
 
@@ -763,8 +873,49 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
-        // Otherwise defer to the app to handle the request
-        return this.requestHandler.handleRequest(request, this);
+        const requestParser = new RequestParser(request);
+
+        if (requestParser.pathParts.length === 1 && requestParser.pathParts[0] === "_summarizer") {
+            return {
+                status: 200,
+                mimeType: "fluid/object",
+                value: this.summarizer,
+            };
+        } else if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === schedulerId) {
+            const wait =
+                typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+
+            const component = await this.getDataStore(requestParser.pathParts[0], wait) as IFluidObject;
+            if (component) {
+                const subRequest = requestParser.createSubRequest(1);
+                if (subRequest !== undefined) {
+                    assert(component.IFluidRouter);
+                    return component.IFluidRouter.request(subRequest);
+                } else {
+                    return {
+                        status: 200,
+                        mimeType: "fluid/object",
+                        value: component,
+                    };
+                }
+            } else {
+                return {
+                    status: 404,
+                    mimeType: "text/plain",
+                    value: `${schedulerId} not found`,
+                };
+            }
+        }
+
+        if (this.requestHandler !== undefined) {
+            return this.requestHandler(request, this);
+        }
+
+        return {
+            status: 404,
+            mimeType: "text/plain",
+            value: "resource not found",
+        };
     }
 
     /**
@@ -804,12 +955,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return root;
     }
 
-    protected serializeContainerBlobs(summaryTree: ISummaryTree) {
+    protected serializeContainerBlobs(summaryTreeBuilder: SummaryTreeBuilder) {
         if (this.chunkMap.size > 0) {
-            summaryTree.tree[chunksBlobName] = {
-                content: JSON.stringify([...this.chunkMap]),
-                type: SummaryType.Blob,
-            };
+            const content = JSON.stringify([...this.chunkMap]);
+            summaryTreeBuilder.addBlob(chunksBlobName, content);
         }
     }
 
@@ -843,7 +992,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
-        assert(this.connected === connected);
+        // There might be no change of state due to Container calling this API after loading runtime.
+        const changeOfState = this._connected !== connected;
+        this._connected = connected;
 
         if (connected) {
             // Once we are connected, all acks are accounted.
@@ -852,13 +1003,15 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.updateDocumentDirtyState(false);
         }
 
-        this.pendingStateManager.setConnectionState(connected);
+        if (changeOfState && this.canSendOps()) {
+            this.pendingStateManager.replayPendingStates();
+        }
 
         for (const [component, componentContext] of this.contexts) {
             try {
                 componentContext.setConnectionState(connected, clientId);
             } catch (error) {
-                this.logger.sendErrorEvent({
+                this._logger.sendErrorEvent({
                     eventName: "ChangeConnectionStateError",
                     clientId,
                     component,
@@ -866,13 +1019,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             }
         }
 
-        raiseConnectedEvent(this.logger, this, connected, clientId);
+        raiseConnectedEvent(this._logger, this, connected, clientId);
 
         if (connected) {
             assert(clientId);
             this.summaryManager.setConnected(clientId);
         } else {
-            assert(!this._leader);
             this.summaryManager.setDisconnected();
         }
     }
@@ -899,7 +1051,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.scheduleManager.beginOperation(message);
 
         try {
-            message = this.unpackRuntimeMessage(message);
+            message = unpackRuntimeMessage(message);
 
             // Chunk processing must come first given that we will transform the message to the unchunked version
             // once all pieces are available
@@ -913,9 +1065,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                     localMessageMetadata = this.pendingStateManager.processPendingLocalMessage(message);
                 }
 
-                // If there are no more pending states after processing a local message,
+                // If there are no more pending messages after processing a local message,
                 // the document is no longer dirty.
-                if (!this.pendingStateManager.isPendingState()) {
+                if (!this.pendingStateManager.hasPendingMessages()) {
                     this.updateDocumentDirtyState(false);
                 }
             }
@@ -957,14 +1109,17 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         if (!context) {
             // Attach message may not have been processed yet
             assert(!local);
-            this.logger.sendTelemetryEvent({ eventName: "SignalComponentNotFound", componentId: envelope.address });
+            this._logger.sendTelemetryEvent({
+                eventName: "SignalComponentNotFound",
+                componentId: envelope.address,
+            });
             return;
         }
 
         context.processSignal(transformed, local);
     }
 
-    public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntimeChannel> {
+    public async getDataStore(id: string, wait = true): Promise<IFluidDataStoreChannel> {
         // Ensure deferred if it doesn't exist which will resolve once the process ID arrives
         const deferredContext = this.ensureContextDeferred(id);
 
@@ -976,7 +1131,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return componentContext.realize();
     }
 
-    public notifyComponentInstantiated(componentContext: IComponentContext) {
+    public notifyDataStoreInstantiated(componentContext: IFluidDataStoreContext) {
         const componentPkgName = componentContext.packagePath[componentContext.packagePath.length - 1];
         const registryPath =
             `/${componentContext.packagePath.slice(0, componentContext.packagePath.length - 1).join("/")}`;
@@ -1012,6 +1167,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             return;
         }
 
+        // Let the PendingStateManager know that there was an attempt to flush messages.
+        // Note that this should happen before the `this.needsFlush` check below because in the scenario where we are
+        // not connected, `this.needsFlush` will be false but the PendingStateManager might have pending messages and
+        // hence needs to track this.
+        this.pendingStateManager.onFlush();
+
         // If flush has already been called then exit early
         if (!this.needsFlush) {
             return;
@@ -1043,66 +1204,63 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
     }
 
-    /**
-     * @deprecated
-     * Remove once issue #1756 is closed
-     */
-    public async createComponent(idOrPkg: string, maybePkg: string | string[]) {
-        const id = maybePkg === undefined ? uuid() : idOrPkg;
-        const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
-        return this._createComponentWithProps(pkg, undefined, id);
+    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter> {
+        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg]).realize();
     }
 
-    public async _createComponentWithProps(pkg: string | string[], props?: any, id?: string):
-        Promise<IComponentRuntimeChannel> {
-        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
+    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
+        const context = this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], rootDataStoreId);
+        const component = await context.realize();
+        component.bindToContext();
+        return component;
     }
 
-    public createComponentContext(pkg: string[], props?: any): IComponentContext {
-        return this._createComponentContext(pkg, props);
+    private canSendOps() {
+        return this.connected && !this.deltaManager.readonly;
     }
 
-    private _createComponentContext(pkg: string[], props?: any, id = uuid()) {
+    private _createComponentContext(pkg: string[], id = uuid()) {
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), "Creating component with existing ID");
-
-        const context = new LocalComponentContext(
+        this.notBoundedComponentContexts.add(id);
+        const context = new LocalFluidDataStoreContext(
             id,
             pkg,
             this,
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
-            props);
+            this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
+            (cr: IFluidDataStoreChannel) => this.bindComponent(cr),
+        );
 
-        const deferred = new Deferred<ComponentContext>();
+        const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
         this.contexts.set(id, context);
 
         return context;
     }
 
-    public async createComponentWithRealizationFn(
+    public async createDataStoreWithRealizationFn(
         pkg: string[],
-        realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponentRuntimeChannel> {
+        realizationFn?: (context: IFluidDataStoreContext) => void,
+    ): Promise<IFluidDataStoreChannel> {
         this.verifyNotClosed();
-
-        // tslint:disable-next-line: no-unsafe-any
         const id: string = uuid();
-        const context = new LocalComponentContext(
+        this.notBoundedComponentContexts.add(id);
+        const context = new LocalFluidDataStoreContext(
             id,
             pkg,
             this,
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
-            undefined /* #1635: Remove LocalComponentContext createProps */);
+            this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
+            (cr: IFluidDataStoreChannel) => this.bindComponent(cr),
+        );
 
-        const deferred = new Deferred<ComponentContext>();
+        const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
         this.contexts.set(id, context);
 
@@ -1145,21 +1303,41 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     /**
-     * Called by IComponentRuntime (on behalf of distributed data structure) in disconnected state to notify about
-     * local changes. All pending changes are automatically flushed by shared objects on connection.
-     * back-compat: 0.18 components
-     */
-    public notifyPendingMessages(): void {
-        assert(!this.connected);
-        this.updateDocumentDirtyState(true);
-    }
-
-    /**
      * Returns true of document is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
      */
     public isDocumentDirty(): boolean {
         return this.dirtyDocument;
+    }
+
+    /**
+     * Will return true for any message that affect the dirty state of this document
+     * This function can be used to filter out any runtime operations that should not be affecting whether or not
+     * the IFluidDataStoreRuntime.isDocumentDirty call returns true/false
+     * @param type - The type of ContainerRuntime message that is being checked
+     * @param contents - The contents of the message that is being verified
+     */
+    public isMessageDirtyable(message: ISequencedDocumentMessage) {
+        assert(
+            isRuntimeMessage(message) === true,
+            "Message passed for dirtyable check should be a container runtime message",
+        );
+        return this.isContainerMessageDirtyable(message.type as ContainerMessageType, message.contents);
+    }
+
+    private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
+        if (type === ContainerMessageType.Attach) {
+            const attachMessage = contents as IAttachMessage;
+            if (attachMessage.id === SchedulerType) {
+                return false;
+            }
+        } else if (type === ContainerMessageType.ComponentOp) {
+            const envelope = contents as IEnvelope;
+            if (envelope.address === SchedulerType) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -1181,33 +1359,31 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     /**
      * Returns a summary of the runtime at the current sequence number.
      */
-    private async summarize(fullTree: boolean = false): Promise<ISummaryTreeWithStats> {
-        const summaryTree: ISummaryTree = {
-            tree: {},
-            type: SummaryType.Tree,
-        };
-        let summaryStats = SummaryTreeConverter.mergeStats();
+    private async summarize(fullTree = false): Promise<ISummaryTreeWithStats> {
+        return this.summarizerNode.enabled
+            ? await this.summarizerNode.node.summarize(fullTree) as ISummaryTreeWithStats
+            : await this.summarizeInternal(fullTree ?? false) as ISummaryTreeWithStats;
+    }
+
+    private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
+        const builder = new SummaryTreeBuilder();
 
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts)
-            .filter(([key, value]) =>
-                value.isAttached,
-            )
-            .map(async ([key, value]) => {
-                const snapshot = await value.snapshot(fullTree);
-                const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-                    snapshot,
-                    `/${encodeURIComponent(key)}`,
-                    fullTree,
-                );
-                summaryTree.tree[key] = treeWithStats.summaryTree;
-                summaryStats = SummaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
+            .filter(([_, value]) => {
+                // Summarizer works only with clients with no local changes!
+                assert(value.attachState !== AttachState.Attaching);
+                return value.attachState === AttachState.Attached;
+            }).map(async ([key, value]) => {
+                const componentSummary = this.summarizerNode.enabled
+                    ? await value.summarize(fullTree)
+                    : convertToSummaryTree(await value.snapshot(fullTree), fullTree);
+                builder.addWithStats(key, componentSummary);
             }));
 
-        this.serializeContainerBlobs(summaryTree);
-
-        summaryStats.treeNodeCount++; // Add this root tree node
-        return { summaryStats, summaryTree };
+        this.serializeContainerBlobs(builder);
+        const summary = builder.getSummaryTree();
+        return { ...summary, id: "" };
     }
 
     private processAttachMessage(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {
@@ -1215,6 +1391,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // The local object has already been attached
         if (local) {
             assert(this.pendingAttach.has(attachMessage.id));
+            this.contexts.get(attachMessage.id)?.emit("attached");
             this.pendingAttach.delete(attachMessage.id);
             return;
         }
@@ -1229,14 +1406,21 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
 
         // Include the type of attach message which is the pkg of the component to be
-        // used by RemotedComponentContext in case it is not in the snapshot.
-        const remotedComponentContext = new RemotedComponentContext(
+        // used by RemotedFluidDataStoreContext  in case it is not in the snapshot.
+        const remotedComponentContext = new RemotedFluidDataStoreContext(
             attachMessage.id,
             snapshotTreeP,
             this,
             new BlobCacheStorageService(this.storage, flatBlobsP),
             this.containerScope,
             this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
+            this.summarizerNode.getCreateChildFn(
+                attachMessage.id,
+                {
+                    type: CreateSummarizerNodeSource.FromAttach,
+                    sequenceNumber: message.sequenceNumber,
+                    snapshot: attachMessage.snapshot,
+                }),
             [attachMessage.type]);
 
         // If a non-local operation then go and create the object, otherwise mark it as officially attached.
@@ -1257,15 +1441,17 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         componentContext.process(transformed, local, localMessageMetadata);
     }
 
-    private attachComponent(componentRuntime: IComponentRuntimeChannel): void {
+    private bindComponent(componentRuntime: IFluidDataStoreChannel): void {
         this.verifyNotClosed();
-
-        const context = this.getContext(componentRuntime.id);
-        if (context.isAttached) {
-            return;
-        }
-        // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
-        if (!this.isLocal()) {
+        assert(this.notBoundedComponentContexts.has(componentRuntime.id),
+            "Component to be binded should be in not bounded set");
+        this.notBoundedComponentContexts.delete(componentRuntime.id);
+        const context = this.getContext(componentRuntime.id) as LocalFluidDataStoreContext;
+        // If the container is detached, we don't need to send OP or add to pending attach because
+        // we will summarize it while uploading the create new summary and make it known to other
+        // clients but we do need to submit op if container forced us to do so.
+        if (this.attachState !== AttachState.Detached) {
+            context.emit("attaching");
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
@@ -1277,22 +1463,22 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         deferred.resolve(context);
     }
 
-    private ensureContextDeferred(id: string): Deferred<ComponentContext> {
+    private ensureContextDeferred(id: string): Deferred<FluidDataStoreContext> {
         const deferred = this.contextsDeferred.get(id);
         if (deferred) { return deferred; }
-        const newDeferred = new Deferred<ComponentContext>();
+        const newDeferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, newDeferred);
         return newDeferred;
     }
 
-    private getContextDeferred(id: string): Deferred<ComponentContext> {
+    private getContextDeferred(id: string): Deferred<FluidDataStoreContext> {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const deferred = this.contextsDeferred.get(id)!;
         assert(deferred);
         return deferred;
     }
 
-    private setNewContext(id: string, context?: ComponentContext) {
+    private setNewContext(id: string, context?: FluidDataStoreContext) {
         assert(context);
         assert(!this.contexts.has(id));
         this.contexts.set(id, context);
@@ -1300,42 +1486,64 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         deferred.resolve(context);
     }
 
-    private getContext(id: string): ComponentContext {
+    private getContext(id: string): FluidDataStoreContext {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const context = this.contexts.get(id)!;
         assert(context);
         return context;
     }
 
-    public createSummary(): ISummaryTree {
-        const summaryTree: ISummaryTree = {
-            tree: {},
-            type: SummaryType.Tree,
-        };
-
-        // Iterate over each component and ask it to snapshot
-        Array.from(this.contexts)
-            .filter(([key, value]) =>
-                value.isAttached,
-            )
-            .map(async ([key, value]) => {
-                const snapshot = value.generateAttachMessage().snapshot;
-                const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-                    snapshot,
-                    `/${encodeURIComponent(key)}`,
-                    true,
-                );
-                summaryTree.tree[key] = treeWithStats.summaryTree;
-            });
-
-        this.serializeContainerBlobs(summaryTree);
-
-        return summaryTree;
+    public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+        let eventName: string;
+        if (attachState === AttachState.Attaching) {
+            assert(this.attachState === AttachState.Attaching,
+                "Container Context should already be in attaching state");
+            eventName = "attaching";
+        } else {
+            assert(this.attachState === AttachState.Attached, "Container Context should already be in attached state");
+            eventName = "attached";
+        }
+        for (const context of this.contexts.values()) {
+            // Fire only for bounded components.
+            if (!this.notBoundedComponentContexts.has(context.id)) {
+                context.emit(eventName);
+            }
+        }
     }
 
-    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+    public createSummary(): ISummaryTree {
+        const builder = new SummaryTreeBuilder();
+
+        // Attaching graph of some components can cause other components to get bind too.
+        // So keep taking summary until no new components get binded.
+        let notBoundedComponentContextsLength: number;
+        do {
+            const builderTree = builder.summary.tree;
+            notBoundedComponentContextsLength = this.notBoundedComponentContexts.size;
+            // Iterate over each component and ask it to snapshot
+            Array.from(this.contexts)
+                .filter(([key, _]) =>
+                    // Take summary of bounded components only and make sure we haven't summarized them already.
+                    !(this.notBoundedComponentContexts.has(key) || builderTree[key]),
+                )
+                .map(([key, value]) => {
+                    const snapshot = value.generateAttachMessage().snapshot;
+                    const componentSummary = convertToSummaryTree(snapshot, true);
+                    builder.addWithStats(key, componentSummary);
+                });
+        } while (notBoundedComponentContextsLength !== this.notBoundedComponentContexts.size);
+
+        this.serializeContainerBlobs(builder);
+
+        return builder.summary;
+    }
+
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
         if (this.context.getAbsoluteUrl === undefined) {
             throw new Error("Driver does not implement getAbsoluteUrl");
+        }
+        if (this.attachState !== AttachState.Attached) {
+            return undefined;
         }
         return this.context.getAbsoluteUrl(relativeUrl);
     }
@@ -1344,23 +1552,27 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         fullTree: boolean = false,
         safe: boolean = false,
     ): Promise<GenerateSummaryData | undefined> {
+        const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
         const message =
-            `Summary @${this.deltaManager.lastSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
+            `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 
         // TODO: Issue-2171 Support for Branch Snapshots
         if (this.parentBranch) {
-            this.logger.sendTelemetryEvent({
+            this._logger.sendTelemetryEvent({
                 eventName: "SkipGenerateSummaryParentBranch",
                 parentBranch: this.parentBranch,
             });
             return;
         }
 
+        if (this.summarizerNode.enabled) {
+            this.summarizerNode.node.startSummary(summaryRefSeqNum);
+        }
         try {
             await this.scheduleManager.pause();
 
             const attemptData: IUnsubmittedSummaryData = {
-                referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+                referenceSequenceNumber: summaryRefSeqNum,
                 submitted: false,
             };
 
@@ -1373,7 +1585,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             const treeWithStats = await this.summarize(fullTree || safe);
 
             const generateData: IGeneratedSummaryData = {
-                summaryStats: treeWithStats.summaryStats,
+                summaryStats: treeWithStats.stats,
                 generateDuration: trace.trace().duration,
             };
 
@@ -1381,25 +1593,19 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 return { ...attemptData, ...generateData };
             }
 
-            let handle: string;
-            if (this.summaryTracker.useContext === true) {
-                handle = await this.storage.uploadSummaryWithContext(
-                    treeWithStats.summaryTree,
-                    this.latestSummaryAck);
-            } else {
-                // back-compat: 0.14 uploadSummary
-                const summaryHandle = await this.storage.uploadSummary(
-                    treeWithStats.summaryTree);
-                handle = summaryHandle.handle;
-            }
+            const handle = await this.storage.uploadSummaryWithContext(
+                treeWithStats.summary,
+                this.latestSummaryAck);
 
             // safe mode refreshes the latest summary ack
             if (safe) {
-                const versions = await this.storage.getVersions(this.id, 1);
-                const parents = versions.map((version) => version.id);
+                const version = await this.getVersionFromStorage(this.id);
                 await this.refreshLatestSummaryAck(
-                    { proposalHandle: undefined, ackHandle: parents[0] },
-                    this.summaryTracker.referenceSequenceNumber);
+                    undefined,
+                    version.id,
+                    this.summaryTracker.referenceSequenceNumber,
+                    version,
+                );
             }
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1422,6 +1628,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             const clientSequenceNumber =
                 this.submitSystemMessage(MessageType.Summarize, summaryMessage);
 
+            if (this.summarizerNode.enabled) {
+                this.summarizerNode.node.completeSummary(handle);
+            }
+
             return {
                 ...attemptData,
                 ...generateData,
@@ -1431,6 +1641,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 submitOpDuration: trace.trace().duration,
             };
         } finally {
+            // Cleanup wip summary in case of failure
+            if (this.summarizerNode.enabled) {
+                this.summarizerNode.node.clearSummary();
+            }
             // Restart the delta manager
             this.scheduleManager.resume();
         }
@@ -1484,23 +1698,23 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     public submitComponentOp(
         id: string,
         contents: any,
-        localOpMetadata: unknown = undefined): number {
+        localOpMetadata: unknown = undefined): void {
         const envelope: IEnvelope = {
             address: id,
             contents,
         };
-        return this.submit(ContainerMessageType.ComponentOp, envelope, localOpMetadata);
+        this.submit(ContainerMessageType.ComponentOp, envelope, localOpMetadata);
     }
 
     private submit(
         type: ContainerMessageType,
         content: any,
-        localOpMetadata: unknown = undefined): number {
+        localOpMetadata: unknown = undefined): void {
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
 
-        if (this.connected) {
+        if (this.canSendOps()) {
             const serializedContent = JSON.stringify(content);
             const maxOpSize = this.context.deltaManager.maxMessageSize;
 
@@ -1536,10 +1750,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         // Let the PendingStateManager know that a message was submitted.
         this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata);
-
-        this.updateDocumentDirtyState(true);
-
-        return clientSequenceNumber;
+        if (this.isContainerMessageDirtyable(type, content)) {
+            this.updateDocumentDirtyState(true);
+        }
     }
 
     private submitChunkedMessage(type: ContainerMessageType, content: string, maxOpSize: number): number {
@@ -1574,7 +1787,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // That might be not what caller hopes to get, but we can look deeper if telemetry tells us it's a problem.
         const middleOfBatch = this.flushMode === FlushMode.Manual && this.needsFlush;
         if (middleOfBatch) {
-            this.logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
+            this._logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
         }
 
         return this.context.submitFn(
@@ -1588,43 +1801,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         contents: any,
         batch: boolean,
         appData?: any) {
-        // Switch in next release
-        const legacyFormat = true;
-
-        if (legacyFormat) {
-            return this.context.submitFn(
-                type === ContainerMessageType.ComponentOp ? MessageType.Operation : type as any as MessageType,
-                contents,
-                batch,
-                appData);
-        } else {
-            return this.context.submitFn(
-                MessageType.Operation,
-                { type, contents },
-                batch,
-                appData);
-        }
-    }
-
-    private unpackRuntimeMessage(message: ISequencedDocumentMessage) {
-        if (message.type === MessageType.Operation) {
-            // legacy op format?
-            if (message.contents.address !== undefined && message.contents.type === undefined) {
-                message.type = ContainerMessageType.ComponentOp;
-            } else {
-                // new format
-                const innerContents = message.contents as { contents: any; type: ContainerMessageType };
-                assert(innerContents.type !== undefined);
-                message.type = innerContents.type;
-                message.contents = innerContents.contents;
-            }
-            assert(isRuntimeMessage(message));
-        } else {
-            // Legacy format, but it's already "unpacked",
-            // i.e. message.type is actually ContainerMessageType.
-            // Nothing to do in such case.
-        }
-        return message;
+        const payload: ContainerRuntimeMessage = { type, contents };
+        return this.context.submitFn(
+            MessageType.Operation,
+            payload,
+            batch,
+            appData);
     }
 
     /**
@@ -1653,12 +1835,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             case ContainerMessageType.Attach:
                 this.submit(type, content, localOpMetadata);
                 break;
-            default:
-                assertNeverMessageType(type);
-                break;
             case ContainerMessageType.ChunkedOp:
-                assertNeverMessageType(type as never);
-                break;
+                throw new Error(`chunkedOp not expected here`);
+            default:
+                unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
         }
     }
 
@@ -1701,18 +1881,17 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     private async getScheduler() {
-        const schedulerRuntime = await this.getComponentRuntime(schedulerId, true);
+        const schedulerRuntime = await this.getDataStore(schedulerId, true);
         const schedulerResponse = await schedulerRuntime.request({ url: "" });
-        const schedulerComponent = schedulerResponse.value as IComponent;
+        const schedulerComponent = schedulerResponse.value as IFluidObject;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return schedulerComponent.IAgentScheduler!;
     }
 
     private updateLeader(leadership: boolean) {
         this._leader = leadership;
-        assert(this.clientId);
         if (this.leader) {
-            assert(this.connected && this.deltaManager && this.deltaManager.active);
+            assert(this.clientId === undefined || this.connected && this.deltaManager && this.deltaManager.active);
             this.emit("leader");
         } else {
             this.emit("notleader");
@@ -1734,10 +1913,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
      */
     private runTaskAnalyzer() {
         // Analyze the current state and ask for local and remote help separately.
-        // called only if a leader, which means we are connected (as leadership is lost on loss of connection).
-        assert(this.clientId !== undefined && this.connected);
+        // If called for detached container, the clientId would not be assigned and it is disconnected. In this
+        // case, all tasks are run by the detached container. Called only if a leader. If we have a clientId,
+        // then we should be connected as leadership is lost on losing connection.
+        const helpTasks = this.clientId === undefined ?
+            { browser: this.tasks, robot: [] } :
+            analyzeTasks(this.clientId, this.getQuorum().getMembers(), this.tasks);
 
-        const helpTasks = analyzeTasks(this.clientId, this.getQuorum().getMembers(), this.tasks);
         if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
             if (helpTasks.browser.length > 0) {
                 const localHelpMessage: IHelpMessage = {
@@ -1758,56 +1940,63 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
     }
 
-    private async refreshLatestSummaryAck(context: ISummaryContext, referenceSequenceNumber: number) {
-        if (referenceSequenceNumber < this.summaryTracker.referenceSequenceNumber) {
+    private async refreshLatestSummaryAck(
+        proposalHandle: string | undefined,
+        ackHandle: string,
+        trackerRefSeqNum: number, // back-compat summarizerNode - remove when fully enabled
+        version?: IVersion,
+    ) {
+        if (trackerRefSeqNum < this.summaryTracker.referenceSequenceNumber) {
             return;
         }
 
-        const snapshotTree = new LazyPromise(async () => {
-            // We have to call get version to get the treeId for r11s; this isn't needed
-            // for odsp currently, since their treeId is undefined
-            const versionsResult = await this.setOrLogError("FailedToGetVersion",
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                async () => this.storage.getVersions(context.ackHandle!, 1),
-                (versions) => !!(versions && versions.length));
+        this.latestSummaryAck = { proposalHandle, ackHandle };
 
-            if (versionsResult.success) {
-                const snapshotResult = await this.setOrLogError("FailedToGetSnapshot",
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    async () => this.storage.getSnapshotTree(versionsResult.result![0]),
-                    (snapshot) => !!snapshot);
+        // back-compat summarizerNode - remove all summary trackers when fully enabled
+        this.summaryTracker.refreshLatestSummary(trackerRefSeqNum);
 
-                if (snapshotResult.success) {
-                    // Translate null to undefined
-                    return snapshotResult.result ?? undefined;
+        if (this.summarizerNode.enabled) {
+            const getSnapshot = async () => {
+                const perfEvent = PerformanceEvent.start(this.logger, {
+                    eventName: "RefreshLatestSummaryGetSnapshot",
+                    hasVersion: !!version, // expected in this case
+                });
+                const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
+                let snapshot: ISnapshotTree | undefined;
+                try {
+                    const trace = Trace.start();
+
+                    const versionToUse = version ?? await this.getVersionFromStorage(ackHandle);
+                    stats.getVersionDuration = trace.trace().duration;
+
+                    snapshot = await this.getSnapshotFromStorage(versionToUse);
+                    stats.getSnapshotDuration = trace.trace().duration;
+                } catch (error) {
+                    perfEvent.cancel(stats, error);
+                    throw error;
                 }
-            }
-        });
 
-        this.latestSummaryAck = context;
-        await this.summaryTracker.refreshLatestSummary(referenceSequenceNumber, async () => snapshotTree);
+                perfEvent.end(stats);
+                return snapshot;
+            };
+
+            await this.summarizerNode.node.refreshLatestSummary(
+                proposalHandle,
+                getSnapshot,
+                async <T>(id: string) => readAndParse<T>(this.storage, id),
+            );
+        }
     }
 
-    private async setOrLogError<T>(
-        eventName: string,
-        setter: () => Promise<T>,
-        validator: (result: T) => boolean,
-    ): Promise<{ result: T | undefined; success: boolean }> {
-        let result: T;
-        try {
-            result = await setter();
-        } catch (error) {
-            // Send error event for exceptions
-            this.logger.sendErrorEvent({ eventName }, error);
-            return { result: undefined, success: false };
-        }
+    private async getVersionFromStorage(versionId: string): Promise<IVersion> {
+        const versions = await this.storage.getVersions(versionId, 1);
+        assert(versions && versions[0], "Failed to get version from storage");
+        return versions[0];
+    }
 
-        const success = validator(result);
-
-        if (!success) {
-            // Send error event when result is invalid
-            this.logger.sendErrorEvent({ eventName });
-        }
-        return { result, success };
+    private async getSnapshotFromStorage(version: IVersion): Promise<ISnapshotTree> {
+        const snapshot = await this.storage.getSnapshotTree(version);
+        assert(snapshot, "Failed to get snapshot from storage");
+        return snapshot;
     }
 }

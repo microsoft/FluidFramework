@@ -5,10 +5,10 @@
 
 import {
     IChannelAttributes,
-    IComponentRuntime,
-    ISharedObjectServices,
-} from "@fluidframework/component-runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+    IFluidDataStoreRuntime,
+    IChannelServices,
+    IChannelFactory,
+} from "@fluidframework/datastore-definitions";
 import { SharedCell } from "./cell";
 import { ISharedCell } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
@@ -16,7 +16,7 @@ import { pkgVersion } from "./packageVersion";
 /**
  * The factory that defines the map
  */
-export class CellFactory implements ISharedObjectFactory {
+export class CellFactory implements IChannelFactory {
     public static readonly Type = "https://graph.microsoft.com/types/cell";
 
     public static readonly Attributes: IChannelAttributes = {
@@ -34,9 +34,9 @@ export class CellFactory implements ISharedObjectFactory {
     }
 
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedCell> {
         const cell = new SharedCell(id, runtime, attributes);
@@ -44,7 +44,7 @@ export class CellFactory implements ISharedObjectFactory {
         return cell;
     }
 
-    public create(document: IComponentRuntime, id: string): ISharedCell {
+    public create(document: IFluidDataStoreRuntime, id: string): ISharedCell {
         const cell = new SharedCell(id, document, this.attributes);
         cell.initializeLocal();
         return cell;

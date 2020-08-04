@@ -4,7 +4,7 @@
  */
 
 import { ICommand, KeyCode, Template, TagName } from "@fluid-example/flow-util-lib";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
 import { htmlFormatter } from "../html/formatters";
@@ -26,8 +26,8 @@ const template = new Template(
         ],
     });
 
-export class WebflowView implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class WebflowView implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private searchMenu?: SearchMenuView;
     private previouslyFocused?: HTMLOrSVGElement;
@@ -35,7 +35,7 @@ export class WebflowView implements IComponentHTMLView {
 
     constructor(private readonly docP: Promise<FlowDocument>) { }
 
-    // #region IComponentHTMLView
+    // #region IFluidHTMLView
     public remove(): void {
         if (this.root) {
             this.root.remove();
@@ -48,7 +48,7 @@ export class WebflowView implements IComponentHTMLView {
         }
     }
 
-    public render(elm: HTMLElement, options: IComponentHTMLOptions): void {
+    public render(elm: HTMLElement): void {
         this.root = template.clone();
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -121,7 +121,7 @@ export class WebflowView implements IComponentHTMLView {
         elm.appendChild(this.root);
     }
 
-    // #endregion IComponentHTMLView
+    // #endregion IFluidHTMLView
 
     private readonly onKeyDown = (e: KeyboardEvent) => {
         if (e.ctrlKey && e.code === KeyCode.keyM) {

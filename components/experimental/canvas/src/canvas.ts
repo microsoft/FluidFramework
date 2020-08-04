@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { DataObject } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { IColor, IInk, Ink, InkCanvas } from "@fluidframework/ink";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.less";
 
@@ -24,29 +24,27 @@ const colorPickerColors: IColor[] = [
     { r: 0, g: 0, b: 0, a: 1 },
 ];
 
-export class Canvas extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class Canvas extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private ink: IInk;
     private inkCanvas: InkCanvas;
-    private inkComponentRoot: HTMLDivElement;
     private inkColorPicker: HTMLDivElement;
 
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        this.inkComponentRoot = this.createCanvasDom();
-        elm.appendChild(this.inkComponentRoot);
+    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
+        elm.appendChild(this.createCanvasDom());
         this.sizeCanvas();
 
         window.addEventListener("resize", this.sizeCanvas.bind(this));
     }
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         this.root.set("pageInk", Ink.create(this.runtime).handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         // Wait here for the ink
-        const handle = await this.root.wait<IComponentHandle<IInk>>("pageInk");
+        const handle = await this.root.wait<IFluidHandle<IInk>>("pageInk");
         this.ink = await handle.get();
     }
 
@@ -59,7 +57,6 @@ export class Canvas extends PrimedComponent implements IComponentHTMLView {
 
         const canvasElement = document.createElement("canvas");
         canvasElement.classList.add("ink-canvas");
-        // TODO size canvas backing store
 
         this.inkCanvas = new InkCanvas(canvasElement, this.ink);
 
@@ -128,7 +125,6 @@ export class Canvas extends PrimedComponent implements IComponentHTMLView {
     }
 
     private sizeCanvas() {
-        const rootRect = this.inkComponentRoot.getBoundingClientRect();
-        this.inkCanvas.setSize(Math.floor(rootRect.width), Math.floor(rootRect.height) - 50);
+        this.inkCanvas.sizeCanvasBackingStore();
     }
 }

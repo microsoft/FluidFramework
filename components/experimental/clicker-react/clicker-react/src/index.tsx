@@ -4,72 +4,69 @@
  */
 
 import {
-    PrimedComponent,
-    PrimedComponentFactory,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
     FluidReactComponent,
     IFluidFunctionalComponentFluidState,
     IFluidFunctionalComponentViewState,
-    FluidToViewMap,
+    SyncedComponent,
 } from "@fluidframework/react";
 import { SharedCounter } from "@fluidframework/counter";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const ClickerName = pkg.name as string;
 
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
-
-    // #region IComponentHTMLView
-
-    /**
-     * Will return a new Clicker view
-     */
-    public render(element: HTMLElement) {
+export class Clicker extends SyncedComponent {
+    constructor(props) {
+        super(props);
         // Mark the counter value in the state as a SharedCounter type and pass in its create function
         // so that it will be created on the first run and be available on our React state
         // We also mark the "incremented" event as we want to update the React state when the counter
         // is incremented to display the new value
-        const fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map();
-        fluidToView.set("counter", {
-            sharedObjectCreate: SharedCounter.create,
-            listenedEvents: ["incremented"],
-        });
-
+        this.setConfig<ICounterState>(
+            "clicker",
+            {
+                syncedStateId: "clicker",
+                fluidToView: new Map([
+                    [
+                        "counter", {
+                            type: SharedCounter.name,
+                            viewKey: "counter",
+                            sharedObjectCreate: SharedCounter.create,
+                            listenedEvents: ["incremented"],
+                        },
+                    ],
+                ]),
+                defaultViewState: {},
+            },
+        );
+    }
+    /**
+     * Will return a new Clicker view
+     */
+    public render(element: HTMLElement) {
         ReactDOM.render(
             <CounterReactView
                 syncedStateId={"clicker"}
-                root={this.root}
-                dataProps={{
-                    fluidComponentMap: new Map(),
-                    runtime: this.runtime,
-                }}
-                fluidToView={fluidToView}
+                syncedComponent={this}
             />,
             element,
         );
         return element;
     }
-
-    // #endregion IComponentHTMLView
 }
 
 // ----- REACT STUFF -----
 
-interface CounterState {
+interface ICounterState {
     counter?: SharedCounter;
 }
 
-type CounterViewState = IFluidFunctionalComponentViewState & CounterState;
-type CounterFluidState = IFluidFunctionalComponentFluidState & CounterState;
+type CounterViewState = IFluidFunctionalComponentViewState & ICounterState;
+type CounterFluidState = IFluidFunctionalComponentFluidState & ICounterState;
 
 class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
     constructor(props) {
@@ -80,7 +77,7 @@ class CounterReactView extends FluidReactComponent<CounterViewState, CounterFlui
     render() {
         return (
             <div>
-                <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
+                <span className="value">
                     {this.state.counter?.value}
                 </span>
                 <button onClick={() => { this.state.counter?.increment(1); }}>+</button>
@@ -90,8 +87,8 @@ class CounterReactView extends FluidReactComponent<CounterViewState, CounterFlui
 }
 
 // ----- FACTORY SETUP -----
-export const ClickerInstantiationFactory = new PrimedComponentFactory(
-    ClickerName,
+export const ClickerInstantiationFactory = new DataObjectFactory(
+    "clicker",
     Clicker,
     [SharedCounter.getFactory()],
     {},

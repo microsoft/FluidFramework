@@ -10,14 +10,14 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IComponentFactory, FlushMode } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
 import { fluidExport as smde } from "./smde";
 
 class SmdeContainerFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const registry = new Map<string, Promise<IComponentFactory>>([
+        const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
             ["@fluid-example/smde", Promise.resolve(smde)],
         ]);
 
@@ -27,23 +27,21 @@ class SmdeContainerFactory implements IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
-            [
-                async (request: IRequest, containerRuntime) => {
-                    console.log(request.url);
+            async (request: IRequest, containerRuntime) => {
+                console.log(request.url);
 
-                    const requestUrl = request.url.length > 0 && request.url.startsWith("/")
-                        ? request.url.substr(1)
-                        : request.url;
-                    const trailingSlash = requestUrl.indexOf("/");
+                const requestUrl = request.url.length > 0 && request.url.startsWith("/")
+                    ? request.url.substr(1)
+                    : request.url;
+                const trailingSlash = requestUrl.indexOf("/");
 
-                    const componentId = requestUrl
-                        ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-                        : defaultComponentId;
-                    const component = await containerRuntime.getComponentRuntime(componentId, true);
+                const componentId = requestUrl
+                    ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
+                    : defaultComponentId;
+                const component = await containerRuntime.getDataStore(componentId, true);
 
-                    return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
-                },
-            ],
+                return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
+            },
             { generateSummaries: true });
 
         // Flush mode to manual to batch operations within a turn
@@ -51,11 +49,7 @@ class SmdeContainerFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            await Promise.all([
-                runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
-                    componentRuntime.attach();
-                }),
-            ]);
+            await runtime.createRootDataStore(defaultComponentId, defaultComponent);
         }
 
         return runtime;

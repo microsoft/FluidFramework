@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import {
     AsyncComponentProvider,
     ComponentSymbolProvider,
@@ -13,26 +13,26 @@ import {
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentDependencySynthesizer>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideFluidDependencySynthesizer>> { }
 }
 
-export const IComponentDependencySynthesizer: keyof IProvideComponentDependencySynthesizer
-    = "IComponentDependencySynthesizer";
+export const IFluidDependencySynthesizer: keyof IProvideFluidDependencySynthesizer
+    = "IFluidDependencySynthesizer";
 
-export interface IProvideComponentDependencySynthesizer {
-    IComponentDependencySynthesizer: IComponentDependencySynthesizer;
+export interface IProvideFluidDependencySynthesizer {
+    IFluidDependencySynthesizer: IFluidDependencySynthesizer;
 }
 
 /**
- * IComponentSynthesizer can generate IComponent Objects based on the IProvideComponent pattern.
+ * IComponentSynthesizer can generate IFluidObject Objects based on the IProvideComponent pattern.
  * It allow for registering providers and uses synthesize to generate a new object with the optional
  * and required types.
  */
-export interface IComponentDependencySynthesizer extends IProvideComponentDependencySynthesizer {
+export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynthesizer {
     /**
      * All the registered types available
      */
-    readonly registeredTypes: Iterable<(keyof IComponent)>;
+    readonly registeredTypes: Iterable<(keyof IFluidObject)>;
 
     /**
      * Add a new provider
@@ -40,13 +40,13 @@ export interface IComponentDependencySynthesizer extends IProvideComponentDepend
      * @param provider - A provider that will resolve the T correctly when asked
      * @throws - If passing a type that's already registered
      */
-    register<T extends keyof IComponent>(type: T, provider: ComponentProvider<T>): void;
+    register<T extends keyof IFluidObject>(type: T, provider: ComponentProvider<T>): void;
 
     /**
      * Remove a provider
      * @param type - Name of the provider to remove
      */
-    unregister<T extends keyof IComponent>(type: T): void;
+    unregister<T extends keyof IFluidObject>(type: T): void;
 
     /**
      * synthesize takes optional and required types and returns an object that will fulfill the
@@ -56,8 +56,8 @@ export interface IComponentDependencySynthesizer extends IProvideComponentDepend
      * @param requiredTypes - required types that need to be in the Scope object
      */
     synthesize<
-        O extends IComponent,
-        R extends IComponent,>(
+        O extends IFluidObject,
+        R extends IFluidObject,>(
             optionalTypes: ComponentSymbolProvider<O>,
             requiredTypes: ComponentSymbolProvider<R>,
     ): AsyncComponentProvider<ComponentKey<O>, ComponentKey<R>>;
@@ -66,11 +66,11 @@ export interface IComponentDependencySynthesizer extends IProvideComponentDepend
      * Check if a given type is registered
      * @param types - Type to check
      */
-    has(...types: (keyof IComponent)[]): boolean;
+    has(...types: (keyof IFluidObject)[]): boolean;
 
     /**
      * Get a provider. undefined if not available.
      * @param type - Type to get
      */
-    getProvider<T extends keyof IComponent>(type: T): ComponentProvider<T> | undefined;
+    getProvider<T extends keyof IFluidObject>(type: T): ComponentProvider<T> | undefined;
 }

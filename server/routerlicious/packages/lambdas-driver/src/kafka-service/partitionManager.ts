@@ -10,9 +10,9 @@ import {
     IPartition,
     IPartitionWithEpoch,
     IPartitionLambdaFactory,
+    ILogger,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
-import * as winston from "winston";
 import { Partition } from "./partition";
 
 /**
@@ -20,14 +20,15 @@ import { Partition } from "./partition";
  * It will route incoming messages to the appropriate partition for the messages.
  */
 export class PartitionManager extends EventEmitter {
-    private partitions = new Map<number, Partition>();
+    private readonly partitions = new Map<number, Partition>();
     // Start rebalancing until we receive the first rebalanced message
     private isRebalancing = true;
 
     constructor(
         private readonly factory: IPartitionLambdaFactory,
         private readonly consumer: IConsumer,
-        private readonly config: Provider) {
+        private readonly config: Provider,
+        private readonly logger?: ILogger) {
         super();
 
         // Place new Kafka messages into our processing queue
@@ -62,11 +63,14 @@ export class PartitionManager extends EventEmitter {
         for (const [, partition] of this.partitions) {
             partition.close();
         }
+
+        this.partitions.clear();
     }
 
     private process(message: IQueuedMessage) {
         if (this.isRebalancing) {
-            winston.info(`Ignoring ${message.topic}:${message.partition}@${message.offset} due to pending rebalance`);
+            this.logger?.info(
+                `Ignoring ${message.topic}:${message.partition}@${message.offset} due to pending rebalance`);
             return;
         }
 
@@ -81,30 +85,62 @@ export class PartitionManager extends EventEmitter {
         partition.process(message);
     }
 
+    /**
+     * Called when rebalancing starts
+     * Note: The consumer may decide to only emit "rebalanced" if it wants to skip closing existing partitions
+     * @param partitions Assigned partitions before the rebalance
+     */
     private rebalancing(partitions: IPartition[]) {
-        winston.info("rebalancing", partitions);
+        this.logger?.info(`Rebalancing partitions: ${JSON.stringify(partitions)}`);
+
         this.isRebalancing = true;
 
         for (const [id, partition] of this.partitions) {
-            winston.info(`Stopping partition ${id} due to rebalancing`);
+            this.logger?.info(`Closing partition ${id} due to rebalancing`);
             partition.close();
         }
+
+        this.partitions.clear();
     }
 
+    /**
+     * Called when rebalanced occurs
+     * @param partitions Assigned partitions after the rebalance.
+     * May contain partitions that have been previously assigned to this consumer
+     */
     private rebalanced(partitions: IPartitionWithEpoch[]) {
         this.isRebalancing = false;
 
-        this.partitions = new Map<number, Partition>();
+        const partitionsMap = new Map(partitions.map((partition) => [partition.partition, partition]));
+
+        // close and remove existing partitions that are no longer assigned
+        const existingPartitions = Array.from(this.partitions);
+        for (const [id, partition] of existingPartitions) {
+            if (!partitionsMap.has(id)) {
+                this.logger?.info(`Closing partition ${id} due to rebalancing`);
+                partition.close();
+                this.partitions.delete(id);
+            }
+        }
+
+        // create new partitions
         for (const partition of partitions) {
+            if (this.partitions.has(partition.partition)) {
+                // this partition already exists
+                // it must have existed before the rebalance
+                continue;
+            }
+
             // eslint-disable-next-line max-len
-            winston.info(`Creating ${partition.topic}: Partition ${partition.partition}, Epoch ${partition.leaderEpoch}, Offset ${partition.offset} due to rebalance`);
+            this.logger?.info(`Creating ${partition.topic}: Partition ${partition.partition}, Epoch ${partition.leaderEpoch}, Offset ${partition.offset} due to rebalance`);
 
             const newPartition = new Partition(
                 partition.partition,
                 partition.leaderEpoch,
                 this.factory,
                 this.consumer,
-                this.config);
+                this.config,
+                this.logger);
 
             // Listen for error events to know when the partition has stopped processing due to an error
             newPartition.on("error", (error, restart) => {

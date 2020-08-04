@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import assert from "assert";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { strongAssert } from "@fluidframework/runtime-utils";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -15,6 +15,7 @@ import {
     IValueChanged,
     IValueOpEmitter,
     IValueType,
+    IValueTypeCreator,
     IValueTypeOperationValue,
     ISharedMapEvents,
 } from "./interfaces";
@@ -137,7 +138,7 @@ export interface IMapDataObjectSerialized {
 /**
  * A SharedMap is a map-like distributed data structure.
  */
-export class MapKernel {
+export class MapKernel implements IValueTypeCreator {
     /**
      * The number of key/value pairs stored in the map.
      */
@@ -181,15 +182,15 @@ export class MapKernel {
      * @param runtime - The component runtime the shared object using the kernel will be associated with
      * @param handle - The handle of the shared object using the kernel
      * @param submitMessage - A callback to submit a message through the shared object
-     * @param isLocal - To query whether the shared object is in local state
+     * @param isAttached - To query whether the shared object should generate ops
      * @param valueTypes - The value types to register
      * @param eventEmitter - The object that will emit map events
      */
     constructor(
-        private readonly runtime: IComponentRuntime,
-        private readonly handle: IComponentHandle,
+        private readonly runtime: IFluidDataStoreRuntime,
+        private readonly handle: IFluidHandle,
         private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
-        private readonly isLocal: () => boolean,
+        private readonly isAttached: () => boolean,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
@@ -329,8 +330,8 @@ export class MapKernel {
         const localValue = this.localValueMaker.fromInMemory(value);
         const serializableValue = makeSerializable(
             localValue,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidSerializer,
+            this.runtime.IFluidHandleContext,
             this.handle);
 
         // Set the value locally.
@@ -341,8 +342,8 @@ export class MapKernel {
             null,
         );
 
-        // If we are in local state, don't submit the op.
-        if (this.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.isAttached()) {
             return;
         }
 
@@ -362,12 +363,12 @@ export class MapKernel {
         const localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), params);
 
         // TODO ideally we could use makeSerialized in this case as well. But the interval
-        // collection has assumptions of attach being called prior. Given the IComponentSerializer it
+        // collection has assumptions of attach being called prior. Given the IFluidSerializer it
         // may be possible to remove custom value type serialization entirely.
         const transformedValue = makeHandlesSerializable(
             params,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidSerializer,
+            this.runtime.IFluidHandleContext,
             this.handle);
 
         // Set the value locally.
@@ -378,8 +379,8 @@ export class MapKernel {
             null,
         );
 
-        // If we are in local state, don't submit the op.
-        if (this.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.isAttached()) {
             return;
         }
 
@@ -392,6 +393,7 @@ export class MapKernel {
             value: serializableValue,
         };
         this.submitMapKeyMessage(op);
+        return this;
     }
 
     /**
@@ -403,8 +405,8 @@ export class MapKernel {
         // Delete the key locally first.
         const successfullyRemoved = this.deleteCore(key, true, null);
 
-        // If we are in local state, don't submit the op.
-        if (this.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.isAttached()) {
             return successfullyRemoved;
         }
 
@@ -424,8 +426,8 @@ export class MapKernel {
         // Clear the data locally first.
         this.clearCore(true, null);
 
-        // If we are in local state, don't submit the op.
-        if (this.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.isAttached()) {
             return;
         }
 
@@ -443,8 +445,8 @@ export class MapKernel {
         const serializableMapData: IMapDataObjectSerialized = {};
         this.data.forEach((localValue, key) => {
             serializableMapData[key] = localValue.makeSerialized(
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
+                this.runtime.IFluidSerializer,
+                this.runtime.IFluidHandleContext,
                 this.handle);
         });
         return serializableMapData;
@@ -455,8 +457,8 @@ export class MapKernel {
         this.data.forEach((localValue, key) => {
             serializableMapData[key] = makeSerializable(
                 localValue,
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
+                this.runtime.IFluidSerializer,
+                this.runtime.IFluidHandleContext,
                 this.handle);
         });
         return serializableMapData;
@@ -617,7 +619,7 @@ export class MapKernel {
     ): boolean {
         if (this.pendingClearMessageId !== -1) {
             if (local) {
-                strongAssert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
+                assert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
                     "Received out of order op when there is an unackd clear message");
             }
             // If we have an unack'd clear, we can ignore all ops.
@@ -628,7 +630,7 @@ export class MapKernel {
             // Found an unack'd op. Clear it from the map if the pendingMessageId in the map matches this message's
             // and don't process the op.
             if (local) {
-                strongAssert(localOpMetadata !== undefined,
+                assert(localOpMetadata !== undefined,
                     `pendingMessageId is missing from the local client's ${op.type} operation`);
                 const pendingMessageId = localOpMetadata as number;
                 const pendingKeyMessageId = this.pendingKeys.get(op.key);
@@ -654,7 +656,7 @@ export class MapKernel {
             {
                 process: (op: IMapClearOperation, local, message, localOpMetadata) => {
                     if (local) {
-                        strongAssert(localOpMetadata !== undefined,
+                        assert(localOpMetadata !== undefined,
                             "pendingMessageId is missing from the local client's clear operation");
                         const pendingMessageId = localOpMetadata as number;
                         if (this.pendingClearMessageId === pendingMessageId) {
@@ -723,8 +725,8 @@ export class MapKernel {
                     const previousValue = localValue.value;
                     const translatedValue = parseHandles(
                         op.value.value,
-                        this.runtime.IComponentSerializer,
-                        this.runtime.IComponentHandleContext);
+                        this.runtime.IFluidSerializer,
+                        this.runtime.IFluidHandleContext);
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IValueChanged = { key: op.key, previousValue };
                     this.eventEmitter.emit("valueChanged", event, local, message, this);
@@ -767,8 +769,8 @@ export class MapKernel {
         const emit = (opName: string, previousValue: any, params: any) => {
             const translatedParams = makeHandlesSerializable(
                 params,
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
+                this.runtime.IFluidSerializer,
+                this.runtime.IFluidHandleContext,
                 this.handle);
 
             const op: IMapValueTypeOperation = {

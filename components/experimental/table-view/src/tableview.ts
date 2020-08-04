@@ -5,9 +5,9 @@
 
 import { Template } from "@fluid-example/flow-util-lib";
 import { TableDocument, TableDocumentType } from "@fluid-example/table-document";
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { GridView } from "./grid";
 import * as styles from "./index.css";
 
@@ -34,11 +34,11 @@ const template = new Template({
 
 const innerDocKey = "innerDoc";
 
-export class TableView extends PrimedComponent implements IComponentHTMLView {
+export class TableView extends DataObject implements IFluidHTMLView {
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     public static getFactory() { return factory; }
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     private readonly templateRoot = template.clone();
 
@@ -49,12 +49,12 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
     private _selectionSummary = template.get(this.templateRoot, "selectionSummary");
     public set selectionSummary(val: string) { this._selectionSummary.textContent = val; }
 
-    // #region IComponentHTMLView
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+    // #region IFluidHTMLView
+    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         elm.append(this.templateRoot);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.root.get<IComponentHandle<TableDocument>>(innerDocKey).get().then((doc) => {
+        this.root.get<IFluidHandle<TableDocument>>(innerDocKey).get().then((doc) => {
             const grid = template.get(this.templateRoot, "grid");
             const gridView = new GridView(doc, this);
             grid.appendChild(gridView.root);
@@ -88,18 +88,18 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
             });
         });
     }
-    // #endregion IComponentHTMLView
+    // #endregion IFluidHTMLView
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         // Set up internal table doc
-        const doc = await TableDocument.getFactory().createComponent(this.context) as TableDocument;
+        const doc = await TableDocument.getFactory().createInstance(this.context) as TableDocument;
         this.root.set(innerDocKey, doc.handle);
         doc.insertRows(0, 5);
         doc.insertCols(0, 8);
     }
 }
 
-const factory = new PrimedComponentFactory(
+const factory = new DataObjectFactory(
     tableViewType,
     TableView,
     [],

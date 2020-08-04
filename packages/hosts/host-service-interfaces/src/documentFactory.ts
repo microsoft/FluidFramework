@@ -17,5 +17,5 @@ export interface IDocumentFactory extends IProvideDocumentFactory {
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideDocumentFactory>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideDocumentFactory>> { }
 }

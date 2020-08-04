@@ -7,8 +7,7 @@
 import assert from "assert";
 import { IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { RequestParser } from "@fluidframework/container-runtime";
-
+import { RequestParser } from "@fluidframework/runtime-utils";
 import {
     BaseContainerService,
     generateContainerServicesRequestHandler,
@@ -22,7 +21,7 @@ class ContainerServiceMock extends BaseContainerService {
         this.route = request.url;
         return {
             status: 200,
-            mimeType: "fluid/component",
+            mimeType: "fluid/object",
             value: this,
         };
     }

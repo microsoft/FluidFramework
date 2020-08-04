@@ -3,25 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
-    IComponentLastEditedTracker,
-    IProvideComponentLastEditedTracker,
+    IFluidLastEditedTracker,
+    IProvideFluidLastEditedTracker,
     LastEditedTrackerComponentName,
 } from "@fluidframework/last-edited-experimental";
-import { IComponentHTMLView, IProvideComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView, IProvideFluidHTMLView } from "@fluidframework/view-interfaces";
 
 export const AnchorName = "anchor";
 
 /**
  * Anchor is an default component is responsible for managing creation and the default component
  */
-export class Anchor extends PrimedComponent implements IProvideComponentHTMLView, IProvideComponentLastEditedTracker {
+export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvideFluidLastEditedTracker {
     private readonly defaultComponentId = "default-component-id";
-    private defaultComponentInternal: IComponentHTMLView | undefined;
+    private defaultComponentInternal: IFluidHTMLView | undefined;
     private readonly lastEditedComponentId = "last-edited-component-id";
-    private lastEditedComponent: IComponentLastEditedTracker | undefined;
+    private lastEditedComponent: IFluidLastEditedTracker | undefined;
 
     private get defaultComponent() {
         if (!this.defaultComponentInternal) {
@@ -31,15 +31,15 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
         return this.defaultComponentInternal;
     }
 
-    private static readonly factory = new PrimedComponentFactory(AnchorName, Anchor, [], {});
+    private static readonly factory = new DataObjectFactory(AnchorName, Anchor, [], {});
 
     public static getFactory() {
         return Anchor.factory;
     }
 
-    public get IComponentHTMLView() { return this.defaultComponent; }
+    public get IFluidHTMLView() { return this.defaultComponent; }
 
-    public get IComponentLastEditedTracker() {
+    public get IFluidLastEditedTracker() {
         if (!this.lastEditedComponent) {
             throw new Error("LastEditedTrackerComponent was not initialized properly");
         }
@@ -47,21 +47,21 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
         return this.lastEditedComponent;
     }
 
-    protected async componentInitializingFirstTime() {
-        const defaultComponent = await this.createAndAttachComponent("vltava");
+    protected async initializingFirstTime() {
+        const defaultComponent = await this.createFluidObject("vltava");
         this.root.set(this.defaultComponentId, defaultComponent.handle);
 
-        const lastEditedComponent = await this.createAndAttachComponent(LastEditedTrackerComponentName);
+        const lastEditedComponent = await this.createFluidObject(LastEditedTrackerComponentName);
         this.root.set(this.lastEditedComponentId, lastEditedComponent.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.defaultComponentInternal =
-            (await this.root.get<IComponentHandle>(this.defaultComponentId).get())
-                .IComponentHTMLView;
+            (await this.root.get<IFluidHandle>(this.defaultComponentId).get())
+                .IFluidHTMLView;
 
         this.lastEditedComponent =
-            (await this.root.get<IComponentHandle>(this.lastEditedComponentId).get())
-                .IComponentLastEditedTracker;
+            (await this.root.get<IFluidHandle>(this.lastEditedComponentId).get())
+                .IFluidLastEditedTracker;
     }
 }

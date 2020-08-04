@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performanceNow } from "@fluidframework/common-utils";
 import { IIntegerRange } from "./base";
@@ -681,33 +681,29 @@ export class Client {
             position taking into account local segments that were modified,
             after the current segment.
 
-            TODO: Consider embeding this infomation into the tree for
-            more efficent look up of pending segment positions.
+            TODO: Consider embedding this information into the tree for
+            more efficient look up of pending segment positions.
         */
         this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
-            if (seg !== segment) {
-                // segment isn't local, so count it
-                if (seg.localSeq === undefined && seg.localRemovedSeq === undefined) {
-                    if (seg.removedSeq === undefined) {
-                        segmentPosition += seg.cachedLength;
-                        return true;
-                    }
-                }
-                // segment is remove locally before this op, so skip it
-                if (seg.localRemovedSeq !== undefined) {
-                    if (seg.localRemovedSeq <= localSeq) {
-                        return true;
-                    }
-                }
-                // segment is inserted locally before this op, so count it
-                if (seg.localSeq <= localSeq) {
-                    segmentPosition += seg.cachedLength;
-                    return true;
-                }
-                return true;
+            // If we've found the desired segment, terminate the walk and return 'segmentPosition'.
+            if (seg === segment) {
+                return false;
             }
-            return false;
+
+            // Otherwise, advance segmentPosition if the segment has been inserted and not removed
+            // with respect to the given 'localSeq'.
+            //
+            // Note that all ACKed / remote ops are applied and we only need concern ourself with
+            // determining if locally pending ops fall before/after the given 'localSeq'.
+            if ((seg.localSeq === undefined || seg.localSeq <= localSeq)                // Is inserted
+                && (seg.removedSeq === undefined || seg.localRemovedSeq > localSeq)     // Not removed
+            ) {
+                segmentPosition += seg.cachedLength;
+            }
+
+            return true;
         });
+
         return segmentPosition;
     }
 
@@ -894,44 +890,51 @@ export class Client {
 
     // TODO: Remove `catchUpMsgs` once new snapshot format is adopted as default.
     //       (See https://github.com/microsoft/FluidFramework/issues/84)
-    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
+    public snapshot(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
         const deltaManager = runtime.deltaManager;
-        const minSeq = deltaManager
-            ? deltaManager.minimumSequenceNumber
-            : 0;
+        const minSeq = deltaManager.minimumSequenceNumber;
 
         // Catch up to latest MSN, if we have not had a chance to do it.
-        // Required for case where ComponentRuntime.attachChannel() generates snapshot right after loading component.
-        // Note that we mock runtime in tests and mock does not have deltamanager implementation.
-        if (deltaManager) {
-            this.updateSeqNumbers(minSeq, deltaManager.lastSequenceNumber);
+        // Required for case where FluidDataStoreRuntime.attachChannel()
+        // generates snapshot right after loading component.
 
-            // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
-            // Not sure why - need to catch it sooner
-            assert.equal(this.getCollabWindow().minSeq, minSeq);
-        }
+        this.updateSeqNumbers(minSeq, deltaManager.lastSequenceNumber);
+
+        // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
+        // Not sure why - need to catch it sooner
+        assert.equal(this.getCollabWindow().minSeq, minSeq);
 
         // TODO: Remove options flag once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
-        const snap = this.mergeTree.options && this.mergeTree.options.newMergeTreeSnapshotFormat
-            ? new SnapshotV1(this.mergeTree, this.logger)
-            : new SnapshotLegacy(this.mergeTree, this.logger);
-
-        snap.extractSync();
-        return snap.emit(
-            catchUpMsgs,
-            runtime.IComponentSerializer,
-            runtime.IComponentHandleContext,
-            handle);
+        if (this.mergeTree.options?.newMergeTreeSnapshotFormat === true) {
+            assert(
+                catchUpMsgs === undefined || catchUpMsgs.length === 0,
+                "New format should not emit catchup ops");
+            const snap = new SnapshotV1(this.mergeTree, this.logger);
+            snap.extractSync();
+            return snap.emit(
+                runtime.IFluidSerializer,
+                runtime.IFluidHandleContext,
+                handle);
+        } else {
+            const snap = new SnapshotLegacy(this.mergeTree, this.logger);
+            snap.extractSync();
+            return snap.emit(
+                catchUpMsgs,
+                runtime.IFluidSerializer,
+                runtime.IFluidHandleContext,
+                handle);
+        }
     }
 
-    public async load(runtime: IComponentRuntime, storage: IObjectStorageService, branchId?: string) {
+    public async load(
+        runtime: IFluidDataStoreRuntime,
+        storage: IChannelStorageService,
+        branchId?: string,
+    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
         const loader = new SnapshotLoader(runtime, this, this.mergeTree, this.logger);
 
-        // TODO: Remove return value once new snapshot format is adopted as default.
-        //       (See https://github.com/microsoft/FluidFramework/issues/84)
-        // eslint-disable-next-line no-return-await
-        return await loader.initialize(branchId, storage);
+        return loader.initialize(branchId, storage);
     }
 
     getStackContext(startPos: number, rangeLabels: string[]) {

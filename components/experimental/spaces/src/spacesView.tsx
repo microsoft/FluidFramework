@@ -5,37 +5,45 @@
 
 import React from "react";
 import "react-grid-layout/css/styles.css";
-import { ISpacesComponentEntry } from "./spacesComponentMap";
+import { ISpacesItemEntry } from "./spacesItemMap";
 import { ISpacesStorage, SpacesStorageView } from "./storage";
+import { ISpacesItem } from "./spaces";
 import { SpacesToolbar } from "./spacesToolbar";
 
 interface ISpacesViewProps {
-    componentMap: Map<string, ISpacesComponentEntry>;
-    storage: ISpacesStorage;
-    addComponent(type: string): void;
+    itemMap: Map<string, ISpacesItemEntry>;
+    storage: ISpacesStorage<ISpacesItem>;
+    addItem(type: string): void;
+    getViewForItem: (item: ISpacesItem) => Promise<JSX.Element | undefined>;
+    getUrlForItem: (itemId: string) => string;
     templates?: string[];
     applyTemplate?(template: string): void;
 }
 
 /**
- * SpacesView is the full view of the Spaces component, including its toolbar and contained components.
+ * SpacesView is the full view of the Spaces component, including its toolbar and contained items.
  */
 export const SpacesView: React.FC<ISpacesViewProps> =
     (props: React.PropsWithChildren<ISpacesViewProps>) => {
         // Editable is a view-only concept; SpacesView is the authority.
-        const [editable, setEditable] = React.useState<boolean>(props.storage.componentList.size === 0);
+        const [editable, setEditable] = React.useState<boolean>(props.storage.itemList.size === 0);
 
         return (
             <div className="spaces-view">
                 <SpacesToolbar
                     editable={editable}
                     setEditable={setEditable}
-                    componentMap={props.componentMap}
-                    addComponent={props.addComponent}
+                    itemMap={props.itemMap}
+                    addItem={props.addItem}
                     templates={props.templates}
                     applyTemplate={props.applyTemplate}
                 />
-                <SpacesStorageView storage={props.storage} editable={editable} />
+                <SpacesStorageView
+                    getViewForItem={props.getViewForItem}
+                    getUrlForItem={props.getUrlForItem}
+                    storage={props.storage}
+                    editable={editable}
+                />
             </div>
         );
     };

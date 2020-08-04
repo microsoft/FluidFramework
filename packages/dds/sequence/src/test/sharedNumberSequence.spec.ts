@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import assert from "assert";
-import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedNumberSequence } from "../sharedNumberSequence";
 import { SharedNumberSequenceFactory } from "../sequenceFactory";
 
@@ -11,10 +11,10 @@ describe("SharedNumberSequence", () => {
     const documentId = "fakeId";
     let sharedNumberSequence: SharedNumberSequence;
     beforeEach(() => {
-        const componentRuntime = new MockComponentRuntime();
+        const componentRuntime = new MockFluidDataStoreRuntime();
         sharedNumberSequence =
             new SharedNumberSequence(componentRuntime, documentId, SharedNumberSequenceFactory.Attributes);
-        componentRuntime.attach();
+        componentRuntime.bindToContext();
     });
 
     describe("getItems", () => {

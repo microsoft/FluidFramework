@@ -8,7 +8,7 @@
  */
 export class BatchManager<T> {
     private pendingWork = new Map<string, T[]>();
-    private pendingTimer: NodeJS.Timer | undefined;
+    private pendingTimer: number | undefined;
 
     /**
      * Creates an instance of BatchManager.

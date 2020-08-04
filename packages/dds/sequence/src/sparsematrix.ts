@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import {
     BaseSegment,
     createGroupOp,
@@ -14,12 +14,13 @@ import {
 } from "@fluidframework/merge-tree";
 import {
     IChannelAttributes,
-    IComponentRuntime,
-    ISharedObjectServices,
+    IFluidDataStoreRuntime,
+    IChannelServices,
     Jsonable,
     JsonablePrimitive,
-} from "@fluidframework/component-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@fluidframework/shared-object-base";
+    IChannelFactory,
+} from "@fluidframework/datastore-definitions";
+import { ISharedObject } from "@fluidframework/shared-object-base";
 import { pkgVersion } from "./packageVersion";
 import { SharedSegmentSequence, SubSequence } from "./";
 
@@ -92,7 +93,7 @@ export class PaddingSegment extends BaseSegment {
     }
 }
 
-export type SparseMatrixItem = Jsonable<JsonablePrimitive | IComponentHandle>;
+export type SparseMatrixItem = Jsonable<JsonablePrimitive | IFluidHandle>;
 export class RunSegment extends SubSequence<SparseMatrixItem> {
     public static readonly typeString = "RunSegment";
     public static is(segment: ISegment): segment is RunSegment {
@@ -195,7 +196,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
      * @param id - optional name of the sparse matrix
      * @returns newly create sparse matrix (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SparseMatrixFactory.Type) as SparseMatrix;
     }
 
@@ -204,11 +205,11 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
      *
      * @returns a factory that creates and load SharedMap
      */
-    public static getFactory(): ISharedObjectFactory {
+    public static getFactory(): IChannelFactory {
         return new SparseMatrixFactory();
     }
 
-    constructor(document: IComponentRuntime, public id: string, attributes: IChannelAttributes) {
+    constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(document, id, attributes, SparseMatrixFactory.segmentFromSpec);
     }
 
@@ -320,7 +321,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     }
 }
 
-export class SparseMatrixFactory implements ISharedObjectFactory {
+export class SparseMatrixFactory implements IChannelFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/sparse-matrix";
 
     public static Attributes: IChannelAttributes = {
@@ -352,9 +353,9 @@ export class SparseMatrixFactory implements ISharedObjectFactory {
     }
 
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes,
     ): Promise<ISharedObject> {
@@ -363,7 +364,7 @@ export class SparseMatrixFactory implements ISharedObjectFactory {
         return sharedObject;
     }
 
-    public create(document: IComponentRuntime, id: string): ISharedObject {
+    public create(document: IFluidDataStoreRuntime, id: string): ISharedObject {
         const sharedObject = new SparseMatrix(document, id, this.attributes);
         sharedObject.initializeLocal();
         return sharedObject;

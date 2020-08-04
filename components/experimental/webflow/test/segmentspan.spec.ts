@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { createLocalLoader, initializeLocalContainer } from "@fluid-internal/test-utils";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 import { TextSegment } from "@fluidframework/merge-tree";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { FlowDocument } from "../src/document";
@@ -25,7 +25,7 @@ describe("SegmentSpan", () => {
         const container = await initializeLocalContainer(id, loader, codeDetails);
 
         const response = await container.request({ url: "default" });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Default component not found`);
         }
         doc = response.value;

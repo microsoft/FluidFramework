@@ -6,7 +6,11 @@
 import assert from "assert";
 import EventEmitter from "events";
 import { IDisposable } from "@fluidframework/common-definitions";
-import { IComponent, IComponentLoadable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import {
+    IFluidObject,
+    IRequest,
+    IResponse,
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -14,6 +18,8 @@ import {
     IGenericBlob,
     ContainerWarning,
     ILoader,
+    BindState,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { Deferred } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -29,28 +35,32 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-    ComponentRegistryEntry,
-    IComponentRuntimeChannel,
+    FluidDataStoreRegistryEntry,
+    IFluidDataStoreChannel,
     IAttachMessage,
-    IComponentContext,
-    IComponentContextLegacy,
-    IComponentFactory,
-    IComponentRegistry,
+    IFluidDataStoreContext,
+    IFluidDataStoreFactory,
+    IFluidDataStoreRegistry,
     IInboundSignalMessage,
+    ISummarizeResult,
+    ISummarizerNode,
+    ISummarizeInternalResult,
+    CreateChildSummarizerNodeFn,
+    SummarizeInternalFn,
+    CreateChildSummarizerNodeParam,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker, strongAssert } from "@fluidframework/runtime-utils";
-import { v4 as uuid } from "uuid";
+import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in component attributes.
 const currentSnapshotFormatVersion = "0.1";
 
 /**
- * Added IComponentAttributes similar to IChannelAttributes which will tell
+ * Added IFluidDataStoretAttributes similar to IChannelAttributes which will tell
  * the attributes of a component like the package, snapshotFormatVersion to
  * take different decisions based on a particular snapshotForamtVersion.
  */
-export interface IComponentAttributes {
+export interface IFluidDataStoretAttributes {
     pkg: string;
     readonly snapshotFormatVersion?: string;
 }
@@ -68,14 +78,9 @@ interface ComponentMessage {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export abstract class ComponentContext extends EventEmitter implements
-    IComponentContext,
-    IComponentContextLegacy,
+export abstract class FluidDataStoreContext extends EventEmitter implements
+    IFluidDataStoreContext,
     IDisposable {
-    public isLocal(): boolean {
-        return this.containerRuntime.isLocal() || !this.isAttached;
-    }
-
     public get documentId(): string {
         return this._containerRuntime.id;
     }
@@ -151,34 +156,44 @@ export abstract class ComponentContext extends EventEmitter implements
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
-    public get isAttached(): boolean {
-        return this._isAttached;
+    public get attachState(): AttachState {
+        return this._attachState;
     }
 
-    public readonly attach: (componentRuntime: IComponentRuntimeChannel) => void;
-    protected componentRuntime: IComponentRuntimeChannel | undefined;
+    public readonly bindToContext: (componentRuntime: IFluidDataStoreChannel) => void;
+    protected componentRuntime: IFluidDataStoreChannel | undefined;
     private loaded = false;
-    private pending: ISequencedDocumentMessage[] | undefined = [];
-    private componentRuntimeDeferred: Deferred<IComponentRuntimeChannel> | undefined;
+    protected pending: ISequencedDocumentMessage[] | undefined = [];
+    private componentRuntimeDeferred: Deferred<IFluidDataStoreChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
+    protected _attachState: AttachState;
+    protected readonly summarizerNode: ISummarizerNode;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
-        public readonly scope: IComponent,
+        public readonly scope: IFluidObject & IFluidObject,
         public readonly summaryTracker: SummaryTracker,
-        private _isAttached: boolean,
-        attach: (componentRuntime: IComponentRuntimeChannel) => void,
+        createSummarizerNode: CreateChildSummarizerNodeFn,
+        private bindState: BindState,
+        bindComponent: (componentRuntime: IFluidDataStoreChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
-        this.attach = (componentRuntime: IComponentRuntimeChannel) => {
-            attach(componentRuntime);
-            this._isAttached = true;
+        this._attachState = existing ? AttachState.Attached : AttachState.Detached;
+
+        this.bindToContext = (componentRuntime: IFluidDataStoreChannel) => {
+            assert(this.bindState === BindState.NotBound);
+            this.bindState = BindState.Binding;
+            bindComponent(componentRuntime);
+            this.bindState = BindState.Bound;
         };
+
+        const thisSummarizeInternal = async (fullTree: boolean) => this.summarizeInternal(fullTree);
+        this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
     }
 
     public dispose(): void {
@@ -199,44 +214,6 @@ export abstract class ComponentContext extends EventEmitter implements
         }
     }
 
-    /**
-     * @deprecated
-     * Remove once issue #1756 is closed
-     */
-    public async createComponent(
-        pkgOrId: string | undefined,
-        pkg?: string,
-        props?: any,
-    ): Promise<IComponentRuntimeChannel> {
-        // pkgOrId can't be undefined if pkg is undefined
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const pkgName = pkg ?? pkgOrId!;
-        assert(pkgName);
-        const id = pkg ? (pkgOrId ?? uuid()) : uuid();
-
-        const packagePath: string[] = await this.composeSubpackagePath(pkgName);
-
-        return this.containerRuntime._createComponentWithProps(packagePath, props, id);
-    }
-
-    public async createComponentWithRealizationFn(
-        pkg: string,
-        realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponent & IComponentLoadable> {
-        const packagePath = await this.composeSubpackagePath(pkg);
-
-        const componentRuntime = await this.containerRuntime.createComponentWithRealizationFn(
-            packagePath,
-            realizationFn,
-        );
-        const response = await componentRuntime.request({ url: "/" });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            throw new Error("Failed to create component");
-        }
-
-        return response.value;
-    }
-
     private async rejectDeferredRealize(reason: string) {
         const error = new Error(reason);
         // Error messages contain package names that is considered Personal Identifiable Information
@@ -250,18 +227,18 @@ export abstract class ComponentContext extends EventEmitter implements
         return deferred.promise;
     }
 
-    public async realize(): Promise<IComponentRuntimeChannel> {
+    public async realize(): Promise<IFluidDataStoreChannel> {
         if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeChannel>();
+            this.componentRuntimeDeferred = new Deferred<IFluidDataStoreChannel>();
             const details = await this.getInitialSnapshotDetails();
             // Base snapshot is the baseline where pending ops are applied to.
             // It is important that this be in sync with the pending ops, and also
             // that it is set here, before bindRuntime is called.
             this._baseSnapshot = details.snapshot;
             const packages = details.pkg;
-            let entry: ComponentRegistryEntry | undefined;
-            let registry: IComponentRegistry | undefined = this._containerRuntime.IComponentRegistry;
-            let factory: IComponentFactory | undefined;
+            let entry: FluidDataStoreRegistryEntry | undefined;
+            let registry: IFluidDataStoreRegistry | undefined = this._containerRuntime.IFluidDataStoreRegistry;
+            let factory: IFluidDataStoreFactory | undefined;
             let lastPkg: string | undefined;
             for (const pkg of packages) {
                 if (!registry) {
@@ -272,26 +249,25 @@ export abstract class ComponentContext extends EventEmitter implements
                 if (!entry) {
                     return this.rejectDeferredRealize(`Registry does not contain entry for the package ${pkg}`);
                 }
-                factory = entry.IComponentFactory;
-                registry = entry.IComponentRegistry;
+                factory = entry.IFluidDataStoreFactory;
+                registry = entry.IFluidDataStoreRegistry;
             }
-
             if (factory === undefined) {
                 return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
             }
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred
-            factory.instantiateComponent(this);
+            factory.instantiateDataStore(this);
         }
 
         return this.componentRuntimeDeferred.promise;
     }
 
     public async realizeWithFn(
-        realizationFn: (context: IComponentContext) => void,
-    ): Promise<IComponentRuntimeChannel> {
+        realizationFn: (context: IFluidDataStoreContext) => void,
+    ): Promise<IFluidDataStoreChannel> {
         if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeChannel>();
+            this.componentRuntimeDeferred = new Deferred<IFluidDataStoreChannel>();
             realizationFn(this);
         }
 
@@ -315,7 +291,7 @@ export abstract class ComponentContext extends EventEmitter implements
         assert(this.connected === connected);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const runtime: IComponentRuntimeChannel = this.componentRuntime!;
+        const runtime: IFluidDataStoreChannel = this.componentRuntime!;
 
         // Back-compat: supporting <= 0.16 components
         if (runtime.setConnectionState) {
@@ -338,6 +314,7 @@ export abstract class ComponentContext extends EventEmitter implements
         };
 
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
+        this.summarizerNode.recordChange(message);
 
         if (this.loaded) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -375,6 +352,7 @@ export abstract class ComponentContext extends EventEmitter implements
 
     /**
      * Notifies the object to take snapshot of a component.
+     * @deprecated in 0.22 summarizerNode
      */
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
         if (!fullTree) {
@@ -386,7 +364,7 @@ export abstract class ComponentContext extends EventEmitter implements
 
         const { pkg } = await this.getInitialSnapshotDetails();
 
-        const componentAttributes: IComponentAttributes = {
+        const componentAttributes: IFluidDataStoretAttributes = {
             pkg: JSON.stringify(pkg),
             snapshotFormatVersion: currentSnapshotFormatVersion,
         };
@@ -401,6 +379,35 @@ export abstract class ComponentContext extends EventEmitter implements
         return { entries, id: null };
     }
 
+    public async summarize(fullTree = false): Promise<ISummarizeResult> {
+        return this.summarizerNode.summarize(fullTree);
+    }
+
+    private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
+        const { pkg } = await this.getInitialSnapshotDetails();
+
+        const componentAttributes: IFluidDataStoretAttributes = {
+            pkg: JSON.stringify(pkg),
+            snapshotFormatVersion: currentSnapshotFormatVersion,
+        };
+
+        await this.realize();
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const componentRuntime = this.componentRuntime!;
+        if (componentRuntime.summarize !== undefined) {
+            const summary = await componentRuntime.summarize(fullTree);
+            addBlobToSummary(summary, ".component", JSON.stringify(componentAttributes));
+            return { ...summary, id: this.id };
+        } else {
+            // back-compat summarizerNode - remove this case
+            const entries = await componentRuntime.snapshotInternal(fullTree);
+            entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
+            const summary = convertToSummaryTree({ entries, id: null });
+            return { ...summary, id: this.id };
+        }
+    }
+
     /**
      * @deprecated 0.18.Should call request on the runtime directly
      */
@@ -409,14 +416,14 @@ export abstract class ComponentContext extends EventEmitter implements
         return runtime.request(request);
     }
 
-    public submitMessage(type: string, content: any, localOpMetadata: unknown): number {
+    public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
         this.verifyNotClosed();
         assert(this.componentRuntime);
         const componentContent: ComponentMessage = {
             content,
             type,
         };
-        return this._containerRuntime.submitComponentOp(
+        this._containerRuntime.submitComponentOp(
             this.id,
             componentContent,
             localOpMetadata);
@@ -438,11 +445,16 @@ export abstract class ComponentContext extends EventEmitter implements
 
         // Update our summary tracker's latestSequenceNumber.
         this.summaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
+        this.summarizerNode.invalidate(latestSequenceNumber);
 
         const channelSummaryTracker = this.summaryTracker.getChild(address);
+        const channelSummarizerNode = this.summarizerNode.getChild(address);
         // If there is a summary tracker for the channel that called us, update it's latestSequenceNumber.
         if (channelSummaryTracker) {
             channelSummaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
+        }
+        if (channelSummarizerNode) {
+            channelSummarizerNode.invalidate(latestSequenceNumber); // TODO: lazy load problem?
         }
     }
 
@@ -472,12 +484,12 @@ export abstract class ComponentContext extends EventEmitter implements
         }
     }
 
-    public bindRuntime(componentRuntime: IComponentRuntimeChannel) {
+    public bindRuntime(componentRuntime: IFluidDataStoreChannel) {
         if (this.componentRuntime) {
             throw new Error("runtime already bound");
         }
 
-        // If this ComponentContext was created via `IContainerRuntime.createComponentContext`, the
+        // If this FluidDataStoreContext was created via `IContainerRuntime.createDataStoreContext`, the
         // `componentRuntimeDeferred` promise hasn't yet been initialized.  Do so now.
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred();
@@ -507,10 +519,13 @@ export abstract class ComponentContext extends EventEmitter implements
         this.componentRuntimeDeferred.resolve(this.componentRuntime);
 
         // notify the runtime if they want to propagate up. Used for logging.
-        this.containerRuntime.notifyComponentInstantiated(this);
+        this.containerRuntime.notifyDataStoreInstantiated(this);
     }
 
-    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
+        if (this.attachState !== AttachState.Attached) {
+            return undefined;
+        }
         return this._containerRuntime.getAbsoluteUrl(relativeUrl);
     }
 
@@ -521,7 +536,7 @@ export abstract class ComponentContext extends EventEmitter implements
      * @returns A list of packages to the subpackage destination if found,
      * otherwise the original subpackage
      */
-    protected async composeSubpackagePath(subpackage: string): Promise<string[]> {
+    public async composeSubpackagePath(subpackage: string): Promise<string[]> {
         const details = await this.getInitialSnapshotDetails();
         let packagePath: string[] = [...details.pkg];
 
@@ -534,10 +549,10 @@ export abstract class ComponentContext extends EventEmitter implements
         // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
         // to the packagePath. If not, look into the global registry and the packagePath becomes just the
         // passed package.
-        if (await this.componentRuntime?.IComponentRegistry?.get(subpackage)) {
+        if (await this.componentRuntime?.IFluidDataStoreRegistry?.get(subpackage)) {
             packagePath.push(subpackage);
         } else {
-            if (!(await this._containerRuntime.IComponentRegistry.get(subpackage))) {
+            if (!(await this._containerRuntime.IFluidDataStoreRegistry.get(subpackage))) {
                 throw new Error(`Registry does not contain entry for package '${subpackage}'`);
             }
 
@@ -552,14 +567,9 @@ export abstract class ComponentContext extends EventEmitter implements
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
-        strongAssert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
-
+        assert(this.componentRuntime, "FluidDataStoreRuntime must exist when resubmitting ops");
         const innerContents = contents as ComponentMessage;
-
-        // back-compat: 0.18 components
-        if (this.componentRuntime.reSubmit) {
-            this.componentRuntime.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
-        }
+        this.componentRuntime.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
 
     private verifyNotClosed() {
@@ -567,9 +577,19 @@ export abstract class ComponentContext extends EventEmitter implements
             throw new Error("Context is closed");
         }
     }
+
+    public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
+        return (summarizeInternal: SummarizeInternalFn) => this.summarizerNode.createChild(
+            summarizeInternal,
+            id,
+            createParam,
+            // DDS will not create failure summaries
+            { throwOnFailure: true },
+        );
+    }
 }
 
-export class RemotedComponentContext extends ComponentContext {
+export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     private details: ISnapshotDetails | undefined;
 
     constructor(
@@ -577,8 +597,9 @@ export class RemotedComponentContext extends ComponentContext {
         private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent,
+        scope: IFluidObject & IFluidObject,
         summaryTracker: SummaryTracker,
+        createSummarizerNode: CreateChildSummarizerNodeFn,
         pkg?: string[],
     ) {
         super(
@@ -588,7 +609,8 @@ export class RemotedComponentContext extends ComponentContext {
             storage,
             scope,
             summaryTracker,
-            true,
+            createSummarizerNode,
+            BindState.Bound,
             () => {
                 throw new Error("Already attached");
             },
@@ -613,12 +635,19 @@ export class RemotedComponentContext extends ComponentContext {
                 tree = await this.initSnapshotValue;
             }
 
+            const localReadAndParse = async <T>(id: string) => readAndParse<T>(this.storage, id);
+            if (tree) {
+                const loadedSummary = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
+                tree = loadedSummary.baseSummary;
+                // Prepend outstanding ops to pending queue of ops to process.
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.pending = loadedSummary.outstandingOps.concat(this.pending!);
+            }
+
             if (tree !== null && tree.blobs[".component"] !== undefined) {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion } =
-                    await readAndParse<IComponentAttributes>(
-                        this.storage,
-                        tree.blobs[".component"]);
+                    await localReadAndParse<IFluidDataStoretAttributes>(tree.blobs[".component"]);
 
                 let pkgFromSnapshot: string[];
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
@@ -648,31 +677,51 @@ export class RemotedComponentContext extends ComponentContext {
     }
 }
 
-export class LocalComponentContext extends ComponentContext {
+export class LocalFluidDataStoreContext extends FluidDataStoreContext {
     constructor(
         id: string,
         pkg: string[],
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent,
+        scope: IFluidObject & IFluidObject,
         summaryTracker: SummaryTracker,
-        attachCb: (componentRuntime: IComponentRuntimeChannel) => void,
-        /**
-         * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
-         */
-        public readonly createProps?: any,
+        createSummarizerNode: CreateChildSummarizerNodeFn,
+        bindComponent: (componentRuntime: IFluidDataStoreChannel) => void,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);
+        super(
+            runtime,
+            id,
+            false,
+            storage,
+            scope,
+            summaryTracker,
+            createSummarizerNode,
+            BindState.NotBound,
+            bindComponent,
+            pkg);
+        this.attachListeners();
+    }
+
+    private attachListeners(): void {
+        this.once("attaching", () => {
+            assert.strictEqual(this.attachState, AttachState.Detached, "Should move from detached to attaching");
+            this._attachState = AttachState.Attaching;
+        });
+        this.once("attached", () => {
+            assert.strictEqual(this.attachState, AttachState.Attaching, "Should move from attaching to attached");
+            this._attachState = AttachState.Attached;
+        });
     }
 
     public generateAttachMessage(): IAttachMessage {
-        const componentAttributes: IComponentAttributes = {
+        const componentAttributes: IFluidDataStoretAttributes = {
             pkg: JSON.stringify(this.pkg),
             snapshotFormatVersion: currentSnapshotFormatVersion,
         };
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const entries = this.componentRuntime!.getAttachSnapshot();
+
         const snapshot: ITree = { entries, id: null };
 
         snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));

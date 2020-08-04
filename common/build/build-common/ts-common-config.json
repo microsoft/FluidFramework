@@ -16,6 +16,7 @@
         "noImplicitAny": false,
         "incremental": true,
         "types": [],
-        "strict": true
+        "strict": true,
+        "lib": [ "ES2017", "ES2018.Promise", "DOM", "DOM.Iterable" ]
     }
 }

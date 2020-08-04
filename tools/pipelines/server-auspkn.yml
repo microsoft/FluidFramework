@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-# server-admin pipeline
+# server-auspkn pipeline
 
 name: $(Build.BuildId)
 
@@ -11,7 +11,7 @@ trigger:
     - master
   paths:
     include:
-    - service/admin
+    - server/auspkn
     - tools/pipelines/server-admin.yml
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
@@ -22,7 +22,7 @@ pr:
     - master
   paths:
     include:
-    - service/admin
+    - server/auspkn
     - tools/pipelines/server-admin.yml
     - tools/pipelines/templates/build-docker-service.yml
 

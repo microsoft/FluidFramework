@@ -4,14 +4,14 @@
  */
 
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory, waitForAttach } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import {
-    IComponentHandle, IComponentLoadable,
+    IFluidHandle, IFluidLoadable,
 } from "@fluidframework/component-core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { TextBoxInstantiationFactory } from "../TextBox";
@@ -39,22 +39,18 @@ const innerComponentKey = "innerId";
  * - Link to open component in separate tab
  * - Button to remove entry
  */
-export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
-    implements
-    IComponentHTMLView,
-    IComponentReactViewable {
+export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements IFluidHTMLView {
     private text: SharedString;
-    private innerIdCell: ISharedCell;
+    private innerIdCell: ISharedCell<IFluidHandle>;
     private _absoluteUrl: string | undefined;
 
-    public get IComponentHTMLView() { return this; }
-    public get IComponentReactViewable() { return this; }
+    public get IFluidHTMLView() { return this; }
     public get absoluteUrl() { return this._absoluteUrl; }
 
     /**
      * Do creation work
      */
-    protected async componentInitializingFirstTime(initialState?: ITodoItemInitialState) {
+    protected async initializingFirstTime(initialState?: ITodoItemInitialState) {
         // Set initial state if it was provided
         const newItemText = initialState?.startingText ?? "New Item";
 
@@ -73,9 +69,9 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
         this.root.set(innerComponentKey, innerIdCell.handle);
     }
 
-    protected async componentHasInitialized() {
-        const text = this.root.get<IComponentHandle<SharedString>>(textKey).get();
-        const innerIdCell = this.root.get<IComponentHandle<ISharedCell>>(innerComponentKey).get();
+    protected async hasInitialized() {
+        const text = this.root.get<IFluidHandle<SharedString>>(textKey).get();
+        const innerIdCell = this.root.get<IFluidHandle<ISharedCell>>(innerComponentKey).get();
 
         this.setCheckedState = this.setCheckedState.bind(this);
 
@@ -97,29 +93,23 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
             if (!local) {
                 if (changed.key === checkedKey) {
                     this.emit("checkedStateChanged");
+                    this.emit("stateChanged");
                 }
             }
         });
 
-        if (this.context.connected) {
-            this._absoluteUrl = await this.context.getAbsoluteUrl(this.url);
-        } else {
-            this.context.deltaManager.on(
-                "connect",
-                () => {
-                    this.context.getAbsoluteUrl(this.url)
-                        .then((url) => {
-                            this._absoluteUrl = url;
-                            return undefined;
-                        })
-                        .catch(() => { });
-                });
-        }
+        waitForAttach(this.runtime)
+            .then(async () => {
+                const url = await this.context.getAbsoluteUrl(this.url);
+                this._absoluteUrl = url;
+                this.emit("stateChanged");
+            })
+            .catch(console.error);
     }
 
     public static getFactory() { return TodoItem.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         TodoItemName,
         TodoItem,
         [
@@ -134,32 +124,16 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
         ]),
     );
 
-    // start IComponentHTMLView
+    // start IFluidHTMLView
 
     public render(div: HTMLElement) {
         ReactDOM.render(
-            this.createJSXElement(),
+            <TodoItemView todoItemModel={this} />,
             div,
         );
     }
 
-    // end IComponentHTMLView
-
-    // start IComponentReactViewable
-
-    /**
-     * If our caller supports React they can query against the IComponentReactViewable
-     * Since this returns a JSX.Element it allows for an easier model.
-     */
-    public createJSXElement(): JSX.Element {
-        return (
-            <TodoItemView
-                todoItemModel={this}
-            />
-        );
-    }
-
-    // end IComponentReactViewable
+    // end IFluidHTMLView
 
     // start public API surface for the TodoItem model, used by the view
 
@@ -170,7 +144,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
 
     public setCheckedState(newState: boolean): void {
         this.root.set(checkedKey, newState);
-        this.emit("checkedStateChanged");
+        this.emit("stateChanged");
     }
 
     public getCheckedState(): boolean {
@@ -196,22 +170,22 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
      * @param props - props to be passed into component creation
      */
     public async createInnerComponent(type: TodoItemSupportedComponents): Promise<void> {
-        let component: IComponentLoadable;
+        let component: IFluidLoadable;
         switch (type) {
             case "todo":
-                component = await TodoItem.getFactory().createComponent(
+                component = await TodoItem.getFactory().createInstance(
                     this.context,
                     { startingText: type },
                 );
                 break;
             case "clicker":
-                component = await ClickerInstantiationFactory.createComponent(this.context);
+                component = await ClickerInstantiationFactory.createInstance(this.context);
                 break;
             case "textBox":
-                component = await TextBoxInstantiationFactory.createComponent(this.context, type);
+                component = await TextBoxInstantiationFactory.createInstance(this.context, type);
                 break;
             case "textList":
-                component = await TextListInstantiationFactory.createComponent(this.context);
+                component = await TextListInstantiationFactory.createInstance(this.context);
                 break;
             default:
         }

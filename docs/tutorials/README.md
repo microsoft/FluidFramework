@@ -37,14 +37,6 @@ Dice roller is a simple example to familiarize yourself with Fluid's component s
 
 [Dice roller tutorial](./dice-roller.md)
 
-<style>
-  iframe#diceroller {
-    height: 95px;
-    width: 200px;
-  }
-</style>
-
-<iframe id="diceroller" src="/fluid/diceroller.html"></iframe>
 
 ## Sudoku
 
@@ -56,14 +48,6 @@ Sudoku is a collaborative Sudoku game.
 
 [Sudoku tutorial](./sudoku.md)
 
-<style>
-  iframe#sudoku {
-    height: 500px;
-    width: 910px;
-  }
-</style>
-
-<iframe id="sudoku" src="/fluid/sudoku.html"></iframe>
 
 ## Other examples
 
@@ -78,12 +62,3 @@ of the overall document or a section of it.
 
 - SharedMap
 - SharedObjectSequence
-
-<style>
-  iframe#badge {
-    height: 250px;
-    width: 800px;
-  }
-</style>
-
-<iframe id="badge" src="/fluid/badge.html"></iframe>

@@ -46,7 +46,13 @@ export class Historian implements IHistorian {
             queryString.token = fromUtf8ToBase64(`${credentials.user}`);
         }
 
-        this.restWrapper = new RestWrapper(endpoint, {}, queryString, cacheBust);
+        const headers = credentials ?
+            {
+                Authorization: `Basic ${fromUtf8ToBase64(`${credentials.user}:${credentials.password}`)}`,
+            } :
+            {};
+
+        this.restWrapper = new RestWrapper(endpoint, headers, queryString, cacheBust);
     }
 
     /* eslint-disable @typescript-eslint/promise-function-async */

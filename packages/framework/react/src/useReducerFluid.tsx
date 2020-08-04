@@ -4,7 +4,8 @@
  */
 
 import * as React from "react";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { SharedMap } from "@fluidframework/map";
 import {
     IFluidFunctionalComponentViewState,
     IFluidReducerProps,
@@ -20,13 +21,15 @@ import {
     IFluidReducer,
     IFluidSelector,
     ICombinedState,
+    ISyncedStateConfig,
 } from "./interface";
 import { useStateFluid } from "./useStateFluid";
 import {
     updateStateAndComponentMap,
-    rootCallbackListener,
-    getFluidStateFromRoot,
-    syncStateAndRoot,
+    syncedStateCallbackListener,
+    getFluidState,
+    syncState,
+    getComponentSchema,
 } from "./helpers";
 
 export function useReducerFluid<
@@ -43,35 +46,51 @@ export function useReducerFluid<
         syncedStateId,
         reducer,
         selector,
-        root,
-        viewToFluid,
-        fluidToView,
-        dataProps,
+        syncedComponent,
     } = props;
+    const config = syncedComponent.getConfig(syncedStateId);
+    if (config === undefined) {
+        throw Error(`Failed to find configuration for synced state ID: ${syncedStateId}`);
+    }
+    const dataProps = props.dataProps ?? syncedComponent.dataProps as C;
     // Get our combined synced state and setState callbacks from the useStateFluid function
     const [viewState, setState] = useStateFluid<SV, SF>({
         syncedStateId,
-        root,
+        syncedComponent,
         dataProps,
-        fluidToView,
-        viewToFluid,
     }, initialViewState);
+    const syncedState = syncedComponent.syncedState;
+    const { fluidToView, viewToFluid } = config as ISyncedStateConfig<SV, SF>;
+
+    const componentSchemaHandles = getComponentSchema(
+        syncedStateId,
+        syncedState,
+    );
+    if (componentSchemaHandles?.storedHandleMapHandle.absolutePath === undefined) {
+        throw Error(`Component schema not initialized prior to render for ${syncedStateId}`);
+    }
+    const storedHandleMap = dataProps.fluidComponentMap.get(
+        componentSchemaHandles?.storedHandleMapHandle.absolutePath,
+    )?.component as SharedMap;
+    if (storedHandleMap === undefined) {
+        throw Error(`Stored handle map not initialized prior to render for ${syncedStateId}`);
+    }
 
     // Dispatch is an in-memory object that will load the reducer actions provided by the user
-    // and add updates to the state and root based off of the type of function and
+    // and add updates to the view and Fluid state based off of the type of function and
     // state values that were updated. Think of it as prepping the data in the first
     // stage of dynamic programming. The dispatch functions are copies of the user-defined functions
     // but with the updates to synced state also handled
     const dispatch = React.useCallback(
         (
-            dispatchState: ICombinedState<SV, SF, C>,
             type: keyof A,
+            dispatchState?: ICombinedState<SV, SF, C>,
             ...args: any
         ) => {
-            // Retrieve the current state that is stored on the root for this component ID
-            const currentFluidState = getFluidStateFromRoot(
+            // Retrieve the current state that is stored on the synced state for this component ID
+            const currentFluidState = getFluidState(
                 syncedStateId,
-                root,
+                syncedState,
                 dataProps.fluidComponentMap,
                 fluidToView,
             );
@@ -82,15 +101,15 @@ export function useReducerFluid<
             }
             const combinedDispatchFluidState: SF = {
                 ...currentFluidState,
-                ...dispatchState.fluidState,
+                ...dispatchState?.fluidState,
             };
             const combinedDispatchViewState: SV = {
                 ...viewState,
-                ...dispatchState.viewState,
+                ...dispatchState?.viewState,
             };
             const combinedDispatchDataProps: C = {
                 ...dataProps,
-                ...dispatchState.dataProps,
+                ...dispatchState?.dataProps,
             };
             const combinedDispatchState = {
                 fluidState: combinedDispatchFluidState,
@@ -98,80 +117,36 @@ export function useReducerFluid<
                 dataProps: combinedDispatchDataProps,
             };
             const action = reducer[type];
-            if (action && instanceOfStateUpdateFunction<SV, SF, C>(action)) {
-                // If its a synchronous state update function, call it and inspect the result for new component handles
-                const result = (action.function as any)(
-                    combinedDispatchState,
-                    ...args,
-                );
-                if (result.newComponentHandles) {
-                    // Fetch any new components and the listener to their root. Then update the state.
-                    const callback = rootCallbackListener(
-                        combinedDispatchDataProps.fluidComponentMap,
-                        syncedStateId,
-                        root,
-                        combinedDispatchDataProps.runtime,
-                        result.state.viewState,
-                        setState,
-                        fluidToView,
-                        viewToFluid,
+            if (action !== undefined) {
+                if (instanceOfStateUpdateFunction<SV, SF, C>(action)) {
+                    // If its a synchronous state update function, call it and inspect the result
+                    // for new component handles
+                    const result = (action.function as any)(
+                        combinedDispatchState,
+                        ...args,
                     );
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    updateStateAndComponentMap(
-                        result.newComponentHandles,
-                        combinedDispatchDataProps.fluidComponentMap,
-                        false,
-                        syncedStateId,
-                        root,
-                        combinedDispatchDataProps.runtime,
-                        result.state.viewState,
-                        setState,
-                        callback,
-                        fluidToView,
-                        viewToFluid,
-                    );
-                } else {
-                    // Update the state directly
-                    syncStateAndRoot(
-                        false,
-                        syncedStateId,
-                        root,
-                        combinedDispatchDataProps.runtime,
-                        result.state.viewState,
-                        setState,
-                        combinedDispatchDataProps.fluidComponentMap,
-                        fluidToView,
-                        viewToFluid,
-                    );
-                }
-            } else if (
-                action &&
-                instanceOfAsyncStateUpdateFunction<SV, SF, C>(action)
-            ) {
-                // In the case of an async function, the function promise is treated as a Thenable
-                // and the returned result is inspected after the function has completed
-                (action.asyncFunction as any)(
-                    combinedDispatchState,
-                    ...args,
-                ).then((result: IStateUpdateResult<SV, SF, C>) => {
-                    const callback = rootCallbackListener(
-                        combinedDispatchDataProps.fluidComponentMap,
-                        syncedStateId,
-                        root,
-                        combinedDispatchDataProps.runtime,
-                        result.state.viewState,
-                        setState,
-                        fluidToView,
-                        viewToFluid,
-                    );
-                    if (result.newComponentHandles) {
+                    if (result.newComponentHandles !== undefined) {
+                        // Fetch any new components and add a listener to their synced state.
+                        // Then update the view state.
+                        const callback = syncedStateCallbackListener(
+                            combinedDispatchDataProps.fluidComponentMap,
+                            storedHandleMap,
+                            syncedStateId,
+                            syncedState,
+                            combinedDispatchDataProps.runtime,
+                            result.state.viewState,
+                            setState,
+                            fluidToView,
+                            viewToFluid,
+                        );
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         updateStateAndComponentMap(
                             result.newComponentHandles,
                             combinedDispatchDataProps.fluidComponentMap,
+                            storedHandleMap,
                             false,
                             syncedStateId,
-                            root,
+                            syncedState,
                             combinedDispatchDataProps.runtime,
                             result.state.viewState,
                             setState,
@@ -180,10 +155,11 @@ export function useReducerFluid<
                             viewToFluid,
                         );
                     } else {
-                        syncStateAndRoot(
+                        // Update the state directly
+                        syncState(
                             false,
                             syncedStateId,
-                            root,
+                            syncedState,
                             combinedDispatchDataProps.runtime,
                             result.state.viewState,
                             setState,
@@ -192,40 +168,89 @@ export function useReducerFluid<
                             viewToFluid,
                         );
                     }
-                });
-            } else if (
-                action &&
-                instanceOfAsyncEffectFunction<SV, SF, C>(action)
-            ) {
-                (action.asyncFunction as any)(
-                    combinedDispatchState,
-                    ...args,
-                ).then(() =>
-                    syncStateAndRoot(
+                } else if (instanceOfAsyncStateUpdateFunction<SV, SF, C>(action)) {
+                    // In the case of an async function, the function promise is treated as a Thenable
+                    // and the returned result is inspected after the function has completed
+                    (action.asyncFunction as any)(
+                        combinedDispatchState,
+                        ...args,
+                    ).then((result: IStateUpdateResult<SV, SF, C>) => {
+                        const callback = syncedStateCallbackListener(
+                            combinedDispatchDataProps.fluidComponentMap,
+                            storedHandleMap,
+                            syncedStateId,
+                            syncedState,
+                            combinedDispatchDataProps.runtime,
+                            result.state.viewState,
+                            setState,
+                            fluidToView,
+                            viewToFluid,
+                        );
+                        if (result.newComponentHandles !== undefined) {
+                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                            updateStateAndComponentMap(
+                                result.newComponentHandles,
+                                combinedDispatchDataProps.fluidComponentMap,
+                                storedHandleMap,
+                                false,
+                                syncedStateId,
+                                syncedState,
+                                combinedDispatchDataProps.runtime,
+                                result.state.viewState,
+                                setState,
+                                callback,
+                                fluidToView,
+                                viewToFluid,
+                            );
+                        } else {
+                            syncState(
+                                false,
+                                syncedStateId,
+                                syncedState,
+                                combinedDispatchDataProps.runtime,
+                                result.state.viewState,
+                                setState,
+                                combinedDispatchDataProps.fluidComponentMap,
+                                fluidToView,
+                                viewToFluid,
+                            );
+                        }
+                    });
+                } else if (instanceOfAsyncEffectFunction<SV, SF, C>(action)) {
+                    (action.asyncFunction as any)(
+                        combinedDispatchState,
+                        ...args,
+                    ).then(() =>
+                        syncState(
+                            false,
+                            syncedStateId,
+                            syncedState,
+                            combinedDispatchDataProps.runtime,
+                            combinedDispatchState.viewState,
+                            setState,
+                            combinedDispatchDataProps.fluidComponentMap,
+                            fluidToView,
+                            viewToFluid,
+                        ),
+                    );
+                } else if (instanceOfEffectFunction<SV, SF, C>(action)) {
+                    (action.function as any)(combinedDispatchState, ...args);
+                    syncState(
                         false,
                         syncedStateId,
-                        root,
+                        syncedState,
                         combinedDispatchDataProps.runtime,
                         combinedDispatchState.viewState,
                         setState,
                         combinedDispatchDataProps.fluidComponentMap,
                         fluidToView,
                         viewToFluid,
-                    ),
-                );
-            } else if (action && instanceOfEffectFunction<SV, SF, C>(action)) {
-                (action.function as any)(combinedDispatchState, ...args);
-                syncStateAndRoot(
-                    false,
-                    syncedStateId,
-                    root,
-                    combinedDispatchDataProps.runtime,
-                    combinedDispatchState.viewState,
-                    setState,
-                    combinedDispatchDataProps.fluidComponentMap,
-                    fluidToView,
-                    viewToFluid,
-                );
+                    );
+                } else {
+                    throw new Error(
+                        `Action with key ${action} does not match an expected reducer action interface`,
+                    );
+                }
             } else {
                 throw new Error(
                     `Action with key ${action} does not
@@ -248,14 +273,14 @@ export function useReducerFluid<
                 asyncFunction: (
                     dispatchState: ICombinedState<SV, SF, C>,
                     ...args: any
-                ) => dispatch(dispatchState, functionName, ...args),
+                ) => dispatch(functionName, dispatchState, ...args),
             };
         } else {
             combinedReducer[functionName] = {
                 function: (
                     dispatchState: ICombinedState<SV, SF, C>,
                     ...args: any
-                ) => dispatch(dispatchState, functionName, ...args),
+                ) => dispatch(functionName, dispatchState, ...args),
             };
         }
     });
@@ -269,14 +294,14 @@ export function useReducerFluid<
     // Fetch can also be used to retrieve data from these components as they will also be available as a parameter.
     const fetch = React.useCallback(
         (
-            fetchState: ICombinedState<SV, SF, C>,
             type: keyof B,
-            handle?: IComponentHandle,
+            fetchState?: ICombinedState<SV, SF, C>,
+            handle?: IFluidHandle,
         ) => {
-            // Retrieve the current state that is stored on the root for this component ID
-            const currentFluidState = getFluidStateFromRoot(
+            // Retrieve the current state that is stored on the syncedState for this component ID
+            const currentFluidState = getFluidState(
                 syncedStateId,
-                root,
+                syncedState,
                 dataProps.fluidComponentMap,
                 fluidToView,
             );
@@ -287,15 +312,15 @@ export function useReducerFluid<
             }
             const combinedFetchFluidState: SF = {
                 ...currentFluidState,
-                ...fetchState.fluidState,
+                ...fetchState?.fluidState,
             };
             const combinedFetchViewState: SV = {
                 ...viewState,
-                ...fetchState.viewState,
+                ...fetchState?.viewState,
             };
             const combinedFetchDataProps: C = {
                 ...dataProps,
-                ...fetchState.dataProps,
+                ...fetchState?.dataProps,
             };
             const combinedFetchState = {
                 fluidState: combinedFetchFluidState,
@@ -303,65 +328,73 @@ export function useReducerFluid<
                 dataProps: combinedFetchDataProps,
             };
             const action = selector[type];
-            if (action && instanceOfSelectorFunction<SV, SF, C>(action)) {
-                // Add any new handles that were returned by the selector to our list
-                // to be loaded to the fluid component map
-                let newHandles: IComponentHandle[] = [];
-                if (
-                    handle &&
-                    instanceOfComponentSelectorFunction<SV, SF, C>(action) &&
-                    combinedFetchDataProps.fluidComponentMap.get(
-                        handle.path,
-                    ) === undefined
-                ) {
-                    newHandles.push(handle);
-                }
-                const actionResult = (action.function as any)(
-                    combinedFetchState,
-                    handle,
-                );
-                if (
-                    actionResult !== undefined &&
-                    actionResult.newComponentHandles !== undefined
-                ) {
-                    newHandles = newHandles.concat(
-                        actionResult.newComponentHandles,
+            if (action !== undefined) {
+                if (instanceOfSelectorFunction<SV, SF, C>(action)) {
+                    // Add any new handles that were returned by the selector to our list
+                    // to be loaded to the fluid component map
+                    let newHandles: IFluidHandle[] = [];
+                    if (
+                        handle !== undefined &&
+                        instanceOfComponentSelectorFunction<SV, SF, C>(action) &&
+                        combinedFetchDataProps.fluidComponentMap.get(
+                            handle.absolutePath,
+                        ) === undefined
+                    ) {
+                        newHandles.push(handle);
+                    }
+                    const actionResult = (action.function as any)(
+                        combinedFetchState,
+                        handle,
+                    );
+                    if (
+                        actionResult !== undefined &&
+                        actionResult.newComponentHandles !== undefined
+                    ) {
+                        newHandles = newHandles.concat(
+                            actionResult.newComponentHandles,
+                        );
+                    }
+                    // If there are handles, start a call to update the component map and then call the set state
+                    // callback when it has finished to provide the updated map in the state
+                    if (newHandles.length > 0) {
+                        const callback = syncedStateCallbackListener(
+                            combinedFetchDataProps.fluidComponentMap,
+                            storedHandleMap,
+                            syncedStateId,
+                            syncedState,
+                            combinedFetchDataProps.runtime,
+                            combinedFetchState.viewState,
+                            setState,
+                            fluidToView,
+                            viewToFluid,
+                        );
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                        updateStateAndComponentMap(
+                            newHandles,
+                            combinedFetchDataProps.fluidComponentMap,
+                            storedHandleMap,
+                            true,
+                            syncedStateId,
+                            syncedState,
+                            combinedFetchDataProps.runtime,
+                            combinedFetchState.viewState,
+                            setState,
+                            callback,
+                            fluidToView,
+                            viewToFluid,
+                        );
+                    }
+                    // Always return the result immediately
+                    return actionResult;
+                } else {
+                    throw new Error(
+                        `Action with key ${action} does not match an expected selector action interface`,
                     );
                 }
-                // If there are handles, start a call to update the component map and then call the set state
-                // callback when it has finished to provide the updated map in the state
-                if (newHandles.length > 0) {
-                    const callback = rootCallbackListener(
-                        combinedFetchDataProps.fluidComponentMap,
-                        syncedStateId,
-                        root,
-                        combinedFetchDataProps.runtime,
-                        combinedFetchState.viewState,
-                        setState,
-                        fluidToView,
-                        viewToFluid,
-                    );
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    updateStateAndComponentMap(
-                        newHandles,
-                        combinedFetchDataProps.fluidComponentMap,
-                        true,
-                        syncedStateId,
-                        root,
-                        combinedFetchDataProps.runtime,
-                        combinedFetchState.viewState,
-                        setState,
-                        callback,
-                        fluidToView,
-                        viewToFluid,
-                    );
-                }
-                // Always return the result immediately
-                return actionResult;
             } else {
                 throw new Error(
                     `Action with key ${action} does not
-                 exist in the reducers provided`,
+                 exist in the selectors provided`,
                 );
             }
         },
@@ -375,15 +408,15 @@ export function useReducerFluid<
         combinedSelector[functionName] = {
             function: (
                 fetchState: ICombinedState<SV, SF, C>,
-                handle?: IComponentHandle,
-            ) => fetch(fetchState, functionName, handle),
+                handle?: IFluidHandle,
+            ) => fetch(functionName, fetchState, handle),
         };
     });
 
-    // Retrieve the current state that is stored on the root for this component ID
-    const fluidState = getFluidStateFromRoot(
+    // Retrieve the current state that is stored on the syncedState for this component ID
+    const fluidState = getFluidState(
         syncedStateId,
-        root,
+        syncedState,
         dataProps.fluidComponentMap,
         fluidToView,
     );

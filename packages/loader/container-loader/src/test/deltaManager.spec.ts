@@ -6,7 +6,7 @@
 import assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { DebugLogger } from "@fluidframework/common-utils";
+import { DebugLogger } from "@fluidframework/telemetry-utils";
 import { IClient, IDocumentMessage, IProcessMessageResult, MessageType } from "@fluidframework/protocol-definitions";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-internal/test-loader-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
@@ -195,10 +195,9 @@ describe("Loader", () => {
                     emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
                         // we can ignore our own op
                         if (
-                            messages
-                            && messages.length === 1
+                            messages.length === 1
                             && messages[0].type === MessageType.Operation
-                            && messages[0].contents
+                            && messages[0].contents !== undefined
                             && JSON.parse(messages[0].contents as string) === ignoreContent
                             && canIgnore
                         ) {

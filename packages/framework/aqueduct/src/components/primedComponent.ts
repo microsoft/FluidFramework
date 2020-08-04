@@ -4,20 +4,21 @@
  */
 
 import {
-    IComponent,
-    IComponentHandle,
+    IFluidObject,
+    IFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
-import { ITaskManager } from "@fluidframework/runtime-definitions";
+import { ITaskManager, SchedulerType } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IEvent } from "@fluidframework/common-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { BlobHandle } from "./blobHandle";
-import { SharedComponent } from "./sharedComponent";
+import { PureDataObject } from "./sharedComponent";
 
 /**
- * PrimedComponent is a base component that is primed with a root directory and task manager. It
+ * DataObject is a base component that is primed with a root directory and task manager. It
  * ensures that both are created and ready before you can access it.
  *
  * Having a single root directory allows for easier development. Instead of creating
@@ -29,8 +30,8 @@ import { SharedComponent } from "./sharedComponent";
  * S - the initial state type that the produced component may take during creation
  * E - represents events that will be available in the EventForwarder
  */
-export abstract class PrimedComponent<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
-    extends SharedComponent<P, S, E>
+export abstract class DataObject<P extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
+    extends PureDataObject<P, S, E>
 {
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;
@@ -44,9 +45,9 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
         } else if (url.startsWith(this.bigBlobs)) {
             const value = this.root.get<string>(url);
             if (value === undefined) {
-                return { mimeType: "fluid/component", status: 404, value: `request ${url} not found` };
+                return { mimeType: "fluid/object", status: 404, value: `request ${url} not found` };
             }
-            return { mimeType: "fluid/component", status: 200, value };
+            return { mimeType: "fluid/object", status: 200, value };
         } else {
             return super.request(request);
         }
@@ -81,56 +82,54 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
      * on map doing proper snapshot blob partitioning to reuse non-changing big properties.
      * In future blobs would be implemented as first class citizen, using blob storage APIs
      */
-    protected async writeBlob(blob: string): Promise<IComponentHandle<string>> {
+    protected async writeBlob(blob: string): Promise<IFluidHandle<string>> {
         this.runtime.logger.sendTelemetryEvent({
             eventName: "WriteBlob",
             size: blob.length,
         });
         const path = `${this.bigBlobs}${uuid()}`;
         this.root.set(path, blob);
-        return new BlobHandle(path, this.root, this.runtime.IComponentHandleContext);
+        return new BlobHandle(path, this.root, this.runtime.IFluidHandleContext);
     }
 
     /**
-     * Calls existing, and opened().  Caller is responsible for ensuring this is only invoked once.
+     * Initializes internal objects and calls initialization overrides.
+     * Caller is responsible for ensuring this is only invoked once.
      */
-    protected async initializeInternal(props?: any): Promise<void> {
+    protected async initializeInternal(props?: S): Promise<void> {
         // Initialize task manager.
-        const request = {
-            headers: [[true]],
-            url: `/_scheduler`,
-        };
-
-        this.internalTaskManager = await this.asComponent<ITaskManager>(this.context.containerRuntime.request(request));
+        this.internalTaskManager = await requestFluidObject<ITaskManager>(
+            this.context.containerRuntime,
+            `/${SchedulerType}`);
 
         if (!this.runtime.existing) {
-            // Create a root directory and register it before calling componentInitializingFirstTime
+            // Create a root directory and register it before calling initializingFirstTime
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
-            this.internalRoot.register();
-            await this.componentInitializingFirstTime(props);
+            this.internalRoot.bindToContext();
+            await this.initializingFirstTime(props);
         } else {
-            // Component has a root directory so we just need to set it before calling componentInitializingFromExisting
+            // Component has a root directory so we just need to set it before calling initializingFromExisting
             this.internalRoot = await this.runtime.getChannel(this.rootDirectoryId) as ISharedDirectory;
 
             // This will actually be an ISharedMap if the channel was previously created by the older version of
-            // PrimedComponent which used a SharedMap.  Since SharedMap and SharedDirectory are compatible unless
+            // DataObject which used a SharedMap.  Since SharedMap and SharedDirectory are compatible unless
             // SharedDirectory-only commands are used on SharedMap, this will mostly just work for compatibility.
             if (this.internalRoot.attributes.type === MapFactory.Type) {
                 this.runtime.logger.send({
                     category: "generic",
                     eventName: "MapPrimedComponent",
-                    message: "Legacy document, SharedMap is masquerading as SharedDirectory in PrimedComponent",
+                    message: "Legacy document, SharedMap is masquerading as SharedDirectory in DataObject",
                 });
             }
 
-            await this.componentInitializingFromExisting();
+            await this.initializingFromExisting();
         }
 
         // This always gets called at the end of initialize on FirstTime or from existing.
-        await this.componentHasInitialized();
+        await this.hasInitialized();
     }
 
-    private getUninitializedErrorString(item: string) {
+    protected getUninitializedErrorString(item: string) {
         return `${item} must be initialized before being accessed.`;
     }
 }

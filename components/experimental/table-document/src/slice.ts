@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
 import { CellRange } from "./cellrange";
 import { ConfigKey } from "./configKey";
@@ -21,10 +21,10 @@ export interface ITableSliceConfig {
     maxCol: number;
 }
 
-export class TableSlice extends PrimedComponent<{}, ITableSliceConfig> implements ITable {
+export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         TableSliceType,
         TableSlice,
         [],
@@ -41,15 +41,6 @@ export class TableSlice extends PrimedComponent<{}, ITableSliceConfig> implement
 
     private maybeDoc?: TableDocument;
     private maybeValues?: CellRange;
-
-    public evaluateCell(row: number, col: number): TableDocumentItem {
-        this.validateInSlice(row, col);
-        return this.doc.evaluateCell(row, col);
-    }
-
-    public evaluateFormula(formula: string): TableDocumentItem {
-        return this.doc.evaluateFormula(formula);
-    }
 
     public getCellValue(row: number, col: number): TableDocumentItem {
         this.validateInSlice(row, col);
@@ -109,14 +100,14 @@ export class TableSlice extends PrimedComponent<{}, ITableSliceConfig> implement
         this.doc.removeCols(startCol, numCols);
     }
 
-    protected async componentInitializingFirstTime(initialState?: ITableSliceConfig) {
+    protected async initializingFirstTime(initialState?: ITableSliceConfig) {
         if (!initialState) {
             throw new Error("TableSlice must be created with initial state");
         }
 
         this.root.set(ConfigKey.docId, initialState.docId);
         this.root.set(ConfigKey.name, initialState.name);
-        this.maybeDoc = await this.getComponent_UNSAFE(initialState.docId);
+        this.maybeDoc = await this.requestFluidObject_UNSAFE(initialState.docId);
         this.root.set(initialState.docId, this.maybeDoc.handle);
         await this.ensureDoc();
         this.createValuesRange(
@@ -127,11 +118,11 @@ export class TableSlice extends PrimedComponent<{}, ITableSliceConfig> implement
         );
     }
 
-    protected async componentInitializingFromExisting() {
+    protected async initializingFromExisting() {
         await this.ensureDoc();
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.maybeValues = await this.doc.getRange(this.root.get(ConfigKey.valuesKey));
 
         this.root.on("op", this.emitOp);
@@ -142,13 +133,12 @@ export class TableSlice extends PrimedComponent<{}, ITableSliceConfig> implement
         if (!this.maybeDoc) {
             const docId = this.root.get(ConfigKey.docId);
             // fetch handle from root
-            const handle = this.root.get<IComponentHandle<TableDocument>>(docId);
+            const handle = this.root.get<IFluidHandle<TableDocument>>(docId);
             this.maybeDoc = await handle.get();
         }
     }
 
     private createValuesRange(minCol: number, minRow: number, maxCol: number, maxRow: number) {
-        // tslint:disable-next-line:insecure-random
         const valuesRangeId = `values-${Math.random().toString(36).substr(2)}`;
         this.root.set(ConfigKey.valuesKey, valuesRangeId);
         this.doc.createInterval(valuesRangeId, minRow, minCol, maxRow, maxCol);

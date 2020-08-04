@@ -3,13 +3,14 @@
   "version": "0.13.0",
   "private": true,
   "description": "Documentation for the Fluid Framework",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "scripts": {
     "build": "npm run build:vuepress",
     "build:ci": "npm run build:copy && node updateMarkdown.js && npm run build:ci:vuepress",
     "build:ci:vuepress": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" vuepress build --dest ./dist --cache .cache --workers 7",
-    "build:copy": "npm run build:copy:api && npm run build:copy:fluid",
+    "build:copy": "npm run build:copy:api",
     "build:copy:api": "copyfiles -f \"api-pages/**\" api/",
     "build:copy:fluid": "copyfiles -f \"node_modules/@fluidframework/local-web-host/dist/**\" .vuepress/public/fluid/local-web-host && copyfiles -f \"node_modules/@fluid-example/sudoku/dist/**\" .vuepress/public/fluid/sudoku && copyfiles -f \"node_modules/@fluid-example/diceroller/dist/**\" .vuepress/public/fluid/diceroller && copyfiles -f \"node_modules/@fluid-example/badge/dist/**\" .vuepress/public/fluid/badge",
     "build:external": "npm run build:external:delete && npm run build:external:vuepress",
@@ -23,10 +24,6 @@
     "start:vuepress": "cross-env VUEPRESS_BASE=\"/\" vuepress dev --port 8080 --no-clear-screen --cache .cache"
   },
   "dependencies": {
-    "@fluid-example/badge": "^0.19.0",
-    "@fluid-example/diceroller": "^0.19.0",
-    "@fluid-example/sudoku": "^0.19.0",
-    "@fluidframework/local-web-host": "^0.19.0",
     "@microsoft/api-documenter": "^7.4.6",
     "@microsoft/api-extractor": "^7.7.2",
     "@vuepress/plugin-pwa": "^1.4.0",

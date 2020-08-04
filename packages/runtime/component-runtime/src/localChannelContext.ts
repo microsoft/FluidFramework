@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     ISequencedDocumentMessage,
     ITree,
 } from "@fluidframework/protocol-definitions";
-import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
-import { strongAssert } from "@fluidframework/runtime-utils";
+import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreContext, ISummarizeResult } from "@fluidframework/runtime-definitions";
+import { convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
@@ -28,10 +29,10 @@ export class LocalChannelContext implements IChannelContext {
         id: string,
         registry: ISharedObjectRegistry,
         type: string,
-        runtime: IComponentRuntime,
-        private readonly componentContext: IComponentContext,
+        runtime: IFluidDataStoreRuntime,
+        private readonly componentContext: IFluidDataStoreContext,
         private readonly storageService: IDocumentStorageService,
-        private readonly submitFn: (content: any, localOpMetadata: unknown) => number,
+        private readonly submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
     ) {
         const factory = registry.get(type);
@@ -48,10 +49,6 @@ export class LocalChannelContext implements IChannelContext {
         return this.channel;
     }
 
-    public isRegistered(): boolean {
-        return this.channel.isRegistered();
-    }
-
     public setConnectionState(connected: boolean, clientId?: string) {
         // Connection events are ignored if the component is not yet attached
         if (!this.attached) {
@@ -63,14 +60,14 @@ export class LocalChannelContext implements IChannelContext {
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
-        strongAssert(this.attached, "Local channel must be attached when processing op");
+        assert(this.attached, "Local channel must be attached when processing op");
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.connection!.process(message, local, localOpMetadata);
     }
 
     public reSubmit(content: any, localOpMetadata: unknown) {
-        strongAssert(this.attached, "Local channel must be attached when resubmitting op");
+        assert(this.attached, "Local channel must be attached when resubmitting op");
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.connection!.reSubmit(content, localOpMetadata);
@@ -78,6 +75,12 @@ export class LocalChannelContext implements IChannelContext {
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
         return this.getAttachSnapshot();
+    }
+
+    public async summarize(fullTree: boolean = false): Promise<ISummarizeResult> {
+        const snapshot = this.getAttachSnapshot();
+        const summary = convertToSummaryTree(snapshot, fullTree);
+        return summary;
     }
 
     public getAttachSnapshot(): ITree {

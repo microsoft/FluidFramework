@@ -5,5 +5,6 @@
 
 export * from "./definitions";
 export * from "./redisCache";
+export * from "./redisTenantCache";
 export * from "./restGitService";
 export * from "./riddlerService";

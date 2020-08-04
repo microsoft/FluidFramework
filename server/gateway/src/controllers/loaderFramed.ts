@@ -7,7 +7,7 @@ import {
     BaseHost,
     IBaseHostConfig,
 } from "@fluidframework/base-host";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IProxyLoaderFactory, IResolvedFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { WebWorkerLoaderFactory } from "@fluidframework/execution-context-loader";
@@ -21,7 +21,7 @@ import { DocumentFactory } from "./documentFactory";
 import { seedFromScriptIds } from "./helpers";
 
 async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
-    const component = await baseHost.getComponent(url);
+    const component = await baseHost.requestFluidObject(url);
     if (component === undefined) {
         return;
     }
@@ -38,7 +38,7 @@ export async function initialize(
     scriptIds: string[],
     config: any,
     clientId: string,
-    scope: IComponent,
+    scope: IFluidObject,
 ) {
     console.log(`Loading ${url}`);
 

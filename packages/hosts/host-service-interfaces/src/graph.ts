@@ -31,5 +31,5 @@ export interface IMicrosoftGraph extends IProvideMicrosoftGraph {
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideMicrosoftGraph>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideMicrosoftGraph>> { }
 }

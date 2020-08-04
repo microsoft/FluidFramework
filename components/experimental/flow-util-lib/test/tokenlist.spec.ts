@@ -37,7 +37,6 @@ describe("TokenList", () => {
         });
 
         it("match first token", () => {
-            // tslint:disable-next-line:no-debugger
             const actual = findToken("a b", "a");
             assert.deepStrictEqual(actual, { start: 0, end: 1 });
         });
@@ -65,7 +64,6 @@ describe("TokenList", () => {
             });
         }
 
-        // tslint:disable:mocha-no-side-effect-code
         test([], "a");
         test(["a"], "b");
 
