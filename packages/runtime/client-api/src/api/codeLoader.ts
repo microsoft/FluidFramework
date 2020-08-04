@@ -4,7 +4,7 @@
  */
 
 import * as cell from "@fluidframework/cell";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime } from "@fluidframework/component-runtime";
 import {
     ICodeLoader,

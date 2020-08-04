@@ -15,7 +15,7 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { FluidOjectHandle } from "@fluidframework/component-runtime";
 import {
     IComponentLayout,

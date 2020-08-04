@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";

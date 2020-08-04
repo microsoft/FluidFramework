@@ -27,7 +27,7 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.25.0",
     "@fluidframework/base-host": "^0.25.0",
-    "@fluidframework/component-core-interfaces": "^0.25.0",
+    "@fluidframework/core-interfaces": "^0.25.0",
     "@fluidframework/container-definitions": "^0.25.0",
     "@fluidframework/container-loader": "^0.25.0",
     "@fluidframework/local-driver": "^0.25.0",

@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
 import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";

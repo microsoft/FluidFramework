@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@fluidframework/component-base": "^0.25.0",
-    "@fluidframework/component-core-interfaces": "^0.25.0",
+    "@fluidframework/core-interfaces": "^0.25.0",
     "@fluidframework/component-runtime": "^0.25.0",
     "@fluidframework/framework-experimental": "^0.25.0",
     "@fluidframework/framework-interfaces": "^0.25.0",

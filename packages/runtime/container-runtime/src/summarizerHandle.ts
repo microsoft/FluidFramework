@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { FluidOjectHandle } from "@fluidframework/component-runtime";
-import { IFluidHandle, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 
 // TODO #2425 Expose Summarizer handle as FluidOjectHandle w/ tests
 export class SummarizerHandle extends FluidOjectHandle {

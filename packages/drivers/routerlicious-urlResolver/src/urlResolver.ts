@@ -6,7 +6,7 @@
 import { parse } from "url";
 import {
     IRequest,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,

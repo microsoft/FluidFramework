@@ -36,7 +36,7 @@ export interface IFluidHTMLView extends IProvideFluidHTMLView {
     remove?(): void;
 }
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     /* eslint-disable @typescript-eslint/no-empty-interface */
     export interface IFluidObject extends
         Readonly<Partial<IProvideFluidHTMLView>> { }

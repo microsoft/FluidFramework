@@ -11,7 +11,7 @@ import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { IFluidObject, IRequest, IResponse, IFluidRouter } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
 import {
     IAudience,
     ICodeLoader,

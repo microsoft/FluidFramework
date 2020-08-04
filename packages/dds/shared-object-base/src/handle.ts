@@ -7,7 +7,7 @@ import {
     IFluidHandleContext,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { FluidOjectHandle } from "@fluidframework/component-runtime";
 import { ISharedObject } from "./types";
 

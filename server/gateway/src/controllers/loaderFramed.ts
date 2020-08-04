@@ -7,7 +7,7 @@ import {
     BaseHost,
     IBaseHostConfig,
 } from "@fluidframework/base-host";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IProxyLoaderFactory, IResolvedFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { WebWorkerLoaderFactory } from "@fluidframework/execution-context-loader";

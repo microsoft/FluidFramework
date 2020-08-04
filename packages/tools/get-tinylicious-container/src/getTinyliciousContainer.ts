@@ -4,7 +4,7 @@
  */
 
 import { initializeContainerCode } from "@fluidframework/base-host";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";

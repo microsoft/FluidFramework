@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import {

@@ -45,7 +45,7 @@ First we will declare all our imports. Here is a quick description and use cases
 
 `PrimedComponent` and `PrimedComponentFactory` from [@fluidframework/aqueduct](../api/aqueduct.md) provide helper
 functionality. `IComponentHTMLView` from
-[@fluidframework/component-core-interfaces](../api/component-core-interfaces.md) provides the interface for
+[@fluidframework/core-interfaces](../api/component-core-interfaces.md) provides the interface for
 enabling rendering. `React` and `ReactDOM` enable React use.
 
 ```typescript
@@ -53,7 +53,7 @@ import {
   PrimedComponent,
   PrimedComponentFactory
 } from "@fluidframework/aqueduct";
-import { IComponentHTMLView } from "@fluidframework/component-core-interfaces";
+import { IComponentHTMLView } from "@fluidframework/core-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";

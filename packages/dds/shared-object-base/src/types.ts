@@ -7,7 +7,7 @@ import { ITree, ISequencedDocumentMessage } from "@fluidframework/protocol-defin
 import { IChannel, IChannelServices } from "@fluidframework/datastore-definitions";
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IFluidObject extends Readonly<Partial<IProvideSharedObject>> { }
 }

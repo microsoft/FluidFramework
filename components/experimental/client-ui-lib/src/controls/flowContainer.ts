@@ -4,7 +4,7 @@
  */
 
 import * as api from "@fluid-internal/client-api";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IInk } from "@fluidframework/ink";
 import { ISharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
