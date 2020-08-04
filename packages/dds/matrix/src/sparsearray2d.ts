@@ -15,14 +15,14 @@ export interface IArray2D<T> extends IMatrixReader<T | undefined | null>, IMatri
 // (Lookup table ~17% faster than inlining the bit-twiddling on Node v12 x64)
 // (Array<T> ~2% faster than typed array on Node v12 x64)
 const x8ToInterlacedX16 =
-    /* eslint-disable no-param-reassign */
     new Array(256).fill(0).map((value, i) => {
+        /* eslint-disable no-param-reassign */
         i = (i | (i << 4)) & 0x0f0f; // .... 7654 .... 3210
         i = (i | (i << 2)) & 0x3333; // ..76 ..54 ..32 ..10
         i = (i | (i << 1)) & 0x5555; // .7.6 .5.4 .3.2 .1.0
+        /* eslint-enable no-param-reassign */
         return i;
     });
-/* eslint-enable no-param-reassign */
 
 // Selects individual bytes from a given 32b integer.  The left shift are used to
 // clear upper bits (faster than using masks on Node 10 x64).

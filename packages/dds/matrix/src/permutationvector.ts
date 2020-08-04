@@ -71,9 +71,9 @@ export class PermutationSegment extends BaseSegment {
         return b;
     }
 
-    public canAppend(segment: ISegment) { 
+    public canAppend(segment: ISegment) {
         const asPerm = segment as PermutationSegment;
-        
+
         return this.start === Handle.unallocated
             ? asPerm.start === Handle.unallocated
             : asPerm.start === this.start + this.cachedLength;
@@ -95,7 +95,7 @@ export class PermutationSegment extends BaseSegment {
             /* start: */ this.start === Handle.unallocated
                 ? Handle.unallocated
                 : this.start + pos);
-        
+
         this.cachedLength = pos;
 
         return leafSegment;
@@ -224,12 +224,16 @@ export class PermutationVector extends Client {
         // SharedMatrix must verify that 'localSeq' used to originally submit this op is still the
         // most recently pending write to the row/col handle before calling 'getPositionForResubmit'
         // to ensure the handle has not been removed or recycled (See comments in `resubmitCore()`).
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         assert(containingSegment! !== undefined && containingSegment.start >= Handle.valid,
             "Caller must ensure 'handle' has not been removed/recycled.");
 
         // Once we know the current position of the handle, we can use the MergeTree to get the segment
         // containing this position and use 'findReconnectionPosition' to adjust for the local ops that
         // have not yet been submitted.
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.findReconnectionPostition(containingSegment, localSeq) + containingOffset!;
     }
 
