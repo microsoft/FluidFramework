@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { parse } from "url";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { Deferred } from "@fluidframework/common-utils";

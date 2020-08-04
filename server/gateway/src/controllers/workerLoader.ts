@@ -9,7 +9,7 @@ import {
     IFluidRunnable,
     IRequest,
     IResponse,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
