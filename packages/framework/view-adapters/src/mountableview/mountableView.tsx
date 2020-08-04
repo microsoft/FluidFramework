@@ -78,10 +78,10 @@ export class MountableView implements IFluidMountableView {
             return;
         }
 
-        // The ReactDOM.render call won't work if the adapted fluid object is from a separate bundle.
+        // The ReactDOM.render call won't work if the adapted Fluid object is from a separate bundle.
         // This is the usage scenario in webpack-fluid-loader currently in the case where the package we're
         // loading exports an IFluidDataStoreFactory (rather than an IRuntimeFactory) because it will wrap the
-        // fluid object in a factory of its own creation.  So, prioritizing this below IFluidHTMLView
+        // Fluid object in a factory of its own creation.  So, prioritizing this below IFluidHTMLView
         // temporarily, so that we have the best chance of cross-bundle adaptation.
         // Try to get a React view if we don't have one already.
         if (this.reactView === undefined && React.isValidElement(this.view)) {

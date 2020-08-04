@@ -22,7 +22,7 @@ export interface IReactViewAdapterProps {
  */
 export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
     /**
-     * Test whether the given fluid object can be successfully adapted by a ReactViewAdapter.
+     * Test whether the given Fluid object can be successfully adapted by a ReactViewAdapter.
      * @param view - the fluid object to test if it is adaptable.
      */
     public static canAdapt(view: IFluidObject) {

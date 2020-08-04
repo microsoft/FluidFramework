@@ -26,7 +26,7 @@ Removed from IFluidDataStoreContext  & IContainerRuntime.
 Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altogether in same release (more info to follow)
 
 ### IComponent and IComponent Interfaces Removed
-In 0.24 IComponent and IComponent interfaces we're deprecated, they are being removed in this build. Please move to IFluidObject and IFluidObject interfaces.
+In 0.24 IComponent and IComponent interfaces were deprecated, they are being removed in this build. Please move to IFluidObject and IFluidObject interfaces.
 
 ### odsp-utils Changes
 To support additional authentication scenarios, the signature and/or name of a few auth-related functions was modified.
