@@ -5,7 +5,12 @@
 
 import assert from "assert";
 import { IRequest } from "@fluidframework/component-core-interfaces";
-import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
+import {
+    IFluidCodeDetails,
+    IProxyLoaderFactory,
+    AttachState,
+    IDetachedContainerSource,
+} from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
@@ -27,6 +32,10 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         package: "detachedContainerTestPackage1",
         config: {},
     };
+    const source: IDetachedContainerSource = {
+        codeDetails,
+        useSnapshot: false,
+    };
     const mapId1 = "mapId1";
     const mapId2 = "mapId2";
 
@@ -38,7 +47,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         `${name} should be ${attached ? "Attached" : "Detached"}`;
 
     async function createDetachedContainerAndGetRootComponent() {
-        const container = await loader.createDetachedContainer(codeDetails);
+        const container = await loader.createDetachedContainer(source);
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
         const defaultComponent = response.value;

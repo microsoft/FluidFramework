@@ -106,7 +106,8 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await context.realize();
@@ -127,7 +128,8 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await context.realize();
@@ -148,7 +150,8 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextA.realize();
@@ -169,7 +172,8 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextB.realize();
@@ -190,7 +194,8 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextB.realize();
@@ -208,7 +213,8 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextC.realize();
@@ -229,7 +235,8 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextFake.realize();
@@ -250,7 +257,8 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextFake.realize();
@@ -271,7 +279,8 @@ describe("Component Creation Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
-                attachCb);
+                attachCb,
+                undefined);
 
             try {
                 await contextC.realize();

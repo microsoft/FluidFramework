@@ -141,6 +141,18 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
+     * Loads the given channel. This is similar to load however it is used to load a local channel from a snapshot.
+     * @param storage - Storage service to read objects at a given path. This is not connected to storage
+     *  endpoint but have blobs to read from.
+    */
+    public async loadLocal(
+        objectStorage: IChannelStorageService): Promise<void> {
+        await this.loadCore(
+            undefined,
+            objectStorage);
+    }
+
+    /**
      * Initializes the object as a local, non-shared object. This object can become shared after
      * it is attached to the document.
      */
@@ -200,7 +212,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param services - Storage used by the shared object
      */
     protected abstract loadCore(
-        branchId: string,
+        branchId: string | undefined,
         services: IChannelStorageService): Promise<void>;
 
     /**

@@ -202,7 +202,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
      * @returns - promise that resolved when the load is completed
      */
     protected async loadCore(
-        branchId: string,
+        branchId: string | undefined,
         storage: IChannelStorageService): Promise<void> {
         const rawContent = await storage.read(snapshotFileName);
 

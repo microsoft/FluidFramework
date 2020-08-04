@@ -210,7 +210,7 @@ export class ConsensusRegisterCollection<T>
     }
 
     protected async loadCore(
-        branchId: string,
+        branchId: string | undefined,
         storage: IChannelStorageService,
     ): Promise<void> {
         const header = await storage.read(snapshotFileName);

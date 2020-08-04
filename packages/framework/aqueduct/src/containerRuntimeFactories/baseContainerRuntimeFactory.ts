@@ -77,7 +77,8 @@ export class BaseContainerRuntimeFactory implements
         // we register the runtime so developers of providers can use it in the factory pattern.
         dc.register(IContainerRuntime, runtime);
 
-        if (!runtime.existing) {
+        // Don't initialize if existing on storage or loaded detached from snapshot(ex. draft mode).
+        if (!(runtime.existing || context.baseSnapshot)) {
             // If it's the first time through.
             await this.containerInitializingFirstTime(runtime);
         }

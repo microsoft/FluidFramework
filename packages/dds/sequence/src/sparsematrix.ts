@@ -19,6 +19,7 @@ import {
     Jsonable,
     JsonablePrimitive,
     IChannelFactory,
+    IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { pkgVersion } from "./packageVersion";
@@ -361,6 +362,17 @@ export class SparseMatrixFactory implements IChannelFactory {
     ): Promise<ISharedObject> {
         const sharedObject = new SparseMatrix(runtime, id, attributes);
         await sharedObject.load(branchId, services);
+        return sharedObject;
+    }
+
+    public async loadLocal(
+        runtime: IFluidDataStoreRuntime,
+        id: string,
+        objectStorage: IChannelStorageService,
+        attributes: IChannelAttributes,
+    ): Promise<ISharedObject> {
+        const sharedObject = new SparseMatrix(runtime, id, attributes);
+        await sharedObject.loadLocal(objectStorage);
         return sharedObject;
     }
 

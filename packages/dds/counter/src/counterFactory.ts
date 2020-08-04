@@ -8,6 +8,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelServices,
     IChannelFactory,
+    IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
 import { SharedCounter } from "./counter";
 import { ISharedCounter } from "./interfaces";
@@ -41,6 +42,17 @@ export class CounterFactory implements IChannelFactory {
         attributes: IChannelAttributes): Promise<ISharedCounter> {
         const counter = new SharedCounter(id, runtime, attributes);
         await counter.load(branchId, services);
+        return counter;
+    }
+
+    public async loadLocal(
+        runtime: IFluidDataStoreRuntime,
+        id: string,
+        objectStorage: IChannelStorageService,
+        attributes: IChannelAttributes,
+    ): Promise<ISharedCounter> {
+        const counter = new SharedCounter(id, runtime, attributes);
+        await counter.loadLocal(objectStorage);
         return counter;
     }
 

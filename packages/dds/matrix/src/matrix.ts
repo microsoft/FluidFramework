@@ -462,7 +462,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         debug(`${this.id} is now disconnected`);
     }
 
-    protected async loadCore(branchId: string, storage: IChannelStorageService) {
+    protected async loadCore(branchId: string | undefined, storage: IChannelStorageService) {
         try {
             await this.rows.load(this.runtime, new ObjectStoragePartition(storage, SnapshotPath.rows), branchId);
             await this.cols.load(this.runtime, new ObjectStoragePartition(storage, SnapshotPath.cols), branchId);

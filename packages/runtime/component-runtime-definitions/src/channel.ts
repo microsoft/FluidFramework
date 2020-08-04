@@ -184,4 +184,21 @@ export interface IChannelFactory {
      * for consistency.
      */
     create(runtime: IFluidDataStoreRuntime, id: string): IChannel;
+
+    /**
+     * Loads the given channel. This is similar to load however it is used to load a local channel from a snapshot.
+     * This call is only ever invoked internally as the only thing that is ever directly loaded is the document itself.
+     * @param runtime - Component runtime containing state/info/helper methods about the component.
+     * @param id - ID of the channel.
+     * @param storage - Storage service to read objects at a given path. This is not connected to storage
+     *  endpoint but have blobs to read from.
+     * @param channelAttributes - The attributes for the the channel to be loaded.
+     * @returns The loaded object
+     */
+    loadLocal(
+        runtime: IFluidDataStoreRuntime,
+        id: string,
+        storage: IChannelStorageService,
+        channelAttributes: Readonly<IChannelAttributes>,
+    ): Promise<IChannel>;
 }

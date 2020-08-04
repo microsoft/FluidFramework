@@ -8,6 +8,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelServices,
     IChannelFactory,
+    IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { Ink } from "./ink";
@@ -58,6 +59,20 @@ export class InkFactory implements IChannelFactory {
         const ink = new Ink(runtime, id, attributes);
         await ink.load(branchId, services);
 
+        return ink;
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.loadLocal}
+     */
+    public async loadLocal(
+        runtime: IFluidDataStoreRuntime,
+        id: string,
+        objectStorage: IChannelStorageService,
+        attributes: IChannelAttributes,
+    ): Promise<ISharedObject> {
+        const ink = new Ink(runtime, id, attributes);
+        await ink.loadLocal(objectStorage);
         return ink;
     }
 

@@ -60,7 +60,8 @@ describe("Component Context Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
-                attachCb);
+                attachCb,
+                undefined);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();
@@ -92,7 +93,8 @@ describe("Component Context Tests", () => {
                 storage,
                 scope,
                 new SummaryTracker("", 0, 0),
-                attachCb);
+                attachCb,
+                undefined);
 
             await localComponentContext.realize()
                 .catch((error) => {
@@ -121,7 +123,8 @@ describe("Component Context Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
-                attachCb);
+                attachCb,
+                undefined);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();

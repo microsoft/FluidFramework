@@ -487,7 +487,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     protected async loadCore(
-        branchId: string,
+        branchId: string | undefined,
         storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
 

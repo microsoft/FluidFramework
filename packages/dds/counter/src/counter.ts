@@ -135,7 +135,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * @returns - promise that resolved when the load is completed
      */
     protected async loadCore(
-        branchId: string,
+        branchId: string | undefined,
         storage: IChannelStorageService): Promise<void> {
         const rawContent = await storage.read(snapshotFileName);
 

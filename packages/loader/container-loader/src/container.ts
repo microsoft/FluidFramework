@@ -29,6 +29,7 @@ import {
     ContainerWarning,
     IThrottlingWarning,
     AttachState,
+    IDetachedContainerSource,
 } from "@fluidframework/container-definitions";
 import { performanceNow } from "@fluidframework/common-utils";
 import {
@@ -55,6 +56,7 @@ import {
     isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
+    readAndParseFromBlobs,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import {
@@ -193,7 +195,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         options: any,
         scope: IFluidObject & IFluidObject,
         loader: Loader,
-        source: IFluidCodeDetails,
+        source: IDetachedContainerSource,
         serviceFactory: IDocumentServiceFactory,
         urlResolver: IUrlResolver,
         logger?: ITelemetryBaseLogger,
@@ -207,8 +209,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             urlResolver,
             {},
             logger);
-        await container.createDetached(source);
-
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        source.useSnapshot ? await container.createDetachedFromSnapshot(JSON.parse(source.snapshot)) :
+            await container.createDetached(source.codeDetails);
         return container;
     }
 
@@ -993,6 +996,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.propagateConnectionState();
     }
 
+    private async createDetachedFromSnapshot(snapshotTree: ISnapshotTree) {
+        const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
+        assert.strictEqual(attributes.sequenceNumber, 0, "Seq number in detached container should be 0!!");
+        this.attachDeltaManagerOpHandler(attributes);
+
+        // ...load in the existing quorum
+        // Initialize the protocol handler
+        this.protocolHandler =
+            await this.loadAndInitializeProtocolState(attributes, undefined, snapshotTree);
+
+        await this.createDetachedContext(attributes, snapshotTree);
+
+        this.loaded = true;
+
+        this.propagateConnectionState();
+    }
+
     private async getDocumentStorageService(): Promise<IDocumentStorageService> {
         if (!this.service) {
             throw new Error("Not attached");
@@ -1002,7 +1022,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async getDocumentAttributes(
-        storage: IDocumentStorageService,
+        storage: IDocumentStorageService | undefined,
         tree: ISnapshotTree | undefined,
     ): Promise<IDocumentAttributes> {
         if (!tree) {
@@ -1019,7 +1039,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             ? tree.trees[".protocol"].blobs.attributes
             : tree.blobs[".attributes"];
 
-        const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
+        const attributes = storage ? await readAndParse<IDocumentAttributes>(storage, attributesHash)
+            : readAndParseFromBlobs<IDocumentAttributes>(tree.trees[".protocol"].blobs, attributesHash);
 
         // Back-compat for older summaries with no term
         if (attributes.term === undefined) {
@@ -1031,7 +1052,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async loadAndInitializeProtocolState(
         attributes: IDocumentAttributes,
-        storage: IDocumentStorageService,
+        storage: IDocumentStorageService | undefined,
         snapshot: ISnapshotTree | undefined,
     ): Promise<ProtocolOpHandler> {
         let members: [string, ISequencedClient][] = [];
@@ -1040,11 +1061,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         if (snapshot) {
             const baseTree = ".protocol" in snapshot.trees ? snapshot.trees[".protocol"] : snapshot;
-            [members, proposals, values] = await Promise.all([
-                readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers!),
-                readAndParse<[number, ISequencedProposal, string[]][]>(storage, baseTree.blobs.quorumProposals!),
-                readAndParse<[string, ICommittedProposal][]>(storage, baseTree.blobs.quorumValues!),
-            ]);
+            if (storage) {
+                [members, proposals, values] = await Promise.all([
+                    readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers),
+                    readAndParse<[number, ISequencedProposal, string[]][]>(storage, baseTree.blobs.quorumProposals),
+                    readAndParse<[string, ICommittedProposal][]>(storage, baseTree.blobs.quorumValues),
+                ]);
+            } else {
+                members = readAndParseFromBlobs<[string, ISequencedClient][]>(snapshot.trees[".protocol"].blobs,
+                    baseTree.blobs.quorumMembers);
+                proposals = readAndParseFromBlobs<[number, ISequencedProposal, string[]][]>(
+                    snapshot.trees[".protocol"].blobs, baseTree.blobs.quorumProposals);
+                values = readAndParseFromBlobs<[string, ICommittedProposal][]>(snapshot.trees[".protocol"].blobs,
+                    baseTree.blobs.quorumValues);
+            }
         }
 
         const protocolHandler = this.initializeProtocolState(
@@ -1491,7 +1521,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     /**
      * Creates a new, unattached container context
      */
-    private async createDetachedContext(attributes: IDocumentAttributes) {
+    private async createDetachedContext(attributes: IDocumentAttributes, snapshot?: ISnapshotTree) {
         this.pkg = this.getCodeDetailsFromQuorum();
         if (!this.pkg) {
             throw new Error("pkg should be provided in create flow!!");
@@ -1507,7 +1537,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.scope,
             this.codeLoader,
             runtimeFactory,
-            { id: null, blobs: {}, commits: {}, trees: {} },    // TODO this will be from the offline store
+            snapshot ?? null,
             attributes,
             this.blobManager,
             new DeltaManagerProxy(this._deltaManager),

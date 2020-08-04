@@ -36,7 +36,8 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IFluidRout
     public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         let root: ISharedMap;
         let scheduler: ConsensusRegisterCollection<string | null>;
-        if (!runtime.existing) {
+        // Don't create if existing on storage or loaded detached from snapshot(ex. draft mode).
+        if (!(runtime.existing || runtime.baseSnapshot)) {
             root = SharedMap.create(runtime, "root");
             root.bindToContext();
             scheduler = ConsensusRegisterCollection.create(runtime);

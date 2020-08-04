@@ -9,6 +9,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelServices,
     IChannelFactory,
+    IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { pkgVersion } from "./packageVersion";
@@ -52,6 +53,17 @@ export class SharedStringFactory implements IChannelFactory {
         attributes: IChannelAttributes): Promise<SharedString> {
         const sharedString = new SharedString(runtime, id, attributes);
         await sharedString.load(branchId, services);
+        return sharedString;
+    }
+
+    public async loadLocal(
+        runtime: IFluidDataStoreRuntime,
+        id: string,
+        objectStorage: IChannelStorageService,
+        attributes: IChannelAttributes,
+    ): Promise<SharedString> {
+        const sharedString = new SharedString(runtime, id, attributes);
+        await sharedString.loadLocal(objectStorage);
         return sharedString;
     }
 
@@ -101,6 +113,17 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
         return sharedSeq;
     }
 
+    public async loadLocal(
+        runtime: IFluidDataStoreRuntime,
+        id: string,
+        objectStorage: IChannelStorageService,
+        attributes: IChannelAttributes,
+    ): Promise<ISharedObject> {
+        const sharedSeq = new SharedObjectSequence<object>(runtime, id, attributes);
+        await sharedSeq.loadLocal(objectStorage);
+        return sharedSeq;
+    }
+
     public create(document: IFluidDataStoreRuntime, id: string): ISharedObject {
         const sharedString = new SharedObjectSequence(document, id, this.attributes);
         sharedString.initializeLocal();
@@ -144,6 +167,17 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
         attributes: IChannelAttributes): Promise<ISharedObject> {
         const sharedSeq = new SharedNumberSequence(runtime, id, attributes);
         await sharedSeq.load(branchId, services);
+        return sharedSeq;
+    }
+
+    public async loadLocal(
+        runtime: IFluidDataStoreRuntime,
+        id: string,
+        objectStorage: IChannelStorageService,
+        attributes: IChannelAttributes,
+    ): Promise<ISharedObject> {
+        const sharedSeq = new SharedNumberSequence(runtime, id, attributes);
+        await sharedSeq.loadLocal(objectStorage);
         return sharedSeq;
     }
 

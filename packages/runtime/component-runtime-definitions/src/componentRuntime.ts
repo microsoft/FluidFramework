@@ -22,6 +22,7 @@ import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
+    ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import { IInboundSignalMessage, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
 import { IChannel } from ".";
@@ -50,6 +51,8 @@ export interface IFluidDataStoreRuntime extends
     readonly documentId: string;
 
     readonly existing: boolean;
+
+    readonly baseSnapshot: ISnapshotTree | undefined;
 
     readonly parentBranch: string | null;
 

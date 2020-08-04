@@ -8,6 +8,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelServices,
     IChannelFactory,
+    IChannelStorageService,
 } from "@fluidframework/component-runtime-definitions";
 import { SharedCell } from "./cell";
 import { ISharedCell } from "./interfaces";
@@ -41,6 +42,17 @@ export class CellFactory implements IChannelFactory {
         attributes: IChannelAttributes): Promise<ISharedCell> {
         const cell = new SharedCell(id, runtime, attributes);
         await cell.load(branchId, services);
+        return cell;
+    }
+
+    public async loadLocal(
+        runtime: IFluidDataStoreRuntime,
+        id: string,
+        objectStorage: IChannelStorageService,
+        attributes: IChannelAttributes,
+    ): Promise<ISharedCell> {
+        const cell = new SharedCell(id, runtime, attributes);
+        await cell.loadLocal(objectStorage);
         return cell;
     }
 

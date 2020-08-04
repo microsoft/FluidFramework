@@ -47,7 +47,7 @@ import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in component attributes.
-const currentSnapshotFormatVersion = "0.1";
+export const currentSnapshotFormatVersion = "0.1";
 
 /**
  * Added IFluidDataStoretAttributes similar to IChannelAttributes which will tell
@@ -620,12 +620,14 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
         scope: IFluidObject & IFluidObject,
         summaryTracker: SummaryTracker,
         bindComponent: (componentRuntime: IFluidDataStoreChannel) => void,
+        private readonly snapshotTree: ISnapshotTree | undefined,
         /**
          * @deprecated 0.16 Issue #1635 Use the IFluidDataStoreFactory creation methods instead to specify initial state
          */
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, BindState.NotBound, bindComponent, pkg);
+        super(runtime, id, false, storage, scope, summaryTracker,
+            snapshotTree ? BindState.Bound : BindState.NotBound, bindComponent, pkg);
         this.attachListeners();
     }
 
@@ -667,7 +669,7 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
         return {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             pkg: this.pkg!,
-            snapshot: undefined,
+            snapshot: this.snapshotTree,
         };
     }
 }
