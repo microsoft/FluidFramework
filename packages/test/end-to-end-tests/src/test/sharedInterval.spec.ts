@@ -17,7 +17,7 @@ import {
     SharedString,
 } from "@fluidframework/sequence";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
     createLocalLoader,
     OpProcessingController,

@@ -25,7 +25,7 @@ import {
 import {
     IFluidDataStoreRuntime,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import {
     IContainerRuntime,
 } from "@fluidframework/container-runtime-definitions";

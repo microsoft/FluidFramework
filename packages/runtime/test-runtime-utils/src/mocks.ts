@@ -43,7 +43,7 @@ import {
     IDeltaHandler,
     IChannelStorageService,
     IChannelServices,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
 import { IFluidDataStoreChannel, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";

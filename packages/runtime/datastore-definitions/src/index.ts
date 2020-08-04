@@ -4,7 +4,7 @@
  */
 
 export * from "./channel";
-export * from "./componentRuntime";
+export * from "./dataStoreRuntime";
 export * from "./jsonable";
 export * from "./serializable";
 export * from "./storage";

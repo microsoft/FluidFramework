@@ -8,7 +8,7 @@ import { AsJsonable, Jsonable, JsonablePrimitive } from "./jsonable";
 
 /**
  * A union of the types that Fluid can intrinsically serialize, which is any type is that is
- * Json serializable + Json serializable objects/arrays with IComponentHandles at the leaves.
+ * Json serializable + Json serializable objects/arrays with IFluidHandles at the leaves.
  *
  * Convenient when declaring type constraints, such as `<T extends Serializable>`.
  *

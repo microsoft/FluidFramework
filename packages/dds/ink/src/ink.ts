@@ -15,7 +15,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelAttributes,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import { InkFactory } from "./inkFactory";

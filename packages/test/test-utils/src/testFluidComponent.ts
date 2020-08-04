@@ -11,7 +11,7 @@ import {
     IFluidDataStoreFactory,
     IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ITestFluidComponent } from "./interfaces";
 
 /**
