@@ -21,7 +21,7 @@ import {
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { ISummarizer, Summarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
 
-const summarizerClientType = "summarizer";
+export const summarizerClientType = "summarizer";
 
 interface ITrackedClient {
     clientId: string;

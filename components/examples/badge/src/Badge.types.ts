@@ -2,24 +2,30 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IIconProps, IColor } from "office-ui-fabric-react";
+import { IColor } from "office-ui-fabric-react";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
 import { SharedObjectSequence } from "@fluidframework/sequence";
+import { AsSerializable } from "@fluidframework/component-runtime-definitions";
 
 export interface IBadgeType {
     key: string;
     text: string;
-    iconProps: IIconProps;
+    iconProps: IBadgeIcon;
 }
-
+export interface IBadgeIcon {
+    // When adding new instances, please ensure the types will still
+    // be a subset of IIconProps
+    iconName: string;
+    style: {color: string};
+}
 export interface IBadgeHistory {
     value: IBadgeType;
     timestamp: Date;
 }
 
 export interface IBadgeModel {
-    currentCell: SharedCell;
+    currentCell: SharedCell<AsSerializable<IBadgeType>>;
     optionsMap: SharedMap;
     historySequence: SharedObjectSequence<IBadgeHistory>;
 }

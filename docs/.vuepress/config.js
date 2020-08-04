@@ -10,10 +10,10 @@ const process = require("process");
 const INCLUDE_PATH = ".vuepress/includes/";
 const BASE_URL = process.env.BASE_URL || "https://fluid-docs.azurewebsites.net";
 const DOCS_AUDIENCE = process.env.DOCS_AUDIENCE || "";
-const THIS_VERSION = process.env.THIS_VERSION || "0.19";
-const MASTER_BRANCH_VERSION = process.env.MASTER_BRANCH_VERSION || "0.19";
-const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.18";
-const N1_VERSION = process.env.N1_VERSION || "0.17";
+const THIS_VERSION = process.env.THIS_VERSION || "0.25";
+const MASTER_BRANCH_VERSION = process.env.MASTER_BRANCH_VERSION || "0.25";
+const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.24";
+const N1_VERSION = process.env.N1_VERSION || "0.23";
 const VUEPRESS_BASE = process.env.VUEPRESS_BASE || `/versions/${THIS_VERSION}/`;
 const RELEASE_URL = BASE_URL;
 const N1_URL = `${BASE_URL}/versions/${N1_VERSION}/`;
@@ -93,10 +93,9 @@ const packageFromFilePath = (filepath) => {
 const getNav = () => {
     const nav = [
         { text: "What is Fluid?", link: "/what-is-fluid.md" },
-        { text: "Docs", link: "/docs/getting-started.md" },
-        { text: "Tutorials", link: "/tutorials/" },
-        // { text: "Ecosystem", link: "/ecosystem/" },
+        { text: "Docs", link: "/docs/" },
         { text: "API", link: "/api/" },
+        { text: "Community", link: "/community/" },
         {
             text: "Versions",
             items: [
@@ -156,7 +155,7 @@ const getApiSidebar = () => {
     }
 
     // console.log(apiCategories);
-    const categoryToLog = "Framework";
+    const categoryToLog = "Unknown";
     console.log(`Packages with ${categoryToLog} category:`);
     console.log(apiCategories.get(categoryToLog));
 
@@ -173,16 +172,37 @@ const getApiSidebar = () => {
     return apiSidebar;
 }
 
+const getCommunitySidebar = () => {
+    return [
+        "",
+    ];
+}
+
 const getDocsSidebar = () => {
     return [
         {
-            title: "Installation",
+            title: "Roadmap",
+            collapsable: false,
+            path: "roadmap.md",
+        },
+        {
+            title: "Getting started",
             collapsable: false,
             // path: "",
             children: [
-                "getting-started.md",
+                "",
+                "dev-env.md",
                 "hello-world.md",
-                "create-a-new-fluid-component",
+                "playground.md",
+                "learn.md",
+            ]
+        },
+        {
+            title: "Recipes and examples",
+            collapsable: false,
+            children: [
+                "data-stores.md",
+                "view-adapters.md",
             ]
         },
         {
@@ -190,10 +210,13 @@ const getDocsSidebar = () => {
             collapsable: false,
             children: [
                 "guide.md",
+                "architecture.md",
                 "dds.md",
-                "components.md",
+                "interfaces.md",
                 "aqueduct.md",
-                "component-interfaces.md",
+                "hosts.md",
+                "containers-runtime.md",
+                "server.md",
             ]
         },
         {
@@ -204,11 +227,11 @@ const getDocsSidebar = () => {
                 // "overview",
                 "SharedDirectory.md",
                 "SharedMap.md",
-                "SharedCounter.md",
                 "SharedCell.md",
+                "SharedCounter.md",
                 {
                     title: "Sequences",
-                    path: "sequences.md",
+                    path: "sequences",
                     children: [
                         "SharedNumberSequence.md",
                         "SharedObjectSequence.md",
@@ -220,43 +243,22 @@ const getDocsSidebar = () => {
             ]
         },
         {
-            title: "Component model",
+            title: "Testing",
             collapsable: false,
             children: [
-                "component-design-principles.md",
+                "testing.md",
             ]
         },
         {
-            title: "Guides",
-            collapsable: false,
-            children: [
-                "visual-component.md",
-                // "data-component.md",
-                // "embed-components.md",
-                // "cross-component.md",
-                // "component-patterns.md",
-                // "component-collections.md",
-                // "bots.md",
-                // "component-best-practices.md",
-            ]
-        },
-        {
-            title: "Advanced",
+            title: "For contributors",
             collapsable: true,
             children: [
-                "tob.md",
-                "dds-anatomy.md",
-                "container-and-component-loading.md",
-            ]
-        },
-        {
-            title: "Misc",
-            collapsable: true,
-            // path: "",
-            children: [
+                "conduct.md",
                 "release-process.md",
                 "breaking-changes.md",
                 "compatibility.md",
+                "tob.md",
+                "dds-anatomy.md",
                 "doc-system.md",
             ]
         },
@@ -298,6 +300,7 @@ const getAllSidebars = () => {
         "/docs/": getDocsSidebar(),
         "/tutorials/": getTutorialsSidebar(),
         "/api/": getApiSidebar(),
+        "/community/": getCommunitySidebar(),
         "/how/": getHowSidebar(),
     };
 }

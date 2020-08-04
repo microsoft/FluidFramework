@@ -170,7 +170,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IFluidRout
             const registersP: Promise<void>[] = [];
             for (const taskUrl of taskUrls) {
                 debug(`Registering ${taskUrl}`);
-                // tslint:disable no-null-keyword
                 registersP.push(this.writeCore(taskUrl, null));
             }
             await Promise.all(registersP);

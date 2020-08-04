@@ -9,8 +9,6 @@ import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframew
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    interface IComponent extends Readonly<Partial<IProvideSharedObject>> { }
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IFluidObject extends Readonly<Partial<IProvideSharedObject>> { }
 }
 
