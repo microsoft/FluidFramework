@@ -22,13 +22,3 @@ export function getTenantIdFromRequest(params: Params) {
 
     return "-";
 }
-
-export function isValidJson(message: string) {
-    let item;
-    try {
-        item = JSON.parse(message);
-    } catch (e) {
-        return item;
-    }
-    return item;
-}

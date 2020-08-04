@@ -9,7 +9,7 @@ import express from "express";
 import morgan from "morgan";
 import * as winston from "winston";
 // eslint-disable-next-line import/no-internal-modules
-import { getTenantIdFromRequest, isValidJson } from "../alfred/utils";
+import { getTenantIdFromRequest } from "../alfred/utils";
 import * as api from "./api";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -19,10 +19,7 @@ const split = require("split");
  * Basic stream logging interface for libraries that require a stream to pipe output to (re: Morgan)
  */
 const stream = split().on("data", (message) => {
-    const logObject = isValidJson(message);
-    if (logObject !== undefined) {
-        winston.info(message, { logObject });
-    } else {
+    if (message !== undefined) {
         winston.info(message);
     }
 });
@@ -45,7 +42,7 @@ export function create(
     app.set("view engine", "hjs");
     if (loggerFormat === "json") {
         app.use(morgan((tokens, req, res) => {
-            const requestLogObject = {
+            const logObject = {
                 method: tokens.method(req, res),
                 url: tokens.url(req, res),
                 status: tokens.status(req, res),
@@ -55,12 +52,21 @@ export function create(
                 serviceName: "riddler",
                 eventName: "http_requests",
              };
-             return JSON.stringify(requestLogObject);
-        }, { stream }));
+
+             const message = [
+                logObject.method,
+                logObject.url,
+                logObject.status,
+                logObject.contentLength, "-",
+                logObject.responseTime, "ms",
+             ].join(" ");
+
+             winston.info(message, { logObject });
+             return undefined;
+        }));
     } else {
         app.use(morgan(loggerFormat, { stream }));
     }
-    app.use(morgan(loggerFormat, { stream }));
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(

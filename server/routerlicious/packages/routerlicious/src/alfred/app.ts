@@ -20,7 +20,7 @@ import morgan from "morgan";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { getTenantIdFromRequest, isValidJson } from "./utils";
+import { getTenantIdFromRequest } from "./utils";
 import * as alfredRoutes from "./routes";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -30,10 +30,7 @@ const split = require("split");
  * Basic stream logging interface for libraries that require a stream to pipe output to (re: Morgan)
  */
 const stream = split().on("data", (message) => {
-    const logObject = isValidJson(message);
-    if (logObject !== undefined) {
-        winston.info(message, { logObject });
-    } else {
+    if (message !== undefined) {
         winston.info(message);
     }
 });
@@ -58,7 +55,7 @@ export function create(
     const loggerFormat = config.get("logger:morganFormat");
     if (loggerFormat === "json") {
         app.use(morgan((tokens, req, res) => {
-            const requestLogObject = {
+            const logObject = {
                 method: tokens.method(req, res),
                 url: tokens.url(req, res),
                 status: tokens.status(req, res),
@@ -68,7 +65,16 @@ export function create(
                 serviceName: "alfred",
                 eventName: "http_requests",
              };
-             return JSON.stringify(requestLogObject);
+             const message = [
+                logObject.method,
+                logObject.url,
+                logObject.status,
+                logObject.contentLength, "-",
+                logObject.responseTime, "ms",
+             ].join(" ");
+
+             winston.info(message, { logObject });
+             return undefined;
         }, { stream }));
     } else {
         app.use(morgan(loggerFormat, { stream }));
