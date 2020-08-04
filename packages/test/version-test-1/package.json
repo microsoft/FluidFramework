@@ -36,6 +36,7 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.25.0",
     "@fluidframework/base-host": "^0.25.0",
+    "@fluidframework/common-utils": "^0.21.0",
     "@fluidframework/view-interfaces": "^0.25.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
@@ -60,7 +61,6 @@
     "eslint-plugin-prefer-arrow": "~1.1.7",
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
-
     "jest": "^24.9.0",
     "jest-junit": "^10.0.0",
     "jest-puppeteer": "^4.3.0",
