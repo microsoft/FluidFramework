@@ -48,10 +48,6 @@ class InsecureTinyliciousUrlResolver implements IUrlResolver {
         return "";
     }
 
-    public createCreateNewRequest(fileName: string): IRequest {
-        return { url: fileName };
-    }
-
     private auth(documentId: string) {
         const claims: ITokenClaims = {
             documentId,
