@@ -49,11 +49,7 @@ class SmdeContainerFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            await Promise.all([
-                runtime._createDataStore(defaultComponentId, defaultComponent).then((componentRuntime) => {
-                    componentRuntime.bindToContext();
-                }),
-            ]);
+            await runtime.createRootDataStore(defaultComponentId, defaultComponent);
         }
 
         return runtime;

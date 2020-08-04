@@ -76,7 +76,7 @@ export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> impl
         minCol: number,
         maxRow: number,
         maxCol: number): Promise<ITable> {
-        const component = await TableSlice.getFactory()._createDataStore(
+        const component = await TableSlice.getFactory().createInstance(
             this.context,
             { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol },
         ) as TableSlice;

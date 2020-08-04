@@ -486,11 +486,7 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            await Promise.all([
-                runtime._createDataStore(defaultComponentId, ScribeFactory.type).then((componentRuntime) => {
-                    componentRuntime.bindToContext();
-                }),
-            ]);
+            await runtime.createRootDataStore(ScribeFactory.type, defaultComponentId);
         }
 
         return runtime;

@@ -444,6 +444,7 @@ export class ContainerRuntime extends EventEmitter
     implements IContainerRuntime, IContainerRuntimeDirtyable, IRuntime, ISummarizerRuntime {
     public get IContainerRuntime() { return this; }
     public get IContainerRuntimeDirtyable() { return this; }
+    public get IFluidRouter() { return this; }
 
     /**
      * Load the components from a snapshot and returns the runtime.
@@ -484,10 +485,7 @@ export class ContainerRuntime extends EventEmitter
 
         // Create all internal components in first load.
         if (!context.existing) {
-            await runtime._createDataStore(schedulerId, schedulerId)
-                .then((componentRuntime) => {
-                    componentRuntime.bindToContext();
-                });
+            await runtime.createRootDataStore(schedulerId, schedulerId);
         }
 
         runtime.subscribeToLeadership();
@@ -734,7 +732,7 @@ export class ContainerRuntime extends EventEmitter
         if (context.baseSnapshot) {
             const baseSnapshot = context.baseSnapshot;
             Object.keys(baseSnapshot.trees).forEach((value) => {
-                if (value !== ".protocol") {
+                if (value !== ".protocol" && value !== ".logTail" && value !== ".serviceProtocol") {
                     const tree = baseSnapshot.trees[value];
                     components.set(value, tree);
                 }
@@ -1206,16 +1204,6 @@ export class ContainerRuntime extends EventEmitter
         }
     }
 
-    /**
-     * @deprecated
-     * Remove once issue #1756 is closed
-     */
-    public async _createDataStore(idOrPkg: string, maybePkg: string | string[]) {
-        const id = maybePkg === undefined ? uuid() : idOrPkg;
-        const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
-        return this._createDataStoreWithProps(pkg, undefined, id);
-    }
-
     public async createDataStore(pkg: string | string[]): Promise<IFluidRouter> {
         return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg]).realize();
     }
@@ -1227,16 +1215,11 @@ export class ContainerRuntime extends EventEmitter
         return component;
     }
 
-    public async _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string):
-        Promise<IFluidDataStoreChannel> {
-        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
-    }
-
     private canSendOps() {
         return this.connected && !this.deltaManager.readonly;
     }
 
-    private _createComponentContext(pkg: string[], props?: any, id = uuid()) {
+    private _createComponentContext(pkg: string[], id = uuid()) {
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), "Creating component with existing ID");
@@ -1250,7 +1233,7 @@ export class ContainerRuntime extends EventEmitter
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindComponent(cr),
-            props);
+        );
 
         const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
@@ -1277,7 +1260,7 @@ export class ContainerRuntime extends EventEmitter
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindComponent(cr),
-            undefined /* #1635: Remove LocalFluidDataStoreContext createProps */);
+        );
 
         const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
@@ -1533,17 +1516,24 @@ export class ContainerRuntime extends EventEmitter
     public createSummary(): ISummaryTree {
         const builder = new SummaryTreeBuilder();
 
-        // Iterate over each component and ask it to snapshot
-        Array.from(this.contexts)
-            .filter(([key, _]) =>
-                // Take summary of bounded components.
-                !this.notBoundedComponentContexts.has(key),
-            )
-            .map(async ([key, value]) => {
-                const snapshot = value.generateAttachMessage().snapshot;
-                const componentSummary = convertToSummaryTree(snapshot, true);
-                builder.addWithStats(key, componentSummary);
-            });
+        // Attaching graph of some components can cause other components to get bind too.
+        // So keep taking summary until no new components get binded.
+        let notBoundedComponentContextsLength: number;
+        do {
+            const builderTree = builder.summary.tree;
+            notBoundedComponentContextsLength = this.notBoundedComponentContexts.size;
+            // Iterate over each component and ask it to snapshot
+            Array.from(this.contexts)
+                .filter(([key, _]) =>
+                    // Take summary of bounded components only and make sure we haven't summarized them already.
+                    !(this.notBoundedComponentContexts.has(key) || builderTree[key]),
+                )
+                .map(([key, value]) => {
+                    const snapshot = value.generateAttachMessage().snapshot;
+                    const componentSummary = convertToSummaryTree(snapshot, true);
+                    builder.addWithStats(key, componentSummary);
+                });
+        } while (notBoundedComponentContextsLength !== this.notBoundedComponentContexts.size);
 
         this.serializeContainerBlobs(builder);
 

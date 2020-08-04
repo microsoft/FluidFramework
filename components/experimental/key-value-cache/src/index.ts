@@ -161,8 +161,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
         );
 
         if (!runtime.existing) {
-            const created = await runtime._createDataStore(ComponentName, ComponentName);
-            created.bindToContext();
+            await runtime.createRootDataStore(ComponentName, ComponentName);
         }
 
         return runtime;

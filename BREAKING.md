@@ -1,5 +1,32 @@
 # Breaking changes
 
+## 0.25 Breaking Changes
+- [IComponentContextLegacy is removed](#IComponentContextLegacy-is-removed)
+- [IContainerRuntimeBase._createDataStoreWithProps() is removed](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
+- [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
+- [createDataStoreWithRealizationFn() APIs moved](#createDataStoreWithRealizationFn()-APIs-moved)
+- [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
+
+### IComponentContextLegacy is removed
+Deprecated in 0.18, removed. 
+
+### IContainerRuntimeBase._createDataStoreWithProps is removed
+`IContainerRuntimeBase._createDataStoreWithProps()` has been removed. Please use `IContainerRuntimeBase.createDataStore()` (returns IFluidRouter).
+If you need to pass props to data store, either use request() route to pass initial props directly, or to query fluid object to interact with it (pass props / call methods to configure object).
+
+### _createDataStore APIs are removed
+`IFluidDataStoreContext._createDataStore()` & `IContainerRuntimeBase._createDataStore()` are removed
+Please switch to using one of the following APIs:
+1. `IContainerRuntime.createRootDataStore()` - data store created that way is automatically bound to container. It will immediately be visible to remote clients (when/if container is attached). Such data stores are never garbage collected. Note that this API is on `IContainerRuntime` interface, which is not directly accessible to data stores. The intention is that only container owners are creating roots.
+2. `IContainerRuntimeBase.createDataStore()` - creates data store that is not bound to container. In order for this store to be bound to container (and thus be observable on remote clients), ensure that handle to it (or any of its objects / DDS) is stored into any other DDS that is already bound to container. In other words, newly created data store has to be reachable (there has to be a path) from some root data store in container. If, in future, such data store becomes unreachable from one of the roots, it will be garbage collected (implementation pending).
+
+### createDataStoreWithRealizationFn() APIs moved
+Removed from IFluidDataStoreContext  & IContainerRuntime.
+Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altogether in same release (more info to follow)
+
+### odsp-utils Changes
+To support additional authentication scenarios, the signature and/or name of a few auth-related functions was modified.
+
 ## 0.24 Breaking Changes
 This release only contains renames. There are no functional changes in this release. You should ensure you have integrated and validated up to release 0.23 before integrating this release.
 
