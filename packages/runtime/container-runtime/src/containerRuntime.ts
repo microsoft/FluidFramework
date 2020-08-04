@@ -803,7 +803,7 @@ export class ContainerRuntime extends EventEmitter
      * Notifies this object about the request made to the container.
      * @param request - Request made to the handler.
      */
-    public async externalRequest(request: IRequest): Promise<IResponse> {
+    public async request(request: IRequest): Promise<IResponse> {
         if (request.url === "_summarizer" || request.url === "/_summarizer") {
             return {
                 status: 200,
@@ -822,16 +822,11 @@ export class ContainerRuntime extends EventEmitter
         };
     }
 
-    // Back-compat: <= 0.24
-    protected async request(request: IRequest): Promise<IResponse> {
-        return this.externalRequest(request);
-    }
-
     /**
-     * Notifies this object about the request made to the container.
+     * Resolves URI representing handle
      * @param request - Request made to the handler.
      */
-    public async internalRequest(request: IRequest): Promise<IResponse> {
+    public async resolveHandle(request: IRequest): Promise<IResponse> {
         const requestParser = new RequestParser(request);
 
         if (requestParser.pathParts.length > 0) {

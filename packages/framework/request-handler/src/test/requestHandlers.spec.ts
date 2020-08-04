@@ -28,7 +28,7 @@ class MockRuntime {
         throw new Error("No component");
     }
 
-    public async internalRequest(request: IRequest) {
+    public async resolveHandle(request: IRequest) {
         const requestParser = new RequestParser(request);
 
         if (requestParser.pathParts.length > 0) {

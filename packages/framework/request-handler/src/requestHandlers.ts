@@ -31,11 +31,11 @@ export const defaultContainerRequestHandler = (defaultUrl?: string) => {
     return async (request: IRequest, runtime: IContainerRuntime) => {
         if (request.url === "" || request.url === "/") {
             if (defaultUrl !== undefined) {
-                return runtime.internalRequest({ url: defaultUrl, headers: request.headers });
+                return runtime.resolveHandle({ url: defaultUrl, headers: request.headers });
             }
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
-        return runtime.internalRequest(request);
+        return runtime.resolveHandle(request);
     };
 };
 

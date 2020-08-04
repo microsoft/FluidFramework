@@ -42,6 +42,6 @@ export class FluidHandleContext implements IFluidHandleContext {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return this.runtime.internalRequest(request);
+        return this.runtime.resolveHandle(request);
     }
 }

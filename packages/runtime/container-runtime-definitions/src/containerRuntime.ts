@@ -146,8 +146,8 @@ export interface IContainerRuntime extends
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
     /**
-     * Serves internal requests in container, i.e. mostly about resolving handles
+     * Resolves handle URI
      * @param request - request to resolve
      */
-    internalRequest(request: IRequest): Promise<IResponse>;
+    resolveHandle(request: IRequest): Promise<IResponse>;
 }
