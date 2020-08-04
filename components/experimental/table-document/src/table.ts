@@ -8,7 +8,7 @@ import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
 import {
     Jsonable,
     JsonablePrimitive,
-} from "@fluidframework/datastore-runtime-definitions";
+} from "@fluidframework/component-runtime-definitions";
 
 export type TableDocumentItem = Jsonable<JsonablePrimitive | IFluidHandle>;
 

@@ -19,7 +19,7 @@ import {
     IChannelStorageService,
     IChannelFactory,
     Serializable,
-} from "@fluidframework/datastore-runtime-definitions";
+} from "@fluidframework/component-runtime-definitions";
 import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";

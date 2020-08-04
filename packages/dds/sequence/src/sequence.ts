@@ -23,7 +23,7 @@ import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
-} from "@fluidframework/datastore-runtime-definitions";
+} from "@fluidframework/component-runtime-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
     makeHandlesSerializable,

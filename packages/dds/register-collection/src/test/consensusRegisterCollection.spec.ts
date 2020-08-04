@@ -17,7 +17,7 @@ import {
     MockFluidDataStoreRuntime,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IDeltaConnection, IChannelServices } from "@fluidframework/datastore-runtime-definitions";
+import { IDeltaConnection, IChannelServices } from "@fluidframework/component-runtime-definitions";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection } from "../interfaces";
 

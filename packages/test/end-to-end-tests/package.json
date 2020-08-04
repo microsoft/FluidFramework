@@ -65,7 +65,7 @@
     "@fluidframework/container-utils": "^0.25.0",
     "@fluidframework/counter": "^0.25.0",
     "@fluidframework/datastore-runtime": "^0.25.0",
-    "@fluidframework/datastore-runtime-definitions": "^0.25.0",
+    "@fluidframework/component-runtime-definitions": "^0.25.0",
     "@fluidframework/driver-base": "^0.25.0",
     "@fluidframework/driver-definitions": "^0.25.0",
     "@fluidframework/driver-utils": "^0.25.0",

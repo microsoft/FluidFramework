@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelStorageService } from "@fluidframework/datastore-runtime-definitions";
+import { IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { IBlob, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";

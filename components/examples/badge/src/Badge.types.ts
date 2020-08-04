@@ -6,7 +6,7 @@ import { IColor } from "office-ui-fabric-react";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
 import { SharedObjectSequence } from "@fluidframework/sequence";
-import { AsSerializable } from "@fluidframework/datastore-runtime-definitions";
+import { AsSerializable } from "@fluidframework/component-runtime-definitions";
 
 export interface IBadgeType {
     key: string;

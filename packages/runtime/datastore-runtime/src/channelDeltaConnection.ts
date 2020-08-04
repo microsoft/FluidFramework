@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-runtime-definitions";
+import { IDeltaConnection, IDeltaHandler } from "@fluidframework/component-runtime-definitions";
 
 export class ChannelDeltaConnection implements IDeltaConnection {
     private _handler: IDeltaHandler | undefined;

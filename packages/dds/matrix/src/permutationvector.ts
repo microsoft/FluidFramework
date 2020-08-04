@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     BaseSegment,

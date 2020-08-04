@@ -15,7 +15,7 @@ import {
     IChannelStorageService,
     Serializable,
     IChannelAttributes,
-} from "@fluidframework/datastore-runtime-definitions";
+} from "@fluidframework/component-runtime-definitions";
 import { makeHandlesSerializable, parseHandles, SharedObject } from "@fluidframework/shared-object-base";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {

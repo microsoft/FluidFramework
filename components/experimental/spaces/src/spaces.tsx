@@ -15,7 +15,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { AsSerializable } from "@fluidframework/datastore-runtime-definitions";
+import { AsSerializable } from "@fluidframework/component-runtime-definitions";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import { RequestParser } from "@fluidframework/runtime-utils";

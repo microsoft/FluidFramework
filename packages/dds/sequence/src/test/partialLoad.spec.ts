@@ -10,7 +10,7 @@ import {
     MockStorage,
  } from "@fluidframework/test-runtime-utils";
 import { ReferenceType } from "@fluidframework/merge-tree";
-import { IChannelServices } from "@fluidframework/datastore-runtime-definitions";
+import { IChannelServices } from "@fluidframework/component-runtime-definitions";
 import { ITree } from "@fluidframework/protocol-definitions";
 import { SharedStringFactory, SharedString } from "..";
 

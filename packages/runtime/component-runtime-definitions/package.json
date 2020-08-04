@@ -1,5 +1,5 @@
 {
-  "name": "@fluidframework/datastore-runtime-definitions",
+  "name": "@fluidframework/component-runtime-definitions",
   "version": "0.25.0",
   "description": "Fluid Runtime definitions",
   "repository": "microsoft/FluidFramework",

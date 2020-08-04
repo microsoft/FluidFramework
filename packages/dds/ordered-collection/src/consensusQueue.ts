@@ -7,7 +7,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelAttributes,
     IChannelFactory,
-} from "@fluidframework/datastore-runtime-definitions";
+} from "@fluidframework/component-runtime-definitions";
 import { ConsensusOrderedCollection } from "./consensusOrderedCollection";
 import { ConsensusQueueFactory } from "./consensusOrderedCollectionFactory";
 import { IOrderedCollection } from "./interfaces";
