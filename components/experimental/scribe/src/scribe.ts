@@ -420,7 +420,6 @@ export class Scribe
     public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         if (!this.div) {
             this.div = document.createElement("div");
-            // tslint:disable-next-line:no-inner-html
             this.div.innerHTML = html;
             initialize(
                 this.div,

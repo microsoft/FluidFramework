@@ -27,7 +27,6 @@ describe("external-component-loader", () => {
         await expect(page).toClick("button", { text: "Add Component" });
 
         // wait for internal component  to be loaded
-        // tslint:disable-next-line: no-string-based-set-timeout ???
         await new Promise((resolve) => setTimeout(resolve, 200));
 
         // enable the components by toggling edit so that the internal component can be used

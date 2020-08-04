@@ -1247,8 +1247,6 @@ export class ContainerRuntime extends EventEmitter
         realizationFn?: (context: IFluidDataStoreContext) => void,
     ): Promise<IFluidDataStoreChannel> {
         this.verifyNotClosed();
-
-        // tslint:disable-next-line: no-unsafe-any
         const id: string = uuid();
         this.notBoundedComponentContexts.add(id);
         const context = new LocalFluidDataStoreContext(

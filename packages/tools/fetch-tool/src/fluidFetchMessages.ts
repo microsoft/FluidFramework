@@ -22,8 +22,6 @@ import {
     messageTypeFilter,
 } from "./fluidFetchArgs";
 
-// tslint:disable:non-literal-fs-path
-
 function filenameFromIndex(index: number): string {
     return index === 0 ? "" : index.toString(); // support old tools...
 }

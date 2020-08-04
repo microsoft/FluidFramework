@@ -14,7 +14,6 @@ describe("DeltaStorageService", () => {
      */
     const deltaStorageBasePath = "https://fake.microsoft.com";
     const deltaStorageRelativePath = "/drives/testdrive/items/testitem/opStream";
-    // tslint:disable-next-line:mocha-no-side-effect-code
     const testDeltaStorageUrl = `${deltaStorageBasePath}${deltaStorageRelativePath}`;
 
     it("Should build the correct sharepoint delta url with auth", async () => {
