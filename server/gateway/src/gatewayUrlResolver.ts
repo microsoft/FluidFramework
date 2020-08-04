@@ -6,7 +6,7 @@
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { configurableUrlResolver } from "@fluidframework/driver-utils";
-import { IClientConfig } from "@fluidframework/odsp-utils";
+import { IClientConfig as OAuthClientConfig } from "@fluidframework/odsp-utils"; // renamed like so in odsp-utils 0.25
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { IAlfredUser, RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver";
 import { IAlfredTenant, IGitCache } from "@fluidframework/server-services-client";
@@ -33,7 +33,7 @@ export function resolveUrl(
 ): [Promise<IFluidResolvedUrl>, Promise<undefined | FullTree>] {
     if (isSpoTenant(tenantId)) {
         const microsoftConfiguration = config.get("login:microsoft");
-        const clientConfig: IClientConfig = {
+        const clientConfig: OAuthClientConfig = {
             clientId: microsoftConfiguration.clientId,
             clientSecret: microsoftConfiguration.secret,
         };

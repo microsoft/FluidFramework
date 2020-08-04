@@ -8,8 +8,8 @@ import { OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
 import {
     getDriveItemByRootFileName,
     getOdspRefreshTokenFn,
-    IClientConfig,
-    IOdspTokens,
+    IClientConfig as OAuthClientConfig, // renamed like so in odsp-utils 0.25
+    IOdspTokens as OdspTokens, // renamed like so in odsp-utils 0.25
 } from "@fluidframework/odsp-utils";
 
 const spoTenants = new Map<string, string>([
@@ -39,8 +39,8 @@ export function isSpoServer(server: string) {
 export async function spoGetResolvedUrl(
     tenantId: string,
     id: string,
-    serverTokens: { [server: string]: IOdspTokens } | undefined,
-    clientConfig: IClientConfig) {
+    serverTokens: { [server: string]: OdspTokens } | undefined,
+    clientConfig: OAuthClientConfig) {
     const server = getSpoServer(tenantId);
     if (server === undefined) {
         return Promise.reject(`Invalid SPO tenantId ${tenantId}`);
