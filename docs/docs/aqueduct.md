@@ -1,4 +1,6 @@
-# The Aqueduct and PrimedComponent
+# Encapsulating data with FluidObjects
+
+## The Aqueduct package
 
 ![Aqueduct](https://publicdomainvectors.org/photos/johnny-automatic-Roman-aqueducts.png)
 
@@ -27,22 +29,22 @@ Coming soon
 
 :::
 
-## PrimedComponent
+## DataObject
 
 ```ts
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 
-class MyComponent extends PrimedComponent implements IComponentHTMLView { }
+class MyComponent extends DataObject implements IComponentHTMLView { }
 ```
 
-[PrimedComponent][] is a base component class that is [primed](https://en.wiktionary.org/wiki/primed#Adjective) with a
+[DataObject][] is a base component class that is [primed](https://en.wiktionary.org/wiki/primed#Adjective) with a
 [SharedDirectory][] and task manager. It ensures that both are created and ready for you to access within your component.
 
 ### The `root` SharedDirectory
 
-### Component lifecycle
+### DataObject lifecycle
 
-PrimedComponent defines three _lifecycle methods_ that you can override to create and initialize distributed data
+DataObject defines three _lifecycle methods_ that you can override to create and initialize distributed data
 structures:
 
 ```ts
@@ -121,12 +123,12 @@ SharedDirectory.
 
 :::
 
-## PrimedComponentFactory
+## DataObjectFactory
 
 
 ## Learn more
 
-The Aqueduct contains much more than just PrimedComponent. To dive deeper into the details, see the [Aqueduct package
+The Aqueduct contains much more than just DataObject. To dive deeper into the details, see the [Aqueduct package
 README](https://github.com/microsoft/FluidFramework/blob/master/packages/framework/aqueduct/README.md)
 
 

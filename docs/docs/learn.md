@@ -1,22 +1,4 @@
----
-aliases:
- - docs/index.html
----
-
-# Getting started
-
-Fluid Framework is a TypeScript library for building collaborative web applications.
-
-If you are new to the Fluid Framework, we recommend reading [What is Fluid?](../what-is-fluid.md) to orient yourself.
-
-Fluid requires Node.js and npm. !!!include(node-versions.md)!!! To build a Fluid component, you'll also need a text/code
-editor and a modern web browser.
-
-**If you're new to web development,** follow [the steps here to set up your Fluid Framework development
-environment](./dev-env.md).
-
-
-## Learn the Fluid Framework
+# Learn the Fluid Framework
 
 People come to the Fluid Framework from a variety of backgrounds and with different learning styles. Whether you prefer
 a step by step conceptual approach or a practical one, we hope you'll find this documentation helpful.
@@ -24,7 +6,7 @@ a step by step conceptual approach or a practical one, we hope you'll find this 
 [<span class="doc-button">Learn by Reading: Docs</span>](./hello-world.md)
 [<span class="doc-button">Learn by Doing: Tutorials</span>](../tutorials/README.md)
 
-### TypeScript and JavaScript resources
+## TypeScript and JavaScript resources
 
 The Fluid Framework documentation assumes some familiarity with programming in the [TypeScript][] language. TypeScript
 is a super-set of the JavaScript programming language, so if you're an experienced JavaScript programmer, TypeScript
@@ -37,34 +19,34 @@ You may also consdider going through [this JavaScript overview][mdn-tutorial] to
 take you between 30 minutes and an hour and you will feel more confident in your JavaScript skills.
 
 
-### Practical tutorials
+## Practical tutorials
 
 If you prefer to **learn by doing**, start with one of our [step-by-step tutorials](../tutorials/README.md). These
 tutorials will guide you through building several Fluid Framework components, explaining the code along the way. You'll
 add new features to the components as you go through the tutorials.
 
-### Concept guide
+## Concept guide
 
 If you prefer to **learn concepts step by step**, our [our guide to Fluid Framework concepts](hello-world.md) is the best
 place to start. Every next chapter in it builds on the knowledge introduced in the previous chapters so you won't miss
 anything as you go along.
 
 
-### Advanced concepts
+## Advanced concepts
 
 Once you're comfortable with the main concepts and played with the Fluid Framework a little bit, you might be interested
 in more advanced topics. This section will introduce you to powerful Fluid Framework capabilities like custom
 Distributed Data Structures, the Quorum data structure, task assignment, and more.
 
 
-### API reference
+## API reference
 
 This documentation section is useful when you want to learn more details about a particular Fluid Framework API. For
-example, the [PrimedComponent API reference]() can provide you with details on what different lifecycle methods are
+example, the [DataObject API reference]() can provide you with details on what different lifecycle methods are
 useful for.
 
 
-### Glossary and FAQ
+## Glossary and FAQ
 
 ::: danger TODO
 
