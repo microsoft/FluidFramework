@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { parse } from "url";
+import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
@@ -25,10 +26,7 @@ export const tinyliciousUrls = {
     storageUrl: "http://localhost:3000",
 };
 
-function getUrlResolver(
-    documentId: string,
-    options: RouteOptions,
-): IUrlResolver {
+function getUrlResolver(options: RouteOptions): IUrlResolver {
     switch (options.mode) {
         case "docker":
             return new InsecureUrlResolver(
@@ -79,9 +77,8 @@ export class MultiUrlResolver implements IUrlResolver {
     private readonly urlResolver: IUrlResolver;
     constructor(
         private readonly rawUrl: string,
-        private readonly documentId: string,
         private readonly options: RouteOptions) {
-        this.urlResolver = getUrlResolver(documentId, options);
+        this.urlResolver = getUrlResolver(options);
     }
 
     async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
@@ -89,16 +86,23 @@ export class MultiUrlResolver implements IUrlResolver {
         if (url.startsWith("/")) {
             url = url.substr(1);
         }
-        return `${this.rawUrl}/${this.documentId}/${url}`;
+        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
+
+        const parsedUrl = parse(fluidResolvedUrl.url);
+        if (parsedUrl.pathname === undefined) {
+            throw new Error("Url should contain tenant and docId!!");
+        }
+        const [, , documentId] = parsedUrl.pathname.split("/");
+        return `${this.rawUrl}/${documentId}/${url}`;
     }
 
     async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         return this.urlResolver.resolve(request);
     }
 
-    public createRequestForCreateNew(
+    public async createRequestForCreateNew(
         fileName: string,
-    ): IRequest {
+    ): Promise<IRequest> {
         switch (this.options.mode) {
             case "r11s":
             case "docker":
@@ -107,11 +111,7 @@ export class MultiUrlResolver implements IUrlResolver {
 
             case "spo":
             case "spo-df":
-                return (this.urlResolver as OdspUrlResolver).createCreateNewRequest(
-                    `https://${this.options.server}`,
-                    this.options.driveId,
-                    "/r11s/",
-                    fileName);
+                return (this.urlResolver as OdspUrlResolver).createCreateNewRequest(fileName);
 
             default: // Local
                 return (this.urlResolver as LocalResolver).createCreateNewRequest(fileName);
