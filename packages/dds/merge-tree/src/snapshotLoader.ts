@@ -155,7 +155,6 @@ export class SnapshotLoader {
                 branching);
         }
 
-
         return chunk;
     }
 
