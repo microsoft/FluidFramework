@@ -135,23 +135,26 @@ export class SnapshotLoader {
         if (chunk.headerMetadata === undefined) {
             throw new Error("header metadata not available");
         }
-        // specify a default client id, "snapshot" here as we
-        // should enter collaboration/op sending mode if we load
-        // a snapshot in any case (summary or attach message)
-        // once we get a client id this will be called with that
-        // clientId in the connected event
-        // However if we load a detached container from snapshot, then we don't supply a default clientId
+        // If we load a detached container from snapshot, then we don't supply a default clientId
         // because we don't want to start collaboration.
-        this.client.startOrUpdateCollaboration(
-            this.runtime.attachState === AttachState.Detached ? undefined : this.runtime.clientId ?? "snapshot",
+        if (this.runtime.attachState !== AttachState.Detached) {
+            // specify a default client id, "snapshot" here as we
+            // should enter collaboration/op sending mode if we load
+            // a snapshot in any case (summary or attach message)
+            // once we get a client id this will be called with that
+            // clientId in the connected event
+            this.client.startOrUpdateCollaboration(
+                this.runtime.clientId ?? "snapshot",
 
-            // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
-            //       (See https://github.com/microsoft/FluidFramework/issues/84)
-            /* minSeq: */ chunk.headerMetadata.minSequenceNumber !== undefined
-                ? chunk.headerMetadata.minSequenceNumber
-                : chunk.headerMetadata.sequenceNumber,
-            /* currentSeq: */ chunk.headerMetadata.sequenceNumber,
-            branching);
+                // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
+                //       (See https://github.com/microsoft/FluidFramework/issues/84)
+                /* minSeq: */ chunk.headerMetadata.minSequenceNumber !== undefined
+                    ? chunk.headerMetadata.minSequenceNumber
+                    : chunk.headerMetadata.sequenceNumber,
+                /* currentSeq: */ chunk.headerMetadata.sequenceNumber,
+                branching);
+        }
+
 
         return chunk;
     }

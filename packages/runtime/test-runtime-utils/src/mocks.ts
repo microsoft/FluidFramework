@@ -395,8 +395,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         this._local = local;
     }
 
-    public get baseSnapshot() {
-        return undefined;
+    public get isLoadedFromSnapshot() {
+        return false;
     }
 
     private _disposed = false;

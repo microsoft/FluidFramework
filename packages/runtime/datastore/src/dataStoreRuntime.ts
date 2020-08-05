@@ -38,7 +38,6 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
     ITreeEntry,
-    ISnapshotTree,
     ITree,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -145,8 +144,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         return this._attachState;
     }
 
-    public get baseSnapshot(): ISnapshotTree | undefined {
-        return this.dataStoreContext.baseSnapshot;
+    public get isLoadedFromSnapshot(): boolean {
+        return this.dataStoreContext.baseSnapshot !== undefined;
     }
 
     /**
