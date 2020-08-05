@@ -5,19 +5,17 @@
 
 /* eslint-disable import/no-extraneous-dependencies */
 
-import { DataObject, DataObjectFactory, defaultDataStoreRuntimeRequestHandler } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
-    IContainerContext,
     IFluidCodeDetails,
     IFluidModule,
     ILoader,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { SharedMap } from "@fluidframework/map";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
-import { componentRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -25,6 +23,7 @@ import {
     ChannelFactoryRegistry,
     createLocalLoader,
     initializeLocalContainer,
+    TestContainerRuntimeFactory,
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
@@ -37,6 +36,9 @@ const codeDetails: IFluidCodeDetails = {
     config: {},
 };
 
+/**
+ * Arguments given to the function passed into compatTest()
+ */
 export interface ICompatTestArgs {
     /**
      * Used to create a test Container. In compatTest(), this Container and its runtime will be arbitrarily-versioned.
@@ -102,28 +104,10 @@ export const createRuntimeFactory = (
     componentFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
     runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): IRuntimeFactory => {
-    const builder = new RuntimeRequestHandlerBuilder();
-    builder.pushHandler(
-        componentRuntimeRequestHandler,
-        defaultDataStoreRuntimeRequestHandler("default"));
-
-    return {
-        get IRuntimeFactory() { return this; },
-        instantiateRuntime: async (context: IContainerContext) => {
-            const runtime = await ContainerRuntime.load(
-                context,
-                [[type, Promise.resolve(componentFactory as IFluidDataStoreFactory)]],
-                async (req, rt) => builder.handleRequest(req, rt),
-                runtimeOptions,
-            );
-            if (!runtime.existing) {
-                await runtime.createRootDataStore(type, "default");
-            }
-            return runtime;
-        },
-    };
+    return new TestContainerRuntimeFactory(type, componentFactory as IFluidDataStoreFactory, runtimeOptions);
 };
 
+// TODO: once 0.25 is released this can import the old version of TestContainerRuntimeFactory used above
 export const createOldRuntimeFactory = (
     type: string,
     componentFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,

@@ -4,7 +4,9 @@
  */
 
 import assert from "assert";
+import { IFluidRouter } from "@fluidframework/component-core-interfaces";
 import { Container } from "@fluidframework/container-loader";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { OpProcessingController } from "@fluidframework/test-utils";
 import {
     compatTest,
@@ -21,15 +23,6 @@ import {
 import * as old from "./oldVersion";
 
 describe("loader/runtime compatibility", () => {
-    async function requestFluidObject<T>(componentId: string, container: Container | old.Container): Promise<T> {
-        const response = await container.request({ url: componentId });
-        if (response.status !== 200
-            || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
-            throw new Error(`Component with id: ${componentId} not found`);
-        }
-        return response.value as T;
-    }
-
     const tests = function(args: ICompatTestArgs) {
         let container: Container | old.Container;
         let component: TestComponent | OldTestComponent;
@@ -42,14 +35,14 @@ describe("loader/runtime compatibility", () => {
             container.on("warning", () => containerError = true);
             container.on("closed", (error) => containerError = containerError || error !== undefined);
 
-            component = await requestFluidObject<TestComponent>("default", container);
+            component = await requestFluidObject<TestComponent>(container as IFluidRouter, "default");
 
             opProcessingController = new OpProcessingController(args.deltaConnectionServer);
             opProcessingController.addDeltaManagers(component._runtime.deltaManager);
         });
 
         afterEach(async function() {
-            assert.strictEqual(containerError, false, "container error");
+            assert.strictEqual(containerError, false, "Container warning or close with error");
         });
 
         it("loads", async function() {
@@ -97,7 +90,7 @@ describe("loader/runtime compatibility", () => {
             ];
 
             const components = await Promise.all(containersP.map(async (containerP) => containerP.then(
-                async (c) => requestFluidObject<TestComponent | OldTestComponent>("default", c))));
+                async (c) => requestFluidObject<TestComponent | OldTestComponent>(c as IFluidRouter, "default"))));
 
             // get initial test value from each component
             components.map(async (c) => assert.strictEqual(await c._root.wait(test[0]), test[1]));

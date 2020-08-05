@@ -6,6 +6,7 @@
 import assert from "assert";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
@@ -26,14 +27,6 @@ const codeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
-    const response = await container.request({ url: componentId });
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        throw new Error(`Component with id: ${componentId} not found`);
-    }
-    return response.value as ITestFluidComponent;
-}
-
 const tests = (args: ICompatTestArgs) => {
     let sharedString1: SharedString;
     let sharedString2: SharedString;
@@ -41,11 +34,11 @@ const tests = (args: ICompatTestArgs) => {
 
     beforeEach(async () => {
         const container1 = await args.makeTestContainer(registry) as Container;
-        const component1 = await requestFluidObject("default", container1);
+        const component1 = await requestFluidObject<ITestFluidComponent>(container1, "default");
         sharedString1 = await component1.getSharedObject<SharedString>(stringId);
 
         const container2 = await args.makeTestContainer(registry) as Container;
-        const component2 = await requestFluidObject("default", container2);
+        const component2 = await requestFluidObject<ITestFluidComponent>(container2, "default");
         sharedString2 = await component2.getSharedObject<SharedString>(stringId);
 
         opProcessingController = new OpProcessingController(args.deltaConnectionServer);
@@ -73,7 +66,7 @@ const tests = (args: ICompatTestArgs) => {
 
         // Create a initialize a new container with the same id.
         const newContainer = await args.makeTestContainer(registry) as Container;
-        const newComponent = await requestFluidObject("default", newContainer);
+        const newComponent = await requestFluidObject<ITestFluidComponent>(newContainer, "default");
         const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
         assert.equal(newSharedString.getText(), text, "The new container should receive the inserted text on creation");
     });

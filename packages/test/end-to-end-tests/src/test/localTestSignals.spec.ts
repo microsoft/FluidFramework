@@ -7,6 +7,7 @@ import assert from "assert";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
@@ -23,14 +24,6 @@ const codeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
-    const response = await container.request({ url: componentId });
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        throw new Error(`Component with id: ${componentId} not found`);
-    }
-    return response.value as ITestFluidComponent;
-}
-
 const tests = (args: ICompatTestArgs) => {
     let component1: ITestFluidComponent;
     let component2: ITestFluidComponent;
@@ -38,10 +31,10 @@ const tests = (args: ICompatTestArgs) => {
 
     beforeEach(async () => {
         const container1 = await args.makeTestContainer() as Container;
-        component1 = await requestFluidObject("default", container1);
+        component1 = await requestFluidObject<ITestFluidComponent>(container1, "default");
 
         const container2 = await args.makeTestContainer() as Container;
-        component2 = await requestFluidObject("default", container2);
+        component2 = await requestFluidObject<ITestFluidComponent>(container2, "default");
 
         opProcessingController = new OpProcessingController(args.deltaConnectionServer);
         opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
