@@ -22,7 +22,7 @@ import {
 } from "@fluidframework/test-utils";
 
 /**
- * Test component that extends DataObject so that we can test the FluidOjectHandle created by PureDataObject.
+ * Test component that extends DataObject so that we can test the FluidObjectHandle created by PureDataObject.
  */
 class TestSharedComponent extends DataObject {
     public get _root() {
@@ -44,7 +44,7 @@ const TestSharedComponentFactory = new DataObjectFactory(
     [SharedMap.getFactory()],
     []);
 
-describe("FluidOjectHandle", () => {
+describe("FluidObjectHandle", () => {
     const id = "fluid-test://localhost/componentHandleTest";
     const codeDetails: IFluidCodeDetails = {
         package: "componentHandleTestPackage",

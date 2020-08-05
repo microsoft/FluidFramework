@@ -16,7 +16,7 @@ import { ISharedDirectory } from "@fluidframework/map";
 /**
  * This class represents blob (long string)
  * This object is used only when creating (writing) new blob and serialization purposes.
- * De-serialization process goes through FluidOjectHandle and request flow:
+ * De-serialization process goes through FluidObjectHandle and request flow:
  * DataObject.request() recognizes requests in the form of `/blobs/<id>`
  * and loads blob.
  */

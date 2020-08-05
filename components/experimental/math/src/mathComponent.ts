@@ -16,7 +16,7 @@ import {
     IResponse,
     IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
-import { FluidOjectHandle } from "@fluidframework/component-runtime";
+import { FluidObjectHandle } from "@fluidframework/component-runtime";
 import {
     IComponentLayout,
     ComponentCursorDirection,
@@ -423,7 +423,7 @@ export class MathInstance extends EventEmitter implements IFluidLoadable, IFluid
     public get IFluidLoadable() { return this; }
     public get IFluidRouter() { return this; }
 
-    public handle: FluidOjectHandle;
+    public handle: FluidObjectHandle;
     public endMarker: IMathMarkerInst;
     public startMarker: MergeTree.Marker;
     public solnText = "x=0";
@@ -438,7 +438,7 @@ export class MathInstance extends EventEmitter implements IFluidLoadable, IFluid
         inCombinedText = false,
     ) {
         super();
-        this.handle = new FluidOjectHandle(this, leafId, context);
+        this.handle = new FluidObjectHandle(this, leafId, context);
         this.initialize(inCombinedText);
     }
 
