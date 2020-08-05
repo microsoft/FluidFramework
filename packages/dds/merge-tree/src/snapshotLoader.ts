@@ -9,6 +9,7 @@ import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
 import { ISegment, MergeTree } from "./mergeTree";
@@ -142,11 +143,10 @@ export class SnapshotLoader {
         // a snapshot in any case (summary or attach message)
         // once we get a client id this will be called with that
         // clientId in the connected event
-        // TODO: this won't support rehydrating a detached container
-        // we need to think more holistically about the dds state machine
-        // now that we differentiate attached vs local
+        // However if we load a detached container from snapshot, then we don't supply a default clientId
+        // because we don't want to start collaboration.
         this.client.startOrUpdateCollaboration(
-            this.runtime.clientId ?? "snapshot",
+            this.runtime.attachState === AttachState.Detached ? undefined : this.runtime.clientId ?? "snapshot",
             // tslint:disable-next-line:no-suspicious-comment
             // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
             //       (See https://github.com/microsoft/FluidFramework/issues/84)

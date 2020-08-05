@@ -30,7 +30,7 @@ import {
     ChildLogger,
     raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils";
-import { buildSnapshotTree } from "@fluidframework/driver-utils";
+import { buildSnapshotTree, readAndParseFromBlobs } from "@fluidframework/driver-utils";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
     IClientDetails,
@@ -38,6 +38,7 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
     ITreeEntry,
+    ITree,
 } from "@fluidframework/protocol-definitions";
 import {
     IAttachMessage,
@@ -49,11 +50,17 @@ import {
     SchedulerType,
 } from "@fluidframework/runtime-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
-import { IChannel, IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import {
+    IChannel,
+    IFluidDataStoreRuntime,
+    IChannelFactory,
+    IChannelAttributes,
+} from "@fluidframework/component-runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
+import { convertSnapshotToITree } from "./utils";
 
 export enum ComponentMessageType {
     // Creates a new channel
@@ -170,6 +177,9 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     private readonly notBoundedChannelContextSet = new Set<string>();
     private boundhandles: Set<IFluidHandle> | undefined;
     private _attachState: AttachState;
+    // This set stores the id of unloaded local channels. This is meant to be used only in detached container when
+    // loaded from a snapshot.
+    private readonly unLoadedLocalChannel = new Set<string>();
 
     private constructor(
         private readonly componentContext: IFluidDataStoreContext,
@@ -194,21 +204,40 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         // Must always receive the component type inside of the attributes
         if (tree?.trees !== undefined) {
             Object.keys(tree.trees).forEach((path) => {
-                const channelContext = new RemoteChannelContext(
-                    this,
-                    componentContext,
-                    componentContext.storage,
-                    (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
-                    (address: string) => this.setChannelDirty(address),
-                    path,
-                    tree.trees[path],
-                    this.sharedObjectRegistry,
-                    undefined /* extraBlobs */,
-                    componentContext.branch,
-                    this.componentContext.summaryTracker.createOrGetChild(
+                let channelContext: IChannelContext;
+                // If already exists on storage, then create a remote channel. However, if it is loaded from a snpashot
+                // but not yet exists on storage, then create a Local Channel.
+                if (existing) {
+                    channelContext = new RemoteChannelContext(
+                        this,
+                        componentContext,
+                        componentContext.storage,
+                        (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
+                        (address: string) => this.setChannelDirty(address),
                         path,
-                        this.deltaManager.lastSequenceNumber,
-                    ));
+                        tree.trees[path],
+                        this.sharedObjectRegistry,
+                        undefined /* extraBlobs */,
+                        componentContext.branch,
+                        this.componentContext.summaryTracker.createOrGetChild(
+                            path,
+                            this.deltaManager.lastSequenceNumber,
+                        ));
+                } else {
+                    const channelAttributes = readAndParseFromBlobs<IChannelAttributes>(
+                        tree.trees[path].blobs, tree.trees[path].blobs[".attributes"]);
+                    channelContext = new LocalChannelContext(
+                        path,
+                        this.sharedObjectRegistry,
+                        channelAttributes.type,
+                        this,
+                        this.componentContext,
+                        this.componentContext.storage,
+                        (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
+                        (address: string) => this.setChannelDirty(address),
+                        tree.trees[path]);
+                    this.unLoadedLocalChannel.add(path);
+                }
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
 
@@ -218,13 +247,19 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         }
 
         this.attachListener();
-        this.bindState = existing ? BindState.Bound : BindState.NotBound;
+
+        // If exists on storage or loaded from a snapshot, it should already be binded.
+        this.bindState = existing || tree !== undefined ? BindState.Bound : BindState.NotBound;
         this._attachState = existing ? AttachState.Attached : AttachState.Detached;
 
         // If it's existing we know it has been attached.
         if (existing) {
             this.deferredAttached.resolve();
         }
+    }
+
+    public get baseSnapshot() {
+        return this.componentContext.baseSnapshot;
     }
 
     public dispose(): void {
@@ -250,7 +285,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const value = await this.contextsDeferred.get(id)!.promise;
             const channel = await value.getChannel();
-
+            this.unLoadedLocalChannel.delete(channel.id);
             return { mimeType: "fluid/object", status: 200, value: channel };
         }
 
@@ -279,7 +314,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const context = await this.contextsDeferred.get(id)!.promise;
         const channel = await context.getChannel();
-
+        this.unLoadedLocalChannel.delete(channel.id);
         return channel;
     }
 
@@ -296,7 +331,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             this.componentContext,
             this.componentContext.storage,
             (content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
-            (address: string) => this.setChannelDirty(address));
+            (address: string) => this.setChannelDirty(address),
+            undefined);
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
@@ -308,6 +344,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             this.contextsDeferred.set(id, deferred);
         }
 
+        assert(context.channel, "Channel should be loaded when created!!");
         return context.channel;
     }
 
@@ -528,7 +565,16 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             }
 
             if (!this.notBoundedChannelContextSet.has(objectId)) {
-                const snapshot = value.getAttachSnapshot();
+                let snapshot: ITree;
+                if (this.unLoadedLocalChannel.has(objectId)) {
+                    // If this channel is not yet loaded, then there should be no changes in the snapshot from which
+                    // it was created as it is detached container. So just use the previous snapshot.
+                    assert(this.componentContext.baseSnapshot,
+                        "BaseSnapshot should be there as detached container loaded from snapshot");
+                    snapshot = convertSnapshotToITree(this.componentContext.baseSnapshot.trees[objectId]);
+                } else {
+                    snapshot = value.getAttachSnapshot();
+                }
 
                 // And then store the tree
                 entries.push(new TreeTreeEntry(objectId, snapshot));

@@ -44,6 +44,7 @@ import {
     BlobCacheStorageService,
     buildSnapshotTree,
     readAndParse,
+    readAndParseFromBlobs,
 } from "@fluidframework/driver-utils";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import {
@@ -78,9 +79,19 @@ import {
     NamedFluidDataStoreRegistryEntries,
     SchedulerType,
 } from "@fluidframework/runtime-definitions";
-import { FluidSerializer, SummaryTracker, RequestParser } from "@fluidframework/runtime-utils";
+import {
+    FluidSerializer,
+    SummaryTracker,
+    RequestParser,
+} from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
-import { FluidDataStoreContext, LocalFluidDataStoreContext, RemotedFluidDataStoreContext } from "./componentContext";
+import {
+    FluidDataStoreContext,
+    LocalFluidDataStoreContext,
+    RemotedFluidDataStoreContext,
+    currentSnapshotFormatVersion,
+    IFluidDataStoretAttributes,
+} from "./componentContext";
 import { FluidHandleContext } from "./componentHandleContext";
 import { FluidDataStoreRegistry } from "./componentRegistry";
 import { debug } from "./debug";
@@ -93,6 +104,7 @@ import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
+import { convertSnapshotToSummaryTree } from "./utils";
 
 const chunksBlobName = ".chunks";
 
@@ -455,10 +467,9 @@ export class ContainerRuntime extends EventEmitter
         const componentRegistry = new ContainerRuntimeDataStoreRegistry(registryEntries);
 
         const chunkId = context.baseSnapshot?.blobs[chunksBlobName];
-        const chunks = chunkId
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            ? await readAndParse<[string, string[]][]>(context.storage!, chunkId)
-            : [];
+        const chunks = context.baseSnapshot && chunkId ? context.storage ?
+            await readAndParse<[string, string[]][]>(context.storage, chunkId) :
+            readAndParseFromBlobs<[string, string[]][]>(context.baseSnapshot.blobs, chunkId) : [];
 
         const runtime = new ContainerRuntime(
             context,
@@ -468,8 +479,9 @@ export class ContainerRuntime extends EventEmitter
             containerScope,
             requestHandler);
 
-        // Create all internal components in first load.
-        if (!context.existing) {
+        // Create all internal components if not already existing on storage or loaded a detached
+        // container from snapshot(ex. draft mode).
+        if (!(context.existing || context.baseSnapshot !== null)) {
             await runtime.createRootDataStore(schedulerId, schedulerId);
         }
 
@@ -575,6 +587,9 @@ export class ContainerRuntime extends EventEmitter
     private latestSummaryAck: ISummaryContext;
     private readonly summaryTracker: SummaryTracker;
     private readonly notBoundedComponentContexts = new Set<string>();
+    // This set stores the id of unrealized components. This is meant to be used only in detached container when loaded
+    // from a snapshot.
+    private readonly unRealizedComponents = new Set<string>();
 
     private tasks: string[] = [];
 
@@ -667,13 +682,44 @@ export class ContainerRuntime extends EventEmitter
 
         // Create a context for each of them
         for (const [key, value] of components) {
-            const componentContext = new RemotedFluidDataStoreContext(
-                key,
-                typeof value === "string" ? value : Promise.resolve(value),
-                this,
-                this.storage,
-                this.containerScope,
-                this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber));
+            let componentContext: FluidDataStoreContext;
+            // If it is loaded from a snapshot but in detached state, then create a local component.
+            if (this.attachState === AttachState.Detached) {
+                let pkgFromSnapshot: string[];
+                if (context.baseSnapshot === null) {
+                    throw new Error("Snapshot should be there to load from!!");
+                }
+                const snapshotTree = value as ISnapshotTree;
+                // Need to rip through snapshot.
+                const { pkg, snapshotFormatVersion } = readAndParseFromBlobs<IFluidDataStoretAttributes>(
+                    snapshotTree.blobs,
+                    snapshotTree.blobs[".component"]);
+                // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
+                // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
+                if (snapshotFormatVersion === currentSnapshotFormatVersion) {
+                    pkgFromSnapshot = JSON.parse(pkg) as string[];
+                } else {
+                    throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
+                }
+                this.unRealizedComponents.add(key);
+                componentContext = new LocalFluidDataStoreContext(
+                    key,
+                    pkgFromSnapshot,
+                    this,
+                    this.storage,
+                    this.containerScope,
+                    this.summaryTracker.createOrGetChild(key, this.deltaManager.lastSequenceNumber),
+                    (cr: IFluidDataStoreChannel) => this.bindComponent(cr),
+                    snapshotTree);
+            } else {
+                componentContext = new RemotedFluidDataStoreContext(
+                    key,
+                    typeof value === "string" ? value : Promise.resolve(value),
+                    this,
+                    this.storage,
+                    this.containerScope,
+                    this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber));
+            }
             this.setNewContext(key, componentContext);
         }
 
@@ -1061,6 +1107,7 @@ export class ContainerRuntime extends EventEmitter
         }
 
         const componentContext = await deferredContext.promise;
+        this.unRealizedComponents.delete(id);
         return componentContext.realize();
     }
 
@@ -1165,6 +1212,7 @@ export class ContainerRuntime extends EventEmitter
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             (cr: IFluidDataStoreChannel) => this.bindComponent(cr),
+            undefined,
             undefined);
 
         const deferred = new Deferred<FluidDataStoreContext>();
@@ -1191,6 +1239,7 @@ export class ContainerRuntime extends EventEmitter
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             (cr: IFluidDataStoreChannel) => this.bindComponent(cr),
+            undefined,
             undefined /* #1635: Remove LocalFluidDataStoreContext createProps */);
 
         const deferred = new Deferred<FluidDataStoreContext>();
@@ -1459,13 +1508,21 @@ export class ContainerRuntime extends EventEmitter
                     !(this.notBoundedComponentContexts.has(key) || summaryTree.tree[key]),
                 )
                 .map(([key, value]) => {
-                    const snapshot = value.generateAttachMessage().snapshot;
-                    const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-                        snapshot,
-                        `/${encodeURIComponent(key)}`,
-                        true,
-                    );
-                    summaryTree.tree[key] = treeWithStats.summaryTree;
+                    if (this.unRealizedComponents.has(key)) {
+                        // If this component is not yet loaded, then there should be no changes in the snapshot from
+                        // which it was created as it is detached container. So just use the previous snapshot.
+                        assert(this.context.baseSnapshot,
+                            "BaseSnapshot should be there as detached container loaded from snapshot");
+                        summaryTree.tree[key] = convertSnapshotToSummaryTree(this.context.baseSnapshot.trees[key]);
+                    } else {
+                        const snapshot = value.generateAttachMessage().snapshot;
+                        const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+                            snapshot,
+                            `/${encodeURIComponent(key)}`,
+                            true,
+                        );
+                        summaryTree.tree[key] = treeWithStats.summaryTree;
+                    }
                 });
         } while (notBoundedComponentContextsLength !== this.notBoundedComponentContexts.size);
 
