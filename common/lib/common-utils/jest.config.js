@@ -6,7 +6,11 @@
 module.exports = {
   globals: {
     "ts-jest": {
-      tsConfig: "./testJest/tsconfig.json"
+      tsConfig: "./testJest/tsconfig.json",
+      diagnostics: {
+        ignoreCodes: [2749, 6133],
+        comment: "suppress warnings about imports only being used as a type"
+      }
     }
   },
   preset: "jest-puppeteer",

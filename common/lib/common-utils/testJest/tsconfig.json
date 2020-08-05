@@ -4,7 +4,8 @@
         "types": [
             "jest",
             "jest-environment-puppeteer",
-            "node"
+            "node",
+            "puppeteer"
         ]
     }
 }

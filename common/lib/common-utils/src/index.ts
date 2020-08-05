@@ -8,7 +8,6 @@ export * from "./base64Encoding";
 export * from "./batchManager";
 export * from "./disposal";
 export * from "./eventForwarder";
-export * from "./hashFile";
 export * from "./heap";
 export * from "./promiseCache";
 export * from "./promises";
