@@ -19,7 +19,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker, SummarizerNode } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { LocalFluidDataStoreContext } from "../componentContext";
+import { LocalFluidDataStoreContext } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
 
 describe("Component Creation Tests", () => {

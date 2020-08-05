@@ -95,9 +95,9 @@ import {
     RequestParser,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
-import { FluidDataStoreContext, LocalFluidDataStoreContext, RemotedFluidDataStoreContext } from "./componentContext";
-import { FluidHandleContext } from "./componentHandleContext";
-import { FluidDataStoreRegistry } from "./componentRegistry";
+import { FluidDataStoreContext, LocalFluidDataStoreContext, RemotedFluidDataStoreContext } from "./dataStoreContext";
+import { FluidHandleContext } from "./dataStoreHandleContext";
+import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
 import { ISummarizerRuntime, Summarizer } from "./summarizer";
 import { SummaryManager, summarizerClientType } from "./summaryManager";
