@@ -130,26 +130,18 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param services - Services used by the shared object
      */
     public async load(
-        branchId: string,
-        services: IChannelServices): Promise<void> {
-        this.services = services;
-
+        branchId: string | undefined,
+        services: IChannelServices,
+    ): Promise<void> {
+        if (this.runtime.attachState !== AttachState.Detached) {
+            this.services = services;
+        }
         await this.loadCore(
             branchId,
             services.objectStorage);
-        this.attachDeltaHandler();
-    }
-
-    /**
-     * Loads the given channel. This is similar to load however it is used to load a local channel from a snapshot.
-     * @param storage - Storage service to read objects at a given path. This is not connected to storage
-     *  endpoint but have blobs to read from.
-    */
-    public async loadLocal(
-        objectStorage: IChannelStorageService): Promise<void> {
-        await this.loadCore(
-            undefined,
-            objectStorage);
+        if (this.runtime.attachState !== AttachState.Detached) {
+            this.attachDeltaHandler();
+        }
     }
 
     /**

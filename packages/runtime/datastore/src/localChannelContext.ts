@@ -122,10 +122,11 @@ export class LocalChannelContext implements IChannelContext {
             ".attributes");
 
         assert(this.factory, "Factory should be there for local channel");
-        const channel = await this.factory.loadLocal(
+        const channel = await this.factory.load(
             this.runtime,
             this.id,
-            this.services.objectStorage,
+            this.services,
+            undefined,
             attributes);
 
         // Commit changes.

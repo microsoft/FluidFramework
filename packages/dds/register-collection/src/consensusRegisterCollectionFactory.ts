@@ -7,7 +7,6 @@ import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelServices,
-    IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { ConsensusRegisterCollection } from "./consensusRegisterCollection";
 import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "./interfaces";
@@ -41,17 +40,6 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
         attributes: IChannelAttributes): Promise<IConsensusRegisterCollection> {
         const collection = new ConsensusRegisterCollection(id, runtime, attributes);
         await collection.load(branchId, services);
-        return collection;
-    }
-
-    public async loadLocal(
-        runtime: IFluidDataStoreRuntime,
-        id: string,
-        objectStorage: IChannelStorageService,
-        attributes: IChannelAttributes,
-    ): Promise<IConsensusRegisterCollection> {
-        const collection = new ConsensusRegisterCollection(id, runtime, attributes);
-        await collection.loadLocal(objectStorage);
         return collection;
     }
 

@@ -8,7 +8,6 @@ import {
     IFluidDataStoreRuntime,
     IChannelServices,
     IChannelFactory,
-    IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import {
     ISharedObject,
@@ -60,21 +59,6 @@ export class SharedSummaryBlockFactory implements IChannelFactory {
         attributes: IChannelAttributes): Promise<ISharedObject> {
         const sharedSummaryBlock = new SharedSummaryBlock(id, runtime, attributes);
         await sharedSummaryBlock.load(branchId, services);
-
-        return sharedSummaryBlock;
-    }
-
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.loadLocal}
-     */
-    public async loadLocal(
-        runtime: IFluidDataStoreRuntime,
-        id: string,
-        objectStorage: IChannelStorageService,
-        attributes: IChannelAttributes,
-    ): Promise<ISharedObject> {
-        const sharedSummaryBlock = new SharedSummaryBlock(id, runtime, attributes);
-        await sharedSummaryBlock.loadLocal(objectStorage);
 
         return sharedSummaryBlock;
     }

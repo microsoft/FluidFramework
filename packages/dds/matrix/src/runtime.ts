@@ -9,7 +9,6 @@ import {
     IChannelServices,
     IChannel,
     IChannelFactory,
-    IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { pkgVersion } from "./packageVersion";
 import { SharedMatrix } from "./matrix";
@@ -40,17 +39,6 @@ export class SharedMatrixFactory implements IChannelFactory {
     ): Promise<IChannel> {
         const matrix = new SharedMatrix(runtime, id, attributes);
         await matrix.load(branchId, services);
-        return matrix;
-    }
-
-    public async loadLocal(
-        runtime: IFluidDataStoreRuntime,
-        id: string,
-        objectStorage: IChannelStorageService,
-        attributes: IChannelAttributes,
-    ): Promise<IChannel> {
-        const matrix = new SharedMatrix(runtime, id, attributes);
-        await matrix.loadLocal(objectStorage);
         return matrix;
     }
 

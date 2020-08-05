@@ -6,9 +6,12 @@
 import { IFluidLoadable } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelAttributes } from "./storage";
-import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
+import { IFluidDataStoreRuntime } from "./componentRuntime";
 
 declare module "@fluidframework/component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface IComponent extends Readonly<Partial<IProvideChannel>> { }
+
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IFluidObject extends Readonly<Partial<IProvideChannel>> { }
 }
@@ -149,7 +152,7 @@ export interface IChannelFactory {
      * Loads the given channel. This call is only ever invoked internally as the only thing
      * that is ever directly loaded is the document itself. Load will then only be called on documents that
      * were created and added to a channel.
-     * @param runtime - Data store runtime containing state/info/helper methods about the data store.
+     * @param runtime - Component runtime containing state/info/helper methods about the component.
      * @param id - ID of the channel.
      * @param services - Services to read objects at a given path using the delta connection.
      * @param branchId - The branch ID.
@@ -165,7 +168,7 @@ export interface IChannelFactory {
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        branchId: string | undefined,
+        branchId: string,
         channelAttributes: Readonly<IChannelAttributes>,
     ): Promise<IChannel>;
 

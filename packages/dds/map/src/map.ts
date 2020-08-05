@@ -87,21 +87,6 @@ export class MapFactory implements IChannelFactory {
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.loadLocal}
-     */
-    public async loadLocal(
-        runtime: IFluidDataStoreRuntime,
-        id: string,
-        objectStorage: IChannelStorageService,
-        attributes: IChannelAttributes,
-    ): Promise<ISharedMap> {
-        const map = new SharedMap(id, runtime, attributes);
-        await map.loadLocal(objectStorage);
-
-        return map;
-    }
-
-    /**
    * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
    */
     public create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap {
