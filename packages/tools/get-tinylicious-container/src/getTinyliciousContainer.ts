@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { initializeContainerCode } from "@fluidframework/base-host";
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
     IRuntimeFactory,
@@ -45,7 +44,8 @@ class InsecureTinyliciousUrlResolver implements IUrlResolver {
     }
 
     public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
-        throw new Error("getAbsoluteUrl not implemented");
+        // Detached flow requires getAbsoluteUrl to return a string, though this is not really valid.
+        return "";
     }
 
     private auth(documentId: string) {
@@ -68,6 +68,7 @@ class InsecureTinyliciousUrlResolver implements IUrlResolver {
 export async function getTinyliciousContainer(
     documentId: string,
     containerRuntimeFactory: IRuntimeFactory,
+    createNew: boolean,
 ): Promise<Container> {
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(
         false,
@@ -93,17 +94,22 @@ export async function getTinyliciousContainer(
         new Map(),
     );
 
-    // The InsecureTinyliciousUrlResolver expects the url of the request to be the documentId.
-    const container = await loader.resolve({ url: documentId });
+    let container: Container;
 
-    // We're not actually using the code proposal here, but the Container will only give us a NullRuntime if there's
-    // no proposal.  So we make a fake proposal, using initializeContainerCode to ensure it only happens once.
-    await initializeContainerCode(container, { package: "", config: {} });
-
-    // If we're loading from ops, the context might be in the middle of reloading.  Check for that case and wait
-    // for the contextChanged event to avoid returning before that reload completes.
-    if (container.hasNullRuntime()) {
-        await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
+    if (createNew) {
+        // We're not actually using the code proposal (our code loader always loads the same module regardless of the
+        // proposal), but the Container will only give us a NullRuntime if there's no proposal.  So we'll use a fake
+        // proposal.
+        container = await loader.createDetachedContainer({ package: "", config: {} });
+        await container.attach({ url: documentId });
+    } else {
+        // The InsecureTinyliciousUrlResolver expects the url of the request to be the documentId.
+        container = await loader.resolve({ url: documentId });
+        // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
+        // new container here, where we expect this to be loading an existing container.
+        if (!container.existing) {
+            throw new Error("Attempted to load a non-existing container");
+        }
     }
 
     return container;
