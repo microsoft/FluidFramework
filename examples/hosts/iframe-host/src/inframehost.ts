@@ -17,7 +17,7 @@ import {
     AttachState,
 } from "@fluidframework/container-definitions";
 import { MultiUrlResolver, MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
-import { IRequest, IResponse, IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ITree, ISummaryTree } from "@fluidframework/protocol-definitions";
 

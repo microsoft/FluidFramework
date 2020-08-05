@@ -5,7 +5,7 @@
 
 import {
     IFluidObject,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     DirectoryFactory,
     MapFactory,

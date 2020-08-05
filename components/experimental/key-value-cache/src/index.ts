@@ -9,7 +9,7 @@ import {
     IFluidRouter,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
     IContainerContext,
@@ -47,7 +47,7 @@ export interface IKeyValue extends IProvideKeyValue {
     delete(key: string): boolean;
 }
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideKeyValue>> { }
 }

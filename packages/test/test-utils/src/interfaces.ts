@@ -6,9 +6,9 @@
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap } from "@fluidframework/map";
 import { IFluidDataStoreContext, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
-import { IFluidLoadable } from "@fluidframework/component-core-interfaces";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideTestFluidComponent>> { }
 }

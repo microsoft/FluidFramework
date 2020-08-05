@@ -1,11 +1,11 @@
 {
-  "name": "@fluidframework/framework-experimental",
+  "name": "@fluidframework/core-interfaces",
   "version": "0.25.0",
-  "description": "Experimental definitions for fluid framework.",
+  "description": "Fluid object interfaces",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
-  "sideEffects": false,
+  "sideEffects": "false",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -22,17 +22,15 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
+    "tsc:watch": "tsc --watch",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
-  },
-  "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.25.0",
-    "@fluidframework/runtime-definitions": "^0.25.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@microsoft/api-extractor": "^7.7.2",
+    "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^5.2.0",

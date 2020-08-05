@@ -6,7 +6,7 @@
 import assert from "assert";
 import { CreateNewHeader, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { InsecureUrlResolver } from "../insecureUrlResolver";
 
 describe("Insecure Url Resolver Test", () => {

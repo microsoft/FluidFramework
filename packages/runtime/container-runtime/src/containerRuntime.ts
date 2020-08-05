@@ -14,7 +14,7 @@ import {
     IFluidSerializer,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IBlobManager,

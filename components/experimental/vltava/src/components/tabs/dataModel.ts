@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { IFluidObject, IFluidHandle, IFluidLoadable } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
     ISharedDirectory,
     IDirectory,

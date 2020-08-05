@@ -6,7 +6,7 @@
 import assert from "assert";
 import { EventEmitter } from "events";
 import { Dom, hasTagName, isTextNode, Scheduler, TagName } from "@fluid-example/flow-util-lib";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@fluidframework/merge-tree";
 import { SequenceEvent } from "@fluidframework/sequence";
 import { FlowDocument } from "../document";

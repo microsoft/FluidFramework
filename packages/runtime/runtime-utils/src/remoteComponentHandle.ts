@@ -9,7 +9,7 @@ import {
     IFluidHandleContext,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 
 /**
  * Handle to dynamically load a component on a remote client and is created on parsing a seralized FluidOjectHandle.

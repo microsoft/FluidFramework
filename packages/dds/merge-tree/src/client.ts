@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";

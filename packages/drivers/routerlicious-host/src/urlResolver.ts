@@ -6,7 +6,7 @@
 import { PromiseCache } from "@fluidframework/common-utils";
 import {
     IRequest,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IResolvedUrl,
     IUrlResolver,
