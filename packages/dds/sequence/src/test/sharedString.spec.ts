@@ -5,9 +5,9 @@
 
 import assert from "assert";
 import { ITree } from "@fluidframework/protocol-definitions";
-import { IChannelServices } from "@fluidframework/component-runtime-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
@@ -27,10 +27,10 @@ import { SharedStringFactory } from "../sequenceFactory";
 
 describe("SharedString", () => {
     let sharedString: SharedString;
-    let componentRuntime1: MockComponentRuntime;
+    let componentRuntime1: MockFluidDataStoreRuntime;
 
     beforeEach(() => {
-        componentRuntime1 = new MockComponentRuntime();
+        componentRuntime1 = new MockFluidDataStoreRuntime();
         sharedString = new SharedString(componentRuntime1, "shared-string-1", SharedStringFactory.Attributes);
     });
 
@@ -45,7 +45,7 @@ describe("SharedString", () => {
                 deltaConnection: new MockEmptyDeltaConnection(),
                 objectStorage: new MockStorage(tree),
             };
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             const sharedString2 = new SharedString(
                 componentRuntime2,
                 "shared-string-2",
@@ -170,7 +170,7 @@ describe("SharedString", () => {
         it("replace negative range", async () => {
             sharedString.insertText(0, "123");
             sharedString.replaceText(2, 1, "aaa");
-            // This assert relies on the behvaior that replacement for a reversed range
+            // This assert relies on the behavior that replacement for a reversed range
             // will insert at the max end of the range but not delete the range
             assert.equal(sharedString.getText(), "12aaa3", "Could not replace negative range");
         });
@@ -185,7 +185,7 @@ describe("SharedString", () => {
                 sharedString.insertText(0, `${insertText}${i}`);
             }
 
-            // Get snapshot and verift its correct.
+            // Get snapshot and verify its correct.
             let tree = sharedString.snapshot();
             assert(tree.entries.length === 2);
             assert(tree.entries[0].path === "header");
@@ -234,7 +234,7 @@ describe("SharedString", () => {
 
             // Load a new Ink in connected state from the snapshot of the first one.
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
@@ -289,7 +289,7 @@ describe("SharedString", () => {
             sharedString.connect(services1);
 
             // Create and connect a second SharedString.
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
@@ -474,7 +474,7 @@ describe("SharedString", () => {
             sharedString.connect(services1);
 
             // Create and connect a second SharedString.
-            const runtime2 = new MockComponentRuntime();
+            const runtime2 = new MockFluidDataStoreRuntime();
             containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
             sharedString2 = new SharedString(runtime2, "shared-string-2", SharedStringFactory.Attributes);
             const services2: IChannelServices = {

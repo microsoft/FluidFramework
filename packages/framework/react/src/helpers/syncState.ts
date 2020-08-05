@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap } from "@fluidframework/map";
 import {
     FluidComponentMap,
@@ -43,7 +43,7 @@ export function syncState<
     isSyncedStateUpdate: boolean,
     syncedStateId: string,
     syncedState: ISyncedState,
-    runtime: IComponentRuntime,
+    runtime: IFluidDataStoreRuntime,
     viewState: SV,
     setState: (
         newState: SV,

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 import { ISharedMap, IDirectoryValueChanged } from "@fluidframework/map";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
-    IComponentHandle,
-    IComponentLoadable,
-    IComponent,
+    IFluidHandle,
+    IFluidLoadable,
+    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import { SyncedComponent } from "./fluidComponent";
 
@@ -157,7 +157,7 @@ export interface IViewConverter<
      * If this is a fluid DDS SharedObject type (i.e. SharedCounter, SharedMap), supply its create function
      * here and add any events that it will fire to the listenedEvents param below to trigger state updates
      */
-    sharedObjectCreate?: (runtime: IComponentRuntime) => any;
+    sharedObjectCreate?: (runtime: IFluidDataStoreRuntime) => any;
     /**
      * List of events fired on this component that will trigger a state update
      */
@@ -230,8 +230,8 @@ export type IFluidReactState = IFluidFunctionalComponentFluidState & IFluidFunct
 
 export const instanceOfIComponentLoadable = (
     object: any,
-): object is IComponentLoadable =>
-    object === Object(object) && "IComponentLoadable" in object;
+): object is IFluidLoadable =>
+    object === Object(object) && "IFluidLoadable" in object;
 
 /**
  * The values stored in the fluid component map
@@ -240,7 +240,7 @@ export interface IFluidComponent {
     /**
      * The actual Fluid component that the path this value is keyed against leads to
      */
-    component?: IComponent & IComponentLoadable;
+    component?: IFluidObject & IFluidLoadable;
     /**
      * Boolean indicating if we are listening to changes on this component's synced state to trigger React
      * state updates. Only set if you want custom behavior for adding listeners to your Fluid state
@@ -271,7 +271,7 @@ export interface IFluidDataProps {
     /**
      * The Fluid component runtime passed in from component initialization
      */
-    runtime: IComponentRuntime;
+    runtime: IFluidDataStoreRuntime;
     /**
      * The running map of all the Fluid components being used to render the React component. This
      * can be view/data components, and they will be asynchronously loaded here so that they are,
@@ -394,7 +394,7 @@ export interface IStateUpdateResult<
      * Any new components that were added in due this function need to have
      * their corresponding handles passed in so that the object can also be loaded for all other users
      */
-    newComponentHandles?: IComponentHandle[];
+    newComponentHandles?: IFluidHandle[];
 }
 
 export const instanceOfAsyncStateUpdateFunction = <
@@ -424,7 +424,7 @@ export interface FluidSelectorFunction<
         state?: ICombinedState<SV, SF, C>
     ) => {
         result: any | undefined;
-        newComponentHandles?: IComponentHandle[];
+        newComponentHandles?: IFluidHandle[];
     };
 }
 
@@ -441,11 +441,11 @@ export interface FluidComponentSelectorFunction<
      * handle if we need to fetch a component from the fluidComponentMap
      */
     function: (
-        handle: IComponentHandle<any>,
+        handle: IFluidHandle<any>,
         state?: ICombinedState<SV, SF, C>,
     ) => {
-        result: IComponent | undefined;
-        newComponentHandles?: IComponentHandle[];
+        result: IFluidObject | undefined;
+        newComponentHandles?: IFluidHandle[];
     };
 }
 
@@ -606,10 +606,10 @@ export interface ISyncedState {
     /**
      * Get values from the synced state for a syncedStateId as key
      */
-    get: <T,>(key: string) => T;
+    get: <T, >(key: string) => T;
     /**
      * Add a listener to the synced state using a provided callback
      */
     addValueChangedListener: (
-        callback:  (changed: IDirectoryValueChanged, local: boolean) => void) => void;
+        callback: (changed: IDirectoryValueChanged, local: boolean) => void) => void;
 }

@@ -7,7 +7,7 @@ import assert from "assert";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import {
     MockContainerRuntimeFactory,
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { SharedSegmentSequenceUndoRedoHandler } from "../sequenceHandler";
@@ -47,7 +47,7 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
     let undoRedoStack: UndoRedoStackManager;
 
     beforeEach(() => {
-        const componentRuntime = new MockComponentRuntime();
+        const componentRuntime = new MockFluidDataStoreRuntime();
         componentRuntime.bindToContext();
 
         containerRuntimeFactory = new MockContainerRuntimeFactory();

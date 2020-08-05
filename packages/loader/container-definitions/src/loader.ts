@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IRequest, IResponse, IFluidRouter } from "@fluidframework/component-core-interfaces";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -72,15 +72,19 @@ export interface ICodeAllowList {
 export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
     (event: "connected", listener: (clientId: string) => void);
+    /**
+     * @param opsBehind - number of ops this client is behind (if present).
+     */
+    (event: "connect", listener: (opsBehind?: number) => void);
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
-    (event: "disconnected" | "joining" | "attaching" | "attached", listener: () => void);
+    (event: "disconnected" | "attaching" | "attached", listener: () => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
     (event: "pong" | "processTime", listener: (latency: number) => void);
 }
 
-export interface IContainer extends IEventProvider<IContainerEvents> {
+export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
 
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 

@@ -30,9 +30,9 @@ resources:
     trigger:
       branches:
         include:
-        - release/*
-        - master
-        - docs/pipeline # for testing
+        - refs/heads/release/*
+        - refs/heads/master
+        - refs/heads/docs/pipeline # for testing
 
 # no branch and PR triggers
 trigger: none

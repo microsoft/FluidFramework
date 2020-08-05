@@ -8,6 +8,7 @@ import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-contain
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { IDiceRoller } from "../component";
+import { DiceRollerContainerRuntimeFactory } from "../container";
 import { PrettyDiceRollerView } from "./views";
 
 // I'm choosing to put the docId in the hash just for my own convenience.  There should be no requirements on the
@@ -26,7 +27,7 @@ async function getDiceRollerFromContainer(container: Container): Promise<IDiceRo
     const response = await container.request({ url });
 
     // Verify the response
-    if (response.status !== 200 || response.mimeType !== "fluid/component") {
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
         throw new Error(`Unable to retrieve component at URL: "${url}"`);
     } else if (response.value === undefined) {
         throw new Error(`Empty response from URL: "${url}"`);
@@ -43,14 +44,8 @@ async function renderPrettyDiceRoller(diceRoller: IDiceRoller) {
 
 // Just a helper function to kick things off.  Making it async allows us to use await.
 async function start(): Promise<void> {
-    // The format of the code proposal will be the contents of our package.json, which has a special "fluid" section
-    // describing the code to load.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-    const packageJson = require("../../package.json");
-
-    // If you'd prefer to load the container bundle yourself (rather than relying on the codeLoader), pass the
-    // entrypoint to the module as the third param below (e.g. window["main"]).
-    const container = await getTinyliciousContainer(documentId, packageJson);
+    // Get the container to use.  Associate the data with the provided documentId, and run the provided code within.
+    const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory);
     const diceRoller = await getDiceRollerFromContainer(container);
     await renderPrettyDiceRoller(diceRoller);
     // Setting "fluidStarted" is just for our test automation

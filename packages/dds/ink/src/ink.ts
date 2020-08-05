@@ -12,10 +12,10 @@ import {
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelAttributes,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import { InkFactory } from "./inkFactory";
@@ -44,16 +44,16 @@ const snapshotFileName = "header";
 export class Ink extends SharedObject<IInkEvents> implements IInk {
     /**
      * Create a new Ink.
-     * @param runtime - Component runtime the new Ink belongs to
+     * @param runtime - Data Store runtime the new Ink belongs to
      * @param id - Optional name of the Ink; will be assigned a unique ID if not provided
      * @returns Newly create Ink object (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, InkFactory.Type) as Ink;
     }
 
     /**
-     * Get a factory for Ink to register with the component.
+     * Get a factory for Ink to register with the data store.
      * @returns A factory that creates and loads Ink
      */
     public static getFactory() {
@@ -70,7 +70,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      * @param runtime - The runtime the Ink will be associated with
      * @param id - Unique ID for the Ink
      */
-    constructor(runtime: IComponentRuntime, id: string, attributes: IChannelAttributes) {
+    constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
     }
 
@@ -200,8 +200,8 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
      * @param operation - The operation object
      */
     private executeClearOperation(operation: IClearOperation): void {
-        this.emit("clear", operation);
         this.inkData.clear();
+        this.emit("clear", operation);
     }
 
     /**

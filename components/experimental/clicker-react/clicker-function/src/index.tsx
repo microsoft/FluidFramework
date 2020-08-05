@@ -4,7 +4,7 @@
  */
 
 import {
-    PrimedComponentFactory,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
     setSyncedObjectConfig,
@@ -72,7 +72,7 @@ export class ClickerFunction extends SyncedComponent {
 }
 
 // ----- FACTORY SETUP -----
-export const ClickerFunctionInstantiationFactory = new PrimedComponentFactory(
+export const ClickerFunctionInstantiationFactory = new DataObjectFactory(
     "clicker-function",
     ClickerFunction,
     [],

@@ -2,11 +2,9 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
 declare module "@fluidframework/component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentClipboardConsumer>> { }
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideComponentClipboardConsumer>> { }
 }
@@ -36,11 +34,11 @@ export interface IComponentClipboardConsumer extends IProvideComponentClipboardC
     /**
    * Provide an alternate component identifier to be instantiated during the paste operation.
    * @alpha
-   * @param targetContext - IComponentContext of the target
+   * @param targetContext - IFluidDataStoreContext of the target
    * @param clipboardHTML - the html string that serialized by the component to the system clipboard.
    */
     getComponentFromClipboardHTML(
-        targetContext: IComponentContext,
+        targetContext: IFluidDataStoreContext,
         clipboardHTML: string | undefined,
     ): Promise<string | undefined>;
 }

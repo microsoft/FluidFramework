@@ -5,8 +5,8 @@
 
 import { EventEmitter } from "events";
 import {
-    IComponentHandleContext,
-    IComponentSerializer,
+    IFluidHandleContext,
+    IFluidSerializer,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -25,11 +25,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 export class NullRuntime extends EventEmitter implements IRuntime {
-    public get IComponentSerializer(): IComponentSerializer {
+    public get IFluidSerializer(): IFluidSerializer {
         throw new Error("Not implemented");
     }
 
-    public get IComponentHandleContext(): IComponentHandleContext {
+    public get IFluidHandleContext(): IFluidHandleContext {
         throw new Error("Not implemented");
     }
 

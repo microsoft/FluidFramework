@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { Container } from "@fluidframework/container-loader";
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
-import { IComponentMountableView } from "@fluidframework/view-interfaces";
+import { IFluidMountableView } from "@fluidframework/view-interfaces";
+import { DiceRollerContainerRuntimeFactory } from "../container";
 
 // I'm choosing to put the docId in the hash just for my own convenience.  There should be no requirements on the
 // page's URL format deeper in the system.
@@ -33,18 +34,18 @@ async function mountDefaultComponentFromContainer(container: Container): Promise
     });
 
     // Verify the response
-    if (response.status !== 200 || response.mimeType !== "fluid/component") {
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
         throw new Error(`Unable to retrieve component at URL: "${url}"`);
     } else if (response.value === undefined) {
         throw new Error(`Empty response from URL: "${url}"`);
     }
 
     // Now we know we got the component back, time to start mounting it.
-    const component = response.value as IComponent;
+    const component = response.value as IFluidObject;
 
     // In a production app, we should probably be retaining a reference to mountableView long-term so we can call
     // unmount() on it to correctly remove it from the DOM if needed.
-    const mountableView: IComponentMountableView | undefined = component.IComponentMountableView;
+    const mountableView: IFluidMountableView | undefined = component.IFluidMountableView;
     if (mountableView !== undefined) {
         mountableView.mount(div);
         return;
@@ -53,7 +54,7 @@ async function mountDefaultComponentFromContainer(container: Container): Promise
     // If we don't get a mountable view back, we can still try to use a view adapter.  This won't always work (e.g.
     // if the response is a React-based component using hooks) and is not the preferred path, but sometimes it
     // can work.
-    console.warn(`Container returned a non-IComponentMountableView.  This can cause errors when mounting components `
+    console.warn(`Container returned a non-IFluidMountableView.  This can cause errors when mounting components `
         + `with React hooks across bundle boundaries.  URL: ${url}`);
     const view = new HTMLViewAdapter(component);
     view.render(div, { display: "block" });
@@ -61,14 +62,8 @@ async function mountDefaultComponentFromContainer(container: Container): Promise
 
 // Just a helper function to kick things off.  Making it async allows us to use await.
 async function start(): Promise<void> {
-    // The format of the code proposal will be the contents of our package.json, which has a special "fluid" section
-    // describing the code to load.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-    const packageJson = require("../../package.json");
-
-    // If you'd prefer to load the container bundle yourself (rather than relying on the codeLoader), pass the
-    // entrypoint to the module as the third param below (e.g. window["main"]).
-    const container = await getTinyliciousContainer(documentId, packageJson);
+    // Get the container to use.  Associate the data with the provided documentId, and run the provided code within.
+    const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory);
     await mountDefaultComponentFromContainer(container);
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line dot-notation

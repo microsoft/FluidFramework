@@ -12,7 +12,7 @@ import {
     IComponentDiscoverableInterfaces,
     IComponentDiscoverInterfaces,
 } from "@fluidframework/framework-interfaces";
-import { IContainerRuntime } from "@fluidframework/component-runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/datastore-definitions";
 
 import { MatchMaker } from "../src/containerServices";
 

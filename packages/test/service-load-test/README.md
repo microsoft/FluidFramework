@@ -17,7 +17,7 @@ This test runs in two different modes: Orchestrator Mode and Test Runner mode
 _This is the main entry point to the test - this Orchestrator process will spawn many Test Runner processes._
 
 ```bash
-node ./dist/nodeStressTest.js [--url <url>] [--profile <profile>] [--refresh] [--debug]
+node ./dist/nodeStressTest.js --password <password> [--url <url>] [--profile <profile>] [--debug]
 ```
 
 ### Test Runner Mode
@@ -25,16 +25,20 @@ node ./dist/nodeStressTest.js [--url <url>] [--profile <profile>] [--refresh] [-
 _This is not typically invoked manually - rather, the Orchestrator process spawns Test Runners using this mode._
 
 ```bash
-node ./dist/nodeStressTest.js --runId <runId> --url <url> [--profile <profile>]
+node ./dist/nodeStressTest.js --runId <runId> --password <password> --url <url> [--profile <profile>]
 ```
 
 ### npm scripts
 
-There are several npm scripts in [package.json](./package.json) to make it quicker to launch this tool. For example:
+There are several npm scripts in [package.json](./package.json) to make it quicker to launch this tool. Among others:
 `npm run start` - Launches in Orchestrator Mode with default options
 `npm run debug` - Launches in Orchestrator Mode with `--debug` provided to allow for attaching to child test runners.
 
 ### Options
+
+#### --password, -w
+
+The password for the username provided in testconfig.json, to be used to retrieve auth tokens. Always required.
 
 #### --url, -u
 
@@ -43,16 +47,12 @@ If present, the test will load an existing data store (at the given url) rather 
 
 #### --profile, -p
 
-Specifies which test profile to use from [testConfig.json](./testConfig.json).  Defaults to **full**.
+Specifies which test profile to use from [testConfig.json](./testConfig.json). Defaults to **full**.
 
 #### --runId, -r
 
 If present, launch in Test Runner mode with the given runId (to distinguish from other concurrent test runners).
 `--url` is required, since the test runner needs to know which data store to connect to.
-
-#### --refresh, -f
-
-Force refresh of cached auth tokens before continuing the orchestrator process. (Not compatible with `--runId`)
 
 #### --debug, -d
 

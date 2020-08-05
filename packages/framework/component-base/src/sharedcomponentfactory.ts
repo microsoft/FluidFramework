@@ -4,38 +4,40 @@
  */
 
 import { IRequest } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
-import { ComponentRegistry } from "@fluidframework/container-runtime";
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
+import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
-    IComponentContext,
-    IComponentFactory,
-    IComponentRegistry,
-    NamedComponentRegistryEntries,
+    IFluidDataStoreContext,
+    IFluidDataStoreFactory,
+    IFluidDataStoreRegistry,
+    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { LazyPromise } from "@fluidframework/common-utils";
-import { SharedComponent } from "./sharedcomponent";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { PureDataObject } from "./sharedcomponent";
 
-export class SharedComponentFactory<T extends SharedComponent> implements IComponentFactory {
+export class PureDataObjectFactory<T extends PureDataObject> implements IFluidDataStoreFactory {
     public readonly ISharedObjectRegistry: ISharedObjectRegistry;
-    public readonly IComponentRegistry: IComponentRegistry | undefined;
+    public readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry | undefined;
 
     constructor(
         public readonly type: string,
-        private readonly ctor: new (context: IComponentContext, runtime: IComponentRuntime, root: ISharedObject) => T,
+        private readonly ctor:
+            new (context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, root: ISharedObject) => T,
         public readonly root: IChannelFactory,
         sharedObjects: readonly IChannelFactory[] = [],
-        components?: readonly IComponentFactory[],
+        components?: readonly IFluidDataStoreFactory[],
     ) {
         if (components !== undefined) {
-            this.IComponentRegistry = new ComponentRegistry(
+            this.IFluidDataStoreRegistry = new FluidDataStoreRegistry(
                 components.map(
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    (factory) => [factory.type!, factory]) as NamedComponentRegistryEntries);
+                    (factory) => [factory.type!, factory]) as NamedFluidDataStoreRegistryEntries);
         }
 
         this.ISharedObjectRegistry = new Map(
@@ -44,9 +46,9 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
                 .map((ext) => [ext.type, ext]));
     }
 
-    public get IComponentFactory() { return this; }
+    public get IFluidDataStoreFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateDataStore(context: IFluidDataStoreContext): void {
         const runtime = this.createRuntime(context);
 
         // Note this may synchronously return an instance or a deferred LazyPromise,
@@ -66,17 +68,14 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
         });
     }
 
-    public create(parentContext: IComponentContext, props?: any) {
+    public async create(parentContext: IFluidDataStoreContext, props?: any) {
         const { containerRuntime, packagePath } = parentContext;
 
-        const childContext = containerRuntime.createComponentContext(
-            packagePath.concat(this.type),
-            props);
-
-        return this.createCore(childContext, this.createRuntime(childContext));
+        const router = await containerRuntime.createDataStore(packagePath.concat(this.type));
+        return requestFluidObject(router, "/");
     }
 
-    private instantiate(context: IComponentContext, runtime: IComponentRuntime) {
+    private instantiate(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime) {
         // New component instances are synchronously created.  Loading a previously created
         // component is deferred (via a LazyPromise) until requested by invoking `.then()`.
         return runtime.existing
@@ -84,7 +83,7 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
             : this.createCore(context, runtime);
     }
 
-    private createCore(context: IComponentContext, runtime: IComponentRuntime, props?: any) {
+    private createCore(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, props?: any) {
         const root = runtime.createChannel("root", this.root.type) as ISharedObject;
         const instance = new this.ctor(context, runtime, root);
         instance.create(props);
@@ -92,7 +91,7 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
         return instance;
     }
 
-    private async load(context: IComponentContext, runtime: IComponentRuntime) {
+    private async load(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime) {
         const instance = new this.ctor(
             context,
             runtime,
@@ -102,11 +101,11 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
         return instance;
     }
 
-    private createRuntime(context: IComponentContext) {
-        return ComponentRuntime.load(
+    private createRuntime(context: IFluidDataStoreContext) {
+        return FluidDataStoreRuntime.load(
             context,
             this.ISharedObjectRegistry,
-            this.IComponentRegistry,
+            this.IFluidDataStoreRegistry,
         );
     }
 }

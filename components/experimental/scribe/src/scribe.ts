@@ -6,13 +6,13 @@
 import { EventEmitter } from "events";
 import { resolve } from "url";
 import {
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
-    IComponentHandle,
+    IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore";
 import {
     IContainerContext,
     IFluidCodeDetails,
@@ -23,17 +23,17 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IDocumentFactory } from "@fluidframework/host-service-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import {
-    IComponentContext,
-    IComponentFactory,
+    IFluidDataStoreContext,
+    IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import {
     IContainerRuntime,
 } from "@fluidframework/container-runtime-definitions";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import Axios from "axios";
 
 import * as scribe from "./tools-core";
@@ -162,8 +162,8 @@ function addLink(element: HTMLDivElement, link: string) {
 
 function initialize(
     div: HTMLDivElement,
-    context: IComponentContext,
-    runtime: IComponentRuntime,
+    context: IFluidDataStoreContext,
+    runtime: IFluidDataStoreRuntime,
     root: ISharedMap,
     template: string,
     speed: number,
@@ -381,46 +381,45 @@ const html =
 
 export class Scribe
     extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLView {
-    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
+    implements IFluidLoadable, IFluidRouter, IFluidHTMLView {
+    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         const collection = new Scribe(runtime, context);
         await collection.initialize();
 
         return collection;
     }
 
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
-    public get IComponentHandle() { return this.innerHandle; }
-    public get IComponentLoadable() { return this; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get IFluidHandle() { return this.innerHandle; }
+    public get IFluidLoadable() { return this; }
 
-    public get IComponentRouter() { return this; }
-    public get IComponentHTMLView() { return this; }
+    public get IFluidRouter() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     public url: string;
     private root: ISharedMap;
     private div: HTMLDivElement;
 
-    constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
+    constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {
         super();
 
         this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
+        this.innerHandle = new FluidOjectHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "fluid/component",
+            mimeType: "fluid/object",
             status: 200,
             value: this,
         };
     }
 
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         if (!this.div) {
             this.div = document.createElement("div");
-            // tslint:disable-next-line:no-inner-html
             this.div.innerHTML = html;
             initialize(
                 this.div,
@@ -450,15 +449,15 @@ export class Scribe
     }
 }
 
-class ScribeFactory implements IComponentFactory, IRuntimeFactory {
+class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
     public static readonly type = "@fluid-example/scribe";
     public readonly type = ScribeFactory.type;
 
-    public get IComponentFactory() { return this; }
+    public get IFluidDataStoreFactory() { return this; }
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const registry = new Map<string, Promise<IComponentFactory>>([
+        const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
             [ScribeFactory.type, Promise.resolve(this)],
         ]);
 
@@ -478,7 +477,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
                 const componentId = requestUrl
                     ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
                     : defaultComponentId;
-                const component = await containerRuntime.getComponentRuntime(componentId, true);
+                const component = await containerRuntime.getDataStore(componentId, true);
 
                 return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
             },
@@ -486,22 +485,18 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            await Promise.all([
-                runtime.createComponent(defaultComponentId, ScribeFactory.type).then((componentRuntime) => {
-                    componentRuntime.bindToContext();
-                }),
-            ]);
+            await runtime.createRootDataStore(ScribeFactory.type, defaultComponentId);
         }
 
         return runtime;
     }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateDataStore(context: IFluidDataStoreContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
-        const runtime = ComponentRuntime.load(
+        const runtime = FluidDataStoreRuntime.load(
             context,
             dataTypes,
         );

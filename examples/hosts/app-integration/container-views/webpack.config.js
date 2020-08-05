@@ -13,7 +13,6 @@ module.exports = env => {
 
     return merge({
         entry: {
-            main: "./src/container/index.ts",
             app: "./src/app/app.ts"
         },
         resolve: {

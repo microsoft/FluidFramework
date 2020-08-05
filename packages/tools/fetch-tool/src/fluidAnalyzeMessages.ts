@@ -18,7 +18,7 @@ import {
     isRuntimeMessage,
     unpackRuntimeMessage,
 } from "@fluidframework/container-runtime";
-import { ComponentMessageType } from "@fluidframework/component-runtime";
+import { DataStoreMessageType } from "@fluidframework/datastore";
 
 const noClientName = "No Client";
 const objectTypePrefix = "https://graph.microsoft.com/types/";
@@ -495,14 +495,14 @@ function processOp(
         };
         const address = envelop.address;
         type = `${type}/${innerContent.type}`;
-        if (innerContent.type === ComponentMessageType.Attach) {
+        if (innerContent.type === DataStoreMessageType.Attach) {
             const attachMessage = innerContent.content as IAttachMessage;
             let objectType = attachMessage.type;
             if (objectType.startsWith(objectTypePrefix)) {
                 objectType = objectType.substring(objectTypePrefix.length);
             }
             dataType.set(getObjectId(address, attachMessage.id), objectType);
-        } else if (innerContent.type === ComponentMessageType.ChannelOp) {
+        } else if (innerContent.type === DataStoreMessageType.ChannelOp) {
             const innerEnvelop = innerContent.content as IEnvelope;
             const innerContent2 = innerEnvelop.contents as {
                 type?: string;

@@ -4,9 +4,9 @@
  */
 
 import {
-    IComponentLoadable,
-    IComponentRouter,
-    IComponentRunnable,
+    IFluidLoadable,
+    IFluidRouter,
+    IFluidRunnable,
 } from "@fluidframework/component-core-interfaces";
 
 /**
@@ -19,9 +19,9 @@ export interface ITask {
     id: string;
 
     /**
-     * Instance of the task that implements IComponentRunnable
+     * Instance of the task that implements IFluidRunnable
      */
-    instance: IComponentRunnable;
+    instance: IFluidRunnable;
 }
 
 export const ITaskManager: keyof IProvideTaskManager = "ITaskManager";
@@ -33,7 +33,7 @@ export interface IProvideTaskManager {
 /**
  * Task manager enables app to register and pick tasks.
  */
-export interface ITaskManager extends IProvideTaskManager, IComponentLoadable, IComponentRouter {
+export interface ITaskManager extends IProvideTaskManager, IFluidLoadable, IFluidRouter {
     /**
      * Registers tasks task so that the client can run the task later.
      */
@@ -57,7 +57,7 @@ export interface IProvideAgentScheduler {
 /**
  * Agent scheduler distributes a set of tasks/variables across connected clients.
  */
-export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRouter, IComponentLoadable {
+export interface IAgentScheduler extends IProvideAgentScheduler, IFluidRouter, IFluidLoadable {
     /**
      * Registers a set of new tasks to distribute amongst connected clients. Only use this if a client wants
      * a new agent to run but does not have the capability to run the agent inside the host.
@@ -110,10 +110,6 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRoute
 }
 
 declare module "@fluidframework/component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends
-        Readonly<Partial<IProvideTaskManager & IProvideAgentScheduler>> { }
-
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends
         Readonly<Partial<IProvideTaskManager & IProvideAgentScheduler>> { }

@@ -1,14 +1,195 @@
 # Breaking changes
 
+## 0.25 Breaking Changes
+- [IComponentContextLegacy is removed](#IComponentContextLegacy-is-removed)
+- [IContainerRuntimeBase._createDataStoreWithProps() is removed](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
+- [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
+- [createDataStoreWithRealizationFn() APIs moved](#createDataStoreWithRealizationFn()-APIs-moved)
+- [Package Renames](#package-renames)
+- [IComponent and IComponent Interfaces Removed](#IComponent-and-IComponent-Interfaces-Removed)
+- [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
+
+### IComponentContextLegacy is removed
+Deprecated in 0.18, removed.
+
+### IContainerRuntimeBase._createDataStoreWithProps is removed
+`IContainerRuntimeBase._createDataStoreWithProps()` has been removed. Please use `IContainerRuntimeBase.createDataStore()` (returns IFluidRouter).
+If you need to pass props to data store, either use request() route to pass initial props directly, or to query fluid object to interact with it (pass props / call methods to configure object).
+
+### _createDataStore APIs are removed
+`IFluidDataStoreContext._createDataStore()` & `IContainerRuntimeBase._createDataStore()` are removed
+Please switch to using one of the following APIs:
+1. `IContainerRuntime.createRootDataStore()` - data store created that way is automatically bound to container. It will immediately be visible to remote clients (when/if container is attached). Such data stores are never garbage collected. Note that this API is on `IContainerRuntime` interface, which is not directly accessible to data stores. The intention is that only container owners are creating roots.
+2. `IContainerRuntimeBase.createDataStore()` - creates data store that is not bound to container. In order for this store to be bound to container (and thus be observable on remote clients), ensure that handle to it (or any of its objects / DDS) is stored into any other DDS that is already bound to container. In other words, newly created data store has to be reachable (there has to be a path) from some root data store in container. If, in future, such data store becomes unreachable from one of the roots, it will be garbage collected (implementation pending).
+
+### createDataStoreWithRealizationFn() APIs moved
+Removed from IFluidDataStoreContext  & IContainerRuntime.
+Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altogether in same release (more info to follow)
+
+### Package Renames
+As a follow up to the changes in 0.24 we are updating a number of package names
+- `@fluidframework/component-runtime-definitions` is renamed to `@fluidframework/datastore-definitions`
+- `@fluidframework/component-runtime` is renamed to `@fluidframework/datastore`
+
+### IComponent and IComponent Interfaces Removed
+In 0.24 IComponent and IComponent interfaces were deprecated, they are being removed in this build. Please move to IFluidObject and IFluidObject interfaces.
+
+### odsp-utils Changes
+To support additional authentication scenarios, the signature and/or name of a few auth-related functions was modified.
+
+## 0.24 Breaking Changes
+This release only contains renames. There are no functional changes in this release. You should ensure you have integrated and validated up to release 0.23 before integrating this release.
+
+This is a followup to the forward compat added in release 0.22: [Forward Compat For Loader IComponent Interfaces](#Forward-Compat-For-Loader-IComponent-Interfaces)
+
+You should ensure all container and components hosts are running at least 0.22 before integrating this release.
+
+The below json describes all the renames done in this release. If you have a large typescript code base, we have automation that may help. Please contact us if that is the case.
+
+All renames are 1-1, and global case senstive and whole word find replace for all should be safe. For IComponent Interfaces, both the type and property name were re-named.
+
+```json
+{
+    "dataStore":{
+        "types":{
+            "IComponentRuntimeChannel":"IFluidDataStoreChannel",
+            "IComponentAttributes": "IFluidDataStoretAttributes",
+
+            "IComponentContext": "IFluidDataStoreContext",
+            "ComponentContext": "FluidDataStoreContext",
+            "LocalComponentContext":"LocalFluidDataStoreContext",
+            "RemotedComponentContext": "RemotedFluidDataStoreContext ",
+
+            "IComponentRuntime":"IFluidDataStoreRuntime",
+            "ComponentRuntime": "FluidDataStoreRuntime",
+            "MockComponentRuntime": "MockFluidDataStoreRuntime"
+        },
+        "methods":{
+            "createComponent": "_createDataStore",
+            "createComponentContext": "createDataStoreContext",
+            "createComponentWithProps": "createDataStoreWithProps",
+            "_createComponentWithProps": "_createDataStoreWithProps",
+            "createComponentWithRealizationFn": "createDataStoreWithRealizationFn",
+            "getComponentRuntime": "getDataStore",
+            "notifyComponentInstantiated": "notifyDataStoreInstantiated"
+        }
+    },
+
+    "aquaduct":{
+        "icomponentInterfaces":{
+            "IProvideComponentDefaultFactoryName": "IProvideFluidExportDefaultFactoryName",
+            "IComponentDefaultFactoryName": "IFluidExportDefaultFactoryName"
+        },
+        "types":{
+            "SharedComponentFactory": "PureDataObjectFactory",
+            "SharedComponent": "PureDataObject",
+
+            "PrimedComponentFactory": "DataObjectFactory",
+            "PrimedComponent": "DataObject",
+
+            "ContainerRuntimeFactoryWithDefaultComponent": "ContainerRuntimeFactoryWithDefaultDataStore",
+
+            "defaultComponentRuntimeRequestHandler": "defaultDataStoreRuntimeRequestHandler"
+        },
+        "methods": {
+            "getComponent": "requestFluidObject",
+            "asComponent": "asFluidObject",
+            "createAndAttachComponent": "createAndAttachDataStore",
+            "getComponentFromDirectory": "getFluidObjectFromDirectory",
+            "getComponent_UNSAFE": "requestFluidObject_UNSAFE",
+            "componentInitializingFirstTime": "initializingFirstTime",
+            "componentInitializingFromExisting": "initializingFromExisting",
+            "componentHasInitialized": "hasInitialized"
+        }
+    },
+
+    "fluidObject":{
+        "icomponentInterfaces":{
+
+            "IProvideComponentRouter": "IProvideFluidRouter",
+            "IComponentRouter": "IFluidRouter",
+
+            "IProvideComponentLoadable": "IProvideFluidLoadable",
+            "IComponentLoadable": "IFluidLoadable",
+
+            "IProvideComponentHandle": "IProvideFluidHandle",
+            "IComponentHandle": "IFluidHandle",
+
+            "IProvideComponentHandleContext": "IProvideFluidHandleContext",
+            "IComponentHandleContext": "IFluidHandleContext",
+
+            "IProvideComponentSerializer": "IProvideFluidSerializer",
+            "IComponentSerializer": "IFluidSerializer",
+
+            "IProvideComponentRunnable": "IProvideFluidRunnable",
+            "IComponentRunnable": "IFluidRunnable",
+
+            "IProvideComponentConfiguration": "IProvideFluidConfiguration",
+            "IComponentConfiguration": "IFluidConfiguration",
+
+            "IProvideComponentHTMLView": "IProvideFluidHTMLView",
+            "IComponentHTMLView": "IFluidHTMLView",
+            "IComponentHTMLOptions": "IFluidHTMLOptions",
+
+            "IProvideComponentMountableView": "IProvideFluidMountableView",
+            "IComponentMountableViewClass": "IFluidMountableViewClass",
+            "IComponentMountableView": "IFluidMountableView",
+
+            "IProvideComponentLastEditedTracker": "IProvideFluidLastEditedTracker",
+            "IComponentLastEditedTracker": "IFluidLastEditedTracker",
+
+            "IProvideComponentRegistry": "IProvideFluidDataStoreRegistry",
+            "IComponentRegistry": "IFluidDataStoreRegistry",
+
+            "IProvideComponentFactory": "IProvideFluidDataStoreFactory",
+            "IComponentFactory": "IFluidDataStoreFactory",
+
+            "IProvideComponentCollection": "IProvideFluidObjectCollection",
+            "IComponentCollection": "IFluidObjectCollection",
+
+            "IProvideComponentDependencySynthesizer": "IProvideFluidDependencySynthesizer",
+            "IComponentDependencySynthesizer": "IFluidDependencySynthesizer",
+
+            "IProvideComponentTokenProvider": "IProvideFluidTokenProvider",
+            "IComponentTokenProvider": "IFluidTokenProvider"
+        },
+        "types":{
+            "IComponent": "IFluidObject",
+            "fluid/component": "fluid/object",
+
+            "SharedObjectComponentHandle": "SharedObjectHandle",
+            "RemoteComponentHandle": "RemoteFluidObjectHandle",
+            "ComponentHandle": "FluidOjectHandle",
+            "ComponentSerializer": "FluidSerializer",
+
+            "ComponentHandleContext": "FluidHandleContext",
+
+            "ComponentRegistryEntry": "FluidDataStoreRegistryEntry",
+            "NamedComponentRegistryEntry": "NamedFluidDataStoreRegistryEntry",
+            "NamedComponentRegistryEntries": "NamedFluidDataStoreRegistryEntries",
+            "ComponentRegistry": "FluidDataStoreRegistry",
+            "ContainerRuntimeComponentRegistry": "ContainerRuntimeDataStoreRegistry"
+        },
+        "methods":{
+            "instantiateComponent": "instantiateDataStore"
+        }
+    }
+}
+```
+
 ## 0.23 Breaking Changes
 - [Removed `collaborating` event on IComponentRuntime](#Removed-`collaborating`-event-on-IComponentRuntime)
 - [ISharedObjectFactory rename](#ISharedObjectFactory)
+- [LocalSessionStorageDbFactory moved to @fluidframework/local-driver](LocalSessionStorageDbFactory-moved-to-@fluidframework/local-driver)
 
 ### Removed `collaborating` event on IComponentRuntime
 Component Runtime no longer fires the collaborating event on attaching. Now it fires `attaching` event.
 
 ### ISharedObjectFactory
 `ISharedObjectFactory` renamed to `IChannelFactory` and moved from `@fluidframework/shared-object-base` to `@fluidframework/component-runtime-definitions`
+
+### LocalSessionStorageDbFactory moved to @fluidframework/local-driver
+Previously, `LocalSessionStorageDbFactory` was part of the `@fluidframework/webpack-component-loader` package.  It has been moved to the `@fluidframework/local-driver` package.
 
 ## 0.22 Breaking Changes
 - [Deprecated `path` from `IComponentHandleContext`](#Deprecated-`path`-from-`IComponentHandleContext`)
@@ -20,6 +201,7 @@ Component Runtime no longer fires the collaborating event on attaching. Now it f
 - [Add Undefined to getAbsoluteUrl return type](#Add-Undefined-to-getAbsoluteUrl-return-type)
 - [Renamed TestDeltaStorageService, TestDocumentDeltaConnection, TestDocumentService, TestDocumentServiceFactory and TestResolver](#Renamed-TestDeltaStorageService,-TestDocumentDeltaConnection,-TestDocumentService,-TestDocumentServiceFactory-and-TestResolver)
 - [DocumentDeltaEventManager has been renamed and moved to "@fluidframework/test-utils"](#DocumentDeltaEventManager-has-been-renamed-and-moved-to-"@fluidframework/test-utils")
+- [`isAttached` replaced with `attachState` property](#`isAttached`-replaced-with-`attachState`-property)
 
 ### Deprecated `path` from `IComponentHandleContext`
 Deprecated the `path` field from the interface `IComponentHandleContext`. This means that `IComponentHandle` will not have this going forward as well.
@@ -143,6 +325,13 @@ containerDeltaEventManager.registerDocuments(component1.runtime, component2.runt
 opProcessingController = new OpProcessingController(deltaConnectionServer);
 opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
 ```
+
+### `isAttached` replaced with `attachState` property
+
+`isAttached` is replaced with `attachState` property on `IContainerContext`, `IContainerRuntime` and `IComponentContext`.
+`isAttached` returned true when the entity was either attaching or attached to the storage.
+So if `attachState` is `AttachState.Attaching` or `AttachState.Attached` then `isAttached` would have returned true.
+Attaching is introduced in regards to Detached container where there is a time where state is neither AttachState.Detached nor AttachState.Attached.
 
 ## 0.21 Breaking Changes
 - [Removed `@fluidframework/local-test-utils`](#removed-`@fluidframework/local-test-utils`)

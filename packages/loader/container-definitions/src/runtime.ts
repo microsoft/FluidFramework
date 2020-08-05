@@ -5,11 +5,10 @@
 
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
-    IComponent,
-    IComponentConfiguration,
+    IFluidObject,
+    IFluidConfiguration,
     IRequest,
     IResponse,
-    IFluidObject,
 } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -104,7 +103,7 @@ export interface IContainerContext extends IMessageScheduler, IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;
-    readonly configuration: IComponentConfiguration;
+    readonly configuration: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly parentBranch: string | null;
@@ -129,7 +128,7 @@ export interface IContainerContext extends IMessageScheduler, IDisposable {
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IComponent & IFluidObject;
+    readonly scope: IFluidObject & IFluidObject;
 
     raiseContainerWarning(warning: ContainerWarning): void;
     requestSnapshot(tagMessage: string): Promise<void>;

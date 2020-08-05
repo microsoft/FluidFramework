@@ -5,8 +5,11 @@
 
 export * from "./componentHandleContextUtils";
 export * from "./serializer";
+export * from "./summarizerNode";
 export * from "./summaryTracker";
+export * from "./summaryUtils";
 export * from "./utils";
 export * from "./objectstoragepartition";
 export * from "./objectstorageutils";
 export * from "./requestParser";
+export * from "./dataStoreHelpers";

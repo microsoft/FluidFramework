@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { Spaces } from "./spaces";
 
 export * from "./spaces";
 export * from "./spacesView";
 export * from "./storage";
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     Spaces.ComponentName,
     [[Spaces.ComponentName, Promise.resolve(Spaces.getFactory())]],
 );

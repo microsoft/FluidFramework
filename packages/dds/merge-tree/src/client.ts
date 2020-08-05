@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { IComponentRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performanceNow } from "@fluidframework/common-utils";
 import { IIntegerRange } from "./base";
@@ -890,12 +890,13 @@ export class Client {
 
     // TODO: Remove `catchUpMsgs` once new snapshot format is adopted as default.
     //       (See https://github.com/microsoft/FluidFramework/issues/84)
-    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
+    public snapshot(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
         const deltaManager = runtime.deltaManager;
         const minSeq = deltaManager.minimumSequenceNumber;
 
         // Catch up to latest MSN, if we have not had a chance to do it.
-        // Required for case where ComponentRuntime.attachChannel() generates snapshot right after loading component.
+        // Required for case where FluidDataStoreRuntime.attachChannel()
+        // generates snapshot right after loading component.
 
         this.updateSeqNumbers(minSeq, deltaManager.lastSequenceNumber);
 
@@ -905,29 +906,29 @@ export class Client {
 
         // TODO: Remove options flag once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
-        if(this.mergeTree.options?.newMergeTreeSnapshotFormat === true) {
+        if (this.mergeTree.options?.newMergeTreeSnapshotFormat === true) {
             assert(
                 catchUpMsgs === undefined || catchUpMsgs.length === 0,
                 "New format should not emit catchup ops");
             const snap = new SnapshotV1(this.mergeTree, this.logger);
             snap.extractSync();
             return snap.emit(
-                runtime.IComponentSerializer,
-                runtime.IComponentHandleContext,
+                runtime.IFluidSerializer,
+                runtime.IFluidHandleContext,
                 handle);
-        }else{
+        } else {
             const snap = new SnapshotLegacy(this.mergeTree, this.logger);
             snap.extractSync();
             return snap.emit(
                 catchUpMsgs,
-                runtime.IComponentSerializer,
-                runtime.IComponentHandleContext,
+                runtime.IFluidSerializer,
+                runtime.IFluidHandleContext,
                 handle);
         }
     }
 
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         storage: IChannelStorageService,
         branchId?: string,
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
