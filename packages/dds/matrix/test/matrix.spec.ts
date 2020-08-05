@@ -658,6 +658,7 @@ describe("Matrix", () => {
                 await expect([
                     [0, 1, 2, 3]
                 ]);
+
                 matrix2.insertCols(1,1);    // rowCount: 1, colCount: 5
                 matrix2.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, ["A"]);
                 matrix1.removeCols(0,2);    // rowCount: 1, colCount: 2
@@ -667,6 +668,39 @@ describe("Matrix", () => {
                     ["B", "A", 2, 3]
                 ]);
             });
+
+            // it("fail", async () => {
+            //     matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 4);
+            //     matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+            //     matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [0,1,2,3]);
+            //     matrix1.removeCols(/* colStart: */ 0, /* colCount: */ 1);
+            //     matrix1.removeRows(/* rowStart: */ 1, /* rowCount: */ 1);
+            //     await expect([
+            //         [],
+            //         [],
+            //         [],
+            //     ]);
+
+            //     matrix1.removeRows(/* rowStart: */ 0, /* rowCount: */ 1);
+            //     matrix2.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+            //     matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [74,37,0]);
+            //     matrix2.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+            //     matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [34,92,97]);
+            //     matrix1.insertRows(/* rowStart: */ 1, /* rowCount: */ 1);
+            //     await expect([
+            //         [92, 37],
+            //         [undefined, undefined],
+            //         [97, 0]
+            //     ]);
+
+            //     matrix2.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+            //     matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [59,89,55]);
+            //     await expect([
+            //         [59, 92, 37],
+            //         [89, undefined, undefined],
+            //         [55, 97, 0]
+            //     ]);
+            // });
         });
     });
 
@@ -880,7 +914,7 @@ describe("Matrix", () => {
             matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
             matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
             matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [0]);
-            
+
             matrix2.insertCols(/* colStart: */ 0, /* colCount: */ 1);
             matrix2.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
             matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [90]);

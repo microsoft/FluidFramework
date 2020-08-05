@@ -449,13 +449,15 @@ export class SharedMatrix<T extends Serializable = Serializable>
                     const row = this.rows.getPositionForResubmit(rowHandle, localSeq);
                     const col = this.cols.getPositionForResubmit(colHandle, localSeq);
 
-                    this.setCellCore(
-                        row,
-                        col,
-                        setOp.value,
-                        rowHandle,
-                        colHandle,
-                    );
+                    if (row >= 0 && col >= 0) {
+                        this.setCellCore(
+                            row,
+                            col,
+                            setOp.value,
+                            rowHandle,
+                            colHandle,
+                        );
+                    }
                 }
                 break;
             }

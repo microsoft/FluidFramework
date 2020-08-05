@@ -9,9 +9,6 @@ export const enum Handle {
 
     /** Sentinel representing an unallocated Handle. */
     unallocated = -1,
-
-    /** Sentinel representing a handle to a row/col that is no longer part of the matrix. */
-    deleted = -2
 }
 
 /**

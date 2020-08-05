@@ -15,6 +15,8 @@ import {
     IMergeTreeDeltaOpArgs,
     IMergeTreeDeltaCallbackArgs,
     MergeTreeDeltaType,
+    IMergeTreeMaintenanceCallbackArgs,
+    MergeTreeMaintenanceType,
 } from "@fluidframework/merge-tree";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions";
@@ -24,7 +26,6 @@ import { serializeBlob, deserializeBlob } from "./serialization";
 
 const enum SnapshotPath {
     segments = "segments",
-    handles = "handles",
     handleTable = "handleTable",
 }
 
@@ -127,6 +128,7 @@ export class PermutationVector extends Client {
         );
 
         this.mergeTreeDeltaCallback = this.onDelta;
+        this.mergeTreeMaintenanceCallback = this.onMaintenance;
     }
 
     public insert(start: number, length: number) {
@@ -199,7 +201,7 @@ export class PermutationVector extends Client {
         //
         //       If we find that we frequently need a reverse handle -> position lookup, we could maintain
         //       one using the Tiny-Calc adjust tree.
-        let containingSegment: PermutationSegment;
+        let containingSegment: PermutationSegment | undefined;
         let containingOffset: number;
 
         this.walkSegments((segment) => {
@@ -225,9 +227,11 @@ export class PermutationVector extends Client {
         // most recently pending write to the row/col handle before calling 'getPositionForResubmit'
         // to ensure the handle has not been removed or recycled (See comments in `resubmitCore()`).
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        assert(containingSegment! !== undefined && containingSegment.start >= Handle.valid,
-            "Caller must ensure 'handle' has not been removed/recycled.");
+        if (containingSegment === undefined) {
+            return -1;
+        }
+
+        assert(containingSegment.start >= Handle.valid);
 
         // Once we know the current position of the handle, we can use the MergeTree to get the segment
         // containing this position and use 'findReconnectionPosition' to adjust for the local ops that
@@ -287,28 +291,6 @@ export class PermutationVector extends Client {
                 break;
 
             case MergeTreeDeltaType.REMOVE: {
-                let freed: number[] = [];
-
-                for (const { segment } of ranges) {
-                    if (segment.start !== Handle.unallocated) {
-                        // Note: Using the spread operator with `.splice()` can exhaust the stack.
-                        freed = freed.concat(
-                            new Array(segment.cachedLength)
-                                .fill(0)
-                                .map((value, index) => index + segment.start),
-                        );
-                    }
-                }
-
-                // Notify matrix that handles are about to be freed.  The matrix is responsible for clearing
-                // the rows/cols prior to free to ensure recycled row/cols are initially empty.
-                this.handlesRecycledCallback(freed);
-
-                // Now that the physical storage has been cleared, add the recycled handles back to the free pool.
-                for (const handle of freed) {
-                    this.handleTable.free(handle);
-                }
-
                 // Notify the matrix of removed positions.  The matrix in turn notifies any IMatrixConsumers.
                 for (const { segment, position } of ranges) {
                     this.deltaCallback(position, /* numRemoved: */ segment.cachedLength, /* numInsert: */ 0);
@@ -318,6 +300,33 @@ export class PermutationVector extends Client {
 
             default:
                 assert.fail();
+        }
+    };
+
+    private readonly onMaintenance = (args: IMergeTreeMaintenanceCallbackArgs) => {
+        if (args.operation === MergeTreeMaintenanceType.UNLINK) {
+            let freed: number[] = [];
+
+            for (const { segment } of args.deltaSegments) {
+                const asPerm = segment as PermutationSegment;
+                if (asPerm.start !== Handle.unallocated) {
+                    // Note: Using the spread operator with `.splice()` can exhaust the stack.
+                    freed = freed.concat(
+                        new Array(asPerm.cachedLength)
+                            .fill(0)
+                            .map((value, index) => index + asPerm.start),
+                    );
+                }
+            }
+
+            // Notify matrix that handles are about to be freed.  The matrix is responsible for clearing
+            // the rows/cols prior to free to ensure recycled row/cols are initially empty.
+            this.handlesRecycledCallback(freed);
+
+            // Now that the physical storage has been cleared, add the recycled handles back to the free pool.
+            for (const handle of freed) {
+                this.handleTable.free(handle);
+            }
         }
     };
 
