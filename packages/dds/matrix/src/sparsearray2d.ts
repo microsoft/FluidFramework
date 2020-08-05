@@ -35,9 +35,12 @@ const byte3 = (x32: number) => (x32 << 24) >>> 24;
 // interleaved between the original bits. (e.g., 1111... -> 01010101...).
 const interlaceBitsX16 = (x16: number) => (x8ToInterlacedX16[byte2(x16)] << 16) | x8ToInterlacedX16[byte3(x16)];
 
+const r0ToMorton16 = (row: number) => (interlaceBitsX16(row) << 1) >>> 0;
+const c0ToMorton16 = (col: number) => interlaceBitsX16(col) >>> 0;
+
 // Given a 2D uint16 coordinate returns the corresponding unt32 Morton coded
 // coordinate.  (See https://en.wikipedia.org/wiki/Z-order_curve)
-const r0c0ToMorton2x16 = (row: number, col: number) => (interlaceBitsX16(col) | (interlaceBitsX16(row) << 1)) >>> 0;
+const r0c0ToMorton2x16 = (row: number, col: number) => (r0ToMorton16(row) | c0ToMorton16(col)) >>> 0;
 
 type RecurArrayHelper<T> = RecurArray<T> | T;
 type RecurArray<T> = RecurArrayHelper<T>[];
@@ -62,7 +65,7 @@ export class SparseArray2D<T> implements IArray2D<T> {
     public get rowCount() { return 0xFFFFFFFF; }
     public get colCount() { return 0xFFFFFFFF; }
 
-    getCell(row: number, col: number): T | undefined | null {
+    public getCell(row: number, col: number): T | undefined | null {
         const keyHi = r0c0ToMorton2x16(row >>> 16, col >>> 16);
         const level0 = this.root[keyHi];
         if (level0 !== undefined) {
@@ -84,7 +87,7 @@ export class SparseArray2D<T> implements IArray2D<T> {
 
     public get matrixProducer() { return undefined as any; }
 
-    setCell(row: number, col: number, value: T | undefined) {
+    public setCell(row: number, col: number, value: T | undefined) {
         const keyHi = r0c0ToMorton2x16(row >>> 16, col >>> 16);
         const keyLo = r0c0ToMorton2x16(row, col);
 
@@ -93,6 +96,84 @@ export class SparseArray2D<T> implements IArray2D<T> {
         const level2 = this.getLevel(level1, byte1(keyLo));
         const level3 = this.getLevel(level2, byte2(keyLo));
         level3[byte3(keyLo)] = value;
+    }
+
+    private forEachKeyInRow(row: number, callback: (key: number) => void) {
+        for (let col = 0; col < 16; col++) {
+            callback((row | c0ToMorton16(col)) >>> 0);
+        }
+    }
+
+    private forEachInRow<V extends UA<any>, U extends UA<V>>(currentLevel: U, row: number, callback: (level: V) => void) {
+        this.forEachKeyInRow(row, (key) => {
+            const nextLevel = currentLevel[key];
+            if (nextLevel !== undefined) {
+                callback(nextLevel);
+            }
+        });
+    }
+
+    private forEachKeyInCol(col: number, callback: (key: number) => void) {
+        for (let row = 0; row < 16; row++) {
+            callback((r0ToMorton16(row) | col) >>> 0);
+        }
+    }
+
+    private forEachInCol<V extends UA<any>, U extends UA<V>>(currentLevel: U, row: number, callback: (level: V) => void) {
+        this.forEachKeyInCol(row, (key) => {
+            const nextLevel = currentLevel[key];
+            if (nextLevel !== undefined) {
+                callback(nextLevel);
+            }
+        });
+    }
+
+    /** Clears the all cells contained within the specifed span of rows. */
+    public clearRows(rowStart: number, rowCount: number) {
+        const rowEnd = rowStart + rowCount;
+        for (let row = rowStart; row < rowEnd; row++) {
+            const rowHi = r0ToMorton16(row >>> 16);
+            for (let colHi = 0; colHi < 0x10000; colHi++) {
+                const keyHi = (rowHi | c0ToMorton16(colHi)) >>> 0;
+                const level0 = this.root[keyHi];
+                if (level0 !== undefined) {
+                    const rowLo = r0ToMorton16(row);
+                    this.forEachInRow(level0, byte0(rowLo), (level1) => {
+                        this.forEachInRow(level1, byte1(rowLo), (level2) => {
+                            this.forEachInRow(level2, byte2(rowLo), (level3) => {
+                                this.forEachKeyInRow(byte3(rowLo), (key) => {
+                                    level3[key] = undefined;
+                                });
+                            });
+                        });
+                    });
+                }
+            }
+        }
+    }
+
+    /** Clears the all cells contained within the specifed span of cols. */
+    public clearCols(colStart: number, colCount: number) {
+        const colEnd = colStart + colCount;
+        for (let col = colStart; col < colEnd; col++) {
+            const colHi = c0ToMorton16(col >>> 16);
+            for (let rowHi = 0; rowHi < 0x10000; rowHi++) {
+                const keyHi = (colHi | r0ToMorton16(rowHi)) >>> 0;
+                const level0 = this.root[keyHi];
+                if (level0 !== undefined) {
+                    const colLo = c0ToMorton16(col);
+                    this.forEachInCol(level0, byte0(colLo), (level1) => {
+                        this.forEachInCol(level1, byte1(colLo), (level2) => {
+                            this.forEachInCol(level2, byte2(colLo), (level3) => {
+                                this.forEachKeyInCol(byte3(colLo), (key) => {
+                                    level3[key] = undefined;
+                                });
+                            });
+                        });
+                    });
+                }
+            }
+        }
     }
 
     private getLevel<T>(parent: UA<UA<T>>, subKey: number) {

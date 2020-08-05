@@ -7,6 +7,15 @@ import { strict as assert } from 'assert';
 import { SharedMatrix } from '../src';
 import { IArray2D } from "../src/sparsearray2d";
 import { Serializable } from '@fluidframework/component-runtime-definitions';
+import { IMatrixProducer, IMatrixReader, IMatrixConsumer } from '@tiny-calc/nano';
+
+class NullMatrixConsumer implements IMatrixConsumer<any> {
+    rowsChanged(rowStart: number, removedCount: number, insertedCount: number, producer: IMatrixProducer<any>): void {}
+    colsChanged(colStart: number, removedCount: number, insertedCount: number, producer: IMatrixProducer<any>): void {}
+    cellsChanged(rowStart: number, colStart: number, rowCount: number, colCount: number, producer: IMatrixProducer<any>): void {}
+}
+
+const nullConsumer = new NullMatrixConsumer();
 
 /**
  * Fills the designated region of the matrix with values computed by the `value` callback.
@@ -61,14 +70,14 @@ export function check<T extends IArray2D<U>, U>(
     colStart = 0,
     rowCount = matrix.rowCount - rowStart,
     colCount = matrix.colCount - colStart,
-    value = (row: number, col: number) => row * rowCount + col
+    value = (row: number, col: number): U => row * rowCount + col as any
 ): T {
     const rowEnd = rowStart + rowCount;
     const colEnd = colStart + colCount;
 
     for (let r = rowStart; r < rowEnd; r++) {
         for (let c = colStart; c < colEnd; c++) {
-            assert.equal(matrix.getCell(r, c), value(r, c) as any);
+            assert.equal(matrix.getCell(r, c), value(r, c));
         }
     }
     return matrix;
@@ -81,36 +90,69 @@ export function checkValue<T extends IArray2D<U>, U>(
     c: number,
     rowStart = 0,
     rowCount = matrix.rowCount - rowStart,
-    value = (row: number, col: number) => row * rowCount + col
+    value = (row: number, col: number) => row * rowCount + col as any
 ) {
-    assert.equal(test, value(r, c) as any);
+    assert.equal(test, value(r, c));
+}
+
+function withReader<TCells, TResult>(
+    producerOrReader: IMatrixReader<TCells> | IMatrixProducer<TCells>,
+    callback: (reader: IMatrixReader<TCells>
+) => TResult) {
+    if ("openMatrix" in producerOrReader) {
+        const reader = producerOrReader.openMatrix(nullConsumer);
+        try {
+            return callback(reader);
+        } finally {
+            producerOrReader.closeMatrix(nullConsumer);
+        }
+    } else {
+        return callback(producerOrReader);
+    }
 }
 
 /**
- * Extracts the contents of the given `SharedMatrix` as a jagged 2D array.  This is convenient for
+ * Extracts the contents of the given `matrix` as a jagged 2D array.  This is convenient for
  * comparing matrices via `assert.deepEqual()`.
  */
-export function extract<T extends Serializable>(actual: SharedMatrix<T>): ReadonlyArray<ReadonlyArray<T>> {
-    const m: T[][] = [];
-    for (let r = 0; r < actual.rowCount; r++) {
-        const row: T[] = [];
-        m.push(row);
+export function extract<T extends Serializable>(
+    matrix: IMatrixReader<T> | IMatrixProducer<T>,
+    rowStart = 0,
+    colStart = 0,
+    rowCount?: number,
+    colCount?: number,
+) {
+    return withReader(matrix, (reader) => {
+        rowCount = rowCount ?? reader.rowCount - rowStart;
+        colCount = colCount ?? reader.colCount - colStart;
 
-        for (let c = 0; c < actual.colCount; c++) {
-            row.push(actual.getCell(r, c) as T);
+        const rows: T[][] = [];
+        for (let r = rowStart; r < rowStart + rowCount; r++) {
+            const row: T[] = [];
+            rows.push(row);
+
+            for (let c = colStart; c < colStart + colCount; c++) {
+                row.push(reader.getCell(r, c));
+            }
         }
-    }
 
-    return m;
+        return rows;
+    });
 }
 
 /**
- * Asserts that given `SharedMatrix` has the specified dimensions.  This is useful for distinguishing
+ * Asserts that given `matrix` has the specified dimensions.  This is useful for distinguishing
  * between variants of empty matrices (zero rows vs. zero cols vs. zero rows and zero cols).
  */
-export function expectSize<T extends Serializable>(matrix: SharedMatrix<T>, rowCount: number, colCount: number) {
-    assert.equal(matrix.rowCount, rowCount, "'matrix' must have expected number of rows.");
-    assert.equal(matrix.colCount, colCount, "'matrix' must have expected number of columns.");
+export function expectSize<T extends Serializable>(
+    matrix: IMatrixReader<T> | IMatrixProducer<T>,
+    rowCount: number,
+    colCount: number,
+) {
+    withReader(matrix, (reader) => {
+        assert.equal(reader.rowCount, rowCount, "'reader' must have expected number of rows.");
+        assert.equal(reader.colCount, colCount, "'reader' must have expected number of columns.");
+    });
 }
 
 /**
