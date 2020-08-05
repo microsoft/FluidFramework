@@ -4,7 +4,6 @@
  */
 
 export * from "./indexNode";
-export * from "./base64Encoding";
 export * from "./batchManager";
 export * from "./disposal";
 export * from "./eventForwarder";
