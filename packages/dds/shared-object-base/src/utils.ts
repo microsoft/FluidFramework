@@ -7,7 +7,7 @@ import {
     IFluidHandle,
     IFluidHandleContext,
     IFluidSerializer,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 
 /**
  * Given a mostly-plain object that may have handle objects embedded within, return a string representation of an object

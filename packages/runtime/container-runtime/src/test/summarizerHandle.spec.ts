@@ -7,7 +7,7 @@ import {
     IFluidHandleContext,
     IFluidHandle,
     IFluidLoadable,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { SummarizerHandle } from "../summarizerHandle";
 
 const mockHandleContext: IFluidHandleContext = {

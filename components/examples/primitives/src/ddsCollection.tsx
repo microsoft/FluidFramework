@@ -5,7 +5,7 @@
 
 import React from "react";
 import { ISharedMap, SharedMap, IDirectory, IDirectoryValueChanged } from "@fluidframework/map";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IMapProps, MapComponent } from "./map";
 
 interface IDdsCollectionProps {

@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IFluidCodeDetails,
     IProxyLoaderFactory,

@@ -14,7 +14,7 @@ import {
     IFluidHandle,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { AsSerializable } from "@fluidframework/datastore-definitions";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 

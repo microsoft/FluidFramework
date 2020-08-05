@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { ISerializedHandle } from "@fluidframework/component-core-interfaces";
+import { ISerializedHandle } from "@fluidframework/core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,

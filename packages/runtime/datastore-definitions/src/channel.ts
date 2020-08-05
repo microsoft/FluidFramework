@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidLoadable } from "@fluidframework/component-core-interfaces";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IFluidObject extends Readonly<Partial<IProvideChannel>> { }
 }

@@ -6,7 +6,7 @@
 import { Template } from "@fluid-example/flow-util-lib";
 import { TableDocument, TableDocumentType } from "@fluid-example/table-document";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { GridView } from "./grid";
 import * as styles from "./index.css";

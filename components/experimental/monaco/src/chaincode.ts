@@ -5,7 +5,7 @@
 
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 import { DataObject } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import * as ClientUI from "@fluid-example/client-ui-lib";
 import {
     IMergeTreeGroupMsg,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject, IFluidHandle, IFluidLoadable } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { AsSerializable, Serializable } from "@fluidframework/datastore-definitions";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";

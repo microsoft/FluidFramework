@@ -9,7 +9,7 @@ import {
     IFluidHandleContext,
     IFluidSerializer,
     IFluidRouter,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IDeltaManager,

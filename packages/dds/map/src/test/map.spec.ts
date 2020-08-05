@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IBlob } from "@fluidframework/protocol-definitions";
 import {
     MockFluidDataStoreRuntime,

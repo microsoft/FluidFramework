@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { IFluidObject, IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidLastEditedTracker } from "@fluidframework/last-edited-experimental";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";

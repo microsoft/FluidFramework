@@ -9,7 +9,7 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { SharedMap } from "@fluidframework/map";

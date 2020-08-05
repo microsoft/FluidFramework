@@ -56,7 +56,7 @@ export interface IDeltaHandlerStrategy {
     processSignal: (message: ISignalMessage) => void;
 }
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IFluidObject extends Readonly<Partial<IProvideDeltaSender>> { }
 }

@@ -10,7 +10,7 @@ import {
     IFluidRouter,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { FluidOjectHandle } from "@fluidframework/datastore";
 import * as ClientUI from "@fluid-example/client-ui-lib";
 import { IFluidObjectCollection } from "@fluidframework/framework-interfaces";

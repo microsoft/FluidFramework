@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidRouter } from "@fluidframework/component-core-interfaces";
+import { IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -199,7 +199,7 @@ export interface ILoaderHeader {
     [LoaderHeader.version]: string | undefined | null;
 }
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ILoaderHeader> { }
 }
