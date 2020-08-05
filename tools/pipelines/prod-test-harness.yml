@@ -1,0 +1,31 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+name: $(Build.BuildId)
+
+# no branch and PR triggers at first
+trigger: none
+pr: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: UseNode@1
+  displayName: Use Node 12.x
+  inputs: 
+    version: 12.x
+
+- script: |
+    npm install
+    npm run build:fast
+  displayName: 'npm install and build:fast'
+
+- task: Npm@1
+  displayName: npm run start:mini
+  inputs:
+    command: 'custom'
+    workingDir: 'packages/test/service-load-test'
+    customCommand: 'run start:mini -- -w $(Password)'
