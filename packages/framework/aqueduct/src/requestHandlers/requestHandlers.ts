@@ -5,7 +5,7 @@
 
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidMountableViewClass } from "@fluidframework/view-interfaces";
-import { RuntimeRequestHandler, componentRuntimeRequestHandler } from "@fluidframework/request-handler";
+import { RuntimeRequestHandler, dataStoreRuntimeRequestHandler } from "@fluidframework/request-handler";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
 /**
@@ -52,7 +52,7 @@ export const defaultDataStoreRuntimeRequestHandler: (defaultComponentId: string)
     (defaultComponentId: string) => {
         return async (request: RequestParser, runtime: IContainerRuntime) => {
             if (request.pathParts.length === 0) {
-                return componentRuntimeRequestHandler(
+                return dataStoreRuntimeRequestHandler(
                     new RequestParser({
                         url: defaultComponentId,
                         headers: request.headers,

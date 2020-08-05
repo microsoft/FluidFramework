@@ -14,7 +14,7 @@ import { IFluidDataStoreContext, ISummarizeResult } from "@fluidframework/runtim
 import { convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
-import { ISharedObjectRegistry } from "./componentRuntime";
+import { ISharedObjectRegistry } from "./dataStoreRuntime";
 
 /**
  * Channel context for a locally created channel

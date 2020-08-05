@@ -47,7 +47,7 @@ export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
     }
 
     /**
-     * Get a factory for ConsensusQueue to register with the component.
+     * Get a factory for ConsensusQueue to register with the data store.
      *
      * @returns a factory that creates and load ConsensusQueue
      */

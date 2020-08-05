@@ -35,7 +35,7 @@ export function serializeHandles(
 
 /**
  * Given a mostly-plain object that may have handle objects embedded within, will return a fully-plain object
- * where any embedded IComponentHandles have been replaced with a serializable form.
+ * where any embedded IFluidObjectHandles have been replaced with a serializable form.
  *
  * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
  * the root to any replaced handles.  (If no handles are found, returns the original object.)

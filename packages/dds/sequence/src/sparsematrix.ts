@@ -201,7 +201,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     }
 
     /**
-     * Get a factory for SharedMap to register with the component.
+     * Get a factory for SharedMap to register with the data store.
      *
      * @returns a factory that creates and load SharedMap
      */

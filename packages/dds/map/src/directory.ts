@@ -381,7 +381,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * Get a factory for SharedDirectory to register with the component.
+     * Get a factory for SharedDirectory to register with the data store.
      *
      * @returns A factory that creates and load SharedDirectory
      */

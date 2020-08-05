@@ -22,7 +22,7 @@ export interface IProvideSharedString {
 }
 
 /**
- * Component interface describing access methods on a SharedString
+ * Fluid object interface describing access methods on a SharedString
  */
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment>, IProvideSharedString {
     insertText(pos: number, text: string, props?: MergeTree.PropertySet);
@@ -47,7 +47,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     }
 
     /**
-     * Get a factory for SharedString to register with the component.
+     * Get a factory for SharedString to register with the data store.
      *
      * @returns a factory that creates and load SharedString
      */
@@ -214,7 +214,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "", start, end);
     }
     /**
-     * Adds spaces for markers and components, so that position calculations account for them
+     * Adds spaces for markers and handles, so that position calculations account for them
      */
     public getTextWithPlaceholders() {
         const segmentWindow = this.client.getCollabWindow();

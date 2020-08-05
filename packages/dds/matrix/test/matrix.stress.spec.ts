@@ -76,14 +76,14 @@ describe("Matrix", () => {
 
                 // Create matrices for this stress run.
                 for (let i = 0; i < numClients; i++) {
-                    const componentRuntimeN = new MockFluidDataStoreRuntime();
-                    const containerRuntimeN = containerRuntimeFactory.createContainerRuntime(componentRuntimeN);
+                    const dataStoreRuntimeN = new MockFluidDataStoreRuntime();
+                    const containerRuntimeN = containerRuntimeFactory.createContainerRuntime(dataStoreRuntimeN);
                     const servicesN: IChannelServices = {
                         deltaConnection: containerRuntimeN.createDeltaConnection(),
                         objectStorage: new MockStorage(),
                     };
 
-                    const matrixN = new SharedMatrix(componentRuntimeN, `matrix-${i}`, SharedMatrixFactory.Attributes);
+                    const matrixN = new SharedMatrix(dataStoreRuntimeN, `matrix-${i}`, SharedMatrixFactory.Attributes);
                     matrixN.connect(servicesN);
 
                     matrices.push(matrixN);

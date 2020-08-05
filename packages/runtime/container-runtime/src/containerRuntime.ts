@@ -1441,12 +1441,12 @@ export class ContainerRuntime extends EventEmitter
         componentContext.process(transformed, local, localMessageMetadata);
     }
 
-    private bindComponent(componentRuntime: IFluidDataStoreChannel): void {
+    private bindComponent(dataStoreRuntime: IFluidDataStoreChannel): void {
         this.verifyNotClosed();
-        assert(this.notBoundedComponentContexts.has(componentRuntime.id),
+        assert(this.notBoundedComponentContexts.has(dataStoreRuntime.id),
             "Component to be binded should be in not bounded set");
-        this.notBoundedComponentContexts.delete(componentRuntime.id);
-        const context = this.getContext(componentRuntime.id) as LocalFluidDataStoreContext;
+        this.notBoundedComponentContexts.delete(dataStoreRuntime.id);
+        const context = this.getContext(dataStoreRuntime.id) as LocalFluidDataStoreContext;
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients but we do need to submit op if container forced us to do so.
@@ -1454,12 +1454,12 @@ export class ContainerRuntime extends EventEmitter
             context.emit("attaching");
             const message = context.generateAttachMessage();
 
-            this.pendingAttach.set(componentRuntime.id, message);
+            this.pendingAttach.set(dataStoreRuntime.id, message);
             this.submit(ContainerMessageType.Attach, message);
         }
 
         // Resolve the deferred so other local components can access it.
-        const deferred = this.getContextDeferred(componentRuntime.id);
+        const deferred = this.getContextDeferred(dataStoreRuntime.id);
         deferred.resolve(context);
     }
 

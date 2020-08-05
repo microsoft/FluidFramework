@@ -51,7 +51,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     }
 
     /**
-     * Get a factory for SharedSummaryBlock to register with the component.
+     * Get a factory for SharedSummaryBlock to register with the data store.
      *
      * @returns a factory that creates and loads SharedSummaryBlock.
      */

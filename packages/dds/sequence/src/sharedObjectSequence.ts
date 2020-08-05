@@ -20,7 +20,7 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
     }
 
     /**
-     * Get a factory for SharedObjectSequence to register with the component.
+     * Get a factory for SharedObjectSequence to register with the data store.
      *
      * @returns a factory that creates and load SharedObjectSequence
      */

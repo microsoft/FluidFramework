@@ -225,7 +225,7 @@ example:
 ``` typescript
     const builder = new RuntimeRequestHandlerBuilder();
     builder.pushHandler(...this.requestHandlers);
-    builder.pushHandler(componentRuntimeRequestHandler);
+    builder.pushHandler(dataStoreRuntimeRequestHandler);
 
     const runtime = await ContainerRuntime.load(
         context,

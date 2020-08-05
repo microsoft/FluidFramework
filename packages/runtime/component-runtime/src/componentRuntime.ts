@@ -609,7 +609,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     }
 
     /**
-     * Attach channel should only be called after the componentRuntime has been attached
+     * Attach channel should only be called after the dataStoreRuntime has been attached
      */
     private attachChannel(channel: IChannel): void {
         this.verifyNotClosed();

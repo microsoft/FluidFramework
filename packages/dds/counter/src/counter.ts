@@ -55,7 +55,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     }
 
     /**
-     * Get a factory for SharedCounter to register with the component.
+     * Get a factory for SharedCounter to register with the data store.
      *
      * @returns a factory that creates and load SharedCounter
      */

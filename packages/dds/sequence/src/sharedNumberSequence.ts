@@ -21,7 +21,7 @@ export class SharedNumberSequence extends SharedSequence<number> {
     }
 
     /**
-     * Get a factory for SharedNumberSequence to register with the component.
+     * Get a factory for SharedNumberSequence to register with the data store.
      *
      * @returns a factory that creates and load SharedNumberSequence
      */

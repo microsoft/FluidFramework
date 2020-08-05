@@ -15,7 +15,7 @@ import { RequestParser } from "@fluidframework/runtime-utils";
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime)
     => Promise<IResponse | undefined>;
 
-export const componentRuntimeRequestHandler: RuntimeRequestHandler =
+export const dataStoreRuntimeRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length > 0) {
             let wait: boolean | undefined;

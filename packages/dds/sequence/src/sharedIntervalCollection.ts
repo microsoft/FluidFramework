@@ -93,7 +93,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     }
 
     /**
-     * Get a factory for SharedIntervalCollection to register with the component.
+     * Get a factory for SharedIntervalCollection to register with the data store.
      *
      * @returns a factory that creates and load SharedIntervalCollection
      */

@@ -105,7 +105,7 @@ export class ConsensusRegisterCollection<T>
     }
 
     /**
-     * Get a factory for ConsensusRegisterCollection to register with the component.
+     * Get a factory for ConsensusRegisterCollection to register with the data store.
      *
      * @returns a factory that creates and load ConsensusRegisterCollection
      */

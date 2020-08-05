@@ -115,13 +115,13 @@ describe("FluidOjectHandle", () => {
         const absolutePath = `/${firstContainerComponent1._runtime.id}`;
 
         // Verify that the local client's FluidDataStoreRuntime has the correct absolute path.
-        const componentRuntime1 = firstContainerComponent1._runtime.IFluidHandleContext;
-        assert.equal(componentRuntime1.absolutePath, absolutePath, "The FluidDataStoreRuntime's path is incorrect");
+        const dataStoreRuntime1 = firstContainerComponent1._runtime.IFluidHandleContext;
+        assert.equal(dataStoreRuntime1.absolutePath, absolutePath, "The FluidDataStoreRuntime's path is incorrect");
 
         // Verify that the remote client's FluidDataStoreRuntime has the correct absolute path.
-        const componentRuntime2 = secondContainerComponent1._runtime.IFluidHandleContext;
+        const dataStoreRuntime2 = secondContainerComponent1._runtime.IFluidHandleContext;
         assert.equal(
-            componentRuntime2.absolutePath,
+            dataStoreRuntime2.absolutePath,
             absolutePath,
             "The remote FluidDataStoreRuntime's path is incorrect");
     });

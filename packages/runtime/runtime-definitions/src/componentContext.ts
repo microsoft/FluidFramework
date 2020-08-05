@@ -316,13 +316,13 @@ export interface IFluidDataStoreContext extends EventEmitter {
     /**
      * Binds a runtime to the context.
      */
-    bindRuntime(componentRuntime: IFluidDataStoreChannel): void;
+    bindRuntime(dataStoreRuntime: IFluidDataStoreChannel): void;
 
     /**
      * Register the runtime to the container
-     * @param componentRuntime - runtime to attach
+     * @param dataStoreRuntime - runtime to attach
      */
-    bindToContext(componentRuntime: IFluidDataStoreChannel): void;
+    bindToContext(dataStoreRuntime: IFluidDataStoreChannel): void;
 
     /**
      * Call by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.

@@ -112,7 +112,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-   * Get a factory for SharedMap to register with the component.
+   * Get a factory for SharedMap to register with the data store.
    * @returns A factory that creates and load SharedMap
    */
     public static getFactory(): IChannelFactory {
