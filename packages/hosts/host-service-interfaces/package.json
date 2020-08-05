@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/host-service-interfaces",
-  "version": "0.24.2",
+  "version": "0.24.3",
   "description": "Host component service interfaces",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -27,8 +27,8 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.24.2",
-    "@fluidframework/container-definitions": "^0.24.2"
+    "@fluidframework/component-core-interfaces": "^0.24.3",
+    "@fluidframework/container-definitions": "^0.24.3"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
