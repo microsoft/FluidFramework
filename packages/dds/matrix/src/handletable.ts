@@ -8,8 +8,10 @@ export const enum Handle {
     valid = 1,
 
     /** Sentinel representing an unallocated Handle. */
-    unallocated = -1,
+    unallocated = -0x80000000,
 }
+
+export const isHandleValid = (handle: Handle) => handle >= Handle.valid;
 
 /**
  * A handle table provides a fast mapping from an integer `handle` to a value `T`.

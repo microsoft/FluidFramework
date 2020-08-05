@@ -21,7 +21,7 @@ import {
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
-import { HandleTable, Handle } from "./handletable";
+import { HandleTable, Handle, isHandleValid } from "./handletable";
 import { serializeBlob, deserializeBlob } from "./serialization";
 
 const enum SnapshotPath {
@@ -51,7 +51,7 @@ export class PermutationSegment extends BaseSegment {
     public get start() { return this._start; }
     public set start(value: Handle) {
         assert.equal(this._start, Handle.unallocated);
-        assert(value >= Handle.valid);
+        assert(isHandleValid(value));
 
         this._start = value;
     }
@@ -147,21 +147,19 @@ export class PermutationVector extends Client {
         const { segment, offset } = this.getContainingSegment(pos);
         const asPerm = segment as PermutationSegment;
 
-        return asPerm.start !== Handle.unallocated
-            ? asPerm.start + offset
-            : Handle.unallocated;
+        return asPerm.start + offset;
     }
 
     public getAllocatedHandle(pos: number): Handle {
         let handle = this.getMaybeHandle(pos);
-        if (handle !== Handle.unallocated) {
+        if (isHandleValid(handle)) {
             return handle;
         }
 
         this.walkSegments(
             (segment) => {
                 const asPerm = segment as PermutationSegment;
-                assert.equal(asPerm.start, Handle.unallocated);
+                assert(!isHandleValid(asPerm.start));
                 asPerm.start = handle = this.handleTable.allocate();
                 return true;
             },
@@ -208,7 +206,7 @@ export class PermutationVector extends Client {
             const { start, cachedLength } = segment as PermutationSegment;
 
             // If the segment is unallocated, skip it.
-            if (start < Handle.valid) {
+            if (!isHandleValid(start)) {
                 return true;
             }
 
@@ -231,7 +229,7 @@ export class PermutationVector extends Client {
             return -1;
         }
 
-        assert(containingSegment.start >= Handle.valid);
+        assert(isHandleValid(containingSegment.start));
 
         // Once we know the current position of the handle, we can use the MergeTree to get the segment
         // containing this position and use 'findReconnectionPosition' to adjust for the local ops that
@@ -309,7 +307,7 @@ export class PermutationVector extends Client {
 
             for (const { segment } of args.deltaSegments) {
                 const asPerm = segment as PermutationSegment;
-                if (asPerm.start !== Handle.unallocated) {
+                if (isHandleValid(asPerm.start)) {
                     // Note: Using the spread operator with `.splice()` can exhaust the stack.
                     freed = freed.concat(
                         new Array(asPerm.cachedLength)
