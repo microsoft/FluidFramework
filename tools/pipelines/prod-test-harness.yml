@@ -33,7 +33,7 @@ steps:
     VERSION_BUILDNUMBER: $(Build.BuildNumber)
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
+    workingDirectory: .
     script: |
       # expect lerna.json and package.json be in the current working directory
 
