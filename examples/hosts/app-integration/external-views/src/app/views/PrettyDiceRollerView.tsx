@@ -15,6 +15,9 @@ export const PrettyDiceRollerView: React.FC<IPrettyDiceRollerViewProps> =
         const [diceValue, setDiceValue] = React.useState(props.model.value);
 
         React.useEffect(() => {
+            // useEffect runs async after render, so it's possible for the dice value to update after render but
+            // before we get our event listener registered.  We refresh our dice value in case that happened.
+            setDiceValue(props.model.value);
             const onDiceRolled = () => {
                 setDiceValue(props.model.value);
             };
