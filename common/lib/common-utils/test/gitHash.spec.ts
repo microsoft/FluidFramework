@@ -10,8 +10,6 @@ import { gitHashFile, gitHashFileAsync } from "../src";
 
 async function getFileContents(p: string): Promise<Buffer> {
     return new Promise<Buffer>((resolve, reject) => {
-        // Disabling due to being test utility method
-        // tslint:disable-next-line:non-literal-fs-path
         fs.readFile(p, (error, data) => {
             if (error) {
                 reject(error);

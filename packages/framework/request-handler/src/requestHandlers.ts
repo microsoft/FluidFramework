@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidObject, IFluidLoadable, IResponse } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IFluidLoadable, IResponse } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
@@ -15,7 +15,7 @@ import { RequestParser } from "@fluidframework/runtime-utils";
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime)
     => Promise<IResponse | undefined>;
 
-export const componentRuntimeRequestHandler: RuntimeRequestHandler =
+export const dataStoreRuntimeRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length > 0) {
             let wait: boolean | undefined;

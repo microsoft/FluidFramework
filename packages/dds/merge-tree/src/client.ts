@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performanceNow } from "@fluidframework/common-utils";
 import { IIntegerRange } from "./base";
@@ -896,7 +896,7 @@ export class Client {
 
         // Catch up to latest MSN, if we have not had a chance to do it.
         // Required for case where FluidDataStoreRuntime.attachChannel()
-        // generates snapshot right after loading component.
+        // generates snapshot right after loading data store.
 
         this.updateSeqNumbers(minSeq, deltaManager.lastSequenceNumber);
 

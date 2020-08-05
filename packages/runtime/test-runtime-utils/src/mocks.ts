@@ -11,7 +11,7 @@ import {
     IFluidHandleContext,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IGenericBlob,
@@ -34,6 +34,7 @@ import {
     ITreeEntry,
     MessageType,
     TreeEntry,
+    SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
     IChannel,
@@ -42,9 +43,9 @@ import {
     IDeltaHandler,
     IChannelStorageService,
     IChannelServices,
-} from "@fluidframework/component-runtime-definitions";
-import { FluidSerializer, getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
-import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/datastore-definitions";
+import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
+import { IFluidDataStoreChannel, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 
@@ -111,14 +112,14 @@ export class MockContainerRuntime {
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
 
     constructor(
-        protected readonly componentRuntime: MockFluidDataStoreRuntime,
+        protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
         protected readonly factory: MockContainerRuntimeFactory,
     ) {
         this.deltaManager = new MockDeltaManager();
         // Set FluidDataStoreRuntime's deltaManager to ours so that they are in sync.
-        this.componentRuntime.deltaManager = this.deltaManager;
+        this.dataStoreRuntime.deltaManager = this.deltaManager;
         // FluidDataStoreRuntime already creates a clientId, reuse that so they are in sync.
-        this.clientId = this.componentRuntime.clientId;
+        this.clientId = this.dataStoreRuntime.clientId;
     }
 
     public createDeltaConnection(): MockDeltaConnection {
@@ -208,9 +209,9 @@ export class MockContainerRuntimeFactory {
         return minSeq ? minSeq : 0;
     }
 
-    public createContainerRuntime(componentRuntime: MockFluidDataStoreRuntime): MockContainerRuntime {
+    public createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime {
         const containerRuntime =
-            new MockContainerRuntime(componentRuntime, this);
+            new MockContainerRuntime(dataStoreRuntime, this);
         this.runtimes.push(containerRuntime);
         return containerRuntime;
     }
@@ -499,6 +500,18 @@ export class MockFluidDataStoreRuntime extends EventEmitter
 
     public async snapshotInternal(): Promise<ITreeEntry[]> {
         return [];
+    }
+
+    public async summarize(fullTree?: boolean): Promise<ISummaryTreeWithStats> {
+        const stats = mergeStats();
+        stats.treeNodeCount++;
+        return {
+            summary: {
+                type: SummaryType.Tree,
+                tree: {},
+            },
+            stats,
+        };
     }
 
     public getAttachSnapshot(): ITreeEntry[] {

@@ -115,7 +115,7 @@ export const createOldRuntimeFactory = (
 ): old.IRuntimeFactory => {
     const builder = new old.RuntimeRequestHandlerBuilder();
     builder.pushHandler(
-        old.componentRuntimeRequestHandler,
+        old.dataStoreRuntimeRequestHandler,
         old.defaultDataStoreRuntimeRequestHandler("default"));
 
     return {

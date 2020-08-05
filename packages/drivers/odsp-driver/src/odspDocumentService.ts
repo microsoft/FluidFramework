@@ -326,7 +326,6 @@ export class OdspDocumentService implements IDocumentService {
         client: IClient,
         url: string,
         url2?: string): Promise<IDocumentDeltaConnection> {
-        // tslint:disable-next-line: strict-boolean-expressions
         const hasUrl2 = !!url2;
 
         // Create null logger if telemetry logger is not available from caller

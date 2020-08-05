@@ -16,7 +16,7 @@ import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { debug } from "./debug";
@@ -96,7 +96,7 @@ export class ConsensusRegisterCollection<T>
     /**
      * Create a new consensus register collection
      *
-     * @param runtime - component runtime the new consensus register collection belongs to
+     * @param runtime - data store runtime the new consensus register collection belongs to
      * @param id - optional name of the consensus register collection
      * @returns newly create consensus register collection (but not attached yet)
      */
@@ -105,7 +105,7 @@ export class ConsensusRegisterCollection<T>
     }
 
     /**
-     * Get a factory for ConsensusRegisterCollection to register with the component.
+     * Get a factory for ConsensusRegisterCollection to register with the data store.
      *
      * @returns a factory that creates and load ConsensusRegisterCollection
      */

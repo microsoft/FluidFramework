@@ -6,7 +6,7 @@
 import "mocha";
 
 import { strict as assert } from "assert";
-import { Serializable, IChannelServices } from "@fluidframework/component-runtime-definitions";
+import { Serializable, IChannelServices } from "@fluidframework/datastore-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
@@ -21,7 +21,7 @@ import { TestConsumer } from "./testconsumer";
 
 describe("Matrix", () => {
     describe("local client", () => {
-        let componentRuntime: MockFluidDataStoreRuntime;
+        let dataStoreRuntime: MockFluidDataStoreRuntime;
         let matrix: SharedMatrix<number>;
         let consumer: TestConsumer<undefined | null | number>;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
 
@@ -31,12 +31,12 @@ describe("Matrix", () => {
             // Create a snapshot
             const objectStorage = new MockStorage(matrix.snapshot());
 
-            // Create a local ComponentRuntime since we only want to load the snapshot for a local client.
-            const componentRuntime = new MockFluidDataStoreRuntime();
-            componentRuntime.local = true;
+            // Create a local DataStoreRuntime since we only want to load the snapshot for a local client.
+            const dataStoreRuntime = new MockFluidDataStoreRuntime();
+            dataStoreRuntime.local = true;
 
             // Load the snapshot into a newly created 2nd SharedMatrix.
-            const matrix2 = new SharedMatrix<T>(componentRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
+            const matrix2 = new SharedMatrix<T>(dataStoreRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
             await matrix2.load(/*branchId: */ null as any, {
                 deltaConnection: new MockEmptyDeltaConnection(),
                 objectStorage
@@ -59,8 +59,8 @@ describe("Matrix", () => {
         }
 
         beforeEach(async () => {
-            componentRuntime = new MockFluidDataStoreRuntime();
-            matrix = new SharedMatrix(componentRuntime, "matrix1", SharedMatrixFactory.Attributes);
+            dataStoreRuntime = new MockFluidDataStoreRuntime();
+            matrix = new SharedMatrix(dataStoreRuntime, "matrix1", SharedMatrixFactory.Attributes);
 
             // Attach a new IMatrixConsumer
             consumer = new TestConsumer(matrix);
@@ -358,24 +358,24 @@ describe("Matrix", () => {
             containterRuntimeFactory = new MockContainerRuntimeFactory();
 
             // Create and connect the first SharedMatrix.
-            const componentRuntime1 = new MockFluidDataStoreRuntime();
-            const containerRuntime1 = containterRuntimeFactory.createContainerRuntime(componentRuntime1);
+            const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+            const containerRuntime1 = containterRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
             const services1: IChannelServices = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            matrix1 = new SharedMatrix(componentRuntime1, "matrix1", SharedMatrixFactory.Attributes);
+            matrix1 = new SharedMatrix(dataStoreRuntime1, "matrix1", SharedMatrixFactory.Attributes);
             matrix1.connect(services1);
             consumer1 = new TestConsumer(matrix1);
 
             // Create and connect the second SharedMatrix.
-            const componentRuntime2 = new MockFluidDataStoreRuntime();
-            const containerRuntime2 = containterRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const containerRuntime2 = containterRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            matrix2 = new SharedMatrix(componentRuntime2, "matrix2", SharedMatrixFactory.Attributes);
+            matrix2 = new SharedMatrix(dataStoreRuntime2, "matrix2", SharedMatrixFactory.Attributes);
             matrix2.connect(services2);
             consumer2 = new TestConsumer(matrix2);
         });
@@ -700,24 +700,24 @@ describe("Matrix", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Create and connect the first SharedMatrix.
-            const componentRuntime1 = new MockFluidDataStoreRuntime();
-            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
+            const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
             const services1: IChannelServices = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            matrix1 = new SharedMatrix(componentRuntime1, "matrix1", SharedMatrixFactory.Attributes);
+            matrix1 = new SharedMatrix(dataStoreRuntime1, "matrix1", SharedMatrixFactory.Attributes);
             matrix1.connect(services1);
             consumer1 = new TestConsumer(matrix1);
 
             // Create and connect the second SharedMatrix.
-            const componentRuntime2 = new MockFluidDataStoreRuntime();
-            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            matrix2 = new SharedMatrix(componentRuntime2, "matrix2", SharedMatrixFactory.Attributes);
+            matrix2 = new SharedMatrix(dataStoreRuntime2, "matrix2", SharedMatrixFactory.Attributes);
             matrix2.connect(services2);
             consumer2 = new TestConsumer(matrix2);
         });

@@ -47,17 +47,17 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
     let undoRedoStack: UndoRedoStackManager;
 
     beforeEach(() => {
-        const componentRuntime = new MockFluidDataStoreRuntime();
-        componentRuntime.bindToContext();
+        const dataStoreRuntime = new MockFluidDataStoreRuntime();
+        dataStoreRuntime.bindToContext();
 
         containerRuntimeFactory = new MockContainerRuntimeFactory();
-        const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+        const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
         const services = {
             deltaConnection: containerRuntime.createDeltaConnection(),
             objectStorage: new MockStorage(undefined),
         };
 
-        sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
+        sharedString = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
         sharedString.bindToContext();
         sharedString.connect(services);

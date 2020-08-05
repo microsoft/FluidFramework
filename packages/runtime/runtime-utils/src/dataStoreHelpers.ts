@@ -6,7 +6,7 @@ import assert from "assert";
  import {
     IFluidObject,
     IFluidRouter,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 
 export async function requestFluidObject<T = IFluidObject>(
     router: IFluidRouter, url: string): Promise<T>

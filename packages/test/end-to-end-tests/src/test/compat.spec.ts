@@ -4,8 +4,8 @@
  */
 
 import assert from "assert";
-import { IFluidRouter } from "@fluidframework/component-core-interfaces";
 import { Container } from "@fluidframework/container-loader";
+import { IFluidRouter } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { OpProcessingController } from "@fluidframework/test-utils";
 import {

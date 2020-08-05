@@ -5,10 +5,12 @@
 - [IContainerRuntimeBase._createDataStoreWithProps() is removed](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
 - [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
 - [createDataStoreWithRealizationFn() APIs moved](#createDataStoreWithRealizationFn()-APIs-moved)
+- [Package Renames](#package-renames)
+- [IComponent and IComponent Interfaces Removed](#IComponent-and-IComponent-Interfaces-Removed)
 - [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
 
 ### IComponentContextLegacy is removed
-Deprecated in 0.18, removed. 
+Deprecated in 0.18, removed.
 
 ### IContainerRuntimeBase._createDataStoreWithProps is removed
 `IContainerRuntimeBase._createDataStoreWithProps()` has been removed. Please use `IContainerRuntimeBase.createDataStore()` (returns IFluidRouter).
@@ -23,6 +25,15 @@ Please switch to using one of the following APIs:
 ### createDataStoreWithRealizationFn() APIs moved
 Removed from IFluidDataStoreContext  & IContainerRuntime.
 Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altogether in same release (more info to follow)
+
+### Package Renames
+As a follow up to the changes in 0.24 we are updating a number of package names
+- `@fluidframework/component-core-interfaces` is renamed to `@fluidframework/core-interfaces`
+- `@fluidframework/component-runtime-definitions` is renamed to `@fluidframework/datastore-definitions`
+- `@fluidframework/component-runtime` is renamed to `@fluidframework/datastore`
+
+### IComponent and IComponent Interfaces Removed
+In 0.24 IComponent and IComponent interfaces were deprecated, they are being removed in this build. Please move to IFluidObject and IFluidObject interfaces.
 
 ### odsp-utils Changes
 To support additional authentication scenarios, the signature and/or name of a few auth-related functions was modified.
@@ -215,7 +226,7 @@ example:
 ``` typescript
     const builder = new RuntimeRequestHandlerBuilder();
     builder.pushHandler(...this.requestHandlers);
-    builder.pushHandler(componentRuntimeRequestHandler);
+    builder.pushHandler(dataStoreRuntimeRequestHandler);
 
     const runtime = await ContainerRuntime.load(
         context,
@@ -345,7 +356,7 @@ The `createValueType()` method on `SharedMap` and `SharedDirectory` was deprecat
 isLocal api is removed from the repo. It is now replaced with isAttached which tells that the entity is attached or getting attached to storage. So its meaning is opposite to isLocal.
 
 ### register/attach api renames on handles, components and dds
-Register on dds and attach on component runtime is renamed to bindToContext(). attach on handles is renamed to attachGraph().
+Register on dds and attach on data store runtime is renamed to bindToContext(). attach on handles is renamed to attachGraph().
 
 ### Error handling changes
 ErrorType enum has been broken into 3 distinct enums / layers:

@@ -10,7 +10,7 @@ import {
     IFluidObject,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -42,8 +42,14 @@ import {
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IInboundSignalMessage,
+    ISummarizeResult,
+    ISummarizerNode,
+    ISummarizeInternalResult,
+    CreateChildSummarizerNodeFn,
+    SummarizeInternalFn,
+    CreateChildSummarizerNodeParam,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker } from "@fluidframework/runtime-utils";
+import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in component attributes.
@@ -70,7 +76,7 @@ interface ComponentMessage {
 }
 
 /**
- * Represents the context for the component. This context is passed to the component runtime.
+ * Represents the context for the component. This context is passed to the data store runtime.
  */
 export abstract class FluidDataStoreContext extends EventEmitter implements
     IFluidDataStoreContext,
@@ -154,13 +160,14 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this._attachState;
     }
 
-    public readonly bindToContext: (componentRuntime: IFluidDataStoreChannel) => void;
-    protected componentRuntime: IFluidDataStoreChannel | undefined;
+    public readonly bindToContext: (dataStoreRuntime: IFluidDataStoreChannel) => void;
+    protected dataStoreRuntime: IFluidDataStoreChannel | undefined;
     private loaded = false;
-    private pending: ISequencedDocumentMessage[] | undefined = [];
-    private componentRuntimeDeferred: Deferred<IFluidDataStoreChannel> | undefined;
+    protected pending: ISequencedDocumentMessage[] | undefined = [];
+    private dataStoreRuntimeDeferred: Deferred<IFluidDataStoreChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
+    protected readonly summarizerNode: ISummarizerNode;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
@@ -169,20 +176,24 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         public readonly storage: IDocumentStorageService,
         public readonly scope: IFluidObject & IFluidObject,
         public readonly summaryTracker: SummaryTracker,
+        createSummarizerNode: CreateChildSummarizerNodeFn,
         private bindState: BindState,
-        bindComponent: (componentRuntime: IFluidDataStoreChannel) => void,
+        bindComponent: (dataStoreRuntime: IFluidDataStoreChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
         this._attachState = existing ? AttachState.Attached : AttachState.Detached;
 
-        this.bindToContext = (componentRuntime: IFluidDataStoreChannel) => {
+        this.bindToContext = (dataStoreRuntime: IFluidDataStoreChannel) => {
             assert(this.bindState === BindState.NotBound);
             this.bindState = BindState.Binding;
-            bindComponent(componentRuntime);
+            bindComponent(dataStoreRuntime);
             this.bindState = BindState.Bound;
         };
+
+        const thisSummarizeInternal = async (fullTree: boolean) => this.summarizeInternal(fullTree);
+        this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
     }
 
     public dispose(): void {
@@ -192,8 +203,8 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         this._disposed = true;
 
         // Dispose any pending runtime after it gets fulfilled
-        if (this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred.promise.then((runtime) => {
+        if (this.dataStoreRuntimeDeferred) {
+            this.dataStoreRuntimeDeferred.promise.then((runtime) => {
                 runtime.dispose();
             }).catch((error) => {
                 this._containerRuntime.logger.sendErrorEvent(
@@ -209,16 +220,16 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         // Mark it as such, so that if it ever reaches telemetry pipeline, it has a chance to remove it.
         (error as any).containsPII = true;
 
-        // This is always called with a componentRuntimeDeferred in realize();
+        // This is always called with a dataStoreRuntimeDeferred in realize();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const deferred = this.componentRuntimeDeferred!;
+        const deferred = this.dataStoreRuntimeDeferred!;
         deferred.reject(error);
         return deferred.promise;
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
-        if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IFluidDataStoreChannel>();
+        if (!this.dataStoreRuntimeDeferred) {
+            this.dataStoreRuntimeDeferred = new Deferred<IFluidDataStoreChannel>();
             const details = await this.getInitialSnapshotDetails();
             // Base snapshot is the baseline where pending ops are applied to.
             // It is important that this be in sync with the pending ops, and also
@@ -245,22 +256,22 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
                 return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
             }
             // During this call we will invoke the instantiate method - which will call back into us
-            // via the bindRuntime call to resolve componentRuntimeDeferred
+            // via the bindRuntime call to resolve dataStoreRuntimeDeferred
             factory.instantiateDataStore(this);
         }
 
-        return this.componentRuntimeDeferred.promise;
+        return this.dataStoreRuntimeDeferred.promise;
     }
 
     public async realizeWithFn(
         realizationFn: (context: IFluidDataStoreContext) => void,
     ): Promise<IFluidDataStoreChannel> {
-        if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IFluidDataStoreChannel>();
+        if (!this.dataStoreRuntimeDeferred) {
+            this.dataStoreRuntimeDeferred = new Deferred<IFluidDataStoreChannel>();
             realizationFn(this);
         }
 
-        return this.componentRuntimeDeferred.promise;
+        return this.dataStoreRuntimeDeferred.promise;
     }
 
     /**
@@ -280,7 +291,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         assert(this.connected === connected);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const runtime: IFluidDataStoreChannel = this.componentRuntime!;
+        const runtime: IFluidDataStoreChannel = this.dataStoreRuntime!;
 
         // Back-compat: supporting <= 0.16 components
         if (runtime.setConnectionState) {
@@ -303,10 +314,11 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         };
 
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
+        this.summarizerNode.recordChange(message);
 
         if (this.loaded) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.componentRuntime!.process(message, local, localOpMetadata);
+            return this.dataStoreRuntime!.process(message, local, localOpMetadata);
         } else {
             assert(!local, "local component is not loaded");
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -323,7 +335,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.componentRuntime!.processSignal(message, local);
+        this.dataStoreRuntime!.processSignal(message, local);
     }
 
     public getQuorum(): IQuorum {
@@ -340,6 +352,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     /**
      * Notifies the object to take snapshot of a component.
+     * @deprecated in 0.22 summarizerNode
      */
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
         if (!fullTree) {
@@ -359,11 +372,40 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         await this.realize();
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const entries = await this.componentRuntime!.snapshotInternal(fullTree);
+        const entries = await this.dataStoreRuntime!.snapshotInternal(fullTree);
 
         entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
         return { entries, id: null };
+    }
+
+    public async summarize(fullTree = false): Promise<ISummarizeResult> {
+        return this.summarizerNode.summarize(fullTree);
+    }
+
+    private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
+        const { pkg } = await this.getInitialSnapshotDetails();
+
+        const componentAttributes: IFluidDataStoretAttributes = {
+            pkg: JSON.stringify(pkg),
+            snapshotFormatVersion: currentSnapshotFormatVersion,
+        };
+
+        await this.realize();
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const dataStoreRuntime = this.dataStoreRuntime!;
+        if (dataStoreRuntime.summarize !== undefined) {
+            const summary = await dataStoreRuntime.summarize(fullTree);
+            addBlobToSummary(summary, ".component", JSON.stringify(componentAttributes));
+            return { ...summary, id: this.id };
+        } else {
+            // back-compat summarizerNode - remove this case
+            const entries = await dataStoreRuntime.snapshotInternal(fullTree);
+            entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
+            const summary = convertToSummaryTree({ entries, id: null });
+            return { ...summary, id: this.id };
+        }
     }
 
     /**
@@ -376,7 +418,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
         this.verifyNotClosed();
-        assert(this.componentRuntime);
+        assert(this.dataStoreRuntime);
         const componentContent: ComponentMessage = {
             content,
             type,
@@ -403,17 +445,22 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
         // Update our summary tracker's latestSequenceNumber.
         this.summaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
+        this.summarizerNode.invalidate(latestSequenceNumber);
 
         const channelSummaryTracker = this.summaryTracker.getChild(address);
+        const channelSummarizerNode = this.summarizerNode.getChild(address);
         // If there is a summary tracker for the channel that called us, update it's latestSequenceNumber.
         if (channelSummaryTracker) {
             channelSummaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
+        }
+        if (channelSummarizerNode) {
+            channelSummarizerNode.invalidate(latestSequenceNumber); // TODO: lazy load problem?
         }
     }
 
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        assert(this.componentRuntime);
+        assert(this.dataStoreRuntime);
         return this._containerRuntime.submitComponentSignal(this.id, type, content);
     }
 
@@ -437,15 +484,15 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         }
     }
 
-    public bindRuntime(componentRuntime: IFluidDataStoreChannel) {
-        if (this.componentRuntime) {
+    public bindRuntime(dataStoreRuntime: IFluidDataStoreChannel) {
+        if (this.dataStoreRuntime) {
             throw new Error("runtime already bound");
         }
 
         // If this FluidDataStoreContext was created via `IContainerRuntime.createDataStoreContext`, the
-        // `componentRuntimeDeferred` promise hasn't yet been initialized.  Do so now.
-        if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred();
+        // `dataStoreRuntimeDeferred` promise hasn't yet been initialized.  Do so now.
+        if (!this.dataStoreRuntimeDeferred) {
+            this.dataStoreRuntimeDeferred = new Deferred();
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -454,7 +501,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         if (pending.length > 0) {
             // Apply all pending ops
             for (const op of pending) {
-                componentRuntime.process(op, false, undefined /* localOpMetadata */);
+                dataStoreRuntime.process(op, false, undefined /* localOpMetadata */);
             }
         }
 
@@ -462,14 +509,14 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
         // And now mark the runtime active
         this.loaded = true;
-        this.componentRuntime = componentRuntime;
+        this.dataStoreRuntime = dataStoreRuntime;
 
         // Freeze the package path to ensure that someone doesn't modify it when it is
         // returned in packagePath().
         Object.freeze(this.pkg);
 
         // And notify the pending promise it is now available
-        this.componentRuntimeDeferred.resolve(this.componentRuntime);
+        this.dataStoreRuntimeDeferred.resolve(this.dataStoreRuntime);
 
         // notify the runtime if they want to propagate up. Used for logging.
         this.containerRuntime.notifyDataStoreInstantiated(this);
@@ -502,7 +549,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
         // to the packagePath. If not, look into the global registry and the packagePath becomes just the
         // passed package.
-        if (await this.componentRuntime?.IFluidDataStoreRegistry?.get(subpackage)) {
+        if (await this.dataStoreRuntime?.IFluidDataStoreRegistry?.get(subpackage)) {
             packagePath.push(subpackage);
         } else {
             if (!(await this._containerRuntime.IFluidDataStoreRegistry.get(subpackage))) {
@@ -520,15 +567,25 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
-        assert(this.componentRuntime, "FluidDataStoreRuntime must exist when resubmitting ops");
+        assert(this.dataStoreRuntime, "FluidDataStoreRuntime must exist when resubmitting ops");
         const innerContents = contents as ComponentMessage;
-        this.componentRuntime.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
+        this.dataStoreRuntime.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
 
     private verifyNotClosed() {
         if (this._disposed) {
             throw new Error("Context is closed");
         }
+    }
+
+    public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
+        return (summarizeInternal: SummarizeInternalFn) => this.summarizerNode.createChild(
+            summarizeInternal,
+            id,
+            createParam,
+            // DDS will not create failure summaries
+            { throwOnFailure: true },
+        );
     }
 }
 
@@ -542,6 +599,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         storage: IDocumentStorageService,
         scope: IFluidObject & IFluidObject,
         summaryTracker: SummaryTracker,
+        createSummarizerNode: CreateChildSummarizerNodeFn,
         pkg?: string[],
     ) {
         super(
@@ -551,6 +609,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             storage,
             scope,
             summaryTracker,
+            createSummarizerNode,
             BindState.Bound,
             () => {
                 throw new Error("Already attached");
@@ -576,12 +635,19 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                 tree = await this.initSnapshotValue;
             }
 
+            const localReadAndParse = async <T>(id: string) => readAndParse<T>(this.storage, id);
+            if (tree) {
+                const loadedSummary = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
+                tree = loadedSummary.baseSummary;
+                // Prepend outstanding ops to pending queue of ops to process.
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.pending = loadedSummary.outstandingOps.concat(this.pending!);
+            }
+
             if (tree !== null && tree.blobs[".component"] !== undefined) {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion } =
-                    await readAndParse<IFluidDataStoretAttributes>(
-                        this.storage,
-                        tree.blobs[".component"]);
+                    await localReadAndParse<IFluidDataStoretAttributes>(tree.blobs[".component"]);
 
                 let pkgFromSnapshot: string[];
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
@@ -619,9 +685,20 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
         storage: IDocumentStorageService,
         scope: IFluidObject & IFluidObject,
         summaryTracker: SummaryTracker,
-        bindComponent: (componentRuntime: IFluidDataStoreChannel) => void,
+        createSummarizerNode: CreateChildSummarizerNodeFn,
+        bindComponent: (dataStoreRuntime: IFluidDataStoreChannel) => void,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, BindState.NotBound, bindComponent, pkg);
+        super(
+            runtime,
+            id,
+            false,
+            storage,
+            scope,
+            summaryTracker,
+            createSummarizerNode,
+            BindState.NotBound,
+            bindComponent,
+            pkg);
         this.attachListeners();
     }
 
@@ -643,7 +720,7 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
         };
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const entries = this.componentRuntime!.getAttachSnapshot();
+        const entries = this.dataStoreRuntime!.getAttachSnapshot();
 
         const snapshot: ITree = { entries, id: null };
 

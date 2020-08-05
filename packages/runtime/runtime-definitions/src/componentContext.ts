@@ -12,7 +12,7 @@ import {
     IProvideFluidSerializer,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -33,6 +33,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IProvideFluidDataStoreRegistry } from "./componentRegistry";
 import { IInboundSignalMessage } from "./protocol";
+import { ISummaryTreeWithStats, ISummarizerNode, SummarizeInternalFn, CreateChildSummarizerNodeParam } from "./summary";
 
 /**
  * Runtime flush mode handling
@@ -51,7 +52,7 @@ export enum FlushMode {
 }
 
 /**
- * A reduced set of functionality of IContainerRuntime that a component/component runtime will need
+ * A reduced set of functionality of IContainerRuntime that a component/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  */
 export interface IContainerRuntimeBase extends
@@ -124,7 +125,7 @@ export interface IContainerRuntimeBase extends
 }
 
 /**
- * Minimal interface a component runtime need to provide for IFluidDataStoreContext to bind to control
+ * Minimal interface a data store runtime need to provide for IFluidDataStoreContext to bind to control
  *
  * Functionality include attach, snapshot, op/signal processing, request routes,
  * and connection state notifications
@@ -164,8 +165,16 @@ export interface IFluidDataStoreChannel extends
 
     /**
      * Generates a snapshot of the given component
+     * @deprecated in 0.22 summarizerNode
      */
     snapshotInternal(fullTree?: boolean): Promise<ITreeEntry[]>;
+
+    /**
+     * Generates a summary for the component.
+     * Introduced with summarizerNode - will be required in a future release.
+     * @param fullTree - true to bypass optimizations and force a full summary tree
+     */
+    summarize?(fullTree?: boolean): Promise<ISummaryTreeWithStats>;
 
     /**
      * Notifies this object about changes in the connection state.
@@ -187,6 +196,9 @@ export interface IFluidDataStoreChannel extends
     reSubmit(type: string, content: any, localOpMetadata: unknown);
 }
 
+/**
+ * @deprecated 0.21 summarizerNode - use ISummarizerNode instead
+ */
 export interface ISummaryTracker {
     /**
      * The reference sequence number of the most recent acked summary.
@@ -219,8 +231,10 @@ export interface ISummaryTracker {
     getChild(key: string): ISummaryTracker | undefined;
 }
 
+export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => ISummarizerNode;
+
 /**
- * Represents the context for the component. It is used by the component runtime to
+ * Represents the context for the component. It is used by the data store runtime to
  * get information and call functionality to the container.
  */
 export interface IFluidDataStoreContext extends EventEmitter {
@@ -277,7 +291,7 @@ export interface IFluidDataStoreContext extends EventEmitter {
     getAudience(): IAudience;
 
     /**
-     * Report error in that happend in the component runtime layer to the container runtime layer
+     * Report error in that happend in the data store runtime layer to the container runtime layer
      * @param err - the error object.
      */
     raiseContainerWarning(warning: ContainerWarning): void;
@@ -302,13 +316,13 @@ export interface IFluidDataStoreContext extends EventEmitter {
     /**
      * Binds a runtime to the context.
      */
-    bindRuntime(componentRuntime: IFluidDataStoreChannel): void;
+    bindRuntime(dataStoreRuntime: IFluidDataStoreChannel): void;
 
     /**
      * Register the runtime to the container
-     * @param componentRuntime - runtime to attach
+     * @param dataStoreRuntime - runtime to attach
      */
-    bindToContext(componentRuntime: IFluidDataStoreChannel): void;
+    bindToContext(dataStoreRuntime: IFluidDataStoreChannel): void;
 
     /**
      * Call by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
@@ -322,6 +336,18 @@ export interface IFluidDataStoreContext extends EventEmitter {
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+
+    getCreateChildSummarizerNodeFn(
+        /** Initial id or path part of this node */
+        id: string,
+        /**
+         * Information needed to create the node.
+         * If it is from a base summary, it will assert that a summary has been seen.
+         * Attach information if it is created from an attach op.
+         * If it is local, it will throw unsupported errors on calls to summarize.
+         */
+        createParam: CreateChildSummarizerNodeParam,
+    ): CreateChildSummarizerNodeFn;
 
     /**
      * Take a package name and transform it into a path that can be used to find it

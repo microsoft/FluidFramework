@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable } from "@fluidframework/component-runtime-definitions";
+import { Serializable } from "@fluidframework/datastore-definitions";
 
 export enum MatrixOp {
     spliceCols,

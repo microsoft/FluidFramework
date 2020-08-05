@@ -9,7 +9,7 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { AsSerializable } from "@fluidframework/component-runtime-definitions";
+import { AsSerializable } from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
 
 /**
