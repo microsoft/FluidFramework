@@ -11,7 +11,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { FluidOjectHandle } from "@fluidframework/component-runtime";
+import { FluidObjectHandle } from "@fluidframework/component-runtime";
 import { IComponentLayout } from "@fluidframework/framework-experimental";
 import { IFluidObjectCollection } from "@fluidframework/framework-interfaces";
 import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";
@@ -90,7 +90,7 @@ export class VideoPlayer implements
     public readonly canInline = true;
     public readonly preferInline = false;
     public readonly preferPersistentElement = true;
-    public handle: FluidOjectHandle;
+    public handle: FluidObjectHandle;
 
     constructor(
         public videoId: string,
@@ -100,7 +100,7 @@ export class VideoPlayer implements
         private readonly youTubeApi: YouTubeAPI,
         private readonly collection: VideoPlayerCollection,
     ) {
-        this.handle = new FluidOjectHandle(this, keyId, context);
+        this.handle = new FluidObjectHandle(this, keyId, context);
     }
 
     public heightInLines() {

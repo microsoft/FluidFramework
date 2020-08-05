@@ -11,7 +11,7 @@ import {
     IResponse,
     IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
-import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
+import { FluidObjectHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IMergeTreeInsertMsg,
@@ -127,7 +127,7 @@ export class ProseMirror extends EventEmitter
         super();
 
         this.url = context.id;
-        this.innerHandle = new FluidOjectHandle(this, this.url, runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, this.url, runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

@@ -14,7 +14,7 @@ import {
 import { AttachState } from "@fluidframework/container-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
-export class FluidOjectHandle<T extends IFluidObject = IFluidObject> implements IFluidHandle {
+export class FluidObjectHandle<T extends IFluidObject = IFluidObject> implements IFluidHandle {
     // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
     private graphAttachState: AttachState = AttachState.Detached;
     private bound: Set<IFluidHandle> | undefined;
@@ -29,7 +29,7 @@ export class FluidOjectHandle<T extends IFluidObject = IFluidObject> implements 
     }
 
     /**
-     * Creates a new FluidOjectHandle.
+     * Creates a new FluidObjectHandle.
      * @param value - The IFluidObject object this handle is for.
      * @param path - The path to this handle relative to the routeContext.
      * @param routeContext - The parent IFluidHandleContext that has a route to this handle.

@@ -17,7 +17,7 @@ import {
 import {
     IFluidDataStoreRuntime,
 } from "@fluidframework/component-runtime-definitions";
-import { FluidOjectHandle } from "@fluidframework/component-runtime";
+import { FluidObjectHandle } from "@fluidframework/component-runtime";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
@@ -62,9 +62,9 @@ export abstract class PureDataObject<
     // #region IFluidLoadable
 
     public get handle(): IFluidHandle<this> {
-        // Lazily create the FluidOjectHandle when requested.
+        // Lazily create the FluidObjectHandle when requested.
         if (!this._handle) {
-            this._handle = new FluidOjectHandle(
+            this._handle = new FluidObjectHandle(
                 this,
                 "",
                 this.runtime.IFluidHandleContext);

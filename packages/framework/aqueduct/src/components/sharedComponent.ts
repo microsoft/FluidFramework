@@ -15,7 +15,7 @@ import {
 import { AsyncComponentProvider, ComponentKey } from "@fluidframework/synthesize";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
-import { FluidOjectHandle } from "@fluidframework/component-runtime";
+import { FluidObjectHandle } from "@fluidframework/component-runtime";
 import { IDirectory } from "@fluidframework/map";
 import { v4 as uuid } from "uuid";
 import { EventForwarder } from "@fluidframework/common-utils";
@@ -81,10 +81,10 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
         this.context = props.context;
         this.providers = props.providers;
 
-        // Create a FluidOjectHandle with empty string as `path`. This is because reaching this PureDataObject is the
+        // Create a FluidObjectHandle with empty string as `path`. This is because reaching this PureDataObject is the
         // same as reaching its routeContext (FluidDataStoreRuntime) so there is so the relative path to it from the
         // routeContext is empty.
-        this.innerHandle = new FluidOjectHandle(this, "", this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
 
         // Container event handlers
         this.runtime.once("dispose", () => {

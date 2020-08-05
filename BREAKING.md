@@ -122,7 +122,7 @@ All renames are 1-1, and global case senstive and whole word find replace for al
 
             "SharedObjectComponentHandle": "SharedObjectHandle",
             "RemoteComponentHandle": "RemoteFluidObjectHandle",
-            "ComponentHandle": "FluidOjectHandle",
+            "ComponentHandle": "FluidObjectHandle",
             "ComponentSerializer": "FluidSerializer",
 
             "ComponentHandleContext": "FluidHandleContext",

@@ -12,7 +12,7 @@ import {
     IResponse,
     IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
-import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/component-runtime";
 import {
     IContainerContext,
     IFluidCodeDetails,
@@ -406,7 +406,7 @@ export class Scribe
         super();
 
         this.url = context.id;
-        this.innerHandle = new FluidOjectHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
