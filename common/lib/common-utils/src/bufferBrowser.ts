@@ -33,7 +33,6 @@ export class IsoBuffer extends Uint8Array {
     }
 
     /**
-     * The real one
      * @param value string | ArrayBuffer
      * @param encodingOrOffset string | number
      * @param length number
