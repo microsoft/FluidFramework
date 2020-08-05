@@ -5,9 +5,9 @@
 
 import assert from "assert";
 import {
-    defaultComponentRuntimeRequestHandler,
-    PrimedComponent,
-    PrimedComponentFactory,
+    defaultDataStoreRuntimeRequestHandler,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
     IContainerContext,
@@ -22,13 +22,13 @@ import {
     IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
-import { IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { componentRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
 import { createLocalLoader, OpProcessingController, initializeLocalContainer } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
 
-class TestComponent extends PrimedComponent {
+class TestComponent extends DataObject {
     public static readonly type = "@fluid-example/test-component";
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
@@ -39,7 +39,7 @@ class TestComponent extends PrimedComponent {
 // dependencies are updated as part of a minor version bump. Otherwise, changes
 // between loader and runtime should be backwards-compatible and changing this
 // class should not be necessary.
-class OldTestComponent extends old.PrimedComponent {
+class OldTestComponent extends old.DataObject {
     public static readonly type = "@fluid-example/test-component";
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
@@ -52,37 +52,35 @@ describe("loader/runtime compatibility", () => {
         config: {},
     };
 
-    const createComponentFactory = (): IComponentFactory => {
-        return new PrimedComponentFactory(TestComponent.type, TestComponent, [], {});
+    const createComponentFactory = (): IFluidDataStoreFactory => {
+        return new DataObjectFactory(TestComponent.type, TestComponent, [], {});
     };
 
-    const createOldComponentFactory = (): old.IComponentFactory => {
-        return new old.PrimedComponentFactory(OldTestComponent.type, OldTestComponent, [], {});
+    const createOldComponentFactory = (): old.IFluidDataStoreFactory => {
+        return new old.DataObjectFactory(OldTestComponent.type, OldTestComponent, [], {});
     };
 
     const createRuntimeFactory = (
         type: string,
-        componentFactory: IComponentFactory | old.IComponentFactory,
+        componentFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
         runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): IRuntimeFactory => {
         const builder = new RuntimeRequestHandlerBuilder();
         builder.pushHandler(
             componentRuntimeRequestHandler,
-            defaultComponentRuntimeRequestHandler("default"));
+            defaultDataStoreRuntimeRequestHandler("default"));
 
         return {
             get IRuntimeFactory() { return this; },
             instantiateRuntime: async (context: IContainerContext) => {
                 const runtime = await ContainerRuntime.load(
                     context,
-                    [[type, Promise.resolve(componentFactory as IComponentFactory)]],
-                    async (req,rt) => builder.handleRequest(req,rt),
+                    [[type, Promise.resolve(componentFactory as IFluidDataStoreFactory)]],
+                    async (req, rt) => builder.handleRequest(req, rt),
                     runtimeOptions,
                 );
                 if (!runtime.existing) {
-                    const componentRuntime = await runtime.createComponent("default", type);
-                    await componentRuntime.request({ url: "/" });
-                    componentRuntime.bindToContext();
+                    await runtime.createRootDataStore(type, "default");
                 }
                 return runtime;
             },
@@ -91,21 +89,21 @@ describe("loader/runtime compatibility", () => {
 
     const createOldRuntimeFactory = (
         type: string,
-        componentFactory: IComponentFactory | old.IComponentFactory,
+        componentFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
         runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): old.IRuntimeFactory => {
         const builder = new old.RuntimeRequestHandlerBuilder();
         builder.pushHandler(
             old.componentRuntimeRequestHandler,
-            old.defaultComponentRuntimeRequestHandler("default"));
+            old.defaultDataStoreRuntimeRequestHandler("default"));
 
         return {
             get IRuntimeFactory() { return this; },
             instantiateRuntime: async (context: old.IContainerContext) => {
                 const runtime = await old.ContainerRuntime.load(
                     context,
-                    [[type, Promise.resolve(componentFactory as old.IComponentFactory)]],
-                    async (req,rt) => builder.handleRequest(req,rt),
+                    [[type, Promise.resolve(componentFactory as old.IFluidDataStoreFactory)]],
+                    async (req, rt) => builder.handleRequest(req, rt),
                     runtimeOptions,
                 );
                 if (!runtime.existing) {
@@ -136,9 +134,10 @@ describe("loader/runtime compatibility", () => {
         return old.initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function getComponent<T>(componentId: string, container: Container | old.Container): Promise<T> {
+    async function requestFluidObject<T>(componentId: string, container: Container | old.Container): Promise<T> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200
+            || (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as T;
@@ -197,7 +196,7 @@ describe("loader/runtime compatibility", () => {
             ];
 
             const components = await Promise.all(containersP.map(async (containerP) => containerP.then(
-                async (container) => getComponent<TestComponent | OldTestComponent>("default", container))));
+                async (container) => requestFluidObject<TestComponent | OldTestComponent>("default", container))));
 
             // get initial test value from each component
             components.map(async (component) => assert.strictEqual(await component._root.wait(test[0]), test[1]));
@@ -226,7 +225,7 @@ describe("loader/runtime compatibility", () => {
             this.container = await createContainerWithOldLoader(
                 { fluidExport: createRuntimeFactory(TestComponent.type, createComponentFactory()) },
                 this.deltaConnectionServer);
-            this.component = await getComponent<TestComponent>("default", this.container);
+            this.component = await requestFluidObject<TestComponent>("default", this.container);
             this.opProcessingController.addDeltaManagers(this.component._runtime.deltaManager);
         });
 
@@ -250,7 +249,7 @@ describe("loader/runtime compatibility", () => {
                 this.deltaConnectionServer,
             );
 
-            this.component = await getComponent<OldTestComponent>("default", this.container);
+            this.component = await requestFluidObject<OldTestComponent>("default", this.container);
             this.opProcessingController.addDeltaManagers(this.component._runtime.deltaManager);
         });
 
@@ -261,7 +260,7 @@ describe("loader/runtime compatibility", () => {
         });
     });
 
-    describe("new ContainerRuntime, old ComponentRuntime", function() {
+    describe("new ContainerRuntime, old FluidDataStoreRuntime", function() {
         beforeEach(async function() {
             this.deltaConnectionServer = LocalDeltaConnectionServer.create(
                 undefined,
@@ -274,7 +273,7 @@ describe("loader/runtime compatibility", () => {
                 this.deltaConnectionServer,
             );
 
-            this.component = await getComponent<OldTestComponent>("default", this.container);
+            this.component = await requestFluidObject<OldTestComponent>("default", this.container);
             this.opProcessingController.addDeltaManagers(this.component._runtime.deltaManager);
         });
 

@@ -5,26 +5,26 @@
 
 import {
     IFluidObject,
-    IComponentHandleContext,
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidHandleContext,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
-import { ComponentHandle } from "@fluidframework/component-runtime";
-import { IComponentLayout } from "@fluidframework/framework-experimental";
-import { IComponentCollection } from "@fluidframework/framework-interfaces";
+} from "@fluidframework/core-interfaces";
+import { FluidOjectHandle } from "@fluidframework/datastore";
+import { IFluidObjectCollection } from "@fluidframework/framework-interfaces";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
-import { SharedComponent, SharedComponentFactory } from "@fluidframework/component-base";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { PureDataObject, PureDataObjectFactory } from "@fluidframework/component-base";
+import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
+import * as ClientUI from "@fluid-example/client-ui-lib";
 
 export class ImageComponent implements
-    IComponentLoadable, IComponentHTMLView, IComponentRouter, IComponentLayout {
-    public get IComponentLoadable() { return this; }
-    public get IComponentHTMLView() { return this; }
-    public get IComponentRouter() { return this; }
-    public get IComponentLayout() { return this; }
+    IFluidLoadable, IFluidHTMLView, IFluidRouter, ClientUI.controls.IViewLayout {
+    public get IFluidLoadable() { return this; }
+    public get IFluidHTMLView() { return this; }
+    public get IFluidRouter() { return this; }
+    public get IViewLayout() { return this; }
 
     // Video def has a preferred aspect ratio
     public aspectRatio?: number;
@@ -32,13 +32,13 @@ export class ImageComponent implements
     public minimumHeightInline?: number;
     public readonly canInline = true;
     public readonly preferInline = false;
-    public handle: ComponentHandle;
+    public handle: FluidOjectHandle;
 
-    constructor(public imageUrl: string, public url: string, path: string, context: IComponentHandleContext) {
-        this.handle = new ComponentHandle(this, path, context);
+    constructor(public imageUrl: string, public url: string, path: string, context: IFluidHandleContext) {
+        this.handle = new FluidOjectHandle(this, path, context);
     }
 
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         const img = document.createElement("img");
         img.src = this.imageUrl;
         elm.appendChild(img);
@@ -46,33 +46,33 @@ export class ImageComponent implements
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "fluid/component",
+            mimeType: "fluid/object",
             status: 200,
             value: this,
         };
     }
 }
 
-export class ImageCollection extends SharedComponent<ISharedDirectory> implements
-    IComponentLoadable, IComponentRouter, IComponentCollection {
-    private static readonly factory = new SharedComponentFactory(
+export class ImageCollection extends PureDataObject<ISharedDirectory> implements
+    IFluidLoadable, IFluidRouter, IFluidObjectCollection {
+    private static readonly factory = new PureDataObjectFactory(
         "@fluid-example/image-collection",
         ImageCollection,
         SharedDirectory.getFactory(),
     );
 
-    public static getFactory(): IComponentFactory { return ImageCollection.factory; }
+    public static getFactory(): IFluidDataStoreFactory { return ImageCollection.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
+    public static async create(parentContext: IFluidDataStoreContext, props?: any) {
         return ImageCollection.factory.create(parentContext, props);
     }
 
     public create() { this.initialize(); }
     public async load() { this.initialize(); }
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentCollection() { return this; }
-    public get IComponentRouter() { return this; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidObjectCollection() { return this; }
+    public get IFluidRouter() { return this; }
 
     private readonly images = new Map<string, ImageComponent>();
 
@@ -100,7 +100,7 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!trimmed) {
             return {
-                mimeType: "fluid/component",
+                mimeType: "fluid/object",
                 status: 200,
                 value: this,
             };
@@ -121,7 +121,7 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
                     this.root.get(key),
                     `${this.url}/${key}`,
                     key,
-                    this.runtime.IComponentHandleContext));
+                    this.runtime.IFluidHandleContext));
         }
 
         this.root.on("valueChanged", (changed) => {
@@ -133,11 +133,11 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
                     this.root.get(changed.key),
                     `${this.url}/${changed.key}`,
                     changed.key,
-                    this.runtime.IComponentHandleContext);
+                    this.runtime.IFluidHandleContext);
                 this.images.set(changed.key, player);
             }
         });
     }
 }
 
-export const fluidExport: IComponentFactory = ImageCollection.getFactory();
+export const fluidExport: IFluidDataStoreFactory = ImageCollection.getFactory();

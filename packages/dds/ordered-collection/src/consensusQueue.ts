@@ -4,10 +4,10 @@
  */
 
 import {
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelAttributes,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { ConsensusOrderedCollection } from "./consensusOrderedCollection";
 import { ConsensusQueueFactory } from "./consensusOrderedCollectionFactory";
 import { IOrderedCollection } from "./interfaces";
@@ -42,7 +42,7 @@ export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
      * @param id - optional name of theconsensus queue
      * @returns newly create consensus queue (but not attached yet)
      */
-    public static create<T = any>(runtime: IComponentRuntime, id?: string) {
+    public static create<T = any>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, ConsensusQueueFactory.Type) as ConsensusQueue<T>;
     }
 
@@ -59,7 +59,7 @@ export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
      * Constructs a new consensus queue. If the object is non-local an id and service interfaces will
      * be provided
      */
-    public constructor(id: string, runtime: IComponentRuntime, attributes: IChannelAttributes) {
+    public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes, new SnapshotableQueue<T>());
     }
 }

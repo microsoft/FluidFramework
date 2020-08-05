@@ -162,8 +162,7 @@ stages:
 
 - stage: deploy
   displayName: Deploy Stage
-  pool:
-    vmImage: 'ubuntu-latest'
+  pool: Default
   dependsOn: build
   jobs:
     # current release

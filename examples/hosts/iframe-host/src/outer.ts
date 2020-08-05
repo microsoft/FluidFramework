@@ -8,7 +8,7 @@ import {
 } from "@fluidframework/routerlicious-driver";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { BaseHost } from "@fluidframework/base-host";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
 import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
@@ -67,7 +67,7 @@ export async function loadFrame(iframeId: string, logId: string) {
 }
 
 async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
-    const component = await baseHost.getComponent(url);
+    const component = await baseHost.requestFluidObject(url);
     if (component === undefined) {
         return;
     }

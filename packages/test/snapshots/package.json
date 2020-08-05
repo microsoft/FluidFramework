@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/test-snapshots",
-  "version": "0.23.0",
+  "version": "0.25.0",
   "private": true,
   "description": "Comprehensive test of snapshot logic.",
   "repository": "microsoft/FluidFramework",
@@ -22,7 +22,8 @@
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:generate": "node --experimental-worker dist/generateSnapshotFiles.js",
-    "test:mocha": "mocha --experimental-worker --recursive dist/test --exit -r make-promises-safe",
+    "test:mocha": "mocha --experimental-worker --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+    "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
@@ -48,18 +49,20 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-internal/replay-tool": "^0.23.0",
-    "@fluidframework/common-utils": "^0.21.0-0",
-    "@fluidframework/protocol-definitions": "^0.1010.0-34206"
+    "@fluid-internal/replay-tool": "^0.25.0",
+    "@fluidframework/common-utils": "^0.21.0",
+    "@fluidframework/protocol-definitions": "^0.1010.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
+    "@fluidframework/mocha-test-setup": "^0.25.0",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^5.2.0",
+    "cross-env": "^7.0.2",
     "eslint": "~6.8.0",
     "eslint-plugin-eslint-comments": "~3.1.2",
     "eslint-plugin-import": "2.20.0",
@@ -68,7 +71,6 @@
     "eslint-plugin-prefer-arrow": "~1.1.7",
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
-    "make-promises-safe": "^5.1.0",
     "mocha": "^8.0.1",
     "mocha-junit-reporter": "^1.18.0",
     "nyc": "^15.0.0",

@@ -14,13 +14,13 @@ import { SharedCell } from "@fluidframework/cell";
 import { performanceNow } from "@fluidframework/common-utils";
 import {
     IFluidObject,
-    IComponentHandle,
-    IComponentLoadable,
+    IFluidHandle,
+    IFluidLoadable,
     IRequest,
     IResponse,
-    IComponent,
-} from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
+    IFluidRouter,
+} from "@fluidframework/core-interfaces";
+import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore";
 import { Ink } from "@fluidframework/ink";
 import {
     ISharedMap,
@@ -28,8 +28,7 @@ import {
 } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import {
-    IComponentRuntimeChannel,
-    IComponentContext,
+    IFluidDataStoreContext,
     ITask,
     ITaskManager,
     SchedulerType,
@@ -40,7 +39,8 @@ import {
     SharedObjectSequence,
     SharedString,
 } from "@fluidframework/sequence";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
 
@@ -49,35 +49,31 @@ const debug = registerDebug("fluid:shared-text");
 /**
  * Helper function to retrieve the handle for the default component route
  */
-async function getHandle(runtimeP: Promise<IComponentRuntimeChannel>): Promise<IComponentHandle> {
-    const runtime = await runtimeP;
-    const request = await runtime.request({ url: "" });
-
-    if (request.status !== 200 || request.mimeType !== "fluid/component") {
-        return Promise.reject("Not found");
-    }
-
-    const component = request.value as IFluidObject & IComponent;
-    return component.IComponentLoadable.handle;
+async function getHandle(runtimeP: Promise<IFluidRouter>): Promise<IFluidHandle> {
+    const component = await requestFluidObject(await runtimeP, "");
+    return component.IFluidLoadable.handle;
 }
 
 export class SharedTextRunner
     extends EventEmitter
-    implements IComponentHTMLView, IComponentLoadable, IProvideSharedString {
-    public static async load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
+    implements IFluidHTMLView, IFluidLoadable, IProvideSharedString {
+    public static async load(
+        runtime: FluidDataStoreRuntime,
+        context: IFluidDataStoreContext,
+    ): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
         await runner.initialize();
 
         return runner;
     }
 
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
-    public get IComponentHandle() { return this.innerHandle; }
-    public get IComponentLoadable() { return this; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get IFluidHandle() { return this.innerHandle; }
+    public get IFluidLoadable() { return this; }
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
     public get ISharedString() { return this.sharedString; }
 
     public readonly url = "/text";
@@ -87,10 +83,14 @@ export class SharedTextRunner
     private collabDoc: Document;
     private taskManager: ITaskManager;
     private uiInitialized = false;
+    private readonly title: string = "Shared Text";
 
-    private constructor(private readonly runtime: ComponentRuntime, private readonly context: IComponentContext) {
+    private constructor(
+        private readonly runtime: FluidDataStoreRuntime,
+        private readonly context: IFluidDataStoreContext,
+    ) {
         super();
-        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
+        this.innerHandle = new FluidOjectHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public render(element: HTMLElement) {
@@ -110,7 +110,7 @@ export class SharedTextRunner
         if (request.url.startsWith(this.taskManager.url)) {
             return this.taskManager.request(request);
         } else if (request.url === "" || request.url === "/") {
-            return { status: 200, mimeType: "fluid/component", value: this };
+            return { status: 200, mimeType: "fluid/object", value: this };
         } else {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
@@ -152,10 +152,10 @@ export class SharedTextRunner
 
             const containerRuntime = this.context.containerRuntime;
             const [progressBars, math, videoPlayers, images] = await Promise.all([
-                getHandle(containerRuntime._createComponentWithProps("@fluid-example/progress-bars")),
-                getHandle(containerRuntime._createComponentWithProps("@fluid-example/math")),
-                getHandle(containerRuntime._createComponentWithProps("@fluid-example/video-players")),
-                getHandle(containerRuntime._createComponentWithProps("@fluid-example/image-collection")),
+                getHandle(containerRuntime.createDataStore("@fluid-example/progress-bars")),
+                getHandle(containerRuntime.createDataStore("@fluid-example/math")),
+                getHandle(containerRuntime.createDataStore("@fluid-example/video-players")),
+                getHandle(containerRuntime.createDataStore("@fluid-example/image-collection")),
             ]);
 
             this.rootView.set("progressBars", progressBars);
@@ -179,8 +179,8 @@ export class SharedTextRunner
 
         await this.rootView.wait("flowContainerMap");
 
-        this.sharedString = await this.rootView.get<IComponentHandle<SharedString>>("text").get();
-        this.insightsMap = await this.rootView.get<IComponentHandle<ISharedMap>>("insights").get();
+        this.sharedString = await this.rootView.get<IFluidHandle<SharedString>>("text").get();
+        this.insightsMap = await this.rootView.get<IFluidHandle<ISharedMap>>("insights").get();
         debug(`Shared string ready - ${performanceNow()}`);
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performanceNow()}`);
@@ -228,9 +228,9 @@ export class SharedTextRunner
             url.resolve(document.baseURI, "/public/images/bindy.svg"));
 
         const overlayMap = await this.rootView
-            .get<IComponentHandle<ISharedMap>>("flowContainerMap")
+            .get<IFluidHandle<ISharedMap>>("flowContainerMap")
             .get();
-        const overlayInkMap = await overlayMap.get<IComponentHandle<ISharedMap>>("overlayInk").get();
+        const overlayInkMap = await overlayMap.get<IFluidHandle<ISharedMap>>("overlayInk").get();
 
         const containerDiv = document.createElement("div");
         containerDiv.id = "flow-container";
@@ -238,6 +238,8 @@ export class SharedTextRunner
         containerDiv.style.overflow = "hidden";
         const container = new controls.FlowContainer(
             containerDiv,
+            this.title,
+            // API.Document should not be used here. This should be removed once #2915 is fixed.
             new API.Document(
                 this.runtime,
                 this.context,
@@ -274,7 +276,7 @@ export class SharedTextRunner
 
 class TaskScheduler {
     constructor(
-        private readonly componentContext: IComponentContext,
+        private readonly componentContext: IFluidDataStoreContext,
         private readonly taskManager: ITaskManager,
         private readonly componentUrl: string,
         private readonly sharedString: SharedString,
@@ -285,7 +287,7 @@ class TaskScheduler {
 
     public start() {
         const hostTokens =
-            (this.componentContext.containerRuntime as IFluidObject & IComponent).IComponentTokenProvider;
+            (this.componentContext.containerRuntime as IFluidObject & IFluidObject).IFluidTokenProvider;
         const intelTokens = hostTokens && hostTokens.intelligence
             ? hostTokens.intelligence.textAnalytics
             : undefined;
@@ -307,7 +309,7 @@ class TaskScheduler {
     }
 }
 
-export function instantiateComponent(context: IComponentContext): void {
+export function instantiateDataStore(context: IFluidDataStoreContext): void {
     const modules = new Map<string, any>();
 
     // Create channel factories
@@ -325,7 +327,7 @@ export function instantiateComponent(context: IComponentContext): void {
     modules.set(objectSequenceFactory.type, objectSequenceFactory);
     modules.set(numberSequenceFactory.type, numberSequenceFactory);
 
-    const runtime = ComponentRuntime.load(
+    const runtime = FluidDataStoreRuntime.load(
         context,
         modules,
     );

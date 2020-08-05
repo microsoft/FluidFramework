@@ -68,14 +68,12 @@ export const defaultOptions: IMergeTreeOperationRunnerConfig & { minLength: numb
 };
 
 describe("MergeTree.Client", () => {
-    // tslint:disable: mocha-no-side-effect-code
     const opts = defaultOptions;
 
     // Generate a list of single character client names, support up to 69 clients
     const clientNames = generateClientNames();
 
     doOverRange(opts.clients, opts.growthFunc.bind(opts), (clientCount) => {
-        // tslint:enable: mocha-no-side-effect-code
         it(`ReconnectFarm_${clientCount}`, async () => {
             const mt = random.engines.mt19937();
             mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, clientCount]);
@@ -102,7 +100,6 @@ describe("MergeTree.Client", () => {
                 opts,
                 applyMessagesWithReconnect);
         })
-            // tslint:disable-next-line: mocha-no-side-effect-code
             .timeout(30 * 1000);
     });
 });

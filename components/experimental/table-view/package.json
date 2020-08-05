@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/table-view",
-  "version": "0.23.0",
+  "version": "0.25.0",
   "description": "Chaincode component that provides a view for a table-document.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -36,17 +36,17 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/flow-util-lib": "^0.23.0",
-    "@fluid-example/table-document": "^0.23.0",
-    "@fluidframework/aqueduct": "^0.23.0",
-    "@fluidframework/component-core-interfaces": "^0.23.0",
-    "@fluidframework/view-interfaces": "^0.23.0",
+    "@fluid-example/flow-util-lib": "^0.25.0",
+    "@fluid-example/table-document": "^0.25.0",
+    "@fluidframework/aqueduct": "^0.25.0",
+    "@fluidframework/core-interfaces": "^0.25.0",
+    "@fluidframework/view-interfaces": "^0.25.0",
     "@tiny-calc/micro": "0.0.0-alpha.5"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/webpack-component-loader": "^0.23.0",
+    "@fluidframework/webpack-component-loader": "^0.25.0",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",

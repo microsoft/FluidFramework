@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
 import { SharedObjectSequence } from "@fluidframework/sequence";
@@ -11,7 +11,7 @@ import { Badge } from "./BadgeModel";
 
 const BadgeName = "@fluid-example/badge";
 
-export const BadgeInstantiationFactory = new PrimedComponentFactory(
+export const BadgeInstantiationFactory = new DataObjectFactory(
     BadgeName,
     Badge,
     [

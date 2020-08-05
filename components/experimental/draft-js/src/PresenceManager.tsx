@@ -7,7 +7,7 @@ import React from "react";
 
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { CharacterMetadata, CompositeDecorator, ContentBlock } from "draft-js";
 import { List } from "immutable";
 
@@ -34,7 +34,7 @@ const placeholderChar = "\u200B"; // Zero width space
 export class PresenceManager {
     private readonly coauthorPositions: Map<string, Author> = new Map<string, Author>();
 
-    public constructor(private readonly authorMap: SharedMap, private readonly runtime: IComponentRuntime) { }
+    public constructor(private readonly authorMap: SharedMap, private readonly runtime: IFluidDataStoreRuntime) { }
 
     public subscribe(renderCallback: (textRangeUpdater: (range: TextRange) => TextRange) => void) {
         this.authorMap.on("op", (op: ISequencedDocumentMessage, local: boolean) => {

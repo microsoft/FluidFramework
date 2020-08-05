@@ -57,7 +57,6 @@ export const longOptions: IConflictFarmConfig = {
 };
 
 describe("MergeTree.Client", () => {
-    // tslint:disable: mocha-no-side-effect-code
     const opts =
         defaultOptions;
     // debugOptions;
@@ -68,7 +67,6 @@ describe("MergeTree.Client", () => {
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     doOverRange(opts.minLength, opts.growthFunc, (minLength) => {
-        // tslint:enable: mocha-no-side-effect-code
         it(`ConflictFarm_${minLength}`, async () => {
             const mt = random.engines.mt19937();
             mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, minLength]);
@@ -96,7 +94,7 @@ describe("MergeTree.Client", () => {
                     opts);
             }
         })
-            // tslint:disable-next-line: mocha-no-side-effect-code
+
             .timeout(30 * 1000);
     });
 });

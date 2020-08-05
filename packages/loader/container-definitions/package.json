@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/container-definitions",
-  "version": "0.23.0",
+  "version": "0.25.0",
   "description": "Fluid container definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -28,9 +28,9 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
-    "@fluidframework/component-core-interfaces": "^0.23.0",
-    "@fluidframework/driver-definitions": "^0.23.0",
-    "@fluidframework/protocol-definitions": "^0.1010.0-34206"
+    "@fluidframework/core-interfaces": "^0.25.0",
+    "@fluidframework/driver-definitions": "^0.25.0",
+    "@fluidframework/protocol-definitions": "^0.1010.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",

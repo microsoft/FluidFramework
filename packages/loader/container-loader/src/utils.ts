@@ -25,7 +25,7 @@ export function parseUrl(url: string): IParsedUrl | undefined {
     const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
     const match = regex.exec(parsed.pathname!);
 
-    return (match && match.length === 3)
+    return (match?.length === 3)
         ? { id: match[1], path: match[2], version: parsed.query.version as string }
         : undefined;
 }

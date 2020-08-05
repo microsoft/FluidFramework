@@ -5,7 +5,7 @@
 
 import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
-import { RequestParser } from "@fluidframework/runtime-utils";
+import { RequestParser, requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
 import { Constellation } from "@fluid-example/multiview-constellation-model";
@@ -33,13 +33,8 @@ const registryEntries = new Map([
 // Just a little helper, since we're going to create multiple coordinates.
 const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string) => {
     const simpleCoordinateComponentRuntime =
-        await runtime.createComponent(id, Coordinate.ComponentName);
-    const simpleResult = await simpleCoordinateComponentRuntime.request({ url: id });
-    if (simpleResult.status !== 200 || simpleResult.mimeType !== "fluid/component") {
-        throw new Error("Error in creating the coordinate model.");
-    }
-    simpleCoordinateComponentRuntime.bindToContext();
-    return simpleResult.value as ICoordinate;
+        await runtime.createRootDataStore(Coordinate.ComponentName, id);
+    return requestFluidObject<ICoordinate>(simpleCoordinateComponentRuntime, id);
 };
 
 // Just a little helper, since we're going to request multiple coordinates.
@@ -116,14 +111,9 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
         triangleCoordinate3.y = 60;
 
         // Create the constellation component
-        const constellationComponentRuntime =
-            await runtime.createComponent(constellationComponentId, Constellation.ComponentName);
-        const constellationResult = await constellationComponentRuntime.request({ url: constellationComponentId });
-        if (constellationResult.status !== 200 || constellationResult.mimeType !== "fluid/component") {
-            throw new Error("Error in creating the constellation model.");
-        }
-        constellationComponentRuntime.bindToContext();
-        const constellationComponent = constellationResult.value as Constellation;
+        const constellationComponent = await requestFluidObject<Constellation>(
+            await runtime.createRootDataStore(Constellation.ComponentName, constellationComponentId),
+            constellationComponentId); // FOLLOW UP: This looks wrong, it should be empty string or slash
 
         // Add a few stars
         await constellationComponent.addStar(86, 74);

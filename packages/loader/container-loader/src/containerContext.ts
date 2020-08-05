@@ -6,12 +6,11 @@
 import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IComponent,
-    IComponentConfiguration,
+    IFluidObject,
+    IFluidConfiguration,
     IRequest,
     IResponse,
-    IFluidObject,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     ICodeLoader,
@@ -48,7 +47,7 @@ import { NullRuntime } from "./nullRuntime";
 export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
-        scope: IComponent & IFluidObject,
+        scope: IFluidObject & IFluidObject,
         codeLoader: ICodeLoader,
         runtimeFactory: IRuntimeFactory,
         baseSnapshot: ISnapshotTree | null,
@@ -138,12 +137,12 @@ export class ContainerContext implements IContainerContext {
         return this.container.options;
     }
 
-    public get configuration(): IComponentConfiguration {
-        const config: Partial<IComponentConfiguration> = {
+    public get configuration(): IFluidConfiguration {
+        const config: Partial<IFluidConfiguration> = {
             canReconnect: this.container.canReconnect,
             scopes: this.container.scopes,
         };
-        return config as IComponentConfiguration;
+        return config as IFluidConfiguration;
     }
 
     public get IMessageScheduler() {
@@ -168,7 +167,7 @@ export class ContainerContext implements IContainerContext {
 
     constructor(
         private readonly container: Container,
-        public readonly scope: IComponent & IFluidObject,
+        public readonly scope: IFluidObject & IFluidObject,
         public readonly codeLoader: ICodeLoader,
         public readonly runtimeFactory: IRuntimeFactory,
         private readonly _baseSnapshot: ISnapshotTree | null,
@@ -233,7 +232,7 @@ export class ContainerContext implements IContainerContext {
     }
 
     public createSummary(): ISummaryTree {
-        if (!this.runtime) {
+        if (this.runtime === undefined) {
             throw new Error("Runtime should be there to take summary");
         }
         return this.runtime.createSummary();
@@ -245,9 +244,9 @@ export class ContainerContext implements IContainerContext {
         assert(this.connected === connected);
 
         // Back-compat: supporting <= 0.16 components
-        if (runtime.setConnectionState) {
+        if (runtime.setConnectionState !== undefined) {
             runtime.setConnectionState(connected, clientId);
-        } else if (runtime.changeConnectionState) {
+        } else if (runtime.changeConnectionState !== undefined) {
             runtime.changeConnectionState(this.connectionState, clientId);
         } else {
             assert(false);

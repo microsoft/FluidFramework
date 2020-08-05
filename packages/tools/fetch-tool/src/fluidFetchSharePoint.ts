@@ -11,7 +11,12 @@ import {
     getOdspRefreshTokenFn,
     IOdspAuthRequestInfo,
 } from "@fluidframework/odsp-utils";
-import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@fluidframework/tool-utils";
+import {
+    getMicrosoftConfiguration,
+    OdspTokenManager,
+    odspTokensCache,
+    OdspTokenConfig,
+} from "@fluidframework/tool-utils";
 import { fluidFetchWebNavigator } from "./fluidFetchInit";
 import { getForceTokenReauth } from "./fluidFetchArgs";
 
@@ -23,12 +28,15 @@ export async function resolveWrapper<T>(
 ): Promise<T> {
     try {
         const odspTokenManager = new OdspTokenManager(odspTokensCache);
+        const tokenConfig: OdspTokenConfig = {
+            type: "browserLogin",
+            navigator: fluidFetchWebNavigator,
+        };
         const tokens = await odspTokenManager.getOdspTokens(
             server,
             clientConfig,
-            fluidFetchWebNavigator,
-            undefined,
-            undefined,
+            tokenConfig,
+            undefined /* forceRefresh */,
             forceTokenReauth || getForceTokenReauth(),
         );
 

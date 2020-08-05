@@ -6,7 +6,7 @@
                 "dotSameRank": true,
                 "packages": [
                     "@fluidframework/common-definitions",
-                    "@fluidframework/component-core-interfaces",
+                    "@fluidframework/core-interfaces",
                     "@fluidframework/gitresources"
                 ]
             },
@@ -24,7 +24,7 @@
                 ],
                 "deps": [
                     "Protocol-Definitions",
-                    "@fluidframework/component-core-interfaces"
+                    "@fluidframework/core-interfaces"
                 ]
             },
             "Container-Definitions": {
@@ -33,7 +33,7 @@
                 ],
                 "deps": [
                     "Driver-Definitions",
-                    "@fluidframework/component-core-interfaces"
+                    "@fluidframework/core-interfaces"
                 ]
             }
         }
@@ -88,6 +88,7 @@
                     "@fluidframework/tool-utils"
                 ],
                 "deps": [
+                    "Base-Utils",
                     "Other-Utils"
                 ]
             },
@@ -120,7 +121,7 @@
                 ],
                 "deps": [
                     "Driver-Utils",
-                    "@fluidframework/component-core-interfaces"
+                    "@fluidframework/core-interfaces"
                 ]
             },
             "Loader": {

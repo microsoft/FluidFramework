@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from 'assert';
-import { SharedMatrix } from '../src';
-import { IArray2D } from "../src/sparsearray2d";
-import { Serializable } from '@fluidframework/component-runtime-definitions';
-import { IMatrixProducer, IMatrixReader, IMatrixConsumer } from '@tiny-calc/nano';
+import { strict as assert } from "assert";
+import { IMatrixProducer, IMatrixReader, IMatrixConsumer, IMatrixWriter } from "@tiny-calc/nano";
+import { Serializable } from "@fluidframework/datastore-definitions";
+import { SharedMatrix } from "../src";
+
+export type IMatrix<T> = IMatrixReader<T> & IMatrixWriter<T>;
 
 class NullMatrixConsumer implements IMatrixConsumer<any> {
     rowsChanged(rowStart: number, removedCount: number, insertedCount: number, producer: IMatrixProducer<any>): void {}
@@ -20,7 +21,7 @@ const nullConsumer = new NullMatrixConsumer();
 /**
  * Fills the designated region of the matrix with values computed by the `value` callback.
  */
-export function fill<T extends IArray2D<U>, U>(
+export function fill<T extends IMatrix<U>, U>(
     matrix: T,
     rowStart = 0,
     colStart = 0,
@@ -43,7 +44,7 @@ export function fill<T extends IArray2D<U>, U>(
 /**
  * Sets the corners of the given matrix.
  */
-export function setCorners<T extends IArray2D<U>, U>(matrix: T) {
+export function setCorners<T extends IMatrix<U>, U>(matrix: T) {
     matrix.setCell(0, 0, "TopLeft" as any);
     matrix.setCell(0, matrix.colCount - 1, "TopRight" as any);
     matrix.setCell(matrix.rowCount - 1, matrix.colCount - 1, "BottomRight" as any);
@@ -53,7 +54,7 @@ export function setCorners<T extends IArray2D<U>, U>(matrix: T) {
 /**
  * Checks the corners of the given matrix.
  */
-export function checkCorners<T extends IArray2D<U>, U>(matrix: T) {
+export function checkCorners<T extends IMatrix<U>, U>(matrix: T) {
     assert.equal(matrix.getCell(0, 0), "TopLeft");
     assert.equal(matrix.getCell(0, matrix.colCount - 1), "TopRight");
     assert.equal(matrix.getCell(matrix.rowCount - 1, matrix.colCount - 1), "BottomRight");
@@ -64,7 +65,7 @@ export function checkCorners<T extends IArray2D<U>, U>(matrix: T) {
  * Vets that cells are equal to the values computed by the 'value' callback for the designated
  * region of the matrix.
  */
-export function check<T extends IArray2D<U>, U>(
+export function check<T extends IMatrix<U>, U>(
     matrix: T,
     rowStart = 0,
     colStart = 0,
@@ -83,7 +84,7 @@ export function check<T extends IArray2D<U>, U>(
     return matrix;
 }
 
-export function checkValue<T extends IArray2D<U>, U>(
+export function checkValue<T extends IMatrix<U>, U>(
     matrix: T,
     test: unknown,
     r: number,

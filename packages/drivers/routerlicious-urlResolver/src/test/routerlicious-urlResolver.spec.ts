@@ -7,7 +7,7 @@
 
 import assert from "assert";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { Provider } from "nconf";
 import { RouterliciousUrlResolver } from "../urlResolver";
 

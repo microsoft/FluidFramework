@@ -7,8 +7,6 @@
 
 import { IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 
-export interface IArray2D<T> extends IMatrixReader<T | undefined | null>, IMatrixWriter<T | undefined> { }
-
 // Build a lookup table that maps a uint8 to the corresponding uint16 where 0s
 // are interleaved between the original bits. (e.g., 1111... -> 01010101...).
 //
@@ -59,7 +57,7 @@ type UA<T> = (T | undefined)[];
 /**
  * A sparse 4 billion x 4 billion array stored as 16x16 tiles.
  */
-export class SparseArray2D<T> implements IArray2D<T> {
+export class SparseArray2D<T> implements IMatrixReader<T | undefined | null>, IMatrixWriter<T | undefined> {
     constructor(private readonly root: UA<UA<UA<UA<UA<T>>>>> = [undefined]) { }
 
     public get rowCount() { return 0xFFFFFFFF; }
@@ -98,14 +96,45 @@ export class SparseArray2D<T> implements IArray2D<T> {
         level3[byte3(keyLo)] = value;
     }
 
-    private forEachKeyInRow(row: number, callback: (key: number) => void) {
+    /**
+     * Invokes the given 'callback' for each key in a 16 x 16 tile at the indicated row.
+     *
+     * (Note that 'rowBits' is the appropriate byte from 'r0ToMorton16' for the current
+     * level being traversed.)
+     */
+    private forEachKeyInRow(rowBits: number, callback: (key: number) => void) {
         for (let col = 0; col < 16; col++) {
-            callback((row | c0ToMorton16(col)) >>> 0);
+            // Perf: Potentially faster to replace 'c0ToMorton16()' with a short look up table?
+            callback((rowBits | c0ToMorton16(col)) >>> 0);
         }
     }
 
-    private forEachInRow<V extends UA<any>, U extends UA<V>>(currentLevel: U, row: number, callback: (level: V) => void) {
-        this.forEachKeyInRow(row, (key) => {
+    /**
+     * Invokes the given 'callback' for each key in a 16 x 16 tile at the indicated col.
+     *
+     * (Note that 'colBits' is the appropriate byte from 'c0ToMorton16' for the current
+     * level being traversed.)
+     */
+    private forEachKeyInCol(col: number, callback: (key: number) => void) {
+        for (let row = 0; row < 16; row++) {
+            // Perf: Potentially faster to replace 'r0ToMorton16()' with a short look up table?
+            callback((r0ToMorton16(row) | col) >>> 0);
+        }
+    }
+
+    /**
+     * Invokes the give 'callback' with the next 'level' array for each populated region
+     * of the given row  in the 'currentLevel'.
+     *
+     * (Note that 'rowBits' is the appropriate byte from 'r0ToMorton16' for the current
+     * level being traversed.)
+     */
+    private forEachInRow<V extends UA<any>, U extends UA<V>>(
+        currentLevel: U,
+        rowBits: number,
+        callback: (level: V) => void,
+    ) {
+        this.forEachKeyInRow(rowBits, (key) => {
             const nextLevel = currentLevel[key];
             if (nextLevel !== undefined) {
                 callback(nextLevel);
@@ -113,14 +142,19 @@ export class SparseArray2D<T> implements IArray2D<T> {
         });
     }
 
-    private forEachKeyInCol(col: number, callback: (key: number) => void) {
-        for (let row = 0; row < 16; row++) {
-            callback((r0ToMorton16(row) | col) >>> 0);
-        }
-    }
-
-    private forEachInCol<V extends UA<any>, U extends UA<V>>(currentLevel: U, row: number, callback: (level: V) => void) {
-        this.forEachKeyInCol(row, (key) => {
+    /**
+     * Invokes the give 'callback' with the next 'level' array for each populated region
+     * of the given col in the 'currentLevel'.
+     *
+     * (Note that 'colBits' is the appropriate byte from 'c0ToMorton16' for the current
+     * level being traversed.)
+     */
+    private forEachInCol<V extends UA<any>, U extends UA<V>>(
+        currentLevel: U,
+        colBits: number,
+        callback: (level: V) => void,
+    ) {
+        this.forEachKeyInCol(colBits, (key) => {
             const nextLevel = currentLevel[key];
             if (nextLevel !== undefined) {
                 callback(nextLevel);
@@ -133,10 +167,13 @@ export class SparseArray2D<T> implements IArray2D<T> {
         const rowEnd = rowStart + rowCount;
         for (let row = rowStart; row < rowEnd; row++) {
             const rowHi = r0ToMorton16(row >>> 16);
+
+            // The top level of tree is a 64k x 64k tile.  We need to scan all 64k entries.
             for (let colHi = 0; colHi < 0x10000; colHi++) {
                 const keyHi = (rowHi | c0ToMorton16(colHi)) >>> 0;
                 const level0 = this.root[keyHi];
                 if (level0 !== undefined) {
+                    // The remainder of the tree is divided in 16 x 16 tiles.
                     const rowLo = r0ToMorton16(row);
                     this.forEachInRow(level0, byte0(rowLo), (level1) => {
                         this.forEachInRow(level1, byte1(rowLo), (level2) => {
@@ -157,10 +194,13 @@ export class SparseArray2D<T> implements IArray2D<T> {
         const colEnd = colStart + colCount;
         for (let col = colStart; col < colEnd; col++) {
             const colHi = c0ToMorton16(col >>> 16);
+
+            // The top level of tree is a 64k x 64k tile.  We need to scan all 64k entries.
             for (let rowHi = 0; rowHi < 0x10000; rowHi++) {
                 const keyHi = (colHi | r0ToMorton16(rowHi)) >>> 0;
                 const level0 = this.root[keyHi];
                 if (level0 !== undefined) {
+                    // The remainder of the tree is divided in 16 x 16 tiles.
                     const colLo = c0ToMorton16(col);
                     this.forEachInCol(level0, byte0(colLo), (level1) => {
                         this.forEachInCol(level1, byte1(colLo), (level2) => {

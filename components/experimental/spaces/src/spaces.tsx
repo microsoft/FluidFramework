@@ -7,16 +7,16 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { Layout } from "react-grid-layout";
 import {
-    PrimedComponent,
-    PrimedComponentFactory,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
-    IComponentHandle,
+    IFluidHandle,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
-import { AsSerializable } from "@fluidframework/component-runtime-definitions";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+} from "@fluidframework/core-interfaces";
+import { AsSerializable } from "@fluidframework/datastore-definitions";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { ISpacesStoredItem, SpacesStorage } from "./storage";
@@ -50,13 +50,13 @@ export interface ISpacesItem {
 /**
  * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.
  */
-export class Spaces extends PrimedComponent implements IComponentHTMLView {
+export class Spaces extends DataObject implements IFluidHTMLView {
     private storageComponent: SpacesStorage<ISpacesItem> | undefined;
     private baseUrl: string | undefined;
 
     public static get ComponentName() { return "@fluid-example/spaces"; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         Spaces.ComponentName,
         Spaces,
         [],
@@ -71,7 +71,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         return Spaces.factory;
     }
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     // In order to handle direct links to items, we'll link to the Spaces component with a path of the itemId for the
     // specific item we want.  We route through Spaces because it's the one with the registry, and so it's the one
@@ -125,9 +125,9 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         );
     }
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const storageComponent =
-            await this.createAndAttachComponent<SpacesStorage<ISpacesItem>>(SpacesStorage.ComponentName);
+            await this.createFluidObject<SpacesStorage<ISpacesItem>>(SpacesStorage.ComponentName);
         this.root.set(SpacesStorageKey, storageComponent.handle);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
@@ -136,9 +136,9 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         }
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.storageComponent =
-            await this.root.get<IComponentHandle<SpacesStorage<ISpacesItem>>>(SpacesStorageKey)?.get();
+            await this.root.get<IFluidHandle<SpacesStorage<ISpacesItem>>>(SpacesStorageKey)?.get();
 
         // We'll cache this async result on initialization, since we need it synchronously during render.
         this.baseUrl = await this.context.getAbsoluteUrl(this.url);
@@ -184,8 +184,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
             throw new Error("Unknown item, can't add");
         }
 
-        // Don't really want to hand out createAndAttachComponent here, see spacesItemMap.ts for more info.
-        const serializableObject = await itemMapEntry.create(this.createAndAttachComponent.bind(this));
+        // Don't really want to hand out createFluidObject here, see spacesItemMap.ts for more info.
+        const serializableObject = await itemMapEntry.create(this.createFluidObject.bind(this));
         return this.storageComponent.addItem(
             {
                 serializableObject,

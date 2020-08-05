@@ -5,10 +5,10 @@
 
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelServices,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { SharedCell } from "./cell";
 import { ISharedCell } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
@@ -34,7 +34,7 @@ export class CellFactory implements IChannelFactory {
     }
 
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
         branchId: string,
@@ -44,7 +44,7 @@ export class CellFactory implements IChannelFactory {
         return cell;
     }
 
-    public create(document: IComponentRuntime, id: string): ISharedCell {
+    public create(document: IFluidDataStoreRuntime, id: string): ISharedCell {
         const cell = new SharedCell(id, document, this.attributes);
         cell.initializeLocal();
         return cell;

@@ -8,14 +8,12 @@ import fs from "fs";
 import path from "path";
 import {
     MockContainerRuntimeFactory,
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { generateStrings, LocationBase } from "./generateSharedStrings";
-
-/* tslint:disable:non-literal-fs-path */
 
 describe("SharedString Snapshot Version", () => {
     let filebase: string;
@@ -37,7 +35,7 @@ describe("SharedString Snapshot Version", () => {
             // load snapshot into sharedString
             const documentId = "fakeId";
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const componentRuntime = new MockComponentRuntime();
+            const componentRuntime = new MockFluidDataStoreRuntime();
             const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
             const services = {
                 deltaConnection: containerRuntime.createDeltaConnection(),

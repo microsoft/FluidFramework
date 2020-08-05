@@ -6,7 +6,7 @@
 import assert from "assert";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@fluidframework/protocol-definitions";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -66,7 +66,7 @@ export class TestClient extends Client {
             {
                 logger: client2.logger,
                 clientId: newLongClientId,
-            } as IComponentRuntime,
+            } as IFluidDataStoreRuntime,
             services);
         await catchupOpsP;
         return client2;
