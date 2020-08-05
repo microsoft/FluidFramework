@@ -10,7 +10,12 @@ import moniker from "moniker";
 import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
 import { IOdspTokens, getServer } from "@fluidframework/odsp-utils";
-import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@fluidframework/tool-utils";
+import {
+    getMicrosoftConfiguration,
+    OdspTokenManager,
+    odspTokensCache,
+    OdspTokenConfig,
+} from "@fluidframework/tool-utils";
 import { IFluidPackage } from "@fluidframework/container-definitions";
 import Axios from "axios";
 import { RouteOptions } from "./loader";
@@ -31,6 +36,11 @@ export const before = async (app: express.Application) => {
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: RouteOptions) => {
     const options: RouteOptions = { mode: "local", ...env, ...{ port: server.options.port } };
     const config: nconf.Provider = nconf.env("__").file(path.join(baseDir, "config.json"));
+    const buildTokenConfig = (response, redirectUriCallback?): OdspTokenConfig => ({
+        type: "browserLogin",
+        navigator: (url: string) => response.redirect(url),
+        redirectUriCallback,
+    });
 
     // Check that tinylicious is running when it is selected
     switch (options.mode) {
@@ -114,12 +124,11 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                     await tokenManager.getOdspTokens(
                         options.server,
                         getMicrosoftConfiguration(),
-                        (url: string) => res.redirect(url),
-                        async (tokens: IOdspTokens) => {
+                        buildTokenConfig(res, async (tokens: IOdspTokens) => {
                             options.odspAccessToken = tokens.accessToken;
                             return originalUrl;
-                        },
-                        true,
+                        }),
+                        true /* forceRefresh */,
                         options.forceReauth,
                     );
                     odspAuthStage = 1;
@@ -128,12 +137,11 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 await tokenManager.getPushTokens(
                     options.server,
                     getMicrosoftConfiguration(),
-                    (url: string) => res.redirect(url),
-                    async (tokens: IOdspTokens) => {
+                    buildTokenConfig(res, async (tokens: IOdspTokens) => {
                         options.pushAccessToken = tokens.accessToken;
                         return originalUrl;
-                    },
-                    true,
+                    }),
+                    true /* forceRefresh */,
                     options.forceReauth,
                 );
                 odspAuthStage = 2;
@@ -153,13 +161,12 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         await tokenManager.getOdspTokens(
             options.server,
             getMicrosoftConfiguration(),
-            (url: string) => res.redirect(url),
-            async (tokens: IOdspTokens) => {
+            buildTokenConfig(res, async (tokens: IOdspTokens) => {
                 options.odspAccessToken = tokens.accessToken;
                 return `${getThisOrigin(options)}/pushLogin`;
-            },
-            true,
-            true,
+            }),
+            undefined /* forceRefresh */,
+            true /* forceReauth */,
         );
     });
 
@@ -172,10 +179,9 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         options.pushAccessToken = (await tokenManager.getPushTokens(
             options.server,
             getMicrosoftConfiguration(),
-            (url: string) => res.redirect(url),
-            undefined,
-            true,
-            true,
+            buildTokenConfig(res),
+            undefined /* forceRefresh */,
+            true /* forceReauth */,
         )).accessToken;
     });
 

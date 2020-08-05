@@ -5,7 +5,7 @@
 
 import "mocha";
 
-import { IChannelServices, Serializable } from "@fluidframework/component-runtime-definitions";
+import { IChannelServices, Serializable } from "@fluidframework/datastore-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,

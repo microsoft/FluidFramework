@@ -22,7 +22,6 @@ import {
     IFluidLoadable,
 } from "@fluidframework/component-core-interfaces";
 import { IDeltaManager, IErrorBase } from "@fluidframework/container-definitions";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     IDocumentMessage,
@@ -43,8 +42,6 @@ const maxSummarizeTimeoutCount = 5; // Double and resend 5 times
 const minOpsForLastSummary = 50;
 
 declare module "@fluidframework/component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideSummarizer>> { }
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideSummarizer>> { }
 }
@@ -592,7 +589,11 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         private readonly configurationGetter: () => ISummaryConfiguration,
         // eslint-disable-next-line max-len
         private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
-        private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => void,
+        private readonly refreshLatestAck: (
+            proposalHandle: string,
+            ackHandle: string,
+            referenceSequenceNumber: number
+        ) => Promise<void>,
         handleContext: IFluidHandleContext,
         summaryCollection?: SummaryCollection,
     ) {
@@ -805,16 +806,16 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             try {
                 const ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
                 refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
-                const context: ISummaryContext = {
-                    proposalHandle: ack.summaryOp.contents.handle,
-                    ackHandle: ack.summaryAckNack.contents.handle,
-                };
 
-                this.refreshLatestAck(context, refSequenceNumber);
-                refSequenceNumber++;
+                await this.refreshLatestAck(
+                    ack.summaryOp.contents.handle,
+                    ack.summaryAckNack.contents.handle,
+                    refSequenceNumber,
+                );
             } catch (error) {
                 this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);
             }
+            refSequenceNumber++;
         }
     }
 }

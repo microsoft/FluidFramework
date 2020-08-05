@@ -84,7 +84,6 @@ export class TextSegment extends BaseSegment {
         }
     }
 
-    // tslint:disable-next-line: no-suspicious-comment
     // TODO: retain removed text for undo
     // returns true if entire string removed
     public removeRange(start: number, end: number) {
@@ -197,7 +196,6 @@ export class MergeTreeTextHelper {
             let beginTags = "";
             let endTags = "";
             if (accumText.parallelArrays) {
-                // tslint:disable-next-line: no-suspicious-comment
                 // TODO: let clients pass in function to get tag
                 const tags = [] as string[];
                 const initTags = [] as string[];

@@ -67,7 +67,6 @@ export function runMergeTreeOperationRunner(
     // eslint-disable-next-line @typescript-eslint/unbound-method
     doOverRange(config.opsPerRoundRange, config.growthFunc, (opsPerRound) => {
         if (config.incrementalLog) {
-            // tslint:disable-next-line: max-line-length
             console.log(`MinLength: ${minLength} Clients: ${clients.length} Ops: ${opsPerRound} Seq: ${seq}`);
         }
         for (let round = 0; round < config.rounds; round++) {
@@ -120,7 +119,7 @@ export function generateOperationMessagesForClients(
             let opIndex = random.integer(0, operations.length - 1)(mt);
             const start = random.integer(0, len - 1)(mt);
             const end = random.integer(start + 1, len)(mt);
-            // tslint:disable-next-line: prefer-for-of
+
             for (let y = 0; y < operations.length && op === undefined; y++) {
                 op = operations[opIndex](client, start, end, mt);
                 opIndex++;

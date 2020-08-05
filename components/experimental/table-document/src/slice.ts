@@ -139,7 +139,6 @@ export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITa
     }
 
     private createValuesRange(minCol: number, minRow: number, maxCol: number, maxRow: number) {
-        // tslint:disable-next-line:insecure-random
         const valuesRangeId = `values-${Math.random().toString(36).substr(2)}`;
         this.root.set(ConfigKey.valuesKey, valuesRangeId);
         this.doc.createInterval(valuesRangeId, minRow, minCol, maxRow, maxCol);

@@ -34,6 +34,7 @@ import {
     ITreeEntry,
     MessageType,
     TreeEntry,
+    SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
     IChannel,
@@ -42,9 +43,9 @@ import {
     IDeltaHandler,
     IChannelStorageService,
     IChannelServices,
-} from "@fluidframework/component-runtime-definitions";
-import { FluidSerializer, getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
-import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/datastore-definitions";
+import { FluidSerializer, getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
+import { IFluidDataStoreChannel, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 
@@ -503,6 +504,18 @@ export class MockFluidDataStoreRuntime extends EventEmitter
 
     public async snapshotInternal(): Promise<ITreeEntry[]> {
         return [];
+    }
+
+    public async summarize(fullTree?: boolean): Promise<ISummaryTreeWithStats> {
+        const stats = mergeStats();
+        stats.treeNodeCount++;
+        return {
+            summary: {
+                type: SummaryType.Tree,
+                tree: {},
+            },
+            stats,
+        };
     }
 
     public getAttachSnapshot(): ITreeEntry[] {

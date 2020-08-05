@@ -42,8 +42,14 @@ import {
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IInboundSignalMessage,
+    ISummarizeResult,
+    ISummarizerNode,
+    ISummarizeInternalResult,
+    CreateChildSummarizerNodeFn,
+    SummarizeInternalFn,
+    CreateChildSummarizerNodeParam,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker } from "@fluidframework/runtime-utils";
+import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in component attributes.
@@ -157,10 +163,11 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     public readonly bindToContext: (componentRuntime: IFluidDataStoreChannel) => void;
     protected componentRuntime: IFluidDataStoreChannel | undefined;
     private loaded = false;
-    private pending: ISequencedDocumentMessage[] | undefined = [];
+    protected pending: ISequencedDocumentMessage[] | undefined = [];
     private componentRuntimeDeferred: Deferred<IFluidDataStoreChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
+    protected readonly summarizerNode: ISummarizerNode;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
@@ -169,6 +176,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         public readonly storage: IDocumentStorageService,
         public readonly scope: IFluidObject & IFluidObject,
         public readonly summaryTracker: SummaryTracker,
+        createSummarizerNode: CreateChildSummarizerNodeFn,
         private bindState: BindState,
         bindComponent: (componentRuntime: IFluidDataStoreChannel) => void,
         protected pkg?: readonly string[],
@@ -183,6 +191,9 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             bindComponent(componentRuntime);
             this.bindState = BindState.Bound;
         };
+
+        const thisSummarizeInternal = async (fullTree: boolean) => this.summarizeInternal(fullTree);
+        this.summarizerNode = createSummarizerNode(thisSummarizeInternal);
     }
 
     public dispose(): void {
@@ -303,6 +314,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         };
 
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
+        this.summarizerNode.recordChange(message);
 
         if (this.loaded) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -340,6 +352,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     /**
      * Notifies the object to take snapshot of a component.
+     * @deprecated in 0.22 summarizerNode
      */
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
         if (!fullTree) {
@@ -364,6 +377,35 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
         return { entries, id: null };
+    }
+
+    public async summarize(fullTree = false): Promise<ISummarizeResult> {
+        return this.summarizerNode.summarize(fullTree);
+    }
+
+    private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
+        const { pkg } = await this.getInitialSnapshotDetails();
+
+        const componentAttributes: IFluidDataStoretAttributes = {
+            pkg: JSON.stringify(pkg),
+            snapshotFormatVersion: currentSnapshotFormatVersion,
+        };
+
+        await this.realize();
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const componentRuntime = this.componentRuntime!;
+        if (componentRuntime.summarize !== undefined) {
+            const summary = await componentRuntime.summarize(fullTree);
+            addBlobToSummary(summary, ".component", JSON.stringify(componentAttributes));
+            return { ...summary, id: this.id };
+        } else {
+            // back-compat summarizerNode - remove this case
+            const entries = await componentRuntime.snapshotInternal(fullTree);
+            entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
+            const summary = convertToSummaryTree({ entries, id: null });
+            return { ...summary, id: this.id };
+        }
     }
 
     /**
@@ -403,11 +445,16 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
         // Update our summary tracker's latestSequenceNumber.
         this.summaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
+        this.summarizerNode.invalidate(latestSequenceNumber);
 
         const channelSummaryTracker = this.summaryTracker.getChild(address);
+        const channelSummarizerNode = this.summarizerNode.getChild(address);
         // If there is a summary tracker for the channel that called us, update it's latestSequenceNumber.
         if (channelSummaryTracker) {
             channelSummaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
+        }
+        if (channelSummarizerNode) {
+            channelSummarizerNode.invalidate(latestSequenceNumber); // TODO: lazy load problem?
         }
     }
 
@@ -530,6 +577,16 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             throw new Error("Context is closed");
         }
     }
+
+    public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
+        return (summarizeInternal: SummarizeInternalFn) => this.summarizerNode.createChild(
+            summarizeInternal,
+            id,
+            createParam,
+            // DDS will not create failure summaries
+            { throwOnFailure: true },
+        );
+    }
 }
 
 export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
@@ -542,6 +599,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         storage: IDocumentStorageService,
         scope: IFluidObject & IFluidObject,
         summaryTracker: SummaryTracker,
+        createSummarizerNode: CreateChildSummarizerNodeFn,
         pkg?: string[],
     ) {
         super(
@@ -551,6 +609,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             storage,
             scope,
             summaryTracker,
+            createSummarizerNode,
             BindState.Bound,
             () => {
                 throw new Error("Already attached");
@@ -576,12 +635,19 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                 tree = await this.initSnapshotValue;
             }
 
+            const localReadAndParse = async <T>(id: string) => readAndParse<T>(this.storage, id);
+            if (tree) {
+                const loadedSummary = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
+                tree = loadedSummary.baseSummary;
+                // Prepend outstanding ops to pending queue of ops to process.
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.pending = loadedSummary.outstandingOps.concat(this.pending!);
+            }
+
             if (tree !== null && tree.blobs[".component"] !== undefined) {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion } =
-                    await readAndParse<IFluidDataStoretAttributes>(
-                        this.storage,
-                        tree.blobs[".component"]);
+                    await localReadAndParse<IFluidDataStoretAttributes>(tree.blobs[".component"]);
 
                 let pkgFromSnapshot: string[];
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
@@ -619,15 +685,21 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
         storage: IDocumentStorageService,
         scope: IFluidObject & IFluidObject,
         summaryTracker: SummaryTracker,
+        createSummarizerNode: CreateChildSummarizerNodeFn,
         bindComponent: (componentRuntime: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
-        /**
-         * @deprecated 0.16 Issue #1635 Use the IFluidDataStoreFactory creation methods instead to specify initial state
-         */
-        public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker,
-            snapshotTree ? BindState.Bound : BindState.NotBound, bindComponent, pkg);
+        super(
+            runtime,
+            id,
+            false,
+            storage,
+            scope,
+            summaryTracker,
+            createSummarizerNode,
+            snapshotTree ? BindState.Bound : BindState.NotBound,
+            bindComponent,
+            pkg);
         this.attachListeners();
     }
 

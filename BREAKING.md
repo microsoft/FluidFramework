@@ -5,9 +5,12 @@
 - [IContainerRuntimeBase._createDataStoreWithProps() is removed](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
 - [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
 - [createDataStoreWithRealizationFn() APIs moved](#createDataStoreWithRealizationFn()-APIs-moved)
+- [Package Renames](#package-renames)
+- [IComponent and IComponent Interfaces Removed](#IComponent-and-IComponent-Interfaces-Removed)
+- [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
 
 ### IComponentContextLegacy is removed
-Deprecated in 0.18, removed. 
+Deprecated in 0.18, removed.
 
 ### IContainerRuntimeBase._createDataStoreWithProps is removed
 `IContainerRuntimeBase._createDataStoreWithProps()` has been removed. Please use `IContainerRuntimeBase.createDataStore()` (returns IFluidRouter).
@@ -22,6 +25,17 @@ Please switch to using one of the following APIs:
 ### createDataStoreWithRealizationFn() APIs moved
 Removed from IFluidDataStoreContext  & IContainerRuntime.
 Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altogether in same release (more info to follow)
+
+### Package Renames
+As a follow up to the changes in 0.24 we are updating a number of package names
+- `@fluidframework/component-runtime-definitions` is renamed to `@fluidframework/datastore-definitions`
+- `@fluidframework/component-runtime` is renamed to `@fluidframework/datastore`
+
+### IComponent and IComponent Interfaces Removed
+In 0.24 IComponent and IComponent interfaces were deprecated, they are being removed in this build. Please move to IFluidObject and IFluidObject interfaces.
+
+### odsp-utils Changes
+To support additional authentication scenarios, the signature and/or name of a few auth-related functions was modified.
 
 ## 0.24 Breaking Changes
 This release only contains renames. There are no functional changes in this release. You should ensure you have integrated and validated up to release 0.23 before integrating this release.

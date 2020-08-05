@@ -10,7 +10,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { FluidDataStoreRuntime } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
     IContainerContext,
     IRuntime,
@@ -25,7 +25,7 @@ import {
 import {
     IFluidDataStoreRuntime,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import {
     IContainerRuntime,
 } from "@fluidframework/container-runtime-definitions";
@@ -48,8 +48,6 @@ export interface IKeyValue extends IProvideKeyValue {
 }
 
 declare module "@fluidframework/component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideKeyValue>> { }
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideKeyValue>> { }
 }

@@ -29,7 +29,6 @@ process.on("exit", () => {
 });
 
 export function randomId() {
-    // tslint:disable-next-line:insecure-random
     return Math.random()
         .toString(36)
         .slice(2);

@@ -13,9 +13,13 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
+    SummarizeInternalFn,
+    CreateChildSummarizerNodeFn,
+    CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SummaryTracker } from "@fluidframework/runtime-utils";
+import { SummaryTracker, SummarizerNode } from "@fluidframework/runtime-utils";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     IFluidDataStoretAttributes,
     LocalFluidDataStoreContext,
@@ -24,9 +28,22 @@ import {
 import { ContainerRuntime } from "../containerRuntime";
 
 describe("Component Context Tests", () => {
+    const componentId = "Test1";
     let summaryTracker: SummaryTracker;
+    let createSummarizerNodeFn: CreateChildSummarizerNodeFn;
     beforeEach(async () => {
         summaryTracker = new SummaryTracker("", 0, 0);
+        const summarizerNode = SummarizerNode.createRoot(
+            new TelemetryNullLogger(),
+            (() => undefined) as unknown as SummarizeInternalFn,
+            0,
+            0,
+            true);
+        createSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => summarizerNode.createChild(
+            summarizeInternal,
+            componentId,
+            { type: CreateSummarizerNodeSource.Local },
+        );
     });
 
     describe("LocalFluidDataStoreContext Initialization", () => {
@@ -54,12 +71,13 @@ describe("Component Context Tests", () => {
 
         it("Check LocalComponent Attributes", () => {
             localComponentContext = new LocalFluidDataStoreContext(
-                "Test1",
+                componentId,
                 ["TestComponent1"],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
+                createSummarizerNodeFn,
                 attachCb,
                 undefined);
 
@@ -87,12 +105,13 @@ describe("Component Context Tests", () => {
         it("Supplying array of packages in LocalFluidDataStoreContext should create exception", async () => {
             let exception = false;
             localComponentContext = new LocalFluidDataStoreContext(
-                "Test1",
+                componentId,
                 ["TestComp", "SubComp"],
                 containerRuntime,
                 storage,
                 scope,
-                new SummaryTracker("", 0, 0),
+                summaryTracker,
+                createSummarizerNodeFn,
                 attachCb,
                 undefined);
 
@@ -117,12 +136,13 @@ describe("Component Context Tests", () => {
                 on: (event, listener) => { },
             } as ContainerRuntime;
             localComponentContext = new LocalFluidDataStoreContext(
-                "Test1",
+                componentId,
                 ["TestComp", "SubComp"],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
+                createSummarizerNodeFn,
                 attachCb,
                 undefined);
 
@@ -185,12 +205,13 @@ describe("Component Context Tests", () => {
             };
 
             remotedComponentContext = new RemotedFluidDataStoreContext(
-                "Test1",
+                componentId,
                 Promise.resolve(snapshotTree),
                 containerRuntime,
                 new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
                 scope,
                 summaryTracker,
+                createSummarizerNodeFn,
             );
             const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
@@ -217,12 +238,13 @@ describe("Component Context Tests", () => {
             };
 
             remotedComponentContext = new RemotedFluidDataStoreContext(
-                "Test1",
+                componentId,
                 Promise.resolve(snapshotTree),
                 containerRuntime,
                 new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
                 scope,
                 summaryTracker,
+                createSummarizerNodeFn,
             );
             const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;

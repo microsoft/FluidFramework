@@ -16,8 +16,8 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
     IFluidDataStoreRuntime,
-} from "@fluidframework/component-runtime-definitions";
-import { FluidOjectHandle } from "@fluidframework/component-runtime";
+} from "@fluidframework/datastore-definitions";
+import { FluidOjectHandle } from "@fluidframework/datastore";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";

@@ -13,7 +13,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelServices,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { v4 as uuid } from "uuid";
 import { SharedObjectHandle } from "./handle";

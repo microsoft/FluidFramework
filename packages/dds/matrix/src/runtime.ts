@@ -10,7 +10,7 @@ import {
     IChannel,
     IChannelFactory,
     IChannelStorageService,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { pkgVersion } from "./packageVersion";
 import { SharedMatrix } from "./matrix";
 
