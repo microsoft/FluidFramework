@@ -3,24 +3,22 @@
 * Licensed under the MIT License.
 */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
     IFluidObject,
-    IComponentLoadable,
-    IResponse,
-    IComponent,
-} from "@fluidframework/component-core-interfaces";
-import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
-import { v4 as uuid } from "uuid";
+    IFluidLoadable,
+    IFluidRouter,
+} from "@fluidframework/core-interfaces";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { UrlRegistry } from "./urlRegistry";
 
 /**
  * Component that loads external components via their url
  */
-export class ExternalComponentLoader extends PrimedComponent {
+export class ExternalComponentLoader extends DataObject {
     public static get ComponentName() { return "@fluid-example/external-component-loader"; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         ExternalComponentLoader.ComponentName,
         ExternalComponentLoader,
         [],
@@ -36,28 +34,25 @@ export class ExternalComponentLoader extends PrimedComponent {
      * Creates the component retrieved from the given location.  Adds it to the registry dynamically if needed.
      * @param componentUrl - the URL of the component to create, adding it to the registry if needed.
      */
-    public async createComponentFromUrl(componentUrl: string): Promise<IComponentLoadable> {
-        const urlReg = await this.runtime.IComponentRegistry?.get("url");
-        if (urlReg?.IComponentRegistry === undefined) {
+    public async createComponentFromUrl(componentUrl: string): Promise<IFluidLoadable> {
+        const urlReg = await this.runtime.IFluidDataStoreRegistry?.get("url");
+        if (urlReg?.IFluidDataStoreRegistry === undefined) {
             throw new Error("Couldn't get url component registry");
         }
 
         // Calling .get() on the urlReg registry will also add it to the registry if it's not already there.
-        const pkgReg = await urlReg.IComponentRegistry.get(componentUrl) as IComponent & IFluidObject;
-        let componentRuntime: IComponentRuntimeChannel;
-        const id = uuid();
-        if (pkgReg?.IComponentDefaultFactoryName !== undefined) {
-            componentRuntime = await this.context.containerRuntime.createComponent(
-                id,
+        const pkgReg = await urlReg.IFluidDataStoreRegistry.get(componentUrl) as IFluidObject & IFluidObject;
+        let router: IFluidRouter;
+        if (pkgReg?.IFluidExportDefaultFactoryName !== undefined) {
+            router = await this.context.containerRuntime.createDataStore(
                 [
                     ...this.context.packagePath,
                     "url",
                     componentUrl,
-                    pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
+                    pkgReg.IFluidExportDefaultFactoryName.getDefaultFactoryName(),
                 ]);
-        } else if (pkgReg?.IComponentFactory !== undefined) {
-            componentRuntime = await this.context.containerRuntime.createComponent(
-                id,
+        } else if (pkgReg?.IFluidDataStoreFactory !== undefined) {
+            router = await this.context.containerRuntime.createDataStore(
                 [
                     ...this.context.packagePath,
                     "url",
@@ -67,19 +62,17 @@ export class ExternalComponentLoader extends PrimedComponent {
             throw new Error(`${componentUrl} is not a factory, and does not provide default component name`);
         }
 
-        const response: IResponse = await componentRuntime.request({ url: "/" });
-        let component = response.value as IComponent & IFluidObject;
-        if (component.IComponentLoadable === undefined) {
-            throw new Error(`${componentUrl} must implement the IComponentLoadable interface to be loaded here`);
+        let obj = await requestFluidObject(router, "/");
+        if (obj.IFluidLoadable === undefined) {
+            throw new Error(`${componentUrl} must implement the IFluidLoadable interface to be loaded here`);
         }
-        componentRuntime.bindToContext();
-        if (component.IComponentCollection !== undefined) {
-            component = component.IComponentCollection.createCollectionItem();
-            if (component.IComponentLoadable === undefined) {
-                throw new Error(`${componentUrl} must implement the IComponentLoadable interface to be loaded here`);
+        if (obj.IFluidObjectCollection !== undefined) {
+            obj = obj.IFluidObjectCollection.createCollectionItem();
+            if (obj.IFluidLoadable === undefined) {
+                throw new Error(`${componentUrl} must implement the IFluidLoadable interface to be loaded here`);
             }
         }
 
-        return component.IComponentLoadable;
+        return obj.IFluidLoadable;
     }
 }

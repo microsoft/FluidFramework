@@ -8,18 +8,12 @@ import * as api from "@fluid-internal/client-api";
 import { performanceNow } from "@fluidframework/common-utils";
 import {
     IFluidObject,
-    IComponentHandle,
-    IComponentLoadable,
-} from "@fluidframework/component-core-interfaces";
+    IFluidHandle,
+    IFluidLoadable,
+} from "@fluidframework/core-interfaces";
 import { IGenericBlob } from "@fluidframework/container-definitions";
 import {
-    ComponentCursorDirection,
-    IComponentCursor,
-    IComponentKeyHandlers,
-    IComponentLayout,
-} from "@fluidframework/framework-experimental";
-import {
-    IComponentCollection,
+    IFluidObjectCollection,
 } from "@fluidframework/framework-interfaces";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -28,7 +22,8 @@ import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
 import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@fluidframework/undo-redo";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
@@ -37,6 +32,12 @@ import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 import { PresenceSignal } from "./presenceSignal";
 import { Status } from "./status";
+import {
+    CursorDirection,
+    IViewCursor,
+    IKeyHandlers,
+    IViewLayout,
+} from "./layout";
 
 interface IPersistentElement extends HTMLDivElement {
     component: IFluidObject;
@@ -56,16 +57,16 @@ function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
 }
 
 interface IBlockViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IComponentHTMLView>;
-    instance?: IComponentHTMLView & IFluidObject;
+    instanceP?: Promise<IFluidHTMLView>;
+    instance?: IFluidHTMLView & IFluidObject;
 }
 
 interface IComponentViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IComponentHTMLView>;
-    instance?: IComponentHTMLView;
+    instanceP?: Promise<IFluidHTMLView>;
+    instance?: IFluidHTMLView;
 }
 
-interface IMathCollection extends IComponentLoadable {
+interface IMathCollection extends IFluidLoadable {
     createCollectionItem(options?: IMathOptions): IMathInstance;
     getInstance(id: string, options?: IMathOptions): IMathInstance;
 }
@@ -77,12 +78,12 @@ interface IMathOptions {
     display: string;
 }
 
-export interface IMathInstance extends IComponentLoadable, IComponentHTMLView, IComponentCursor,
-    IComponentKeyHandlers, IComponentLayout, SearchMenu.ISearchMenuClient {
-    IComponentLoadable: IComponentLoadable;
-    IComponentCursor: IComponentCursor;
-    IComponentKeyHandlers: IComponentKeyHandlers;
-    IComponentLayout: IComponentLayout;
+export interface IMathInstance extends IFluidLoadable, IFluidHTMLView, IViewCursor,
+    IKeyHandlers, IViewLayout, SearchMenu.ISearchMenuClient {
+    IFluidLoadable: IFluidLoadable;
+    IViewCursor: IViewCursor;
+    IKeyHandlers: IKeyHandlers;
+    IViewLayout: IViewLayout;
     ISearchMenuClient: SearchMenu.ISearchMenuClient;
     id: string;
     leafId: string;
@@ -473,6 +474,7 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             f.insertComponentNew("code", "@fluid-example/monaco");
         },
         key: "insert new monaco",
@@ -816,7 +818,7 @@ function renderSegmentIntoLine(
                         componentMarker.instanceP = lineContext.flowView.collabDocument.context.containerRuntime
                             .request({ url: `/${componentMarker.properties.leafId}` })
                             .then(async (response) => {
-                                if (response.status !== 200 || response.mimeType !== "fluid/component") {
+                                if (response.status !== 200 || response.mimeType !== "fluid/object") {
                                     return Promise.reject(response);
                                 }
 
@@ -2278,7 +2280,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             } else {
                 if (newBlock.instance) {
                     let wpct = 0.75;
-                    const layout = newBlock.instance.IComponentLayout;
+                    const layout = newBlock.instance.IViewLayout;
                     if (layout && layout.requestedWidthPercentage) {
                         wpct = layout.requestedWidthPercentage;
                     }
@@ -2326,7 +2328,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                         newBlock.instanceP = newBlock.properties.leafId.get()
                             .then(async (component: IFluidObject) => {
                                 // TODO below is a temporary workaround. Should every QI interface also implement
-                                // IFluidObject. Then you can go from IComponentHTMLView to IComponentLayout.
+                                // IFluidObject. Then you can go from IFluidHTMLView to IViewLayout.
                                 // Or should you query for each one individually.
                                 if (!HTMLViewAdapter.canAdapt(component)) {
                                     return Promise.reject("component is not viewable");
@@ -3041,7 +3043,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public viewportStartPos: number;
     public viewportEndPos: number;
     public cursorSpan: HTMLSpanElement;
-    public componentCursor: IComponentCursor;
+    public childCursor: IViewCursor;
     public viewportDiv: HTMLDivElement;
     public viewportRect: ui.Rectangle;
     public historyWidget: HTMLDivElement;
@@ -3078,9 +3080,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public keypressHandler: (e: KeyboardEvent) => void;
     public keydownHandler: (e: KeyboardEvent) => void;
 
-    public videoPlayers: IComponentCollection;
-    public images: IComponentCollection;
-    public progressBars: IComponentCollection;
+    public videoPlayers: IFluidObjectCollection;
+    public images: IFluidObjectCollection;
+    public progressBars: IFluidObjectCollection;
 
     // TODO: 'services' is being used temporarily to smuggle context down to components.
     //       Should be replaced w/component-standardized render context, layout context, etc.
@@ -3511,9 +3513,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             }
             this.cursor.pos = span.segPos + computed;
             this.cursor.enable();
-            if (this.componentCursor) {
-                this.componentCursor.leave(ComponentCursorDirection.Airlift);
-                this.componentCursor = undefined;
+            if (this.childCursor) {
+                this.childCursor.leave(CursorDirection.Airlift);
+                this.childCursor = undefined;
             }
             const tilePos = findTile(this, this.cursor.pos, "pg", false);
             if (tilePos) {
@@ -3599,9 +3601,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const position = this.getPosFromPixels(targetLineDiv, x);
         if (position !== undefined) {
             this.cursor.enable();
-            if (this.componentCursor) {
-                this.componentCursor.leave(ComponentCursorDirection.Airlift);
-                this.componentCursor = undefined;
+            if (this.childCursor) {
+                this.childCursor.leave(CursorDirection.Airlift);
+                this.childCursor = undefined;
             }
             this.cursor.pos = position;
             return true;
@@ -3655,8 +3657,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     const mathMarker = marker as IMathViewMarker;
                     this.loadMath(mathMarker);
                     this.cursor.disable();
-                    this.componentCursor = mathMarker.instance;
-                    mathMarker.instance.enter(ComponentCursorDirection.Right);
+                    this.childCursor = mathMarker.instance;
+                    mathMarker.instance.enter(CursorDirection.Right);
                 } else {
                     this.cursorRev();
                 }
@@ -3708,8 +3710,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     const mathMarker = marker as IMathViewMarker;
                     this.loadMath(mathMarker);
                     this.cursor.disable();
-                    this.componentCursor = mathMarker.instance;
-                    mathMarker.instance.enter(ComponentCursorDirection.Left);
+                    this.childCursor = mathMarker.instance;
+                    mathMarker.instance.enter(CursorDirection.Left);
                 } else {
                     this.cursorFwd();
                 }
@@ -4228,7 +4230,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.loadMath(marker);
         }
         if (marker.instance.fwd()) {
-            marker.instance.leave(ComponentCursorDirection.Right);
+            marker.instance.leave(CursorDirection.Right);
             this.cursor.enable();
             this.cursorFwd();
         }
@@ -4241,7 +4243,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.loadMath(marker);
         }
         if (marker.instance.rev()) {
-            marker.instance.leave(ComponentCursorDirection.Left);
+            marker.instance.leave(CursorDirection.Left);
             this.cursorRev();
             this.cursor.enable();
         }
@@ -4490,7 +4492,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         if (overlappingComments && (overlappingComments.length >= 1)) {
             const commentInterval = overlappingComments[0];
 
-            const commentHandle = commentInterval.properties.story as IComponentHandle<Sequence.SharedString>;
+            const commentHandle = commentInterval.properties.story as IFluidHandle<Sequence.SharedString>;
             commentHandle.get().then(
                 (comment) => {
                     const commentText = comment.getText();
@@ -4520,19 +4522,20 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public insertComponentNew(prefix: string, chaincode: string, inline = false) {
-        const id = `${prefix}-${Date.now()}`;
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.collabDocument.context.createComponent(id, chaincode).then((doc) => doc.bindToContext());
+    public async insertComponentNew(prefix: string, chaincode: string, inline = false) {
+        const router = await this.collabDocument.context.containerRuntime.createDataStore(chaincode);
+        const object = await requestFluidObject(router, "");
+        const loadable = object.IFluidLoadable;
+
         const props = {
             crefTest: {
                 layout: { inline },
                 type: {
                     name: "component",
                 } as IReferenceDocType,
-                url: id,
+                url: loadable.handle,
             },
-            leafId: id,
+            leafId: loadable.handle,
         };
 
         if (!inline) {
@@ -4566,7 +4569,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 } as IReferenceDocType,
                 url: mathInstance.id,
             },
-            // Change this to just use url and IComponentRouter on collection
+            // Change this to just use url and IFluidRouter on collection
             leafId: mathInstance.leafId,
         };
         if (!inline) {
@@ -4580,14 +4583,14 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             mathInstance.registerSearchMenuHost(this);
         }
         this.cursor.disable();
-        this.componentCursor = mathMarker.instance;
-        mathMarker.instance.enter(ComponentCursorDirection.Left);
+        this.childCursor = mathMarker.instance;
+        mathMarker.instance.enter(CursorDirection.Left);
     }
 
-    public insertNewCollectionComponent(collection: IComponentCollection, inline = false) {
+    public insertNewCollectionComponent(collection: IFluidObjectCollection, inline = false) {
         // TODO - we may want to have a shared component collection?
         const instance = collection.createCollectionItem();
-        const loadable = instance.IComponentLoadable;
+        const loadable = instance.IFluidLoadable;
 
         const props = {
             crefTest: {
@@ -4628,16 +4631,16 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const root = this.collabDocument.getRoot();
 
         const [progressBars, math, videoPlayers, images] = await Promise.all([
-            root.get<IComponentHandle>("progressBars").get(),
-            root.get<IComponentHandle<IMathCollection>>("math").get(),
-            root.get<IComponentHandle>("videoPlayers").get(),
-            root.get<IComponentHandle>("images").get(),
+            root.get<IFluidHandle>("progressBars").get(),
+            root.get<IFluidHandle<IMathCollection>>("math").get(),
+            root.get<IFluidHandle>("videoPlayers").get(),
+            root.get<IFluidHandle>("images").get(),
         ]);
 
         this.math = math;
-        this.progressBars = progressBars.IComponentCollection;
-        this.videoPlayers = videoPlayers.IComponentCollection;
-        this.images = images.IComponentCollection;
+        this.progressBars = progressBars.IFluidObjectCollection;
+        this.videoPlayers = videoPlayers.IFluidObjectCollection;
+        this.images = images.IFluidObjectCollection;
     }
 
     private insertBlobInternal(blob: IGenericBlob) {
@@ -5084,7 +5087,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.commentsView = await this.comments.getView();
 
         this.sequenceTest = await this.docRoot
-            .get<IComponentHandle<Sequence.SharedNumberSequence>>("sequence-test")
+            .get<IFluidHandle<Sequence.SharedNumberSequence>>("sequence-test")
             .get();
         this.sequenceTest.on("op", (op) => {
             this.showSequenceEntries();

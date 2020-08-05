@@ -4,10 +4,10 @@
  */
 
 import {
-    IComponentHandle,
-    IComponentHandleContext,
-    IComponentSerializer,
-} from "@fluidframework/component-core-interfaces";
+    IFluidHandle,
+    IFluidHandleContext,
+    IFluidSerializer,
+} from "@fluidframework/core-interfaces";
 
 /**
  * Given a mostly-plain object that may have handle objects embedded within, return a string representation of an object
@@ -21,9 +21,9 @@ import {
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function serializeHandles(
     value: any,
-    serializer: IComponentSerializer,
-    context: IComponentHandleContext,
-    bind: IComponentHandle,
+    serializer: IFluidSerializer,
+    context: IFluidHandleContext,
+    bind: IFluidHandle,
 ): string | undefined {
     return value !== undefined
         ? serializer.stringify(
@@ -48,9 +48,9 @@ export function serializeHandles(
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function makeHandlesSerializable(
     value: any,
-    serializer: IComponentSerializer,
-    context: IComponentHandleContext,
-    bind: IComponentHandle,
+    serializer: IFluidSerializer,
+    context: IFluidHandleContext,
+    bind: IFluidHandle,
 ) {
     return serializer.replaceHandles(
         value,
@@ -69,8 +69,8 @@ export function makeHandlesSerializable(
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function parseHandles(
     value: any,
-    serializer: IComponentSerializer,
-    context: IComponentHandleContext,
+    serializer: IFluidSerializer,
+    context: IFluidHandleContext,
 ) {
     return value !== undefined ? serializer.parse(JSON.stringify(value), context) : value;
 }

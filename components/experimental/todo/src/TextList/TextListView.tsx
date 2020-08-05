@@ -4,7 +4,7 @@
  */
 
 import { CollaborativeInput } from "@fluidframework/react-inputs";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDirectory, IDirectoryValueChanged, ISharedDirectory } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import React, { useEffect, useRef, useState } from "react";
@@ -35,7 +35,7 @@ export function TextListView(props: ITextListViewProps) {
             const addedItems = newIds.filter((x) => !currentIds.includes(x));
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             addedItems.forEach(async (id) => {
-                const sharedStringP = props.textDirectory.get<IComponentHandle<SharedString>>(id).get();
+                const sharedStringP = props.textDirectory.get<IFluidHandle<SharedString>>(id).get();
                 sharedStringsP.push(sharedStringP);
                 sharedStringList.push({
                     id,

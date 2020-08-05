@@ -12,12 +12,12 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
     Jsonable,
     AsJsonable,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import {
     SharedObject,
 } from "@fluidframework/shared-object-base";
@@ -46,7 +46,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      * @param id - optional name of the shared summary block.
      * @returns newly created shared summary block (but not attached yet).
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedSummaryBlockFactory.Type) as SharedSummaryBlock;
     }
 
@@ -72,7 +72,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      * @param runtime - component runtime thee object belongs to.
      * @param attributes - The attributes for the object.
      */
-    constructor(id: string, runtime: IComponentRuntime, attributes: IChannelAttributes) {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
     }
 

@@ -6,11 +6,15 @@
 import fs from "fs";
 import path from "path";
 import express from "express";
-import moniker from "moniker";
 import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
 import { IOdspTokens, getServer } from "@fluidframework/odsp-utils";
-import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@fluidframework/tool-utils";
+import {
+    getMicrosoftConfiguration,
+    OdspTokenManager,
+    odspTokensCache,
+    OdspTokenConfig,
+} from "@fluidframework/tool-utils";
 import { IFluidPackage } from "@fluidframework/container-definitions";
 import Axios from "axios";
 import { RouteOptions } from "./loader";
@@ -25,12 +29,17 @@ const getThisOrigin = (options: RouteOptions): string => `http://localhost:${opt
 
 export const before = async (app: express.Application) => {
     app.get("/getclientsidewebparts", async (req, res) => res.send(await createManifestResponse()));
-    app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
+    app.get("/", (req, res) => res.redirect(`/new`));
 };
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: RouteOptions) => {
     const options: RouteOptions = { mode: "local", ...env, ...{ port: server.options.port } };
     const config: nconf.Provider = nconf.env("__").file(path.join(baseDir, "config.json"));
+    const buildTokenConfig = (response, redirectUriCallback?): OdspTokenConfig => ({
+        type: "browserLogin",
+        navigator: (url: string) => response.redirect(url),
+        redirectUriCallback,
+    });
 
     // Check that tinylicious is running when it is selected
     switch (options.mode) {
@@ -114,12 +123,11 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                     await tokenManager.getOdspTokens(
                         options.server,
                         getMicrosoftConfiguration(),
-                        (url: string) => res.redirect(url),
-                        async (tokens: IOdspTokens) => {
+                        buildTokenConfig(res, async (tokens: IOdspTokens) => {
                             options.odspAccessToken = tokens.accessToken;
                             return originalUrl;
-                        },
-                        true,
+                        }),
+                        true /* forceRefresh */,
                         options.forceReauth,
                     );
                     odspAuthStage = 1;
@@ -128,12 +136,11 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 await tokenManager.getPushTokens(
                     options.server,
                     getMicrosoftConfiguration(),
-                    (url: string) => res.redirect(url),
-                    async (tokens: IOdspTokens) => {
+                    buildTokenConfig(res, async (tokens: IOdspTokens) => {
                         options.pushAccessToken = tokens.accessToken;
                         return originalUrl;
-                    },
-                    true,
+                    }),
+                    true /* forceRefresh */,
                     options.forceReauth,
                 );
                 odspAuthStage = 2;
@@ -153,13 +160,12 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         await tokenManager.getOdspTokens(
             options.server,
             getMicrosoftConfiguration(),
-            (url: string) => res.redirect(url),
-            async (tokens: IOdspTokens) => {
+            buildTokenConfig(res, async (tokens: IOdspTokens) => {
                 options.odspAccessToken = tokens.accessToken;
                 return `${getThisOrigin(options)}/pushLogin`;
-            },
-            true,
-            true,
+            }),
+            undefined /* forceRefresh */,
+            true /* forceReauth */,
         );
     });
 
@@ -172,10 +178,9 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         options.pushAccessToken = (await tokenManager.getPushTokens(
             options.server,
             getMicrosoftConfiguration(),
-            (url: string) => res.redirect(url),
-            undefined,
-            true,
-            true,
+            buildTokenConfig(res),
+            undefined /* forceRefresh */,
+            true /* forceReauth */,
         )).accessToken;
     });
 
@@ -184,7 +189,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         res.end(buffer);
     });
 
-    app.get("/:id*", async (req, res) => {
+    const isReady = async (req, res) => {
         if (readyP !== undefined) {
             let canContinue = false;
             try {
@@ -200,11 +205,51 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 if (!res.finished) {
                     res.end();
                 }
-                return;
+                return false;
             }
         }
 
-        fluid(req, res, baseDir, options);
+        return true;
+    };
+
+    /**
+     * For urls of format - http://localhost:8080/doc/<id>.
+     * This is when user is trying to load an existing document. We try to load a Container with `id` as documentId.
+     */
+    app.get("/doc/:id*", async (req, res) => {
+        const ready = await isReady(req, res);
+        if (ready) {
+            fluid(req, res, baseDir, options);
+        }
+    });
+
+    /**
+     * For urls of format - http://localhost:8080/<id>.
+     * If the `id` is "new" or "manualAttach", the user is trying to create a new document.
+     * For other `ids`, we treat this as the user trying to load an existing document. We redirect to
+     * http://localhost:8080/doc/<id>.
+     */
+    app.get("/:id*", async (req, res) => {
+        // Ignore favicon.ico urls.
+        if (req.url === "/favicon.ico") {
+            res.end();
+            return;
+        }
+
+        const documentId = req.params.id;
+        if (documentId !== "new" && documentId !== "manualAttach") {
+            // The `id` is not for a new document. We assume the user is trying to load an existing document and
+            // redirect them to - http://localhost:8080/doc/<id>.
+            const reqUrl = req.url.replace(documentId, `doc/${documentId}`);
+            const newUrl = `${getThisOrigin(options)}${reqUrl}`;
+            res.redirect(newUrl);
+            return;
+        }
+
+        const ready = await isReady(req, res);
+        if (ready) {
+            fluid(req, res, baseDir, options);
+        }
     });
 };
 

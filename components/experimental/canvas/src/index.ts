@@ -4,8 +4,8 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultComponent,
-    PrimedComponentFactory,
+    ContainerRuntimeFactoryWithDefaultDataStore,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { Ink } from "@fluidframework/ink";
 import { Canvas } from "./canvas";
@@ -14,7 +14,7 @@ import { Canvas } from "./canvas";
 const pkg = require("../package.json");
 export const CanvasName = pkg.name as string;
 
-export const CanvasInstantiationFactory = new PrimedComponentFactory(
+export const CanvasInstantiationFactory = new DataObjectFactory(
     CanvasName,
     Canvas,
     [
@@ -23,7 +23,7 @@ export const CanvasInstantiationFactory = new PrimedComponentFactory(
     {},
 );
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     CanvasName,
     new Map([
         [CanvasName, Promise.resolve(CanvasInstantiationFactory)],

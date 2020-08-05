@@ -4,26 +4,26 @@
  */
 
 import {
-    PrimedComponent,
-    PrimedComponentFactory,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import React from "react";
 import ReactDOM from "react-dom";
 
-// tslint:disable-next-line: no-var-requires no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 const pkg = require("../package.json");
 const pkgversion = pkg.version as string;
 const versionTest2Name = pkg.name as string;
 
-export class VersionTest extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class VersionTest extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
     private upgradeToPkg: string = "@fluid-internal/version-test-3";
     private upgradeToVersion: string = "0.3.x";
 
-    protected async componentHasInitialized() {
-        if (!this.root.get("diceValue")) {
+    protected async hasInitialized() {
+        if (this.root.get("diceValue") === undefined) {
             this.root.set("diceValue", 0);
         }
         this.root.set("title2", "version 2");
@@ -39,17 +39,21 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
                 <div>
                     old title:
           <p className="title">{title}</p>
-                    <input className="titleInput" type={"text"} onChange={e => this.root.set("title", e.target.value)} />
+                    <input className="titleInput" type={"text"}
+                        onChange={(e) => this.root.set("title", e.target.value)} />
                     <br />
                     new title:
           <p className="title2">{title2}</p>
-                    <input className="title2Input" type={"text"} onChange={e => this.root.set("title2", e.target.value)} />
+                    <input className="title2Input" type={"text"}
+                        onChange={(e) => this.root.set("title2", e.target.value)} />
                     <br />
                     <p><span style={{ backgroundColor: "springgreen" }}>version {pkgversion}</span></p>
                     <br />
                     <div>
-                        <input type="text" value={this.upgradeToPkg} onChange={e => { this.upgradeToPkg = e.currentTarget.value; rerender(); }} />@
-            <input type="text" value={this.upgradeToVersion} onChange={e => { this.upgradeToVersion = e.currentTarget.value; rerender(); }} />
+                        <input type="text" value={this.upgradeToPkg}
+                            onChange={(e) => { this.upgradeToPkg = e.currentTarget.value; rerender(); }} />@
+                        <input type="text" value={this.upgradeToVersion}
+                            onChange={(e) => { this.upgradeToVersion = e.currentTarget.value; rerender(); }} />
                     </div>
                     <button onClick={() => this.quorumProposeCode()}>Upgrade Version</button>
                     <div>
@@ -58,7 +62,7 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
                         <button className="diceRoller" onClick={this.rollDice.bind(this)}>Roll</button>
                     </div>
                 </div>,
-                div
+                div,
             );
         };
 
@@ -67,7 +71,8 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
         return div;
     }
     private rollDice() {
-        this.root.set("diceValue", this.root.get("diceValue") + 1);
+        const dice: number = this.root.get("diceValue");
+        this.root.set("diceValue", dice + 1);
     }
 
     private getDiceChar(value: number) {
@@ -76,11 +81,20 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
     }
 
     private quorumProposeCode() {
-        setTimeout(() => this.runtime.getQuorum().propose(
-            "code",
-            { "config": { "cdn": `https://pragueauspkn.azureedge.net/@yo-fluid/${this.upgradeToPkg}` }, "package": `${this.upgradeToPkg}@${this.upgradeToVersion}` },
-        ), 3000);
+        setTimeout(() => {
+            // If this promise rejects, the test should fail but currently it may not.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.runtime.getQuorum().propose(
+                "code",
+                {
+                    config: {
+                        cdn: `https://pragueauspkn.azureedge.net/@yo-fluid/${this.upgradeToPkg}`,
+                    },
+                    package: `${this.upgradeToPkg}@${this.upgradeToVersion}`,
+                },
+            );
+        }, 3000);
     }
 }
 
-export const VersiontestInstantiationFactory = new PrimedComponentFactory(versionTest2Name, VersionTest, [], {});
+export const VersiontestInstantiationFactory = new DataObjectFactory(versionTest2Name, VersionTest, [], {});

@@ -9,7 +9,6 @@ import fs from "fs-extra";
 
 describe("Check Dependencies", () => {
     it("verify no @fluid-internal packages in dependencies", async () => {
-        // tslint:disable-next-line: non-literal-fs-path
         await verifyNoFluidPackages(path.join(__dirname, "/../../node_modules"));
     });
 });
@@ -18,7 +17,6 @@ describe("Check Dependencies", () => {
 const visitedPkgDirs: string[] = [];
 
 const verifyNoFluidPackages = async (dir: string) => {
-    // tslint:disable-next-line: non-literal-fs-path
     const entries = await fs.promises.opendir(dir);
     const searches: Promise<void>[] = [];
     for await (const entry of entries) {

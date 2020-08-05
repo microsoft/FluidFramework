@@ -6,10 +6,10 @@
 import { strict as assert } from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IComponentHandle,
-    IComponentHandleContext,
-    IComponentSerializer,
-} from "@fluidframework/component-core-interfaces";
+    IFluidHandle,
+    IFluidHandleContext,
+    IFluidSerializer,
+} from "@fluidframework/core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -18,7 +18,7 @@ import {
     TreeEntry,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IChannelStorageService } from "@fluidframework/component-runtime-definitions";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as Properties from "./properties";
@@ -81,13 +81,13 @@ export class SnapshotV1 {
     }
 
     /**
-     * Emits the snapshot to an ITree. If provided the optional IComponentSerializer will be used when serializing
+     * Emits the snapshot to an ITree. If provided the optional IFluidSerializer will be used when serializing
      * the summary data rather than JSON.stringify.
      */
     emit(
-        serializer?: IComponentSerializer,
-        context?: IComponentHandleContext,
-        bind?: IComponentHandle,
+        serializer?: IFluidSerializer,
+        context?: IFluidHandleContext,
+        bind?: IFluidHandle,
     ): ITree {
         const chunks: MergeTreeChunkV1[] = [];
         this.header.totalSegmentCount = 0;
@@ -256,8 +256,8 @@ export class SnapshotV1 {
         path: string,
         logger: ITelemetryLogger,
         options: Properties.PropertySet,
-        serializer?: IComponentSerializer,
-        context?: IComponentHandleContext,
+        serializer?: IFluidSerializer,
+        context?: IFluidHandleContext,
     ): Promise<MergeTreeChunkV1> {
         const chunkAsString: string = await storage.read(path);
         return SnapshotV1.processChunk(path, chunkAsString, logger, options, serializer, context);
@@ -268,8 +268,8 @@ export class SnapshotV1 {
         chunk: string,
         logger: ITelemetryLogger,
         options: Properties.PropertySet,
-        serializer?: IComponentSerializer,
-        context?: IComponentHandleContext,
+        serializer?: IFluidSerializer,
+        context?: IFluidHandleContext,
     ): MergeTreeChunkV1 {
         const utf8 = fromBase64ToUtf8(chunk);
         const chunkObj = serializer ? serializer.parse(utf8, context) : JSON.parse(utf8);

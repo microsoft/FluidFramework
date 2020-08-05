@@ -4,17 +4,17 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultComponent,
-    PrimedComponent,
-    PrimedComponentFactory,
+    ContainerRuntimeFactoryWithDefaultDataStore,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { ClickerInstantiationFactory, Clicker } from "@fluid-example/clicker";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 const simpleComponentEmbedName = "@fluid-example/simple-component-embed";
 
-export class SimpleComponentEmbed extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class SimpleComponentEmbed extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private clicker: Clicker | undefined;
 
@@ -23,15 +23,15 @@ export class SimpleComponentEmbed extends PrimedComponent implements IComponentH
    * Here we will create a new embedded component. This can happen at any time
    * but in this scenario we only want it to be created once.
    */
-    protected async componentInitializingFirstTime() {
-        const component = await this.createAndAttachComponent(ClickerInstantiationFactory.type);
+    protected async initializingFirstTime() {
+        const component = await this.createFluidObject(ClickerInstantiationFactory.type);
         this.root.set("myEmbeddedCounter", component.handle);
     }
 
     /**
    * Get Clicker component using ID from before
    */
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         const handle = this.root.get("myEmbeddedCounter");
         this.clicker = await handle.get();
     }
@@ -49,14 +49,14 @@ export class SimpleComponentEmbed extends PrimedComponent implements IComponentH
     }
 }
 
-export const SimpleComponentEmbedInstantiationFactory = new PrimedComponentFactory(
+export const SimpleComponentEmbedInstantiationFactory = new DataObjectFactory(
     simpleComponentEmbedName,
     SimpleComponentEmbed,
     [],
     {},
 );
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     SimpleComponentEmbedInstantiationFactory.type,
     new Map([
         SimpleComponentEmbedInstantiationFactory.registryEntry,

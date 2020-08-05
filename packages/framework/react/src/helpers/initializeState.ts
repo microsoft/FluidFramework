@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     IDirectoryValueChanged,
     SharedMap,
@@ -67,7 +67,7 @@ export async function initializeState<
     if (storedHandleMap === undefined) {
         throw Error(`Stored handle map not initialized prior to render for ${syncedStateId}`);
     }
-    const unlistenedHandles: IComponentHandle[] = [];
+    const unlistenedHandles: IFluidHandle[] = [];
     for (const handle of storedHandleMap.values()) {
         unlistenedHandles.push(handle);
     }
@@ -121,7 +121,7 @@ export async function initializeState<
         change: IDirectoryValueChanged,
         local: boolean,
     ) => {
-        const handle = storedHandleMap.get<IComponentHandle>(change.key);
+        const handle = storedHandleMap.get<IFluidHandle>(change.key);
         if (handle !== undefined && !state.fluidComponentMap?.has(handle.absolutePath)) {
             state.fluidComponentMap?.set(handle.absolutePath, {
                 isListened: false,

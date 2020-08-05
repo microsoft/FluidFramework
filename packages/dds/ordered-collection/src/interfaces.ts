@@ -4,11 +4,11 @@
  */
 
 import {
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelServices,
     IChannelAttributes,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 export enum ConsensusResult {
@@ -30,13 +30,13 @@ export type ConsensusCallback<T> = (value: T) => Promise<ConsensusResult>;
  */
 export interface IConsensusOrderedCollectionFactory extends IChannelFactory {
     load(
-        document: IComponentRuntime,
+        document: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<IConsensusOrderedCollection>;
 
-    create(document: IComponentRuntime, id: string): IConsensusOrderedCollection;
+    create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection;
 }
 
 /**

@@ -6,7 +6,7 @@
 import { strict as assert } from 'assert';
 import { SharedMatrix } from '../src';
 import { IArray2D } from "../src/sparsearray2d";
-import { Serializable } from '@fluidframework/component-runtime-definitions';
+import { Serializable } from '@fluidframework/datastore-definitions';
 
 /**
  * Fills the designated region of the matrix with values computed by the `value` callback.
@@ -72,6 +72,18 @@ export function check<T extends IArray2D<U>, U>(
         }
     }
     return matrix;
+}
+
+export function checkValue<T extends IArray2D<U>, U>(
+    matrix: T,
+    test: unknown,
+    r: number,
+    c: number,
+    rowStart = 0,
+    rowCount = matrix.rowCount - rowStart,
+    value = (row: number, col: number) => row * rowCount + col
+) {
+    assert.equal(test, value(r, c) as any);
 }
 
 /**

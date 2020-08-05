@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -40,9 +40,9 @@ describe("Cell", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
+    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
         const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
         return response.value as ITestFluidComponent;
@@ -52,15 +52,15 @@ describe("Cell", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
         const container1 = await createContainer();
-        component1 = await getComponent("default", container1);
+        component1 = await requestFluidObject("default", container1);
         sharedCell1 = await component1.getSharedObject<SharedCell>(cellId);
 
         const container2 = await createContainer();
-        const component2 = await getComponent("default", container2);
+        const component2 = await requestFluidObject("default", container2);
         sharedCell2 = await component2.getSharedObject<SharedCell>(cellId);
 
         const container3 = await createContainer();
-        const component3 = await getComponent("default", container3);
+        const component3 = await requestFluidObject("default", container3);
         sharedCell3 = await component3.getSharedObject<SharedCell>(cellId);
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);
@@ -224,7 +224,7 @@ describe("Cell", () => {
 
         async function getCellComponent(cellP: Promise<ISharedCell>): Promise<ISharedCell> {
             const cell = await cellP;
-            const handle = cell.get() as IComponentHandle<ISharedCell>;
+            const handle = cell.get() as IFluidHandle<ISharedCell>;
             return handle.get();
         }
 

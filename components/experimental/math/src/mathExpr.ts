@@ -4,7 +4,7 @@
  */
 
 import * as SearchMenu from "@fluid-example/search-menu";
-import { IFluidObject, IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import * as MergeTree from "@fluidframework/merge-tree";
 import * as Katex from "katex";
 import { CharacterCodes } from "./characterCodes";
@@ -369,7 +369,7 @@ export interface IMathCursor {
 export interface IMathMarker extends MergeTree.Marker {
     mathTokens: MathToken[];
     mathText: string;
-    mathInstance?: IComponent & IFluidObject;
+    mathInstance?: IFluidObject & IFluidObject;
 }
 
 /**

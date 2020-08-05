@@ -4,9 +4,9 @@
  */
 
 import assert from "assert";
-import { IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
@@ -17,11 +17,11 @@ import { ISharedCounter, SharedCounter } from "..";
 
 describe("SharedCounter", () => {
     let testCounter: ISharedCounter;
-    let componentRuntime: MockComponentRuntime;
+    let componentRuntime: MockFluidDataStoreRuntime;
     let factory: IChannelFactory;
 
     beforeEach(async () => {
-        componentRuntime = new MockComponentRuntime();
+        componentRuntime = new MockFluidDataStoreRuntime();
         factory = SharedCounter.getFactory();
         testCounter = factory.create(componentRuntime, "counter") as ISharedCounter;
     });
@@ -100,7 +100,7 @@ describe("SharedCounter", () => {
             testCounter.connect(services1);
 
             // Create and connect a second SharedCounter.
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
@@ -176,7 +176,7 @@ describe("SharedCounter", () => {
             testCounter.connect(services1);
 
             // Create and connect a second SharedCounter.
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),

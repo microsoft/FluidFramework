@@ -68,16 +68,18 @@ FROM copysrc AS docs
 WORKDIR /docs
 
 # Build docs
+ARG BASE_URL
 ARG VUEPRESS_BASE
 ARG MASTER_BRANCH_VERSION
 ARG THIS_VERSION
 ARG N1_VERSION
 ARG RELEASE_VERSION
 
-# write the arg into a temp file
+# write the args into temp files
+RUN echo ${BASE_URL} > /root/base_url
 RUN echo ${VUEPRESS_BASE} > /root/vuepress_base
 # set the environment variable right before running the build
-RUN VUEPRESS_BASE=$(cat /root/vuepress_base); npm run build:ci
+RUN BASE_URL=$(cat /root/base_url); VUEPRESS_BASE=$(cat /root/vuepress_base); npm run build:ci
 
 # We want / to be the working dir when we use the image to extract the built docs
 # Without this the working dir is /docs, which doesn't match the local environment

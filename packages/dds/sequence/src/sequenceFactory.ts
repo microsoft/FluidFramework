@@ -6,10 +6,10 @@
 import * as MergeTree from "@fluidframework/merge-tree";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelServices,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { pkgVersion } from "./packageVersion";
 import { SharedNumberSequence } from "./sharedNumberSequence";
@@ -45,7 +45,7 @@ export class SharedStringFactory implements IChannelFactory {
     }
 
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
         branchId: string,
@@ -55,7 +55,7 @@ export class SharedStringFactory implements IChannelFactory {
         return sharedString;
     }
 
-    public create(document: IComponentRuntime, id: string): SharedString {
+    public create(document: IFluidDataStoreRuntime, id: string): SharedString {
         const sharedString = new SharedString(document, id, this.attributes);
         sharedString.initializeLocal();
         return sharedString;
@@ -91,7 +91,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
     }
 
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
         branchId: string,
@@ -101,7 +101,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
         return sharedSeq;
     }
 
-    public create(document: IComponentRuntime, id: string): ISharedObject {
+    public create(document: IFluidDataStoreRuntime, id: string): ISharedObject {
         const sharedString = new SharedObjectSequence(document, id, this.attributes);
         sharedString.initializeLocal();
         return sharedString;
@@ -137,7 +137,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
     }
 
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
         branchId: string,
@@ -147,7 +147,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
         return sharedSeq;
     }
 
-    public create(document: IComponentRuntime, id: string): ISharedObject {
+    public create(document: IFluidDataStoreRuntime, id: string): ISharedObject {
         const sharedString = new SharedNumberSequence(document, id, this.attributes);
         sharedString.initializeLocal();
         return sharedString;

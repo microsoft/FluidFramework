@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IBlob, ITree } from "@fluidframework/protocol-definitions";
-import { IChannelStorageService } from "@fluidframework/component-runtime-definitions";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 
 /**

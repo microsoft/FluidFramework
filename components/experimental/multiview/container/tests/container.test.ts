@@ -22,7 +22,7 @@ describe("CoordinateContainerRuntimeFactory", () => {
         const numSliders = await page.evaluate(() => {
             return document.querySelectorAll("input[type=range]").length;
         });
-        // 2 sides, 4 slider views, 2 sliders per view
-        assert(numSliders === 16);
+        // 2 sides, 11 slider views, 2 sliders per view
+        assert(numSliders === 44);
     });
 });

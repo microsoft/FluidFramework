@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IComponentFactory, FlushMode } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
 import { fluidExport as smde } from "./codemirror";
 
 class CodeMirrorFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const registry = new Map<string, Promise<IComponentFactory>>([
+        const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
             ["@fluid-example/smde", Promise.resolve(smde)],
         ]);
 
@@ -38,7 +38,7 @@ class CodeMirrorFactory implements IRuntimeFactory {
                 const componentId = requestUrl
                     ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
                     : defaultComponentId;
-                const component = await containerRuntime.getComponentRuntime(componentId, true);
+                const component = await containerRuntime.getDataStore(componentId, true);
 
                 return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
             },
@@ -50,11 +50,7 @@ class CodeMirrorFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            await Promise.all([
-                runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
-                    componentRuntime.bindToContext();
-                }),
-            ]);
+            await runtime.createRootDataStore(defaultComponent, defaultComponentId);
         }
 
         return runtime;

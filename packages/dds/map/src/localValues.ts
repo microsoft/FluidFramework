@@ -4,12 +4,12 @@
  */
 
 import {
-    IComponentHandle,
-    IComponentHandleContext,
-    IComponentSerializer,
+    IFluidHandle,
+    IFluidHandleContext,
+    IFluidSerializer,
     ISerializedHandle,
-} from "@fluidframework/component-core-interfaces";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/core-interfaces";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
     ISharedObject,
     parseHandles,
@@ -48,17 +48,17 @@ export interface ILocalValue {
      * @returns The serialized form of the contained value
      */
     makeSerialized(
-        serializer: IComponentSerializer,
-        context: IComponentHandleContext,
-        bind: IComponentHandle,
+        serializer: IFluidSerializer,
+        context: IFluidHandleContext,
+        bind: IFluidHandle,
     ): ISerializedValue;
 }
 
 export function makeSerializable(
     localValue: ILocalValue,
-    serializer: IComponentSerializer,
-    context: IComponentHandleContext,
-    bind: IComponentHandle): ISerializableValue {
+    serializer: IFluidSerializer,
+    context: IFluidHandleContext,
+    bind: IFluidHandle): ISerializableValue {
     const value = localValue.makeSerialized(serializer, context, bind);
     return {
         type: value.type,
@@ -95,9 +95,9 @@ export class PlainLocalValue implements ILocalValue {
      * {@inheritDoc ILocalValue.makeSerialized}
      */
     public makeSerialized(
-        serializer: IComponentSerializer,
-        context: IComponentHandleContext,
-        bind: IComponentHandle,
+        serializer: IFluidSerializer,
+        context: IFluidHandleContext,
+        bind: IFluidHandle,
     ): ISerializedValue {
         // Stringify to convert to the serialized handle values - and then parse in order to create
         // a POJO for the op
@@ -171,9 +171,9 @@ export class ValueTypeLocalValue implements ILocalValue {
      * {@inheritDoc ILocalValue.makeSerialized}
      */
     public makeSerialized(
-        serializer: IComponentSerializer,
-        context: IComponentHandleContext,
-        bind: IComponentHandle,
+        serializer: IFluidSerializer,
+        context: IFluidHandleContext,
+        bind: IFluidHandle,
     ): ISerializedValue {
         const storedValueType = this.valueType.factory.store(this.value);
         const value = serializeHandles(storedValueType, serializer, context, bind);
@@ -213,7 +213,7 @@ export class LocalValueMaker {
      * Create a new LocalValueMaker.
      * @param runtime - The runtime this maker will be associated with
      */
-    constructor(private readonly runtime: IComponentRuntime) {
+    constructor(private readonly runtime: IFluidDataStoreRuntime) {
     }
 
     /**
@@ -244,8 +244,8 @@ export class LocalValueMaker {
 
             const translatedValue = parseHandles(
                 serializable.value,
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext);
+                this.runtime.IFluidSerializer,
+                this.runtime.IFluidHandleContext);
 
             return new PlainLocalValue(translatedValue);
         } else if (this.valueTypes.has(serializable.type)) {
@@ -256,8 +256,8 @@ export class LocalValueMaker {
 
             serializable.value = parseHandles(
                 serializable.value,
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext);
+                this.runtime.IFluidSerializer,
+                this.runtime.IFluidHandleContext);
 
             const localValue = valueType.factory.load(emitter, serializable.value);
             return new ValueTypeLocalValue(localValue, valueType);

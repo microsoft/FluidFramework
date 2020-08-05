@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-console
-// tslint:disable:no-bitwise
 import { Suite } from "benchmark";
 import { bsearch } from "../src/bsearch";
 import { lis } from "../src/lis";

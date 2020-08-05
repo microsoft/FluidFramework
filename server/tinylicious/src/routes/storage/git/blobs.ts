@@ -9,52 +9,59 @@ import * as git from "isomorphic-git";
 import * as nconf from "nconf";
 import * as utils from "../utils";
 
+export async function createBlob(
+    store: nconf.Provider,
+    tenantId: string,
+    authorization: string,
+    body: ICreateBlobParams,
+): Promise<ICreateBlobResponse> {
+    const buffer = Buffer.from(body.content, body.encoding);
+
+    const sha = await git.writeObject({
+        dir: utils.getGitDir(store, tenantId),
+        type: "blob",
+        object: buffer,
+    });
+
+    return {
+        sha,
+        url: "",
+    };
+}
+
+export async function getBlob(
+    store: nconf.Provider,
+    tenantId: string,
+    authorization: string,
+    sha: string,
+    useCache: boolean,
+): Promise<IBlob> {
+    const gitObj = await git.readObject({ dir: utils.getGitDir(store, tenantId), oid: sha });
+    const buffer = gitObj.object as Buffer;
+
+    const result: IBlob = {
+        url: "",
+        sha,
+        size: buffer.length,
+        content: buffer.toString("base64"),
+        encoding: "base64",
+    };
+
+    return result;
+}
+
 export function create(store: nconf.Provider): Router {
     const router: Router = Router();
-
-    async function createBlob(
-        tenantId: string,
-        authorization: string,
-        body: ICreateBlobParams,
-    ): Promise<ICreateBlobResponse> {
-        const buffer = Buffer.from(body.content, body.encoding);
-
-        const sha = await git.writeObject({
-            dir: utils.getGitDir(store, tenantId),
-            type: "blob",
-            object: buffer,
-        });
-
-        return {
-            sha,
-            url: "",
-        };
-    }
-
-    async function getBlob(
-        tenantId: string,
-        authorization: string,
-        sha: string,
-        useCache: boolean,
-    ): Promise<IBlob> {
-        const gitObj = await git.readObject({ dir: utils.getGitDir(store, tenantId), oid: sha });
-        const buffer = gitObj.object as Buffer;
-
-        const result: IBlob = {
-            url: "",
-            sha,
-            size: buffer.length,
-            content: buffer.toString("base64"),
-            encoding: "base64",
-        };
-
-        return result;
-    }
 
     router.post(
         "/repos/:ignored?/:tenantId/git/blobs",
         (request, response) => {
-            const blobP = createBlob(request.params.tenantId, request.get("Authorization"), request.body);
+            const blobP = createBlob(
+                store,
+                request.params.tenantId,
+                request.get("Authorization"),
+                request.body);
+
             utils.handleResponse(
                 blobP,
                 response,
@@ -69,7 +76,13 @@ export function create(store: nconf.Provider): Router {
         "/repos/:ignored?/:tenantId/git/blobs/:sha",
         (request, response) => {
             const useCache = !("disableCache" in request.query);
-            const blobP = getBlob(request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
+            const blobP = getBlob(
+                store,
+                request.params.tenantId,
+                request.get("Authorization"),
+                request.params.sha,
+                useCache);
+
             utils.handleResponse(
                 blobP,
                 response,
@@ -84,7 +97,12 @@ export function create(store: nconf.Provider): Router {
         (request, response) => {
             const useCache = !("disableCache" in request.query);
 
-            const blobP = getBlob(request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
+            const blobP = getBlob(
+                store,
+                request.params.tenantId,
+                request.get("Authorization"),
+                request.params.sha,
+                useCache);
 
             blobP.then((blob) => {
                 if (useCache) {

@@ -8,25 +8,36 @@ import { Router } from "express";
 import * as nconf from "nconf";
 import * as utils from "../utils";
 
+export async function createTag(
+    store: nconf.Provider,
+    tenantId: string,
+    authorization: string,
+    params: git.ICreateTagParams,
+): Promise<git.ITag> {
+    throw new Error("Not implemented");
+}
+
+export async function getTag(
+    store: nconf.Provider,
+    tenantId: string,
+    authorization: string,
+    tag: string,
+): Promise<git.ITag> {
+    throw new Error("Not implemented");
+}
+
 export function create(store: nconf.Provider): Router {
     const router: Router = Router();
-
-    async function createTag(
-        tenantId: string,
-        authorization: string,
-        params: git.ICreateTagParams,
-    ): Promise<git.ITag> {
-        throw new Error("Not implemented");
-    }
-
-    async function getTag(tenantId: string, authorization: string, tag: string): Promise<git.ITag> {
-        throw new Error("Not implemented");
-    }
 
     router.post(
         "/repos/:ignored?/:tenantId/git/tags",
         (request, response) => {
-            const tagP = createTag(request.params.tenantId, request.get("Authorization"), request.body);
+            const tagP = createTag(
+                store,
+                request.params.tenantId,
+                request.get("Authorization"),
+                request.body);
+
             utils.handleResponse(
                 tagP,
                 response,
@@ -37,7 +48,12 @@ export function create(store: nconf.Provider): Router {
     router.get(
         "/repos/:ignored?/:tenantId/git/tags/*",
         (request, response) => {
-            const tagP = getTag(request.params.tenantId, request.get("Authorization"), request.params[0]);
+            const tagP = getTag(
+                store,
+                request.params.tenantId,
+                request.get("Authorization"),
+                request.params[0]);
+
             utils.handleResponse(
                 tagP,
                 response,

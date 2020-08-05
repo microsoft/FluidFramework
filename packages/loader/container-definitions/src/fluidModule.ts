@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 
 export interface IFluidModule {
-    fluidExport: IComponent & IFluidObject;
+    fluidExport: IFluidObject & IFluidObject;
 }

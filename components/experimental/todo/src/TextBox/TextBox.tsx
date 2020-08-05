@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PrimedComponent } from "@fluidframework/aqueduct";
+import { DataObject } from "@fluidframework/aqueduct";
 import { CollaborativeTextArea } from "@fluidframework/react-inputs";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -18,15 +18,15 @@ export const TextBoxName = `${pkg.name as string}-textbox`;
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
  * collaborative textarea.
  */
-export class TextBox extends PrimedComponent<{}, string> implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class TextBox extends DataObject<{}, string> implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private text: SharedString | undefined;
 
     /**
      * Do creation work
      */
-    protected async componentInitializingFirstTime(initialState?: string) {
+    protected async initializingFirstTime(initialState?: string) {
         // if initial state is provided then use it.
         const newItemText = initialState ?? "Important Things";
 
@@ -36,11 +36,11 @@ export class TextBox extends PrimedComponent<{}, string> implements IComponentHT
         this.root.set("text", text.handle);
     }
 
-    protected async componentHasInitialized() {
-        this.text = await this.root.get<IComponentHandle<SharedString>>("text").get();
+    protected async hasInitialized() {
+        this.text = await this.root.get<IFluidHandle<SharedString>>("text").get();
     }
 
-    // start IComponentHTMLView
+    // start IFluidHTMLView
 
     public render(div: HTMLElement) {
         ReactDOM.render(
@@ -49,5 +49,5 @@ export class TextBox extends PrimedComponent<{}, string> implements IComponentHT
         );
     }
 
-    // end IComponentHTMLView
+    // end IFluidHTMLView
 }

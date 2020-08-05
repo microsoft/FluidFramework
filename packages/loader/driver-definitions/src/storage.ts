@@ -174,6 +174,15 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     serviceConfiguration: IServiceConfiguration;
 
     /**
+     * Last known sequence number to ordering service at the time of connection
+     * It may lap actual last sequence number (quite a bit, if container  is very active).
+     * But it's best information for client to figure out how far it is behind, at least
+     * for "read" connections. "write" connections may use own "join" op to similar information,
+     * that is likely to be more up-to-date.
+     */
+    checkpointSequenceNumber?: number;
+
+    /**
      * Submit a new message to the server
      */
     submit(messages: IDocumentMessage[]): void;
