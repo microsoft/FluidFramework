@@ -86,7 +86,7 @@ Specific interfaces to monitor:
 
 - `IContainerRuntime` - interfaces container runtime to loaded data store runtime
 - `IFluidDataStoreContext` - interfaces component context to loaded data store runtime
-- `IDatastoreRuntime` - interfaces loaded data store runtime to its context
+- `IFluidDataStoreRuntime` - interfaces loaded data store runtime to its context
 
 ## Guidelines for compatible contributions
 
