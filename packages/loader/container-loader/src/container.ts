@@ -1034,7 +1034,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             ? tree.trees[".protocol"].blobs.attributes
             : tree.blobs[".attributes"];
 
-        const attributes = storage ? await readAndParse<IDocumentAttributes>(storage, attributesHash)
+        const attributes = storage !== undefined ? await readAndParse<IDocumentAttributes>(storage, attributesHash)
             : readAndParseFromBlobs<IDocumentAttributes>(tree.trees[".protocol"].blobs, attributesHash);
 
         // Back-compat for older summaries with no term
@@ -1056,7 +1056,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         if (snapshot !== undefined) {
             const baseTree = ".protocol" in snapshot.trees ? snapshot.trees[".protocol"] : snapshot;
-            if (storage) {
+            if (storage !== undefined) {
                 [members, proposals, values] = await Promise.all([
                     readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers),
                     readAndParse<[number, ISequencedProposal, string[]][]>(storage, baseTree.blobs.quorumProposals),

@@ -86,6 +86,7 @@ import {
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     CreateSummarizerNodeSource,
+    ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import {
     FluidSerializer,
@@ -1576,11 +1577,20 @@ export class ContainerRuntime extends EventEmitter
                         // which it was created as it is detached container. So just use the previous snapshot.
                         assert(this.context.baseSnapshot,
                             "BaseSnapshot should be there as detached container loaded from snapshot");
-                        builder.addWithStats(key, convertSnapshotToSummaryTree(this.context.baseSnapshot.trees[key]));
+                        const summary: ISummarizeResult = {
+                            summary: convertSnapshotToSummaryTree(this.context.baseSnapshot.trees[key]),
+                            stats: {
+                                treeNodeCount: 0,
+                                blobNodeCount: 0,
+                                handleNodeCount: 0,
+                                totalBlobSize: 0,
+                            },
+                        };
+                        builder.addWithStats(key, summary);
                     } else {
                         const snapshot = value.generateAttachMessage().snapshot;
                         const treeWithStats = convertToSummaryTree(snapshot, true);
-                        builder.addWithStats(key, treeWithStats.summaryTree);
+                        builder.addWithStats(key, treeWithStats);
                     }
                 });
         } while (notBoundedComponentContextsLength !== this.notBoundedComponentContexts.size);
