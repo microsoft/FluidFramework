@@ -1578,6 +1578,7 @@ export class ContainerRuntime extends EventEmitter
                             "BaseSnapshot should be there as detached container loaded from snapshot");
                         const summary: ISummarizeResult = {
                             summary: convertSnapshotToSummaryTree(this.context.baseSnapshot.trees[key]),
+                            // No need to build stats, because we don't need them anyway here.
                             stats: {
                                 treeNodeCount: 0,
                                 blobNodeCount: 0,
