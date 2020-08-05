@@ -85,7 +85,7 @@ our own container-level runtime code can load our own component-level runtime co
 Specific interfaces to monitor:
 
 - `IContainerRuntime` - interfaces container runtime to loaded data store runtime
-- `IComponentContext` - interfaces component context to loaded data store runtime
+- `IFluidDataStoreContext` - interfaces component context to loaded data store runtime
 - `IDatastoreRuntime` - interfaces loaded data store runtime to its context
 
 ## Guidelines for compatible contributions
