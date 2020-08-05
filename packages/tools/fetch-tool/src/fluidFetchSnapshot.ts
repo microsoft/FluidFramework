@@ -94,38 +94,38 @@ async function fetchBlobsFromSnapshotTree(
         result.push({ path, blobId, blob: Promise.resolve(content), isTree: true, reused: false, canBeReused: false });
     }
 
-    for (const component of Object.keys(tree.commits)) {
-        const componentVersions = await storage.getVersions(tree.commits[component], 1);
-        if (componentVersions.length !== 1) {
-            console.error(`ERROR: Unable to get versions for ${component}`);
+    for (const dataStore of Object.keys(tree.commits)) {
+        const dataStoreVersions = await storage.getVersions(tree.commits[dataStore], 1);
+        if (dataStoreVersions.length !== 1) {
+            console.error(`ERROR: Unable to get versions for ${dataStore}`);
             continue;
         }
-        const componentSnapShotTree = await reportErrors(
-            `getSnapshotTree ${componentVersions[0].id}`,
-            storage.getSnapshotTree(componentVersions[0]));
-        if (componentSnapShotTree === null) {
+        const dataStoreSnapShotTree = await reportErrors(
+            `getSnapshotTree ${dataStoreVersions[0].id}`,
+            storage.getSnapshotTree(dataStoreVersions[0]));
+        if (dataStoreSnapShotTree === null) {
             // eslint-disable-next-line max-len
-            console.error(`No component tree for component = ${component}, path = ${prefix}, version = ${componentVersions[0].id}`);
+            console.error(`No data store tree for data store = ${dataStore}, path = ${prefix}, version = ${dataStoreVersions[0].id}`);
             continue;
         }
-        assert(componentSnapShotTree.id === tree.commits[component]);
-        assert(componentSnapShotTree.id === componentVersions[0].id);
-        const componentBlobs = await fetchBlobsFromSnapshotTree(
+        assert(dataStoreSnapShotTree.id === tree.commits[dataStore]);
+        assert(dataStoreSnapShotTree.id === dataStoreVersions[0].id);
+        const dataStoreBlobs = await fetchBlobsFromSnapshotTree(
             storage,
-            componentSnapShotTree,
-            `${prefix}[${component}]/`);
-        result = result.concat(componentBlobs);
+            dataStoreSnapShotTree,
+            `${prefix}[${dataStore}]/`);
+        result = result.concat(dataStoreBlobs);
     }
 
     for (const subtreeId of Object.keys(tree.trees)) {
         const subtree = tree.trees[subtreeId];
         assert(Object.keys(subtree.commits).length === 0);
-        const componentBlobs = await fetchBlobsFromSnapshotTree(
+        const dataStoreBlobs = await fetchBlobsFromSnapshotTree(
             storage,
             subtree,
             `${prefix}${subtreeId}/`,
             false);
-        result = result.concat(componentBlobs);
+        result = result.concat(dataStoreBlobs);
     }
     return result;
 }
