@@ -184,9 +184,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     private readonly notBoundedChannelContextSet = new Set<string>();
     private boundhandles: Set<IFluidHandle> | undefined;
     private _attachState: AttachState;
-    // This set stores the id of unloaded local channels. This is meant to be used only in detached container when
-    // loaded from a snapshot.
-    private readonly unLoadedLocalChannel = new Set<string>();
 
     private constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
@@ -247,7 +244,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                         (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
                         (address: string) => this.setChannelDirty(address),
                         tree.trees[path]);
-                    this.unLoadedLocalChannel.add(path);
                 }
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -292,7 +288,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             const value = await this.contextsDeferred.get(id)!.promise;
             const channel = await value.getChannel();
 
-            this.unLoadedLocalChannel.delete(channel.id);
             return { mimeType: "fluid/object", status: 200, value: channel };
         }
 
@@ -321,7 +316,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const context = await this.contextsDeferred.get(id)!.promise;
         const channel = await context.getChannel();
-        this.unLoadedLocalChannel.delete(channel.id);
+
         return channel;
     }
 
@@ -617,14 +612,14 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
             if (!this.notBoundedChannelContextSet.has(objectId)) {
                 let snapshot: ITree;
-                if (this.unLoadedLocalChannel.has(objectId)) {
+                if (value.isLoaded) {
+                    snapshot = value.getAttachSnapshot();
+                } else {
                     // If this channel is not yet loaded, then there should be no changes in the snapshot from which
                     // it was created as it is detached container. So just use the previous snapshot.
                     assert(this.dataStoreContext.baseSnapshot,
                         "BaseSnapshot should be there as detached container loaded from snapshot");
                     snapshot = convertSnapshotToITree(this.dataStoreContext.baseSnapshot.trees[objectId]);
-                } else {
-                    snapshot = value.getAttachSnapshot();
                 }
 
                 // And then store the tree

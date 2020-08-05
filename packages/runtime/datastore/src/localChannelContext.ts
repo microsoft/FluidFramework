@@ -30,7 +30,7 @@ import { ChannelStorageService } from "./channelStorageService";
  */
 export class LocalChannelContext implements IChannelContext {
     public channel: IChannel | undefined;
-    private isLoaded = false;
+    private _isLoaded = false;
     private attached = false;
     private readonly pending: ISequencedDocumentMessage[] = [];
     private _services: {
@@ -57,7 +57,7 @@ export class LocalChannelContext implements IChannelContext {
         }
         if (snapshotTree === undefined) {
             this.channel = this.factory.create(runtime, id);
-            this.isLoaded = true;
+            this._isLoaded = true;
         }
         this.dirtyFn = () => { dirtyFn(id); };
     }
@@ -67,6 +67,10 @@ export class LocalChannelContext implements IChannelContext {
             this.channel = await this.loadChannel();
         }
         return this.channel;
+    }
+
+    public get isLoaded(): boolean {
+        return this._isLoaded;
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
@@ -126,7 +130,7 @@ export class LocalChannelContext implements IChannelContext {
 
         // Commit changes.
         this.channel = channel;
-        this.isLoaded = true;
+        this._isLoaded = true;
 
         if (this.attached) {
             this.channel.connect(this.services);
