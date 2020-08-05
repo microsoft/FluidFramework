@@ -24,8 +24,12 @@ if (window.location.hash.length === 0) {
 const documentId = window.location.hash.substring(1);
 document.title = documentId;
 
-// In this app, we know our container code provides a default component that is an IDiceRoller.
-async function getDiceRollerFromContainer(container: Container): Promise<IDiceRoller> {
+// Just a helper function to kick things off.  Making it async allows us to use await.
+async function start(): Promise<void> {
+    // Get the container to use.  Associate the data with the provided documentId, and run the provided code within.
+    const container: Container =
+        await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
+
     // For this basic scenario, I'm just requesting the default view.  Nothing stopping me from issuing alternate
     // requests (e.g. for other components or views) if I wished.
     const url = "/";
@@ -38,21 +42,13 @@ async function getDiceRollerFromContainer(container: Container): Promise<IDiceRo
         throw new Error(`Empty response from URL: "${url}"`);
     }
 
-    return response.value;
-}
+    // In this app, we know our container code provides a default component that is an IDiceRoller.
+    const diceRoller: IDiceRoller = response.value;
 
-// Given an IDiceRoller, we can render its data using the PrettyDiceRollerView we've created in our app.
-async function renderPrettyDiceRoller(diceRoller: IDiceRoller) {
+    // Given an IDiceRoller, we can render its data using the PrettyDiceRollerView we've created in our app.
     const div = document.getElementById("content") as HTMLDivElement;
     ReactDOM.render(React.createElement(PrettyDiceRollerView, { model: diceRoller }), div);
-}
 
-// Just a helper function to kick things off.  Making it async allows us to use await.
-async function start(): Promise<void> {
-    // Get the container to use.  Associate the data with the provided documentId, and run the provided code within.
-    const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
-    const diceRoller = await getDiceRollerFromContainer(container);
-    await renderPrettyDiceRoller(diceRoller);
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line dot-notation
     window["fluidStarted"] = true;
