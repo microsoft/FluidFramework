@@ -18,6 +18,9 @@ import { insertBlockStart } from "./RichTextAdapter";
 import { MemberList } from "./MemberList";
 
 export class DraftJsObject extends DataObject implements IFluidHTMLView {
+    private text: SharedString | undefined;
+    private authors: SharedMap | undefined;
+
     public get IFluidHTMLView() { return this; }
 
     public static get ComponentName() { return "@fluid-example/draft-js"; }
@@ -42,18 +45,20 @@ export class DraftJsObject extends DataObject implements IFluidHTMLView {
         this.root.set("authors", authors.handle);
     }
 
+    protected async hasInitialized() {
+        [this.text, this.authors] = await Promise.all([this.root.get("text").get(), this.root.get("authors").get()]);
+    }
+
     /**
      * Will return a new view
      */
-    public async render(div: HTMLElement) {
-        const [text, authors] = await Promise.all([this.root.get("text").get(), this.root.get("authors").get()]);
+    public render(div: HTMLElement) {
         ReactDOM.render(
             <div style={{ margin: "20px auto", maxWidth: 800 }}>
-                <MemberList quorum={this.runtime.getQuorum()} dds={authors} style={{ textAlign: "right" }} />
-                <FluidEditor sharedString={text} authors={authors} runtime={this.runtime} />
+                <MemberList quorum={this.runtime.getQuorum()} dds={this.authors} style={{ textAlign: "right" }} />
+                <FluidEditor sharedString={this.text} authors={this.authors} runtime={this.runtime} />
             </div>,
             div,
         );
-        return div;
     }
 }
