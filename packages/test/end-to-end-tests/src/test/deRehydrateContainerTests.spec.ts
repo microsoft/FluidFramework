@@ -23,7 +23,7 @@ import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
