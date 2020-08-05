@@ -6,22 +6,22 @@
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<
-        IProvideComponentLayout
-        & IProvideComponentCursor
-        & IProvideComponentKeyHandlers>> {
+        IProvideViewLayout
+        & IProvideViewCursor
+        & IProvideKeyHandlers>> {
     }
 }
 
-export const IComponentLayout: keyof IProvideComponentLayout = "IComponentLayout";
+export const IViewLayout: keyof IProvideViewLayout = "IViewLayout";
 
-export interface IProvideComponentLayout {
-    readonly IComponentLayout: IComponentLayout;
+export interface IProvideViewLayout {
+    readonly IViewLayout: IViewLayout;
 }
 
 /**
  * Provide information about component preferences for layout.
  */
-export interface IComponentLayout extends IProvideComponentLayout {
+export interface IViewLayout extends IProvideViewLayout {
     aspectRatio?: number;
     minimumWidth?: number;
     minimumHeight?: number;
@@ -35,7 +35,7 @@ export interface IComponentLayout extends IProvideComponentLayout {
 /**
  * Direction from which the cursor has entered or left a component.
  */
-export enum ComponentCursorDirection {
+export enum CursorDirection {
     Left,
     Right,
     Up,
@@ -44,28 +44,28 @@ export enum ComponentCursorDirection {
     Focus,
 }
 
-export const IComponentCursor: keyof IProvideComponentCursor = "IComponentCursor";
+export const IViewCursor: keyof IProvideViewCursor = "IViewCursor";
 
-export interface IProvideComponentCursor {
-    readonly IComponentCursor: IComponentCursor;
+export interface IProvideViewCursor {
+    readonly IViewCursor: IViewCursor;
 }
 
-export interface IComponentCursor extends IProvideComponentCursor {
-    enter(direction: ComponentCursorDirection): void;
-    leave(direction: ComponentCursorDirection): void;
+export interface IViewCursor extends IProvideViewCursor {
+    enter(direction: CursorDirection): void;
+    leave(direction: CursorDirection): void;
     // Returns true if cursor leaves the component
     fwd(): boolean;
     rev(): boolean;
 }
 
-export const IComponentKeyHandlers: keyof IProvideComponentKeyHandlers = "IComponentKeyHandlers";
+export const IKeyHandlers: keyof IProvideKeyHandlers = "IKeyHandlers";
 
-export interface IProvideComponentKeyHandlers {
-    readonly IComponentKeyHandlers: IComponentKeyHandlers;
+export interface IProvideKeyHandlers {
+    readonly IKeyHandlers: IKeyHandlers;
 }
 
 // Used when another component will forward keyboard events to this component
-export interface IComponentKeyHandlers extends IProvideComponentKeyHandlers {
+export interface IKeyHandlers extends IProvideKeyHandlers {
     onKeypress(e: KeyboardEvent): void;
     onKeydown(e: KeyboardEvent): void;
 }
