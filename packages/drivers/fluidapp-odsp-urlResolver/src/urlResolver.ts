@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
@@ -22,13 +23,16 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
             // eslint-disable-next-line @typescript-eslint/no-use-before-define
             contents = await initializeFluidOffice(reqUrl);
         } else if (server === "www.office.com") {
-            const drive = reqUrl.searchParams.get("drive");
-            const item = reqUrl.searchParams.get("item");
-            const site = reqUrl.searchParams.get("siteUrl");
-            if (!drive || !item || !site) {
-                return undefined;
-            }
-            contents = { drive, item, site };
+            const getReqSearchParam = (name: string): string => {
+                const value = reqUrl.searchParams.get(name);
+                assert(value, `Missing ${name} from office.com URL parameter`);
+                return value;
+            };
+            contents = {
+                drive: getReqSearchParam("drive"),
+                item: getReqSearchParam("item"),
+                site: getReqSearchParam("siteUrl"),
+            };
         } else {
             return undefined;
         }
