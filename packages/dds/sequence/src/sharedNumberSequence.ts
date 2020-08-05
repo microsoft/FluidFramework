@@ -11,7 +11,7 @@ export class SharedNumberSequence extends SharedSequence<number> {
     /**
      * Create a new shared number sequence
      *
-     * @param runtime - component runtime the new shared number sequence belongs to
+     * @param runtime - data store runtime the new shared number sequence belongs to
      * @param id - optional name of the shared number sequence
      * @returns newly create shared number sequence (but not attached yet)
      */

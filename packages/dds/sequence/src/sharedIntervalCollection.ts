@@ -84,7 +84,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     /**
      * Create a SharedIntervalCollection
      *
-     * @param runtime - component runtime the new shared map belongs to
+     * @param runtime - data store runtime the new shared map belongs to
      * @param id - optional name of the shared map
      * @returns newly create shared map (but not attached yet)
      */

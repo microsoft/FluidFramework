@@ -355,7 +355,7 @@ The `createValueType()` method on `SharedMap` and `SharedDirectory` was deprecat
 isLocal api is removed from the repo. It is now replaced with isAttached which tells that the entity is attached or getting attached to storage. So its meaning is opposite to isLocal.
 
 ### register/attach api renames on handles, components and dds
-Register on dds and attach on component runtime is renamed to bindToContext(). attach on handles is renamed to attachGraph().
+Register on dds and attach on data store runtime is renamed to bindToContext(). attach on handles is renamed to attachGraph().
 
 ### Error handling changes
 ErrorType enum has been broken into 3 distinct enums / layers:

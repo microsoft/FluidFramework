@@ -322,7 +322,7 @@ describe("Directory", () => {
          *   same key.
          */
         it("should correctly process a set operation sent in local state", async () => {
-            // Set the component runtime to local.
+            // Set the data store runtime to local.
             componentRuntime.local = true;
 
             // Set a key in local state.
@@ -366,7 +366,7 @@ describe("Directory", () => {
         });
 
         it("should correctly process a sub directory operation sent in local state", async () => {
-            // Set the component runtime to local.
+            // Set the data store runtime to local.
             componentRuntime.local = true;
 
             // Create a sub directory in local state.

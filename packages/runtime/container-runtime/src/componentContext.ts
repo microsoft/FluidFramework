@@ -76,7 +76,7 @@ interface ComponentMessage {
 }
 
 /**
- * Represents the context for the component. This context is passed to the component runtime.
+ * Represents the context for the component. This context is passed to the data store runtime.
  */
 export abstract class FluidDataStoreContext extends EventEmitter implements
     IFluidDataStoreContext,

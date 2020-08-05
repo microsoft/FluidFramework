@@ -11,7 +11,7 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
     /**
      * Create a new shared object sequence
      *
-     * @param runtime - component runtime the new shared object sequence belongs to
+     * @param runtime - data store runtime the new shared object sequence belongs to
      * @param id - optional name of the shared object sequence
      * @returns newly create shared object sequence (but not attached yet)
      */

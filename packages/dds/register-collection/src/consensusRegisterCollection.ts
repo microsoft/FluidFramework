@@ -96,7 +96,7 @@ export class ConsensusRegisterCollection<T>
     /**
      * Create a new consensus register collection
      *
-     * @param runtime - component runtime the new consensus register collection belongs to
+     * @param runtime - data store runtime the new consensus register collection belongs to
      * @param id - optional name of the consensus register collection
      * @returns newly create consensus register collection (but not attached yet)
      */

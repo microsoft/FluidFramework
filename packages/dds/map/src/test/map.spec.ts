@@ -233,7 +233,7 @@ describe("Map", () => {
          *   when it gets a remote op with the same key, it ignores it as it has a pending set with the same key.
          */
         it("should correctly process a set operation sent in local state", async () => {
-            // Set the component runtime to local.
+            // Set the data store runtime to local.
             componentRuntime.local = true;
 
             // Set a key in local state.

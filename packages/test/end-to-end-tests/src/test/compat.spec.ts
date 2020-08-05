@@ -181,16 +181,16 @@ describe("loader/runtime compatibility", () => {
                 createContainer( // new everything
                     { fluidExport: createRuntimeFactory(TestComponent.type, createComponentFactory()) },
                     this.deltaConnectionServer),
-                createContainerWithOldLoader( // old loader, new container/component runtimes
+                createContainerWithOldLoader( // old loader, new container/data store runtimes
                     { fluidExport: createRuntimeFactory(TestComponent.type, createComponentFactory()) },
                     this.deltaConnectionServer),
                 createContainerWithOldLoader( // old everything
                     { fluidExport: createOldRuntimeFactory(TestComponent.type, createOldComponentFactory()) },
                     this.deltaConnectionServer),
-                createContainer( // new loader, old container/component runtimes
+                createContainer( // new loader, old container/data store runtimes
                     { fluidExport: createOldRuntimeFactory(TestComponent.type, createOldComponentFactory()) },
                     this.deltaConnectionServer),
-                createContainer( // new loader/container runtime, old component runtime
+                createContainer( // new loader/container runtime, old data store runtime
                     { fluidExport: createRuntimeFactory(TestComponent.type, createOldComponentFactory()) },
                     this.deltaConnectionServer),
             ];

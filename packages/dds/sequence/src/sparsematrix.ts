@@ -192,7 +192,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     /**
      * Create a new sparse matrix
      *
-     * @param runtime - component runtime the new sparse matrix belongs to
+     * @param runtime - data store runtime the new sparse matrix belongs to
      * @param id - optional name of the sparse matrix
      * @returns newly create sparse matrix (but not attached yet)
      */

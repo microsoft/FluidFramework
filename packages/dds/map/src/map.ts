@@ -103,7 +103,7 @@ export class MapFactory implements IChannelFactory {
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     /**
    * Create a new shared map.
-   * @param runtime - Component runtime the new shared map belongs to
+   * @param runtime - Data store runtime the new shared map belongs to
    * @param id - Optional name of the shared map
    * @returns Newly create shared map (but not attached yet)
    */
@@ -132,7 +132,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
    * Create a new SharedMap.
    * @param id - String identifier
-   * @param runtime - Component runtime
+   * @param runtime - Data store runtime
    * @param attributes - The attributes for the map
    */
     constructor(

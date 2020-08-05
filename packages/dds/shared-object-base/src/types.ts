@@ -29,7 +29,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
     extends IProvideSharedObject, IChannel, IEventProvider<TEvent> {
     /**
-     * Binds the given shared object to its containing component runtime, causing it to attach once
+     * Binds the given shared object to its containing data store runtime, causing it to attach once
      * the runtime attaches.
      */
     bindToContext(): void;

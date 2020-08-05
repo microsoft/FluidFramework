@@ -179,7 +179,7 @@ export class MapKernel implements IValueTypeCreator {
 
     /**
      * Create a new shared map kernel.
-     * @param runtime - The component runtime the shared object using the kernel will be associated with
+     * @param runtime - The data store runtime the shared object using the kernel will be associated with
      * @param handle - The handle of the shared object using the kernel
      * @param submitMessage - A callback to submit a message through the shared object
      * @param isAttached - To query whether the shared object should generate ops

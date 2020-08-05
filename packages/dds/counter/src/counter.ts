@@ -46,7 +46,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     /**
      * Create a new shared counter
      *
-     * @param runtime - component runtime the new shared counter belongs to
+     * @param runtime - data store runtime the new shared counter belongs to
      * @param id - optional name of the shared counter
      * @returns newly create shared counter (but not attached yet)
      */

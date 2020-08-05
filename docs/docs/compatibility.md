@@ -71,7 +71,7 @@ Within the Fluid Framework, the runtime consists of a few parts:
    components, the component-level runtime code and container-level runtime code depend on each other through the APIs
    defined in runtime-definitions.  For reference, this boundary occurs between the `IComponentContext`
    (container-level) and the `IDatastoreRuntime` (component-level).  Fluid tries to keep the container runtime backwards
-   compatible with the component runtime by at least 1 version.
+   compatible with the data store runtime by at least 1 version.
 3. The distributed data structures code: typically developers can build components consisting of the Fluid Framework
    provided set of distributed data structures.  There is a registry of DDS factories within each component that
    instruct how to load the DDS code, but this code is meant to be statically loaded with the component.  Developers can
@@ -84,9 +84,9 @@ our own container-level runtime code can load our own component-level runtime co
 
 Specific interfaces to monitor:
 
-- `IContainerRuntime` - interfaces container runtime to loaded component runtime
-- `IComponentContext` - interfaces component context to loaded component runtime
-- `IDatastoreRuntime` - interfaces loaded component runtime to its context
+- `IContainerRuntime` - interfaces container runtime to loaded data store runtime
+- `IComponentContext` - interfaces component context to loaded data store runtime
+- `IDatastoreRuntime` - interfaces loaded data store runtime to its context
 
 ## Guidelines for compatible contributions
 

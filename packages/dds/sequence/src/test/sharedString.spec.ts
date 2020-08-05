@@ -222,7 +222,7 @@ describe("SharedString", () => {
 
     describe("SharedString op processing in local state", () => {
         it("should correctly process operations sent in local state", async () => {
-            // Set the component runtime to local.
+            // Set the data store runtime to local.
             componentRuntime1.local = true;
 
             // Initialize the shared string so that it is completely loaded before we take a snapshot.

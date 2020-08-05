@@ -38,7 +38,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     /**
      * Create a new shared string
      *
-     * @param runtime - component runtime the new shared string belongs to
+     * @param runtime - data store runtime the new shared string belongs to
      * @param id - optional name of the shared string
      * @returns newly create shared string (but not attached yet)
      */

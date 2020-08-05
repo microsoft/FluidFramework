@@ -42,7 +42,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     /**
      * Create a new shared summary block
      *
-     * @param runtime - component runtime the new shared summary block belongs to.
+     * @param runtime - data store runtime the new shared summary block belongs to.
      * @param id - optional name of the shared summary block.
      * @returns newly created shared summary block (but not attached yet).
      */
@@ -69,7 +69,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      * be provided.
      *
      * @param id - optional name of the shared summary block.
-     * @param runtime - component runtime thee object belongs to.
+     * @param runtime - data store runtime thee object belongs to.
      * @param attributes - The attributes for the object.
      */
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {

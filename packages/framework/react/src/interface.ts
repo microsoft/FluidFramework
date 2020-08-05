@@ -269,7 +269,7 @@ export type FluidComponentMap = Map<string, IFluidComponent>;
  */
 export interface IFluidDataProps {
     /**
-     * The Fluid component runtime passed in from component initialization
+     * The Fluid data store runtime passed in from component initialization
      */
     runtime: IFluidDataStoreRuntime;
     /**
