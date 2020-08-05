@@ -13,11 +13,13 @@ export function getParam(params: Params, key: string) {
 }
 
 export function getTenantIdFromRequest(params: Params) {
-    if (getParam(params, "tenantId") !== undefined) {
-        return getParam(params, "tenantId");
+    const tenantId = getParam(params, "tenantId");
+    if (tenantId !== undefined) {
+        return tenantId;
     }
-    if (getParam(params, "id") !== undefined) {
-        return getParam(params, "id");
+    const id = getParam(params, "id");
+    if (id !== undefined) {
+        return id;
     }
 
     return "-";

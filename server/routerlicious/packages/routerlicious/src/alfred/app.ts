@@ -55,7 +55,7 @@ export function create(
     const loggerFormat = config.get("logger:morganFormat");
     if (loggerFormat === "json") {
         app.use(morgan((tokens, req, res) => {
-            const logObject = {
+            const messageMetaData = {
                 method: tokens.method(req, res),
                 url: tokens.url(req, res),
                 status: tokens.status(req, res),
@@ -65,15 +65,7 @@ export function create(
                 serviceName: "alfred",
                 eventName: "http_requests",
              };
-             const message = [
-                logObject.method,
-                logObject.url,
-                logObject.status,
-                logObject.contentLength, "-",
-                logObject.responseTime, "ms",
-             ].join(" ");
-
-             winston.info(message, { logObject });
+             winston.info("request log generated", { messageMetaData });
              return undefined;
         }, { stream }));
     } else {
