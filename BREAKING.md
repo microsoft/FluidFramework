@@ -1,14 +1,22 @@
 # Breaking changes
 
 ## 0.25 Breaking Changes
+- [Component is removed from event names](#Component-is-removed-from-event-names)
 - [IComponentContextLegacy is removed](#IComponentContextLegacy-is-removed)
 - [IContainerRuntimeBase._createDataStoreWithProps() is removed](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
 - [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
 - [createDataStoreWithRealizationFn() APIs moved](#createDataStoreWithRealizationFn()-APIs-moved)
 - [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
 
+### Component is removed from event names
+The following telemetry event names have been updated to drop references to the term component:
+
+ComponentRuntimeDisposeError -> ChannelDisposeError
+ComponentContextDisposeError -> FluidDataStoreContextDisposeError
+SignalComponentNotFound -> SignalFluidDataStoreNotFound
+
 ### IComponentContextLegacy is removed
-Deprecated in 0.18, removed. 
+Deprecated in 0.18, removed.
 
 ### IContainerRuntimeBase._createDataStoreWithProps is removed
 `IContainerRuntimeBase._createDataStoreWithProps()` has been removed. Please use `IContainerRuntimeBase.createDataStore()` (returns IFluidRouter).

@@ -844,7 +844,6 @@ export class ContainerRuntime extends EventEmitter
             contextD.promise.then((context) => {
                 context.dispose();
             }).catch((contextError) => {
-                // TODO: Verify this renaming of event is okay
                 this._logger.sendErrorEvent({
                     eventName: "FluidDataStoreContextDisposeError",
                     fluidDataStoreId,
@@ -1114,7 +1113,6 @@ export class ContainerRuntime extends EventEmitter
         const context = this.contexts.get(envelope.address);
         if (!context) {
             // Attach message may not have been processed yet
-            // TODO: Verify changing the telemetry event name is okay for dashboards
             assert(!local);
             this._logger.sendTelemetryEvent({
                 eventName: "SignalFluidDataStoreNotFound",

@@ -207,7 +207,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             this.channelDeferred.promise.then((runtime) => {
                 runtime.dispose();
             }).catch((error) => {
-                // TODO: Verify that it is okay to change the event name
                 this._containerRuntime.logger.sendErrorEvent(
                     { eventName: "ChannelDisposeError", fluidDataStoreId: this.id },
                     error);
@@ -284,7 +283,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
-        // Connection events are ignored if the fluidDataStore is not yet loaded
+        // Connection events are ignored if the store is not yet loaded
         if (!this.loaded) {
             return;
         }
@@ -294,7 +293,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const channel: IFluidDataStoreChannel = this.channel!;
 
-        // Back-compat: supporting <= 0.16 fluidDataStores
+        // Back-compat: supporting <= 0.16 stores
         if (channel.setConnectionState) {
             channel.setConnectionState(connected, clientId);
         } else if (channel.changeConnectionState) {
@@ -372,7 +371,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const entries = await this.channel!.snapshotInternal(fullTree);
 
-        // TODO: Verify that this is okay
         entries.push(new BlobTreeEntry(".component", JSON.stringify(attributes)));
 
         return { entries, id: null };
@@ -724,7 +722,6 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
 
         const snapshot: ITree = { entries, id: null };
 
-        // TODO: Verify that this is okay to change entry path
         snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(attributes)));
 
         const message: IAttachMessage = {
