@@ -22,8 +22,8 @@ import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { LocalFluidDataStoreContext } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
 
-describe("Component Creation Tests", () => {
-    describe("Component creation via local context creation and realize", () => {
+describe("Data Store Creation Tests", () => {
+    describe("Store creation via local context creation and realize", () => {
         /**
          * These tests simulate component and subcomponent creation by creating local contexts and realizing them.
          * The component tree for these tests is as follows:

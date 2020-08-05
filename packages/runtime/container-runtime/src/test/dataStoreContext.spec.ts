@@ -24,7 +24,7 @@ import {
     IFluidDataStoreAttributes,
     LocalFluidDataStoreContext,
     RemotedFluidDataStoreContext,
-} from "../componentContext";
+} from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
 
 describe("Component Context Tests", () => {
