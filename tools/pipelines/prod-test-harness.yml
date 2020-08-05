@@ -40,3 +40,6 @@ steps:
     command: 'custom'
     workingDir: 'packages/test/service-load-test'
     customCommand: 'run start:mini -- -w $(Password)'
+  env:
+    login__microsoft__clientId: $(clientId)
+    login__microsoft__secret: $(clientSecret)
