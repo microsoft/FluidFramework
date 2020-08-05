@@ -141,6 +141,10 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this._containerRuntime;
     }
 
+    public get isLoaded(): boolean {
+        return this.loaded;
+    }
+
     /**
      * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
      * Use containerRuntime instead of hostRuntime

@@ -606,9 +606,6 @@ export class ContainerRuntime extends EventEmitter
         ) => CreateChildSummarizerNodeFn;
     } & ({ readonly enabled: true; readonly node: SummarizerNode } | { readonly enabled: false });
     private readonly notBoundedComponentContexts = new Set<string>();
-    // This set stores the id of unrealized components. This is meant to be used only in detached container when loaded
-    // from a snapshot.
-    private readonly unRealizedComponents = new Set<string>();
 
     private tasks: string[] = [];
 
@@ -772,7 +769,6 @@ export class ContainerRuntime extends EventEmitter
                 } else {
                     throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
                 }
-                this.unRealizedComponents.add(key);
                 componentContext = new LocalFluidDataStoreContext(
                     key,
                     pkgFromSnapshot,
@@ -1172,7 +1168,6 @@ export class ContainerRuntime extends EventEmitter
         }
 
         const componentContext = await deferredContext.promise;
-        this.unRealizedComponents.delete(id);
         return componentContext.realize();
     }
 
@@ -1572,7 +1567,11 @@ export class ContainerRuntime extends EventEmitter
                     !(this.notBoundedComponentContexts.has(key) || builderTree[key]),
                 )
                 .map(([key, value]) => {
-                    if (this.unRealizedComponents.has(key)) {
+                    if (value.isLoaded) {
+                        const snapshot = value.generateAttachMessage().snapshot;
+                        const treeWithStats = convertToSummaryTree(snapshot, true);
+                        builder.addWithStats(key, treeWithStats);
+                    } else {
                         // If this component is not yet loaded, then there should be no changes in the snapshot from
                         // which it was created as it is detached container. So just use the previous snapshot.
                         assert(this.context.baseSnapshot,
@@ -1587,10 +1586,6 @@ export class ContainerRuntime extends EventEmitter
                             },
                         };
                         builder.addWithStats(key, summary);
-                    } else {
-                        const snapshot = value.generateAttachMessage().snapshot;
-                        const treeWithStats = convertToSummaryTree(snapshot, true);
-                        builder.addWithStats(key, treeWithStats);
                     }
                 });
         } while (notBoundedComponentContextsLength !== this.notBoundedComponentContexts.size);
