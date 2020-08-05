@@ -4,7 +4,7 @@
  */
 
 import { IServiceConfiguration } from "@fluidframework/protocol-definitions";
-import { LocalOrderer } from "@fluidframework/server-memory-orderer";
+import { IPubSub, LocalOrderer } from "@fluidframework/server-memory-orderer";
 import { GitManager, IHistorian } from "@fluidframework/server-services-client";
 import {
     IDatabaseManager,
@@ -16,7 +16,7 @@ import {
     ITenantManager,
 } from "@fluidframework/server-services-core";
 
-export class MemoryOrdererManager implements IOrdererManager {
+export class LocalOrdererManager implements IOrdererManager {
     private readonly map = new Map<string, Promise<IOrderer>>();
 
     constructor(
@@ -29,6 +29,7 @@ export class MemoryOrdererManager implements IOrdererManager {
         private readonly createHistorian: (tenant: string) => Promise<IHistorian>,
         private readonly logger: ILogger,
         private readonly serviceConfiguration?: Partial<IServiceConfiguration>,
+        private readonly pubsub?: IPubSub,
     ) {
     }
 
@@ -73,14 +74,14 @@ export class MemoryOrdererManager implements IOrdererManager {
             this.maxMessageSize,
             this.logger,
             gitManager,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
+            undefined /* ILocalOrdererSetup */,
+            this.pubsub,
+            undefined /* broadcasterContext */,
+            undefined /* scriptoriumContext */,
+            undefined /* foremanContext */,
+            undefined /* scribeContext */,
+            undefined /* deliContext */,
+            undefined /* clientTimeout */,
             this.serviceConfiguration);
 
         const lambdas = [
