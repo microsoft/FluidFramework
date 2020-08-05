@@ -39,7 +39,7 @@
     "@fluid-example/flow-util-lib": "^0.25.0",
     "@fluid-example/table-document": "^0.25.0",
     "@fluidframework/aqueduct": "^0.25.0",
-    "@fluidframework/component-core-interfaces": "^0.25.0",
+    "@fluidframework/core-interfaces": "^0.25.0",
     "@fluidframework/view-interfaces": "^0.25.0",
     "@tiny-calc/micro": "0.0.0-alpha.5"
   },

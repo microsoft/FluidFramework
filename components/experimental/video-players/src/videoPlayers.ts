@@ -10,9 +10,9 @@ import {
     IFluidRouter,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
-import { FluidOjectHandle } from "@fluidframework/component-runtime";
-import { IComponentLayout } from "@fluidframework/framework-experimental";
+} from "@fluidframework/core-interfaces";
+import { FluidOjectHandle } from "@fluidframework/datastore";
+import * as ClientUI from "@fluid-example/client-ui-lib";
 import { IFluidObjectCollection } from "@fluidframework/framework-interfaces";
 import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
@@ -74,13 +74,13 @@ interface IYouTubePlayer {
 }
 
 export class VideoPlayer implements
-    IFluidLoadable, IFluidHTMLView, IFluidRouter, IComponentLayout {
+    IFluidLoadable, IFluidHTMLView, IFluidRouter, ClientUI.controls.IViewLayout {
     private player: IYouTubePlayer;
     private playerDiv: HTMLDivElement;
 
     public get IFluidHTMLView() { return this; }
     public get IFluidRouter() { return this; }
-    public get IComponentLayout() { return this; }
+    public get IViewLayout() { return this; }
     public get IFluidLoadable() { return this; }
 
     // Video def has a preferred aspect ratio

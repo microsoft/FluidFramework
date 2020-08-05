@@ -24,7 +24,7 @@ import {
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { componentRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
+import { dataStoreRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
 import { createLocalLoader, OpProcessingController, initializeLocalContainer } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
 
@@ -67,7 +67,7 @@ describe("loader/runtime compatibility", () => {
     ): IRuntimeFactory => {
         const builder = new RuntimeRequestHandlerBuilder();
         builder.pushHandler(
-            componentRuntimeRequestHandler,
+            dataStoreRuntimeRequestHandler,
             defaultDataStoreRuntimeRequestHandler("default"));
 
         return {
@@ -94,7 +94,7 @@ describe("loader/runtime compatibility", () => {
     ): old.IRuntimeFactory => {
         const builder = new old.RuntimeRequestHandlerBuilder();
         builder.pushHandler(
-            old.componentRuntimeRequestHandler,
+            old.dataStoreRuntimeRequestHandler,
             old.defaultDataStoreRuntimeRequestHandler("default"));
 
         return {
@@ -107,9 +107,9 @@ describe("loader/runtime compatibility", () => {
                     runtimeOptions,
                 );
                 if (!runtime.existing) {
-                    const componentRuntime = await runtime.createComponent("default", type);
-                    await componentRuntime.request({ url: "/" });
-                    componentRuntime.bindToContext();
+                    const dataStoreRuntime = await runtime.createComponent("default", type);
+                    await dataStoreRuntime.request({ url: "/" });
+                    dataStoreRuntime.bindToContext();
                 }
                 return runtime;
             },
@@ -181,16 +181,16 @@ describe("loader/runtime compatibility", () => {
                 createContainer( // new everything
                     { fluidExport: createRuntimeFactory(TestComponent.type, createComponentFactory()) },
                     this.deltaConnectionServer),
-                createContainerWithOldLoader( // old loader, new container/component runtimes
+                createContainerWithOldLoader( // old loader, new container/data store runtimes
                     { fluidExport: createRuntimeFactory(TestComponent.type, createComponentFactory()) },
                     this.deltaConnectionServer),
                 createContainerWithOldLoader( // old everything
                     { fluidExport: createOldRuntimeFactory(TestComponent.type, createOldComponentFactory()) },
                     this.deltaConnectionServer),
-                createContainer( // new loader, old container/component runtimes
+                createContainer( // new loader, old container/data store runtimes
                     { fluidExport: createOldRuntimeFactory(TestComponent.type, createOldComponentFactory()) },
                     this.deltaConnectionServer),
-                createContainer( // new loader/container runtime, old component runtime
+                createContainer( // new loader/container runtime, old data store runtime
                     { fluidExport: createRuntimeFactory(TestComponent.type, createOldComponentFactory()) },
                     this.deltaConnectionServer),
             ];

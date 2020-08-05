@@ -23,7 +23,7 @@ import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
     makeHandlesSerializable,
@@ -121,17 +121,17 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
     private readonly intervalMapKernel: MapKernel;
     constructor(
-        private readonly componentRuntime: IFluidDataStoreRuntime,
+        private readonly dataStoreRuntime: IFluidDataStoreRuntime,
         public id: string,
         attributes: IChannelAttributes,
         public readonly segmentFromSpec: (spec: MergeTree.IJSONSegment) => MergeTree.ISegment,
     ) {
-        super(id, componentRuntime, attributes);
+        super(id, dataStoreRuntime, attributes);
 
         this.client = new MergeTree.Client(
             segmentFromSpec,
             ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
-            componentRuntime.options);
+            dataStoreRuntime.options);
 
         super.on("newListener", (event) => {
             switch (event) {
@@ -513,7 +513,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 .catch((error) => {
                     this.loadFinished(error);
                 });
-            if (this.componentRuntime.options?.sequenceInitializeFromHeaderOnly !== true) {
+            if (this.dataStoreRuntime.options?.sequenceInitializeFromHeaderOnly !== true) {
                 // if we not doing parital load, await the catch up ops,
                 // and the finalization of the load
                 await loadCatchUpOps;

@@ -14,7 +14,7 @@ import {
     CreateChildSummarizerNodeFn,
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker, SummarizerNode } from "@fluidframework/runtime-utils";

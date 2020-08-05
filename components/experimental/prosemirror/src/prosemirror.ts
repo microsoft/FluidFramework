@@ -10,8 +10,8 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
-} from "@fluidframework/component-core-interfaces";
-import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
+} from "@fluidframework/core-interfaces";
+import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IMergeTreeInsertMsg,
@@ -21,7 +21,7 @@ import {
     createMap,
 } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { EditorView } from "prosemirror-view";

@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import {
@@ -13,7 +13,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelServices,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { v4 as uuid } from "uuid";
 import { SharedObjectHandle } from "./handle";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDirectoryValueChanged, SharedMap } from "@fluidframework/map";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import {

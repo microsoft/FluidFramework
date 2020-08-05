@@ -46,7 +46,6 @@ function latestLEQ(a: PartialSequenceLength[], key: number) {
     return best;
 }
 
-// tslint:disable-next-line: interface-name
 export interface PartialSequenceLength {
     seq: number;
     len: number;

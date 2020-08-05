@@ -6,7 +6,7 @@
 import {
     IFluidObject,
     IFluidHandle,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IViewConverter,

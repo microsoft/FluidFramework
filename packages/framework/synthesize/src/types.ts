@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { DependencyContainer } from "./dependencyContainer";
 
 export type ComponentKey<T extends IFluidObject> = keyof T & keyof IFluidObject;

@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IDocumentService } from "@fluidframework/driver-definitions";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";

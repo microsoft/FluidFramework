@@ -1,3 +1,7 @@
+---
+sidebarDepth: 2
+---
+
 # Set up your development environment
 
 In order to build solutions with the Fluid Framework, ensure that you have installed

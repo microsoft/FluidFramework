@@ -4,8 +4,8 @@
  */
 
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     FluidComponentMap,
     IViewConverter,
@@ -17,7 +17,7 @@ import {
  * Store the Fluid state onto the shared synced state
  * @param syncedStateId - Unique ID to use for storing the component's synced state in the map
  * @param syncedState - The shared map that will be used to store the synced state
- * @param runtime - The component runtime
+ * @param runtime - The data store runtime
  * @param componentMap - A map of component handle paths to their respective components
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
  * respective converters

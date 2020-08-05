@@ -13,7 +13,7 @@ import {
     IFluidDataStoreFactory,
     FlushMode,
 } from "@fluidframework/runtime-definitions";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 
 const defaultComponentId = "" as const;
 

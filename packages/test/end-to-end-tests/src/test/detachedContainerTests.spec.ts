@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
@@ -26,7 +26,7 @@ import { SharedCell } from "@fluidframework/cell";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { ComponentMessageType } from "@fluidframework/component-runtime";
+import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
@@ -202,7 +202,7 @@ describe("Detached Container", () => {
             assert.equal(type, MessageType.Operation);
             assert.equal(contents.type, ContainerMessageType.FluidDataStoreOp);
 
-            assert.equal(contents.contents.contents.type, ComponentMessageType.ChannelOp);
+            assert.equal(contents.contents.contents.type, DataStoreMessageType.ChannelOp);
 
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedStringId, "Address should be shared string");
@@ -268,7 +268,7 @@ describe("Detached Container", () => {
                 testChannelId, "Channel id should match");
             assert.strictEqual(contents.contents.contents.content.type,
                 SharedMap.getFactory().type, "Channel type should match");
-            assert.strictEqual(contents.contents.contents.type, ComponentMessageType.Attach,
+            assert.strictEqual(contents.contents.contents.type, DataStoreMessageType.Attach,
                 "Op should be an attach op");
             defPromise.resolve();
             return 0;

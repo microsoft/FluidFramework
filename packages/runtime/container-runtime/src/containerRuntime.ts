@@ -14,7 +14,7 @@ import {
     IFluidSerializer,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -1252,8 +1252,6 @@ export class ContainerRuntime extends EventEmitter
         realizationFn?: (context: IFluidDataStoreContext) => void,
     ): Promise<IFluidDataStoreChannel> {
         this.verifyNotClosed();
-
-        // tslint:disable-next-line: no-unsafe-any
         const id: string = uuid();
         this.notBoundContexts.add(id);
         const context = new LocalFluidDataStoreContext(

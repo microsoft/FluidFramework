@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 import { ISharedMap, IDirectoryValueChanged } from "@fluidframework/map";
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
     IFluidHandle,
     IFluidLoadable,
     IFluidObject,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { SyncedComponent } from "./fluidComponent";
 
 /**
@@ -269,7 +269,7 @@ export type FluidComponentMap = Map<string, IFluidComponent>;
  */
 export interface IFluidDataProps {
     /**
-     * The Fluid component runtime passed in from component initialization
+     * The Fluid data store runtime passed in from component initialization
      */
     runtime: IFluidDataStoreRuntime;
     /**

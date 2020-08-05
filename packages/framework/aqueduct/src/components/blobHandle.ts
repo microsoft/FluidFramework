@@ -9,7 +9,7 @@ import {
     IFluidRouter,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { ISharedDirectory } from "@fluidframework/map";
 

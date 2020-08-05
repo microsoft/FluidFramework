@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { Caret as CaretUtil, Direction, Rect, TagName } from "@fluid-example/flow-util-lib";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";

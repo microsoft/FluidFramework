@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { FluidOjectHandle } from "@fluidframework/component-runtime";
-import { IFluidHandle, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { FluidOjectHandle } from "@fluidframework/datastore";
+import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 
 // TODO: Fix FluidOjectHandle -> FluidObjectHandle in component-runtime package
 // TODO #2425 Expose Summarizer handle as FluidOjectHandle w/ tests

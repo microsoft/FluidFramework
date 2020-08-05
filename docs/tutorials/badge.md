@@ -14,15 +14,6 @@ OUTDATED
 Badge is a Fluid component that allows users to create an in-line badge within a document to represent the status
 of the overall document or a section of it.
 
-<style>
-  iframe#badge {
-    height: 250px;
-    width: 800px;
-  }
-</style>
-
-<iframe id="badge" src="/fluid/badge.html"></iframe>
-
 ## Features
 
 ### Custom status

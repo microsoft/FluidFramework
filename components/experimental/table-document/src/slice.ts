@@ -4,7 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
 import { CellRange } from "./cellrange";
 import { ConfigKey } from "./configKey";
@@ -139,7 +139,6 @@ export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITa
     }
 
     private createValuesRange(minCol: number, minRow: number, maxCol: number, maxRow: number) {
-        // tslint:disable-next-line:insecure-random
         const valuesRangeId = `values-${Math.random().toString(36).substr(2)}`;
         this.root.set(ConfigKey.valuesKey, valuesRangeId);
         this.doc.createInterval(valuesRangeId, minRow, minCol, maxRow, maxCol);
