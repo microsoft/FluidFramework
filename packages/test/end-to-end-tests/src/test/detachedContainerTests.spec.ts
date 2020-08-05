@@ -9,7 +9,7 @@ import {
     IFluidCodeDetails,
     IProxyLoaderFactory,
     AttachState,
-    IDetachedContainerSource,
+    DetachedContainerSource,
 } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
@@ -41,7 +41,7 @@ describe("Detached Container", () => {
         package: "detachedContainerTestPackage",
         config: {},
     };
-    const source: IDetachedContainerSource = {
+    const source: DetachedContainerSource = {
         codeDetails: pkg,
         useSnapshot: false,
     };

@@ -493,7 +493,7 @@ export class ContainerRuntime extends EventEmitter
 
         // Create all internal components if not already existing on storage or loaded a detached
         // container from snapshot(ex. draft mode).
-        if (!(context.existing || context.baseSnapshot !== null)) {
+        if (!(context.existing || context.baseSnapshot)) {
             await runtime.createRootDataStore(schedulerId, schedulerId);
         }
 
@@ -738,7 +738,8 @@ export class ContainerRuntime extends EventEmitter
 
         // Extract components stored inside the snapshot
         const components = new Map<string, ISnapshotTree | string>();
-        if (context.baseSnapshot) {
+        // back-compat 0.24 baseSnapshotCouldBeNull
+        if (context.baseSnapshot !== undefined && context.baseSnapshot !== null) {
             const baseSnapshot = context.baseSnapshot;
             Object.keys(baseSnapshot.trees).forEach((value) => {
                 if (value !== ".protocol" && value !== ".logTail" && value !== ".serviceProtocol") {
@@ -754,7 +755,8 @@ export class ContainerRuntime extends EventEmitter
             // If it is loaded from a snapshot but in detached state, then create a local component.
             if (this.attachState === AttachState.Detached) {
                 let pkgFromSnapshot: string[];
-                if (context.baseSnapshot === null) {
+                // back-compat 0.24 baseSnapshotCouldBeNull
+                if (context.baseSnapshot === null || context.baseSnapshot === undefined) {
                     throw new Error("Snapshot should be there to load from!!");
                 }
                 const snapshotTree = value as ISnapshotTree;

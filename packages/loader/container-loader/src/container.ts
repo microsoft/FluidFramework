@@ -29,7 +29,7 @@ import {
     ContainerWarning,
     IThrottlingWarning,
     AttachState,
-    IDetachedContainerSource,
+    DetachedContainerSource,
 } from "@fluidframework/container-definitions";
 import { performanceNow } from "@fluidframework/common-utils";
 import {
@@ -195,7 +195,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         options: any,
         scope: IFluidObject & IFluidObject,
         loader: Loader,
-        source: IDetachedContainerSource,
+        source: DetachedContainerSource,
         serviceFactory: IDocumentServiceFactory,
         urlResolver: IUrlResolver,
         logger?: ITelemetryBaseLogger,
@@ -1494,7 +1494,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.scope,
             this.codeLoader,
             chaincode,
-            snapshot ?? null,
+            snapshot,
             attributes,
             this.blobManager,
             new DeltaManagerProxy(this._deltaManager),
@@ -1532,7 +1532,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.scope,
             this.codeLoader,
             runtimeFactory,
-            snapshot ?? null,
+            snapshot,
             attributes,
             this.blobManager,
             new DeltaManagerProxy(this._deltaManager),

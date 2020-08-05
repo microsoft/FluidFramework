@@ -12,7 +12,7 @@ import {
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
     isFluidPackage,
-    IDetachedContainerSource,
+    DetachedContainerSource,
 } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
@@ -169,7 +169,7 @@ export async function start(
         if (!codeDetails) {
             throw new Error("Code details must be defined for detached mode!!");
         }
-        const source: IDetachedContainerSource = {
+        const source: DetachedContainerSource = {
             codeDetails,
             useSnapshot: false,
         };

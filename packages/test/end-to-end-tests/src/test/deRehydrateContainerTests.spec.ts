@@ -7,7 +7,7 @@ import assert from "assert";
 import {
     IFluidCodeDetails,
     IProxyLoaderFactory,
-    IDetachedContainerSource,
+    DetachedContainerSource,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
@@ -38,7 +38,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         package: "detachedContainerTestPackage1",
         config: {},
     };
-    const source: IDetachedContainerSource = {
+    const source: DetachedContainerSource = {
         codeDetails,
         useSnapshot: false,
     };
@@ -195,7 +195,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             await createDetachedContainerAndGetRootComponent();
 
         const snapshotTree: string = container.serialize();
-        const rehydrationSource: IDetachedContainerSource = {
+        const rehydrationSource: DetachedContainerSource = {
             snapshot: snapshotTree,
             useSnapshot: true,
         };
@@ -242,7 +242,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             await createDetachedContainerAndGetRootComponent();
 
         const snapshotTree: string = container.serialize();
-        const rehydrationSource: IDetachedContainerSource = {
+        const rehydrationSource: DetachedContainerSource = {
             snapshot: snapshotTree,
             useSnapshot: true,
         };
@@ -295,7 +295,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         sharedStringBefore.insertText(0, "Hello");
 
         const snapshotTree: string = container.serialize();
-        const rehydrationSource: IDetachedContainerSource = {
+        const rehydrationSource: DetachedContainerSource = {
             snapshot: snapshotTree,
             useSnapshot: true,
         };
@@ -317,7 +317,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const sharedString1 = await defaultComponent1.getSharedObject<SharedString>(sharedStringId);
         sharedString1.insertText(0, str);
         const snapshotTree: string = container.serialize();
-        const rehydrationSource: IDetachedContainerSource = {
+        const rehydrationSource: DetachedContainerSource = {
             snapshot: snapshotTree,
             useSnapshot: true,
         };

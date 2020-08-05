@@ -9,7 +9,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
-import { IContainer, ILoader, IDetachedContainerSource } from "@fluidframework/container-definitions";
+import { IContainer, ILoader, DetachedContainerSource } from "@fluidframework/container-definitions";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import Comlink from "comlink";
 
@@ -71,7 +71,7 @@ export class WebWorkerLoader implements ILoader, IFluidRunnable, IFluidRouter {
         return this.proxy.resolve(request);
     }
 
-    public async createDetachedContainer(source: IDetachedContainerSource): Promise<IContainer> {
+    public async createDetachedContainer(source: DetachedContainerSource): Promise<IContainer> {
         return this.proxy.createDetachedContainer(source);
     }
 }

@@ -5,7 +5,7 @@
 
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
-    IRuntimeFactory, IDetachedContainerSource,
+    IRuntimeFactory, DetachedContainerSource,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
@@ -100,7 +100,7 @@ export async function getTinyliciousContainer(
         // We're not actually using the code proposal (our code loader always loads the same module regardless of the
         // proposal), but the Container will only give us a NullRuntime if there's no proposal.  So we'll use a fake
         // proposal.
-        const source: IDetachedContainerSource = {
+        const source: DetachedContainerSource = {
             codeDetails: { package: "", config: {} },
             useSnapshot: false,
         };

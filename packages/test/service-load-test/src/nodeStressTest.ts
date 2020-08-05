@@ -9,7 +9,7 @@ import commander from "commander";
 import {
     IProxyLoaderFactory,
     IFluidCodeDetails,
-    IDetachedContainerSource,
+    DetachedContainerSource,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { OdspDocumentServiceFactory, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
@@ -42,7 +42,7 @@ const codeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-const source: IDetachedContainerSource = {
+const source: DetachedContainerSource = {
     codeDetails,
     useSnapshot: false,
 };

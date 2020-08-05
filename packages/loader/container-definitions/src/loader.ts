@@ -72,7 +72,7 @@ export interface ICodeAllowList {
 /**
  * Source to create the detached container from. Either needs the codeDetails or a snapshot to start from.
  */
-export type IDetachedContainerSource = {
+export type DetachedContainerSource = {
     codeDetails: IFluidCodeDetails,
     useSnapshot: false,
 } | {
@@ -159,7 +159,7 @@ export interface ILoader {
      * Creates a new container using the specified chaincode but in an unattached state. While unattached all
      * updates will only be local until the user explicitly attaches the container to a service provider.
      */
-    createDetachedContainer(source: IDetachedContainerSource): Promise<IContainer>;
+    createDetachedContainer(source: DetachedContainerSource): Promise<IContainer>;
 }
 
 export enum LoaderHeader {
