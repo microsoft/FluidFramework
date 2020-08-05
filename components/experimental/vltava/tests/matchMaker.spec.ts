@@ -7,7 +7,7 @@
 import assert from "assert";
 import { EventEmitter } from "events";
 
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
     IComponentDiscoverableInterfaces,
     IComponentDiscoverInterfaces,

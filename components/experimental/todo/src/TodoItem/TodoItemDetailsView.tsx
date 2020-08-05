@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import React from "react";
 import { TodoItemSupportedComponents } from "./supportedComponent";

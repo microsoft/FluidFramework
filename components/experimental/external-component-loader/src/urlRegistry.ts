@@ -12,7 +12,7 @@ import {
     FluidDataStoreRegistryEntry,
     IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { WebCodeLoader, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 
 /**

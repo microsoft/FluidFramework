@@ -19,7 +19,7 @@ import {
     IRequest,
     IResponse,
     IFluidRouter,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore";
 import { Ink } from "@fluidframework/ink";
 import {

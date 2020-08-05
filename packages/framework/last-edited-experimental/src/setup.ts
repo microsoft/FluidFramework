@@ -6,7 +6,7 @@
 import { ISequencedDocumentMessage, IQuorum } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { ILastEditDetails, IFluidLastEditedTracker } from "./interfaces";
 
 // Default implementation of the shouldDiscardMessageFn function below that tells that all messages other

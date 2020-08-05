@@ -20,7 +20,7 @@ import {
     IFluidHandleContext,
     IFluidHandle,
     IFluidLoadable,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { IDeltaManager, IErrorBase } from "@fluidframework/container-definitions";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import {
@@ -41,7 +41,7 @@ const maxSummarizeTimeoutCount = 5; // Double and resend 5 times
 
 const minOpsForLastSummary = 50;
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideSummarizer>> { }
 }

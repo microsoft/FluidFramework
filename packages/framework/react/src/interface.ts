@@ -8,7 +8,7 @@ import {
     IFluidHandle,
     IFluidLoadable,
     IFluidObject,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { SyncedComponent } from "./fluidComponent";
 
 /**

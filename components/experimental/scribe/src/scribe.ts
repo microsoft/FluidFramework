@@ -11,7 +11,7 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore";
 import {
     IContainerContext,

@@ -5,7 +5,7 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { LastEditedTracker } from "./lastEditedTracker";
 import { IProvideFluidLastEditedTracker } from "./interfaces";
 
