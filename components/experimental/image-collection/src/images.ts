@@ -12,19 +12,19 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { FluidOjectHandle } from "@fluidframework/datastore";
-import { IComponentLayout } from "@fluidframework/framework-experimental";
 import { IFluidObjectCollection } from "@fluidframework/framework-interfaces";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { PureDataObject, PureDataObjectFactory } from "@fluidframework/component-base";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
+import * as ClientUI from "@fluid-example/client-ui-lib";
 
 export class ImageComponent implements
-    IFluidLoadable, IFluidHTMLView, IFluidRouter, IComponentLayout {
+    IFluidLoadable, IFluidHTMLView, IFluidRouter, ClientUI.controls.IViewLayout {
     public get IFluidLoadable() { return this; }
     public get IFluidHTMLView() { return this; }
     public get IFluidRouter() { return this; }
-    public get IComponentLayout() { return this; }
+    public get IViewLayout() { return this; }
 
     // Video def has a preferred aspect ratio
     public aspectRatio?: number;

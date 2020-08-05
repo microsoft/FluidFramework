@@ -53,7 +53,6 @@
     "@fluidframework/container-definitions": "^0.25.0",
     "@fluidframework/core-interfaces": "^0.25.0",
     "@fluidframework/datastore-definitions": "^0.25.0",
-    "@fluidframework/framework-experimental": "^0.25.0",
     "@fluidframework/framework-interfaces": "^0.25.0",
     "@fluidframework/ink": "^0.25.0",
     "@fluidframework/map": "^0.25.0",
