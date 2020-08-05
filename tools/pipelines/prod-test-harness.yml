@@ -26,6 +26,33 @@ steps:
     customRegistry: 'useFeed'
     customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
 
+- task: Bash@3
+  displayName: Set Package Version
+  env:
+    VERSION_BUILDBRANCH: $(Build.SourceBranch)
+    VERSION_BUILDNUMBER: $(Build.BuildNumber)
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      # expect lerna.json and package.json be in the current working directory
+
+      echo VERSION_BUILDBRANCH=$VERSION_BUILDBRANCH
+      echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
+
+      version=`node $(Build.SourcesDirectory)/tools/build-server-resources/build-version.js`
+      echo COMPUTED_VERSION=$version
+
+      if [ "$version" == '' ]; then
+        exit -1
+      fi
+
+      if [ -f "lerna.json" ]; then
+        npx lerna version $version --no-git-tag-version --no-push --yes
+      else
+        npm version --no-git-tag-version $version -f --allow-same-version
+      fi
+
 - task: Npm@1
   displayName: npm run build
   inputs:
