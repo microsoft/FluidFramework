@@ -5,7 +5,6 @@
 import { FluidOjectHandle } from "@fluidframework/datastore";
 import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 
-// TODO: Fix FluidOjectHandle -> FluidObjectHandle in component-runtime package
 // TODO #2425 Expose Summarizer handle as FluidOjectHandle w/ tests
 export class SummarizerHandle extends FluidOjectHandle {
     public async get(): Promise<any> {
