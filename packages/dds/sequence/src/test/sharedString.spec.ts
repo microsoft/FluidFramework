@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ITree } from "@fluidframework/protocol-definitions";
-import { IChannelServices } from "@fluidframework/component-runtime-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
@@ -170,7 +170,7 @@ describe("SharedString", () => {
         it("replace negative range", async () => {
             sharedString.insertText(0, "123");
             sharedString.replaceText(2, 1, "aaa");
-            // This assert relies on the behvaior that replacement for a reversed range
+            // This assert relies on the behavior that replacement for a reversed range
             // will insert at the max end of the range but not delete the range
             assert.equal(sharedString.getText(), "12aaa3", "Could not replace negative range");
         });
@@ -185,7 +185,7 @@ describe("SharedString", () => {
                 sharedString.insertText(0, `${insertText}${i}`);
             }
 
-            // Get snapshot and verift its correct.
+            // Get snapshot and verify its correct.
             let tree = sharedString.snapshot();
             assert(tree.entries.length === 2);
             assert(tree.entries[0].path === "header");

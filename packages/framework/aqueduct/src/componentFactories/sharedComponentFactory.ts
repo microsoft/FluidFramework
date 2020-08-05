@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject, IFluidLoadable, IRequest } from "@fluidframework/component-core-interfaces";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
+import { IFluidObject, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
@@ -14,7 +14,7 @@ import {
     NamedFluidDataStoreRegistryEntries,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
-import { IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
     ComponentSymbolProvider,
     DependencyContainer,

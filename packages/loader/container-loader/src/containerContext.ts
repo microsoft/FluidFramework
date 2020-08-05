@@ -10,7 +10,7 @@ import {
     IFluidConfiguration,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     ICodeLoader,
@@ -232,7 +232,7 @@ export class ContainerContext implements IContainerContext {
     }
 
     public createSummary(): ISummaryTree {
-        if (!this.runtime) {
+        if (this.runtime === undefined) {
             throw new Error("Runtime should be there to take summary");
         }
         return this.runtime.createSummary();
@@ -244,9 +244,9 @@ export class ContainerContext implements IContainerContext {
         assert(this.connected === connected);
 
         // Back-compat: supporting <= 0.16 components
-        if (runtime.setConnectionState) {
+        if (runtime.setConnectionState !== undefined) {
             runtime.setConnectionState(connected, clientId);
-        } else if (runtime.changeConnectionState) {
+        } else if (runtime.changeConnectionState !== undefined) {
             runtime.changeConnectionState(this.connectionState, clientId);
         } else {
             assert(false);

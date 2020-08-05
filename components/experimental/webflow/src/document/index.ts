@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { PureDataObject, PureDataObjectFactory } from "@fluidframework/component-base";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     createInsertSegmentOp,
     createRemoveRangeOp,

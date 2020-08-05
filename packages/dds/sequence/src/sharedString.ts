@@ -4,13 +4,13 @@
  */
 
 // eslint-disable-next-line import/no-unassigned-import
-import { } from "@fluidframework/component-core-interfaces";
+import { } from "@fluidframework/core-interfaces";
 import * as MergeTree from "@fluidframework/merge-tree";
-import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
 import { SharedSegmentSequence } from "./sequence";
 import { SharedStringFactory } from "./sequenceFactory";
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideSharedString>> { }
 }

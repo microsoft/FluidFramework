@@ -7,7 +7,7 @@ import assert from "assert";
 import {
     IRequest,
     DriverHeader,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IUrlResolver,
     IResolvedUrl,

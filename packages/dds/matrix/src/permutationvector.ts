@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     BaseSegment,
@@ -16,7 +16,7 @@ import {
     IMergeTreeDeltaCallbackArgs,
     MergeTreeDeltaType,
 } from "@fluidframework/merge-tree";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import { HandleTable, Handle } from "./handletable";

@@ -11,11 +11,11 @@ import {
     IProvideFluidHandle,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { AsyncComponentProvider, ComponentKey } from "@fluidframework/synthesize";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
-import { FluidOjectHandle } from "@fluidframework/component-runtime";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { FluidOjectHandle } from "@fluidframework/datastore";
 import { IDirectory } from "@fluidframework/map";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
@@ -100,7 +100,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
     public async initialize(initialState?: S): Promise<void> {
         // We want to ensure if this gets called more than once it only executes the initialize code once.
         if (!this.initializeP) {
-            this.initializeP = this.initializeInternal(this.context.createProps as S ?? initialState);
+            this.initializeP = this.initializeInternal(initialState);
         }
 
         await this.initializeP;

@@ -9,6 +9,7 @@ import { ISummaryTracker } from "@fluidframework/runtime-definitions";
  * SummaryTracker is a tree node which allows for deferred
  * snapshot tree access and tracks the latest acked summary
  * reference sequence number.
+ * @deprecated 0.21 summarizerNode - use SummarizerNode instead
  */
 export class SummaryTracker implements ISummaryTracker {
     /**
@@ -41,14 +42,12 @@ export class SummaryTracker implements ISummaryTracker {
 
     private readonly children = new Map<string, SummaryTracker>();
 
-    public refreshLatestSummary(
-        referenceSequenceNumber: number,
-    ) {
+    public refreshLatestSummary(referenceSequenceNumber: number) {
         this._referenceSequenceNumber = referenceSequenceNumber;
 
         // Propagate update to all child nodes
-        for (const [, value] of this.children.entries()) {
-            value.refreshLatestSummary(referenceSequenceNumber);
+        for (const child of this.children.values()) {
+            child.refreshLatestSummary(referenceSequenceNumber);
         }
     }
 

@@ -7,7 +7,7 @@ import "mocha";
 
 import { strict as assert } from "assert";
 import { Random } from "best-random";
-import { IChannelServices } from "@fluidframework/component-runtime-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockStorage,

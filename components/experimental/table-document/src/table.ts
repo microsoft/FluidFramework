@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
 import {
     Jsonable,
     JsonablePrimitive,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 
 export type TableDocumentItem = Jsonable<JsonablePrimitive | IFluidHandle>;
 

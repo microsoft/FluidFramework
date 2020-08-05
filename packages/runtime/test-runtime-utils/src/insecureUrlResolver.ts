@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { parse } from "url";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidHandleContext } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { RemoteFluidObjectHandle } from "../remoteComponentHandle";
 
 export const mockHandleContext: IFluidHandleContext = {

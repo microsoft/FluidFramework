@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { SnapshotLegacy } from "../snapshotlegacy";
 import { TestClient } from ".";
@@ -35,7 +35,7 @@ describe("snapshot", () => {
         assert.equal(client2.getLength(), client1.getLength());
         assert.equal(client2.getText(), client1.getText());
     })
-        // tslint:disable-next-line: mocha-no-side-effect-code
+
         .timeout(5000);
 
     it("header and body", async () => {
@@ -72,6 +72,6 @@ describe("snapshot", () => {
                 client1.getText(SnapshotLegacy.sizeOfFirstChunk - 1));
         }
     })
-        // tslint:disable-next-line: mocha-no-side-effect-code
+
         .timeout(5000);
 });

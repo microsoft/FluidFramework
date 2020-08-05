@@ -9,7 +9,7 @@ import {
     IFluidHandleContext,
     IFluidSerializer,
     IFluidRouter,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { IQuorum } from "@fluidframework/protocol-definitions";
 import { DependencyContainer } from "@fluidframework/synthesize";
 import { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";

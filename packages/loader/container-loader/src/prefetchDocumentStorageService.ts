@@ -16,12 +16,11 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         const p = this.internalStorageService.getSnapshotTree(version);
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        if (p && this.prefetchEnabled) {
+        if (this.prefetchEnabled) {
             // We don't care if the prefetch succeed
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             p.then((tree: ISnapshotTree | null | undefined) => {
-                if (!tree) { return; }
+                if (tree === null || tree === undefined) { return; }
                 this.prefetchTree(tree);
             });
         }
@@ -41,7 +40,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
     private cachedRead(blobId: string): Promise<string> {
         if (this.prefetchEnabled) {
             const prefetchedBlobP: Promise<string> | undefined = this.prefetchCache.get(blobId);
-            if (prefetchedBlobP) {
+            if (prefetchedBlobP !== undefined) {
                 return prefetchedBlobP;
             }
             const prefetchedBlobPFromStorage = this.internalStorageService.read(blobId);

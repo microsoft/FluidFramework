@@ -8,7 +8,7 @@ import {
     IFluidHandle,
     IFluidHandleContext,
     IFluidSerializer,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";

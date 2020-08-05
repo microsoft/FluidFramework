@@ -7,12 +7,12 @@
 import assert from "assert";
 import { EventEmitter } from "events";
 
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
     IComponentDiscoverableInterfaces,
     IComponentDiscoverInterfaces,
 } from "@fluidframework/framework-interfaces";
-import { IContainerRuntime } from "@fluidframework/component-runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/datastore-definitions";
 
 import { MatchMaker } from "../src/containerServices";
 

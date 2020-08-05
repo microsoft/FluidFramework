@@ -1,6 +1,6 @@
-# Controls Library
+# Example Client UI Controls Library
 
-Provides a set of controls built on top of the Fluid UI library.
+Provides a set of controls built on top of the example client UI library.
 
 ## Canvas
 

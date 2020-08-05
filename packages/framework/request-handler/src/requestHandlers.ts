@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidObject, IFluidLoadable, IResponse } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IFluidLoadable, IResponse } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 

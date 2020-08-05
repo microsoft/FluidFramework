@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidHandle } from "@fluidframework/component-core-interfaces";
-import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
+import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
+import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ITestFluidComponent } from "./interfaces";
 
 /**

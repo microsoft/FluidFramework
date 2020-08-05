@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from 'assert';
-import { SharedMatrix } from '../src';
-import { Serializable } from '@fluidframework/component-runtime-definitions';
-import { IMatrixProducer, IMatrixReader, IMatrixConsumer, IMatrixWriter } from '@tiny-calc/nano';
+import { strict as assert } from "assert";
+import { IMatrixProducer, IMatrixReader, IMatrixConsumer, IMatrixWriter } from "@tiny-calc/nano";
+import { Serializable } from "@fluidframework/datastore-definitions";
+import { SharedMatrix } from "../src";
 
 export type IMatrix<T> = IMatrixReader<T> & IMatrixWriter<T>;
 
