@@ -34,6 +34,7 @@ import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from "./runtime";
 import { Handle, isHandleValid } from "./handletable";
 import { deserializeBlob, serializeBlob } from "./serialization";
+import { ensureRange } from "./range";
 
 const enum SnapshotPath {
     rows = "rows",
@@ -90,6 +91,9 @@ export class SharedMatrix<T extends Serializable = Serializable>
             this.onColHandlesRecycled);
     }
 
+    private get rowMap() { return this.rows.handleMap; }
+    private get colMap() { return this.cols.handleMap; }
+
     public static create<T extends Serializable = Serializable>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedMatrixFactory.Type) as SharedMatrix<T>;
     }
@@ -113,13 +117,19 @@ export class SharedMatrix<T extends Serializable = Serializable>
     public get colCount() { return this.cols.getLength(); }
 
     public getCell(row: number, col: number): T | undefined | null {
+        // Perf: Bounds checking is performed inside the implementation for 'getHandle()'
+
         // Map the logical (row, col) to associated storage handles.
-        const rowHandle = this.rows.getMaybeHandle(row);
+        const rowHandle = this.rowMap.getHandle(row);
         if (isHandleValid(rowHandle)) {
-            const colHandle = this.cols.getMaybeHandle(col);
+            const colHandle = this.colMap.getHandle(col);
             if (isHandleValid(colHandle)) {
                 return this.cells.getCell(rowHandle, colHandle);
             }
+        } else {
+            // If we early exit because the given rowHandle is unallocated, we still need to
+            // bounds-check the 'col' parameter.
+            ensureRange(col, this.cols.getLength());
         }
 
         return undefined;

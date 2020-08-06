@@ -153,7 +153,7 @@ describe("Matrix", () => {
             assert.throws(() => { matrix.getCell(0, -1); });
 
             // Reading past end of matrix must throw.
-            assert.throws(() => { matrix.getCell(1, 0);  });
+            assert.throws(() => { matrix.getCell(1, 0); });
             assert.throws(() => { matrix.getCell(0, 2); });
         });
 

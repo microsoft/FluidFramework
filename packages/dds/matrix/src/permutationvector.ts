@@ -23,6 +23,7 @@ import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import { HandleTable, Handle, isHandleValid } from "./handletable";
 import { serializeBlob, deserializeBlob } from "./serialization";
+import { HandleCache } from "./handlemap";
 
 const enum SnapshotPath {
     segments = "segments",
@@ -111,6 +112,7 @@ export class PermutationSegment extends BaseSegment {
 
 export class PermutationVector extends Client {
     private handleTable = new HandleTable<never>(); // Tracks available storage handles for rows.
+    public readonly handleMap = new HandleCache(this);
 
     constructor(
         path: string,
@@ -124,8 +126,7 @@ export class PermutationVector extends Client {
             ChildLogger.create(logger, `Matrix.${path}.MergeTreeClient`), {
             ...runtime.options,
             newMergeTreeSnapshotFormat: true,   // Temporarily force new snapshot format until it is the default.
-        },                                      // (See https://github.com/microsoft/FluidFramework/issues/84)
-        );
+        });                                     // (See https://github.com/microsoft/FluidFramework/issues/84)
 
         this.mergeTreeDeltaCallback = this.onDelta;
         this.mergeTreeMaintenanceCallback = this.onMaintenance;
@@ -144,10 +145,7 @@ export class PermutationVector extends Client {
     public getMaybeHandle(pos: number): Handle {
         assert(0 <= pos && pos < this.getLength());
 
-        const { segment, offset } = this.getContainingSegment(pos);
-        const asPerm = segment as PermutationSegment;
-
-        return asPerm.start + offset;
+        return this.handleMap.getHandle(pos);
     }
 
     public getAllocatedHandle(pos: number): Handle {
@@ -159,7 +157,6 @@ export class PermutationVector extends Client {
         this.walkSegments(
             (segment) => {
                 const asPerm = segment as PermutationSegment;
-                assert(!isHandleValid(asPerm.start));
                 asPerm.start = handle = this.handleTable.allocate();
                 return true;
             },
@@ -167,6 +164,8 @@ export class PermutationVector extends Client {
             pos + 1,
             /* accum: */ undefined,
             /* splitRange: */ true);
+
+        this.handleMap.add(pos, handle);
 
         return handle;
     }
@@ -284,11 +283,20 @@ export class PermutationVector extends Client {
                     //       processing remote ops.
                     segment.reset();
 
+                    this.handleMap.itemsChanged(position, /* deleteCount: */ 0, /* insertCount: */ segment.cachedLength);
+                }
+
+                // Notify the matrix of inserted positions.  The matrix in turn notifies any IMatrixConsumers.
+                for (const { segment, position } of ranges) {
                     this.deltaCallback(position, /* numRemoved: */ 0, /* numInserted: */ segment.cachedLength);
                 }
                 break;
 
             case MergeTreeDeltaType.REMOVE: {
+                for (const { segment, position } of ranges) {
+                    this.handleMap.itemsChanged(position, /* deleteCount: */ segment.cachedLength, /* insertCount: */ 0);
+                }
+
                 // Notify the matrix of removed positions.  The matrix in turn notifies any IMatrixConsumers.
                 for (const { segment, position } of ranges) {
                     this.deltaCallback(position, /* numRemoved: */ segment.cachedLength, /* numInsert: */ 0);
