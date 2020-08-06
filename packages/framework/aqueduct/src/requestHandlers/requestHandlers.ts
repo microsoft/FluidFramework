@@ -24,16 +24,17 @@ export const mountableViewRequestHandler:
     (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => RuntimeRequestHandler =
     (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => {
         return async (request: RequestParser, runtime: IContainerRuntime) => {
+            const nestedHandler = buildRuntimeRequestHandler(...handlers);
             if (request.headers?.mountableView === true) {
                 // Reissue the request without the mountableView header.
                 // We'll repack whatever the response is if we can.
                 const headers = { ...request.headers };
                 delete headers.mountableView;
-                const newRequest = new RequestParser({
+                const newRequest: IRequest = {
                     url: request.url,
                     headers,
-                });
-                const response = await buildRuntimeRequestHandler(...handlers)(newRequest, runtime);
+                };
+                const response = await nestedHandler(newRequest, runtime);
 
                 if (response.status === 200 && MountableViewClass.canMount(response.value)) {
                     return {
@@ -42,8 +43,9 @@ export const mountableViewRequestHandler:
                         value: new MountableViewClass(response.value),
                     };
                 }
+                return response;
             }
-            return undefined;
+            return nestedHandler(request, runtime);
         };
     };
 
