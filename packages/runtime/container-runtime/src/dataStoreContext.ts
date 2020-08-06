@@ -517,7 +517,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         this.channelDeferred.resolve(this.channel);
 
         // notify the runtime if they want to propagate up. Used for logging.
-        this.containerRuntime.notifyDataStoreInstantiated(this);
+        this._containerRuntime.notifyDataStoreInstantiated(this);
     }
 
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
