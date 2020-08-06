@@ -11,7 +11,7 @@ import {
     IFluidHandleContext,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -75,10 +75,10 @@ export interface ISharedObjectRegistry {
 export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreChannel,
     IFluidDataStoreRuntime, IFluidHandleContext {
     /**
-     * Loads the component runtime
+     * Loads the data store runtime
      * @param context - The component context
      * @param sharedObjectRegistry - The registry of shared objects used by this component
-     * @param activeCallback - The callback called when the component runtime in active
+     * @param activeCallback - The callback called when the data store runtime in active
      * @param componentRegistry - The registry of components created and used by this component
      */
     public static load(
@@ -609,7 +609,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     }
 
     /**
-     * Attach channel should only be called after the componentRuntime has been attached
+     * Attach channel should only be called after the dataStoreRuntime has been attached
      */
     private attachChannel(channel: IChannel): void {
         this.verifyNotClosed();

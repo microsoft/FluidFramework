@@ -2,5 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-export * from "./componentClipboardProvider";
-export * from "./componentClipboardConsumer";
+
+import { Buffer } from "buffer";
+export { Buffer as IsoBuffer };

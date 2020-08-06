@@ -4,7 +4,7 @@
  */
 
 import { IDirectoryValueChanged, SharedMap } from "@fluidframework/map";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
     FluidComponentMap,
@@ -25,7 +25,7 @@ import { ISyncedState } from "..";
  * @param isSyncedStateUpdate - Is the update from a local state update or from one triggered by the synced state
  * @param syncedStateId - Unique ID for this synced component's state
  * @param syncedState - The shared map this component's synced state is stored on
- * @param runtime - The component runtime
+ * @param runtime - The data store runtime
  * @param viewState - The current view state
  * @param setState - Callback to update the react view state
  * @param syncedStateCallback - The callback that will be triggered when the synced state value for the components

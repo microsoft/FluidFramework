@@ -8,7 +8,7 @@ import { DataObject, DataObjectFactory, waitForAttach } from "@fluidframework/aq
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import {
     IFluidHandle, IFluidLoadable,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";

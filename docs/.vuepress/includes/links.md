@@ -1,10 +1,10 @@
 <!-- Links -->
 
-[IComponentHTMLView]: ../api/component-core-interfaces.icomponenthtmlview.md
-[icomponenthtmlview]: ../api/component-core-interfaces.icomponenthtmlview.md
+[IComponentHTMLView]: ../api/core-interfaces.icomponenthtmlview.md
+[icomponenthtmlview]: ../api/core-interfaces.icomponenthtmlview.md
 
-[IProvideComponentHTMLView]: ../api/component-core-interfaces.iprovidecomponenthtmlview.md
-[iprovidecomponenthtmlview]: ../api/component-core-interfaces.iprovidecomponenthtmlview.md
+[IProvideComponentHTMLView]: ../api/core-interfaces.iprovidecomponenthtmlview.md
+[iprovidecomponenthtmlview]: ../api/core-interfaces.iprovidecomponenthtmlview.md
 
 [PrimedComponent]: ../api/aqueduct.primedcomponent.md
 [primedcomponent]: ../api/aqueduct.primedcomponent.md

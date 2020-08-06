@@ -5,7 +5,7 @@
 
 import childProcess from "child_process";
 import path from "path";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { ILoader } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";

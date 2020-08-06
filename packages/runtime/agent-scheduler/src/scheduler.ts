@@ -12,8 +12,8 @@ import {
     IFluidRunnable,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
-import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/component-runtime";
+} from "@fluidframework/core-interfaces";
+import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore";
 import { LoaderHeader, AttachState } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";

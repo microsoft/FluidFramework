@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
     IFluidLastEditedTracker,

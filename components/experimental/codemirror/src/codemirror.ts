@@ -10,8 +10,8 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
-} from "@fluidframework/component-core-interfaces";
-import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
+} from "@fluidframework/core-interfaces";
+import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     MergeTreeDeltaType,

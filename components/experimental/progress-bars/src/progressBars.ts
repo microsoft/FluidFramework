@@ -11,8 +11,8 @@ import {
     IFluidRouter,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
-import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
+} from "@fluidframework/core-interfaces";
+import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { IFluidObjectCollection } from "@fluidframework/framework-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";

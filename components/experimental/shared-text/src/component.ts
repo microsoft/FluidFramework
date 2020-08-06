@@ -19,8 +19,8 @@ import {
     IRequest,
     IResponse,
     IFluidRouter,
-} from "@fluidframework/component-core-interfaces";
-import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/component-runtime";
+} from "@fluidframework/core-interfaces";
+import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore";
 import { Ink } from "@fluidframework/ink";
 import {
     ISharedMap,
@@ -83,6 +83,7 @@ export class SharedTextRunner
     private collabDoc: Document;
     private taskManager: ITaskManager;
     private uiInitialized = false;
+    private readonly title: string = "Shared Text";
 
     private constructor(
         private readonly runtime: FluidDataStoreRuntime,
@@ -237,6 +238,8 @@ export class SharedTextRunner
         containerDiv.style.overflow = "hidden";
         const container = new controls.FlowContainer(
             containerDiv,
+            this.title,
+            // API.Document should not be used here. This should be removed once #2915 is fixed.
             new API.Document(
                 this.runtime,
                 this.context,

@@ -56,7 +56,7 @@ describe("TestSignals", () => {
     });
 
     describe("Attach signal Handlers on Both Clients", () => {
-        it("Validate component runtime signals", async () => {
+        it("Validate data store runtime signals", async () => {
             let user1SignalReceivedCount = 0;
             let user2SignalReceivedCount = 0;
 
@@ -151,15 +151,15 @@ describe("TestSignals", () => {
         await opProcessingController.process();
         assert.equal(user1HostSignalReceivedCount, 1, "client 1 did not receive signal on host runtime");
         assert.equal(user2HostSignalReceivedCount, 1, "client 2 did not receive signal on host runtime");
-        assert.equal(user1CompSignalReceivedCount, 0, "client 1 should not receive signal on component runtime");
-        assert.equal(user2CompSignalReceivedCount, 0, "client 2 should not receive signal on component runtime");
+        assert.equal(user1CompSignalReceivedCount, 0, "client 1 should not receive signal on data store runtime");
+        assert.equal(user2CompSignalReceivedCount, 0, "client 2 should not receive signal on data store runtime");
 
         user2ComponentRuntime.submitSignal("TestSignal", true);
         await opProcessingController.process();
         assert.equal(user1HostSignalReceivedCount, 1, "client 1 should not receive signal on host runtime");
         assert.equal(user2HostSignalReceivedCount, 1, "client 2 should not receive signal on host runtime");
-        assert.equal(user1CompSignalReceivedCount, 1, "client 1 did not receive signal on component runtime");
-        assert.equal(user2CompSignalReceivedCount, 1, "client 2 did not receive signal on component runtime");
+        assert.equal(user1CompSignalReceivedCount, 1, "client 1 did not receive signal on data store runtime");
+        assert.equal(user2CompSignalReceivedCount, 1, "client 2 did not receive signal on data store runtime");
     });
 
     afterEach(async () => {

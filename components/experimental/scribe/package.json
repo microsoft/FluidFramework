@@ -33,11 +33,11 @@
   },
   "dependencies": {
     "@fluid-internal/client-api": "^0.25.0",
-    "@fluidframework/component-core-interfaces": "^0.25.0",
-    "@fluidframework/component-runtime": "^0.25.0",
     "@fluidframework/container-definitions": "^0.25.0",
     "@fluidframework/container-runtime": "^0.25.0",
     "@fluidframework/container-runtime-definitions": "^0.25.0",
+    "@fluidframework/core-interfaces": "^0.25.0",
+    "@fluidframework/datastore": "^0.25.0",
     "@fluidframework/datastore-definitions": "^0.25.0",
     "@fluidframework/host-service-interfaces": "^0.25.0",
     "@fluidframework/map": "^0.25.0",

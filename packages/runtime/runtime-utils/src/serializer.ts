@@ -7,7 +7,7 @@ import {
     IFluidHandle,
     IFluidHandleContext,
     IFluidSerializer,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { RemoteFluidObjectHandle } from "./remoteComponentHandle";
 import { isSerializedHandle } from "./utils";
 

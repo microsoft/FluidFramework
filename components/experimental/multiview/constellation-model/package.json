@@ -38,7 +38,7 @@
     "@fluid-example/multiview-coordinate-interface": "^0.25.0",
     "@fluid-example/multiview-coordinate-model": "^0.25.0",
     "@fluidframework/aqueduct": "^0.25.0",
-    "@fluidframework/component-core-interfaces": "^0.25.0",
+    "@fluidframework/core-interfaces": "^0.25.0",
     "@fluidframework/map": "^0.25.0"
   },
   "devDependencies": {

@@ -14,27 +14,27 @@ import {
     CreateChildSummarizerNodeFn,
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker, SummarizerNode } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { LocalFluidDataStoreContext } from "../componentContext";
+import { LocalFluidDataStoreContext } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
 
-describe("Component Creation Tests", () => {
-    describe("Component creation via local context creation and realize", () => {
+describe("Data Store Creation Tests", () => {
+    describe("Store creation via local context creation and realize", () => {
         /**
-         * These tests simulate component and subcomponent creation by creating local contexts and realizing them.
-         * The component tree for these tests is as follows:
+         * These tests simulate dataStore and subDataStore creation by creating local contexts and realizing them.
+         * The dataStore tree for these tests is as follows:
          *
          *                  Default
          *                     |
          *                     |
-         *                Component A
+         *                DataStore A
          *                   /   \
          *                  /     \
-         *        Component B     Component C
+         *        DataStore B     DataStore C
          */
 
         let storage: IDocumentStorageService;
@@ -42,15 +42,15 @@ describe("Component Creation Tests", () => {
         const attachCb = (mR: IFluidDataStoreChannel) => { };
         let containerRuntime: ContainerRuntime;
         const defaultName = "default";
-        const componentAName = "componentA";
-        const componentBName = "componentB";
-        const componentCName = "componentC";
+        const dataStoreAName = "dataStoreA";
+        const dataStoreBName = "dataStoreB";
+        const dataStoreCName = "dataStoreC";
         let summaryTracker: SummaryTracker;
         let getCreateSummarizerNodeFn: (id: string) => CreateChildSummarizerNodeFn;
 
         // Helper function that creates a FluidDataStoreRegistryEntry with the registry entries
         // provided to it.
-        function createComponentRegistryEntry(
+        function createDataStoreRegistryEntry(
             entries: NamedFluidDataStoreRegistryEntries,
         ): FluidDataStoreRegistryEntry {
             const registryEntries = new Map(entries);
@@ -74,19 +74,19 @@ describe("Component Creation Tests", () => {
         }
 
         beforeEach(async () => {
-            // Component B is a leaf component and its registry does not have any entries.
-            const entryB = createComponentRegistryEntry([]);
-            // Component C is a leaf component and its registry does not have any entries.
-            const entryC = createComponentRegistryEntry([]);
-            // Component A's registry has entries for component B and component C.
-            const entryA = createComponentRegistryEntry([
-                [componentBName, Promise.resolve(entryB)],
-                [componentCName, Promise.resolve(entryC)],
+            // DataStore B is a leaf dataStore and its registry does not have any entries.
+            const entryB = createDataStoreRegistryEntry([]);
+            // DataStore C is a leaf dataStore and its registry does not have any entries.
+            const entryC = createDataStoreRegistryEntry([]);
+            // DataStore A's registry has entries for dataStore B and dataStore C.
+            const entryA = createDataStoreRegistryEntry([
+                [dataStoreBName, Promise.resolve(entryB)],
+                [dataStoreCName, Promise.resolve(entryC)],
             ]);
-            // The default component's registry has entry for only component A.
-            const entryDefault = createComponentRegistryEntry([[componentAName, Promise.resolve(entryA)]]);
+            // The default dataStore's registry has entry for only dataStore A.
+            const entryDefault = createDataStoreRegistryEntry([[dataStoreAName, Promise.resolve(entryA)]]);
 
-            // Create the global registry for the container that can only create the default component.
+            // Create the global registry for the container that can only create the default dataStore.
             const globalRegistryEntries = new Map([[defaultName, Promise.resolve(entryDefault)]]);
             const globalRegistry: IFluidDataStoreRegistry = {
                 get IFluidDataStoreRegistry() { return globalRegistry; },
@@ -112,18 +112,18 @@ describe("Component Creation Tests", () => {
             );
         });
 
-        it("Valid global component", async () => {
+        it("Valid global dataStore", async () => {
             let success: boolean = true;
-            const componentId = "default-Id";
-            // Create the default component that is in the global registry.
+            const dataStoreId = "default-Id";
+            // Create the default dataStore that is in the global registry.
             const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                componentId,
+                dataStoreId,
                 [defaultName],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                getCreateSummarizerNodeFn(componentId),
+                getCreateSummarizerNodeFn(dataStoreId),
                 attachCb);
 
             try {
@@ -135,18 +135,18 @@ describe("Component Creation Tests", () => {
             assert.strictEqual(success, true);
         });
 
-        it("Invalid global component", async () => {
+        it("Invalid global dataStore", async () => {
             let success: boolean = true;
-            const componentId = "A-Id";
-            // Create component A that is not in the global registry.
+            const dataStoreId = "A-Id";
+            // Create dataStore A that is not in the global registry.
             const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                componentId,
-                [componentAName],
+                dataStoreId,
+                [dataStoreAName],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                getCreateSummarizerNodeFn(componentId),
+                getCreateSummarizerNodeFn(dataStoreId),
                 attachCb);
 
             try {
@@ -158,18 +158,18 @@ describe("Component Creation Tests", () => {
             assert.strictEqual(success, false);
         });
 
-        it("Valid subcomponent from the global component", async () => {
+        it("Valid subDataStore from the global dataStore", async () => {
             let success: boolean = true;
-            const componentId = "A-Id";
-            // Create component A that is in the registry of the default component.
+            const dataStoreId = "A-Id";
+            // Create dataStore A that is in the registry of the default dataStore.
             const contextA: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                componentId,
-                [defaultName, componentAName],
+                dataStoreId,
+                [defaultName, dataStoreAName],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                getCreateSummarizerNodeFn(componentId),
+                getCreateSummarizerNodeFn(dataStoreId),
                 attachCb);
 
             try {
@@ -181,18 +181,18 @@ describe("Component Creation Tests", () => {
             assert.strictEqual(success, true);
         });
 
-        it("Invalid subcomponent from the global component", async () => {
+        it("Invalid subDataStore from the global dataStore", async () => {
             let success: boolean = true;
-            const componentId = "B-Id";
-            // Create component B that is in not the registry of the default component.
+            const dataStoreId = "B-Id";
+            // Create dataStore B that is in not the registry of the default dataStore.
             const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                componentId,
-                [defaultName, componentBName],
+                dataStoreId,
+                [defaultName, dataStoreBName],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                getCreateSummarizerNodeFn(componentId),
+                getCreateSummarizerNodeFn(dataStoreId),
                 attachCb);
 
             try {
@@ -204,18 +204,18 @@ describe("Component Creation Tests", () => {
             assert.strictEqual(success, false);
         });
 
-        it("Valid subcomponent at depth 2", async () => {
+        it("Valid subDataStore at depth 2", async () => {
             let success: boolean = true;
-            const componentBId = "B-Id";
-            // Create component B that is in the registry of component A (which is at depth 2).
+            const dataStoreBId = "B-Id";
+            // Create dataStore B that is in the registry of dataStore A (which is at depth 2).
             const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                componentBId,
-                [defaultName, componentAName, componentBName],
+                dataStoreBId,
+                [defaultName, dataStoreAName, dataStoreBName],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                getCreateSummarizerNodeFn(componentBId),
+                getCreateSummarizerNodeFn(dataStoreBId),
                 attachCb);
 
             try {
@@ -226,16 +226,16 @@ describe("Component Creation Tests", () => {
             // Verify that realize was successful.
             assert.strictEqual(success, true);
 
-            const componentCId = "C-Id";
-            // Create component C that is in the registry of component A (which is at depth 2).
+            const dataStoreCId = "C-Id";
+            // Create dataStore C that is in the registry of dataStore A (which is at depth 2).
             const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                componentCId,
-                [defaultName, componentAName, componentCName],
+                dataStoreCId,
+                [defaultName, dataStoreAName, dataStoreCName],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                getCreateSummarizerNodeFn(componentCId),
+                getCreateSummarizerNodeFn(dataStoreCId),
                 attachCb);
 
             try {
@@ -247,18 +247,18 @@ describe("Component Creation Tests", () => {
             assert.strictEqual(success, true);
         });
 
-        it("Invalid subcomponent at depth 2", async () => {
+        it("Invalid subDataStore at depth 2", async () => {
             let success: boolean = true;
-            const componentId = "fake-Id";
-            // Create a fake component that is not in the registry of component A (which is at depth 2).
+            const dataStoreId = "fake-Id";
+            // Create a fake dataStore that is not in the registry of dataStore A (which is at depth 2).
             const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                componentId,
-                [defaultName, componentAName, "fake"],
+                dataStoreId,
+                [defaultName, dataStoreAName, "fake"],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                getCreateSummarizerNodeFn(componentId),
+                getCreateSummarizerNodeFn(dataStoreId),
                 attachCb);
 
             try {
@@ -270,18 +270,18 @@ describe("Component Creation Tests", () => {
             assert.strictEqual(success, false);
         });
 
-        it("Invalid subcomponent at depth 3", async () => {
+        it("Invalid subDataStore at depth 3", async () => {
             let success: boolean = true;
-            const componentId = "fake-Id";
-            // Create a fake component that is not in the registry of component B (which is at depth 3).
+            const dataStoreId = "fake-Id";
+            // Create a fake dataStore that is not in the registry of dataStore B (which is at depth 3).
             const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                componentId,
-                [defaultName, componentAName, componentBName, "fake"],
+                dataStoreId,
+                [defaultName, dataStoreAName, dataStoreBName, "fake"],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                getCreateSummarizerNodeFn(componentId),
+                getCreateSummarizerNodeFn(dataStoreId),
                 attachCb);
 
             try {
@@ -293,18 +293,18 @@ describe("Component Creation Tests", () => {
             assert.strictEqual(success, false);
         });
 
-        it("Subcomponent which is in the registry of the parent component", async () => {
+        it("SubDataStore which is in the registry of the parent dataStore", async () => {
             let success: boolean = true;
-            const componentId = "C-Id";
-            // Create component C that is in parent's registry but not in the registry of component B.
+            const dataStoreId = "C-Id";
+            // Create dataStore C that is in parent's registry but not in the registry of dataStore B.
             const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                componentId,
-                [defaultName, componentAName, componentBName, componentCName],
+                dataStoreId,
+                [defaultName, dataStoreAName, dataStoreBName, dataStoreCName],
                 containerRuntime,
                 storage,
                 scope,
                 summaryTracker,
-                getCreateSummarizerNodeFn(componentId),
+                getCreateSummarizerNodeFn(dataStoreId),
                 attachCb);
 
             try {

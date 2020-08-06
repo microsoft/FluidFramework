@@ -4,7 +4,7 @@
  */
 
 import * as SearchMenu from "@fluid-example/search-menu";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import * as MergeTree from "@fluidframework/merge-tree";
 import * as Katex from "katex";
 import { CharacterCodes } from "./characterCodes";

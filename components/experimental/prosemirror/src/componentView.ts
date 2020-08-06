@@ -6,7 +6,7 @@
 import { Node } from "prosemirror-model";
 import { EditorView, NodeView } from "prosemirror-view";
 import { ILoader } from "@fluidframework/container-definitions";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 
 export class ComponentView implements NodeView {

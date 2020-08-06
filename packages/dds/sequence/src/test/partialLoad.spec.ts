@@ -46,23 +46,23 @@ function generateSnapshotTree(
     containerRuntimeFactory: MockContainerRuntimeFactory,
     options: any = {},
 ): [SharedString, ITree] {
-    const componentRuntime1 = new MockFluidDataStoreRuntime();
-    componentRuntime1.options = options;
+    const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+    dataStoreRuntime1.options = options;
     // Connect the first SharedString.
-    const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
+    const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
     const services1: IChannelServices = {
         deltaConnection: containerRuntime1.createDeltaConnection(),
         objectStorage: new MockStorage(),
     };
-    const sharedString = new SharedString(componentRuntime1, "shared-string", SharedStringFactory.Attributes);
+    const sharedString = new SharedString(dataStoreRuntime1, "shared-string", SharedStringFactory.Attributes);
     sharedString.initializeLocal();
     sharedString.connect(services1);
 
     // Create and connect a second SharedString.
-    const componentRuntime2 = new MockFluidDataStoreRuntime();
-    componentRuntime2.options = options;
-    const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
-    const sharedString2 = new SharedString(componentRuntime2, "shared-string", SharedStringFactory.Attributes);
+    const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+    dataStoreRuntime2.options = options;
+    const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+    const sharedString2 = new SharedString(dataStoreRuntime2, "shared-string", SharedStringFactory.Attributes);
     const services2: IChannelServices = {
         deltaConnection: containerRuntime2.createDeltaConnection(),
         objectStorage: new MockStorage(),
@@ -86,15 +86,15 @@ describe("SharedString Partial Load", () => {
         const options = { mergeTreeSnapshotChunkSize };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
-        const localComponentRuntime = new MockFluidDataStoreRuntime();
-        localComponentRuntime.options = options;
-        const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localComponentRuntime);
+        const localDataStoreRuntime = new MockFluidDataStoreRuntime();
+        localDataStoreRuntime.options = options;
+        const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
         const localServices = {
             deltaConnection: localContainerRuntime.createDeltaConnection(),
             objectStorage: new MockStorage(snapshotTree),
         };
         const localSharedString =
-            new SharedString(localComponentRuntime, "shared-string", SharedStringFactory.Attributes);
+            new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
 
         // eslint-disable-next-line no-null/no-null
         await localSharedString.load(null, localServices);
@@ -107,15 +107,15 @@ describe("SharedString Partial Load", () => {
         const options = { newMergeTreeSnapshotFormat: true, mergeTreeSnapshotChunkSize };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
-        const localComponentRuntime = new MockFluidDataStoreRuntime();
-        localComponentRuntime.options = options;
-        const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localComponentRuntime);
+        const localDataStoreRuntime = new MockFluidDataStoreRuntime();
+        localDataStoreRuntime.options = options;
+        const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
         const localServices = {
             deltaConnection: localContainerRuntime.createDeltaConnection(),
             objectStorage: new MockStorage(snapshotTree),
         };
         const localSharedString =
-            new SharedString(localComponentRuntime, "shared-string", SharedStringFactory.Attributes);
+            new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
 
         // eslint-disable-next-line no-null/no-null
         await localSharedString.load(null, localServices);
@@ -132,15 +132,15 @@ describe("SharedString Partial Load", () => {
         };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
-        const localComponentRuntime = new MockFluidDataStoreRuntime();
-        localComponentRuntime.options = options;
-        const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localComponentRuntime);
+        const localDataStoreRuntime = new MockFluidDataStoreRuntime();
+        localDataStoreRuntime.options = options;
+        const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
         const localServices = {
             deltaConnection: localContainerRuntime.createDeltaConnection(),
             objectStorage: new MockStorage(snapshotTree),
         };
         const localSharedString =
-            new SharedString(localComponentRuntime, "shared-string", SharedStringFactory.Attributes);
+            new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
 
         // eslint-disable-next-line no-null/no-null
         await localSharedString.load(null, localServices);
@@ -148,7 +148,7 @@ describe("SharedString Partial Load", () => {
         assert.notEqual(localSharedString.getText(), remoteSharedString.getText());
 
         await localSharedString.loaded;
-        localComponentRuntime.deltaManager.lastSequenceNumber = localSharedString.getCurrentSeq();
+        localDataStoreRuntime.deltaManager.lastSequenceNumber = localSharedString.getCurrentSeq();
 
         assert.equal(localSharedString.getText(), remoteSharedString.getText());
     });
@@ -162,23 +162,23 @@ describe("SharedString Partial Load", () => {
         };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
-        const localComponentRuntime = new MockFluidDataStoreRuntime();
-        localComponentRuntime.options = options;
-        const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localComponentRuntime);
+        const localDataStoreRuntime = new MockFluidDataStoreRuntime();
+        localDataStoreRuntime.options = options;
+        const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
         const localServices = {
             deltaConnection: localContainerRuntime.createDeltaConnection(),
             objectStorage: new MockStorage(snapshotTree),
         };
         const localSharedString =
-            new SharedString(localComponentRuntime, "shared-string", SharedStringFactory.Attributes);
+            new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
 
         // eslint-disable-next-line no-null/no-null
         await localSharedString.load(null, localServices);
 
-        localComponentRuntime.deltaManager.lastSequenceNumber =
+        localDataStoreRuntime.deltaManager.lastSequenceNumber =
             containerRuntimeFactory.sequenceNumber;
 
-        localComponentRuntime.deltaManager.minimumSequenceNumber =
+        localDataStoreRuntime.deltaManager.minimumSequenceNumber =
             containerRuntimeFactory.getMinSeq();
 
         assert.notEqual(localSharedString.getText(), remoteSharedString.getText());
@@ -207,23 +207,23 @@ describe("SharedString Partial Load", () => {
         };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
-        const localComponentRuntime = new MockFluidDataStoreRuntime();
-        localComponentRuntime.options = options;
-        const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localComponentRuntime);
+        const localDataStoreRuntime = new MockFluidDataStoreRuntime();
+        localDataStoreRuntime.options = options;
+        const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
         const localServices = {
             deltaConnection: localContainerRuntime.createDeltaConnection(),
             objectStorage: new MockStorage(snapshotTree),
         };
         const localSharedString =
-            new SharedString(localComponentRuntime, "shared-string", SharedStringFactory.Attributes);
+            new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
 
         // eslint-disable-next-line no-null/no-null
         await localSharedString.load(null, localServices);
 
-        localComponentRuntime.deltaManager.lastSequenceNumber =
+        localDataStoreRuntime.deltaManager.lastSequenceNumber =
             containerRuntimeFactory.sequenceNumber;
 
-        localComponentRuntime.deltaManager.minimumSequenceNumber =
+        localDataStoreRuntime.deltaManager.minimumSequenceNumber =
             containerRuntimeFactory.getMinSeq();
 
         assert.notEqual(localSharedString.getText(), remoteSharedString.getText());
@@ -249,23 +249,23 @@ describe("SharedString Partial Load", () => {
         };
         const [remoteSharedString, snapshotTree] = generateSnapshotTree(containerRuntimeFactory, options);
 
-        const localComponentRuntime = new MockFluidDataStoreRuntime();
-        localComponentRuntime.options = options;
-        const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localComponentRuntime);
+        const localDataStoreRuntime = new MockFluidDataStoreRuntime();
+        localDataStoreRuntime.options = options;
+        const localContainerRuntime = containerRuntimeFactory.createContainerRuntime(localDataStoreRuntime);
         const localServices = {
             deltaConnection: localContainerRuntime.createDeltaConnection(),
             objectStorage: new MockStorage(snapshotTree),
         };
         const localSharedString =
-            new SharedString(localComponentRuntime, "shared-string", SharedStringFactory.Attributes);
+            new SharedString(localDataStoreRuntime, "shared-string", SharedStringFactory.Attributes);
 
         // eslint-disable-next-line no-null/no-null
         await localSharedString.load(null, localServices);
 
-        localComponentRuntime.deltaManager.lastSequenceNumber =
+        localDataStoreRuntime.deltaManager.lastSequenceNumber =
             containerRuntimeFactory.sequenceNumber;
 
-        localComponentRuntime.deltaManager.minimumSequenceNumber =
+        localDataStoreRuntime.deltaManager.minimumSequenceNumber =
             containerRuntimeFactory.getMinSeq();
 
         assert.notEqual(localSharedString.getText(), remoteSharedString.getText());

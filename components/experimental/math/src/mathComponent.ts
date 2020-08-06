@@ -15,13 +15,8 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
-} from "@fluidframework/component-core-interfaces";
-import { FluidOjectHandle } from "@fluidframework/component-runtime";
-import {
-    IComponentLayout,
-    ComponentCursorDirection,
-    IComponentCursor,
-} from "@fluidframework/framework-experimental";
+} from "@fluidframework/core-interfaces";
+import { FluidOjectHandle } from "@fluidframework/datastore";
 import {
     IFluidObjectCollection,
 } from "@fluidframework/framework-interfaces";
@@ -35,31 +30,31 @@ import * as Katex from "katex";
 import * as MathExpr from "./mathExpr";
 
 const directionToCursorDirection = {
-    [Direction.left]: ComponentCursorDirection.Left,
-    [Direction.right]: ComponentCursorDirection.Right,
-    [Direction.up]: ComponentCursorDirection.Up,
-    [Direction.down]: ComponentCursorDirection.Down,
-    [Direction.none]: ComponentCursorDirection.Airlift,
+    [Direction.left]: ClientUI.controls.CursorDirection.Left,
+    [Direction.right]: ClientUI.controls.CursorDirection.Right,
+    [Direction.up]: ClientUI.controls.CursorDirection.Up,
+    [Direction.down]: ClientUI.controls.CursorDirection.Down,
+    [Direction.none]: ClientUI.controls.CursorDirection.Airlift,
 };
 
 const cursorDirectionToDirection = {
-    [ComponentCursorDirection.Left]: Direction.left,
-    [ComponentCursorDirection.Right]: Direction.right,
-    [ComponentCursorDirection.Up]: Direction.up,
-    [ComponentCursorDirection.Down]: Direction.down,
-    [ComponentCursorDirection.Airlift]: Direction.none,
+    [ClientUI.controls.CursorDirection.Left]: Direction.left,
+    [ClientUI.controls.CursorDirection.Right]: Direction.right,
+    [ClientUI.controls.CursorDirection.Up]: Direction.up,
+    [ClientUI.controls.CursorDirection.Down]: Direction.down,
+    [ClientUI.controls.CursorDirection.Airlift]: Direction.none,
 };
 
 type IMathMarkerInst = MathExpr.IMathMarker;
 
-export class MathView implements IFluidHTMLView, IComponentCursor, IComponentLayout {
+export class MathView implements IFluidHTMLView, ClientUI.controls.IViewCursor, ClientUI.controls.IViewLayout {
     public get IFluidHTMLView() { return this; }
-    public get IComponentCursor() { return this; }
-    public get IComponentLayout() { return this; }
+    public get IViewCursor() { return this; }
+    public get IViewLayout() { return this; }
 
     public cursorActive = false;
     public cursorElement: HTMLElement;
-    // IComponentLayout
+    // IViewLayout
     public canInline = true;
     public containerElement: HTMLElement;
     public mathCursor = 0;
@@ -110,21 +105,21 @@ export class MathView implements IFluidHTMLView, IComponentCursor, IComponentLay
         this.localRender();
     };
 
-    // IComponentCursor
-    public enter(direction: ComponentCursorDirection) {
-        console.log(`enter: ${ComponentCursorDirection[direction]}`);
+    // IViewCursor
+    public enter(direction: ClientUI.controls.CursorDirection) {
+        console.log(`enter: ${ClientUI.controls.CursorDirection[direction]}`);
         this.cursorActive = true;
-        if (direction === ComponentCursorDirection.Right) {
+        if (direction === ClientUI.controls.CursorDirection.Right) {
             this.mathCursor = 0;
             this.mathTokenIndex = 0;
-        } else if (direction === ComponentCursorDirection.Left) {
+        } else if (direction === ClientUI.controls.CursorDirection.Left) {
             const mathText = this.instance.getMathText();
             this.mathCursor = mathText.length;
             this.mathTokenIndex = this.instance.endMarker.mathTokens.length;
         }
     }
 
-    public leave(direction: ComponentCursorDirection) {
+    public leave(direction: ClientUI.controls.CursorDirection) {
         this.cursorActive = false;
     }
 
@@ -137,7 +132,7 @@ export class MathView implements IFluidHTMLView, IComponentCursor, IComponentLay
         } else {
             this.mathCursor = 0;
             this.mathTokenIndex = 0;
-            this.noteCursorExit(ComponentCursorDirection.Left);
+            this.noteCursorExit(ClientUI.controls.CursorDirection.Left);
             return true;
         }
     }
@@ -147,7 +142,7 @@ export class MathView implements IFluidHTMLView, IComponentCursor, IComponentLay
         this.mathTokenIndex = MathExpr.mathTokFwd(this.mathTokenIndex,
             mathMarker.mathTokens);
         if (this.mathTokenIndex > mathMarker.mathTokens.length) {
-            this.noteCursorExit(ComponentCursorDirection.Right);
+            this.noteCursorExit(ClientUI.controls.CursorDirection.Right);
             return true;
         } else if (this.mathTokenIndex === mathMarker.mathTokens.length) {
             const mathText = this.instance.getMathText();
@@ -162,11 +157,11 @@ export class MathView implements IFluidHTMLView, IComponentCursor, IComponentLay
         this.containerElement.style.outline = "none";
         this.containerElement.addEventListener("focus", () => {
             console.log("focus...");
-            this.enter(ComponentCursorDirection.Focus);
+            this.enter(ClientUI.controls.CursorDirection.Focus);
             this.localRender();
         });
         this.containerElement.addEventListener("blur", () => {
-            this.leave(ComponentCursorDirection.Focus);
+            this.leave(ClientUI.controls.CursorDirection.Focus);
             this.localRender();
         });
         this.containerElement.addEventListener("keydown", (e) => {
@@ -180,7 +175,7 @@ export class MathView implements IFluidHTMLView, IComponentCursor, IComponentLay
             e.preventDefault();
             e.stopPropagation();
             const cursorDirection = directionToCursorDirection[e.detail.direction];
-            console.log(`caret event ${ComponentCursorDirection[cursorDirection]}`);
+            console.log(`caret event ${ClientUI.controls.CursorDirection[cursorDirection]}`);
             this.enter(cursorDirection);
         }) as EventListener);
     }
@@ -351,12 +346,12 @@ export class MathView implements IFluidHTMLView, IComponentCursor, IComponentLay
             }
         } else if (e.keyCode === ClientUI.controls.KeyCode.rightArrow) {
             if (this.fwd()) {
-                this.leave(ComponentCursorDirection.Right);
+                this.leave(ClientUI.controls.CursorDirection.Right);
             }
             this.localRender();
         } else if (e.keyCode === ClientUI.controls.KeyCode.leftArrow) {
             if (this.rev()) {
-                this.leave(ComponentCursorDirection.Left);
+                this.leave(ClientUI.controls.CursorDirection.Left);
             }
             this.localRender();
         }
@@ -408,7 +403,7 @@ export class MathView implements IFluidHTMLView, IComponentCursor, IComponentLay
         }
     }
 
-    private noteCursorExit(direction: ComponentCursorDirection) {
+    private noteCursorExit(direction: ClientUI.controls.CursorDirection) {
         const cursorElement = ClientUI.controls.findFirstMatch(this.containerElement, (cursor: HTMLElement) => {
             return cursor.style && (cursor.style.color === MathExpr.cursorColor);
         }) || this.containerElement;

@@ -8,14 +8,14 @@ import assert from "assert";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
-import { componentRuntimeRequestHandler, createComponentResponse } from "../requestHandlers";
+import { dataStoreRuntimeRequestHandler, createComponentResponse } from "../requestHandlers";
 
 describe("RequestParser", () => {
-    describe("componentRuntimeRequestHandler", () => {
+    describe("dataStoreRuntimeRequestHandler", () => {
         it("Empty request", async () => {
             const requestParser = new RequestParser({ url: "/" });
             const runtime: IContainerRuntime = {} as IContainerRuntime;
-            const response = await componentRuntimeRequestHandler(requestParser, runtime);
+            const response = await dataStoreRuntimeRequestHandler(requestParser, runtime);
             assert.equal(response, undefined);
         });
 
@@ -33,7 +33,7 @@ describe("RequestParser", () => {
                     } as IFluidDataStoreChannel);
                 },
             } as IContainerRuntime;
-            const response = await componentRuntimeRequestHandler(requestParser, runtime);
+            const response = await dataStoreRuntimeRequestHandler(requestParser, runtime);
             assert.notEqual(response, undefined);
         });
 
@@ -51,7 +51,7 @@ describe("RequestParser", () => {
                     } as IFluidDataStoreChannel);
                 },
             } as IContainerRuntime;
-            const response = await componentRuntimeRequestHandler(requestParser, runtime);
+            const response = await dataStoreRuntimeRequestHandler(requestParser, runtime);
             assert.notEqual(response, undefined);
         });
 
@@ -69,7 +69,7 @@ describe("RequestParser", () => {
                     } as IFluidDataStoreChannel);
                 },
             } as IContainerRuntime;
-            const response = await componentRuntimeRequestHandler(requestParser, runtime);
+            const response = await dataStoreRuntimeRequestHandler(requestParser, runtime);
             assert.notEqual(response, undefined);
         });
     });
