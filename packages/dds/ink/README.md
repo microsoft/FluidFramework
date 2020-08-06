@@ -66,7 +66,6 @@ Ink is an in-progress data structure with the purpose of facilitating collaborat
 
 ## Coordinate bundling
 - Enable bundled coordinate updates rather than one per op
-- Use PointerEvent.getCoalescedEvents(), along with the bundled coordinate updates to improve rendering fidelity and hang resistance
 
 ## Canvas consolidation
 - Replace client-ui-lib's OverlayCanvas with ink's InkCanvas, or remove it.

@@ -8,7 +8,7 @@ window.performance.mark = window.performance.mark || (() => { });
 window.performance.measure = window.performance.measure || (() => { });
 
 import assert from "assert";
-import { createLocalLoader, initializeLocalContainer } from "@fluid-internal/test-utils";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { htmlFormatter } from "../src";
 import { FlowDocument } from "../src/document";
@@ -54,7 +54,7 @@ describe("Layout", () => {
         const container = await initializeLocalContainer(id, loader, codeDetails);
 
         const response = await container.request({ url: "default" });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Default component not found`);
         }
         doc = response.value;

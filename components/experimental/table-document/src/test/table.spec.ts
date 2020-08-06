@@ -6,9 +6,8 @@
 /* eslint-disable no-shadow */
 
 import assert from "assert";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@fluid-internal/test-utils";
+import { createLocalLoader, OpProcessingController, initializeLocalContainer } from "@fluidframework/test-utils";
 import { TableDocument } from "../document";
 import { TableSlice } from "../slice";
 import { TableDocumentItem } from "../table";
@@ -20,7 +19,7 @@ describe("TableDocument", () => {
         config: {},
     };
     let table: TableDocument;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let opProcessingController: OpProcessingController;
 
     function makeId(type: string) {
         const id = Math.random().toString(36).substr(2);
@@ -34,13 +33,13 @@ describe("TableDocument", () => {
         const container = await initializeLocalContainer(id, loader, codeDetails);
 
         const response = await container.request({ url: "default" });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Default component not found`);
         }
         table = response.value;
 
-        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-        containerDeltaEventManager.registerDocuments(container);
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController.addDeltaManagers(container.deltaManager);
     });
 
     const extract = (table: TableDocument) => {
@@ -60,7 +59,7 @@ describe("TableDocument", () => {
         assert.deepStrictEqual(extract(table), expected);
 
         // Paranoid check that awaiting incoming messages does not change test results.
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
         assert.strictEqual(table.numRows, expected.length);
         assert.deepStrictEqual(extract(table), expected);
     };
@@ -108,64 +107,6 @@ describe("TableDocument", () => {
             for (let row = 0; row < table.numRows; row++) {
                 for (let col = 0; col < table.numCols; col++) {
                     assert.strictEqual(table.getCellValue(row, col), `${row},${col}`);
-                }
-            }
-        });
-    });
-
-    describe("eval", () => {
-        it("=A1", () => {
-            table.insertRows(0, 1);
-            table.insertCols(0, 2);
-            table.setCellValue(0, 0, 10);
-            table.setCellValue(0, 1, "=A1");
-            assert.strictEqual(table.evaluateCell(0, 1), 10);
-        });
-
-        it("=A1 w/invalidation", () => {
-            table.insertRows(0, 1);
-            table.insertCols(0, 2);
-            table.setCellValue(0, 0, 10);
-            table.setCellValue(0, 1, "=A1");
-            assert.strictEqual(table.evaluateCell(0, 1), 10);
-            table.setCellValue(0, 0, 20);
-            assert.strictEqual(table.evaluateCell(0, 1), 20);
-        });
-
-        it("=A1 w/insert col", () => {
-            table.insertRows(0, 1);
-            table.insertCols(0, 2);
-            table.setCellValue(0, 0, 10);
-            table.setCellValue(0, 1, "=A1");
-            assert.strictEqual(table.evaluateCell(0, 1), 10);
-            table.insertCols(1, 1);
-            assert.strictEqual(table.evaluateCell(0, 1), undefined);
-            assert.strictEqual(table.evaluateCell(0, 2), 10);
-        });
-
-        it("=A1 w/insert row", () => {
-            table.insertRows(0, 1);
-            table.insertCols(0, 2);
-            table.setCellValue(0, 0, 10);
-            table.setCellValue(0, 1, "=A1");
-            assert.strictEqual(table.evaluateCell(0, 1), 10);
-            table.insertRows(0, 1);
-            assert.strictEqual(table.evaluateCell(0, 1), undefined);
-            assert.strictEqual(table.evaluateCell(1, 1), 10);
-        });
-
-        it("cascading recalcs", () => {
-            table.insertRows(0, 1);
-            table.insertCols(0, 4);
-            table.setCellValue(0, 1, "=A1");
-            table.setCellValue(0, 2, "=B1");
-            table.setCellValue(0, 3, "=C1");
-            for (const expected of [10, 20, 30]) {
-                table.setCellValue(0, 0, expected);
-                for (let r = 0; r < table.numRows; r++) {
-                    for (let c = 0; c < table.numCols; c++) {
-                        assert.strictEqual(table.evaluateCell(r, c), expected);
-                    }
                 }
             }
         });

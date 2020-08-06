@@ -4,36 +4,38 @@
  */
 
 import {
+    IClient,
+    IConnect,
+    IConnected,
+    IContentMessage,
+    ISequencedDocumentMessage,
+    IServiceConfiguration,
+    ISignalMessage,
+} from "@fluidframework/protocol-definitions";
+import { configureWebSocketServices } from "@fluidframework/server-lambdas";
+import { IPubSub, PubSub } from "@fluidframework/server-memory-orderer";
+import {
     DefaultMetricClient,
     IDatabaseManager,
     IDocumentStorage,
+    ILogger,
+    IWebSocket,
     IWebSocketServer,
     MongoDatabaseManager,
     MongoManager,
-    ILogger,
-    IWebSocket,
 } from "@fluidframework/server-services-core";
 import {
+    DebugLogger,
     ITestDbFactory,
+    TestClientManager,
     TestDbFactory,
     TestDocumentStorage,
-    TestTenantManager,
-    TestWebSocketServer,
-    TestClientManager,
-    DebugLogger,
     TestHistorian,
     TestTaskMessageSender,
+    TestTenantManager,
 } from "@fluidframework/server-test-utils";
-import { configureWebSocketServices } from "@fluidframework/server-lambdas";
-import {
-    IClient,
-    IConnected,
-    IConnect,
-    ISequencedDocumentMessage,
-    IContentMessage,
-    ISignalMessage,
-} from "@fluidframework/protocol-definitions";
-import { MemoryOrdererManager } from "./memoryOrdererManager";
+import { LocalWebSocketServer } from "./localWebSocketServer";
+import { LocalOrdererManager } from "./localOrdererManager";
 
 /**
  * Items needed for handling deltas.
@@ -58,13 +60,17 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
     /**
      * Creates and returns a local delta connection server.
      */
-    public static create(testDbFactory: ITestDbFactory = new TestDbFactory({})): ILocalDeltaConnectionServer {
+    public static create(
+        testDbFactory: ITestDbFactory = new TestDbFactory({}),
+        serviceConfiguration?: Partial<IServiceConfiguration>,
+    ): ILocalDeltaConnectionServer {
         const nodesCollectionName = "nodes";
         const documentsCollectionName = "documents";
         const deltasCollectionName = "deltas";
         const scribeDeltasCollectionName = "scribeDeltas";
 
-        const webSocketServer = new TestWebSocketServer();
+        const pubsub: IPubSub = new PubSub();
+        const webSocketServer = new LocalWebSocketServer(pubsub);
         const mongoManager = new MongoManager(testDbFactory);
         const testTenantManager = new TestTenantManager(undefined, undefined, testDbFactory.testDatabase);
 
@@ -81,7 +87,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
         const logger = DebugLogger.create("fluid-server:LocalDeltaConnectionServer");
 
-        const ordererManager = new MemoryOrdererManager(
+        const ordererManager = new LocalOrdererManager(
             testStorage,
             databaseManager,
             testTenantManager,
@@ -89,7 +95,9 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             {},
             16 * 1024,
             async () => new TestHistorian(testDbFactory.testDatabase),
-            logger);
+            logger,
+            serviceConfiguration,
+            pubsub);
 
         configureWebSocketServices(
             webSocketServer,
@@ -111,9 +119,9 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
     }
 
     private constructor(
-        public webSocketServer: TestWebSocketServer,
+        public webSocketServer: LocalWebSocketServer,
         public databaseManager: IDatabaseManager,
-        private readonly ordererManager: MemoryOrdererManager,
+        private readonly ordererManager: LocalOrdererManager,
         public testDbFactory: ITestDbFactory,
         public documentStorage: IDocumentStorage,
         private readonly logger: ILogger) { }
@@ -175,20 +183,6 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
                 socket.removeListener("op", earlyOpHandler);
                 socket.removeListener("op-content", earlyContentHandler);
                 socket.removeListener("signal", earlySignalHandler);
-
-                /* Issue #1566: Backward compat */
-                if (response.initialMessages === undefined) {
-                    response.initialMessages = [];
-                }
-                if (response.initialClients === undefined) {
-                    response.initialClients = [];
-                }
-                if (response.initialContents === undefined) {
-                    response.initialContents = [];
-                }
-                if (response.initialSignals === undefined) {
-                    response.initialSignals = [];
-                }
 
                 if (queuedMessages.length > 0) {
                     // Some messages were queued.

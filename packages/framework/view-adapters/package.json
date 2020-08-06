@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/view-adapters",
-  "version": "0.21.0",
+  "version": "0.25.0",
   "description": "View adapters for rendering components of alternate or unknown UI frameworks",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,13 +26,13 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.21.0",
-    "@fluidframework/view-interfaces": "^0.21.0",
+    "@fluidframework/core-interfaces": "^0.25.0",
+    "@fluidframework/view-interfaces": "^0.25.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.17.0",
+    "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/react": "^16.9.15",

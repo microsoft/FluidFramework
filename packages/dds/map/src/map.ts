@@ -12,12 +12,12 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
-    IObjectStorageService,
-    ISharedObjectServices,
-} from "@fluidframework/component-runtime-definitions";
+    IFluidDataStoreRuntime,
+    IChannelStorageService,
+    IChannelServices,
+    IChannelFactory,
+} from "@fluidframework/datastore-definitions";
 import {
-    ISharedObjectFactory,
     SharedObject,
 } from "@fluidframework/shared-object-base";
 import { debug } from "./debug";
@@ -42,14 +42,14 @@ const snapshotFileName = "header";
  * The factory that defines the map.
  * @sealed
  */
-export class MapFactory implements ISharedObjectFactory {
+export class MapFactory implements IChannelFactory {
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
+   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
    */
     public static readonly Type = "https://graph.microsoft.com/types/map";
 
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
+   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
    */
     public static readonly Attributes: IChannelAttributes = {
         type: MapFactory.Type,
@@ -58,26 +58,26 @@ export class MapFactory implements ISharedObjectFactory {
     };
 
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
+   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
    */
     public get type() {
         return MapFactory.Type;
     }
 
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
+   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
    */
     public get attributes() {
         return MapFactory.Attributes;
     }
 
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.load}
+   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.load}
    */
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedMap> {
         const map = new SharedMap(id, runtime, attributes);
@@ -87,9 +87,9 @@ export class MapFactory implements ISharedObjectFactory {
     }
 
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.create}
+   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
    */
-    public create(runtime: IComponentRuntime, id: string): ISharedMap {
+    public create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap {
         const map = new SharedMap(id, runtime, MapFactory.Attributes);
         map.initializeLocal();
 
@@ -103,19 +103,19 @@ export class MapFactory implements ISharedObjectFactory {
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     /**
    * Create a new shared map.
-   * @param runtime - Component runtime the new shared map belongs to
+   * @param runtime - Data store runtime the new shared map belongs to
    * @param id - Optional name of the shared map
    * @returns Newly create shared map (but not attached yet)
    */
-    public static create(runtime: IComponentRuntime, id?: string): SharedMap {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap {
         return runtime.createChannel(id, MapFactory.Type) as SharedMap;
     }
 
     /**
-   * Get a factory for SharedMap to register with the component.
+   * Get a factory for SharedMap to register with the data store.
    * @returns A factory that creates and load SharedMap
    */
-    public static getFactory(): ISharedObjectFactory {
+    public static getFactory(): IChannelFactory {
         return new MapFactory();
     }
 
@@ -132,12 +132,12 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
    * Create a new SharedMap.
    * @param id - String identifier
-   * @param runtime - Component runtime
+   * @param runtime - Data store runtime
    * @param attributes - The attributes for the map
    */
     constructor(
         id: string,
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);
@@ -145,7 +145,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             runtime,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-            () => this.isLocal(),
+            () => this.isAttached(),
             valueTypes,
             this,
         );
@@ -220,15 +220,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
    */
     public set(key: string, value: any): this {
         this.kernel.set(key, value);
-        return this;
-    }
-
-    /**
-   * {@inheritDoc IValueTypeCreator.createValueType}
-   */
-    public createValueType(key: string, type: string, params: any): this {
-        console.warn("Value types are deprecated.  Use the SharedCounter instead (@fluidframework/counter)");
-        this.kernel.createValueType(key, type, params);
         return this;
     }
 
@@ -331,7 +322,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
    */
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService) {
+        storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
 
         const data = fromBase64ToUtf8(header);
@@ -378,7 +369,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     protected registerCore() {
         for (const value of this.values()) {
             if (SharedObject.is(value)) {
-                value.register();
+                value.bindToContext();
             }
         }
     }

@@ -6,24 +6,28 @@
 import { strict as assert } from 'assert';
 import { SharedMatrix } from '../src';
 import { IArray2D } from "../src/sparsearray2d";
-import { Serializable } from '@fluidframework/component-runtime-definitions';
+import { Serializable } from '@fluidframework/datastore-definitions';
 
 /**
  * Fills the designated region of the matrix with values computed by the `value` callback.
  */
 export function fill<T extends IArray2D<U>, U>(
     matrix: T,
-    row = 0,
-    col = 0,
-    rowCount = 256,
-    colCount = 256,
+    rowStart = 0,
+    colStart = 0,
+    rowCount = matrix.rowCount - rowStart,
+    colCount = matrix.colCount - colStart,
     value = (row: number, col: number) => row * rowCount + col
 ): T {
-    for (let r = row + rowCount - 1; r >= row; r--) {
-        for (let c = col + colCount - 1; c >= col; c--) {
+    const rowEnd = rowStart + rowCount;
+    const colEnd = colStart + colCount;
+
+    for (let r = rowStart; r < rowEnd; r++) {
+        for (let c = colStart; c < colEnd; c++) {
             matrix.setCell(r, c, value(r, c) as any);
         }
     }
+
     return matrix;
 }
 
@@ -53,18 +57,33 @@ export function checkCorners<T extends IArray2D<U>, U>(matrix: T) {
  */
 export function check<T extends IArray2D<U>, U>(
     matrix: T,
-    row = 0,
-    col = 0,
-    rowCount = 256,
-    colCount = 256,
+    rowStart = 0,
+    colStart = 0,
+    rowCount = matrix.rowCount - rowStart,
+    colCount = matrix.colCount - colStart,
     value = (row: number, col: number) => row * rowCount + col
 ): T {
-    for (let r = row + rowCount - 1; r >= row; r--) {
-        for (let c = col + colCount - 1; c >= col; c--) {
+    const rowEnd = rowStart + rowCount;
+    const colEnd = colStart + colCount;
+
+    for (let r = rowStart; r < rowEnd; r++) {
+        for (let c = colStart; c < colEnd; c++) {
             assert.equal(matrix.getCell(r, c), value(r, c) as any);
         }
     }
     return matrix;
+}
+
+export function checkValue<T extends IArray2D<U>, U>(
+    matrix: T,
+    test: unknown,
+    r: number,
+    c: number,
+    rowStart = 0,
+    rowCount = matrix.rowCount - rowStart,
+    value = (row: number, col: number) => row * rowCount + col
+) {
+    assert.equal(test, value(r, c) as any);
 }
 
 /**

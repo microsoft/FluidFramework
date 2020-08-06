@@ -6,7 +6,7 @@
 import { parse } from "url";
 import { BaseTelemetryNullLogger } from "@fluidframework/common-utils";
 import {
-    IComponentRunnable,
+    IFluidRunnable,
     IRequest,
     IResponse,
 } from "@fluidframework/component-core-interfaces";
@@ -40,10 +40,10 @@ class NotUsedUrlResolver implements IUrlResolver {
 }
 
 // Loader class to load a container and proxy component interfaces from within a web worker.
-// Only supports IComponentRunnable for now.
-class WorkerLoader implements ILoader, IComponentRunnable {
+// Only supports IFluidRunnable for now.
+class WorkerLoader implements ILoader, IFluidRunnable {
     private container: Container | undefined;
-    private runnable: IComponentRunnable | undefined;
+    private runnable: IFluidRunnable | undefined;
 
     constructor(
         private readonly id: string,
@@ -97,14 +97,15 @@ class WorkerLoader implements ILoader, IComponentRunnable {
         }
 
         const response = await this.container.request(request);
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 ||
+            (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
-        this.runnable = response.value as IComponentRunnable;
+        this.runnable = response.value as IFluidRunnable;
         if (this.runnable === undefined) {
-            return { status: 404, mimeType: "text/plain", value: `IComponentRunnable not found` };
+            return { status: 404, mimeType: "text/plain", value: `IFluidRunnable not found` };
         }
-        return { status: 200, mimeType: "fluid/component", value: `loaded` };
+        return { status: 200, mimeType: "fluid/object", value: `loaded` };
     }
 
     public async resolve(request: IRequest): Promise<IContainer> {

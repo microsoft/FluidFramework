@@ -4,7 +4,7 @@
  */
 
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
 const rootMapId = "root";
@@ -13,12 +13,12 @@ const rootMapId = "root";
  * A document is a collection of collaborative types.
  */
 export class Document {
-    public static async load(runtime: IComponentRuntime): Promise<Document> {
+    public static async load(runtime: IFluidDataStoreRuntime): Promise<Document> {
         let root: ISharedMap;
 
         if (!runtime.existing) {
             root = SharedMap.create(runtime, rootMapId);
-            root.register();
+            root.bindToContext();
         } else {
             root = await runtime.getChannel(rootMapId) as ISharedMap;
         }
@@ -38,7 +38,7 @@ export class Document {
     /**
      * Constructs a new document from the provided details
      */
-    private constructor(public runtime: IComponentRuntime, private readonly root: ISharedMap) {
+    private constructor(public runtime: IFluidDataStoreRuntime, private readonly root: ISharedMap) {
     }
 
     public getRoot(): ISharedMap {

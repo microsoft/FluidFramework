@@ -3,19 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import {
-    CriticalContainerError,
-    IGenericNetworkError,
-    NetworkErrorBasicTypes,
-    INetworkErrorBasic,
     IThrottlingWarning,
-    ErrorType,
-    IErrorBase,
-} from "@fluidframework/container-definitions";
-import {
-    ErrorWithProps,
-} from "./error";
+    IDriverErrorBase,
+    DriverErrorType,
+} from "@fluidframework/driver-definitions";
+import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
 
 export enum OnlineStatus {
     Offline,
@@ -37,8 +30,8 @@ export function isOnline(): OnlineStatus {
 /**
  * Generic network error class.
  */
-export class GenericNetworkError extends ErrorWithProps implements IGenericNetworkError {
-    readonly errorType = ErrorType.genericNetworkError;
+export class GenericNetworkError extends CustomErrorWithProps implements IDriverErrorBase {
+    readonly errorType = DriverErrorType.genericNetworkError;
 
     constructor(
         errorMessage: string,
@@ -49,32 +42,30 @@ export class GenericNetworkError extends ErrorWithProps implements IGenericNetwo
     }
 }
 
-export class NetworkErrorBasic extends ErrorWithProps implements INetworkErrorBasic {
+export class NetworkErrorBasic<T> extends CustomErrorWithProps {
     constructor(
         errorMessage: string,
-        readonly errorType: NetworkErrorBasicTypes,
+        readonly errorType: T,
         readonly canRetry: boolean,
     ) {
         super(errorMessage);
     }
 }
 
-export class NonRetryableError extends NetworkErrorBasic implements IErrorBase {
+export class NonRetryableError<T> extends NetworkErrorBasic<T> {
     constructor(
         errorMessage: string,
-        readonly errorType: NetworkErrorBasicTypes,
-        readonly canRetry: boolean,
+        readonly errorType: T,
     ) {
-        super(errorMessage, errorType, canRetry);
-        assert(!canRetry);
+        super(errorMessage, errorType, false);
     }
 }
 
 /**
  * Throttling error class - used to communicate all throttling errors
  */
-class ThrottlingError extends ErrorWithProps implements IThrottlingWarning {
-    readonly errorType = ErrorType.throttlingError;
+export class ThrottlingError extends CustomErrorWithProps implements IThrottlingWarning {
+    readonly errorType = DriverErrorType.throttlingError;
     readonly canRetry = true;
 
     constructor(
@@ -87,19 +78,15 @@ class ThrottlingError extends ErrorWithProps implements IThrottlingWarning {
 }
 
 export const createWriteError = (errorMessage: string) =>
-    new NonRetryableError(errorMessage, ErrorType.writeError, false) as INetworkErrorBasic;
+    new NonRetryableError(errorMessage, DriverErrorType.writeError);
 
 export function createGenericNetworkError(
     errorMessage: string,
     canRetry: boolean,
     retryAfterSeconds?: number,
     statusCode?: number) {
-    let error: CriticalContainerError;
     if (retryAfterSeconds !== undefined && canRetry) {
-        error = new ThrottlingError(errorMessage, retryAfterSeconds, statusCode);
+        return new ThrottlingError(errorMessage, retryAfterSeconds, statusCode);
     }
-    else {
-        error = new GenericNetworkError(errorMessage, canRetry, statusCode);
-    }
-    return error;
+    return new GenericNetworkError(errorMessage, canRetry, statusCode);
 }

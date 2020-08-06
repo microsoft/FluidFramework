@@ -5,16 +5,17 @@
 
 import { EventEmitter } from "events";
 import {
-    IComponentHandleContext,
-    IComponentSerializer,
+    IFluidHandleContext,
+    IFluidSerializer,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import {
     ISequencedDocumentMessage,
@@ -24,11 +25,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 export class NullRuntime extends EventEmitter implements IRuntime {
-    public get IComponentSerializer(): IComponentSerializer {
+    public get IFluidSerializer(): IFluidSerializer {
         throw new Error("Not implemented");
     }
 
-    public get IComponentHandleContext(): IComponentHandleContext {
+    public get IFluidHandleContext(): IFluidHandleContext {
         throw new Error("Not implemented");
     }
 
@@ -72,6 +73,10 @@ export class NullRuntime extends EventEmitter implements IRuntime {
             tree: {},
             type: SummaryType.Tree,
         };
+    }
+
+    public setAttachState(attachState: AttachState.Attaching | AttachState.Attached) {
+        throw new Error("Null Runtime should not be attached");
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

@@ -5,9 +5,9 @@
 
 import assert from "assert";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { createSharedStringWithInterception } from "../sequence";
 
 describe("Shared String with Interception", () => {
@@ -20,7 +20,7 @@ describe("Shared String with Interception", () => {
         const userAttributes = { userId: "Fake User" };
         const documentId = "fakeId";
         let sharedString: SharedString;
-        let componentContext: IComponentContext;
+        let componentContext: IFluidDataStoreContext;
 
         function orderSequentially(callback: () => void): void {
             callback();
@@ -43,12 +43,12 @@ describe("Shared String with Interception", () => {
         }
 
         beforeEach(() => {
-            const componentRuntime = new MockComponentRuntime();
-            sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
-            componentRuntime.attach();
+            const dataStoreRuntime = new MockFluidDataStoreRuntime();
+            sharedString = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
+            dataStoreRuntime.bindToContext();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;
+            componentContext = { containerRuntime: { orderSequentially } } as IFluidDataStoreContext;
         });
 
         it("should be able to intercept SharedString methods by the wrapper", async () => {

@@ -4,8 +4,8 @@
  */
 
 import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode, Scheduler } from "@fluid-example/flow-util-lib";
-import { IComponent } from "@fluidframework/component-core-interfaces";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { paste } from "../clipboard/paste";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
 import { ownsNode } from "../util/event";
@@ -20,7 +20,7 @@ import * as styles from "./index.css";
  * been inserted into the document.
  */
 export interface IComponentHTMLViewFactory {
-    createView(model: IComponent, scope?: IComponent): IComponentHTMLView;
+    createView(model: IFluidObject, scope?: IFluidObject): IFluidHTMLView;
 }
 
 export class Editor {
@@ -29,7 +29,7 @@ export class Editor {
     private readonly caretSync: () => void;
     private get doc() { return this.layout.doc; }
 
-    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, viewFactoryRegistry?: Map<string, IComponentHTMLViewFactory>, scope?: IComponent) {
+    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, viewFactoryRegistry?: Map<string, IComponentHTMLViewFactory>, scope?: IFluidObject) {
         const scheduler = new Scheduler();
         this.layout = new Layout(doc, root, formatter, scheduler, viewFactoryRegistry, scope);
         this.caret = new Caret(this.layout);

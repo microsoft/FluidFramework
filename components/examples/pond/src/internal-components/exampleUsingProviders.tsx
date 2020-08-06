@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedMap } from "@fluidframework/map";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -19,23 +19,23 @@ const pkg = require("../../package.json");
  * Basic example that takes a container provider
  */
 export class ExampleUsingProviders
-    extends PrimedComponent<IComponentUserInformation>
-    implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+    extends DataObject<IComponentUserInformation>
+    implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private userInformation: IComponentUserInformation | undefined;
 
     public static readonly ComponentName = `${pkg.name as string}-example-using-provider`;
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.userInformation = await this.providers.IComponentUserInformation;
     }
 
-    // start IComponentHTMLView
+    // start IFluidHTMLView
 
     public render(div: HTMLElement) {
         let element: JSX.Element = <span></span>;
-        if (this.userInformation) {
+        if (this.userInformation !== undefined) {
             element = <ExampleUsingProvidersView userInfo={this.userInformation} />;
         } else {
             console.log("No IComponentUserInformation Provided");
@@ -46,13 +46,13 @@ export class ExampleUsingProviders
             div);
     }
 
-    // end IComponentHTMLView
+    // end IFluidHTMLView
 
     // ----- COMPONENT SETUP STUFF -----
 
     public static getFactory() { return ExampleUsingProviders.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         ExampleUsingProviders.ComponentName,
         ExampleUsingProviders,
         [SharedMap.getFactory()],

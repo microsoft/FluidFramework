@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { Buffer } from "buffer";
+
 export interface IBlobManager {
     // Rehydrate a blob manager from a snapshot
     loadBlobMetadata(blobs: IGenericBlob[]): void;

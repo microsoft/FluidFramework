@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@fluidframework/merge-tree";
 import {
     positionToRowCol,
@@ -13,7 +13,6 @@ import {
     SparseMatrix,
     SequenceDeltaEvent,
 } from "@fluidframework/sequence";
-import { ISheetlet, createSheetletProducer } from "@tiny-calc/micro";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IEvent } from "@fluidframework/common-definitions";
 import { CellRange } from "./cellrange";
@@ -30,10 +29,10 @@ export interface ITableDocumentEvents extends IEvent {
         listener: (delta: SequenceDeltaEvent, target: SharedNumberSequence | SparseMatrix) => void);
 }
 
-export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents> implements ITable {
+export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         TableDocumentType,
         TableDocument,
         [
@@ -51,28 +50,10 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
     public get numRows() { return this.matrix.numRows; }
 
     private get matrix(): SparseMatrix { return this.maybeMatrix; }
-    private get workbook() { return this.maybeWorkbook; }
 
     private maybeRows?: SharedNumberSequence;
     private maybeCols?: SharedNumberSequence;
     private maybeMatrix?: SparseMatrix;
-    private maybeWorkbook?: ISheetlet;
-
-    public evaluateCell(row: number, col: number): TableDocumentItem {
-        try {
-            return this.workbook.evaluateCell(row, col);
-        } catch (e) {
-            return `${e}`;
-        }
-    }
-
-    public evaluateFormula(formula: string): TableDocumentItem {
-        try {
-            return this.workbook.evaluateFormula(formula);
-        } catch (e) {
-            return `${e}`;
-        }
-    }
 
     public getCellValue(row: number, col: number): TableDocumentItem {
         return this.matrix.getItem(row, col);
@@ -80,7 +61,6 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
 
     public setCellValue(row: number, col: number, value: TableDocumentItem, properties?: PropertySet) {
         this.matrix.setItems(row, col, [value], properties);
-        this.workbook.invalidate(row, col);
     }
 
     public async getRange(label: string) {
@@ -96,7 +76,7 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
         minCol: number,
         maxRow: number,
         maxCol: number): Promise<ITable> {
-        const component = await TableSlice.getFactory().createComponent(
+        const component = await TableSlice.getFactory().createInstance(
             this.context,
             { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol },
         ) as TableSlice;
@@ -157,7 +137,7 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
         this.maybeCols.remove(startCol, startCol + numCols);
     }
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const rows = SharedNumberSequence.create(this.runtime, "rows");
         this.root.set("rows", rows.handle);
 
@@ -170,69 +150,20 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
         this.root.set(ConfigKey.docId, this.runtime.id);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         const [maybeMatrixHandle, maybeRowsHandle, maybeColsHandle] = await Promise.all([
-            this.root.wait<IComponentHandle<SparseMatrix>>("matrix"),
-            this.root.wait<IComponentHandle<SharedNumberSequence>>("rows"),
-            this.root.wait<IComponentHandle<SharedNumberSequence>>("cols"),
+            this.root.wait<IFluidHandle<SparseMatrix>>("matrix"),
+            this.root.wait<IFluidHandle<SharedNumberSequence>>("rows"),
+            this.root.wait<IFluidHandle<SharedNumberSequence>>("cols"),
         ]);
 
         this.maybeMatrix = await maybeMatrixHandle.get();
         this.maybeRows = await maybeRowsHandle.get();
         this.maybeCols = await maybeColsHandle.get();
 
-        this.matrix.on("op", (op, local, target) => {
-            if (!local) {
-                // Temporarily, we invalidate the entire matrix when we receive a remote op.
-                // This can be improved w/the new SparseMatrix, which makes it easier to decode
-                // the range of cells impacted by matrix ops.
-                for (let row = 0; row < this.numRows; row++) {
-                    for (let col = 0; col < this.numCols; col++) {
-                        this.workbook.invalidate(row, col);
-                    }
-                }
-            }
-        });
         this.forwardEvent(this.maybeCols, "op", "sequenceDelta");
         this.forwardEvent(this.maybeRows, "op", "sequenceDelta");
         this.forwardEvent(this.matrix, "op", "sequenceDelta");
-
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        const table = this;
-
-        const producer = {
-            get rowCount() { return table.numRows; },
-            get colCount() { return table.numCols; },
-            getCell: (row, col) => {
-                const raw = table.matrix.getItem(row, col);
-                return typeof raw === "object"
-                    ? undefined
-                    : raw;
-            },
-            openMatrix() { return this; },
-            closeMatrix() { },
-            get matrixProducer() { return this; },
-        };
-
-        const grid = {
-            getCell: (row: number, col: number) => table.matrix.getTag(row, col),
-            write(row: number, col: number, value: any) {
-                table.matrix.setTag(row, col, value);
-            },
-            readOrWrite(row: number, col: number, value: () => any) {
-                const existing = this.getCell(row, col);
-                if (existing !== undefined) {
-                    return existing;
-                }
-
-                this.write(row, col, value());
-            },
-            clear(row: number, col: number) {
-                this.write(row, col, undefined);
-            },
-        };
-
-        this.maybeWorkbook = createSheetletProducer(producer, grid);
     }
 
     private readonly localRefToRowCol = (localRef: LocalReference) => {

@@ -4,7 +4,7 @@
  */
 
 import * as api from "@fluid-internal/client-api";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IInk } from "@fluidframework/ink";
 import { ISharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -36,8 +36,10 @@ export class FlowContainer extends ui.Component {
     private layerCache: { [key: string]: Layer } = {};
     private activeLayers: { [key: string]: IOverlayLayerStatus } = {};
 
+    // api.Document should not be used. It should be removed after #2915 is fixed.
     constructor(
         element: HTMLDivElement,
+        title: string,
         private readonly collabDocument: api.Document,
         private readonly sharedString: Sequence.SharedString,
         private readonly overlayInkMap: ISharedMap,
@@ -52,8 +54,8 @@ export class FlowContainer extends ui.Component {
         const titleDiv = document.createElement("div");
         titleDiv.id = "title-bar";
         this.title = new Title(titleDiv);
-        this.title.setTitle(this.collabDocument.id);
-        this.title.setBackgroundColor(this.collabDocument.id);
+        this.title.setTitle(title);
+        this.title.setBackgroundColor(title);
 
         // Status bar at the bottom
         const statusDiv = document.createElement("div");
@@ -190,7 +192,7 @@ export class FlowContainer extends ui.Component {
         if (this.activeLayers[id]) {
             this.activeLayers[id].active = true;
         }
-        const inkLayerData = await this.overlayInkMap.get<IComponentHandle<IInk>>(id).get();
+        const inkLayerData = await this.overlayInkMap.get<IFluidHandle<IInk>>(id).get();
 
         if (!(id in this.layerCache)) {
             const layer = new InkLayer(this.size, inkLayerData);

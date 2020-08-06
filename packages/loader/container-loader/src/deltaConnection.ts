@@ -37,7 +37,7 @@ export class DeltaConnection
     }
 
     public get connected(): boolean {
-        return !!this._connection;
+        return this._connection !== undefined;
     }
 
     private readonly _details: IConnectionDetails;
@@ -49,7 +49,7 @@ export class DeltaConnection
     private _connection?: IDocumentDeltaConnection;
 
     private get connection(): IDocumentDeltaConnection {
-        if (!this._connection) {
+        if (this._connection === undefined) {
             throw new Error("Connection is closed!");
         }
         return this._connection;
@@ -63,6 +63,7 @@ export class DeltaConnection
             claims: connection.claims,
             clientId: connection.clientId,
             existing: connection.existing,
+            checkpointSequenceNumber: connection.checkpointSequenceNumber,
             get initialClients() { return connection.initialClients; },
             get initialContents() { return connection.initialContents; },
             get initialMessages() { return connection.initialMessages; },
@@ -111,7 +112,7 @@ export class DeltaConnection
      * Closes the delta connection. This disconnects the socket and clears any listeners
      */
     public close() {
-        if (this._connection) {
+        if (this._connection !== undefined) {
             const connection = this._connection;
             this._connection = undefined;
             connection.disconnect();

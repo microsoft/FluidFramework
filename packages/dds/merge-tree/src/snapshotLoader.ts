@@ -4,9 +4,10 @@
  */
 
 import assert from "assert";
-import { fromBase64ToUtf8, ChildLogger } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
@@ -24,7 +25,7 @@ export class SnapshotLoader {
     private readonly logger: ITelemetryLogger;
 
     constructor(
-        private readonly runtime: IComponentRuntime,
+        private readonly runtime: IFluidDataStoreRuntime,
         private readonly client: Client,
         private readonly mergeTree: MergeTree,
         logger: ITelemetryLogger) {
@@ -33,21 +34,35 @@ export class SnapshotLoader {
 
     public async initialize(
         branchId: string,
-        services: IObjectStorageService): Promise<ISequencedDocumentMessage[]> {
-        const headerP = services.read(SnapshotLegacy.header);
-        const blobsP = services.list("");
-
-        const header = await headerP;
-        assert(header);
+        services: IChannelStorageService,
+    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
         // Override branch by default which is derived from document id,
         // as document id isn't stable for spo
         // which leads to branch id being in correct
         const branch = this.runtime.options && this.runtime.options.enableBranching
             ? branchId : this.runtime.documentId;
+        const headerLoadedP =
+            services.read(SnapshotLegacy.header).then((header) => {
+                assert(header);
+                return this.loadHeader(header, branch);
+            });
 
-        const headerChunk = this.loadHeader(header, branch);
+        const catchupOpsP =
+            this.loadBodyAndCatchupOps(headerLoadedP, services, branch);
 
-        // tslint:disable-next-line: no-suspicious-comment
+        await headerLoadedP;
+
+        return { catchupOpsP };
+    }
+
+    private async loadBodyAndCatchupOps(
+        headerChunkP: Promise<MergeTreeChunkV1>,
+        services: IChannelStorageService,
+        branch: string,
+    ): Promise<ISequencedDocumentMessage[]> {
+        const blobsP = services.list("");
+        const headerChunk = await headerChunkP;
+
         // TODO we shouldn't need to wait on the body being complete to finish initialization.
         // To fully support this we need to be able to process inbound ops for pending segments.
         await this.loadBody(headerChunk, services);
@@ -57,7 +72,7 @@ export class SnapshotLoader {
             headerChunk.headerMetadata.orderedChunkMetadata.forEach(
                 (md) => blobs.splice(blobs.indexOf(md.id), 1));
             assert(blobs.length === 1, `There should be only one blob with catch up ops: ${blobs.length}`);
-            // tslint:disable-next-line:no-suspicious-comment
+
             // TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
             return this.loadCatchupOps(services.read(blobs[0]), branch);
@@ -109,12 +124,10 @@ export class SnapshotLoader {
             header,
             this.logger,
             this.mergeTree.options,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext);
+            this.runtime.IFluidSerializer,
+            this.runtime.IFluidHandleContext);
         const segs = chunk.segments.map(this.specToSegment);
         this.mergeTree.reloadFromSegments(segs);
-
-        // tslint:disable-next-line: no-suspicious-comment
         // TODO currently only assumes two levels of branching
         const branching = branchId === this.runtime.documentId ? 0 : 1;
 
@@ -131,7 +144,7 @@ export class SnapshotLoader {
         // now that we differentiate attached vs local
         this.client.startOrUpdateCollaboration(
             this.runtime.clientId ?? "snapshot",
-            // tslint:disable-next-line:no-suspicious-comment
+
             // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
             /* minSeq: */ chunk.headerMetadata.minSequenceNumber !== undefined
@@ -143,7 +156,7 @@ export class SnapshotLoader {
         return chunk;
     }
 
-    private async loadBody(chunk1: MergeTreeChunkV1, services: IObjectStorageService): Promise<void> {
+    private async loadBody(chunk1: MergeTreeChunkV1, services: IChannelStorageService): Promise<void> {
         this.runtime.logger.shipAssert(
             chunk1.length <= chunk1.headerMetadata.totalLength,
             { eventName: "Mismatch in totalLength" });
@@ -163,8 +176,8 @@ export class SnapshotLoader {
                 chunk1.headerMetadata.orderedChunkMetadata[chunkIndex].id,
                 this.logger,
                 this.mergeTree.options,
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext);
+                this.runtime.IFluidSerializer,
+                this.runtime.IFluidHandleContext);
             lengthSofar += chunk.length;
             // Deserialize each chunk segment and append it to the end of the MergeTree.
             segs.push(...chunk.segments.map(this.specToSegment));

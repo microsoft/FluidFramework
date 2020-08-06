@@ -11,16 +11,16 @@ import { fill, check } from './utils';
 describe('SparseArray2D', () => {
     it('read/write top-left 256x256', () => {
         const a = new SparseArray2D();
-        fill(a);
-        check(a);
+        fill(a, /* rowStart: */ 0, /* colStart: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
+        check(a, /* rowStart: */ 0, /* colStart: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
     });
 
     it('read/write bottom-right 256x256', () => {
         const a = new SparseArray2D();
-        fill(a);
-        check(a);
+        fill(a, /* rowStart: */ 0, /* colStart: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
+        check(a, /* rowStart: */ 0, /* colStart: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
 
-        fill(a, 0xffffff00, 0xffffff00);
-        check(a, 0xffffff00, 0xffffff00);
+        fill(a,  /* rowStart: */ 0xffffff00, /* colStart: */ 0xffffff00, /* rowCount: */ 256, /* colCount: */ 256);
+        check(a, /* rowStart: */ 0xffffff00, /* colStart: */ 0xffffff00, /* rowCount: */ 256, /* colCount: */ 256);
     });
 });

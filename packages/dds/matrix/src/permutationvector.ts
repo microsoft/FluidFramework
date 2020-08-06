@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { ChildLogger } from "@fluidframework/common-utils";
-import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     BaseSegment,
@@ -16,7 +16,7 @@ import {
     IMergeTreeDeltaCallbackArgs,
     MergeTreeDeltaType,
 } from "@fluidframework/merge-tree";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import { HandleTable, Handle } from "./handletable";
@@ -90,7 +90,7 @@ export class PermutationVector extends Client {
     constructor(
         path: string,
         logger: ITelemetryBaseLogger,
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         private readonly deltaCallback: (position: number, numRemoved: number, numInserted: number) => void,
         private readonly handlesRecycledCallback: (handles: Handle[]) => void,
     ) {
@@ -98,8 +98,8 @@ export class PermutationVector extends Client {
             PermutationSegment.fromJSONObject,
             ChildLogger.create(logger, `Matrix.${path}.MergeTreeClient`), {
             ...runtime.options,
-            newMergeTreeSnapshotFormat: true,
-        },
+            newMergeTreeSnapshotFormat: true,   // Temporarily force new snapshot format until it is the default.
+        },                                      // (See https://github.com/microsoft/FluidFramework/issues/84)
         );
 
         this.mergeTreeDeltaCallback = this.onDelta;
@@ -138,8 +138,38 @@ export class PermutationVector extends Client {
         return this.getPosition(segment) + offset;
     }
 
+    public getPositionForResubmit(handle: Handle, localSeq: number) {
+        assert(localSeq <= this.mergeTree.collabWindow.localSeq,
+            "'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op.");
+
+        // TODO: In theory, the MergeTree should be able to map the (position, refSeq, localSeq) from
+        //       the original operation to the current position for resubmitting.  This is probably the
+        //       ideal solution, as we would no longer need to store row/col handles in the op metadata.
+        //
+        //       Failing that, we could avoid the O(n) search below by building a temporary map in the
+        //       opposite direction from the handle to either it's current position or segment + offset
+        //       and reuse it for the duration of resubmission.  (Ideally, we would know when resubmission
+        //       ended so we could discard this map.)
+        //
+        //       If we find that we frequently need a reverse handle -> position lookup, we could maintain
+        //       one using the Tiny-Calc adjust tree.
+        const currentPosition = this.handles.indexOf(handle);
+
+        // SharedMatrix must verify that 'localSeq' used to originally submit this op is still the
+        // most recently pending write to the row/col handle before calling 'getPositionForResubmit'
+        // to ensure the handle has not been removed or recycled (See comments in `resubmitCore()`).
+        assert(currentPosition >= 0,
+            "Caller must ensure 'handle' has not been removed/recycled.");
+
+        // Once we know the current position of the handle, we can use the MergeTree to get the segment
+        // containing this position and use 'findReconnectionPosition' to adjust for the local ops that
+        // have not yet been submitted.
+        const { segment, offset } = this.getContainingSegment(currentPosition);
+        return this.findReconnectionPostition(segment, localSeq) + offset;
+    }
+
     // Constructs an ITreeEntry for the cell data.
-    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle): ITree {
+    public snapshot(runtime: IFluidDataStoreRuntime, handle: IFluidHandle): ITree {
         return {
             entries: [
                 {
@@ -155,7 +185,7 @@ export class PermutationVector extends Client {
         };
     }
 
-    public async load(runtime: IComponentRuntime, storage: IObjectStorageService, branchId?: string) {
+    public async load(runtime: IFluidDataStoreRuntime, storage: IChannelStorageService, branchId?: string) {
         const [handleTableData, handles] = await Promise.all([
             await deserializeBlob(runtime, storage, SnapshotPath.handleTable),
             await deserializeBlob(runtime, storage, SnapshotPath.handles),

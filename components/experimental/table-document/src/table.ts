@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
 import {
     Jsonable,
     JsonablePrimitive,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 
-export type TableDocumentItem = Jsonable<JsonablePrimitive | IComponentHandle>;
+export type TableDocumentItem = Jsonable<JsonablePrimitive | IFluidHandle>;
 
 export interface ITable {
     readonly numRows: number;
@@ -18,8 +18,6 @@ export interface ITable {
 
     getCellValue(row: number, col: number): TableDocumentItem;
     setCellValue(row: number, col: number, value: TableDocumentItem, properties?: PropertySet);
-    evaluateFormula(formula: string): TableDocumentItem;
-    evaluateCell(row: number, col: number): TableDocumentItem;
     annotateRows(startRow: number, endRow: number, properties: PropertySet, op?: ICombiningOp);
     getRowProperties(row: number): PropertySet;
     annotateCols(startCol: number, endCol: number, properties: PropertySet, op?: ICombiningOp);

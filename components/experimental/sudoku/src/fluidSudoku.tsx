@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { loadPuzzle } from "./helpers/puzzles";
@@ -20,20 +20,15 @@ export const FluidSudokuName = "FluidSudoku";
 /**
  * A collaborative Sudoku component built on the Fluid Framework.
  */
-export class FluidSudoku extends PrimedComponent
-    implements IComponentHTMLView, IComponentReactViewable {
-    public get IComponentHTMLView() {
-        return this;
-    }
-
-    public get IComponentReactViewable() {
+export class FluidSudoku extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() {
         return this;
     }
 
     /**
      * This is where you define all which Distributed Data Structures your component will use
      */
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         FluidSudokuName,
         FluidSudoku,
         [SharedMap.getFactory()],
@@ -52,10 +47,10 @@ export class FluidSudoku extends PrimedComponent
 
     /**
      * ComponentInitializingFirstTime is where you do setup for your component. This is only called once the first time
-     * your component is created. Anything that happens in componentInitializingFirstTime will happen before any other
+     * your component is created. Anything that happens in initializingFirstTime will happen before any other
      * user will see the component.
      */
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         // Create a new map for our Sudoku data
         const map = SharedMap.create(this.runtime);
 
@@ -73,15 +68,15 @@ export class FluidSudoku extends PrimedComponent
     /**
      * This method will be called whenever the component has initialized, be it the first time or subsequent times.
      */
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         // Shared objects that are stored within other Shared objects (e.g. a SharedMap within the root, which is a
         // SharedDirectory) must be retrieved asynchronously. We do that here, in this async function, then store a
         // local reference to the object so we can easily use it in synchronous code.
         //
         // Our "puzzle" SharedMap is stored as a handle on the "root" SharedDirectory. To get it we must make a
-        // synchronous call to get the IComponentHandle, then an asynchronous call to get the ISharedMap from the
+        // synchronous call to get the IFluidHandle, then an asynchronous call to get the ISharedMap from the
         // handle.
-        this.puzzle = await this.root.get<IComponentHandle<ISharedMap>>(this.sudokuMapKey).get();
+        this.puzzle = await this.root.get<IFluidHandle<ISharedMap>>(this.sudokuMapKey).get();
 
         // Since we're using a Fluid distributed data structure to store our Sudoku data, we need to render whenever a
         // value in our map changes. Recall that distributed data structures can be changed by both local and remote
@@ -91,7 +86,7 @@ export class FluidSudoku extends PrimedComponent
         });
 
         this.clientPresence = await this.root
-            .get<IComponentHandle<ISharedMap>>(this.presenceMapKey)
+            .get<IFluidHandle<ISharedMap>>(this.presenceMapKey)
             .get();
 
         this.clientPresence.on("valueChanged", (changed, local, op) => {
@@ -99,27 +94,25 @@ export class FluidSudoku extends PrimedComponent
         });
     }
 
-    public createJSXElement(props?: any): JSX.Element {
-        if (this.puzzle) {
-            return (
-                <SudokuView
-                    puzzle={this.puzzle}
-                    clientPresence={this.clientPresence}
-                    clientId={this.runtime.clientId ?? "not connected"}
-                    setPresence={this.presenceSetter}
-                />
-            );
-        } else {
-            return <div />;
-        }
-    }
-
     public render(element?: HTMLElement): void {
         if (element) {
             this.domElement = element;
         }
         if (this.domElement) {
-            ReactDOM.render(this.createJSXElement(), this.domElement);
+            let view: JSX.Element;
+            if (this.puzzle) {
+                view = (
+                    <SudokuView
+                        puzzle={this.puzzle}
+                        clientPresence={this.clientPresence}
+                        clientId={this.runtime.clientId ?? "not connected"}
+                        setPresence={this.presenceSetter}
+                    />
+                );
+            } else {
+                view = <div />;
+            }
+            ReactDOM.render(view, this.domElement);
         }
     }
 

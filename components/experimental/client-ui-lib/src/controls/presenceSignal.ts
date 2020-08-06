@@ -4,13 +4,13 @@
  */
 
 import { EventEmitter } from "events";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
 const presenceKey = "presence";
 
 export class PresenceSignal extends EventEmitter {
-    constructor(private readonly runtime: IComponentRuntime) {
+    constructor(private readonly runtime: IFluidDataStoreRuntime) {
         super();
         this.listenForPresence();
     }

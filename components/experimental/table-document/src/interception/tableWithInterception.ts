@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { ITable, TableDocumentItem } from "../table";
 import { TableDocument } from "../document";
 
@@ -20,14 +20,14 @@ import { TableDocument } from "../document";
  *   createTableWithInterception on the created TableSlice object.
  *
  * @param table - The underlying ITable object
- * @param context - The IComponentContext that will be used to call orderSequentially
+ * @param context - The IFluidDataStoreContext that will be used to call orderSequentially
  * @param propertyInterceptionCallback - The interception callback to be called
  *
  * @returns A new ITable object that intercepts the methods modifying the properties of cells, rows or columns.
  */
 export function createTableWithInterception<T extends ITable>(
     table: T,
-    context: IComponentContext,
+    context: IFluidDataStoreContext,
     propertyInterceptionCallback: (props?: PropertySet) => PropertySet): T {
     const tableWithInterception = Object.create(table);
 

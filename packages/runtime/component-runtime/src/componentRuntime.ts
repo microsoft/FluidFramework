@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    IComponentHandle,
-    IComponentHandleContext,
+    IFluidHandle,
+    IFluidHandleContext,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -19,12 +19,17 @@ import {
     IGenericBlob,
     ContainerWarning,
     ILoader,
+    BindState,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import {
-    ChildLogger,
     Deferred,
-    raiseConnectedEvent,
+    unreachableCase,
 } from "@fluidframework/common-utils";
+import {
+    ChildLogger,
+    raiseConnectedEvent,
+} from "@fluidframework/telemetry-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
@@ -36,15 +41,17 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IAttachMessage,
-    IComponentContext,
-    IComponentRegistry,
-    IComponentRuntimeChannel,
+    IFluidDataStoreContext,
+    IFluidDataStoreRegistry,
+    IFluidDataStoreChannel,
     IEnvelope,
     IInboundSignalMessage,
+    SchedulerType,
+    ISummaryTreeWithStats,
+    CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { strongAssert } from "@fluidframework/runtime-utils";
-import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { IChannel, IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
@@ -59,32 +66,28 @@ export enum ComponentMessageType {
 export interface ISharedObjectRegistry {
     // TODO consider making this async. A consequence is that either the creation of a distributed data type
     // is async or we need a new API to split the synchronous vs. asynchronous creation.
-    get(name: string): ISharedObjectFactory | undefined;
-}
-
-function assertNeverMessageType(messageType: never): never {
-    throw new Error(`Never: unknown message type: ${messageType}`);
+    get(name: string): IChannelFactory | undefined;
 }
 
 /**
  * Base component class
  */
-export class ComponentRuntime extends EventEmitter implements IComponentRuntimeChannel,
-    IComponentRuntime, IComponentHandleContext {
+export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreChannel,
+    IFluidDataStoreRuntime, IFluidHandleContext {
     /**
-     * Loads the component runtime
+     * Loads the data store runtime
      * @param context - The component context
      * @param sharedObjectRegistry - The registry of shared objects used by this component
-     * @param activeCallback - The callback called when the component runtime in active
+     * @param activeCallback - The callback called when the data store runtime in active
      * @param componentRegistry - The registry of components created and used by this component
      */
     public static load(
-        context: IComponentContext,
+        context: IFluidDataStoreContext,
         sharedObjectRegistry: ISharedObjectRegistry,
-        componentRegistry?: IComponentRegistry,
-    ): ComponentRuntime {
-        const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { componentId: context.id });
-        const runtime = new ComponentRuntime(
+        componentRegistry?: IFluidDataStoreRegistry,
+    ): FluidDataStoreRuntime {
+        const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { componentId: uuid() });
+        const runtime = new FluidDataStoreRuntime(
             context,
             context.documentId,
             context.id,
@@ -104,7 +107,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return runtime;
     }
 
-    public get IComponentRouter() { return this; }
+    public get IFluidRouter() { return this; }
 
     public get connected(): boolean {
         return this.componentContext.connected;
@@ -127,21 +130,32 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public get isAttached(): boolean {
-        return this._isAttached;
+        return this.attachState !== AttachState.Detached;
     }
 
+    public get attachState(): AttachState {
+        return this._attachState;
+    }
+
+    /**
+     * @deprecated - 0.21 back-compat
+     */
     public get path(): string {
         return this.id;
     }
 
-    public get routeContext(): IComponentHandleContext {
-        return this.componentContext.containerRuntime.IComponentHandleContext;
+    public get absolutePath(): string {
+        return generateHandleContextPath(this.id, this.routeContext);
     }
 
-    public get IComponentSerializer() { return this.componentContext.containerRuntime.IComponentSerializer; }
+    public get routeContext(): IFluidHandleContext {
+        return this.componentContext.containerRuntime.IFluidHandleContext;
+    }
 
-    public get IComponentHandleContext() { return this; }
-    public get IComponentRegistry() { return this.componentRegistry; }
+    public get IFluidSerializer() { return this.componentContext.containerRuntime.IFluidSerializer; }
+
+    public get IFluidHandleContext() { return this; }
+    public get IFluidDataStoreRegistry() { return this.componentRegistry; }
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
@@ -150,13 +164,17 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
-    private _isAttached: boolean;
+    private bindState: BindState;
+    // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
+    private graphAttachState: AttachState = AttachState.Detached;
     private readonly deferredAttached = new Deferred<void>();
-    private readonly attachChannelQueue = new Map<string, LocalChannelContext>();
-    private boundhandles: Set<IComponentHandle> | undefined;
+    private readonly localChannelContextQueue = new Map<string, LocalChannelContext>();
+    private readonly notBoundedChannelContextSet = new Set<string>();
+    private boundhandles: Set<IFluidHandle> | undefined;
+    private _attachState: AttachState;
 
     private constructor(
-        private readonly componentContext: IComponentContext,
+        private readonly componentContext: IFluidDataStoreContext,
         public readonly documentId: string,
         public readonly id: string,
         public readonly parentBranch: string | null,
@@ -168,7 +186,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         private readonly audience: IAudience,
         private readonly snapshotFn: (message: string) => Promise<void>,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
-        private readonly componentRegistry: IComponentRegistry | undefined,
+        private readonly componentRegistry: IFluidDataStoreRegistry | undefined,
         public readonly logger: ITelemetryLogger,
     ) {
         super();
@@ -192,6 +210,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                     this.componentContext.summaryTracker.createOrGetChild(
                         path,
                         this.deltaManager.lastSequenceNumber,
+                    ),
+                    this.componentContext.getCreateChildSummarizerNodeFn(
+                        path,
+                        { type: CreateSummarizerNodeSource.FromSummary },
                     ));
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -202,7 +224,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         }
 
         this.attachListener();
-        this._isAttached = existing;
+        this.bindState = existing ? BindState.Bound : BindState.NotBound;
+        this._attachState = existing ? AttachState.Attached : AttachState.Detached;
 
         // If it's existing we know it has been attached.
         if (existing) {
@@ -221,7 +244,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     public async request(request: IRequest): Promise<IResponse> {
         // System routes
-        if (request.url === "/_scheduler") {
+        if (request.url === `/${SchedulerType}`) {
             return this.componentContext.containerRuntime.request(request);
         }
 
@@ -234,7 +257,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             const value = await this.contextsDeferred.get(id)!.promise;
             const channel = await value.getChannel();
 
-            return { mimeType: "fluid/component", status: 200, value: channel };
+            return { mimeType: "fluid/object", status: 200, value: channel };
         }
 
         // Otherwise defer to an attached request handler
@@ -270,7 +293,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), "createChannel() with existing ID");
-
+        this.notBoundedChannelContextSet.add(id);
         const context = new LocalChannelContext(
             id,
             this.sharedObjectRegistry,
@@ -295,69 +318,77 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     /**
-     * Registers a channel with the runtime. If the runtime is attached we will attach the channel right away.
+     * Binds a channel with the runtime. If the runtime is attached we will attach the channel right away.
      * If the runtime is not attached we will defer the attach until the runtime attaches.
      * @param channel - channel to be registered.
      */
-    public registerChannel(channel: IChannel): void {
-        // If our Component is not local attach the channel.
-        if (this._isAttached) {
+    public bindChannel(channel: IChannel): void {
+        assert(this.notBoundedChannelContextSet.has(channel.id), "Channel to be binded should be in not bounded set");
+        this.notBoundedChannelContextSet.delete(channel.id);
+        // If our Component is attached, then attach the channel.
+        if (this.isAttached) {
             this.attachChannel(channel);
             return;
         } else {
             this.bind(channel.handle);
 
             // If our Component is local then add the channel to the queue
-            if (!this.attachChannelQueue.has(channel.id)) {
-                this.attachChannelQueue.set(channel.id, this.contexts.get(channel.id) as LocalChannelContext);
+            if (!this.localChannelContextQueue.has(channel.id)) {
+                this.localChannelContextQueue.set(channel.id, this.contexts.get(channel.id) as LocalChannelContext);
             }
         }
     }
 
-    public isLocal(): boolean {
-        return this.componentContext.isLocal();
-    }
-
-    /**
-     * Attaches this runtime to the container
-     * This includes the following:
-     * 1. Sending an Attach op that includes all existing state
-     * 2. Attaching registered channels
-     */
-    public attach() {
-        if (this._isAttached) {
+    public attachGraph() {
+        if (this.graphAttachState !== AttachState.Detached) {
             return;
         }
-
+        this.graphAttachState = AttachState.Attaching;
         if (this.boundhandles !== undefined) {
             this.boundhandles.forEach((handle) => {
-                handle.attach();
+                handle.attachGraph();
             });
             this.boundhandles = undefined;
         }
 
-        // Attach the runtime to the container via this callback
-        this.componentContext.attach(this);
-
         // Flush the queue to set any pre-existing channels to local
-        this.attachChannelQueue.forEach((channel) => {
+        this.localChannelContextQueue.forEach((channel) => {
             // When we are attaching the component we don't need to send attach for the registered services.
             // This is because they will be captured as part of the Attach component snapshot
             channel.attach();
         });
 
-        this._isAttached = true;
-        this.deferredAttached.resolve();
-        this.attachChannelQueue.clear();
+        this.localChannelContextQueue.clear();
+        this.bindToContext();
+        this.graphAttachState = AttachState.Attached;
     }
 
-    public bind(handle: IComponentHandle): void {
-        if (this.isAttached) {
-            handle.attach();
+    /**
+     * Binds this runtime to the container
+     * This includes the following:
+     * 1. Sending an Attach op that includes all existing state
+     * 2. Attaching the graph if the component becomes attached.
+     */
+    public bindToContext() {
+        if (this.bindState !== BindState.NotBound) {
+            return;
+        }
+        this.bindState = BindState.Binding;
+        // Attach the runtime to the container via this callback
+        this.componentContext.bindToContext(this);
+
+        this.bindState = BindState.Bound;
+    }
+
+    public bind(handle: IFluidHandle): void {
+        // If the component is already attached or its graph is already in attaching or attached state,
+        // then attach the incoming handle too.
+        if (this.isAttached || this.graphAttachState !== AttachState.Detached) {
+            handle.attachGraph();
             return;
         }
         if (this.boundhandles === undefined) {
-            this.boundhandles = new Set<IComponentHandle>();
+            this.boundhandles = new Set<IFluidHandle>();
         }
 
         this.boundhandles.add(handle);
@@ -446,6 +477,14 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                             id,
                             message.sequenceNumber,
                         ),
+                        this.componentContext.getCreateChildSummarizerNodeFn(
+                            id,
+                            {
+                                type: CreateSummarizerNodeSource.FromAttach,
+                                sequenceNumber: message.sequenceNumber,
+                                snapshot: attachMessage.snapshot,
+                            },
+                        ),
                         attachMessage.type);
 
                     this.contexts.set(id, remoteChannelContext);
@@ -474,15 +513,31 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.emit("signal", message, local);
     }
 
+    private isChannelAttached(id: string): boolean {
+        return (
+            // Added in createChannel
+            // Removed when bindChannel is called
+            !this.notBoundedChannelContextSet.has(id)
+            // Added in bindChannel only if this is not attached yet
+            // Removed when this is attached by calling attachGraph
+            && !this.localChannelContextQueue.has(id)
+            // Added in attachChannel called by bindChannel
+            // Removed when attach op is broadcast
+            && !this.pendingAttach.has(id)
+        );
+    }
+
     public async snapshotInternal(fullTree: boolean = false): Promise<ITreeEntry[]> {
         // Craft the .attributes file for each shared object
         const entries = await Promise.all(Array.from(this.contexts)
-            .filter(([key, value]) =>
+            .filter(([key, _]) => {
+                const isAttached = this.isChannelAttached(key);
+                // We are not expecting local dds! Summary may not capture local state.
+                assert(isAttached, "Not expecting detached channels during summarize");
                 // If the object is registered - and we have received the sequenced op creating the object
                 // (i.e. it has a base mapping) - then we go ahead and snapshot
-                value.isRegistered(),
-            )
-            .map(async ([key, value]) => {
+                return isAttached;
+            }).map(async ([key, value]) => {
                 const snapshot = await value.snapshot(fullTree);
 
                 // And then store the tree
@@ -492,8 +547,29 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return entries;
     }
 
+    public async summarize(fullTree = false): Promise<ISummaryTreeWithStats> {
+        const builder = new SummaryTreeBuilder();
+
+        // Iterate over each component and ask it to snapshot
+        await Promise.all(Array.from(this.contexts)
+            .filter(([key, _]) => {
+                const isAttached = this.isChannelAttached(key);
+                // We are not expecting local dds! Summary may not capture local state.
+                assert(isAttached, "Not expecting detached channels during summarize");
+                // If the object is registered - and we have received the sequenced op creating the object
+                // (i.e. it has a base mapping) - then we go ahead and snapshot
+                return isAttached;
+            }).map(async ([key, value]) => {
+                const channelSummary = await value.summarize(fullTree);
+                builder.addWithStats(key, channelSummary);
+            }));
+
+        return builder.getSummaryTree();
+    }
+
     public getAttachSnapshot(): ITreeEntry[] {
         const entries: ITreeEntry[] = [];
+        this.attachGraph();
 
         // Craft the .attributes file for each shared object
         for (const [objectId, value] of this.contexts) {
@@ -501,7 +577,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 throw new Error("Should only be called with local channel handles");
             }
 
-            if (value.isRegistered()) {
+            if (!this.notBoundedChannelContextSet.has(objectId)) {
                 const snapshot = value.getAttachSnapshot();
 
                 // And then store the tree
@@ -533,7 +609,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     /**
-     * Attach channel should only be called after the componentRuntime has been attached
+     * Attach channel should only be called after the dataStoreRuntime has been attached
      */
     private attachChannel(channel: IChannel): void {
         this.verifyNotClosed();
@@ -542,14 +618,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             return;
         }
 
-        channel.handle.attach();
+        channel.handle.attachGraph();
 
         assert(this.isAttached, "Component should be attached to attach the channel.");
-        // If the container is detached, we don't need to send OP or add to pending attach because
-        // we will summarize it while uploading the create new summary and make it known to other
-        // clients. If the container is attached and component is not attached we will never reach here.
-        if (!this.isLocal()) {
-            // Get the object snapshot and include it in the initial attach
+        // Get the object snapshot only if the component is Bound and its graph is attached too,
+        // because if the graph is attaching, then it would get included in the component snapshot.
+        if (this.bindState === BindState.Bound && this.graphAttachState === AttachState.Attached) {
             const snapshot = snapshotChannel(channel);
 
             const message: IAttachMessage = {
@@ -567,15 +641,15 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     private submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
         const envelope: IEnvelope = { address, contents };
-        return this.submit(ComponentMessageType.ChannelOp, envelope, localOpMetadata);
+        this.submit(ComponentMessageType.ChannelOp, envelope, localOpMetadata);
     }
 
     private submit(
         type: ComponentMessageType,
         content: any,
-        localOpMetadata: unknown = undefined): number {
+        localOpMetadata: unknown = undefined): void {
         this.verifyNotClosed();
-        return this.componentContext.submitMessage(type, content, localOpMetadata);
+        this.componentContext.submitMessage(type, content, localOpMetadata);
     }
 
     /**
@@ -594,7 +668,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                     // For Operations, find the right channel and trigger resubmission on it.
                     const envelope = content as IEnvelope;
                     const channelContext = this.contexts.get(envelope.address);
-                    strongAssert(channelContext, "There should be a channel context for the op");
+                    assert(channelContext, "There should be a channel context for the op");
                     channelContext.reSubmit(envelope.contents, localOpMetadata);
                     break;
                 }
@@ -603,7 +677,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 this.submit(type, content, localOpMetadata);
                 break;
             default:
-                assertNeverMessageType(type);
+                unreachableCase(type);
         }
     }
 
@@ -630,11 +704,24 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     private attachListener() {
+        this.setMaxListeners(Number.MAX_SAFE_INTEGER);
         this.componentContext.on("leader", () => {
             this.emit("leader");
         });
         this.componentContext.on("notleader", () => {
             this.emit("notleader");
+        });
+        this.componentContext.once("attaching", () => {
+            assert(this.bindState !== BindState.NotBound, "Component attaching should not occur if it is not bound");
+            this._attachState = AttachState.Attaching;
+            // This promise resolution will be moved to attached event once we fix the scheduler.
+            this.deferredAttached.resolve();
+            this.emit("attaching");
+        });
+        this.componentContext.once("attached", () => {
+            assert(this.bindState === BindState.Bound, "Component should only be attached after it is bound");
+            this._attachState = AttachState.Attached;
+            this.emit("attached");
         });
     }
 

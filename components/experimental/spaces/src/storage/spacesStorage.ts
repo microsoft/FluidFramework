@@ -6,27 +6,26 @@
 import { EventEmitter } from "events";
 import { Layout } from "react-grid-layout";
 import {
-    PrimedComponent,
-    PrimedComponentFactory,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import {
-    IComponentHandle,
-} from "@fluidframework/component-core-interfaces";
+import { AsSerializable } from "@fluidframework/datastore-definitions";
+import { v4 as uuid } from "uuid";
 
 /**
  * ISpacesStorage describes the public API surface of SpacesStorage.
  */
-export interface ISpacesStorage extends EventEmitter {
+export interface ISpacesStorage<T> extends EventEmitter {
     /**
-     * The list of components being stored.
+     * The list of items being stored.
      */
-    readonly componentList: Map<string, ISpacesStoredComponent>;
+    readonly itemList: Map<string, ISpacesStoredItem<AsSerializable<T>>>;
     /**
-     * Adds the given item to the collector.
-     * @param item - The item to add.
+     * Adds a item to the storage using the given data.
+     * @param serializableItemData - The data of the item to add.
      * @returns A unique key corresponding to the added item.
      */
-    addItem(handle: IComponentHandle, type: string, layout?: Layout): string
+    addItem(serializableItemData: AsSerializable<T>, layout?: Layout): string
     /**
      * Removes the item specified by the given key.
      * @param key - The key referring to the item to remove.
@@ -41,22 +40,21 @@ export interface ISpacesStorage extends EventEmitter {
 }
 
 /**
- * Spaces collects loadable components paired with a type.  The type is actually not generally needed except for
- * supporting export to template.
+ * Spaces collects serializable formats of items and stores them with grid-based layout information.
  */
-export interface ISpacesStoredComponent {
-    handle: IComponentHandle;
-    type: string;
+export interface ISpacesStoredItem<T> {
+    serializableItemData: AsSerializable<T>;
     layout: Layout;
 }
 
 /**
- * SpacesStorage is a component which maintains a collection of other components and a grid-based layout for rendering.
+ * SpacesStorage is a component which maintains a collection of items and a grid-based layout for rendering.
+ * The type of the item stored is flexible, as long as it is serializable.
  */
-export class SpacesStorage extends PrimedComponent implements ISpacesStorage {
+export class SpacesStorage<T> extends DataObject implements ISpacesStorage<T> {
     public static get ComponentName() { return "@fluid-example/spaces-storage"; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         SpacesStorage.ComponentName,
         SpacesStorage,
         [],
@@ -68,19 +66,19 @@ export class SpacesStorage extends PrimedComponent implements ISpacesStorage {
         return SpacesStorage.factory;
     }
 
-    public get componentList(): Map<string, ISpacesStoredComponent> {
+    public get itemList(): Map<string, ISpacesStoredItem<AsSerializable<T>>> {
         return this.root;
     }
 
-    public addItem(handle: IComponentHandle, type: string, layout?: Layout): string {
-        const model: ISpacesStoredComponent = {
-            handle,
-            type,
+    public addItem(serializableItemData: AsSerializable<T>, layout?: Layout): string {
+        const model: ISpacesStoredItem<T> = {
+            serializableItemData,
             layout: layout ?? { x: 0, y: 0, w: 6, h: 2 },
         };
 
-        this.root.set(handle.path, model);
-        return handle.path;
+        const id = uuid();
+        this.root.set(id, model);
+        return id;
     }
 
     public removeItem(key: string): void {
@@ -88,18 +86,17 @@ export class SpacesStorage extends PrimedComponent implements ISpacesStorage {
     }
 
     public updateLayout(key: string, newLayout: Layout): void {
-        const currentEntry = this.root.get<ISpacesStoredComponent>(key);
+        const currentEntry = this.root.get<ISpacesStoredItem<T>>(key);
         const model = {
-            handle: currentEntry.handle,
-            type: currentEntry.type,
+            serializableItemData: currentEntry.serializableItemData,
             layout: { x: newLayout.x, y: newLayout.y, w: newLayout.w, h: newLayout.h },
         };
         this.root.set(key, model);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         this.root.on("valueChanged", () => {
-            this.emit("componentListChanged", new Map(this.componentList.entries()));
+            this.emit("itemListChanged", new Map(this.itemList.entries()));
         });
     }
 }

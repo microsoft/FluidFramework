@@ -16,6 +16,8 @@ trigger:
     - server/routerlicious
     - tools/build-server-resources
     - tools/pipelines/server-routerlicious.yml
+    - tools/pipelines/templates/publish-npm-package.yml
+    - tools/pipelines/templates/include-generate-notice-steps.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
   
@@ -33,6 +35,12 @@ pr:
     - server/routerlicious/kubernetes/routerlicious
 
 variables:
+  skipComponentGovernanceDetection: true
+  pushImage: ${{
+    and(
+        ne(variables['Build.Reason'], 'PullRequest'),
+        eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    )}}
   registry: prague.azurecr.io
   containerName: prague-server
   baseContainerName: $(containerName)-base
@@ -54,7 +62,6 @@ stages:
         # Checkout
         - checkout: self
           clean: true
-          fetchDepth: 1
           lfs: false
           submodules: false
 
@@ -77,21 +84,9 @@ stages:
               cp server/routerlicious/repo-package.json server/routerlicious/packages/package.json
               cp server/routerlicious/repo-package-lock.json server/routerlicious/packages/package-lock.json
             displayName: 'Generate Mono repo package json'
-          - task: ComponentGovernanceComponentDetection@0
-            displayName: Component Detection
-            inputs:
-              sourceScanPath: server/routerlicious
-              verbosity: Verbose
-              scanType: Register
-              alertWarningLevel: High
-          - task: msospo.ospo-extension.8d7f9abb-6896-461d-9e25-4f74ed65ddb2.notice@0
-            displayName: 'NOTICE File Generator'
-          - task: CopyFiles@2
-            displayName: 'Copy NOTICE'
-            inputs:
-              SourceFolder: '$(System.DefaultWorkingDirectory)'
-              Contents: NOTICE.txt
-              TargetFolder: server/routerlicious
+          - template: templates/include-generate-notice-steps.yml
+            parameters:
+              buildDirectory: server/routerlicious
           - bash: |
               rm server/routerlicious/packages/package.json
               rm server/routerlicious/packages/package-lock.json
@@ -141,7 +136,7 @@ stages:
           displayName: npm lint
           inputs:
             action: 'Run a Docker command'
-            customCommand: 'run --user root -t $(baseContainerTag) npm run lint'
+            customCommand: 'run -t $(baseContainerTag) npm run lint'
 
         # Test
         - task: Docker@0
@@ -181,7 +176,7 @@ stages:
             publishLocation: 'Container'
 
         # Build - Runner
-        - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+        - ${{ if eq(variables.pushImage, true) }}:
           - task: Docker@2
             displayName: 'Docker Build - Runner'
             inputs:
@@ -212,7 +207,7 @@ stages:
           continueOnError: true
           condition: succeededOrFailed()
 
-        - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+        - ${{ if eq(variables.pushImage, true) }}:
           - task: Docker@0
             displayName: 'Cleanup: Runner'
             inputs:

@@ -3,23 +3,38 @@
  * Licensed under the MIT License.
  */
 
-import { IProvideComponentFactory } from "./componentFactory";
+import { IProvideFluidDataStoreFactory } from "./componentFactory";
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentRegistry>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideFluidDataStoreRegistry>> { }
 }
 
-export type ComponentRegistryEntry = Readonly<Partial<IProvideComponentRegistry & IProvideComponentFactory>>;
-export type NamedComponentRegistryEntry = [string, Promise<ComponentRegistryEntry>];
-export type NamedComponentRegistryEntries = Iterable<NamedComponentRegistryEntry>;
+/**
+ * A single registry entry that may be used to create components
+ */
+export type FluidDataStoreRegistryEntry =
+    Readonly<Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>>;
+/**
+ * An associated pair of an identifier and registry entry.  Registry entries
+ * may be dynamically loaded.
+ */
+export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
+/**
+ * An iterable itentifier/registry entry pair list
+ */
+export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry>;
 
-export const IComponentRegistry: keyof IProvideComponentRegistry = "IComponentRegistry";
+export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry = "IFluidDataStoreRegistry";
 
-export interface IProvideComponentRegistry {
-    readonly IComponentRegistry: IComponentRegistry;
+export interface IProvideFluidDataStoreRegistry {
+    readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
 }
 
-export interface IComponentRegistry extends IProvideComponentRegistry {
-    get(name: string): Promise<ComponentRegistryEntry | undefined>;
+/**
+ * An association of identifiers to component registry entries, where the
+ * entries can be used to create components.
+ */
+export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
+    get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
 }

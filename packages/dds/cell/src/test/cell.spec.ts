@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import {
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
@@ -18,10 +18,10 @@ import { ISharedCell } from "../interfaces";
 
 describe("Cell", () => {
     let cell: SharedCell;
-    let componentRuntime: MockComponentRuntime;
+    let componentRuntime: MockFluidDataStoreRuntime;
 
     beforeEach(async () => {
-        componentRuntime = new MockComponentRuntime();
+        componentRuntime = new MockFluidDataStoreRuntime();
         cell = new SharedCell("cell", componentRuntime, CellFactory.Attributes);
     });
 
@@ -61,7 +61,7 @@ describe("Cell", () => {
 
     describe("SharedCell op processing in local state", () => {
         it("should correctly process a set operation sent in local state", async () => {
-            // Set the component runtime to local.
+            // Set the data store runtime to local.
             componentRuntime.local = true;
 
             // Set a value in local state.
@@ -70,7 +70,7 @@ describe("Cell", () => {
 
             // Load a new SharedCell in connected state from the snapshot of the first one.
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2 = MockSharedObjectServices.createFromTree(cell.snapshot());
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
@@ -121,7 +121,7 @@ describe("Cell", () => {
             cell.connect(services1);
 
             // Create and connect a second SharedCell.
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
@@ -177,7 +177,7 @@ describe("Cell", () => {
             cell.connect(services1);
 
             // Create and connect a second SharedCell.
-            const componentRuntime2 = new MockComponentRuntime();
+            const componentRuntime2 = new MockFluidDataStoreRuntime();
             containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),

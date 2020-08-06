@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, IChannelAttributes } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
 import { SharedObjectSequenceFactory } from "./sequenceFactory";
 import { SharedSequence } from "./sharedSequence";
 
@@ -11,16 +11,16 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
     /**
      * Create a new shared object sequence
      *
-     * @param runtime - component runtime the new shared object sequence belongs to
+     * @param runtime - data store runtime the new shared object sequence belongs to
      * @param id - optional name of the shared object sequence
      * @returns newly create shared object sequence (but not attached yet)
      */
-    public static create<T>(runtime: IComponentRuntime, id?: string) {
+    public static create<T>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedObjectSequenceFactory.Type) as SharedObjectSequence<T>;
     }
 
     /**
-     * Get a factory for SharedObjectSequence to register with the component.
+     * Get a factory for SharedObjectSequence to register with the data store.
      *
      * @returns a factory that creates and load SharedObjectSequence
      */
@@ -28,7 +28,7 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
         return new SharedObjectSequenceFactory();
     }
 
-    constructor(document: IComponentRuntime, public id: string, attributes: IChannelAttributes) {
+    constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(document, id, attributes, SharedObjectSequenceFactory.segmentFromSpec);
     }
 

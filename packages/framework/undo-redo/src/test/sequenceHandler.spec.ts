@@ -7,7 +7,7 @@ import assert from "assert";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import {
     MockContainerRuntimeFactory,
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { SharedSegmentSequenceUndoRedoHandler } from "../sequenceHandler";
@@ -47,19 +47,19 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
     let undoRedoStack: UndoRedoStackManager;
 
     beforeEach(() => {
-        const componentRuntime = new MockComponentRuntime();
-        componentRuntime.attach();
+        const dataStoreRuntime = new MockFluidDataStoreRuntime();
+        dataStoreRuntime.bindToContext();
 
         containerRuntimeFactory = new MockContainerRuntimeFactory();
-        const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+        const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
         const services = {
             deltaConnection: containerRuntime.createDeltaConnection(),
             objectStorage: new MockStorage(undefined),
         };
 
-        sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
+        sharedString = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
-        sharedString.register();
+        sharedString.bindToContext();
         sharedString.connect(services);
 
         undoRedoStack = new UndoRedoStackManager();

@@ -5,14 +5,13 @@
 
 import { EventEmitter } from "events";
 import {
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
-    IComponentHandle,
-    IComponent,
-} from "@fluidframework/component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
+    IFluidHandle,
+} from "@fluidframework/core-interfaces";
+import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     MergeTreeDeltaType,
@@ -21,11 +20,10 @@ import {
     reservedTileLabelsKey,
     Marker,
 } from "@fluidframework/merge-tree";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { SharedString, SequenceDeltaEvent } from "@fluidframework/sequence";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
-import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
+import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import CodeMirror from "codemirror";
 
 /* eslint-disable @typescript-eslint/no-require-imports,
@@ -38,7 +36,7 @@ import/no-internal-modules, import/no-unassigned-import */
 
 import { CodeMirrorPresenceManager } from "./presence";
 
-class CodemirrorView implements IComponentHTMLView {
+class CodemirrorView implements IFluidHTMLView {
     private textArea: HTMLTextAreaElement | undefined;
     private codeMirror: CodeMirror.EditorFromTextArea | undefined;
     private presenceManager: CodeMirrorPresenceManager | undefined;
@@ -50,9 +48,9 @@ class CodemirrorView implements IComponentHTMLView {
 
     private sequenceDeltaCb: any;
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
-    constructor(private readonly text: SharedString, private readonly runtime: IComponentRuntime) {
+    constructor(private readonly text: SharedString, private readonly runtime: IFluidDataStoreRuntime) {
     }
 
     public remove(): void {
@@ -70,7 +68,7 @@ class CodemirrorView implements IComponentHTMLView {
         }
     }
 
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         // Create base textarea
         if (!this.textArea) {
             this.textArea = document.createElement("textarea");
@@ -157,7 +155,7 @@ class CodemirrorView implements IComponentHTMLView {
             this.updatingSequence = true;
 
             // eslint-disable-next-line max-len
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const doc = this.codeMirror!.getDoc();
             for (const range of ev.ranges) {
                 const segment = range.segment;
@@ -198,42 +196,42 @@ class CodemirrorView implements IComponentHTMLView {
 
 /**
  * CodeMirrorComponent builds a fluid collaborative code editor on top of the open source code editor CodeMirror.
- * It has its own implementation of IComponentLoadable and does not extend SharedComponent / PrimedComponent. This is
- * done intentionally to serve as an example of exposing the URL and handle via IComponentLoadable.
+ * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
+ * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
 export class CodeMirrorComponent
     extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
-    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
+    implements IFluidLoadable, IFluidRouter, IFluidHTMLView {
+    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         const collection = new CodeMirrorComponent(runtime, context);
         await collection.initialize();
 
         return collection;
     }
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
-    public get IComponentHTMLVisual() { return this; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidRouter() { return this; }
+    public get IFluidHTMLView() { return this; }
 
-    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
     public url: string;
     private text: SharedString | undefined;
     private root: ISharedMap | undefined;
-    private readonly innerHandle: IComponentHandle<this>;
+    private readonly innerHandle: IFluidHandle<this>;
 
     constructor(
-        private readonly runtime: IComponentRuntime,
-        /* Private */ context: IComponentContext,
+        private readonly runtime: IFluidDataStoreRuntime,
+        /* Private */ context: IFluidDataStoreContext,
     ) {
         super();
         this.url = context.id;
-        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
+        this.innerHandle = new FluidOjectHandle(this, this.url, runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "fluid/component",
+            mimeType: "fluid/object",
             status: 200,
             value: this,
         };
@@ -251,34 +249,35 @@ export class CodeMirrorComponent
                 { [reservedTileLabelsKey]: ["pg"] });
 
             this.root.set("text", text.handle);
-            this.root.register();
+            this.root.bindToContext();
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this.text = await this.root.get<IComponentHandle<SharedString>>("text").get();
+        this.text = await this.root.get<IFluidHandle<SharedString>>("text").get();
     }
 
-    public addView(scope: IComponent): IComponentHTMLView {
+    public render(elm: HTMLElement): void {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return new CodemirrorView(this.text!, this.runtime);
+        const codemirrorView = new CodemirrorView(this.text!, this.runtime);
+        codemirrorView.render(elm);
     }
 }
 
-class SmdeFactory implements IComponentFactory {
+class SmdeFactory implements IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/codemirror";
     public readonly type = SmdeFactory.type;
 
-    public get IComponentFactory() { return this; }
+    public get IFluidDataStoreFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
-        const dataTypes = new Map<string, ISharedObjectFactory>();
+    public instantiateDataStore(context: IFluidDataStoreContext): void {
+        const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         const sequenceFactory = SharedString.getFactory();
 
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(sequenceFactory.type, sequenceFactory);
 
-        const runtime = ComponentRuntime.load(
+        const runtime = FluidDataStoreRuntime.load(
             context,
             dataTypes);
 

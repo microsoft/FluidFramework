@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, IChannelAttributes } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
 import { SharedNumberSequenceFactory } from "./sequenceFactory";
 import { SharedSequence } from "./sharedSequence";
 
@@ -11,17 +11,17 @@ export class SharedNumberSequence extends SharedSequence<number> {
     /**
      * Create a new shared number sequence
      *
-     * @param runtime - component runtime the new shared number sequence belongs to
+     * @param runtime - data store runtime the new shared number sequence belongs to
      * @param id - optional name of the shared number sequence
      * @returns newly create shared number sequence (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id,
             SharedNumberSequenceFactory.Type) as SharedNumberSequence;
     }
 
     /**
-     * Get a factory for SharedNumberSequence to register with the component.
+     * Get a factory for SharedNumberSequence to register with the data store.
      *
      * @returns a factory that creates and load SharedNumberSequence
      */
@@ -29,7 +29,7 @@ export class SharedNumberSequence extends SharedSequence<number> {
         return new SharedNumberSequenceFactory();
     }
 
-    constructor(document: IComponentRuntime, public id: string, attributes: IChannelAttributes) {
+    constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(document, id, attributes, SharedNumberSequenceFactory.segmentFromSpec);
     }
 

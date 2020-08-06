@@ -1,0 +1,25 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+parameters:
+- name: buildDirectory
+  type: string
+
+steps:
+- task: ComponentGovernanceComponentDetection@0
+  displayName: Component Detection
+  inputs:
+    sourceScanPath: ${{ parameters.buildDirectory }}
+    verbosity: Verbose
+    scanType: Register
+    alertWarningLevel: High
+
+- task: msospo.ospo-extension.8d7f9abb-6896-461d-9e25-4f74ed65ddb2.notice@0
+  displayName: 'NOTICE File Generator'
+
+- task: CopyFiles@2
+  displayName: 'Copy NOTICE'
+  inputs:
+    SourceFolder: '$(System.DefaultWorkingDirectory)'
+    Contents: NOTICE.txt
+    TargetFolder: ${{ parameters.buildDirectory }}

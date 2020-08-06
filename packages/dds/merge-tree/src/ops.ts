@@ -25,10 +25,6 @@ export interface IMarkerDef {
     refType?: ReferenceType;
 }
 
-export interface IComponentDef {
-    url: string;
-}
-
 // Note: Assigned positive integers to avoid clashing with MergeTreeMaintenanceType
 export const enum MergeTreeDeltaType {
     INSERT = 0,

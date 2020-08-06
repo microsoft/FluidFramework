@@ -5,9 +5,9 @@
 
 import assert from "assert";
 import { ITree } from "@fluidframework/protocol-definitions";
-import { ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
@@ -27,26 +27,29 @@ import { SharedStringFactory } from "../sequenceFactory";
 
 describe("SharedString", () => {
     let sharedString: SharedString;
-    let componentRuntime: MockComponentRuntime;
+    let dataStoreRuntime1: MockFluidDataStoreRuntime;
 
     beforeEach(() => {
-        componentRuntime = new MockComponentRuntime();
-        sharedString = new SharedString(componentRuntime, "shared-string-1", SharedStringFactory.Attributes);
+        dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+        sharedString = new SharedString(dataStoreRuntime1, "shared-string-1", SharedStringFactory.Attributes);
     });
 
     describe("SharedString in local state", () => {
         beforeEach(() => {
-            componentRuntime.local = true;
+            dataStoreRuntime1.local = true;
         });
 
         // Creates a new SharedString and loads it from the passed snaphost tree.
         async function CreateStringAndCompare(tree: ITree): Promise<void> {
-            const services: ISharedObjectServices = {
+            const services: IChannelServices = {
                 deltaConnection: new MockEmptyDeltaConnection(),
                 objectStorage: new MockStorage(tree),
             };
-
-            const sharedString2 = new SharedString(componentRuntime, "shared-string-2", SharedStringFactory.Attributes);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const sharedString2 = new SharedString(
+                dataStoreRuntime2,
+                "shared-string-2",
+                SharedStringFactory.Attributes);
             // eslint-disable-next-line no-null/no-null
             await sharedString2.load(null/* branchId */, services);
             await sharedString2.loaded;
@@ -167,7 +170,7 @@ describe("SharedString", () => {
         it("replace negative range", async () => {
             sharedString.insertText(0, "123");
             sharedString.replaceText(2, 1, "aaa");
-            // This assert relies on the behvaior that replacement for a reversed range
+            // This assert relies on the behavior that replacement for a reversed range
             // will insert at the max end of the range but not delete the range
             assert.equal(sharedString.getText(), "12aaa3", "Could not replace negative range");
         });
@@ -182,7 +185,7 @@ describe("SharedString", () => {
                 sharedString.insertText(0, `${insertText}${i}`);
             }
 
-            // Get snapshot and verift its correct.
+            // Get snapshot and verify its correct.
             let tree = sharedString.snapshot();
             assert(tree.entries.length === 2);
             assert(tree.entries[0].path === "header");
@@ -219,8 +222,8 @@ describe("SharedString", () => {
 
     describe("SharedString op processing in local state", () => {
         it("should correctly process operations sent in local state", async () => {
-            // Set the component runtime to local.
-            componentRuntime.local = true;
+            // Set the data store runtime to local.
+            dataStoreRuntime1.local = true;
 
             // Initialize the shared string so that it is completely loaded before we take a snapshot.
             sharedString.initializeLocal();
@@ -231,21 +234,21 @@ describe("SharedString", () => {
 
             // Load a new Ink in connected state from the snapshot of the first one.
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const componentRuntime2 = new MockComponentRuntime();
-            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
-            const services2: ISharedObjectServices = {
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+            const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(sharedString.snapshot()),
             };
 
             const sharedString2 =
-                new SharedString(componentRuntime2, "shared-string-2", SharedStringFactory.Attributes);
+                new SharedString(dataStoreRuntime2, "shared-string-2", SharedStringFactory.Attributes);
             // eslint-disable-next-line no-null/no-null
             await sharedString2.load(null, services2);
 
             // Now connect the first Ink
-            componentRuntime.local = false;
-            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+            dataStoreRuntime1.local = false;
+            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
             const services1 = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(undefined),
@@ -276,23 +279,25 @@ describe("SharedString", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactory();
 
             // Connect the first SharedString.
-            componentRuntime.local = false;
-            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+            dataStoreRuntime1.local = false;
+            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
             const services1 = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
+            sharedString.initializeLocal();
             sharedString.connect(services1);
 
             // Create and connect a second SharedString.
-            const componentRuntime2 = new MockComponentRuntime();
-            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
 
-            sharedString2 = new SharedString(componentRuntime2, "shared-string-2", SharedStringFactory.Attributes);
+            sharedString2 = new SharedString(dataStoreRuntime2, "shared-string-2", SharedStringFactory.Attributes);
+            sharedString2.initializeLocal();
             sharedString2.connect(services2);
         });
 
@@ -460,21 +465,23 @@ describe("SharedString", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Connect the first SharedString.
-            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime);
-            const services1: ISharedObjectServices = {
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+            const services1: IChannelServices = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
+            sharedString.initializeLocal();
             sharedString.connect(services1);
 
             // Create and connect a second SharedString.
-            const runtime2 = new MockComponentRuntime();
+            const runtime2 = new MockFluidDataStoreRuntime();
             containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
-            sharedString2 = new SharedString(componentRuntime, "shared-string-2", SharedStringFactory.Attributes);
-            const services2: ISharedObjectServices = {
+            sharedString2 = new SharedString(runtime2, "shared-string-2", SharedStringFactory.Attributes);
+            const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
+            sharedString2.initializeLocal();
             sharedString2.connect(services2);
         });
 

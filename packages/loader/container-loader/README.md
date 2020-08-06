@@ -12,17 +12,17 @@
 - [Proposal Lifetime](#Proposal-lifetime)
 
 ## Expectations from host implementers
-It's expected that host will listen to various events described in other sections of the document and conveys correctly (in some form) information to the user to ensure that user is aware of various situations and is not going to lose data.
+It's expected that host will listen to various events described in other sections of this document and conveys correctly (in some form) information to the user to ensure that user is aware of various situations and is not going to lose data.
 Please see specific sections for more details on these states and events - this section only serves as a summary and does not go into details
 1. ["disconnected" and "connected"](#Connectivity-events) event: Host can either notify user about no connectivity (and potential data loss if container is closed) or disallow edits via `Container.forceReadonly(true)`
 2. ["closed"](#Closure) event: If raised with error, host is responsible for conveying error in some form to the user. Container is left in disconnected & readonly state when it is closed (because of error or not).
-3. ["readonly"](#Readonly-states) event: Host should have some indication to user that document is not editable. User permissions can change over lifetime of Container, but they can't change per conneciton session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
+3. ["readonly"](#Readonly-states) event: Host should have some indication to user that container is not editable. User permissions can change over lifetime of Container, but they can't change per conneciton session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
 
 ## Expectations from container runtime and components implementers
 1. Respect ["readonly" state](#Readonly-states). In this state container runtime (and components) should not allow changes to local state, as these changes will be lost on container being closed.
-2. Maintain Ops in flight until observed they are acknowledged by server. Resubmit any lost Ops on reconnection. This is done by DDSs in stock implementations of container & component runtimes provided by Fluid Framework
+2. Maintain Ops in flight until observed they are acknowledged by server. Resubmit any lost Ops on reconnection. This is done by DDSs in stock implementations of container & data store runtimes provided by Fluid Framework
 3. Respect "["disconnected" and "connected"](#Connectivity-events) states and do not not submit Ops when disconnected.
-4. Respect ["dispose"](#Closure) event and treat it as combination of "readonly" and "disconnected" states. I.e. it should be fully operatable (render content), but not allow edits. This is equivalent to "closed" event on container for hosts, but is broader (includes document's code version upgrades).
+4. Respect ["dispose"](#Closure) event and treat it as combination of "readonly" and "disconnected" states. I.e. it should be fully operatable (render content), but not allow edits. This is equivalent to "closed" event on container for hosts, but is broader (includes container's code version upgrades).
 
 ## Fluid Loader
 
@@ -31,8 +31,8 @@ Fluid storage as well as consensus over a quorum of clients.
 
 Storage includes snapshots as well as the live and persisted operation stream.
 
-The consensus system allows clients within the collaboration window to agree on document properties. One
-example of this is the npm package that should be loaded to process operations applied to the document.
+The consensus system allows clients within the collaboration window to agree on container's properties. One
+example of this is the npm package that should be loaded to process operations applied to the container.
 
 ## Container Lifetime
 
@@ -59,25 +59,25 @@ When container is closed, the following is true (in no particular order):
 `"closed"` event is available on Container for hosts. `"disposed"` event is delivered to container runtime when container is closed. But container runtime can be also disposed when new code proposal is made and new version of the code (and container runtime) is loaded in accordance with it.
 
 ## Audience
-`Container.audience` exposes an object that tracks all connected clients to same document.
+`Container.audience` exposes an object that tracks all connected clients to same container.
 - `getMembers()` can be used to retrieve current set of users
 - `getMember()` can be used to get IClient information about particular client (returns undefined if such client is not connected)
 - `"addMember"` event is raised when new member joins
-- `"removeMember"` event is raised when an earlier connected member leaves (disconnects from document)
+- `"removeMember"` event is raised when an earlier connected member leaves (disconnects from container)
 
 `getMembers()` and `"addMember"` event provide _IClient_ interface that describes type of connection, permissions and user information:
 - clientId is the key - it is unique ID for a session. Please see [ClientID and client identification](#ClientId-and-client-identification) for more details on it, as well as how to properly differentiate human vs. agent clients and difference between client ID & user ID.
 - IClient.mode in particular describes connectivity mode of a client:
-    - "write" means client has read/write connection, can change document, and participates in Quorum
-    - "read" indicates client as read connection. Such clients can't modify document and do not participate in quorum. That said, "read" does not indicate client permissions, i.e. client might have read-only permissions to a file, or maybe connected temporarily as read-only, to reduce COGS on server and not "modify" document (any read-write connection generates join & leave messages that modify document and change "last edited by" property)
+    - "write" means client has read/write connection, can change container contents, and participates in Quorum
+    - "read" indicates client as read connection. Such clients can't modify container and do not participate in quorum. That said, "read" does not indicate client permissions, i.e. client might have read-only permissions to a file, or maybe connected temporarily as read-only, to reduce COGS on server and not "modify" container (any read-write connection generates join & leave messages that modify container and change "last edited by" property)
 
-Please note that if this client losses connection to ordering server, then audience information is not reset at that moment. It will become stale while client is disconnected, and will refresh the moment client connects back to document. For more details, please see [Connectivity events](#Connectivity-events) section
+Please note that if this client losses connection to ordering server, then audience information is not reset at that moment. It will become stale while client is disconnected, and will refresh the moment client connects back to container. For more details, please see [Connectivity events](#Connectivity-events) section
 
 ## ClientID and client identification
 
-`Container.clientId` exposes ID of a client. Ordering service assigns unique random IDs to all connected clients. Please note that if same user opened same document on 3 different machines, then there would be 3 clientIDs tracking 3 sessions for the same user.
+`Container.clientId` exposes ID of a client. Ordering service assigns unique random IDs to all connected clients. Please note that if same user opened same container on 3 different machines, then there would be 3 clientIDs tracking 3 sessions for the same user.
 
-A single user connecting to a document may result in multiple sessions for the document (and thus multiple clientID). This is due to various agents (including summarizing agents) working along humans. You can leverage `IClient.details.capabilities.interactive` to differentiate humans vs. agents. This property should be used to filter out bots when exposing user presence (like in coauth gallery)
+A single user connecting to a container may result in multiple sessions for the container (and thus multiple clientID). This is due to various agents (including summarizing agents) working along humans. You can leverage `IClient.details.capabilities.interactive` to differentiate humans vs. agents. This property should be used to filter out bots when exposing user presence (like in coauth gallery)
 
 IClient.user represents user ID (in storage) and can be used to identify sessions from same user (from same or different machines).
 
@@ -85,23 +85,27 @@ IClient.user represents user ID (in storage) and can be used to identify session
 
 There are two ways errors are exposed:
 1. At open time, by returning rejected promise from Loader.resolve() or Loader.request()
-2. As an `"closed"` event on container, when container is closed due to critical error.
-3. As an `"warning"` event on container.
+2. As a `"closed"` event on container, when container is closed due to critical error.
+3. As a `"warning"` event on container.
 
-Most critical errors can show up in #1 & #2 workflows. For example, URI may point to deleted file, which will result in errors on container open. But file can also be deleted while container is opened, resulting in same error type being raised through "error" handler.
+Critical errors can show up in #1 & #2 workflows. For example, component URI may point to a deleted file, which will result in errors on container open. But file can also be deleted while container is opened, resulting in same error type being raised through "error" handler.
 
-Errors and warnings raised by those paths are typed: errors are of [CriticalContainerError](../container-definitions/src/error.ts) type, and warnings are of [ContainerWarning](../container-definitions/src/error.ts) type which is a union of interfaces that have one thing in common - they have the following  field, describing type of an error (and appropriate interface of error object):
+Errors are of [ICriticalContainerError](../container-definitions/src/error.ts) type, and warnings are of [ContainerWarning](../container-definitions/src/error.ts) type. Both have `errorType` property, describing type of an error (and appropriate interface of error object):
 ```ts
-     readonly errorType: ErrorType.genericError;
+     readonly errorType: string;
 ```
-ErrorType enum represents all error and warning types that can be raised by container.
-For a full list of error interfaces please see interfaces that are part of these two types above.
+There are 3 sources of errors:
+1. [ContainerErrorType](../container-definitions/src/error.ts) - errors & warnings raised at loader level
+2. [OdspErrorType](../../drivers/odsp-driver/src/odspError.ts) and [R11sErrorType](../../drivers/routerlicious-driver/src/documentDeltaConnection.ts) - errors raised by ODSP and R11S drivers.
+3. Runtime errors, like `"summarizingError"`, `"dataCorruptionError"`. This class of errors is not pre-determined and depends on type of container loaded.
 
- Hosts have to listen to `"closed"` event. If error object is present there, container was closed due to error and this information needs to be communicated to user in some way. If there is no error object, it was closed due to host application calling Container.close() (without specifying error).
- When container is closed, it is no longer connected to ordering service. It is also in read-only state, communicating to components not to allow user to make changes to document.
+`ICriticalContainerError.errorType` is a string, which represents a union of 3 error types described above. Hosting application may package different drivers and open different types of containers, and only hosting application may have enough information to enumerate all possible error codes in such scenarios.
+
+Hosts must listen to `"closed"` event. If error object is present there, container was closed due to error and this information needs to be communicated to user in some way. If there is no error object, it was closed due to host application calling Container.close() (without specifying error).
+When container is closed, it is no longer connected to ordering service. It is also in read-only state, communicating to components not to allow user to make changes to container.
 
 ## Connectivity events
-Container raises 2  events to notify hosting application about connectivity issues and connectivity status.
+Container raises two events to notify hosting application about connectivity issues and connectivity status.
 - `"connected"` event is raised when container is connected and is up-to-date, i.e. changes are flowing between client and server.
 - `"disconnected"` event is raised when container lost connectivity (for any reason).
 
@@ -115,7 +119,7 @@ Components should almost never listen to these events (see more on [Readonly sta
 
 Hosting application can use these events in order to indicate to user when user changes are not propagating through the system, and thus can be lost (on browser tab being closed). It's advised to use some delay (like 5 seconds) before showing such UI, as network connectivity might be intermittent.  Also if container was offline for very long period of time due to `Container.setAutoReconnect(false)` being called, it might take a while to get connected and current.
 
-Please note that hosts can implement various strategies on how to handle disconnections. Some may decide to show some UX letting user know about potential loss of data if document is closed while disconnected. Others can force container to disallow user edits while offline (see [Readonly states](#Readonly-states)).
+Please note that hosts can implement various strategies on how to handle disconnections. Some may decide to show some UX letting user know about potential loss of data if container is closed while disconnected. Others can force container to disallow user edits while offline (see [Readonly states](#Readonly-states)).
 
 It's worth pointing out that being connected does not mean all user edits are preserved on container closure. There is latency in the system, and loader layer does not provide any guarantees here. Not every implementation needs a solution here (games likely do not care), and thus solving this problem is pushed to framework level (i.e. having a component that can expose `'dirtyDocument'` signal from ContainerRuntime and request route that can return such component).
 
@@ -132,7 +136,7 @@ User permissions can change over lifetime of Container. They can't change during
 This value is not affected by `Container.forceReadonly` calls discussed below and can be used by hosts to indicate to users if it's possible to edit a file in the absence of readonly state being overridden via `Container.forceReadonly`.
 
 Hosts can also force readonly-mode for a container via calling `Container.forceReadonly(true)`. This can be useful in scenarios like
-   - Loss of connectivity, in scenarios where host choses method od preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of document (container)
+   - Loss of connectivity, in scenarios where host choses method od preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of container
    - Special view-only mode in host. For example can be used by hosts for previewing container content in-place with other host content, and leveraging full-screen / separate window experience for editing.
 
 Container and DeltaManager expose `"readonly"` event and property. It can have 3 states:

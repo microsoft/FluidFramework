@@ -2,14 +2,14 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ISharedDirectory, ISharedMap } from "@fluidframework/map";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { ISharedMap, IDirectoryValueChanged } from "@fluidframework/map";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
-    IComponentHandle,
-    IComponentLoadable,
-    IComponent,
-} from "@fluidframework/component-core-interfaces";
-import { SharedObject } from "@fluidframework/shared-object-base";
+    IFluidHandle,
+    IFluidLoadable,
+    IFluidObject,
+} from "@fluidframework/core-interfaces";
+import { SyncedComponent } from "./fluidComponent";
 
 /**
  * The combined state contains the fluid and view states and the data props
@@ -38,13 +38,9 @@ export interface ICombinedState<
 }
 
 /**
- * The fluid schema that is generated on load and will be stored in the root
+ * The fluid schema that is generated on load and will be stored in the synced state
  */
 export interface IFluidSchema {
-    /**
-     * (k,v) = (common fluid and view state component keys, respective handles)
-     */
-    componentKeyMap: ISharedMap;
     /**
      * (k,v) = (viewKeys, needsFluidConverter)
      */
@@ -53,6 +49,10 @@ export interface IFluidSchema {
      * (k,v) = (fluidKeys, needsViewConverter)
      */
     fluidMatchingMap: ISharedMap;
+    /**
+     * (k,v) = (path, handle)
+     */
+    storedHandleMap: ISharedMap;
 }
 
 /**
@@ -112,28 +112,20 @@ export interface IFluidProps<
     SF extends IFluidFunctionalComponentFluidState
     > {
     /**
-     *  Unique ID to use for storing the component's synced state in the root
+     *  Unique ID to use for storing the component's synced state in the SyncedComponent's syncedState SharedMap
      */
     syncedStateId: string;
     /**
-     * The root shared directory that will be used to store the synced state
+     * An instance of the SyncedComponent that this will be rendered in
      */
-    root: ISharedDirectory;
+    syncedComponent: SyncedComponent;
     /**
-     * Data props that are loaded in during the Fluid initialization step. This contains the runtime
-     * and the fluid component map
+     * Data props containing the fluid component map and the runtime
+      Optional as the above two will be passed by default. This only need to be defined
+     * if there are additional values from the component lifecycle that need to be made
+     * available to the reducers
      */
-    dataProps: IFluidDataProps;
-    /**
-     * A map of the Fluid state values that need conversion to their view state counterparts and the
-     * respective converters
-     */
-    fluidToView: FluidToViewMap<SV, SF>;
-    /**
-     * A map of the view state values that need conversion to their Fluid state counterparts and the
-     * respective converters
-     */
-    viewToFluid?: ViewToFluidMap<SV, SF>;
+    dataProps?: IFluidDataProps;
 }
 
 /**
@@ -145,29 +137,33 @@ export interface IViewConverter<
     SF extends IFluidFunctionalComponentFluidState
     > {
     /**
-     * The corresponding value key within the view state type, only needs to be provided if different
-     * from the fluidKey
+     * The type of object this key in the Fluid state holds
      */
-    stateKey?: keyof SV;
+    type: string;
     /**
-     * A callback that takes in the partial view state containing the value that
-     * this converter maps to, and returns the corresponding partial fluid state
+     * The corresponding value key within the view state type
+     */
+    viewKey: keyof SV;
+    /**
+     * A callback that takes in the partial Fluid state containing the value that
+     * this converter maps to, and returns the corresponding partial view state
      */
     viewConverter?: (
-        syncedState: Partial<SF>,
+        viewState: SV,
+        fluidState: Partial<SF>,
         fluidComponentMap: FluidComponentMap
     ) => Partial<SV>;
     /**
      * If this is a fluid DDS SharedObject type (i.e. SharedCounter, SharedMap), supply its create function
      * here and add any events that it will fire to the listenedEvents param below to trigger state updates
      */
-    sharedObjectCreate?: (runtime: IComponentRuntime) => SharedObject;
+    sharedObjectCreate?: (runtime: IFluidDataStoreRuntime) => any;
     /**
      * List of events fired on this component that will trigger a state update
      */
     listenedEvents?: string[];
     /**
-     * If this Fluid object is stored on the root under a different key than the name of this Fluid state
+     * If this Fluid object is stored on the component root under a different key than the name of this Fluid state
      * key within the synced state map, provide the key on the root for this object here. The changes will also
      * reflect under that key if the data needs to be used elsewhere
      */
@@ -175,7 +171,7 @@ export interface IViewConverter<
 }
 
 /**
- * Root converters to take the view state value that they are keyed against in the ViewToFluid map
+ * Fluid converters to take the view state value that they are keyed against in the ViewToFluid map
  * and convert them into their synced Fluid state counterparts
  */
 export interface IFluidConverter<
@@ -183,14 +179,19 @@ export interface IFluidConverter<
     SF extends IFluidFunctionalComponentFluidState
     > {
     /**
+     * The type of object this key in the view state holds
+     */
+    type: string;
+    /**
      * The corresponding value within the Fluid state
      */
     fluidKey: keyof SF;
     /**
-     * A callback that takes in the partial Fluid state containing the value that
-     * this converter maps to, and returns the corresponding partial view state
+     * A callback that takes in the partial view state containing the value that
+     * this converter maps to, and optionally returns a value. This value will be automatically set on the synced state
+     * under the view key this converter maps to
      */
-    fluidConverter?: (viewState: Partial<SV>) => Partial<SF>;
+    fluidConverter?: (viewState: SV, fluidState: Partial<SF>) => any;
 }
 
 /**
@@ -204,7 +205,7 @@ export interface IFluidFunctionalComponentFluidState {
     syncedStateId?: string;
     /**
      * Boolean indicating if any components on this state are being listened on
-     * for root updates to trigger React state updates
+     * for synced state updates to trigger React state updates
      */
     isInitialized?: boolean;
 }
@@ -225,10 +226,12 @@ export interface IFluidFunctionalComponentViewState
     fluidComponentMap?: FluidComponentMap;
 }
 
+export type IFluidReactState = IFluidFunctionalComponentFluidState & IFluidFunctionalComponentViewState;
+
 export const instanceOfIComponentLoadable = (
     object: any,
-): object is IComponentLoadable =>
-    object === Object(object) && "IComponentLoadable" in object;
+): object is IFluidLoadable =>
+    object === Object(object) && "IFluidLoadable" in object;
 
 /**
  * The values stored in the fluid component map
@@ -237,9 +240,9 @@ export interface IFluidComponent {
     /**
      * The actual Fluid component that the path this value is keyed against leads to
      */
-    component?: IComponent & IComponentLoadable;
+    component?: IFluidObject & IFluidLoadable;
     /**
-     * Boolean indicating if we are listening to changes on this component's root to trigger React
+     * Boolean indicating if we are listening to changes on this component's synced state to trigger React
      * state updates. Only set if you want custom behavior for adding listeners to your Fluid state
      */
     isListened?: boolean;
@@ -266,9 +269,9 @@ export type FluidComponentMap = Map<string, IFluidComponent>;
  */
 export interface IFluidDataProps {
     /**
-     * The Fluid component runtime passed in from component initialization
+     * The Fluid data store runtime passed in from component initialization
      */
-    runtime: IComponentRuntime;
+    runtime: IFluidDataStoreRuntime;
     /**
      * The running map of all the Fluid components being used to render the React component. This
      * can be view/data components, and they will be asynchronously loaded here so that they are,
@@ -289,7 +292,7 @@ export interface FluidEffectFunction<
      * The function defined here will take the combined state and apply some
      * logic that does not cause any state update changes
      */
-    function: (oldState: ICombinedState<SV, SF, C>, ...args: any) => void;
+    function: (oldState?: ICombinedState<SV, SF, C>, ...args: any) => void;
 }
 
 export const instanceOfEffectFunction = <
@@ -314,7 +317,7 @@ export interface FluidAsyncEffectFunction<
      * async logic that does not cause any state update changes
      */
     asyncFunction: (
-        oldState: ICombinedState<SV, SF, C>,
+        oldState?: ICombinedState<SV, SF, C>,
         ...args: any
     ) => Promise<void>;
 }
@@ -342,7 +345,7 @@ export interface FluidStateUpdateFunction<
      * to load in are returned by the function.
      */
     function: (
-        oldState: ICombinedState<SV, SF, C>,
+        oldState?: ICombinedState<SV, SF, C>,
         ...args: any
     ) => IStateUpdateResult<SV, SF, C>;
 }
@@ -370,7 +373,7 @@ export interface FluidAsyncStateUpdateFunction<
      * component handles to load in will be returned by the function when it finishes.
      */
     asyncFunction: (
-        oldState: ICombinedState<SV, SF, C>,
+        oldState?: ICombinedState<SV, SF, C>,
         ...args: any
     ) => Promise<IStateUpdateResult<SV, SF, C>>;
 }
@@ -391,7 +394,7 @@ export interface IStateUpdateResult<
      * Any new components that were added in due this function need to have
      * their corresponding handles passed in so that the object can also be loaded for all other users
      */
-    newComponentHandles?: IComponentHandle[];
+    newComponentHandles?: IFluidHandle[];
 }
 
 export const instanceOfAsyncStateUpdateFunction = <
@@ -418,10 +421,10 @@ export interface FluidSelectorFunction<
      * It will also return any new component handles that will be needed for other users to render the view value
      */
     function: (
-        state: ICombinedState<SV, SF, C>
+        state?: ICombinedState<SV, SF, C>
     ) => {
         result: any | undefined;
-        newComponentHandles?: IComponentHandle[];
+        newComponentHandles?: IFluidHandle[];
     };
 }
 
@@ -438,11 +441,11 @@ export interface FluidComponentSelectorFunction<
      * handle if we need to fetch a component from the fluidComponentMap
      */
     function: (
-        state: ICombinedState<SV, SF, C>,
-        handle: IComponentHandle<any>
+        handle: IFluidHandle<any>,
+        state?: ICombinedState<SV, SF, C>,
     ) => {
-        result: IComponent | undefined;
-        newComponentHandles?: IComponentHandle[];
+        result: IFluidObject | undefined;
+        newComponentHandles?: IFluidHandle[];
     };
 }
 
@@ -475,13 +478,13 @@ export interface IFluidReducerProps<
     C extends IFluidDataProps
     > {
     /**
-     * Unique ID to use for storing the component's synced state in the root
+     * Unique ID to use for storing the component's synced state in the SyncedComponent's syncedState SharedMap
      */
     syncedStateId: string;
     /**
-     * The root shared directory that will be used to store the synced state
+     * An instance of the SyncedComponent that this will be rendered in
      */
-    root: ISharedDirectory;
+    syncedComponent: SyncedComponent;
     /**
      * The Fluid reducer containing all the functions as defined by an extension of the IFluidReducer type.
      * Any mutations to the state, or effects outside of the component involving the state should be done here.
@@ -493,23 +496,12 @@ export interface IFluidReducerProps<
      */
     selector: B;
     /**
-     * A map of the view state values that need conversion to their Fluid state counterparts and the
-     * respective converters. Optional if only using primitive values in both states, no Fluid DDS' are being used, the
-     * Fluid and View state types match, and the values stored in the root do not need to be directly accessed later,
-     * i.e. they are only used for the view state of this
-     * React component
-     */
-    viewToFluid?: ViewToFluidMap<SV, SF>;
-    /**
-     *  A map of the Fluid state values that need conversion to their view state counterparts and the
-     * respective converters. Optional if fluid and view are of the same type
-     */
-    fluidToView: FluidToViewMap<SV, SF>;
-    /**
      * Data props that are loaded in during the Fluid initialization step. This contains the runtime
      * and the fluid component map
+     * TODO: Move data props out as it can be fetched from synced component but
+     * still needs to be extensible for reducers
      */
-    dataProps: C;
+    dataProps?: C;
 }
 
 /**
@@ -519,7 +511,7 @@ export interface IFluidContextProps<SV, SF, C> extends IFluidProps<SV, SF> {
     /**
      * The additional data that will be passed through the Fluid context
      */
-    reactContext: Partial<C>;
+    reactContext?: C;
 }
 
 /**
@@ -573,4 +565,51 @@ export interface FluidContext<
      * Callback to update the state
      */
     setState: (newState: SV) => void;
+}
+
+export interface ISyncedStateConfig<SV, SF> {
+    /**
+     * Unique ID to use for storing the component's synced state in the SyncedComponent's syncedState SharedMap
+     */
+    syncedStateId: string;
+    /**
+     * The backup default view that any view with this ID will use prior to Fluid state initializing, this can be
+     * overridden by the view developer themselves
+     */
+    defaultViewState: SV;
+    /**
+     * A map of the Fluid state values that need conversion to their view state counterparts and the
+     * respective converters
+     */
+    fluidToView: FluidToViewMap<SV, SF>;
+    /**
+     * A map of the view state values that need conversion to their Fluid state counterparts and the
+     * respective converters
+     */
+    viewToFluid?: ViewToFluidMap<SV, SF>;
+}
+
+/**
+ * The configurations that define the relationships between Fluid and view states for
+ * views that are rendered in a SyncedComponent
+ */
+export type SyncedStateConfig = Map<string, ISyncedStateConfig<any, any>>;
+
+/**
+ * The interface for interacting with the synced state that is stored on a SyncedComponent
+ */
+export interface ISyncedState {
+    /**
+     * Set values on the synced state for a syncedStateId as key
+     */
+    set: (key: string, value: any) => void;
+    /**
+     * Get values from the synced state for a syncedStateId as key
+     */
+    get: <T, >(key: string) => T;
+    /**
+     * Add a listener to the synced state using a provided callback
+     */
+    addValueChangedListener: (
+        callback: (changed: IDirectoryValueChanged, local: boolean) => void) => void;
 }

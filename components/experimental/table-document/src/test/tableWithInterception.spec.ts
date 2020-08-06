@@ -4,11 +4,11 @@
  */
 
 import assert from "assert";
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@fluid-internal/test-utils";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 import { ITable } from "../table";
 import { TableDocument } from "../document";
 import { TableDocumentType } from "../componentTypes";
@@ -24,7 +24,7 @@ describe("Table Document with Interception", () => {
 
         const userAttributes = { userId: "Fake User" };
         let tableDocument: TableDocument;
-        let componentContext: IComponentContext;
+        let componentContext: IFluidDataStoreContext;
 
         // Sample interface used for storing the details of a cell.
         interface ICellType {
@@ -64,7 +64,7 @@ describe("Table Document with Interception", () => {
         }
 
         beforeEach(async () => {
-            const factory = new ContainerRuntimeFactoryWithDefaultComponent(
+            const factory = new ContainerRuntimeFactoryWithDefaultDataStore(
                 TableDocumentType,
                 new Map([
                     [TableDocumentType, Promise.resolve(TableDocument.getFactory())],
@@ -76,13 +76,13 @@ describe("Table Document with Interception", () => {
             const container = await initializeLocalContainer(id, loader, codeDetails);
 
             const response = await container.request({ url: "default" });
-            if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            if (response.status !== 200 || response.mimeType !== "fluid/object") {
                 throw new Error(`Default component not found`);
             }
             tableDocument = response.value;
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;
+            componentContext = { containerRuntime: { orderSequentially } } as IFluidDataStoreContext;
         });
 
         it("should be able to intercept TableDocument methods by the interception", async () => {

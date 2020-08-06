@@ -5,9 +5,9 @@
 
 import assert from "assert";
 import { Caret as CaretUtil, Direction, Rect, TagName } from "@fluid-example/flow-util-lib";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";
 import * as styles from "../editor/index.css";
 import { emptyObject } from "../util";
@@ -71,7 +71,7 @@ class HtmlFormatter extends RootFormatter<IFormatterState> {
 interface IInclusionState {
     root?: HTMLElement;
     slot?: HTMLElement;
-    view?: Promise<IComponentHTMLView>;
+    view?: Promise<IFluidHTMLView>;
 }
 
 export class InclusionFormatter extends Formatter<IInclusionState> {
@@ -92,7 +92,7 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
                     : TagName.span);
 
             const viewFactory = layout.viewFactoryRegistry.get(marker.properties.view);
-            state.view = layout.doc.getComponentFromMarker(marker).then((component: IComponent) => {
+            state.view = layout.doc.getComponentFromMarker(marker).then((component: IFluidObject) => {
                 if (viewFactory) {
                     // We found a view class registered for this marker's view type
                     const view = viewFactory.createView(component, layout.scope);

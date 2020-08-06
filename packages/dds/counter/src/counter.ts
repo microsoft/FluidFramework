@@ -12,10 +12,11 @@ import {
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-    IComponentRuntime,
-    IObjectStorageService,
-} from "@fluidframework/component-runtime-definitions";
-import { ISharedObjectFactory, SharedObject } from "@fluidframework/shared-object-base";
+    IFluidDataStoreRuntime,
+    IChannelStorageService,
+    IChannelFactory,
+} from "@fluidframework/datastore-definitions";
+import { SharedObject } from "@fluidframework/shared-object-base";
 import { CounterFactory } from "./counterFactory";
 import { debug } from "./debug";
 import { ISharedCounter, ISharedCounterEvents } from "./interfaces";
@@ -45,20 +46,20 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     /**
      * Create a new shared counter
      *
-     * @param runtime - component runtime the new shared counter belongs to
+     * @param runtime - data store runtime the new shared counter belongs to
      * @param id - optional name of the shared counter
      * @returns newly create shared counter (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, CounterFactory.Type) as SharedCounter;
     }
 
     /**
-     * Get a factory for SharedCounter to register with the component.
+     * Get a factory for SharedCounter to register with the data store.
      *
      * @returns a factory that creates and load SharedCounter
      */
-    public static getFactory(): ISharedObjectFactory {
+    public static getFactory(): IChannelFactory {
         return new CounterFactory();
     }
 
@@ -135,7 +136,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      */
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService): Promise<void> {
+        storage: IChannelStorageService): Promise<void> {
         const rawContent = await storage.read(snapshotFileName);
 
         const content = rawContent !== undefined

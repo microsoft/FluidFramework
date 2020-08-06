@@ -86,7 +86,7 @@ export interface IPackageManager extends IProvidePackageManager {
     search(params: ISearchParams): Promise<ISearchResult>;
 }
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvidePackageManager>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvidePackageManager>> { }
 }

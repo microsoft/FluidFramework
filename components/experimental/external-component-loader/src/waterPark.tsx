@@ -3,18 +3,22 @@
 * Licensed under the MIT License.
 */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
-    IComponentHandle,
-} from "@fluidframework/component-core-interfaces";
+    IFluidHandle,
+    IRequest,
+    IResponse,
+} from "@fluidframework/core-interfaces";
 import { IPackage } from "@fluidframework/container-definitions";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { ReactViewAdapter } from "@fluidframework/view-adapters";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import {
     SpacesStorage,
     SpacesStorageView,
 } from "@fluid-example/spaces";
 import React from "react";
 import ReactDOM from "react-dom";
+import { RequestParser } from "@fluidframework/runtime-utils";
 import { WaterParkToolbar } from "./waterParkToolbar";
 import { ExternalComponentLoader } from "./externalComponentLoader";
 
@@ -56,14 +60,22 @@ if (window.location.hostname === "localhost") {
 }
 
 /**
+ * IWaterparkItem just stores a handle, and will assume that the handle points to something that a ReactViewAdapter
+ * can adapt for rendering purposes.
+ */
+export interface IWaterparkItem {
+    handle: IFluidHandle;
+}
+
+/**
  * WaterPark assembles the SpacesStorage with the ExternalComponentLoader to load other components.
  */
-export class WaterPark extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class WaterPark extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     public static get ComponentName() { return "@fluid-example/waterpark"; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         WaterPark.ComponentName,
         WaterPark,
         [],
@@ -78,29 +90,60 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
         return WaterPark.factory;
     }
 
-    private storage: SpacesStorage | undefined;
+    private storage: SpacesStorage<IWaterparkItem> | undefined;
     private loader: ExternalComponentLoader | undefined;
+    private baseUrl: string | undefined;
 
     public render(element: HTMLElement) {
         if (this.storage === undefined) {
             throw new Error("Can't render, storage not found");
         }
         ReactDOM.render(
-            <WaterParkView storage={this.storage} onSelectOption={this.addComponent} />,
+            <WaterParkView
+                storage={this.storage}
+                onSelectOption={this.addComponent}
+                getViewForItem={this.getViewForItem}
+                getUrlForItem={(itemId: string) => `${this.baseUrl}/${itemId}`}
+            />,
             element,
         );
     }
 
-    protected async componentInitializingFirstTime() {
-        const storage = await this.createAndAttachComponent(SpacesStorage.ComponentName);
+    // In order to handle direct links to items, we'll link to the Waterpark component with a path of the itemId for
+    // the specific item we want.  We route through Waterpark because it knows how to get a view out of an
+    // IWaterparkItem.
+    public async request(req: IRequest): Promise<IResponse> {
+        const requestParser = new RequestParser({ url: req.url });
+        // The only time we have a path will be direct links to items.
+        if (requestParser.pathParts.length > 0) {
+            const itemId = requestParser.pathParts[0];
+            const item = this.storage?.itemList.get(itemId);
+            if (item !== undefined) {
+                const viewForItem = await this.getViewForItem(item.serializableItemData);
+                return {
+                    mimeType: "fluid/view",
+                    status: 200,
+                    value: viewForItem,
+                };
+            }
+        }
+
+        // If it's not a direct link to an item, then just do normal request handling.
+        return super.request(req);
+    }
+
+    protected async initializingFirstTime() {
+        const storage = await this.createFluidObject(SpacesStorage.ComponentName);
         this.root.set(storageKey, storage.handle);
-        const loader = await this.createAndAttachComponent(ExternalComponentLoader.ComponentName);
+        const loader = await this.createFluidObject(ExternalComponentLoader.ComponentName);
         this.root.set(loaderKey, loader.handle);
     }
 
-    protected async componentHasInitialized() {
-        this.storage = await this.root.get<IComponentHandle<SpacesStorage>>(storageKey)?.get();
-        this.loader = await this.root.get<IComponentHandle<ExternalComponentLoader>>(loaderKey)?.get();
+    protected async hasInitialized() {
+        this.storage = await this.root.get<IFluidHandle<SpacesStorage<IWaterparkItem>>>(storageKey)?.get();
+        this.loader = await this.root.get<IFluidHandle<ExternalComponentLoader>>(loaderKey)?.get();
+        // We'll cache this async result on initialization, since we need it synchronously during render.
+        this.baseUrl = await this.context.getAbsoluteUrl(this.url);
     }
 
     /**
@@ -118,20 +161,33 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
         if (component.handle === undefined) {
             throw new Error("Can't add, component must have a handle");
         }
-        this.storage.addItem(
-            component.handle,
-            componentUrl,
-        );
+        this.storage.addItem({
+            handle: component.handle,
+        });
+    };
+
+    private readonly getViewForItem = async (item: IWaterparkItem) => {
+        const component = await item.handle.get();
+
+        // This is where Spaces would do a lookup for how to get the view and call that.
+        // In Waterpark, we'll just assume the handle points to something we can adapt with a ReactViewAdapter.
+        if (ReactViewAdapter.canAdapt(component)) {
+            return <ReactViewAdapter view={component} />;
+        }
+
+        return undefined;
     };
 }
 
 interface IWaterParkViewProps {
-    storage: SpacesStorage;
+    storage: SpacesStorage<IWaterparkItem>;
     onSelectOption: (componentUrl: string) => Promise<void>;
+    getViewForItem: (item: IWaterparkItem) => Promise<JSX.Element | undefined>;
+    getUrlForItem: (itemId: string) => string;
 }
 
 export const WaterParkView: React.FC<IWaterParkViewProps> = (props: React.PropsWithChildren<IWaterParkViewProps>) => {
-    const [editable, setEditable] = React.useState(props.storage.componentList.size === 0);
+    const [editable, setEditable] = React.useState(props.storage.itemList.size === 0);
     return (
         <>
             <WaterParkToolbar
@@ -139,7 +195,12 @@ export const WaterParkView: React.FC<IWaterParkViewProps> = (props: React.PropsW
                 onSelectOption={props.onSelectOption}
                 toggleEditable={() => setEditable(!editable)}
             />
-            <SpacesStorageView storage={props.storage} editable={editable} />
+            <SpacesStorageView
+                getViewForItem={props.getViewForItem}
+                getUrlForItem={props.getUrlForItem}
+                storage={props.storage}
+                editable={editable}
+            />
         </>
     );
 };

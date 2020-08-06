@@ -5,10 +5,10 @@
 
 import { EventEmitter } from "events";
 
-import { IComponent, IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { IComponentLastEditedTracker } from "@fluidframework/last-edited-experimental";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidLastEditedTracker } from "@fluidframework/last-edited-experimental";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
 import { IQuorum, ISequencedClient } from "@fluidframework/protocol-definitions";
 
@@ -23,7 +23,7 @@ export interface IVltavaLastEditedState {
 }
 
 export interface IVltavaDataModel extends EventEmitter {
-    getDefaultComponent(): Promise<IComponent>;
+    getDefaultComponent(): Promise<IFluidObject>;
     getTitle(): string;
     getUsers(): IVltavaUserDetails[];
     getLastEditedState(): Promise<IVltavaLastEditedState | undefined>;
@@ -32,7 +32,7 @@ export interface IVltavaDataModel extends EventEmitter {
 export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     private readonly quorum: IQuorum;
     private users: IVltavaUserDetails[] = [];
-    private lastEditedTracker: IComponentLastEditedTracker | undefined;
+    private lastEditedTracker: IFluidLastEditedTracker | undefined;
 
     public on(event: "membersChanged", listener: (users: Map<string, ISequencedClient>) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -41,8 +41,8 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
 
     constructor(
         private readonly root: ISharedDirectory,
-        private readonly context: IComponentContext,
-        runtime: IComponentRuntime,
+        private readonly context: IFluidDataStoreContext,
+        runtime: IFluidDataStoreRuntime,
     ) {
         super();
 
@@ -57,8 +57,8 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
         });
     }
 
-    public async getDefaultComponent(): Promise<IComponent> {
-        return this.root.get<IComponentHandle>("tabs-component-id").get();
+    public async getDefaultComponent(): Promise<IFluidObject> {
+        return this.root.get<IFluidHandle>("tabs-component-id").get();
     }
 
     public getTitle(): string {
@@ -118,9 +118,9 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
 
     private async setupLastEditedTracker() {
         const response = await this.context.containerRuntime.request({ url: "default" });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error("Can't find last edited component");
         }
-        this.lastEditedTracker = response.value.IComponentLastEditedTracker;
+        this.lastEditedTracker = response.value.IFluidLastEditedTracker;
     }
 }

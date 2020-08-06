@@ -29,7 +29,7 @@ export interface IMicrosoftGraph extends IProvideMicrosoftGraph {
     me(): Promise<IGraphUser>;
 }
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideMicrosoftGraph>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideMicrosoftGraph>> { }
 }

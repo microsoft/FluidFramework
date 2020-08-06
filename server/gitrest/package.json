@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Git REST API",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/www.js",
@@ -19,7 +20,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/gitresources": "^0.1006.0-0",
+    "@fluidframework/gitresources": "^0.1010.0 ",
     "body-parser": "^1.17.2",
     "compression": "^1.7.3",
     "cors": "^2.8.5",
@@ -58,7 +59,7 @@
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
     "lorem-ipsum": "^1.0.6",
-    "mocha": "^7.1.2",
+    "mocha": "^8.0.1",
     "moniker": "^0.1.2",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.3",

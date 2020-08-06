@@ -7,33 +7,56 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { Layout } from "react-grid-layout";
 import {
-    PrimedComponent,
-    PrimedComponentFactory,
+    DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
-    IComponentHandle,
-} from "@fluidframework/component-core-interfaces";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+    IFluidHandle,
+    IRequest,
+    IResponse,
+} from "@fluidframework/core-interfaces";
+import { AsSerializable } from "@fluidframework/datastore-definitions";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
-import { ISpacesStoredComponent, SpacesStorage } from "./storage";
+import { RequestParser } from "@fluidframework/runtime-utils";
+import { ISpacesStoredItem, SpacesStorage } from "./storage";
 import { SpacesView } from "./spacesView";
 import {
-    spacesComponentMap,
+    spacesItemMap,
     spacesRegistryEntries,
     templateDefinitions,
-} from "./spacesComponentMap";
+} from "./spacesItemMap";
 
 const SpacesStorageKey = "spaces-storage";
 
 /**
+ * ISpacesItem stores an itemType and a serializable object pairing.  Spaces maps this typename to its itemMap,
+ * which lets it find how to get an item out of the serializable object.  The serializable object likely includes
+ * one or more handles to persisted model components, though could include anything it wants.  So the Spaces component
+ * owns the typenames, but the individual types own their own serializable object format.
+ */
+export interface ISpacesItem {
+    /**
+     * The unknown blob of data that backs the instance of the item.  Probably contains handles, etc.
+     */
+    serializableObject: AsSerializable<any>;
+    /**
+     * A key matching an entry in the spacesItemMap, which we'll use to pair the unknown blob with an entry that
+     * knows how to deal with it.
+     */
+    itemType: string;
+}
+
+/**
  * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.
  */
-export class Spaces extends PrimedComponent implements IComponentHTMLView {
-    private storageComponent: SpacesStorage | undefined;
+export class Spaces extends DataObject implements IFluidHTMLView {
+    private storageComponent: SpacesStorage<ISpacesItem> | undefined;
+    private baseUrl: string | undefined;
 
     public static get ComponentName() { return "@fluid-example/spaces"; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new DataObjectFactory(
         Spaces.ComponentName,
         Spaces,
         [],
@@ -48,7 +71,30 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         return Spaces.factory;
     }
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
+
+    // In order to handle direct links to items, we'll link to the Spaces component with a path of the itemId for the
+    // specific item we want.  We route through Spaces because it's the one with the registry, and so it's the one
+    // that knows how to getViewForItem().
+    public async request(req: IRequest): Promise<IResponse> {
+        const requestParser = new RequestParser({ url: req.url });
+        // The only time we have a path will be direct links to items.
+        if (requestParser.pathParts.length > 0) {
+            const itemId = requestParser.pathParts[0];
+            const item = this.storageComponent?.itemList.get(itemId);
+            if (item !== undefined) {
+                const viewForItem = await this.getViewForItem(item.serializableItemData);
+                return {
+                    mimeType: "fluid/view",
+                    status: 200,
+                    value: viewForItem,
+                };
+            }
+        }
+
+        // If it's not a direct link to an item, then just do normal request handling.
+        return super.request(req);
+    }
 
     /**
      * Will return a new Spaces View
@@ -58,27 +104,30 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
             throw new Error("Spaces can't render, storage not found");
         }
 
-        const addComponent = (type: string) => {
-            this.createAndStoreComponent(type, { w: 20, h: 5, x: 0, y: 0 })
+        const addItem = (type: string) => {
+            this.createAndStoreItem(type, { w: 20, h: 5, x: 0, y: 0 })
                 .catch((error) => {
-                    console.error(`Error while creating component: ${type}`, error);
+                    console.error(`Error while creating item: ${type}`, error);
                 });
         };
 
         ReactDOM.render(
             <SpacesView
-                componentMap={spacesComponentMap}
+                itemMap={spacesItemMap}
                 storage={this.storageComponent}
-                addComponent={addComponent}
+                addItem={addItem}
                 templates={[...Object.keys(templateDefinitions)]}
                 applyTemplate={this.applyTemplate}
+                getViewForItem={this.getViewForItem}
+                getUrlForItem={(itemId: string) => `${this.baseUrl}/${itemId}`}
             />,
             div,
         );
     }
 
-    protected async componentInitializingFirstTime() {
-        const storageComponent = await this.createAndAttachComponent<SpacesStorage>(SpacesStorage.ComponentName);
+    protected async initializingFirstTime() {
+        const storageComponent =
+            await this.createFluidObject<SpacesStorage<ISpacesItem>>(SpacesStorage.ComponentName);
         this.root.set(SpacesStorageKey, storageComponent.handle);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
@@ -87,55 +136,73 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         }
     }
 
-    protected async componentHasInitialized() {
-        this.storageComponent = await this.root.get<IComponentHandle<SpacesStorage>>(SpacesStorageKey)?.get();
+    protected async hasInitialized() {
+        this.storageComponent =
+            await this.root.get<IFluidHandle<SpacesStorage<ISpacesItem>>>(SpacesStorageKey)?.get();
+
+        // We'll cache this async result on initialization, since we need it synchronously during render.
+        this.baseUrl = await this.context.getAbsoluteUrl(this.url);
     }
 
     private readonly applyTemplate = async (template: string) => {
-        const componentPromises: Promise<string>[] = [];
+        const itemPromises: Promise<string>[] = [];
         const templateDefinition = templateDefinitions[template];
-        for (const [componentType, layouts] of Object.entries(templateDefinition)) {
+        for (const [itemType, layouts] of Object.entries(templateDefinition)) {
             for (const layout of layouts) {
-                componentPromises.push(this.createAndStoreComponent(componentType, layout));
+                itemPromises.push(this.createAndStoreItem(itemType, layout));
             }
         }
-        await Promise.all(componentPromises);
+        await Promise.all(itemPromises);
     };
 
     public saveLayout(): void {
         if (this.storageComponent === undefined) {
             throw new Error("Can't save layout, storage not found");
         }
-        localStorage.setItem("spacesTemplate", JSON.stringify([...this.storageComponent.componentList.values()]));
+        localStorage.setItem("spacesTemplate", JSON.stringify([...this.storageComponent.itemList.values()]));
     }
 
     public async setTemplate(): Promise<void> {
         const templateString = localStorage.getItem("spacesTemplate");
         if (templateString) {
-            const templateItems = JSON.parse(templateString) as ISpacesStoredComponent[];
+            const templateItems = JSON.parse(templateString) as ISpacesStoredItem<ISpacesItem>[];
             const promises = templateItems.map(async (templateItem) => {
-                return this.createAndStoreComponent(templateItem.type, templateItem.layout);
+                return this.createAndStoreItem(templateItem.serializableItemData.itemType, templateItem.layout);
             });
 
             await Promise.all(promises);
         }
     }
 
-    private async createAndStoreComponent(type: string, layout: Layout): Promise<string> {
-        const component = await this.createAndAttachComponent(type);
-
-        if (component.handle === undefined) {
-            throw new Error("Can't add, component must have a handle");
-        }
-
+    private async createAndStoreItem(type: string, layout: Layout): Promise<string> {
         if (this.storageComponent === undefined) {
             throw new Error("Can't add item, storage not found");
         }
 
+        const itemMapEntry = spacesItemMap.get(type);
+        if (itemMapEntry === undefined) {
+            throw new Error("Unknown item, can't add");
+        }
+
+        // Don't really want to hand out createFluidObject here, see spacesItemMap.ts for more info.
+        const serializableObject = await itemMapEntry.create(this.createFluidObject.bind(this));
         return this.storageComponent.addItem(
-            component.handle,
-            type,
+            {
+                serializableObject,
+                itemType: type,
+            },
             layout,
         );
     }
+
+    private readonly getViewForItem = async (item: ISpacesItem) => {
+        const registryEntry = spacesItemMap.get(item.itemType);
+
+        if (registryEntry === undefined) {
+            // Probably would be ok to return undefined instead
+            throw new Error("Cannot get view, unknown widget type");
+        }
+
+        return registryEntry.getView(item.serializableObject);
+    };
 }

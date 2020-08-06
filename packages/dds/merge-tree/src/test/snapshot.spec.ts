@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { IMergeTreeOp } from "../ops";
 import { SnapshotV1 } from "../snapshotV1";
@@ -15,12 +15,13 @@ import { TestClient } from ".";
 async function loadSnapshot(tree: ITree) {
     const services = new MockStorage(tree);
     const client2 = new TestClient(undefined);
-    const runtime: Partial<IComponentRuntime> = {
+    const runtime: Partial<IFluidDataStoreRuntime> = {
         logger: client2.logger,
         clientId: "1",
     };
 
-    await client2.load(runtime as IComponentRuntime, services);
+    const { catchupOpsP } = await client2.load(runtime as IFluidDataStoreRuntime, services);
+    await catchupOpsP;
     return client2;
 }
 
@@ -77,7 +78,7 @@ class TestString {
     public getSnapshot() {
         const snapshot = new SnapshotV1(this.client.mergeTree, this.client.logger);
         snapshot.extractSync();
-        return snapshot.emit([]);
+        return snapshot.emit();
     }
 
     public getText() { return this.client.getText(); }
@@ -185,7 +186,7 @@ describe("snapshot", () => {
     });
 
     it("includes ACKed segments below MSN in body", async () => {
-        for (let i = 0; i < SnapshotV1.sizeOfChunks + 10; i++) {
+        for (let i = 0; i < SnapshotV1.chunkSize + 10; i++) {
             str.append(`${i % 10}`, /* increaseMsn: */ true);
         }
 
@@ -193,7 +194,7 @@ describe("snapshot", () => {
     });
 
     it("includes ACKed segments above MSN in body", async () => {
-        for (let i = 0; i < SnapshotV1.sizeOfChunks + 10; i++) {
+        for (let i = 0; i < SnapshotV1.chunkSize + 10; i++) {
             str.append(`${i % 10}`, /* increaseMsn: */ false);
         }
 

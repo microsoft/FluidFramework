@@ -50,8 +50,7 @@ parameters:
 trigger: none
 
 variables:
-  - name: skipComponentGovernanceDetection
-    value: true
+  skipComponentGovernanceDetection: true
 
 stages:
   - stage: build
@@ -67,7 +66,6 @@ stages:
         # Setup
         - checkout: self
           clean: true
-          fetchDepth: 1
           lfs: ${{ parameters.checkoutSubmodules }}
           submodules: ${{ parameters.checkoutSubmodules }}
 
@@ -86,7 +84,7 @@ stages:
 
         - task: UseNode@1
           displayName: Use Node 12.x
-          inputs:
+          inputs: 
             version: 12.x
 
         - task: Bash@3
@@ -239,7 +237,6 @@ stages:
           steps:
           - checkout: self
             clean: true
-            fetchDepth: 1
             lfs: false
             submodules: false
 
@@ -272,3 +269,4 @@ stages:
               environment: office-feed
               customEndPoint: Office Packages
               internal: false
+

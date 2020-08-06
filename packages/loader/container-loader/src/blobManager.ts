@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Buffer } from "buffer";
 import { IBlobManager, IGenericBlob } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 

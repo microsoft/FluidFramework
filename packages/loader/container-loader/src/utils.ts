@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { Buffer } from "buffer";
 import { parse } from "url";
+import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import uuid from "uuid";
 
 export interface IParsedUrl {
     id: string;
@@ -22,7 +25,71 @@ export function parseUrl(url: string): IParsedUrl | undefined {
     const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
     const match = regex.exec(parsed.pathname!);
 
-    return (match && match.length === 3)
+    return (match?.length === 3)
         ? { id: match[1], path: match[2], version: parsed.query.version as string }
         : undefined;
+}
+
+function convertProtocolAndAppSummaryToSnapshotTreeCore(
+    summary: ISummaryTree,
+): ISnapshotTree {
+    const treeNode = {
+        blobs: {},
+        trees: {},
+        commits: {},
+        id: uuid(),
+    };
+    const keys = Object.keys(summary.tree);
+    for (const key of keys) {
+        const summaryObject = summary.tree[key];
+
+        switch (summaryObject.type) {
+            case SummaryType.Tree: {
+                treeNode.trees[key] = convertProtocolAndAppSummaryToSnapshotTreeCore(summaryObject);
+                break;
+            }
+            case SummaryType.Blob: {
+                const blobId = uuid();
+                treeNode.blobs[key] = blobId;
+                const content = typeof summaryObject.content === "string" ?
+                    summaryObject.content : summaryObject.content.toString("base64");
+                treeNode.blobs[blobId] = Buffer.from(content).toString("base64");
+                break;
+            }
+            case SummaryType.Handle:
+                throw new Error("No handles should be there in summary in detached container!!");
+                break;
+            default: {
+                throw new Error(`Unknown tree type ${summaryObject.type}`);
+            }
+        }
+    }
+    return treeNode;
+}
+
+/**
+ * Combine and convert protocol and app summary tree to format which is readable by container while rehydrating.
+ * @param protocolSummaryTree - Protocol Summary Tree
+ * @param appSummaryTree - App Summary Tree
+ */
+export function convertProtocolAndAppSummaryToSnapshotTree(
+    protocolSummaryTree: ISummaryTree,
+    appSummaryTree: ISummaryTree,
+): ISnapshotTree {
+    const protocolSummaryTreeModified: ISummaryTree = {
+        type: SummaryType.Tree,
+        tree: {
+            ".protocol": {
+                type: SummaryType.Tree,
+                tree: { ...protocolSummaryTree.tree },
+            },
+        },
+    };
+    const snapshotTree = convertProtocolAndAppSummaryToSnapshotTreeCore(protocolSummaryTreeModified);
+    snapshotTree.trees = {
+        ...snapshotTree.trees,
+        ...convertProtocolAndAppSummaryToSnapshotTreeCore(appSummaryTree).trees,
+    };
+
+    return snapshotTree;
 }
