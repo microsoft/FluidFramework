@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-import { Buffer } from "buffer";
-export { Buffer as IsoBuffer };
+export const IsoBuffer = Buffer;
+export type IsoBuffer = Buffer;
