@@ -23,15 +23,15 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
             // eslint-disable-next-line @typescript-eslint/no-use-before-define
             contents = await initializeFluidOffice(reqUrl);
         } else if (server === "www.office.com") {
-            const getReqSearchParam = (name: string): string => {
+            const getRequiredParam = (name: string): string => {
                 const value = reqUrl.searchParams.get(name);
                 assert(value, `Missing ${name} from office.com URL parameter`);
                 return value;
             };
             contents = {
-                drive: getReqSearchParam("drive"),
-                item: getReqSearchParam("item"),
-                site: getReqSearchParam("siteUrl"),
+                drive: getRequiredParam("drive"),
+                item: getRequiredParam("item"),
+                site: getRequiredParam("siteUrl"),
             };
         } else {
             return undefined;
