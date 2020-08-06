@@ -9,7 +9,7 @@ import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 import { DraftJsObject } from "./fluid-object";
 import { DraftJsContainer } from "./container";
 
-// Re-export everything from component
+// Re-export everything
 export { DraftJsObject as DraftJsExample, DraftJsContainer };
 
 // Since this is a single page fluid application we are generating a new document id
@@ -32,7 +32,7 @@ async function start() {
     // Get the Default Object from the Container
     const defaultObject = await getDefaultObjectFromContainer<DraftJsObject>(container);
 
-    // For now we will just reach into the component to render it
+    // For now we will just reach into the FluidObject to render it
     defaultObject.render(document.getElementById("content"));
 
     // Setting "fluidStarted" is just for our test automation

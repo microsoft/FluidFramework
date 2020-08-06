@@ -5,7 +5,7 @@ enable real-time coauthoring using the Fluid Framework.
 
 ## Getting Started
 
-If you want to run this component follow the following steps:
+To run this follow the steps below:
 
 1. Run `npm install` from the `FluidFramework` root directory
 2. Navigate to this directory

@@ -10,17 +10,16 @@ import {
 import { DraftJsObject } from "./fluid-object";
 
 /**
- * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultDataStore also enables dynamic loading in
- * the EmbeddedComponentLoader.
+ * This does setup for the Fluid Container.
  *
  * There are two important things here:
- * 1. Default Component name
- * 2. Map of string to factory for all components
+ * 1. Default FluidObject name
+ * 2. Map of string to factory for all FluidObjects
  *
- * In this example, we are only registering a single component, but more complex examples will register multiple
- * components.
+ * In this example, we are only registering a single FluidObject, but more complex examples will register multiple
+ * FluidObjects.
  */
 export const DraftJsContainer = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DraftJsObject.ComponentName,
+    DraftJsObject.Name,
     new Map([DraftJsObject.factory.registryEntry]),
 );
