@@ -23,7 +23,7 @@ steps:
   inputs:
     command: 'custom'
     workingDir: 'packages/test/service-load-test'
-    customCommand: './src/usePrereleaseDeps.js'
+    customCommand: 'run usePrereleaseDeps'
 
 - task: Npm@1
   displayName: npm i
