@@ -3,19 +3,16 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluidframework/webpack-component-loader");
 const path = require("path");
 const merge = require("webpack-merge");
-
-const pkg = require("./package.json");
-const fluidPackageName = pkg.name.slice(1);
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = env => {
     const isProduction = env && env.production;
 
     return merge({
         entry: {
-            main: "./src/index.tsx"
+            app: "./src/index.ts"
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
@@ -38,18 +35,16 @@ module.exports = env => {
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939
-            devtoolNamespace: fluidPackageName,
+            devtoolNamespace: "fluid-example/draftjs",
             libraryTarget: "umd"
         },
-        devServer: {
-            publicPath: '/dist',
-            stats: "minimal",
-            before: fluidRoute.before,
-            after: (app, server) => fluidRoute.after(app, server, __dirname, env),
-            watchOptions: {
-                ignored: "**/node_modules/**",
-            }
-        }
+        plugins: [
+            new HtmlWebpackPlugin({
+                template: "./public/index.html",
+                chunks: ["app"],
+            }),
+            // new CleanWebpackPlugin(),
+        ],
     }, isProduction
         ? require("./webpack.prod")
         : require("./webpack.dev"));

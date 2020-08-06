@@ -60,7 +60,7 @@ const getBlockStyle = (block) => {
 };
 
 /**
- * A wrapper around the Draft.js Editor component which connects RichUtils and callbacks to connect Fluid
+ * A wrapper around the Draft.js Editor which connects RichUtils and callbacks to connect Fluid
  */
 export class FluidEditor extends React.Component<IProps, IState> {
     private readonly presenceManager: PresenceManager;
