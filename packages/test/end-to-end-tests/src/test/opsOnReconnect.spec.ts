@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -99,7 +99,7 @@ describe("Ops on Reconnect", () => {
                 return;
             }
             const message = unpackRuntimeMessage(containerMessage);
-            if (message.type === ContainerMessageType.ComponentOp) {
+            if (message.type === ContainerMessageType.FluidDataStoreOp) {
                 const envelope = message.contents as IEnvelope;
                 if (envelope.address !== `${SchedulerType}`) {
                     // The client ID of firstContainer should have changed on disconnect.

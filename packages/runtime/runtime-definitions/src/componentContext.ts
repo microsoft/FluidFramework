@@ -10,7 +10,7 @@ import {
     IFluidRouter,
     IProvideFluidHandleContext,
     IProvideFluidSerializer,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -50,7 +50,7 @@ export enum FlushMode {
 }
 
 /**
- * A reduced set of functionality of IContainerRuntime that a component/component runtime will need
+ * A reduced set of functionality of IContainerRuntime that a component/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  */
 export interface IContainerRuntimeBase extends
@@ -117,7 +117,7 @@ export interface IContainerRuntimeBase extends
 }
 
 /**
- * Minimal interface a component runtime need to provide for IFluidDataStoreContext to bind to control
+ * Minimal interface a data store runtime need to provide for IFluidDataStoreContext to bind to control
  *
  * Functionality include attach, snapshot, op/signal processing, request routes,
  * and connection state notifications
@@ -226,7 +226,7 @@ export interface ISummaryTracker {
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => ISummarizerNode;
 
 /**
- * Represents the context for the component. It is used by the component runtime to
+ * Represents the context for the component. It is used by the data store runtime to
  * get information and call functionality to the container.
  */
 export interface IFluidDataStoreContext extends EventEmitter {
@@ -283,7 +283,7 @@ export interface IFluidDataStoreContext extends EventEmitter {
     getAudience(): IAudience;
 
     /**
-     * Report error in that happend in the component runtime layer to the container runtime layer
+     * Report error in that happend in the data store runtime layer to the container runtime layer
      * @param err - the error object.
      */
     raiseContainerWarning(warning: ContainerWarning): void;
@@ -308,13 +308,13 @@ export interface IFluidDataStoreContext extends EventEmitter {
     /**
      * Binds a runtime to the context.
      */
-    bindRuntime(componentRuntime: IFluidDataStoreChannel): void;
+    bindRuntime(dataStoreRuntime: IFluidDataStoreChannel): void;
 
     /**
      * Register the runtime to the container
-     * @param componentRuntime - runtime to attach
+     * @param dataStoreRuntime - runtime to attach
      */
-    bindToContext(componentRuntime: IFluidDataStoreChannel): void;
+    bindToContext(dataStoreRuntime: IFluidDataStoreChannel): void;
 
     /**
      * Call by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.

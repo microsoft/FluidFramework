@@ -9,8 +9,8 @@ import {
     IFluidConfiguration,
     IFluidLoadable,
     IFluidHandleContext,
-} from "@fluidframework/component-core-interfaces";
-import { FluidOjectHandle } from "@fluidframework/component-runtime";
+} from "@fluidframework/core-interfaces";
+import { FluidOjectHandle } from "@fluidframework/datastore";
 
 import { DependencyContainer } from "..";
 

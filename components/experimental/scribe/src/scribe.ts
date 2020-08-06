@@ -11,8 +11,8 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
-} from "@fluidframework/component-core-interfaces";
-import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/component-runtime";
+} from "@fluidframework/core-interfaces";
+import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore";
 import {
     IContainerContext,
     IFluidCodeDetails,
@@ -25,7 +25,7 @@ import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IFluidDataStoreRuntime,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
@@ -422,7 +422,6 @@ export class Scribe
     public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         if (!this.div) {
             this.div = document.createElement("div");
-            // tslint:disable-next-line:no-inner-html
             this.div.innerHTML = html;
             initialize(
                 this.div,

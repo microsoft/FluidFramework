@@ -1,4 +1,4 @@
-# Fluid UI Framework
+# Example Client UI Library
 
 ## Design Goals
 

@@ -8,7 +8,12 @@ import { EventEmitter } from "events";
 import {
     IFluidHandleContext,
     IFluidSerializer,
-} from "@fluidframework/component-core-interfaces";
+<<<<<<< HEAD
+} from "@fluidframework/core-interfaces";
+=======
+    IFluidRouter,
+} from "@fluidframework/core-interfaces";
+>>>>>>> 14d63d3fe39e95812e8ee2e9f20a363baacc401b
 import { IQuorum } from "@fluidframework/protocol-definitions";
 import { DependencyContainer } from "@fluidframework/synthesize";
 import { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";

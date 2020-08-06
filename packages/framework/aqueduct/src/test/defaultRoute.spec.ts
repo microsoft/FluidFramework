@@ -8,7 +8,7 @@ import assert from "assert";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
-import { IRequest, IResponse, IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
 import { createComponentResponse } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "../requestHandlers";
 

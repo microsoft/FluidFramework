@@ -4,7 +4,7 @@
  */
 
 import * as cell from "@fluidframework/cell";
-import { FluidDataStoreRuntime } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
     ICodeLoader,
     IContainerContext,

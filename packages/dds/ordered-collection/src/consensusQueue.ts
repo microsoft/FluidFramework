@@ -7,7 +7,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelAttributes,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { ConsensusOrderedCollection } from "./consensusOrderedCollection";
 import { ConsensusQueueFactory } from "./consensusOrderedCollectionFactory";
 import { IOrderedCollection } from "./interfaces";
@@ -38,7 +38,7 @@ export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
     /**
      * Create a new consensus queue
      *
-     * @param runtime - component runtime the new consensus queue belongs to
+     * @param runtime - data store runtime the new consensus queue belongs to
      * @param id - optional name of theconsensus queue
      * @returns newly create consensus queue (but not attached yet)
      */
@@ -47,7 +47,7 @@ export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
     }
 
     /**
-     * Get a factory for ConsensusQueue to register with the component.
+     * Get a factory for ConsensusQueue to register with the data store.
      *
      * @returns a factory that creates and load ConsensusQueue
      */

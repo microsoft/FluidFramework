@@ -10,7 +10,7 @@ import { SharedString } from "@fluidframework/sequence";
 
 import React from "react";
 import ReactDOM from "react-dom";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 /**
  * CollaborativeText uses the React CollaborativeTextArea to load a collaborative HTML <textarea>

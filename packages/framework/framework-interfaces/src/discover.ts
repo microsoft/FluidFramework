@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 
 /**
  * The interfaces in this file are related to component interface discovery. The idea
@@ -23,13 +23,7 @@ import { IFluidObject } from "@fluidframework/component-core-interfaces";
  * Disclaimer: These interfaces are experimental and are subject to change.
  */
 
-declare module "@fluidframework/component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<
-        IProvideComponentDiscoverableInterfaces
-        & IProvideComponentDiscoverInterfaces
-        & IProvideComponentInterfacesRegistry>> { }
-
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<
         IProvideComponentDiscoverableInterfaces

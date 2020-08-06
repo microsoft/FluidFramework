@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     BaseSegment,
     createGroupOp,
@@ -19,7 +19,7 @@ import {
     Jsonable,
     JsonablePrimitive,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { pkgVersion } from "./packageVersion";
 import { SharedSegmentSequence, SubSequence } from "./";
@@ -192,7 +192,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     /**
      * Create a new sparse matrix
      *
-     * @param runtime - component runtime the new sparse matrix belongs to
+     * @param runtime - data store runtime the new sparse matrix belongs to
      * @param id - optional name of the sparse matrix
      * @returns newly create sparse matrix (but not attached yet)
      */
@@ -201,7 +201,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     }
 
     /**
-     * Get a factory for SharedMap to register with the component.
+     * Get a factory for SharedMap to register with the data store.
      *
      * @returns a factory that creates and load SharedMap
      */

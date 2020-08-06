@@ -9,12 +9,12 @@ import {
     ISequencedDocumentMessage,
     ITree,
 } from "@fluidframework/protocol-definitions";
-import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreContext, ISummarizeResult } from "@fluidframework/runtime-definitions";
 import { convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
-import { ISharedObjectRegistry } from "./componentRuntime";
+import { ISharedObjectRegistry } from "./dataStoreRuntime";
 
 /**
  * Channel context for a locally created channel

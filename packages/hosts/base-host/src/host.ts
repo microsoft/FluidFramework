@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
     IFluidCodeDetails,
     IProxyLoaderFactory,
     IFluidModule,
 } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+import { Loader, Container } from "@fluidframework/container-loader";
 import { WebCodeLoader } from "@fluidframework/web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
 import { initializeContainerCode } from "./initializeContainerCode";
@@ -67,7 +67,7 @@ export class BaseHost {
         return this.loaderP;
     }
 
-    public async initializeContainer(url: string, codeDetails?: IFluidCodeDetails) {
+    public async initializeContainer(url: string, codeDetails?: IFluidCodeDetails): Promise<Container> {
         const loader = await this.getLoader();
         const container = await loader.resolve({ url });
 

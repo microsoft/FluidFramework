@@ -4,7 +4,7 @@
  */
 
 import { IUrlResolver, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { OdspDriverUrlResolver, createOdspUrl } from "@fluidframework/odsp-driver";
 import {
     IOdspAuthRequestInfo,
@@ -55,7 +55,15 @@ export class OdspUrlResolver implements IUrlResolver {
         return this.driverUrlResolver.getAbsoluteUrl(resolvedUrl, relativeUrl);
     }
 
-    public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest {
-        return this.driverUrlResolver.createCreateNewRequest(siteUrl, driveId, filePath, fileName);
+    public async createCreateNewRequest(fileName: string): Promise<IRequest> {
+        const filePath = "/r11s/";
+        const driveItem = await getDriveItemByRootFileName(
+            this.server,
+            "",
+            filePath,
+            this.authRequestInfo,
+            false);
+        return this.driverUrlResolver.createCreateNewRequest(
+            `https://${this.server}`, driveItem.drive, filePath, fileName);
     }
 }

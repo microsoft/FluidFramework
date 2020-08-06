@@ -27,6 +27,7 @@
     "start:tinylicious": "webpack-dev-server --config webpack.config.js --package package.json --env.mode tinylicious",
     "test": "npm run test:jest",
     "test:jest": "jest",
+    "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
@@ -37,7 +38,7 @@
     "@fluid-example/multiview-coordinate-interface": "^0.25.0",
     "@fluid-example/multiview-coordinate-model": "^0.25.0",
     "@fluidframework/aqueduct": "^0.25.0",
-    "@fluidframework/component-core-interfaces": "^0.25.0",
+    "@fluidframework/core-interfaces": "^0.25.0",
     "@fluidframework/map": "^0.25.0"
   },
   "devDependencies": {
@@ -53,6 +54,7 @@
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^5.2.0",
+    "cross-env": "^7.0.2",
     "eslint": "~6.8.0",
     "eslint-plugin-eslint-comments": "~3.1.2",
     "eslint-plugin-import": "2.20.0",

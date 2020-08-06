@@ -7,7 +7,7 @@ import assert from "assert";
     IFluidObject,
     IFluidRouter,
     IRequest,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 
 export async function requestFluidObject<T = IFluidObject>(
     router: IFluidRouter, url: string | IRequest): Promise<T>
