@@ -11,3 +11,16 @@ import { Params } from "express-serve-static-core";
 export function getParam(params: Params, key: string) {
     return Array.isArray(params) ? undefined : params[key];
 }
+
+export function getTenantIdFromRequest(params: Params) {
+    const tenantId = getParam(params, "tenantId");
+    if (tenantId !== undefined) {
+        return tenantId;
+    }
+    const id = getParam(params, "id");
+    if (id !== undefined) {
+        return id;
+    }
+
+    return "-";
+}
