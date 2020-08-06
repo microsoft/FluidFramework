@@ -5,11 +5,12 @@ enable real-time coauthoring using the Fluid Framework.
 
 ## Getting Started
 
-If you want to run this component follow the following steps:
+To run this follow the steps below:
 
 1. Run `npm install` from the `FluidFramework` root directory
 2. Navigate to this directory
-3. Run `npm run start`
+3. Run `npm run start:server` to start a Tinylicious Fluid Server
+4. Run `npm run start` (from a different command window) to start the Collaborative Draft.js example
 
 ## Data model
 
