@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidMountableViewClass } from "@fluidframework/view-interfaces";
 import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
@@ -20,32 +20,32 @@ import { RequestParser } from "@fluidframework/runtime-utils";
  * without the header, and respond with a mountable view of the given class using the response.
  * @param MountableViewClass - The type of mountable view to use when responding
  */
-export const mountableViewRequestHandler:
-    (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => RuntimeRequestHandler =
+export const mountableViewRequestHandler =
     (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => {
+        const nestedHandler = buildRuntimeRequestHandler(...handlers);
         return async (request: RequestParser, runtime: IContainerRuntime) => {
-            const nestedHandler = buildRuntimeRequestHandler(...handlers);
-            if (request.headers?.mountableView === true) {
+            const mountableView = request.headers?.mountableView === true;
+            let newRequest: IRequest = request;
+            if (mountableView) {
                 // Reissue the request without the mountableView header.
                 // We'll repack whatever the response is if we can.
-                const headers = { ...request.headers };
-                delete headers.mountableView;
-                const newRequest: IRequest = {
+                const headers: IRequestHeader = { ...request.headers };
+                delete (headers as any).mountableView;
+                newRequest = {
                     url: request.url,
                     headers,
                 };
-                const response = await nestedHandler(newRequest, runtime);
-
-                if (response.status === 200 && MountableViewClass.canMount(response.value)) {
-                    return {
-                        status: 200,
-                        mimeType: "fluid/object",
-                        value: new MountableViewClass(response.value),
-                    };
-                }
-                return response;
             }
-            return nestedHandler(request, runtime);
+            const response = await nestedHandler(newRequest, runtime);
+
+            if (mountableView && response.status === 200 && MountableViewClass.canMount(response.value)) {
+                return {
+                    status: 200,
+                    mimeType: "fluid/object",
+                    value: new MountableViewClass(response.value),
+                };
+            }
+            return response;
         };
     };
 

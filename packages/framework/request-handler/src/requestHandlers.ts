@@ -22,7 +22,7 @@ export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainer
  * And last, but not least, it does not allow any policy to be implemented around GC of components exposed
  * through internal URIs. I.e. if there are no other references to such objects, they will be GC'd and
  * external links would get broken. Maybe that's what is needed in some cases, but better, more centralized
- * handling of external URI -> internal handle is required (in future, we will support weak handle references,
+ * handling of external URI to internal handle is required (in future, we will support weak handle references,
  * that will allow any GC policy to be implemented by container authors.)
  */
 export const deprecated_innerRequestHandler = async (request: IRequest, runtime: IContainerRuntime) =>
