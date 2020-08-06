@@ -14,7 +14,9 @@ export { DraftJsObject as DraftJsExample, DraftJsContainer };
 
 // Since this is a single page fluid application we are generating a new document id
 // if one was not provided
+let createNew = false;
 if (window.location.hash.length === 0) {
+    createNew = true;
     window.location.hash = Date.now().toString();
 }
 const documentId = window.location.hash.substring(1);
@@ -25,7 +27,7 @@ const documentId = window.location.hash.substring(1);
  */
 async function start() {
     // Get the Fluid Container associated with the provided id
-    const container = await getTinyliciousContainer(documentId, DraftJsContainer);
+    const container = await getTinyliciousContainer(documentId, DraftJsContainer, createNew);
 
     // Get the Default Object from the Container
     const defaultObject = await getDefaultObjectFromContainer<DraftJsObject>(container);
