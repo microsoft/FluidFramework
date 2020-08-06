@@ -19,7 +19,7 @@ steps:
     version: 12.x
 
 - task: Npm@1
-  displayName: Use prerelease deps
+  displayName: npm run usePrereleaseDeps
   inputs:
     command: 'custom'
     workingDir: 'packages/test/service-load-test'
@@ -43,10 +43,10 @@ steps:
 
 - task: Npm@1
   displayName: npm run start:mini
+  env:
+    login__microsoft__clientId: $(clientId)
+    login__microsoft__secret: $(clientSecret)
   inputs:
     command: 'custom'
     workingDir: 'packages/test/service-load-test'
     customCommand: 'run start:mini -- -w $(Password)'
-  env:
-    login__microsoft__clientId: $(clientId)
-    login__microsoft__secret: $(clientSecret)
