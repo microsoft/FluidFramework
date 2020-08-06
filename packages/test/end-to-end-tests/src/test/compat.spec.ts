@@ -88,11 +88,11 @@ describe("loader/runtime compatibility", () => {
         };
     };
 
-    // back-compatL <= 0.24: This function should be removed in favor or defaultRouteRequestHandler.
+    // back-compatL <= 0.24: This function should be removed in favor of similar logic in createRuntimeFactory.
     function old_defaultContainerRequestHandler(defaultUrl?: string) {
         const builder = new old.RuntimeRequestHandlerBuilder();
         builder.pushHandler(
-            old.dataStoreRuntimeRequestHandler,
+            old.componentRuntimeRequestHandler,
             old.defaultDataStoreRuntimeRequestHandler("default"));
         return async (req, rt) => builder.handleRequest(req, rt);
     }
