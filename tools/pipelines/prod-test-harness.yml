@@ -19,6 +19,13 @@ steps:
     version: 12.x
 
 - task: Npm@1
+  displayName: Use prerelease deps
+  inputs:
+    command: 'custom'
+    workingDir: 'packages/test/service-load-test'
+    customCommand: './src/usePrereleaseDeps.js'
+
+- task: Npm@1
   displayName: npm i
   inputs:
     command: 'custom'
