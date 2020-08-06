@@ -33,7 +33,7 @@ export interface IVltavaDataModel extends EventEmitter {
 export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     private readonly quorum: IQuorum;
     private users: IVltavaUserDetails[] = [];
-    private readonly lastEditedTracker: IFluidLastEditedTracker | undefined;
+    private lastEditedTracker: IFluidLastEditedTracker | undefined;
 
     public on(event: "membersChanged", listener: (users: Map<string, ISequencedClient>) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -119,6 +119,6 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
 
     private async setupLastEditedTracker() {
         const object = await requestFluidObject(this.context.containerRuntime.IFluidHandleContext, "default");
-        return object.IFluidLastEditedTracker;
+        this.lastEditedTracker = object.IFluidLastEditedTracker;
     }
 }

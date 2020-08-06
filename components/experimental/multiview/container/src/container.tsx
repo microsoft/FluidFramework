@@ -77,15 +77,11 @@ const defaultViewRequestHandler: RuntimeRequestHandler =
         }
     };
 
-// We'll use a MountableView so webpack-component-loader can display us, and add our default view request handler.
-const viewRequestHandlers = [
-    mountableViewRequestHandler(MountableView),
-    defaultViewRequestHandler,
-];
-
 export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor() {
-        super(registryEntries, [], viewRequestHandlers);
+        // We'll use a MountableView so webpack-component-loader can display us,
+        // and add our default view request handler.
+        super(registryEntries, [], [mountableViewRequestHandler(MountableView, [defaultViewRequestHandler])]);
     }
 
     /**

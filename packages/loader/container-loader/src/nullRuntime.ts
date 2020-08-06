@@ -80,7 +80,7 @@ export class NullRuntime extends EventEmitter implements IRuntime {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return Promise.resolve({ status: 404, mimeType: "text/plain", value: null });
+        return { status: 404, mimeType: "text/plain", value: null };
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {

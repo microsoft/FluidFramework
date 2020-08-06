@@ -33,7 +33,7 @@ export class FluidHandleContext implements IFluidHandleContext {
     }
 
     public attachGraph(): void {
-        assert(false);
+        assert(false, "can't attach container runtime form within container!");
         return;
     }
 

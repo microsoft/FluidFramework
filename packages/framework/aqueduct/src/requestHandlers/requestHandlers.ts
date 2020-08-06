@@ -5,7 +5,7 @@
 
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidMountableViewClass } from "@fluidframework/view-interfaces";
-import { RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { RuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
 /**
@@ -19,8 +19,12 @@ import { RequestParser } from "@fluidframework/runtime-utils";
  * without the header, and respond with a mountable view of the given class using the response.
  * @param MountableViewClass - The type of mountable view to use when responding
  */
-export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableViewClass) => RuntimeRequestHandler =
-    (MountableViewClass: IFluidMountableViewClass) => {
+export const mountableViewRequestHandler:
+    (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => RuntimeRequestHandler =
+    (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => {
+        const builder = new RuntimeRequestHandlerBuilder();
+        builder.pushHandler(...handlers);
+
         return async (request: RequestParser, runtime: IContainerRuntime) => {
             if (request.headers?.mountableView === true) {
                 // Reissue the request without the mountableView header.
@@ -31,7 +35,7 @@ export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableVi
                     url: request.url,
                     headers,
                 });
-                const response = await runtime.IFluidHandleContext.request(newRequest);
+                const response = await builder.handleRequest(newRequest, runtime);
 
                 if (response.status === 200 && MountableViewClass.canMount(response.value)) {
                     return {

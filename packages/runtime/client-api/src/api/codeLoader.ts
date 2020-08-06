@@ -27,7 +27,7 @@ import { defaultContainerRequestHandler } from "@fluidframework/request-handler"
 import { Document } from "./document";
 
 const rootMapId = "root";
-const rootStoreId = "root";
+const rootStoreId = "rootStore";
 const insightsMapId = "insights";
 
 export class Chaincode implements IFluidDataStoreFactory {
