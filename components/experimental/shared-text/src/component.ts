@@ -185,8 +185,9 @@ export class SharedTextRunner
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performanceNow()}`);
 
-        const schedulerResponse = await this.runtime.request({ url: `/${SchedulerType}` });
-        const schedulerComponent = schedulerResponse.value as IFluidObject;
+        const schedulerComponent = await requestFluidObject<ITaskManager>(
+            this.context.containerRuntime.IFluidHandleContext,
+            `/${SchedulerType}`);
         this.taskManager = schedulerComponent.ITaskManager;
 
         const options = parse(window.location.search.substr(1));

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { defaultDataStoreRuntimeRequestHandler } from "@fluidframework/aqueduct";
+import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { dataStoreRuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
+import { deprecated_innerRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
 /**
@@ -24,8 +24,8 @@ export class TestContainerRuntimeFactory implements IRuntimeFactory {
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const builder = new RuntimeRequestHandlerBuilder();
         builder.pushHandler(
-            dataStoreRuntimeRequestHandler,
-            defaultDataStoreRuntimeRequestHandler("default"));
+            defaultRouteRequestHandler("default"),
+            deprecated_innerRequestHandler);
 
         const runtime = await ContainerRuntime.load(
             context,

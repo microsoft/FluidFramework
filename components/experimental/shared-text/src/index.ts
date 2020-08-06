@@ -7,16 +7,19 @@
 // eslint-disable-next-line import/no-unassigned-import
 import "./publicpath";
 
-import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
+import {
+    deprecated_innerRequestHandler,
+    buildRuntimeRequestHandler,
+} from "@fluidframework/request-handler";
+import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import * as sharedTextComponent from "./component";
 
 /* eslint-disable max-len */
@@ -82,39 +85,6 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
     public get IFluidDataStoreFactory() { return this; }
     public get IRuntimeFactory() { return this; }
 
-    /**
-     * A request handler for a container runtime
-     * @param request - The request
-     * @param runtime - Container Runtime instance
-     */
-    private static async containerRequestHandler(request: IRequest, runtime: IContainerRuntime) {
-        console.log(request.url);
-
-        //
-        // if (request.url === "/graphiql") {
-        //     const runner = (await runtime.request({ url: "/" })).value as sharedTextComponent.SharedTextRunner;
-        //     const sharedText = await runner.getRoot().get<IFluidHandle>("text").get<SharedString>();
-        //     return { status: 200, mimeType: "fluid/object", value: new GraphIQLView(sharedText) };
-        // }
-
-        console.log(request.url);
-        const requestUrl = request.url.length > 0 && request.url.startsWith("/")
-            ? request.url.substr(1)
-            : request.url;
-        const trailingSlash = requestUrl.indexOf("/");
-
-        const componentId = requestUrl
-            ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-            : "text";
-        const component = await runtime.getDataStore(componentId, true);
-
-        return component.request(
-            {
-                headers: request.headers,
-                url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1),
-            });
-    }
-
     public instantiateDataStore(context: IFluidDataStoreContext): void {
         return sharedTextComponent.instantiateDataStore(context);
     }
@@ -133,7 +103,11 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
                     Promise.resolve(new MyRegistry(context, "https://pragueauspkn.azureedge.net")),
                 ],
             ],
-            SharedTextFactoryComponent.containerRequestHandler);
+            buildRuntimeRequestHandler(
+                defaultRouteRequestHandler(DefaultComponentName),
+                deprecated_innerRequestHandler,
+            ),
+        );
 
         // On first boot create the base component
         if (!runtime.existing) {

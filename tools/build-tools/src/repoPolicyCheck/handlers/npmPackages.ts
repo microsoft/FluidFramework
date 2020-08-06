@@ -36,7 +36,7 @@ function packageShouldNotBePrivate(name: string): boolean {
     }
 
     // see https://github.com/microsoft/FluidFramework/issues/3054
-    if (name === "@fluidframework/component-core-interfaces") {
+    if (name === "@fluidframework/core-interfaces") {
         return false;
     }
 

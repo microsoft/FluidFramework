@@ -875,42 +875,46 @@ export class ContainerRuntime extends EventEmitter
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
-        const requestParser = new RequestParser(request);
-
-        if (requestParser.pathParts.length === 1 && requestParser.pathParts[0] === "_summarizer") {
+        if (request.url === "_summarizer" || request.url === "/_summarizer") {
             return {
                 status: 200,
                 mimeType: "fluid/object",
                 value: this.summarizer,
             };
-        } else if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === schedulerId) {
+        }
+        if (this.requestHandler !== undefined) {
+            return this.requestHandler(request, this);
+        }
+
+        return {
+            status: 404,
+            mimeType: "text/plain",
+            value: "resource not found",
+        };
+    }
+
+    /**
+     * Resolves URI representing handle
+     * @param request - Request made to the handler.
+     */
+    public async resolveHandle(request: IRequest): Promise<IResponse> {
+        const requestParser = new RequestParser(request);
+
+        if (requestParser.pathParts.length > 0) {
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const fluidDataStore = await this.getDataStore(requestParser.pathParts[0], wait) as IFluidObject;
-            if (fluidDataStore) {
-                const subRequest = requestParser.createSubRequest(1);
-                if (subRequest !== undefined) {
-                    assert(fluidDataStore.IFluidRouter);
-                    return fluidDataStore.IFluidRouter.request(subRequest);
-                } else {
-                    return {
-                        status: 200,
-                        mimeType: "fluid/object",
-                        value: fluidDataStore,
-                    };
-                }
+            const component = await this.getDataStore(requestParser.pathParts[0], wait);
+            const subRequest = requestParser.createSubRequest(1);
+            if (subRequest !== undefined) {
+                return component.IFluidRouter.request(subRequest);
             } else {
                 return {
-                    status: 404,
-                    mimeType: "text/plain",
-                    value: `${schedulerId} not found`,
+                    status: 200,
+                    mimeType: "fluid/object",
+                    value: component,
                 };
             }
-        }
-
-        if (this.requestHandler !== undefined) {
-            return this.requestHandler(request, this);
         }
 
         return {

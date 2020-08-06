@@ -43,8 +43,7 @@ const requestCoordinateFromId = async (request: RequestParser, runtime: IContain
         url: `${id}`,
         headers: request.headers,
     });
-    const coordinate = (await runtime.request(coordinateRequest)).value as Coordinate;
-    return coordinate;
+    return requestFluidObject<Coordinate>(runtime.IFluidHandleContext, coordinateRequest);
 };
 
 /**
@@ -62,7 +61,9 @@ const defaultViewRequestHandler: RuntimeRequestHandler =
                 url: `${constellationComponentId}`,
                 headers: request.headers,
             });
-            const constellation = (await runtime.request(constellationRequest)).value as Constellation;
+            const constellation = await requestFluidObject<Constellation>(
+                runtime.IFluidHandleContext,
+                constellationRequest);
             const viewResponse = (
                 <DefaultView
                     simpleCoordinate={simpleCoordinate}
@@ -76,15 +77,11 @@ const defaultViewRequestHandler: RuntimeRequestHandler =
         }
     };
 
-// We'll use a MountableView so webpack-component-loader can display us, and add our default view request handler.
-const viewRequestHandlers = [
-    mountableViewRequestHandler(MountableView),
-    defaultViewRequestHandler,
-];
-
 export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor() {
-        super(registryEntries, [], viewRequestHandlers);
+        // We'll use a MountableView so webpack-component-loader can display us,
+        // and add our default view request handler.
+        super(registryEntries, [], [mountableViewRequestHandler(MountableView, [defaultViewRequestHandler])]);
     }
 
     /**

@@ -32,3 +32,9 @@ export class RuntimeRequestHandlerBuilder {
         return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }
 }
+
+export function buildRuntimeRequestHandler(...handlers: RuntimeRequestHandler[]) {
+    const builder = new RuntimeRequestHandlerBuilder();
+    builder.pushHandler(...handlers);
+    return async (request: IRequest, runtime: IContainerRuntime) => builder.handleRequest(request, runtime);
+}
