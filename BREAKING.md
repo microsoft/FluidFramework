@@ -14,7 +14,7 @@
 ### Container runtime event changes
 Container runtime now emits the event "fluidDataStoreInstantiated" instead of "componentInstantiated"
 
-### Component is removed from telemtry event names
+### Component is removed from telemetry event names
 The following telemetry event names have been updated to drop references to the term component:
 
 ComponentRuntimeDisposeError -> ChannelDisposeError
