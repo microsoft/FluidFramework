@@ -208,7 +208,7 @@ describe("Detached Container", () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.equal(type, MessageType.Operation);
-            assert.equal(contents.type, ContainerMessageType.ComponentOp);
+            assert.equal(contents.type, ContainerMessageType.FluidDataStoreOp);
 
             assert.equal(contents.contents.contents.type, DataStoreMessageType.ChannelOp);
 

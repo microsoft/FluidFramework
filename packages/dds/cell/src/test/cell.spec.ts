@@ -61,7 +61,7 @@ describe("Cell", () => {
 
     describe("SharedCell op processing in local state", () => {
         it("should correctly process a set operation sent in local state", async () => {
-            // Set the component runtime to local.
+            // Set the data store runtime to local.
             componentRuntime.local = true;
 
             // Set a value in local state.

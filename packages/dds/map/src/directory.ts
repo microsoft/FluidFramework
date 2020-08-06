@@ -372,7 +372,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * Create a new shared directory
      *
-     * @param runtime - Component runtime the new shared directory belongs to
+     * @param runtime - Data store runtime the new shared directory belongs to
      * @param id - Optional name of the shared directory
      * @returns Newly create shared directory (but not attached yet)
      */
@@ -381,7 +381,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * Get a factory for SharedDirectory to register with the component.
+     * Get a factory for SharedDirectory to register with the data store.
      *
      * @returns A factory that creates and load SharedDirectory
      */
@@ -420,7 +420,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * Constructs a new shared directory. If the object is non-local an id and service interfaces will
      * be provided.
      * @param id - String identifier for the SharedDirectory
-     * @param runtime - Component runtime
+     * @param runtime - Data store runtime
      * @param type - Type identifier
      */
     constructor(
@@ -954,7 +954,7 @@ class SubDirectory implements IDirectory {
     /**
      * Constructor.
      * @param directory - Reference back to the SharedDirectory to perform operations
-     * @param runtime - The component runtime this directory is associated with
+     * @param runtime - The data store runtime this directory is associated with
      * @param absolutePath - The absolute path of this IDirectory
      */
     constructor(

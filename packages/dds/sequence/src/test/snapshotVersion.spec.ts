@@ -35,13 +35,13 @@ describe("SharedString Snapshot Version", () => {
             // load snapshot into sharedString
             const documentId = "fakeId";
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const componentRuntime = new MockFluidDataStoreRuntime();
-            const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+            const dataStoreRuntime = new MockFluidDataStoreRuntime();
+            const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
             const services = {
                 deltaConnection: containerRuntime.createDeltaConnection(),
                 objectStorage: new MockStorage(oldsnap),
             };
-            const sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
+            const sharedString = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
             // eslint-disable-next-line no-null/no-null
             await sharedString.load(null/* branchId */, services);
             await sharedString.loaded;

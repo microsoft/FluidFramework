@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./bufferNode";
-export * from "./performanceNowNode";
+import { Buffer } from "buffer";
+export { Buffer as IsoBuffer };
