@@ -6,7 +6,7 @@
 module.exports = {
   globals: {
     "ts-jest": {
-      tsConfig: "./testJest/tsconfig.json",
+      tsConfig: "./testJest/tsconfig.json"
     }
   },
   preset: "jest-puppeteer",
