@@ -194,7 +194,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const { container } =
             await createDetachedContainerAndGetRootComponent();
 
-        const snapshotTree: string = container.serialize();
+        const snapshotTree = JSON.parse(container.serialize());
         const rehydrationSource: DetachedContainerSource = {
             snapshot: snapshotTree,
             useSnapshot: true,
@@ -241,7 +241,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const { container } =
             await createDetachedContainerAndGetRootComponent();
 
-        const snapshotTree: string = container.serialize();
+        const snapshotTree = JSON.parse(container.serialize());
         const rehydrationSource: DetachedContainerSource = {
             snapshot: snapshotTree,
             useSnapshot: true,
@@ -294,7 +294,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const sharedStringBefore = await defaultComponentBefore.getSharedObject<SharedString>(sharedStringId);
         sharedStringBefore.insertText(0, "Hello");
 
-        const snapshotTree: string = container.serialize();
+        const snapshotTree = JSON.parse(container.serialize());
         const rehydrationSource: DetachedContainerSource = {
             snapshot: snapshotTree,
             useSnapshot: true,
@@ -316,7 +316,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const defaultComponent1 = response1.value as ITestFluidComponent;
         const sharedString1 = await defaultComponent1.getSharedObject<SharedString>(sharedStringId);
         sharedString1.insertText(0, str);
-        const snapshotTree: string = container.serialize();
+        const snapshotTree = JSON.parse(container.serialize());
         const rehydrationSource: DetachedContainerSource = {
             snapshot: snapshotTree,
             useSnapshot: true,

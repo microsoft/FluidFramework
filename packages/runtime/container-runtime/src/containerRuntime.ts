@@ -102,7 +102,7 @@ import {
     LocalFluidDataStoreContext,
     RemotedFluidDataStoreContext,
     currentSnapshotFormatVersion,
-    IFluidDataStoretAttributes,
+    IFluidDataStoreAttributes,
 } from "./dataStoreContext";
 import { FluidHandleContext } from "./dataStoreHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -762,7 +762,7 @@ export class ContainerRuntime extends EventEmitter
                 }
                 const snapshotTree = value as ISnapshotTree;
                 // Need to rip through snapshot.
-                const { pkg, snapshotFormatVersion } = readAndParseFromBlobs<IFluidDataStoretAttributes>(
+                const { pkg, snapshotFormatVersion } = readAndParseFromBlobs<IFluidDataStoreAttributes>(
                     snapshotTree.blobs,
                     snapshotTree.blobs[".component"]);
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.

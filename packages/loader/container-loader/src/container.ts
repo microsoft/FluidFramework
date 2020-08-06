@@ -209,9 +209,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             urlResolver,
             {},
             logger);
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        source.useSnapshot ? await container.createDetachedFromSnapshot(JSON.parse(source.snapshot)) :
+
+        if (source.useSnapshot) {
+            await container.createDetachedFromSnapshot(source.snapshot);
+        } else {
             await container.createDetached(source.codeDetails);
+        }
         return container;
     }
 
