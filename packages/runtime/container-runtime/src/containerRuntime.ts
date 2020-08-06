@@ -1356,7 +1356,7 @@ export class ContainerRuntime extends EventEmitter
         return this.context.submitSignalFn(envelope);
     }
 
-    public submitFluidDataStoreSignal(address: string, type: string, content: any) {
+    public submitDataStoreSignal(address: string, type: string, content: any) {
         const envelope: ISignalEnvelop = { address, contents: { type, content } };
         return this.context.submitSignalFn(envelope);
     }
@@ -1700,7 +1700,7 @@ export class ContainerRuntime extends EventEmitter
         this.emit(dirty ? "dirtyDocument" : "savedDocument");
     }
 
-    public submitFluidDataStoreOp(
+    public submitDataStoreOp(
         id: string,
         contents: any,
         localOpMetadata: unknown = undefined): void {
@@ -1833,9 +1833,9 @@ export class ContainerRuntime extends EventEmitter
     private reSubmit(type: ContainerMessageType, content: any, localOpMetadata: unknown) {
         switch (type) {
             case ContainerMessageType.FluidDataStoreOp:
-                // For Operations, call resubmitFluidDataStoreOp which will find the right store
+                // For Operations, call resubmitDataStoreOp which will find the right store
                 // and trigger resubmission on it.
-                this.resubmitFluidDataStoreOp(content, localOpMetadata);
+                this.resubmitDataStoreOp(content, localOpMetadata);
                 break;
             case ContainerMessageType.Attach:
                 this.submit(type, content, localOpMetadata);
@@ -1847,7 +1847,7 @@ export class ContainerRuntime extends EventEmitter
         }
     }
 
-    private resubmitFluidDataStoreOp(content: any, localOpMetadata: unknown) {
+    private resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
         const envelope = content as IEnvelope;
         const context = this.getContext(envelope.address);
         assert(context, "There should be a store context for the op");

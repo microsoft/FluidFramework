@@ -420,7 +420,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             content,
             type,
         };
-        this._containerRuntime.submitFluidDataStoreOp(
+        this._containerRuntime.submitDataStoreOp(
             this.id,
             fluidDataStoreContent,
             localOpMetadata);
@@ -459,7 +459,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
         assert(this.channel);
-        return this._containerRuntime.submitFluidDataStoreSignal(this.id, type, content);
+        return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
     }
 
     public raiseContainerWarning(warning: ContainerWarning): void {
