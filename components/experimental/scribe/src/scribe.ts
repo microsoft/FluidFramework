@@ -31,7 +31,11 @@ import {
     IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { defaultContainerRequestHandler } from "@fluidframework/request-handler";
+import {
+    deprecated_innerRequestHandler,
+    buildRuntimeRequestHandler,
+} from "@fluidframework/request-handler";
+import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import Axios from "axios";
 
 import * as scribe from "./tools-core";
@@ -465,7 +469,10 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
-            defaultContainerRequestHandler(defaultComponentId),
+            buildRuntimeRequestHandler(
+                defaultRouteRequestHandler(defaultComponentId),
+                deprecated_innerRequestHandler,
+            ),
             { generateSummaries: true });
 
         // On first boot create the base component

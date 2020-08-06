@@ -23,7 +23,11 @@ import {
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
-import { defaultContainerRequestHandler } from "@fluidframework/request-handler";
+import {
+    deprecated_innerRequestHandler,
+    buildRuntimeRequestHandler,
+} from "@fluidframework/request-handler";
+import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -111,7 +115,10 @@ export class ChaincodeFactory implements IRuntimeFactory {
                 [chaincode.type, Promise.resolve(chaincode)],
                 ...this.registries,
             ],
-            defaultContainerRequestHandler(rootStoreId),
+            buildRuntimeRequestHandler(
+                defaultRouteRequestHandler(rootStoreId),
+                deprecated_innerRequestHandler,
+            ),
             this.runtimeOptions);
 
         // On first boot create the base component

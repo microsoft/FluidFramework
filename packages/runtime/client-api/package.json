@@ -45,6 +45,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "@fluidframework/aqueduct": "^0.25.0",
     "@fluidframework/cell": "^0.25.0",
     "@fluidframework/common-utils": "^0.21.0",
     "@fluidframework/component-core-interfaces": "^0.25.0",

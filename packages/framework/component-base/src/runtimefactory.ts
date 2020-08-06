@@ -8,9 +8,9 @@ import {
     ContainerRuntime,
 } from "@fluidframework/container-runtime";
 import {
-    RuntimeRequestHandlerBuilder,
+    buildRuntimeRequestHandler,
     RuntimeRequestHandler,
-    defaultContainerRequestHandler,
+    deprecated_innerRequestHandler,
 } from "@fluidframework/request-handler";
 import {
     NamedFluidDataStoreRegistryEntries,
@@ -40,14 +40,12 @@ export class RuntimeFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const builder = new RuntimeRequestHandlerBuilder();
-        builder.pushHandler(...this.requestHandlers);
-        builder.pushHandler(defaultContainerRequestHandler());
-
         const runtime = await ContainerRuntime.load(
             context,
             this.registry,
-            async (req, rt) => builder.handleRequest(req, rt),
+            buildRuntimeRequestHandler(
+                ...this.requestHandlers,
+                deprecated_innerRequestHandler),
         );
 
         // Flush mode to manual to batch operations within a turn

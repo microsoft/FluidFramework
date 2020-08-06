@@ -16,28 +16,17 @@ export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainer
     => Promise<IResponse | undefined>;
 
 /**
- * Pipe through container request into internal request.
- * If request is empty and default url is provided, redirect request to such default url.
- *
- * @deprecated - This request handler exposes internal container structure and allows external requests
- * to get to internal objects. It is build for demo purposes only. It's recommended to never expose internal
- * structure and have mapping of external URIs to internal handles, and only use handles internally (not requests),
- * thus having more control over lifetime of external URIs and GC policy of objects that were ever exposed
- * through external URIs.
- *
- * @param defaultUrl - optional default url in case request is empty.
+ * @deprecated - please avoid adding new references to this API!
+ * It exposes internal container guts to external world, which is not ideal.
+ * It also relies heavily on internal routing schema (formation of handle URIs) which will change in future
+ * And last, but not least, it does not allow any policy to be implemented around GC of components exposed
+ * through internal URIs. I.e. if there are no other references to such objects, they will be GC'd and
+ * external links would get broken. Maybe that's what is needed in some cases, but better, more centralized
+ * handling of external URI -> internal handle is required (in future, we will support weak handle references,
+ * that will allow any GC policy to be implemented by container authors.)
  */
-export const defaultContainerRequestHandler = (defaultUrl?: string) => {
-    return async (request: IRequest, runtime: IContainerRuntime) => {
-        if (request.url === "" || request.url === "/") {
-            if (defaultUrl !== undefined) {
-                return runtime.resolveHandle({ url: defaultUrl, headers: request.headers });
-            }
-            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-        }
-        return runtime.resolveHandle(request);
-    };
-};
+export const deprecated_innerRequestHandler = async (request: IRequest, runtime: IContainerRuntime) =>
+    runtime.resolveHandle(request);
 
 export const createComponentResponse = (component: IFluidObject) => {
     return { status: 200, mimeType: "fluid/object", value: component };

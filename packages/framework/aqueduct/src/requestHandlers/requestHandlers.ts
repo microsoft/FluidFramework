@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { IRequest } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidMountableViewClass } from "@fluidframework/view-interfaces";
-import { RuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "@fluidframework/request-handler";
+import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
 /**
@@ -22,9 +23,6 @@ import { RequestParser } from "@fluidframework/runtime-utils";
 export const mountableViewRequestHandler:
     (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => RuntimeRequestHandler =
     (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => {
-        const builder = new RuntimeRequestHandlerBuilder();
-        builder.pushHandler(...handlers);
-
         return async (request: RequestParser, runtime: IContainerRuntime) => {
             if (request.headers?.mountableView === true) {
                 // Reissue the request without the mountableView header.
@@ -35,7 +33,7 @@ export const mountableViewRequestHandler:
                     url: request.url,
                     headers,
                 });
-                const response = await builder.handleRequest(newRequest, runtime);
+                const response = await buildRuntimeRequestHandler(...handlers)(newRequest, runtime);
 
                 if (response.status === 200 && MountableViewClass.canMount(response.value)) {
                     return {
@@ -48,3 +46,18 @@ export const mountableViewRequestHandler:
             return undefined;
         };
     };
+
+/**
+ * Pipe through container request into internal request.
+ * If request is empty and default url is provided, redirect request to such default url.
+ * @param defaultRootId - optional default root data store ID to pass request in case request is empty.
+ */
+export const defaultRouteRequestHandler = (defaultRootId: string) => {
+    return async (request: IRequest, runtime: IContainerRuntime) => {
+        const parser = new RequestParser(request);
+        if (parser.pathParts.length === 0) {
+            return runtime.resolveHandle({ url: `/${defaultRootId}${parser.query}`, headers: request.headers });
+        }
+        return undefined; // continue search
+    };
+};

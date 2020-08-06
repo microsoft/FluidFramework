@@ -10,7 +10,11 @@ import {
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
-import { defaultContainerRequestHandler } from "@fluidframework/request-handler";
+import {
+    deprecated_innerRequestHandler,
+    buildRuntimeRequestHandler,
+} from "@fluidframework/request-handler";
+import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { fluidExport as smde } from "./smde";
 
 class SmdeContainerFactory implements IRuntimeFactory {
@@ -27,7 +31,10 @@ class SmdeContainerFactory implements IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
-            defaultContainerRequestHandler(defaultComponentId),
+            buildRuntimeRequestHandler(
+                defaultRouteRequestHandler(defaultComponentId),
+                deprecated_innerRequestHandler,
+            ),
             { generateSummaries: true });
 
         // Flush mode to manual to batch operations within a turn

@@ -7,6 +7,7 @@ import assert from "assert";
 import {
     DataObject,
     DataObjectFactory,
+    defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
 import {
     IContainerContext,
@@ -24,7 +25,10 @@ import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createLocalLoader, OpProcessingController, initializeLocalContainer } from "@fluidframework/test-utils";
-import { defaultContainerRequestHandler } from "@fluidframework/request-handler";
+import {
+    deprecated_innerRequestHandler,
+    buildRuntimeRequestHandler,
+} from "@fluidframework/request-handler";
 import * as old from "./oldVersion";
 
 class TestComponent extends DataObject {
@@ -70,7 +74,10 @@ describe("loader/runtime compatibility", () => {
                 const runtime: ContainerRuntime = await ContainerRuntime.load(
                     context,
                     [[type, Promise.resolve(componentFactory as IFluidDataStoreFactory)]],
-                    defaultContainerRequestHandler("default"),
+                    buildRuntimeRequestHandler(
+                        defaultRouteRequestHandler("default"),
+                        deprecated_innerRequestHandler,
+                    ),
                     runtimeOptions,
                 );
                 if (!runtime.existing) {
@@ -81,7 +88,7 @@ describe("loader/runtime compatibility", () => {
         };
     };
 
-    // back-compatL <= 0.24: This function should be removed in favor or defaultContainerRequestHandler.
+    // back-compatL <= 0.24: This function should be removed in favor or defaultRouteRequestHandler.
     function old_defaultContainerRequestHandler(defaultUrl?: string) {
         const builder = new old.RuntimeRequestHandlerBuilder();
         builder.pushHandler(

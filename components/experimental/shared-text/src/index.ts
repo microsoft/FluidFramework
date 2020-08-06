@@ -15,7 +15,11 @@ import {
     IFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { defaultContainerRequestHandler } from "@fluidframework/request-handler";
+import {
+    deprecated_innerRequestHandler,
+    buildRuntimeRequestHandler,
+} from "@fluidframework/request-handler";
+import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import * as sharedTextComponent from "./component";
 
 /* eslint-disable max-len */
@@ -99,7 +103,10 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
                     Promise.resolve(new MyRegistry(context, "https://pragueauspkn.azureedge.net")),
                 ],
             ],
-            defaultContainerRequestHandler(DefaultComponentName),
+            buildRuntimeRequestHandler(
+                defaultRouteRequestHandler(DefaultComponentName),
+                deprecated_innerRequestHandler,
+            ),
         );
 
         // On first boot create the base component

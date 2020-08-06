@@ -26,7 +26,11 @@ import {
     IFluidDataStoreRuntime,
     IChannelFactory,
 } from "@fluidframework/component-runtime-definitions";
-import { defaultContainerRequestHandler } from "@fluidframework/request-handler";
+import {
+    deprecated_innerRequestHandler,
+    buildRuntimeRequestHandler,
+} from "@fluidframework/request-handler";
+import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
@@ -135,7 +139,10 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IFluidDataStor
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             new Map([[ComponentName, Promise.resolve(this)]]),
-            defaultContainerRequestHandler(ComponentName),
+            buildRuntimeRequestHandler(
+                defaultRouteRequestHandler(ComponentName),
+                deprecated_innerRequestHandler,
+            ),
         );
 
         if (!runtime.existing) {
