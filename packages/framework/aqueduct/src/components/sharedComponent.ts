@@ -219,7 +219,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
 
     /**
      * Called the first time the component is initialized (new creations with a new
-     * component runtime)
+     * data store runtime)
      *
      * @param props - Optional props to be passed in on create
      * @deprecated 0.16 Issue #1635 Initial props should be provided through a factory override
@@ -228,7 +228,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
 
     /**
      * Called every time but the first time the component is initialized (creations
-     * with an existing component runtime)
+     * with an existing data store runtime)
      */
     protected async initializingFromExisting(): Promise<void> { }
 

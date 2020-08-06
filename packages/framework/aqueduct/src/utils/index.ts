@@ -4,3 +4,4 @@
  */
 
 export * from "./attachUtils";
+export * from "./containerInteractions";

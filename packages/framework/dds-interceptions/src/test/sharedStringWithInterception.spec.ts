@@ -43,9 +43,9 @@ describe("Shared String with Interception", () => {
         }
 
         beforeEach(() => {
-            const componentRuntime = new MockFluidDataStoreRuntime();
-            sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
-            componentRuntime.bindToContext();
+            const dataStoreRuntime = new MockFluidDataStoreRuntime();
+            sharedString = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
+            dataStoreRuntime.bindToContext();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             componentContext = { containerRuntime: { orderSequentially } } as IFluidDataStoreContext;

@@ -4,7 +4,6 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
@@ -18,12 +17,20 @@ import { FluidEditor } from "./FluidEditor";
 import { insertBlockStart } from "./RichTextAdapter";
 import { MemberList } from "./MemberList";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const DraftJsName = pkg.name as string;
+export class DraftJsObject extends DataObject implements IFluidHTMLView {
+    private text: SharedString | undefined;
+    private authors: SharedMap | undefined;
 
-export class DraftJsExample extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
+
+    public static get Name() { return "@fluid-example/draft-js"; }
+
+    public static readonly factory = new DataObjectFactory(
+        DraftJsObject.Name,
+        DraftJsObject,
+        [SharedMap.getFactory(), SharedString.getFactory()],
+        {},
+    );
 
     /**
      * Do setup work here
@@ -38,31 +45,20 @@ export class DraftJsExample extends DataObject implements IFluidHTMLView {
         this.root.set("authors", authors.handle);
     }
 
+    protected async hasInitialized() {
+        [this.text, this.authors] = await Promise.all([this.root.get("text").get(), this.root.get("authors").get()]);
+    }
+
     /**
      * Will return a new view
      */
-    public async render(div: HTMLElement) {
-        const [text, authors] = await Promise.all([this.root.get("text").get(), this.root.get("authors").get()]);
+    public render(div: HTMLElement) {
         ReactDOM.render(
             <div style={{ margin: "20px auto", maxWidth: 800 }}>
-                <MemberList quorum={this.runtime.getQuorum()} dds={authors} style={{ textAlign: "right" }} />
-                <FluidEditor sharedString={text} authors={authors} runtime={this.runtime} />
+                <MemberList quorum={this.runtime.getQuorum()} dds={this.authors} style={{ textAlign: "right" }} />
+                <FluidEditor sharedString={this.text} authors={this.authors} runtime={this.runtime} />
             </div>,
             div,
         );
-        return div;
     }
 }
-
-// ----- COMPONENT SETUP STUFF -----
-export const DraftInstantiationFactory = new DataObjectFactory(
-    DraftJsName,
-    DraftJsExample,
-    [SharedMap.getFactory(), SharedString.getFactory()],
-    {},
-);
-
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DraftJsName,
-    new Map([[DraftJsName, Promise.resolve(DraftInstantiationFactory)]]),
-);

@@ -98,7 +98,7 @@ describe("Runtime", () => {
                     assert.strictEqual(5, batchEnd, "Did not receive correct batchEnd events");
                 });
 
-                it("Message with non batch-related metdata", () => {
+                it("Message with non batch-related metadata", () => {
                     const clientId: string = "test-client";
                     const message: Partial<ISequencedDocumentMessage> = {
                         clientId,
@@ -198,7 +198,7 @@ describe("Runtime", () => {
                     assert.strictEqual(2, batchEnd, "Did not receive correct batchBegin event for the batch");
                 });
 
-                it("Partial batch messages followed by non batch-related metdata message from another client", () => {
+                it("Partial batch messages followed by non batch-related metadata message from another client", () => {
                     const clientId1: string = "test-client-1";
                     const clientId2: string = "test-client-2";
                     const batchBeginMessage: Partial<ISequencedDocumentMessage> = {

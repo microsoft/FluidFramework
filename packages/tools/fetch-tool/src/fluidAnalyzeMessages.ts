@@ -158,7 +158,7 @@ function dumpStats(
     }
 }
 
-const getObjectId = (componentId: string, id: string) => `[${componentId}]/${id}`;
+const getObjectId = (dataStoreId: string, id: string) => `[${dataStoreId}]/${id}`;
 
 /**
  * Analyzer for sessions
@@ -481,7 +481,7 @@ function processOp(
     let recorded = false;
     if (message.type === ContainerMessageType.Attach) {
         const attachMessage = message.contents as IAttachMessage;
-        processComponentAttachOp(attachMessage, dataType);
+        processDataStoreAttachOp(attachMessage, dataType);
     } else if (isRuntimeMessage(message)) {
         const runtimeMessage = unpackRuntimeMessage(message);
         let envelop = runtimeMessage.contents as IEnvelope;
@@ -553,12 +553,12 @@ function processOp(
     }
 }
 
-function processComponentAttachOp(
+function processDataStoreAttachOp(
     attachMessage: IAttachMessage | string,
     dataType: Map<string, string>) {
     // dataType.set(getObjectId(attachMessage.id), attachMessage.type);
 
-    // That's component, and it brings a bunch of data structures.
+    // That's data store, and it brings a bunch of data structures.
     // Let's try to crack it.
     let parsedAttachMessage: IAttachMessage;
     if (typeof attachMessage === "string") {
