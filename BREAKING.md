@@ -1,6 +1,8 @@
 # Breaking changes
 
 ## 0.25 Breaking Changes
+- [Container runtime event changes](#Container-runtime-event-changes)
+- [Component is removed from telemetry event names](#Component-is-removed-from-telemetry-event-names)
 - [IComponentContextLegacy is removed](#IComponentContextLegacy-is-removed)
 - [IContainerRuntimeBase._createDataStoreWithProps() is removed](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
 - [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
@@ -8,6 +10,16 @@
 - [Package Renames](#package-renames)
 - [IComponent and IComponent Interfaces Removed](#IComponent-and-IComponent-Interfaces-Removed)
 - [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
+
+### Container runtime event changes
+Container runtime now emits the event "fluidDataStoreInstantiated" instead of "componentInstantiated"
+
+### Component is removed from telemetry event names
+The following telemetry event names have been updated to drop references to the term component:
+
+ComponentRuntimeDisposeError -> ChannelDisposeError
+ComponentContextDisposeError -> FluidDataStoreContextDisposeError
+SignalComponentNotFound -> SignalFluidDataStoreNotFound
 
 ### IComponentContextLegacy is removed
 Deprecated in 0.18, removed.
