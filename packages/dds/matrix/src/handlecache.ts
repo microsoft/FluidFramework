@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /* eslint-disable no-bitwise */
 
 import { strict as assert } from "assert";
