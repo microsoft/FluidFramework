@@ -10,6 +10,9 @@ import { Container, Loader } from "@fluidframework/container-loader";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { LocalResolver, LocalDocumentServiceFactory, LocalSessionStorageDbFactory } from "@fluidframework/local-driver";
 
+// The deltaConnection needs to be shared across the Loader instances for collaboration to happen
+let deltaConn;
+
 /**
  * Connect to the Ram-a-licious service and retrieve a Container with the given ID running the given code.
  * @param documentId - The document id to retrieve or create
@@ -20,7 +23,7 @@ export async function getRamaliciousContainer(
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
 ): Promise<Container> {
-    const deltaConn = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory(documentId));
+    deltaConn = deltaConn ?? LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory(documentId));
     const documentServiceFactory = new LocalDocumentServiceFactory(deltaConn);
     const url = `${window.location.origin}/${documentId}`;
 
