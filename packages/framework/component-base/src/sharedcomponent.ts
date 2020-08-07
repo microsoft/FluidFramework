@@ -10,7 +10,7 @@ import {
     IRequest,
     IResponse,
     IProvideFluidHandle,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";

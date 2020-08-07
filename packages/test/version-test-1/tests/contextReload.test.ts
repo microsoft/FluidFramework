@@ -24,16 +24,16 @@ describe("context reload", () => {
         }
 
         const text = "fluid is really great!!!";
-        await expect(page).toFill("#sbs-left .titleInput", text);
-        await expect(page).toFill("#sbs-left input.cdn", `${globals.PATH}/file`);
-        await expect(await page.$eval("#sbs-left input.cdn", (el) => (el as HTMLInputElement).value)).toBe(`${globals.PATH}/file`);
+        await expect(page).toFill("#sbs-right .titleInput", text);
+        await expect(page).toFill("#sbs-right input.cdn", `${globals.PATH}/file`);
+        await expect(await page.$eval("#sbs-right input.cdn", (el) => (el as HTMLInputElement).value)).toBe(`${globals.PATH}/file`);
 
-        const upgrade = await page.$("#sbs-left button.upgrade");
+        const upgrade = await page.$("#sbs-right button.upgrade");
         upgrade && await upgrade.click();
 
         await page.waitForSelector("button.diceRoller");
-        await expect(await getTitleValue("left")).toEqual(await getTitleValue("right"));
-        await expect(await getTitleValue("left")).toEqual(text);
+        await expect(await getTitleValue("right")).toEqual(await getTitleValue("left"));
+        await expect(await getTitleValue("right")).toEqual(text);
     })
 
     it("has a dice roller on the new version", async () => {
@@ -41,16 +41,16 @@ describe("context reload", () => {
             return await page.$eval(`#sbs-${div} .diceValue`, (el) => (el as HTMLDivElement).innerText);
         }
 
-        await expect(page).toFill("#sbs-left input.cdn", `${globals.PATH}/file`);
-        await expect(await page.$eval("#sbs-left input.cdn", (el) => (el as HTMLInputElement).value)).toBe(`${globals.PATH}/file`);
+        await expect(page).toFill("#sbs-right input.cdn", `${globals.PATH}/file`);
+        await expect(await page.$eval("#sbs-right input.cdn", (el) => (el as HTMLInputElement).value)).toBe(`${globals.PATH}/file`);
 
-        const upgrade = await page.$("#sbs-left button.upgrade");
+        const upgrade = await page.$("#sbs-right button.upgrade");
         upgrade && await upgrade.click();
 
         await page.waitForSelector("button.diceRoller");
         await expect(page).toClick("button.diceRoller", { text: "Roll" });
 
-        await expect(await getDiceValue("left")).toEqual(await getDiceValue("right"));
+        await expect(await getDiceValue("right")).toEqual(await getDiceValue("left"));
     });
 
     it("is followed by an immediate summary", async () => {
@@ -68,10 +68,10 @@ describe("context reload", () => {
             }
         });
 
-        await expect(page).toFill("#sbs-left input.cdn", `${globals.PATH}/file`);
-        await expect(await page.$eval("#sbs-left input.cdn", (el) => (el as HTMLInputElement).value)).toBe(`${globals.PATH}/file`);
+        await expect(page).toFill("#sbs-right input.cdn", `${globals.PATH}/file`);
+        await expect(await page.$eval("#sbs-right input.cdn", (el) => (el as HTMLInputElement).value)).toBe(`${globals.PATH}/file`);
 
-        const upgrade = await page.$("#sbs-left button.upgrade");
+        const upgrade = await page.$("#sbs-right button.upgrade");
         upgrade && await upgrade.click();
 
         await summMessage.promise;

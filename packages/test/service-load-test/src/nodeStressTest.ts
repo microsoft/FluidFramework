@@ -175,7 +175,7 @@ async function main() {
     const p: Promise<void>[] = [];
     for (let i = 0; i < config.profiles[profile].numClients; i++) {
         const args = [
-            "dist\\nodeStressTest.js",
+            "./dist/nodeStressTest.js",
             "--password", password,
             "--profile", profile,
             "--runId", i.toString(),

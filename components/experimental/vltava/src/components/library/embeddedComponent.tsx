@@ -4,7 +4,7 @@
  */
 
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 
 import React from "react";
 

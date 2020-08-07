@@ -19,7 +19,7 @@ import {
     IRequest,
     IResponse,
     IFluidRouter,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore";
 import { Ink } from "@fluidframework/ink";
 import {
@@ -83,6 +83,7 @@ export class SharedTextRunner
     private collabDoc: Document;
     private taskManager: ITaskManager;
     private uiInitialized = false;
+    private readonly title: string = "Shared Text";
 
     private constructor(
         private readonly runtime: FluidDataStoreRuntime,
@@ -184,8 +185,9 @@ export class SharedTextRunner
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performanceNow()}`);
 
-        const schedulerResponse = await this.runtime.request({ url: `/${SchedulerType}` });
-        const schedulerComponent = schedulerResponse.value as IFluidObject;
+        const schedulerComponent = await requestFluidObject<ITaskManager>(
+            this.context.containerRuntime.IFluidHandleContext,
+            `/${SchedulerType}`);
         this.taskManager = schedulerComponent.ITaskManager;
 
         const options = parse(window.location.search.substr(1));
@@ -237,6 +239,8 @@ export class SharedTextRunner
         containerDiv.style.overflow = "hidden";
         const container = new controls.FlowContainer(
             containerDiv,
+            this.title,
+            // API.Document should not be used here. This should be removed once #2915 is fixed.
             new API.Document(
                 this.runtime,
                 this.context,

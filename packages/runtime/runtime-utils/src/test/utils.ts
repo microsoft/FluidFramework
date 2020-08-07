@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidHandleContext } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { RemoteFluidObjectHandle } from "../remoteComponentHandle";
 
 export const mockHandleContext: IFluidHandleContext = {
@@ -14,9 +14,6 @@ export const mockHandleContext: IFluidHandleContext = {
     IFluidHandleContext: undefined as any,
 
     attachGraph: () => {
-        throw new Error("Method not implemented.");
-    },
-    bind: () => {
         throw new Error("Method not implemented.");
     },
     request: () => {

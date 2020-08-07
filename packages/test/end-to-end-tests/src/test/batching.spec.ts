@@ -59,7 +59,7 @@ describe("Batching", () => {
 
     function setupBacthMessageListener(component: ITestFluidComponent, receivedMessages: ISequencedDocumentMessage[]) {
         component.context.containerRuntime.on("op", (message: ISequencedDocumentMessage) => {
-            if (message.type === ContainerMessageType.ComponentOp) {
+            if (message.type === ContainerMessageType.FluidDataStoreOp) {
                 const envelope = message.contents as IEnvelope;
                 if (envelope.address !== `${SchedulerType}`) {
                     receivedMessages.push(message);

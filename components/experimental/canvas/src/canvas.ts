@@ -4,7 +4,7 @@
  */
 
 import { DataObject } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IColor, IInk, Ink, InkCanvas } from "@fluidframework/ink";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-unassigned-import

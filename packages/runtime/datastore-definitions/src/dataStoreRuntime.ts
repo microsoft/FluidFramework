@@ -11,7 +11,7 @@ import {
     IFluidSerializer,
     IFluidRouter,
     IFluidHandle,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IDeltaManager,

@@ -8,7 +8,7 @@ import {
     IFluidHandleContext,
     IFluidSerializer,
     ISerializedHandle,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
     ISharedObject,
@@ -42,8 +42,8 @@ export interface ILocalValue {
 
     /**
      * Retrieve the serialized form of the value stored within.
-     * @param serializer - Component runtime's serializer
-     * @param context - Component runtime's handle context
+     * @param serializer - Data store runtime's serializer
+     * @param context - Data store runtime's handle context
      * @param bind - Container type's handle
      * @returns The serialized form of the contained value
      */

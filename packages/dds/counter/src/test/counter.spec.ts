@@ -17,13 +17,13 @@ import { ISharedCounter, SharedCounter } from "..";
 
 describe("SharedCounter", () => {
     let testCounter: ISharedCounter;
-    let componentRuntime: MockFluidDataStoreRuntime;
+    let dataStoreRuntime: MockFluidDataStoreRuntime;
     let factory: IChannelFactory;
 
     beforeEach(async () => {
-        componentRuntime = new MockFluidDataStoreRuntime();
+        dataStoreRuntime = new MockFluidDataStoreRuntime();
         factory = SharedCounter.getFactory();
-        testCounter = factory.create(componentRuntime, "counter") as ISharedCounter;
+        testCounter = factory.create(dataStoreRuntime, "counter") as ISharedCounter;
     });
 
     describe("SharedCounter in local state", () => {
@@ -74,7 +74,7 @@ describe("SharedCounter", () => {
 
                 // Load a new SharedCounter from the snapshot of the first one.
                 const services = MockSharedObjectServices.createFromTree(testCounter.snapshot());
-                const testCounter2 = factory.create(componentRuntime, "counter2") as SharedCounter;
+                const testCounter2 = factory.create(dataStoreRuntime, "counter2") as SharedCounter;
                 await testCounter2.load("branchId", services);
 
                 // Verify that the new SharedCounter has the correct value.
@@ -91,8 +91,8 @@ describe("SharedCounter", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactory();
 
             // Connect the first SharedCounter.
-            componentRuntime.local = false;
-            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+            dataStoreRuntime.local = false;
+            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
             const services1 = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
@@ -100,14 +100,14 @@ describe("SharedCounter", () => {
             testCounter.connect(services1);
 
             // Create and connect a second SharedCounter.
-            const componentRuntime2 = new MockFluidDataStoreRuntime();
-            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
 
-            testCounter2 = factory.create(componentRuntime, "counter2") as SharedCounter;
+            testCounter2 = factory.create(dataStoreRuntime, "counter2") as SharedCounter;
             testCounter2.connect(services2);
         });
 
@@ -167,8 +167,8 @@ describe("SharedCounter", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Connect the first SharedCounter.
-            componentRuntime.local = false;
-            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+            dataStoreRuntime.local = false;
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
             const services1 = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
@@ -176,14 +176,14 @@ describe("SharedCounter", () => {
             testCounter.connect(services1);
 
             // Create and connect a second SharedCounter.
-            const componentRuntime2 = new MockFluidDataStoreRuntime();
-            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
 
-            testCounter2 = factory.create(componentRuntime, "counter2") as SharedCounter;
+            testCounter2 = factory.create(dataStoreRuntime, "counter2") as SharedCounter;
             testCounter2.connect(services2);
         });
 

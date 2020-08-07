@@ -8,8 +8,11 @@ import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-defi
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { DependencyContainerRegistry } from "@fluidframework/synthesize";
 import { MountableView } from "@fluidframework/view-adapters";
-import { RuntimeRequestHandler } from "@fluidframework/request-handler";
-import { defaultDataStoreRuntimeRequestHandler, mountableViewRequestHandler } from "../requestHandlers";
+import {
+    RuntimeRequestHandler,
+    deprecated_innerRequestHandler,
+} from "@fluidframework/request-handler";
+import { mountableViewRequestHandler, defaultRouteRequestHandler } from "../requestHandlers";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
 const defaultComponentId = "default";
@@ -36,9 +39,13 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
             [
                 // The mountable view request handler must go before any other request handlers that we might
                 // want to return mountable views, so it can correctly handle the header and reissue the request.
-                mountableViewRequestHandler(MountableView),
-                defaultDataStoreRuntimeRequestHandler(defaultComponentId),
-                ...requestHandlers,
+                mountableViewRequestHandler(
+                    MountableView,
+                    [
+                        ...requestHandlers,
+                        defaultRouteRequestHandler(defaultComponentId),
+                        deprecated_innerRequestHandler,
+                    ]),
             ],
         );
     }

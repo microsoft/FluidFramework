@@ -4,7 +4,7 @@
  */
 
 import { Buffer } from "buffer";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 export interface IBlobManager {
     // Rehydrate a blob manager from a snapshot

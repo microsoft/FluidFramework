@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidRouter, IFluidRunnable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IFluidRouter, IFluidRunnable, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { ISharedMap } from "@fluidframework/map";
 import * as Sequence from "@fluidframework/sequence";
 import { IntelRunner, ITokenConfig } from "./intelRunner";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISerializedHandle } from "@fluidframework/component-core-interfaces";
+import { ISerializedHandle } from "@fluidframework/core-interfaces";
 
 export const isSerializedHandle = (value: any): value is ISerializedHandle =>
     value?.type === "__fluid_handle__";

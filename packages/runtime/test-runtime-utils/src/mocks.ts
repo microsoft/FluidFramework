@@ -11,7 +11,7 @@ import {
     IFluidHandleContext,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     ContainerWarning,
@@ -111,14 +111,14 @@ export class MockContainerRuntime {
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
 
     constructor(
-        protected readonly componentRuntime: MockFluidDataStoreRuntime,
+        protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
         protected readonly factory: MockContainerRuntimeFactory,
     ) {
         this.deltaManager = new MockDeltaManager();
         // Set FluidDataStoreRuntime's deltaManager to ours so that they are in sync.
-        this.componentRuntime.deltaManager = this.deltaManager;
+        this.dataStoreRuntime.deltaManager = this.deltaManager;
         // FluidDataStoreRuntime already creates a clientId, reuse that so they are in sync.
-        this.clientId = this.componentRuntime.clientId;
+        this.clientId = this.dataStoreRuntime.clientId;
     }
 
     public createDeltaConnection(): MockDeltaConnection {
@@ -208,9 +208,9 @@ export class MockContainerRuntimeFactory {
         return minSeq ? minSeq : 0;
     }
 
-    public createContainerRuntime(componentRuntime: MockFluidDataStoreRuntime): MockContainerRuntime {
+    public createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime {
         const containerRuntime =
-            new MockContainerRuntime(componentRuntime, this);
+            new MockContainerRuntime(dataStoreRuntime, this);
         this.runtimes.push(containerRuntime);
         return containerRuntime;
     }

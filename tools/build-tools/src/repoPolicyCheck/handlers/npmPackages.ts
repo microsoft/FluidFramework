@@ -23,7 +23,7 @@ function packageShouldBePrivate(name: string): boolean {
     if (name === "@fluid-internal/client-api") {
         return false;
     }
-    
+
     return (
         name === "root" || // minirepo roots
         name.startsWith("@fluid-internal"));
@@ -32,6 +32,11 @@ function packageShouldBePrivate(name: string): boolean {
 function packageShouldNotBePrivate(name: string): boolean {
     // See https://github.com/microsoft/FluidFramework/issues/2642
     if (name === "@fluidframework/server-gateway") {
+        return false;
+    }
+
+    // see https://github.com/microsoft/FluidFramework/issues/3054
+    if (name === "@fluidframework/core-interfaces") {
         return false;
     }
 
