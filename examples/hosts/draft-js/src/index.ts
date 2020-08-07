@@ -15,9 +15,9 @@ export { DraftJsObject as DraftJsExample, DraftJsContainer };
 
 // Since this is a single page fluid application we are generating a new document id
 // if one was not provided
-// let createNew = false;
+let createNew = false;
 if (window.location.hash.length === 0) {
-    // createNew = true;
+    createNew = true;
     window.location.hash = Date.now().toString();
 }
 const documentId = window.location.hash.substring(1);
@@ -28,7 +28,7 @@ const documentId = window.location.hash.substring(1);
  */
 async function start() {
     // Get the Fluid Container associated with the provided id
-    const container = await getRamaliciousContainer(documentId, DraftJsContainer, true);
+    const container = await getRamaliciousContainer(documentId, DraftJsContainer, createNew);
 
     // Get the Default Object from the Container
     const defaultObject = await getDefaultObjectFromContainer<DraftJsObject>(container);
@@ -36,7 +36,13 @@ async function start() {
     // For now we will just reach into the FluidObject to render it
     defaultObject.render(document.getElementById("content1"));
 
-    defaultObject.render(document.getElementById("content2"));
+    // Get the Fluid Container associated with the provided id
+    const container2 = await getRamaliciousContainer(documentId, DraftJsContainer, false);
+
+    // Get the Default Object from the Container
+    const defaultObject2 = await getDefaultObjectFromContainer<DraftJsObject>(container2);
+
+    defaultObject2.render(document.getElementById("content2"));
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line dot-notation
