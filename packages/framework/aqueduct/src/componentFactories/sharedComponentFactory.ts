@@ -29,7 +29,7 @@ import {
 
 interface IPureDataObjectInitialState<TProps>{
     IPureDataObjectInitialState?: IPureDataObjectInitialState<TProps>;
-    props?: TProps;
+    initialState?: TProps;
 }
 
 /**
@@ -125,7 +125,7 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
         const providers = dependencyContainer.synthesize<P>(this.optionalProviders, {});
         // Create a new instance of our component
         const instance = new this.ctor({ runtime, context, providers });
-        await instance.initializeInternal(scope?.runtimeEnvironment?.IPureDataObjectInitialState?.props);
+        await instance.initializeInternal(scope?.runtimeEnvironment?.IPureDataObjectInitialState?.initialState);
         return instance;
     }
 
@@ -147,9 +147,8 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
         }
         const packagePath = await context.composeSubpackagePath(this.type);
 
-        const props: IPureDataObjectInitialState<S> = {
-            props: initialState,
-        };
+        const props: IPureDataObjectInitialState<S> = { initialState };
+        props.IPureDataObjectInitialState = props;
 
         const scope: IFluidDataStoreScope = {
             loadable: {},

@@ -229,8 +229,9 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     }
 
     public async realize(scope?: IFluidDataStoreScope): Promise<IFluidDataStoreChannel> {
+        // Back-compat: Can't enable it in 0.25, enable in later version!
         // scope can be provided only on creation path, where first realize() call is guaranteed to bring it
-        assert((scope === undefined) === (this.channelDeferred !== undefined));
+        // assert((scope === undefined) === (this.channelDeferred !== undefined));
 
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
