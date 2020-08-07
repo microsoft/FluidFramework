@@ -9,7 +9,7 @@ import {
 import {
     setSyncedObjectConfig,
     useSyncedObject,
-    SyncedComponent,
+    SyncedDataObject,
 } from "@fluidframework/react";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -17,7 +17,7 @@ import * as ReactDOM from "react-dom";
 // ---- React Function Component w/ useSyncedObject ----
 
 interface ICounterReactFunctionalProps {
-    syncedComponent: SyncedComponent,
+    syncedDataObject: SyncedDataObject,
     syncedStateId: string,
 }
 
@@ -29,7 +29,7 @@ function CounterReactFunction(
     props: ICounterReactFunctionalProps,
 ) {
     const [state, setState] = useSyncedObject<ICounterReactFunctionalState>(
-        props.syncedComponent,
+        props.syncedDataObject,
         props.syncedStateId,
         { value: 0 },
     );
@@ -49,7 +49,7 @@ function CounterReactFunction(
 /**
  * Basic ClickerFunction example showing Clicker as a React Function component
  */
-export class ClickerFunction extends SyncedComponent {
+export class ClickerFunction extends SyncedDataObject {
     constructor(props) {
         super(props);
         setSyncedObjectConfig<number>(this, "counter-function", 0);
@@ -62,7 +62,7 @@ export class ClickerFunction extends SyncedComponent {
             <div>
                 <CounterReactFunction
                     syncedStateId={"counter-function"}
-                    syncedComponent={this}
+                    syncedDataObject={this}
                 />
             </div>,
             div,

@@ -9,15 +9,15 @@ import {
     IFluidLoadable,
     IFluidObject,
 } from "@fluidframework/core-interfaces";
-import { SyncedComponent } from "./fluidComponent";
+import { SyncedDataObject } from "./fluidDataObject";
 
 /**
  * The combined state contains the fluid and view states and the data props
  * that are passed in to all reducers and selectors
  */
 export interface ICombinedState<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C extends IFluidDataProps
     > {
     /**
@@ -75,8 +75,8 @@ export type FluidToViewMap<SV, SF> = Map<keyof SF, IViewConverter<SV, SF>>;
  * elsewhere. They do not return any new components or state.
  */
 export interface IFluidReducer<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C extends IFluidDataProps
     > {
     [key: string]:
@@ -95,8 +95,8 @@ export interface IFluidReducer<
  * component map being updated if the view requires a component that hasn't been locally loaded yet
  */
 export interface IFluidSelector<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C extends IFluidDataProps
     > {
     [key: string]:
@@ -108,17 +108,17 @@ export interface IFluidSelector<
  * Props passed in to create a fluid react component or passed in to the useStateFluid hook
  */
 export interface IFluidProps<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
     > {
     /**
-     *  Unique ID to use for storing the component's synced state in the SyncedComponent's syncedState SharedMap
+     *  Unique ID to use for storing the component's synced state in the SyncedDataObject's syncedState SharedMap
      */
     syncedStateId: string;
     /**
-     * An instance of the SyncedComponent that this will be rendered in
+     * An instance of the SyncedDataObject that this will be rendered in
      */
-    syncedComponent: SyncedComponent;
+    syncedDataObject: SyncedDataObject;
     /**
      * Data props containing the fluid component map and the runtime
       Optional as the above two will be passed by default. This only need to be defined
@@ -133,8 +133,8 @@ export interface IFluidProps<
  * and convert them into their view state counterparts
  */
 export interface IViewConverter<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
     > {
     /**
      * The type of object this key in the Fluid state holds
@@ -175,8 +175,8 @@ export interface IViewConverter<
  * and convert them into their synced Fluid state counterparts
  */
 export interface IFluidConverter<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
     > {
     /**
      * The type of object this key in the view state holds
@@ -198,7 +198,7 @@ export interface IFluidConverter<
  * Base interface to extend from for the functional component Fluid state. These values can and should be left
  * undefined when passing in the initial state as they will be used to establish the Fluid state
  */
-export interface IFluidFunctionalComponentFluidState {
+export interface IFluidState {
     /**
      * The unique state ID for this React Fluid component
      */
@@ -214,8 +214,8 @@ export interface IFluidFunctionalComponentFluidState {
  * Base interface to extend from for the functional component view state. This should not contain any Fluid
  * components and should be crafted based off of what the view will use.
  */
-export interface IFluidFunctionalComponentViewState
-    extends IFluidFunctionalComponentFluidState {
+export interface IViewState
+    extends IFluidState {
     /**
      * The map containing the locally available components that have been loaded. If there are
      * any components loaded during initialization that the view needs to use,
@@ -226,7 +226,7 @@ export interface IFluidFunctionalComponentViewState
     fluidComponentMap?: FluidComponentMap;
 }
 
-export type IFluidReactState = IFluidFunctionalComponentFluidState & IFluidFunctionalComponentViewState;
+export type IFluidReactState = IFluidState & IViewState;
 
 export const instanceOfIComponentLoadable = (
     object: any,
@@ -284,8 +284,8 @@ export interface IFluidDataProps {
  * Definition for an effect function used in reducers
  */
 export interface FluidEffectFunction<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C extends IFluidDataProps
     > {
     /**
@@ -296,8 +296,8 @@ export interface FluidEffectFunction<
 }
 
 export const instanceOfEffectFunction = <
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C extends IFluidDataProps
 >(
     object: any,
@@ -308,8 +308,8 @@ export const instanceOfEffectFunction = <
  * Definition for an async effect function used in reducers
  */
 export interface FluidAsyncEffectFunction<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C extends IFluidDataProps
     > {
     /**
@@ -323,8 +323,8 @@ export interface FluidAsyncEffectFunction<
 }
 
 export const instanceOfAsyncEffectFunction = <
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C extends IFluidDataProps
 >(
     object: any,
@@ -335,8 +335,8 @@ export const instanceOfAsyncEffectFunction = <
  * Definition for a state update function used in reducers
  */
 export interface FluidStateUpdateFunction<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C extends IFluidDataProps
     > {
     /**
@@ -351,8 +351,8 @@ export interface FluidStateUpdateFunction<
 }
 
 export const instanceOfStateUpdateFunction = <
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C extends IFluidDataProps
 >(
     object: any,
@@ -363,8 +363,8 @@ export const instanceOfStateUpdateFunction = <
  * Definition for an async state update function used in reducers
  */
 export interface FluidAsyncStateUpdateFunction<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C extends IFluidDataProps
     > {
     /**
@@ -382,8 +382,8 @@ export interface FluidAsyncStateUpdateFunction<
  * The value returned by state update functions.
  */
 export interface IStateUpdateResult<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C extends IFluidDataProps
     > {
     /**
@@ -398,8 +398,8 @@ export interface IStateUpdateResult<
 }
 
 export const instanceOfAsyncStateUpdateFunction = <
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C extends IFluidDataProps
 >(
     object: any,
@@ -410,8 +410,8 @@ export const instanceOfAsyncStateUpdateFunction = <
  * Definition for a selector function used in selectors
  */
 export interface FluidSelectorFunction<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C extends IFluidDataProps
     > {
     /**
@@ -432,8 +432,8 @@ export interface FluidSelectorFunction<
  * Definition for a component selector function used in selectors
  */
 export interface FluidComponentSelectorFunction<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C extends IFluidDataProps
     > {
     /**
@@ -450,8 +450,8 @@ export interface FluidComponentSelectorFunction<
 }
 
 export const instanceOfSelectorFunction = <
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C extends IFluidDataProps
 >(
     object: any,
@@ -459,8 +459,8 @@ export const instanceOfSelectorFunction = <
     object === Object(object) && "function" in object;
 
 export const instanceOfComponentSelectorFunction = <
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     C extends IFluidDataProps
 >(
     object: any,
@@ -471,20 +471,20 @@ export const instanceOfComponentSelectorFunction = <
  * Props passed in to the useReducerFluid hook
  */
 export interface IFluidReducerProps<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     A extends IFluidReducer<SV, SF, C>,
     B,
     C extends IFluidDataProps
     > {
     /**
-     * Unique ID to use for storing the component's synced state in the SyncedComponent's syncedState SharedMap
+     * Unique ID to use for storing the component's synced state in the SyncedDataObject's syncedState SharedMap
      */
     syncedStateId: string;
     /**
-     * An instance of the SyncedComponent that this will be rendered in
+     * An instance of the SyncedDataObject that this will be rendered in
      */
-    syncedComponent: SyncedComponent;
+    syncedDataObject: SyncedDataObject;
     /**
      * The Fluid reducer containing all the functions as defined by an extension of the IFluidReducer type.
      * Any mutations to the state, or effects outside of the component involving the state should be done here.
@@ -518,7 +518,7 @@ export interface IFluidContextProps<SV, SF, C> extends IFluidProps<SV, SF> {
  * The state that is available through the react context
  */
 export interface FluidContextState<
-    SV extends IFluidFunctionalComponentViewState,
+    SV extends IViewState,
     C
     > {
     /**
@@ -539,7 +539,7 @@ export interface FluidContextState<
  * The returned value of createFluidContext
  */
 export interface FluidContext<
-    SV extends IFluidFunctionalComponentViewState,
+    SV extends IViewState,
     C
     > {
     /**
@@ -569,7 +569,7 @@ export interface FluidContext<
 
 export interface ISyncedStateConfig<SV, SF> {
     /**
-     * Unique ID to use for storing the component's synced state in the SyncedComponent's syncedState SharedMap
+     * Unique ID to use for storing the component's synced state in the SyncedDataObject's syncedState SharedMap
      */
     syncedStateId: string;
     /**
@@ -591,12 +591,12 @@ export interface ISyncedStateConfig<SV, SF> {
 
 /**
  * The configurations that define the relationships between Fluid and view states for
- * views that are rendered in a SyncedComponent
+ * views that are rendered in a SyncedDataObject
  */
 export type SyncedStateConfig = Map<string, ISyncedStateConfig<any, any>>;
 
 /**
- * The interface for interacting with the synced state that is stored on a SyncedComponent
+ * The interface for interacting with the synced state that is stored on a SyncedDataObject
  */
 export interface ISyncedState {
     /**

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SyncedComponent } from "@fluidframework/react";
+import { SyncedDataObject } from "@fluidframework/react";
 
-export function getAuthorName(syncedComponent: SyncedComponent) {
-    const quorum = syncedComponent.dataProps.runtime.getQuorum();
-    const clientId = syncedComponent.dataProps.runtime.clientId ?? "";
+export function getAuthorName(syncedDataObject: SyncedDataObject) {
+    const quorum = syncedDataObject.dataProps.runtime.getQuorum();
+    const clientId = syncedDataObject.dataProps.runtime.clientId ?? "";
     return (quorum.getMember(clientId)?.client.user as any).name ?? "";
 }

@@ -12,8 +12,8 @@ import {
     IFluidDataProps,
     FluidToViewMap,
     ViewToFluidMap,
-    IFluidFunctionalComponentViewState,
-    IFluidFunctionalComponentFluidState,
+    IViewState,
+    IFluidState,
     ISyncedState,
 } from "../interface";
 import {
@@ -24,7 +24,7 @@ import {
 } from ".";
 
 /**
- * Fetch the synced state for this view from the SyncedComponent sharedState and add
+ * Fetch the synced state for this view from the SyncedDataObject sharedState and add
  * listeners for all state updates
  * @param syncedStateId - Unique ID for this synced component's state
  * @param syncedState - The component's shared state map
@@ -39,8 +39,8 @@ import {
  * respective converters
  */
 export async function initializeState<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
     syncedStateId: string,
     syncedState: ISyncedState,

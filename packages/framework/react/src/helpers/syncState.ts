@@ -7,8 +7,8 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap } from "@fluidframework/map";
 import {
     FluidComponentMap,
-    IFluidFunctionalComponentFluidState,
-    IFluidFunctionalComponentViewState,
+    IFluidState,
+    IViewState,
     ViewToFluidMap,
     FluidToViewMap,
     ISyncedState,
@@ -37,8 +37,8 @@ import { getComponentSchema } from "./getComponentSchema";
  * respective converters
  */
 export function syncState<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
     isSyncedStateUpdate: boolean,
     syncedStateId: string,

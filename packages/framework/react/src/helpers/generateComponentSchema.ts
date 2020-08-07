@@ -6,8 +6,8 @@
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedMap } from "@fluidframework/map";
 import {
-    IFluidFunctionalComponentFluidState,
-    IFluidFunctionalComponentViewState,
+    IFluidState,
+    IViewState,
     ViewToFluidMap,
     FluidToViewMap,
     IFluidSchema,
@@ -22,8 +22,8 @@ import {
  * @param viewToFluid - The view to fluid conversion state mapping
  * */
 export function generateComponentSchema<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
     runtime: IFluidDataStoreRuntime,
     defaultViewState: SV,

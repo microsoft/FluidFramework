@@ -8,8 +8,8 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
     FluidComponentMap,
-    IFluidFunctionalComponentFluidState,
-    IFluidFunctionalComponentViewState,
+    IFluidState,
+    IViewState,
     ViewToFluidMap,
     FluidToViewMap,
 } from "../interface";
@@ -36,8 +36,8 @@ import { ISyncedState } from "..";
  * respective converters
  */
 export const updateStateAndComponentMap = async <
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
     newHandleList: IFluidHandle[],
     fluidComponentMap: FluidComponentMap,

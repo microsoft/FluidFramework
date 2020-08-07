@@ -7,8 +7,8 @@ import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
     FluidComponentMap,
     IViewConverter,
-    IFluidFunctionalComponentViewState,
-    IFluidFunctionalComponentFluidState,
+    IViewState,
+    IFluidState,
     ISyncedState,
 } from "../interface";
 import { getFluidState } from "./getFluidState";
@@ -25,8 +25,8 @@ import { getFluidState } from "./getFluidState";
  * @param combinedFluidState - Optional param containing the combined Fluid state so far to fetch from
  */
 export function getViewFromFluid<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
     syncedStateId: string,
     syncedState: ISyncedState,

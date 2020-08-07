@@ -9,8 +9,8 @@ import {
     FluidComponentMap,
     ViewToFluidMap,
     FluidToViewMap,
-    IFluidFunctionalComponentViewState,
-    IFluidFunctionalComponentFluidState,
+    IViewState,
+    IFluidState,
 } from "../interface";
 import { syncState } from "./syncState";
 import { getByFluidKey } from "./utils";
@@ -33,8 +33,8 @@ import { ISyncedState } from "..";
  * respective converters
  */
 export const syncedStateCallbackListener = <
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
     fluidComponentMap: FluidComponentMap,
     storedHandleMap: ISharedMap,

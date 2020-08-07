@@ -8,9 +8,9 @@ import {
 } from "@fluidframework/aqueduct";
 import {
     FluidReactComponent,
-    IFluidFunctionalComponentFluidState,
-    IFluidFunctionalComponentViewState,
-    SyncedComponent,
+    IFluidState,
+    IViewState,
+    SyncedDataObject,
 } from "@fluidframework/react";
 import { SharedCounter } from "@fluidframework/counter";
 import * as React from "react";
@@ -19,7 +19,7 @@ import * as ReactDOM from "react-dom";
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends SyncedComponent {
+export class Clicker extends SyncedDataObject {
     constructor(props) {
         super(props);
         // Mark the counter value in the state as a SharedCounter type and pass in its create function
@@ -51,7 +51,7 @@ export class Clicker extends SyncedComponent {
         ReactDOM.render(
             <CounterReactView
                 syncedStateId={"clicker"}
-                syncedComponent={this}
+                syncedDataObject={this}
             />,
             element,
         );
@@ -65,8 +65,8 @@ interface ICounterState {
     counter?: SharedCounter;
 }
 
-type CounterViewState = IFluidFunctionalComponentViewState & ICounterState;
-type CounterFluidState = IFluidFunctionalComponentFluidState & ICounterState;
+type CounterViewState = IViewState & ICounterState;
+type CounterFluidState = IFluidState & ICounterState;
 
 class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
     constructor(props) {

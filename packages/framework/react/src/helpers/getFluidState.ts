@@ -11,8 +11,8 @@ import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IViewConverter,
     FluidComponentMap,
-    IFluidFunctionalComponentViewState,
-    IFluidFunctionalComponentFluidState,
+    IViewState,
+    IFluidState,
     ISyncedState,
 } from "..";
 
@@ -25,8 +25,8 @@ import {
  * in case the fluid value is stored in the syncedState under a different key
  */
 export function getFluidState<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
     syncedStateId: string,
     syncedState: ISyncedState,

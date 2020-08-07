@@ -7,7 +7,7 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
-    SyncedComponent,
+    SyncedDataObject,
     setSyncedCounterConfig,
     useSyncedCounter,
     setSyncedArrayConfig,
@@ -27,7 +27,7 @@ const defaultImgUrl = "https://picsum.photos/id/221/1200/800";
 // Interfaces
 
 interface ILikesAndCommentsViewProps {
-    syncedComponent: SyncedComponent,
+    syncedDataObject: SyncedDataObject,
 }
 
 interface IComment {
@@ -41,9 +41,9 @@ function LikesAndCommentsView(
     props: ILikesAndCommentsViewProps,
 ) {
     // Use synced states
-    const [likes, likesReducer] = useSyncedCounter(props.syncedComponent, "likes");
-    const [comments, commentReducer] = useSyncedArray<IComment>(props.syncedComponent, "comments");
-    const [imgUrl, setImgUrl] = useSyncedString(props.syncedComponent,"imgUrl");
+    const [likes, likesReducer] = useSyncedCounter(props.syncedDataObject, "likes");
+    const [comments, commentReducer] = useSyncedArray<IComment>(props.syncedDataObject, "comments");
+    const [imgUrl, setImgUrl] = useSyncedString(props.syncedDataObject,"imgUrl");
     // Use local state
     const [currentComment, setCurrentComment] = React.useState("");
 
@@ -85,7 +85,7 @@ function LikesAndCommentsView(
                         onClick={() => {
                             commentReducer.add({
                                 message: currentComment,
-                                author: getAuthorName(props.syncedComponent),
+                                author: getAuthorName(props.syncedDataObject),
                             });
                             setCurrentComment("");
                         }}
@@ -100,7 +100,7 @@ function LikesAndCommentsView(
 /**
  * LikesAndComments example using multiple DDS hooks
  */
-export class LikesAndComments extends SyncedComponent {
+export class LikesAndComments extends SyncedDataObject {
     constructor(props) {
         super(props);
         // Declare configs for each synced state the view will need
@@ -123,7 +123,7 @@ export class LikesAndComments extends SyncedComponent {
         ReactDOM.render(
             <div>
                 <LikesAndCommentsView
-                    syncedComponent={this}
+                    syncedDataObject={this}
                 />
             </div>,
             div,

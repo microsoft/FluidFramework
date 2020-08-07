@@ -8,15 +8,15 @@ import { IDirectoryValueChanged, SharedMap } from "@fluidframework/map";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import {
     FluidComponentMap,
-    IFluidFunctionalComponentFluidState,
-    IFluidFunctionalComponentViewState,
+    IFluidState,
+    IViewState,
     IFluidConverter,
 } from "../interface";
 import { IFluidComponent } from "..";
 
 export function getByFluidKey<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(searchValue: string, map: Map<keyof SV, IFluidConverter<SV, SF>>) {
     for (const [key, value] of map.entries()) {
         if (value.fluidKey === searchValue) {
@@ -49,8 +49,8 @@ export async function asyncForEach(
 }
 
 export const addComponent = async <
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
     handle: IFluidHandle,
     fluidComponentMap: FluidComponentMap,

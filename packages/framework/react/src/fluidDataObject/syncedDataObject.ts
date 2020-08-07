@@ -15,8 +15,8 @@ import {
     FluidComponentMap,
     SyncedStateConfig,
     ISyncedStateConfig,
-    IFluidFunctionalComponentViewState,
-    IFluidFunctionalComponentFluidState,
+    IViewState,
+    IFluidState,
     ISyncedState,
 } from "../interface";
 import {
@@ -26,8 +26,8 @@ import {
 } from "../helpers";
 
 /**
- * SyncedComponent is a base component for components with views. It extends DataObject.
- * In addition to the root and task manager, the SyncedComponent also provides a syncedStateConfig
+ * SyncedDataObject is a base component for components with views. It extends DataObject.
+ * In addition to the root and task manager, the SyncedDataObject also provides a syncedStateConfig
  * and assures that the syncedState will be initialized according the config by the time the view
  * is rendered.
  *
@@ -39,7 +39,7 @@ import {
  * S - the initial state type that the produced component may take during creation
  * E - represents events that will be available in the EventForwarder
  */
-export abstract class SyncedComponent<
+export abstract class SyncedDataObject<
     P extends IFluidObject = object,
     S = undefined,
     E extends IEvent = IEvent
@@ -125,8 +125,8 @@ export abstract class SyncedComponent<
      * that establish the relationship between SV and SF
      */
     public setFluidConfig<
-        SV extends IFluidFunctionalComponentViewState,
-        SF extends IFluidFunctionalComponentFluidState
+        SV extends IViewState,
+        SF extends IFluidState
     >(key: string, value: ISyncedStateConfig<SV, SF>) {
         this.syncedStateConfig.set(key, value);
     }
@@ -140,7 +140,7 @@ export abstract class SyncedComponent<
     }
 
     /**
-     * Returns a view. This function need to be implemented for any consumer of SyncedComponent
+     * Returns a view. This function need to be implemented for any consumer of SyncedDataObject
      * to render values that have been initialized using the syncedStateConfig
      * @param element - The document that the rendered value will be displayed in
      */

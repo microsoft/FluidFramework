@@ -545,8 +545,8 @@ import {
 } from "@fluidframework/aqueduct";
 import {
     FluidReactComponent,
-    IFluidFunctionalComponentFluidState,
-    IFluidFunctionalComponentViewState,
+    IFluidState,
+    IViewState,
     FluidToViewMap,
 } from "@fluidframework/react";
 import { SharedCounter } from "@fluidframework/counter";
@@ -558,8 +558,8 @@ interface CounterState {
     counter?: SharedCounter;
 }
 
-type CounterViewState = IFluidFunctionalComponentViewState & CounterState;
-type CounterFluidState = IFluidFunctionalComponentFluidState & CounterState;
+type CounterViewState = IViewState & CounterState;
+type CounterFluidState = IFluidState & CounterState;
 
 
 export class Clicker extends PrimedComponent implements IComponentHTMLView {
@@ -624,8 +624,8 @@ interface CounterState {
     counter?: SharedCounter;
 }
 
-type CounterViewState = IFluidFunctionalComponentViewState & CounterState;
-type CounterFluidState = IFluidFunctionalComponentFluidState & CounterState;
+type CounterViewState = IViewState & CounterState;
+type CounterFluidState = IFluidState & CounterState;
 ```
 
 The `CounterViewState` and `CounterFluidState` here both have the `counter` available. The former is what will be used

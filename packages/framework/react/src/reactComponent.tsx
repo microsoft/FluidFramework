@@ -6,8 +6,8 @@
 import * as React from "react";
 import {
     IFluidProps,
-    IFluidFunctionalComponentFluidState,
-    IFluidFunctionalComponentViewState,
+    IFluidState,
+    IViewState,
     IFluidConverter,
     IViewConverter,
     IFluidDataProps,
@@ -18,8 +18,8 @@ import { syncState, initializeState } from "./helpers";
 /**
  * A react component with a synced state, initial props, and a Fluid-to-view state two-way mapping
  */
-export abstract class FluidReactComponent<SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState> extends React.Component<IFluidProps<SV, SF>, SV> {
+export abstract class FluidReactComponent<SV extends IViewState,
+    SF extends IFluidState> extends React.Component<IFluidProps<SV, SF>, SV> {
     private readonly _syncedStateId: string;
     private readonly _syncedState: ISyncedState;
     private readonly _dataProps: IFluidDataProps;
@@ -29,17 +29,17 @@ export abstract class FluidReactComponent<SV extends IFluidFunctionalComponentVi
         super(props);
         const {
             syncedStateId,
-            syncedComponent,
+            syncedDataObject,
         } = props;
-        const config = syncedComponent.getConfig(syncedStateId);
+        const config = syncedDataObject.getConfig(syncedStateId);
         if (config === undefined) {
             throw Error(`Failed to find configuration for synced state ID: ${syncedStateId}`);
         }
         this._viewToFluid = config.viewToFluid as any;
         this._fluidToView = config.fluidToView as any;
         this._syncedStateId = syncedStateId;
-        this._syncedState = syncedComponent.syncedState;
-        this._dataProps = syncedComponent.dataProps;
+        this._syncedState = syncedDataObject.syncedState;
+        this._dataProps = syncedDataObject.dataProps;
         this.state = config.defaultViewState;
     }
 

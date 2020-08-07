@@ -7,7 +7,7 @@ import * as React from "react";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedMap } from "@fluidframework/map";
 import {
-    IFluidFunctionalComponentViewState,
+    IViewState,
     IFluidReducerProps,
     IFluidDataProps,
     instanceOfStateUpdateFunction,
@@ -17,7 +17,7 @@ import {
     instanceOfEffectFunction,
     instanceOfAsyncEffectFunction,
     IStateUpdateResult,
-    IFluidFunctionalComponentFluidState,
+    IFluidState,
     IFluidReducer,
     IFluidSelector,
     ICombinedState,
@@ -33,8 +33,8 @@ import {
 } from "./helpers";
 
 export function useReducerFluid<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
+    SV extends IViewState,
+    SF extends IFluidState,
     A extends IFluidReducer<SV, SF, C>,
     B extends IFluidSelector<SV, SF, C>,
     C extends IFluidDataProps
@@ -46,20 +46,20 @@ export function useReducerFluid<
         syncedStateId,
         reducer,
         selector,
-        syncedComponent,
+        syncedDataObject,
     } = props;
-    const config = syncedComponent.getConfig(syncedStateId);
+    const config = syncedDataObject.getConfig(syncedStateId);
     if (config === undefined) {
         throw Error(`Failed to find configuration for synced state ID: ${syncedStateId}`);
     }
-    const dataProps = props.dataProps ?? syncedComponent.dataProps as C;
+    const dataProps = props.dataProps ?? syncedDataObject.dataProps as C;
     // Get our combined synced state and setState callbacks from the useStateFluid function
     const [viewState, setState] = useStateFluid<SV, SF>({
         syncedStateId,
-        syncedComponent,
+        syncedDataObject,
         dataProps,
     }, initialViewState);
-    const syncedState = syncedComponent.syncedState;
+    const syncedState = syncedDataObject.syncedState;
     const { fluidToView, viewToFluid } = config as ISyncedStateConfig<SV, SF>;
 
     const componentSchemaHandles = getComponentSchema(
