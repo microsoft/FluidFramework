@@ -12,7 +12,7 @@ import { BlobHandle, ContainerMessageType } from "@fluidframework/container-runt
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
+import { createLocalLoader, initializeLocalContainer, TestContainerRuntimeFactory } from "@fluidframework/test-utils";
 
 class TestComponent extends DataObject {
     public static readonly type = "@fluid-example/test-component";
@@ -30,8 +30,14 @@ describe("blobs", () => {
     let deltaConnectionServer: ILocalDeltaConnectionServer;
 
     async function createContainer(): Promise<Container> {
-        const factory = new DataObjectFactory(TestComponent.type, TestComponent, [], {});
-        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
+        const fluidModule = {
+            fluidExport: new TestContainerRuntimeFactory(
+                TestComponent.type,
+                new DataObjectFactory(TestComponent.type, TestComponent, [], {}),
+                { initialSummarizerDelayMs: 100 },
+            ),
+        };
+        const loader = createLocalLoader([[codeDetails, fluidModule]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
@@ -49,8 +55,6 @@ describe("blobs", () => {
 
     it("attach sends an op", async function() {
         const container = await createContainer();
-        container.on("op", (op) => console.log(op.type));
-        container.on("op", (op) => console.log(op.contents?.type));
 
         const blobOpP = new Promise((res) => container.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
@@ -67,7 +71,6 @@ describe("blobs", () => {
     });
 
     it("blobManager loads from snapshot", async function() {
-        this.timeout(20000);
         const testString = "this is a test string";
         const testString2 = "this is another test string";
         const container1 = await createContainer();
@@ -81,12 +84,10 @@ describe("blobs", () => {
         const component1 = await requestFluidObject<TestComponent>(container1, "default");
 
         const blob = await component1._runtime.uploadBlob(Buffer.from(testString)) as BlobHandle;
-        console.log(blob.blobId);
         component1._root.set("my blob", blob);
 
         const blob2 = await component1._runtime.uploadBlob(Buffer.from(testString2)) as BlobHandle;
         component1._root.set("my other blob", blob2);
-        console.log(blob2.blobId);
 
         await summaryP;
 

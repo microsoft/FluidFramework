@@ -921,22 +921,7 @@ export class ContainerRuntime extends EventEmitter
     public async resolveHandle(request: IRequest): Promise<IResponse> {
         const requestParser = new RequestParser(request);
 
-        if (requestParser.pathParts.length > 0) {
-            const wait =
-                typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
-
-            const component = await this.getDataStore(requestParser.pathParts[0], wait);
-            const subRequest = requestParser.createSubRequest(1);
-            if (subRequest !== undefined) {
-                return component.IFluidRouter.request(subRequest);
-            } else {
-                return {
-                    status: 200,
-                    mimeType: "fluid/object",
-                    value: component,
-                };
-            }
-        } else if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === "blobs") {
+        if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === "blobs") {
             const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
             if (handle) {
                 return {
@@ -949,6 +934,21 @@ export class ContainerRuntime extends EventEmitter
                     status: 404,
                     mimeType: "text/plain",
                     value: "blob not found",
+                };
+            }
+        } else if (requestParser.pathParts.length > 0) {
+            const wait =
+                typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+
+            const component = await this.getDataStore(requestParser.pathParts[0], wait);
+            const subRequest = requestParser.createSubRequest(1);
+            if (subRequest !== undefined) {
+                return component.IFluidRouter.request(subRequest);
+            } else {
+                return {
+                    status: 200,
+                    mimeType: "fluid/object",
+                    value: component,
                 };
             }
         }
