@@ -1347,6 +1347,15 @@ export class MergeTree {
                                 // eslint-disable-next-line dot-notation
                                 console.log(`${this.getLongClientId(this.collabWindow.clientId)}: Zremove ${segment["text"]}; cli ${this.getLongClientId(segment.clientId)}`);
                             }
+
+                            // Notify maintenance event observers that the segment is being unlinked from the MergeTree.
+                            if (this.mergeTreeMaintenanceCallback) {
+                                this.mergeTreeMaintenanceCallback({
+                                    operation: MergeTreeMaintenanceType.UNLINK,
+                                    deltaSegments: [{ segment }],
+                                });
+                            }
+
                             segment.parent = undefined;
                         }
                         prevSegment = undefined;
