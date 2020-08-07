@@ -15,7 +15,7 @@ import {
     IChannelStorageService,
     Serializable,
     IChannelAttributes,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { makeHandlesSerializable, parseHandles, SharedObject } from "@fluidframework/shared-object-base";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
@@ -556,28 +556,18 @@ export class SharedMatrix<T extends Serializable = Serializable>
     };
 
     private readonly onRowHandlesRecycled = (rowHandles: Handle[]) => {
-        for (let col = 0; col < this.colCount; col++) {
-            const colHandle = this.cols.handles[col];
-            if (colHandle !== Handle.unallocated) {
-                for (const rowHandle of rowHandles) {
-                    this.cells.setCell(rowHandle, colHandle, undefined);
-                    this.annotations.setCell(rowHandle, colHandle, undefined);
-                    this.pending.setCell(rowHandle, colHandle, undefined);
-                }
-            }
+        for (const rowHandle of rowHandles) {
+            this.cells.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
+            this.annotations.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
+            this.pending.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
         }
     };
 
     private readonly onColHandlesRecycled = (colHandles: Handle[]) => {
-        for (let row = 0; row < this.rowCount; row++) {
-            const rowHandle = this.rows.handles[row];
-            if (rowHandle !== Handle.unallocated) {
-                for (const colHandle of colHandles) {
-                    this.cells.setCell(rowHandle, colHandle, undefined);
-                    this.annotations.setCell(rowHandle, colHandle, undefined);
-                    this.pending.setCell(rowHandle, colHandle, undefined);
-                }
-            }
+        for (const colHandle of colHandles) {
+            this.cells.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
+            this.annotations.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
+            this.pending.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
         }
     };
 

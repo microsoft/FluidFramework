@@ -5,7 +5,7 @@
 
 import "mocha";
 
-import { IChannelServices, Serializable } from "@fluidframework/component-runtime-definitions";
+import { IChannelServices, Serializable } from "@fluidframework/datastore-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
@@ -27,12 +27,12 @@ async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
     // Create a snapshot
     const objectStorage = new MockStorage(matrix.snapshot());
 
-    // Create a local ComponentRuntime since we only want to load the snapshot for a local client.
-    const componentRuntime = new MockFluidDataStoreRuntime();
-    componentRuntime.local = true;
+    // Create a local DataStoreRuntime since we only want to load the snapshot for a local client.
+    const dataStoreRuntime = new MockFluidDataStoreRuntime();
+    dataStoreRuntime.local = true;
 
     // Load the snapshot into a newly created 2nd SharedMatrix.
-    const matrix2 = new SharedMatrix<T>(componentRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
+    const matrix2 = new SharedMatrix<T>(dataStoreRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
     await matrix2.load(/*branchId: */ null as any, {
         deltaConnection: new MockEmptyDeltaConnection(),
         objectStorage
@@ -50,30 +50,30 @@ describe("Big Matrix", function () {
     describe(`Excel-size matrix (${Const.excelMaxRows}x${Const.excelMaxCols})`, () => {
         let matrix1: SharedMatrix;
         let matrix2: SharedMatrix;
-        let componentRuntime1: MockFluidDataStoreRuntime;
+        let dataStoreRuntime1: MockFluidDataStoreRuntime;
         let containterRuntimeFactory: MockContainerRuntimeFactory;
 
         beforeEach(async () => {
             containterRuntimeFactory = new MockContainerRuntimeFactory();
 
             // Create and connect the first SharedMatrix.
-            componentRuntime1 = new MockFluidDataStoreRuntime();
-            const containerRuntime1 = containterRuntimeFactory.createContainerRuntime(componentRuntime1);
+            dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+            const containerRuntime1 = containterRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
             const services1: IChannelServices = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            matrix1 = new SharedMatrix(componentRuntime1, "matrix1", SharedMatrixFactory.Attributes);
+            matrix1 = new SharedMatrix(dataStoreRuntime1, "matrix1", SharedMatrixFactory.Attributes);
             matrix1.connect(services1);
 
             // Create and connect the second SharedMatrix.
-            const componentRuntime2 = new MockFluidDataStoreRuntime();
-            const containerRuntime2 = containterRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const containerRuntime2 = containterRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            matrix2 = new SharedMatrix(componentRuntime2, "matrix2", SharedMatrixFactory.Attributes);
+            matrix2 = new SharedMatrix(dataStoreRuntime2, "matrix2", SharedMatrixFactory.Attributes);
             matrix2.connect(services2);
         });
 
@@ -129,9 +129,9 @@ describe("Big Matrix", function () {
 
         beforeEach(async () => {
             // Create a SharedMatrix in local state.
-            const componentRuntime = new MockFluidDataStoreRuntime();
-            componentRuntime.local = true;
-            matrix = new SharedMatrix(componentRuntime, "matrix1", SharedMatrixFactory.Attributes);
+            const dataStoreRuntime = new MockFluidDataStoreRuntime();
+            dataStoreRuntime.local = true;
+            matrix = new SharedMatrix(dataStoreRuntime, "matrix1", SharedMatrixFactory.Attributes);
         });
 
         it("snapshot", async () => {

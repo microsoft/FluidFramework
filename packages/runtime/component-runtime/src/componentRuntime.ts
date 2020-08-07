@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -11,7 +11,7 @@ import {
     IFluidHandleContext,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -46,10 +46,11 @@ import {
     IFluidDataStoreChannel,
     IEnvelope,
     IInboundSignalMessage,
-    SchedulerType,
+    ISummaryTreeWithStats,
+    CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { generateHandleContextPath } from "@fluidframework/runtime-utils";
-import { IChannel, IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { IChannel, IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
@@ -73,10 +74,10 @@ export interface ISharedObjectRegistry {
 export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreChannel,
     IFluidDataStoreRuntime, IFluidHandleContext {
     /**
-     * Loads the component runtime
+     * Loads the data store runtime
      * @param context - The component context
      * @param sharedObjectRegistry - The registry of shared objects used by this component
-     * @param activeCallback - The callback called when the component runtime in active
+     * @param activeCallback - The callback called when the data store runtime in active
      * @param componentRegistry - The registry of components created and used by this component
      */
     public static load(
@@ -208,6 +209,10 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                     this.componentContext.summaryTracker.createOrGetChild(
                         path,
                         this.deltaManager.lastSequenceNumber,
+                    ),
+                    this.componentContext.getCreateChildSummarizerNodeFn(
+                        path,
+                        { type: CreateSummarizerNodeSource.FromSummary },
                     ));
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -237,11 +242,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        // System routes
-        if (request.url === `/${SchedulerType}`) {
-            return this.componentContext.containerRuntime.request(request);
-        }
-
         // Parse out the leading slash
         const id = request.url.startsWith("/") ? request.url.substr(1) : request.url;
 
@@ -471,6 +471,14 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                             id,
                             message.sequenceNumber,
                         ),
+                        this.componentContext.getCreateChildSummarizerNodeFn(
+                            id,
+                            {
+                                type: CreateSummarizerNodeSource.FromAttach,
+                                sequenceNumber: message.sequenceNumber,
+                                snapshot: attachMessage.snapshot,
+                            },
+                        ),
                         attachMessage.type);
 
                     this.contexts.set(id, remoteChannelContext);
@@ -499,15 +507,31 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         this.emit("signal", message, local);
     }
 
+    private isChannelAttached(id: string): boolean {
+        return (
+            // Added in createChannel
+            // Removed when bindChannel is called
+            !this.notBoundedChannelContextSet.has(id)
+            // Added in bindChannel only if this is not attached yet
+            // Removed when this is attached by calling attachGraph
+            && !this.localChannelContextQueue.has(id)
+            // Added in attachChannel called by bindChannel
+            // Removed when attach op is broadcast
+            && !this.pendingAttach.has(id)
+        );
+    }
+
     public async snapshotInternal(fullTree: boolean = false): Promise<ITreeEntry[]> {
         // Craft the .attributes file for each shared object
         const entries = await Promise.all(Array.from(this.contexts)
-            .filter(([key, value]) =>
+            .filter(([key, _]) => {
+                const isAttached = this.isChannelAttached(key);
+                // We are not expecting local dds! Summary may not capture local state.
+                assert(isAttached, "Not expecting detached channels during summarize");
                 // If the object is registered - and we have received the sequenced op creating the object
                 // (i.e. it has a base mapping) - then we go ahead and snapshot
-                !this.notBoundedChannelContextSet.has(key),
-            )
-            .map(async ([key, value]) => {
+                return isAttached;
+            }).map(async ([key, value]) => {
                 const snapshot = await value.snapshot(fullTree);
 
                 // And then store the tree
@@ -517,11 +541,28 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         return entries;
     }
 
+    public async summarize(fullTree = false): Promise<ISummaryTreeWithStats> {
+        const builder = new SummaryTreeBuilder();
+
+        // Iterate over each component and ask it to snapshot
+        await Promise.all(Array.from(this.contexts)
+            .filter(([key, _]) => {
+                const isAttached = this.isChannelAttached(key);
+                // We are not expecting local dds! Summary may not capture local state.
+                assert(isAttached, "Not expecting detached channels during summarize");
+                // If the object is registered - and we have received the sequenced op creating the object
+                // (i.e. it has a base mapping) - then we go ahead and snapshot
+                return isAttached;
+            }).map(async ([key, value]) => {
+                const channelSummary = await value.summarize(fullTree);
+                builder.addWithStats(key, channelSummary);
+            }));
+
+        return builder.getSummaryTree();
+    }
+
     public getAttachSnapshot(): ITreeEntry[] {
         const entries: ITreeEntry[] = [];
-        // Move resolving the promise in attached event once that becomes
-        // default flow for our tests.
-        this.deferredAttached.resolve();
         this.attachGraph();
 
         // Craft the .attributes file for each shared object
@@ -562,7 +603,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     }
 
     /**
-     * Attach channel should only be called after the componentRuntime has been attached
+     * Attach channel should only be called after the dataStoreRuntime has been attached
      */
     private attachChannel(channel: IChannel): void {
         this.verifyNotClosed();
@@ -667,6 +708,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         this.componentContext.once("attaching", () => {
             assert(this.bindState !== BindState.NotBound, "Component attaching should not occur if it is not bound");
             this._attachState = AttachState.Attaching;
+            // This promise resolution will be moved to attached event once we fix the scheduler.
+            this.deferredAttached.resolve();
             this.emit("attaching");
         });
         this.componentContext.once("attached", () => {

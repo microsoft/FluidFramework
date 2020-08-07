@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandleContext } from "@fluidframework/component-core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces";
 
 /**
  * Generates the absolute path for an IFluidHandleContext given its path and its parent routeContext.

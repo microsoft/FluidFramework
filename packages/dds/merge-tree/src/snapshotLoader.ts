@@ -7,7 +7,7 @@ import assert from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
@@ -63,7 +63,6 @@ export class SnapshotLoader {
         const blobsP = services.list("");
         const headerChunk = await headerChunkP;
 
-        // tslint:disable-next-line: no-suspicious-comment
         // TODO we shouldn't need to wait on the body being complete to finish initialization.
         // To fully support this we need to be able to process inbound ops for pending segments.
         await this.loadBody(headerChunk, services);
@@ -73,7 +72,7 @@ export class SnapshotLoader {
             headerChunk.headerMetadata.orderedChunkMetadata.forEach(
                 (md) => blobs.splice(blobs.indexOf(md.id), 1));
             assert(blobs.length === 1, `There should be only one blob with catch up ops: ${blobs.length}`);
-            // tslint:disable-next-line:no-suspicious-comment
+
             // TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
             return this.loadCatchupOps(services.read(blobs[0]), branch);
@@ -129,8 +128,6 @@ export class SnapshotLoader {
             this.runtime.IFluidHandleContext);
         const segs = chunk.segments.map(this.specToSegment);
         this.mergeTree.reloadFromSegments(segs);
-
-        // tslint:disable-next-line: no-suspicious-comment
         // TODO currently only assumes two levels of branching
         const branching = branchId === this.runtime.documentId ? 0 : 1;
 
@@ -147,7 +144,7 @@ export class SnapshotLoader {
         // now that we differentiate attached vs local
         this.client.startOrUpdateCollaboration(
             this.runtime.clientId ?? "snapshot",
-            // tslint:disable-next-line:no-suspicious-comment
+
             // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
             /* minSeq: */ chunk.headerMetadata.minSequenceNumber !== undefined

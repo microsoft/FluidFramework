@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidHandle } from "@fluidframework/component-core-interfaces";
-import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/component-runtime";
+import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
+import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ITestFluidComponent } from "./interfaces";
 
 /**
@@ -47,7 +47,7 @@ export class TestFluidComponent implements ITestFluidComponent {
 
     /**
      * Creates a new TestFluidComponent.
-     * @param runtime - The component runtime.
+     * @param runtime - The data store runtime.
      * @param context - The componet context.
      * @param factoryEntries - A list of id to IChannelFactory mapping. For each item in the list,
      * a shared object is created which can be retrieved by calling getSharedObject() with the id;
@@ -105,13 +105,15 @@ export class TestFluidComponent implements ITestFluidComponent {
     }
 }
 
+export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
+
 /**
- * Creates a factory for a TestFluidComponent with the given object factory entries. It creates a component runtime
+ * Creates a factory for a TestFluidComponent with the given object factory entries. It creates a data store runtime
  * with the object factories in the entry list. All the entries with an id other than undefined are passed to the
  * component so that it can create a shared object for each.
  *
  * For example, the following will create a component that creates and loads a SharedString and SharedDirectory. It
- * will add SparseMatrix to the component runtime's factory so that it can be created later.
+ * will add SparseMatrix to the data store runtime's factory so that it can be created later.
  *      new TestFluidComponentFactory([
  *          [ "sharedString", SharedString.getFactory() ],
  *          [ "sharedDirectory", SharedDirectory.getFactory() ],
@@ -130,11 +132,11 @@ export class TestFluidComponentFactory implements IFluidDataStoreFactory {
 
     /**
      * Creates a new TestFluidComponentFactory.
-     * @param factoryEntries - A list of id to IChannelFactory mapping. It creates a component runtime with each
+     * @param factoryEntries - A list of id to IChannelFactory mapping. It creates a data store runtime with each
      * IChannelFactory. Entries with string ids are passed to the component so that it can create a shared object
      * for it.
      */
-    constructor(private readonly factoryEntries: Iterable<[string | undefined, IChannelFactory]>) { }
+    constructor(private readonly factoryEntries: ChannelFactoryRegistry) { }
 
     public instantiateDataStore(context: IFluidDataStoreContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
@@ -143,7 +145,7 @@ export class TestFluidComponentFactory implements IFluidDataStoreFactory {
         const sharedMapFactory = SharedMap.getFactory();
         dataTypes.set(sharedMapFactory.type, sharedMapFactory);
 
-        // Add the object factories to the list to be sent to component runtime.
+        // Add the object factories to the list to be sent to data store runtime.
         for (const entry of this.factoryEntries) {
             const factory = entry[1];
             dataTypes.set(factory.type, factory);

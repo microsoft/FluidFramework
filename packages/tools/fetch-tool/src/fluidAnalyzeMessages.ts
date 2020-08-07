@@ -18,7 +18,7 @@ import {
     isRuntimeMessage,
     unpackRuntimeMessage,
 } from "@fluidframework/container-runtime";
-import { ComponentMessageType } from "@fluidframework/component-runtime";
+import { DataStoreMessageType } from "@fluidframework/datastore";
 
 const noClientName = "No Client";
 const objectTypePrefix = "https://graph.microsoft.com/types/";
@@ -158,7 +158,7 @@ function dumpStats(
     }
 }
 
-const getObjectId = (componentId: string, id: string) => `[${componentId}]/${id}`;
+const getObjectId = (dataStoreId: string, id: string) => `[${dataStoreId}]/${id}`;
 
 /**
  * Analyzer for sessions
@@ -481,7 +481,7 @@ function processOp(
     let recorded = false;
     if (message.type === ContainerMessageType.Attach) {
         const attachMessage = message.contents as IAttachMessage;
-        processComponentAttachOp(attachMessage, dataType);
+        processDataStoreAttachOp(attachMessage, dataType);
     } else if (isRuntimeMessage(message)) {
         const runtimeMessage = unpackRuntimeMessage(message);
         let envelop = runtimeMessage.contents as IEnvelope;
@@ -495,14 +495,14 @@ function processOp(
         };
         const address = envelop.address;
         type = `${type}/${innerContent.type}`;
-        if (innerContent.type === ComponentMessageType.Attach) {
+        if (innerContent.type === DataStoreMessageType.Attach) {
             const attachMessage = innerContent.content as IAttachMessage;
             let objectType = attachMessage.type;
             if (objectType.startsWith(objectTypePrefix)) {
                 objectType = objectType.substring(objectTypePrefix.length);
             }
             dataType.set(getObjectId(address, attachMessage.id), objectType);
-        } else if (innerContent.type === ComponentMessageType.ChannelOp) {
+        } else if (innerContent.type === DataStoreMessageType.ChannelOp) {
             const innerEnvelop = innerContent.content as IEnvelope;
             const innerContent2 = innerEnvelop.contents as {
                 type?: string;
@@ -553,12 +553,12 @@ function processOp(
     }
 }
 
-function processComponentAttachOp(
+function processDataStoreAttachOp(
     attachMessage: IAttachMessage | string,
     dataType: Map<string, string>) {
     // dataType.set(getObjectId(attachMessage.id), attachMessage.type);
 
-    // That's component, and it brings a bunch of data structures.
+    // That's data store, and it brings a bunch of data structures.
     // Let's try to crack it.
     let parsedAttachMessage: IAttachMessage;
     if (typeof attachMessage === "string") {

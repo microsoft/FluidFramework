@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { CreateNewHeader } from "@fluidframework/driver-definitions";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 
 describe("Odsp Driver Resolver", () => {

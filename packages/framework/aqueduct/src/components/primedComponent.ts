@@ -8,7 +8,7 @@ import {
     IFluidHandle,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
 import { ITaskManager, SchedulerType } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
@@ -40,9 +40,7 @@ export abstract class DataObject<P extends IFluidObject = object, S = undefined,
 
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;
-        if (this.internalTaskManager && url.startsWith(this.taskManager.url)) {
-            return this.internalTaskManager.request(request);
-        } else if (url.startsWith(this.bigBlobs)) {
+        if (url.startsWith(this.bigBlobs)) {
             const value = this.root.get<string>(url);
             if (value === undefined) {
                 return { mimeType: "fluid/object", status: 404, value: `request ${url} not found` };
@@ -99,7 +97,7 @@ export abstract class DataObject<P extends IFluidObject = object, S = undefined,
     public async initializeInternal(props?: S): Promise<void> {
         // Initialize task manager.
         this.internalTaskManager = await requestFluidObject<ITaskManager>(
-            this.context.containerRuntime,
+            this.context.containerRuntime.IFluidHandleContext,
             `/${SchedulerType}`);
 
         if (!this.runtime.existing) {

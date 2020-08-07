@@ -5,12 +5,13 @@
 
 import { EventEmitter } from "events";
 
-import { IFluidObject, IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidLastEditedTracker } from "@fluidframework/last-edited-experimental";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
 import { IQuorum, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 export interface IVltavaUserDetails {
     name: string,
@@ -117,10 +118,7 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     }
 
     private async setupLastEditedTracker() {
-        const response = await this.context.containerRuntime.request({ url: "default" });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error("Can't find last edited component");
-        }
-        this.lastEditedTracker = response.value.IFluidLastEditedTracker;
+        const object = await requestFluidObject(this.context.containerRuntime.IFluidHandleContext, "default");
+        this.lastEditedTracker = object.IFluidLastEditedTracker;
     }
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IResponse, IFluidObject, IFluidRouter, IRequest } from "@fluidframework/component-core-interfaces";
+import { IResponse, IFluidObject, IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { RequestParser } from "@fluidframework/runtime-utils";

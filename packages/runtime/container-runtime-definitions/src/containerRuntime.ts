@@ -6,7 +6,9 @@
 import {
     IFluidObject,
     IFluidRouter,
-} from "@fluidframework/component-core-interfaces";
+    IRequest,
+    IResponse,
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -32,9 +34,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
-declare module "@fluidframework/component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideContainerRuntime>> { }
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideContainerRuntime>> { }
 }
@@ -142,4 +142,10 @@ export interface IContainerRuntime extends
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+
+    /**
+     * Resolves handle URI
+     * @param request - request to resolve
+     */
+    resolveHandle(request: IRequest): Promise<IResponse>;
 }

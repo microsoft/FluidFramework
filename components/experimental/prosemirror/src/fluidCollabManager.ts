@@ -32,9 +32,7 @@ import { create as createSelection } from "./selection";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import OrderedMap = require("orderedmap");
 
-declare module "@fluidframework/component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideRichTextEditor>> { }
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideRichTextEditor>> { }
 }

@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { BaseContainerService, serviceRoutePathRoot } from "@fluidframework/aqueduct";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
     IComponentInterfacesRegistry,
     IProvideComponentDiscoverableInterfaces,
@@ -14,20 +14,18 @@ import {
     IComponentDiscoverableInterfaces,
 } from "@fluidframework/framework-interfaces";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 export const MatchMakerContainerServiceId = "matchMaker";
 
 const getMatchMakerContainerService =
     async (context: IFluidDataStoreContext): Promise<IComponentInterfacesRegistry> => {
-        const response = await context.containerRuntime.request({
-            url: `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
-        });
-        if (response.status === 200 && response.mimeType === "fluid/object") {
-            const value = response.value as IFluidObject;
-            const matchMaker = value.IComponentInterfacesRegistry;
-            if (matchMaker) {
-                return matchMaker;
-            }
+        const value = await requestFluidObject(
+            context.containerRuntime.IFluidHandleContext,
+            `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`);
+        const matchMaker = value.IComponentInterfacesRegistry;
+        if (matchMaker) {
+            return matchMaker;
         }
 
         throw new Error("MatchMaker Container Service not registered");

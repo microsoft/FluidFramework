@@ -32,7 +32,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
             // We should get a new clientId on reconnection.
             this.clientId = uuid();
             // Update the clientId in FluidDataStoreRuntime.
-            this.componentRuntime.clientId = this.clientId;
+            this.dataStoreRuntime.clientId = this.clientId;
             // On reconnection, ask the DDSs to resubmit pending messages.
             this.reSubmitMessages();
         } else {
@@ -50,9 +50,9 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     private _connected = true;
 
     constructor(
-        componentRuntime: MockFluidDataStoreRuntime,
+        dataStoreRuntime: MockFluidDataStoreRuntime,
         factory: MockContainerRuntimeFactoryForReconnection) {
-        super(componentRuntime, factory);
+        super(dataStoreRuntime, factory);
     }
 
     public submit(messageContent: any, localOpMetadata: unknown) {
@@ -81,8 +81,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
  * Specalized implementation of MockContainerRuntimeFactory for testing ops during reconnection.
  */
 export class MockContainerRuntimeFactoryForReconnection extends MockContainerRuntimeFactory {
-    public createContainerRuntime(componentRuntime: MockFluidDataStoreRuntime): MockContainerRuntimeForReconnection {
-        const containerRuntime = new MockContainerRuntimeForReconnection(componentRuntime, this);
+    public createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntimeForReconnection {
+        const containerRuntime = new MockContainerRuntimeForReconnection(dataStoreRuntime, this);
         this.runtimes.push(containerRuntime);
         return containerRuntime;
     }

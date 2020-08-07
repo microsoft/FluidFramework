@@ -62,15 +62,6 @@ development server, which will load two instances of the component side by side.
 
 !!!include(browsers.md)!!!
 
-<style>
-  iframe#sudoku {
-    height: 500px;
-    width: 910px;
-  }
-</style>
-
-<iframe id="sudoku" src="/fluid/sudoku.html"></iframe>
-
 ::: important
 
 If you make changes to your data model during development, you may notice console failures, or your component may fail

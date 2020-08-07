@@ -7,7 +7,7 @@ import {
     IFluidHandleContext,
     IFluidHandle,
     IFluidLoadable,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { SummarizerHandle } from "../summarizerHandle";
 
 const mockHandleContext: IFluidHandleContext = {
@@ -18,9 +18,6 @@ const mockHandleContext: IFluidHandleContext = {
     IFluidHandleContext: undefined as any,
 
     attachGraph: () => {
-        throw new Error("Method not implemented.");
-    },
-    bind: () => {
         throw new Error("Method not implemented.");
     },
     request: () => {
