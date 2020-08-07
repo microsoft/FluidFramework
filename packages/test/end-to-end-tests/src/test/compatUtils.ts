@@ -49,7 +49,7 @@ export interface ICompatTestArgs {
 
 export interface ICompatTestOptions {
     /**
-     * Use TestFluidComponent instead of PrimedComponent
+     * Use TestFluidDataStore instead of PrimedComponent
      */
     testFluidDataStore?: boolean,
 }
