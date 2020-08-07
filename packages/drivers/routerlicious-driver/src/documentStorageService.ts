@@ -192,7 +192,7 @@ export class DocumentStorageService implements IDocumentStorageService {
             : { parsedContent: content.toString("base64"), encoding: "base64" };
 
         // The gitHashFile would return the same hash as returned by the server as blob.sha
-        const hash = gitHashFile(Buffer.from(parsedContent, encoding));
+        const hash = await gitHashFile(Buffer.from(parsedContent, encoding));
         if (!this.blobsShaCache.has(hash)) {
             this.blobsShaCache.set(hash, "");
             const blob = await this.manager.createBlob(parsedContent, encoding);

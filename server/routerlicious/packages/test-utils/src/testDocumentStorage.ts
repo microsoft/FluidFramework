@@ -320,7 +320,7 @@ async function writeSummaryBlob(
         : { parsedContent: content.toString("base64"), encoding: "base64" };
 
     // The gitHashFile would return the same hash as returned by the server as blob.sha
-    const hash = gitHashFile(Buffer.from(parsedContent, encoding));
+    const hash = await gitHashFile(Buffer.from(parsedContent, encoding));
     if (!blobsShaCache.has(hash)) {
         const blob = await manager.createBlob(parsedContent, encoding);
         blobsShaCache.add(blob.sha);

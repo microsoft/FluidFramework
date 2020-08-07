@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Buffer } from "buffer";
 import { parse } from "url";
+import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import uuid from "uuid";
 
@@ -53,7 +53,7 @@ function convertProtocolAndAppSummaryToSnapshotTreeCore(
                 treeNode.blobs[key] = blobId;
                 const content = typeof summaryObject.content === "string" ?
                     summaryObject.content : summaryObject.content.toString("base64");
-                treeNode.blobs[blobId] = Buffer.from(content).toString("base64");
+                treeNode.blobs[blobId] = fromUtf8ToBase64(content);
                 break;
             }
             case SummaryType.Handle:

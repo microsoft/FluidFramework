@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Buffer } from "buffer";
+import { IsoBuffer } from "@fluidframework/common-utils";
 import { IBlobManager, IGenericBlob } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 
@@ -35,7 +35,7 @@ export class BlobManager implements IBlobManager {
         if (blobContent === undefined) {
             return undefined;
         }
-        blob!.content = Buffer.from(blobContent, "base64");
+        blob!.content = IsoBuffer.from(blobContent, "base64");
         return blob;
     }
 
