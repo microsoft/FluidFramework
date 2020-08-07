@@ -28,15 +28,15 @@ describe("Directory", () => {
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
-    let component1: ITestFluidComponent;
+    let dataStore1: ITestFluidComponent;
     let sharedDirectory1: ISharedDirectory;
     let sharedDirectory2: ISharedDirectory;
     let sharedDirectory3: ISharedDirectory;
 
-    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
-        const response = await container.request({ url: componentId });
+    async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidComponent> {
+        const response = await container.request({ url: dataStoreId });
         if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
+            throw new Error(`DataStore with id: ${dataStoreId} not found`);
         }
         return response.value as ITestFluidComponent;
     }
@@ -51,22 +51,22 @@ describe("Directory", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
         const container1 = await createContainer();
-        component1 = await requestFluidObject("default", container1);
-        sharedDirectory1 = await component1.getSharedObject<SharedDirectory>(directoryId);
+        dataStore1 = await requestFluidObject("default", container1);
+        sharedDirectory1 = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
 
         const container2 = await createContainer();
-        const component2 = await requestFluidObject("default", container2);
-        sharedDirectory2 = await component2.getSharedObject<SharedDirectory>(directoryId);
+        const dataStore2 = await requestFluidObject("default", container2);
+        sharedDirectory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
 
         const container3 = await createContainer();
-        const component3 = await requestFluidObject("default", container3);
-        sharedDirectory3 = await component3.getSharedObject<SharedDirectory>(directoryId);
+        const dataStore3 = await requestFluidObject("default", container3);
+        sharedDirectory3 = await dataStore3.getSharedObject<SharedDirectory>(directoryId);
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);
         opProcessingController.addDeltaManagers(
-            component1.runtime.deltaManager,
-            component2.runtime.deltaManager,
-            component3.runtime.deltaManager);
+            dataStore1.runtime.deltaManager,
+            dataStore2.runtime.deltaManager,
+            dataStore3.runtime.deltaManager);
 
         await opProcessingController.process();
     });
@@ -310,7 +310,7 @@ describe("Directory", () => {
 
         describe("Nested map support", () => {
             it("supports setting a map as a value", async () => {
-                const newMap = SharedMap.create(component1.runtime);
+                const newMap = SharedMap.create(dataStore1.runtime);
                 sharedDirectory1.set("mapKey", newMap.handle);
 
                 await opProcessingController.process();
@@ -573,7 +573,7 @@ describe("Directory", () => {
 
             it("can process set in local state", async () => {
                 // Create a new directory in local (detached) state.
-                const newDirectory1 = SharedDirectory.create(component1.runtime);
+                const newDirectory1 = SharedDirectory.create(dataStore1.runtime);
 
                 // Set a value while in local state.
                 newDirectory1.set("newKey", "newValue");
@@ -610,7 +610,7 @@ describe("Directory", () => {
 
             it("can process sub directory ops in local state", async () => {
                 // Create a new directory in local (detached) state.
-                const newDirectory1 = SharedDirectory.create(component1.runtime);
+                const newDirectory1 = SharedDirectory.create(dataStore1.runtime);
 
                 // Create a sub directory while in local state.
                 const subDirName = "testSubDir";

@@ -94,11 +94,11 @@ describe("Document Dirty", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function requestFluidObject(componentId: string, fromContainer: Container):
+    async function requestFluidObject(dataStoreId: string, fromContainer: Container):
         Promise<ITestFluidComponent> {
-        const response = await fromContainer.request({ url: componentId });
+        const response = await fromContainer.request({ url: dataStoreId });
         if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
+            throw new Error(`DataStore with id: ${dataStoreId} not found`);
         }
         return response.value as ITestFluidComponent;
     }
@@ -107,7 +107,7 @@ describe("Document Dirty", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
         documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 
-        // Create the first container, component and DDSes.
+        // Create the first container, dataStore and DDSes.
         container = await createContainer();
         containerComp = await requestFluidObject("default", container);
         containerCompContainerRuntime = containerComp.context.containerRuntime as IContainerRuntime;

@@ -29,7 +29,7 @@ describe("Cell", () => {
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
-    let component1: ITestFluidComponent;
+    let dataStore1: ITestFluidComponent;
     let sharedCell1: ISharedCell;
     let sharedCell2: ISharedCell;
     let sharedCell3: ISharedCell;
@@ -40,10 +40,10 @@ describe("Cell", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
-        const response = await container.request({ url: componentId });
+    async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidComponent> {
+        const response = await container.request({ url: dataStoreId });
         if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
+            throw new Error(`Data Store with id: ${dataStoreId} not found`);
         }
         return response.value as ITestFluidComponent;
     }
@@ -52,22 +52,22 @@ describe("Cell", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
         const container1 = await createContainer();
-        component1 = await requestFluidObject("default", container1);
-        sharedCell1 = await component1.getSharedObject<SharedCell>(cellId);
+        dataStore1 = await requestFluidObject("default", container1);
+        sharedCell1 = await dataStore1.getSharedObject<SharedCell>(cellId);
 
         const container2 = await createContainer();
-        const component2 = await requestFluidObject("default", container2);
-        sharedCell2 = await component2.getSharedObject<SharedCell>(cellId);
+        const dataStore2 = await requestFluidObject("default", container2);
+        sharedCell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
 
         const container3 = await createContainer();
-        const component3 = await requestFluidObject("default", container3);
-        sharedCell3 = await component3.getSharedObject<SharedCell>(cellId);
+        const dataStore3 = await requestFluidObject("default", container3);
+        sharedCell3 = await dataStore3.getSharedObject<SharedCell>(cellId);
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);
         opProcessingController.addDeltaManagers(
-            component1.runtime.deltaManager,
-            component2.runtime.deltaManager,
-            component3.runtime.deltaManager);
+            dataStore1.runtime.deltaManager,
+            dataStore2.runtime.deltaManager,
+            dataStore3.runtime.deltaManager);
 
         // Set a starting value in the cell
         sharedCell1.set(initialCellValue);
@@ -213,8 +213,8 @@ describe("Cell", () => {
     });
 
     it("registers data if data is a shared object", async () => {
-        const detachedCell1: ISharedCell = SharedCell.create(component1.runtime);
-        const detachedCell2: ISharedCell = SharedCell.create(component1.runtime);
+        const detachedCell1: ISharedCell = SharedCell.create(dataStore1.runtime);
+        const detachedCell2: ISharedCell = SharedCell.create(dataStore1.runtime);
         const cellValue = "cell cell cell cell";
         detachedCell2.set(cellValue);
         detachedCell1.set(detachedCell2.handle);
@@ -222,14 +222,14 @@ describe("Cell", () => {
 
         await opProcessingController.process();
 
-        async function getCellComponent(cellP: Promise<ISharedCell>): Promise<ISharedCell> {
+        async function getCellDataStore(cellP: Promise<ISharedCell>): Promise<ISharedCell> {
             const cell = await cellP;
             const handle = cell.get() as IFluidHandle<ISharedCell>;
             return handle.get();
         }
 
-        verifyCellValue(await getCellComponent(getCellComponent(Promise.resolve(sharedCell2))), cellValue, 2);
-        verifyCellValue(await getCellComponent(getCellComponent(Promise.resolve(sharedCell3))), cellValue, 3);
+        verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell2))), cellValue, 2);
+        verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell3))), cellValue, 3);
     });
 
     afterEach(async () => {

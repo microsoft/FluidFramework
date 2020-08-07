@@ -34,15 +34,15 @@ const tests = (args: ICompatTestArgs) => {
 
     beforeEach(async () => {
         const container1 = await args.makeTestContainer(registry) as Container;
-        const component1 = await requestFluidObject<ITestFluidComponent>(container1, "default");
-        sharedString1 = await component1.getSharedObject<SharedString>(stringId);
+        const dataStore1 = await requestFluidObject<ITestFluidComponent>(container1, "default");
+        sharedString1 = await dataStore1.getSharedObject<SharedString>(stringId);
 
         const container2 = await args.makeTestContainer(registry) as Container;
-        const component2 = await requestFluidObject<ITestFluidComponent>(container2, "default");
-        sharedString2 = await component2.getSharedObject<SharedString>(stringId);
+        const dataStore2 = await requestFluidObject<ITestFluidComponent>(container2, "default");
+        sharedString2 = await dataStore2.getSharedObject<SharedString>(stringId);
 
         opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-        opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
+        opProcessingController.addDeltaManagers(dataStore1.runtime.deltaManager, dataStore2.runtime.deltaManager);
     });
 
     it("can sync SharedString across multiple containers", async () => {
@@ -66,8 +66,8 @@ const tests = (args: ICompatTestArgs) => {
 
         // Create a initialize a new container with the same id.
         const newContainer = await args.makeTestContainer(registry) as Container;
-        const newComponent = await requestFluidObject<ITestFluidComponent>(newContainer, "default");
-        const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
+        const newDataStore = await requestFluidObject<ITestFluidComponent>(newContainer, "default");
+        const newSharedString = await newDataStore.getSharedObject<SharedString>(stringId);
         assert.equal(newSharedString.getText(), text, "The new container should receive the inserted text on creation");
     });
 };
@@ -94,6 +94,6 @@ describe("SharedString", () => {
     });
 
     describe("compatibility", () => {
-        compatTest(tests, { testFluidComponent: true });
+        compatTest(tests, { testFluidDataStore: true });
     });
 });
