@@ -2,8 +2,17 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidObject, IResponse, IRequest } from "@fluidframework/core-interfaces";
+
+import assert from "assert";
+import {
+    IFluidObject,
+    IResponse,
+    IRequest,
+    IFluidHandle,
+    IFluidLoadable,
+} from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
 /**
@@ -26,8 +35,43 @@ export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainer
  * that will allow any GC policy to be implemented by container authors.)
  */
 export const deprecated_innerRequestHandler = async (request: IRequest, runtime: IContainerRuntime) =>
-    runtime.resolveHandle(request);
+    runtime.IFluidHandleContext.resolveHandle(request);
 
 export const createComponentResponse = (component: IFluidObject) => {
     return { status: 200, mimeType: "fluid/object", value: component };
 };
+
+class LegacyUriHandle<T = IFluidObject & IFluidLoadable> implements IFluidHandle<T> {
+    public readonly path: string;
+    public readonly isAttached = true;
+
+    public get IFluidHandle(): IFluidHandle { return this; }
+
+    public constructor(public readonly absolutePath, public readonly runtime: IContainerRuntimeBase) {
+        this.path = absolutePath;
+    }
+
+    public attachGraph() {
+        assert(false);
+    }
+
+    public async get(): Promise<any> {
+        throw new Error("AAA");
+    }
+
+    public bind(handle: IFluidHandle) {
+        throw new Error("Cannot bind to LegacyUriHandle");
+    }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        return this.runtime.IFluidHandleContext.resolveHandle(this.absolutePath);
+    }
+}
+
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+export function handleFromLegacyUri<T = IFluidObject & IFluidLoadable>(
+    uri: string,
+    runtime: IContainerRuntimeBase): IFluidHandle<T>
+{
+    return new LegacyUriHandle<T>(uri, runtime);
+}

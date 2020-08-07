@@ -31,7 +31,6 @@ import {
     IFluidDataStoreContext,
     ITask,
     ITaskManager,
-    SchedulerType,
 } from "@fluidframework/runtime-definitions";
 import {
     IProvideSharedString,
@@ -185,10 +184,7 @@ export class SharedTextRunner
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performanceNow()}`);
 
-        const schedulerComponent = await requestFluidObject<ITaskManager>(
-            this.context.containerRuntime.IFluidHandleContext,
-            `/${SchedulerType}`);
-        this.taskManager = schedulerComponent.ITaskManager;
+        this.taskManager = await this.context.containerRuntime.getTaskManager();
 
         const options = parse(window.location.search.substr(1));
         setTranslation(

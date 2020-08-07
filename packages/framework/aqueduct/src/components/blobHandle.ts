@@ -22,7 +22,6 @@ import { ISharedDirectory } from "@fluidframework/map";
  */
 export class BlobHandle implements IFluidHandle {
     public get IFluidRouter(): IFluidRouter { return this; }
-    public get IFluidHandleContext(): IFluidHandleContext { return this; }
     public get IFluidHandle(): IFluidHandle { return this; }
 
     public get isAttached(): boolean {
@@ -32,7 +31,7 @@ export class BlobHandle implements IFluidHandle {
     public readonly absolutePath: string;
 
     constructor(
-        public readonly path: string,
+        public path: string,
         private readonly directory: ISharedDirectory,
         public readonly routeContext: IFluidHandleContext,
     ) {

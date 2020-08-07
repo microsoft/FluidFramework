@@ -5,7 +5,12 @@
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 import assert from "assert";
-import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
+import {
+    IRequest,
+    IResponse,
+    IFluidObject,
+    IFluidHandleContext,
+} from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
@@ -15,6 +20,12 @@ import {
 } from "../requestHandlers";
 
 class MockRuntime {
+    public get IFluidHandleContext() {
+        return {
+            resolveHandle: async (req) => this.resolveHandle(req),
+        } as IFluidHandleContext;
+    }
+
     public async getDataStore(id, wait): Promise<IFluidDataStoreChannel> {
         if (id === "componentId") {
             return {
@@ -63,7 +74,7 @@ async function assertRejected(p: Promise<IResponse | undefined>) {
 
 describe("RequestParser", () => {
     describe("deprecated_innerRequestHandler", () => {
-        const runtime = new MockRuntime() as IContainerRuntime;
+        const runtime = new MockRuntime() as any as IContainerRuntime;
 
         it("Empty request", async () => {
             const requestParser = new RequestParser({ url: "/" });

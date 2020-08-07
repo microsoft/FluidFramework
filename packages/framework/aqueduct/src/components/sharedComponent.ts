@@ -20,6 +20,7 @@ import { IDirectory } from "@fluidframework/map";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { serviceRoutePathRoot } from "../containerServices";
 
 export interface ISharedComponentProps<P extends IFluidObject = object> {
@@ -206,7 +207,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * @param id - component id
      */
     protected async requestFluidObject_UNSAFE<T extends IFluidObject>(id: string): Promise<T> {
-        return requestFluidObject(this.context.containerRuntime.IFluidHandleContext, `/${id}`);
+        return handleFromLegacyUri<T>(`/${id}`, this.context.containerRuntime).get();
     }
 
     /**
@@ -214,7 +215,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * @param id - service id
      */
     protected async getService<T extends IFluidObject>(id: string): Promise<T> {
-        return requestFluidObject(this.context.containerRuntime.IFluidHandleContext, `/${serviceRoutePathRoot}/${id}`);
+        return handleFromLegacyUri<T>(`/${serviceRoutePathRoot}/${id}`, this.context.containerRuntime).get();
     }
 
     /**
