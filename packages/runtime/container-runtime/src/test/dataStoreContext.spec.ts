@@ -21,14 +21,14 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker, SummarizerNode } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
-    IFluidDataStoretAttributes,
+    IFluidDataStoreAttributes,
     LocalFluidDataStoreContext,
     RemotedFluidDataStoreContext,
-} from "../componentContext";
+} from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
 
-describe("Component Context Tests", () => {
-    const componentId = "Test1";
+describe("Data Store Context Tests", () => {
+    const dataStoreId = "Test1";
     let summaryTracker: SummaryTracker;
     let createSummarizerNodeFn: CreateChildSummarizerNodeFn;
     beforeEach(async () => {
@@ -41,13 +41,13 @@ describe("Component Context Tests", () => {
             true);
         createSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => summarizerNode.createChild(
             summarizeInternal,
-            componentId,
+            dataStoreId,
             { type: CreateSummarizerNodeSource.Local },
         );
     });
 
     describe("LocalFluidDataStoreContext Initialization", () => {
-        let localComponentContext: LocalFluidDataStoreContext;
+        let localDataStoreContext: LocalFluidDataStoreContext;
         let storage: IDocumentStorageService;
         let scope: IFluidObject & IFluidObject;
         const attachCb = (mR: IFluidDataStoreChannel) => { };
@@ -69,10 +69,10 @@ describe("Component Context Tests", () => {
             } as ContainerRuntime;
         });
 
-        it("Check LocalComponent Attributes", () => {
-            localComponentContext = new LocalFluidDataStoreContext(
-                componentId,
-                ["TestComponent1"],
+        it("Check LocalDataStore Attributes", () => {
+            localDataStoreContext = new LocalFluidDataStoreContext(
+                dataStoreId,
+                ["TestDataStore1"],
                 containerRuntime,
                 storage,
                 scope,
@@ -81,30 +81,30 @@ describe("Component Context Tests", () => {
                 attachCb);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            localComponentContext.realize();
-            localComponentContext.bindRuntime(new MockFluidDataStoreRuntime());
-            const attachMessage = localComponentContext.generateAttachMessage();
+            localDataStoreContext.realize();
+            localDataStoreContext.bindRuntime(new MockFluidDataStoreRuntime());
+            const attachMessage = localDataStoreContext.generateAttachMessage();
 
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
 
-            const contents = JSON.parse(blob.contents) as IFluidDataStoretAttributes;
-            const componentAttributes: IFluidDataStoretAttributes = {
-                pkg: JSON.stringify(["TestComponent1"]),
+            const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
+            const dataStoreAttributes: IFluidDataStoreAttributes = {
+                pkg: JSON.stringify(["TestDataStore1"]),
                 snapshotFormatVersion: "0.1",
             };
 
-            assert.equal(contents.pkg, componentAttributes.pkg, "Local Component package does not match.");
+            assert.equal(contents.pkg, dataStoreAttributes.pkg, "Local DataStore package does not match.");
             assert.equal(
                 contents.snapshotFormatVersion,
-                componentAttributes.snapshotFormatVersion,
-                "Local Component snapshot version does not match.");
-            assert.equal(attachMessage.type, "TestComponent1", "Attach message type does not match.");
+                dataStoreAttributes.snapshotFormatVersion,
+                "Local DataStore snapshot version does not match.");
+            assert.equal(attachMessage.type, "TestDataStore1", "Attach message type does not match.");
         });
 
         it("Supplying array of packages in LocalFluidDataStoreContext should create exception", async () => {
             let exception = false;
-            localComponentContext = new LocalFluidDataStoreContext(
-                componentId,
+            localDataStoreContext = new LocalFluidDataStoreContext(
+                dataStoreId,
                 ["TestComp", "SubComp"],
                 containerRuntime,
                 storage,
@@ -113,7 +113,7 @@ describe("Component Context Tests", () => {
                 createSummarizerNodeFn,
                 attachCb);
 
-            await localComponentContext.realize()
+            await localDataStoreContext.realize()
                 .catch((error) => {
                     exception = true;
                 });
@@ -133,8 +133,8 @@ describe("Component Context Tests", () => {
                 notifyDataStoreInstantiated: (c) => { },
                 on: (event, listener) => { },
             } as ContainerRuntime;
-            localComponentContext = new LocalFluidDataStoreContext(
-                componentId,
+            localDataStoreContext = new LocalFluidDataStoreContext(
+                dataStoreId,
                 ["TestComp", "SubComp"],
                 containerRuntime,
                 storage,
@@ -144,29 +144,29 @@ describe("Component Context Tests", () => {
                 attachCb);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            localComponentContext.realize();
-            localComponentContext.bindRuntime(new MockFluidDataStoreRuntime());
+            localDataStoreContext.realize();
+            localDataStoreContext.bindRuntime(new MockFluidDataStoreRuntime());
 
-            const attachMessage = localComponentContext.generateAttachMessage();
+            const attachMessage = localDataStoreContext.generateAttachMessage();
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
-            const contents = JSON.parse(blob.contents) as IFluidDataStoretAttributes;
-            const componentAttributes: IFluidDataStoretAttributes = {
+            const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
+            const dataStoreAttributes: IFluidDataStoreAttributes = {
                 pkg: JSON.stringify(["TestComp", "SubComp"]),
                 snapshotFormatVersion: "0.1",
             };
 
-            assert.equal(contents.pkg, componentAttributes.pkg, "Local Component package does not match.");
+            assert.equal(contents.pkg, dataStoreAttributes.pkg, "Local DataStore package does not match.");
             assert.equal(
                 contents.snapshotFormatVersion,
-                componentAttributes.snapshotFormatVersion,
-                "Local Component snapshot version does not match.");
+                dataStoreAttributes.snapshotFormatVersion,
+                "Local DataStore snapshot version does not match.");
             assert.equal(attachMessage.type, "SubComp", "Attach message type does not match.");
         });
     });
 
-    describe("RemoteComponentContext Initialization", () => {
-        let remotedComponentContext: RemotedFluidDataStoreContext;
-        let componentAttributes: IFluidDataStoretAttributes;
+    describe("RemoteDataStoreContext Initialization", () => {
+        let remotedDataStoreContext: RemotedFluidDataStoreContext;
+        let dataStoreAttributes: IFluidDataStoreAttributes;
         const storage: Partial<IDocumentStorageService> = {};
         let scope: IFluidObject & IFluidObject;
         let containerRuntime: ContainerRuntime;
@@ -187,22 +187,22 @@ describe("Component Context Tests", () => {
             } as ContainerRuntime;
         });
 
-        it("Check RemotedComponent Attributes", async () => {
-            componentAttributes = {
-                pkg: JSON.stringify(["TestComponent1"]),
+        it("Check RemotedDataStore Attributes", async () => {
+            dataStoreAttributes = {
+                pkg: JSON.stringify(["TestDataStore1"]),
                 snapshotFormatVersion: "0.1",
             };
-            const buffer = Buffer.from(JSON.stringify(componentAttributes), "utf-8");
-            const blobCache = new Map<string, string>([["componentAttribtues", buffer.toString("base64")]]);
+            const buffer = Buffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
+            const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
             const snapshotTree: ISnapshotTree = {
                 id: "dummy",
-                blobs: { [".component"]: "componentAttribtues" },
+                blobs: { [".component"]: "fluidDataStoreAttributes" },
                 commits: {},
                 trees: {},
             };
 
-            remotedComponentContext = new RemotedFluidDataStoreContext(
-                componentId,
+            remotedDataStoreContext = new RemotedFluidDataStoreContext(
+                dataStoreId,
                 Promise.resolve(snapshotTree),
                 containerRuntime,
                 new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
@@ -210,32 +210,32 @@ describe("Component Context Tests", () => {
                 summaryTracker,
                 createSummarizerNodeFn,
             );
-            const snapshot = await remotedComponentContext.snapshot(true);
+            const snapshot = await remotedDataStoreContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
 
-            const contents = JSON.parse(blob.contents) as IFluidDataStoretAttributes;
-            assert.equal(contents.pkg, componentAttributes.pkg, "Remote Component package does not match.");
+            const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
+            assert.equal(contents.pkg, dataStoreAttributes.pkg, "Remote DataStore package does not match.");
             assert.equal(
                 contents.snapshotFormatVersion,
-                componentAttributes.snapshotFormatVersion,
-                "Remote Component snapshot version does not match.");
+                dataStoreAttributes.snapshotFormatVersion,
+                "Remote DataStore snapshot version does not match.");
         });
 
-        it("Check RemotedComponent Attributes without version", async () => {
-            componentAttributes = {
-                pkg: "TestComponent1",
+        it("Check RemotedDataStore Attributes without version", async () => {
+            dataStoreAttributes = {
+                pkg: "TestDataStore1",
             };
-            const buffer = Buffer.from(JSON.stringify(componentAttributes), "utf-8");
-            const blobCache = new Map<string, string>([["componentAttribtues", buffer.toString("base64")]]);
+            const buffer = Buffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
+            const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
             const snapshotTree: ISnapshotTree = {
                 id: "dummy",
-                blobs: { [".component"]: "componentAttribtues" },
+                blobs: { [".component"]: "fluidDataStoreAttributes" },
                 commits: {},
                 trees: {},
             };
 
-            remotedComponentContext = new RemotedFluidDataStoreContext(
-                componentId,
+            remotedDataStoreContext = new RemotedFluidDataStoreContext(
+                dataStoreId,
                 Promise.resolve(snapshotTree),
                 containerRuntime,
                 new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
@@ -243,15 +243,15 @@ describe("Component Context Tests", () => {
                 summaryTracker,
                 createSummarizerNodeFn,
             );
-            const snapshot = await remotedComponentContext.snapshot(true);
+            const snapshot = await remotedDataStoreContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
 
-            const contents = JSON.parse(blob.contents) as IFluidDataStoretAttributes;
+            const contents = JSON.parse(blob.contents) as IFluidDataStoreAttributes;
             assert.equal(
                 contents.pkg,
-                JSON.stringify([componentAttributes.pkg]),
-                "Remote Component package does not match.");
-            assert.equal(contents.snapshotFormatVersion, "0.1", "Remote Component snapshot version does not match.");
+                JSON.stringify([dataStoreAttributes.pkg]),
+                "Remote DataStore package does not match.");
+            assert.equal(contents.snapshotFormatVersion, "0.1", "Remote DataStore snapshot version does not match.");
         });
     });
 });

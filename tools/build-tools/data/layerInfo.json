@@ -170,13 +170,12 @@
                     "Runtime"
                 ]
             },
-            "Component": {
+            "Examples": {
                 "dot": false,
                 "dirs": [
-                    "packages/components/",
                     "components/",
-                    "packages/agents/",
-                    "packages/server/tools-core"
+                    "examples/",
+                    "packages/agents/"
                 ],
                 "deps": [
                     "Framework"
@@ -211,8 +210,7 @@
                     "@fluidframework/webpack-component-loader"
                 ],
                 "dirs": [
-                    "packages/test/",
-                    "examples/hosts/"
+                    "packages/test/"
                 ]
             }
         }

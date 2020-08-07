@@ -11,10 +11,10 @@ describe("SharedNumberSequence", () => {
     const documentId = "fakeId";
     let sharedNumberSequence: SharedNumberSequence;
     beforeEach(() => {
-        const componentRuntime = new MockFluidDataStoreRuntime();
+        const dataStoreRuntime = new MockFluidDataStoreRuntime();
         sharedNumberSequence =
-            new SharedNumberSequence(componentRuntime, documentId, SharedNumberSequenceFactory.Attributes);
-        componentRuntime.bindToContext();
+            new SharedNumberSequence(dataStoreRuntime, documentId, SharedNumberSequenceFactory.Attributes);
+        dataStoreRuntime.bindToContext();
     });
 
     describe("getItems", () => {

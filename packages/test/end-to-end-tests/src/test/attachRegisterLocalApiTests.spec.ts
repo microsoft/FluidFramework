@@ -511,7 +511,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         const { container, defaultComponent } =
             await createDetachedContainerAndGetRootComponent();
         let componentContextAttachState = AttachState.Detached;
-        let componentRuntimeAttachState = AttachState.Detached;
+        let dataStoreRuntimeAttachState = AttachState.Detached;
         defaultComponent.context.once("attaching", () => {
             assert.strictEqual(componentContextAttachState, AttachState.Detached,
                 "Should be fire from Detached state for context");
@@ -529,25 +529,25 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         });
 
         defaultComponent.runtime.once("attaching", () => {
-            assert.strictEqual(componentRuntimeAttachState, AttachState.Detached,
+            assert.strictEqual(dataStoreRuntimeAttachState, AttachState.Detached,
                 "Should be fire from Detached state for runtime");
             assert.strictEqual(defaultComponent.runtime.attachState, AttachState.Attaching,
-                "Component runtime should be attaching at this stage");
-            componentRuntimeAttachState = AttachState.Attaching;
+                "Data store runtime should be attaching at this stage");
+            dataStoreRuntimeAttachState = AttachState.Attaching;
         });
 
         defaultComponent.runtime.once("attached", () => {
-            assert.strictEqual(componentRuntimeAttachState, AttachState.Attaching,
+            assert.strictEqual(dataStoreRuntimeAttachState, AttachState.Attaching,
                 "Should be fire from attaching state for runtime");
             assert.strictEqual(defaultComponent.runtime.attachState, AttachState.Attached,
-                "Component runtime should be attached at this stage");
-            componentRuntimeAttachState = AttachState.Attached;
+                "Data store runtime should be attached at this stage");
+            dataStoreRuntimeAttachState = AttachState.Attached;
         });
         await container.attach(request);
         assert.strictEqual(componentContextAttachState, AttachState.Attached,
             "Component context should end up in attached state");
-        assert.strictEqual(componentRuntimeAttachState, AttachState.Attached,
-            "Component runtime should end up in attached state");
+        assert.strictEqual(dataStoreRuntimeAttachState, AttachState.Attached,
+            "Data store runtime should end up in attached state");
     });
 
     it("Attach events on not bounded components", async () => {
