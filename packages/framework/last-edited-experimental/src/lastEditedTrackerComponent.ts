@@ -38,12 +38,12 @@ export class LastEditedTrackerComponent extends DataObject
 
     public get IFluidLastEditedTracker() { return this.lastEditedTracker; }
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const sharedSummaryBlock = SharedSummaryBlock.create(this.runtime);
         this.root.set(this.sharedSummaryBlockId, sharedSummaryBlock.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() { // hasInitialized
         const sharedSummaryBlock =
             await this.root.get<IFluidHandle<SharedSummaryBlock>>(this.sharedSummaryBlockId).get();
         this._lastEditedTracker = new LastEditedTracker(sharedSummaryBlock);

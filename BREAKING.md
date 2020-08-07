@@ -302,7 +302,7 @@ getAbsoluteUrl on the container runtime and component context now returns `strin
 import { waitForAttach } from "@fluidframework/aqueduct";
 
 
-protected async componentHasInitialized() {
+protected async hasInitialized() {
         waitForAttach(this.runtime)
             .then(async () => {
                 const url = await this.context.getAbsoluteUrl(this.url);

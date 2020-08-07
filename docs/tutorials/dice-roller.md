@@ -75,7 +75,7 @@ behavior as well as additional helpers to make component development easier.
 2. Provide `this.createAndAttachComponent(...)` and `this.getComponent(...)` functions for easier creation and access
    to other components.
 3. Provide the following setup overrides
-   - `componentInitializingFirstTime()` - only called the first time a component is initialized
+   - `initializingFirstTime()` - only called the first time a component is initialized
    - `existing()` - called every time except the first time a component is initialized
    - `opened()` - called every time a component is initialized. After `create` and `existing`.
 
@@ -103,14 +103,14 @@ our component can discover that we implement `IComponentHTMLView`.
 public get IComponentHTMLView() { return this; }
 ```
 
-### `componentInitializingFirstTime()`
+### `initializingFirstTime()`
 
-`componentInitializingFirstTime()` will be called only the first time a client opens the component. In here we perform
+`initializingFirstTime()` will be called only the first time a client opens the component. In here we perform
 setup operations that we only want to happen once. Since we are using a `PrimedComponent`, we have a `root`
 SharedDirectory we can use to store data. We set our initial `diceValue` on our root directory like so:
 
 ```typescript
-protected async componentInitializingFirstTime() {
+protected async initializingFirstTime() {
   this.root.set("diceValue", 1);
 }
 ```
@@ -130,7 +130,7 @@ This is the point where React and VanillaJS differ.
 ::: tab React
 We create a `rerender` function that will display our content into the provided `HTMLElement`.
 To get the dice value we use the `get` method on the root, using the same key (`diceValue`) that
-we created in `componentInitializingFirstTime()`. Because we are using React we will call
+we created in `initializingFirstTime()`. Because we are using React we will call
 `ReactDOM.render(...)` with a span displaying our dice value as a Unicode character and a button
 that rolls the dice when clicked. Finally we pass the provided `HTMLElement` (`div`) into our
 `ReactDOM.render(...)` to tell React what to render in.
