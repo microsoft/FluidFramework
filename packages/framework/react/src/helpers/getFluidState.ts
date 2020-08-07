@@ -14,6 +14,7 @@ import {
     IViewState,
     IFluidState,
     ISyncedState,
+    IFluidObjectMapItem,
 } from "..";
 
 /**
@@ -40,7 +41,7 @@ export function getFluidState<
         return;
     }
     const componentState = componentMap.get(componentStateHandle.absolutePath)
-        ?.component as SharedMap;
+        ?.fluidObject as SharedMap;
     if (componentState === undefined) {
         return;
     }
@@ -53,8 +54,8 @@ export function getFluidState<
             const possibleComponentId = (value as IFluidObject)
                 ?.IFluidHandle?.absolutePath;
             if (possibleComponentId !== undefined) {
-                value = componentMap.get(possibleComponentId);
-                fluidState[fluidKey] = value?.component;
+                value = (componentMap.get(possibleComponentId)) as IFluidObjectMapItem;
+                fluidState[fluidKey] = value?.fluidObject;
             } else {
                 fluidState[fluidKey] = value;
             }

@@ -80,9 +80,9 @@ export function syncState<
     } = componentSchemaHandles;
 
     const viewMatchingMap = fluidObjectMap.get(viewMatchingMapHandle.absolutePath)
-        ?.component as ISharedMap;
+        ?.fluidObject as ISharedMap;
     const fluidMatchingMap = fluidObjectMap.get(fluidMatchingMapHandle.absolutePath)
-        ?.component as ISharedMap;
+        ?.fluidObject as ISharedMap;
 
     if (viewMatchingMap === undefined || fluidMatchingMap === undefined) {
         throw Error("Failed to fetch shared map DDS' from the schema handles");

@@ -166,7 +166,7 @@ export abstract class SyncedDataObject<
             // Add it to the fluid component map so that it will have a listener added to it once
             // we enter the render lifecycle
             this.fluidObjectMap.set(storedFluidState.handle.absolutePath, {
-                component: storedFluidState,
+                fluidObject: storedFluidState,
                 isRuntimeMap: true,
             });
             // Add the state to our map of synced states so that we can load it later for persistence
@@ -183,7 +183,7 @@ export abstract class SyncedDataObject<
                 if (createCallback !== undefined) {
                     const sharedObject = createCallback(this.runtime);
                     this.fluidObjectMap.set(sharedObject.handle.absolutePath, {
-                        component: sharedObject,
+                        fluidObject: sharedObject,
                         listenedEvents: value.listenedEvents ?? ["valueChanged"],
                     });
                     storedFluidState.set(fluidKey, sharedObject.handle);
@@ -213,21 +213,21 @@ export abstract class SyncedDataObject<
             this.fluidObjectMap.set(
                 componentSchema.fluidMatchingMap.handle.absolutePath,
                 {
-                    component: componentSchema.fluidMatchingMap,
+                    fluidObject: componentSchema.fluidMatchingMap,
                     isRuntimeMap: true,
                 },
             );
             this.fluidObjectMap.set(
                 componentSchema.viewMatchingMap.handle.absolutePath,
                 {
-                    component: componentSchema.viewMatchingMap,
+                    fluidObject: componentSchema.viewMatchingMap,
                     isRuntimeMap: true,
                 },
             );
             this.fluidObjectMap.set(
                 componentSchema.storedHandleMap.handle.absolutePath,
                 {
-                    component: componentSchema.storedHandleMap,
+                    fluidObject: componentSchema.storedHandleMap,
                     isRuntimeMap: true,
                 },
             );
@@ -263,7 +263,7 @@ export abstract class SyncedDataObject<
             // Add it to the fluid component map so that it will have a listener added to it once
             // we enter the render lifecycle
             this.fluidObjectMap.set(storedFluidStateHandle.absolutePath, {
-                component: storedFluidState,
+                fluidObject: storedFluidState,
                 isRuntimeMap: true,
             });
             // If the view is using any Fluid Components or SharedObjects, asynchronously fetch them
@@ -282,7 +282,7 @@ export abstract class SyncedDataObject<
                         );
                     }
                     this.fluidObjectMap.set(handle.absolutePath, {
-                        component: await handle.get(),
+                        fluidObject: await handle.get(),
                         listenedEvents: value.listenedEvents ?? ["valueChanged"],
                     });
                 } else {
@@ -292,7 +292,7 @@ export abstract class SyncedDataObject<
                     const handle = storedValue?.IFluidHandle;
                     if (handle !== undefined) {
                         this.fluidObjectMap.set(handle.absolutePath, {
-                            component: await handle.get(),
+                            fluidObject: await handle.get(),
                             listenedEvents: value.listenedEvents ?? [
                                 "valueChanged",
                             ],
@@ -314,21 +314,21 @@ export abstract class SyncedDataObject<
             this.fluidObjectMap.set(
                 componentSchemaHandles.fluidMatchingMapHandle.absolutePath,
                 {
-                    component: await componentSchemaHandles.fluidMatchingMapHandle.get(),
+                    fluidObject: await componentSchemaHandles.fluidMatchingMapHandle.get(),
                     isRuntimeMap: true,
                 },
             );
             this.fluidObjectMap.set(
                 componentSchemaHandles.viewMatchingMapHandle.absolutePath,
                 {
-                    component: await componentSchemaHandles.viewMatchingMapHandle.get(),
+                    fluidObject: await componentSchemaHandles.viewMatchingMapHandle.get(),
                     isRuntimeMap: true,
                 },
             );
             this.fluidObjectMap.set(
                 componentSchemaHandles.storedHandleMapHandle.absolutePath,
                 {
-                    component: await componentSchemaHandles.storedHandleMapHandle.get(),
+                    fluidObject: await componentSchemaHandles.storedHandleMapHandle.get(),
                     isRuntimeMap: true,
                 },
             );

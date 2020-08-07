@@ -89,10 +89,11 @@ export interface IFluidReducer<
 /**
  * The fluid selector, containing an object that is keyed by function name and contains selector
  * functions. Each function will have the view state, fluid state, and data props passed into it
- * as parameters in the combined state. Component selector functions can also optionally pass in a
- * handle to fetch from the component map. Selector functions are used to retrieve components or parameters
- * from other components. It offers a way to fetch these values and return them to the view, with the
- * component map being updated if the view requires a component that hasn't been locally loaded yet
+ * as parameters in the combined state. Selector functions can also optionally pass in a
+ * handle to fetch from the Fluid object map.
+ * Selector functions are used to retrieve Fluid objects or parameters from other Fluid objects.
+ * It offers a way to fetch these values and return them to the view, with the
+ * Fluid object map being updated if the view requires a Fluid object that hasn't been locally loaded yet
  */
 export interface IFluidSelector<
     SV extends IViewState,
@@ -101,28 +102,28 @@ export interface IFluidSelector<
     > {
     [key: string]:
     | FluidSelectorFunction<SV, SF, C>
-    | FluidComponentSelectorFunction<SV, SF, C>;
+    | FluidObjectSelectorFunction<SV, SF, C>;
 }
 
 /**
- * Props passed in to create a fluid react component or passed in to the useStateFluid hook
+ * Props passed in to create a FluidReactView or passed in to the useStateFluid hook
  */
 export interface IFluidProps<
     SV extends IViewState,
     SF extends IFluidState
     > {
     /**
-     *  Unique ID to use for storing the component's synced state in the SyncedDataObject's syncedState SharedMap
+     *  Unique ID to use for storing the synced state in the SyncedDataObject's syncedState SharedMap
      */
     syncedStateId: string;
     /**
-     * An instance of the SyncedDataObject that this will be rendered in
+     * An instance of the SyncedDataObject that this view will be rendered in
      */
     syncedDataObject: SyncedDataObject;
     /**
-     * Data props containing the fluid component map and the runtime
-      Optional as the above two will be passed by default. This only need to be defined
-     * if there are additional values from the component lifecycle that need to be made
+     * Data props containing the Fluid object map and the runtime
+     * Optional as the above two will be passed by default. This only need to be defined
+     * if there are additional values from the Fluid object lifecycle that need to be made
      * available to the reducers
      */
     dataProps?: IFluidDataProps;
@@ -159,12 +160,13 @@ export interface IViewConverter<
      */
     sharedObjectCreate?: (runtime: IFluidDataStoreRuntime) => any;
     /**
-     * List of events fired on this component that will trigger a state update
+     * List of events fired on this Fluid object that will trigger a state update
      */
     listenedEvents?: string[];
     /**
-     * If this Fluid object is stored on the component root under a different key than the name of this Fluid state
-     * key within the synced state map, provide the key on the root for this object here. The changes will also
+     * If this Fluid object is stored on the Fluid DataObject root under a different key
+     * than the name of this Fluid state key within the synced state map,
+     * provide the key on the root for this object here. The changes will also
      * reflect under that key if the data needs to be used elsewhere
      */
     rootKey?: string;
@@ -195,59 +197,59 @@ export interface IFluidConverter<
 }
 
 /**
- * Base interface to extend from for the functional component Fluid state. These values can and should be left
+ * Base interface to extend from for the Fluid state. These values can and should be left
  * undefined when passing in the initial state as they will be used to establish the Fluid state
  */
 export interface IFluidState {
     /**
-     * The unique state ID for this React Fluid component
+     * The unique state ID for this React Fluid view
      */
     syncedStateId?: string;
     /**
-     * Boolean indicating if any components on this state are being listened on
+     * Boolean indicating if any DDS' or Fluid objects on this state are being listened on
      * for synced state updates to trigger React state updates
      */
     isInitialized?: boolean;
 }
 
 /**
- * Base interface to extend from for the functional component view state. This should not contain any Fluid
- * components and should be crafted based off of what the view will use.
+ * Base interface to extend from for the view state.
+ * This should be crafted based off of what the view will use from the Fluid state.
  */
 export interface IViewState
     extends IFluidState {
     /**
-     * The map containing the locally available components that have been loaded. If there are
-     * any components loaded during initialization that the view needs to use,
+     * The map containing the locally available Fluid objects that have been loaded. If there are
+     * any Fluid objects loaded during initialization that the view needs to use,
      * they should be fetched and loaded in here.
-     * Any new components added through reducers/selectors during the React lifecycle
-     * will be automatically added to this map and the state will reupdate when they become asynchronously available
+     * Any new Fluid objects added through reducers/selectors during the React lifecycle
+     * will be automatically added to this map and the state will re-update when they become asynchronously available
      */
     fluidObjectMap?: FluidObjectMap;
 }
 
 export type IFluidReactState = IFluidState & IViewState;
 
-export const instanceOfIComponentLoadable = (
+export const instanceOfIFluidLoadable = (
     object: any,
 ): object is IFluidLoadable =>
     object === Object(object) && "IFluidLoadable" in object;
 
 /**
- * The values stored in the fluid component map
+ * The values stored in the Fluid object map
  */
 export interface IFluidObjectMapItem {
     /**
-     * The actual Fluid component that the path this value is keyed against leads to
+     * The actual Fluid object that the path this value is keyed against leads to
      */
-    component?: IFluidObject & IFluidLoadable;
+    fluidObject?: IFluidObject & IFluidLoadable;
     /**
-     * Boolean indicating if we are listening to changes on this component's synced state to trigger React
+     * Boolean indicating if we are listening to changes on this Fluid object's synced state to trigger React
      * state updates. Only set if you want custom behavior for adding listeners to your Fluid state
      */
     isListened?: boolean;
     /**
-     * List of events fired on this component that will trigger a state update
+     * List of events fired on this Fluid object that will trigger a state update
      */
     listenedEvents?: string[];
     /**
@@ -431,7 +433,7 @@ export interface FluidSelectorFunction<
 /**
  * Definition for a component selector function used in selectors
  */
-export interface FluidComponentSelectorFunction<
+export interface FluidObjectSelectorFunction<
     SV extends IViewState,
     SF extends IFluidState,
     C extends IFluidDataProps
@@ -464,7 +466,7 @@ export const instanceOfComponentSelectorFunction = <
     C extends IFluidDataProps
 >(
     object: any,
-): object is FluidComponentSelectorFunction<SV, SF, C> =>
+): object is FluidObjectSelectorFunction<SV, SF, C> =>
     object === Object(object) && "function" in object;
 
 /**

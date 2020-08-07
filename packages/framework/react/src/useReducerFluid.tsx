@@ -71,7 +71,7 @@ export function useReducerFluid<
     }
     const storedHandleMap = dataProps.fluidObjectMap.get(
         componentSchemaHandles?.storedHandleMapHandle.absolutePath,
-    )?.component as SharedMap;
+    )?.fluidObject as SharedMap;
     if (storedHandleMap === undefined) {
         throw Error(`Stored handle map not initialized prior to render for ${syncedStateId}`);
     }

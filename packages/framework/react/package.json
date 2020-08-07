@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/react",
   "version": "0.25.0",
-  "description": "Base components and hooks for building Fluid React components",
+  "description": "Base views and hooks for building Fluid React views",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

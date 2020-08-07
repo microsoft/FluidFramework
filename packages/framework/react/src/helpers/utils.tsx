@@ -84,7 +84,7 @@ export const addComponent = async <
                 (component as SharedObject).on(event, refreshView);
             }
         }
-        value.component = component;
+        value.fluidObject = component;
         value.isListened = true;
         fluidObjectMap.set(handle.absolutePath, value);
     });
