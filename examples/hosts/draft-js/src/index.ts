@@ -42,10 +42,6 @@ async function start() {
 
     // For now we will just reach into the FluidObject to render it
     defaultObject2.render(document.getElementById("content2"));
-
-    // Setting "fluidStarted" is just for our test automation
-    // eslint-disable-next-line dot-notation
-    window["fluidStarted"] = true;
 }
 
 start().catch((e)=> {

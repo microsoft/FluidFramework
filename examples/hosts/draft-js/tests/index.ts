@@ -25,32 +25,29 @@ const documentId = window.location.hash.substring(1);
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-async function start() {
+export async function createContainerAndRenderInElement(elementId: string, createNewFlag: boolean) {
     // Get the Fluid Container associated with the provided id
-    const container = await getSessionStorageContainer(documentId, DraftJsContainer, createNew);
+    const container = await getSessionStorageContainer(documentId, DraftJsContainer, createNewFlag);
 
     // Get the Default Object from the Container
     const defaultObject = await getDefaultObjectFromContainer<DraftJsObject>(container);
 
     // For now we will just reach into the FluidObject to render it
-    defaultObject.render(document.getElementById("content1"));
-
-    const container2 = await getSessionStorageContainer(documentId, DraftJsContainer, false);
-
-    // Get the Default Object from the Container
-    const defaultObject2 = await getDefaultObjectFromContainer<DraftJsObject>(container2);
-
-    // For now we will just reach into the FluidObject to render it
-    defaultObject2.render(document.getElementById("content2"));
+    defaultObject.render(document.getElementById(elementId));
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line dot-notation
     window["fluidStarted"] = true;
 }
 
-start().catch((e)=> {
+async function setup() {
+    await createContainerAndRenderInElement("content1", createNew);
+    await createContainerAndRenderInElement("content2", false);
+}
+
+setup().catch((e)=> {
     console.error(e);
     console.log(
-        "%cEnsure you are running the Tinylicious Fluid Server\nUse:`npm run start:server`",
+        "%cThere were issues setting up and starting the in memory FLuid Server",
         "font-size:30px");
 });

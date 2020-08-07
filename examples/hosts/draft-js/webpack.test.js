@@ -34,6 +34,9 @@ module.exports = env => {
             devtoolNamespace: "fluid-example/draft-js",
             libraryTarget: "umd"
         },
+        devServer: {
+            contentBase: path.join(__dirname, 'tests')
+        },
         plugins: [
             new HtmlWebpackPlugin({
                 template: "./tests/index.html",
