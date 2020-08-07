@@ -70,6 +70,7 @@ import {
 import {
     FlushMode,
     IAttachMessage,
+    InboundAttachMessage,
     IFluidDataStoreContext,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
@@ -95,7 +96,12 @@ import {
     RequestParser,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
-import { FluidDataStoreContext, LocalFluidDataStoreContext, RemotedFluidDataStoreContext } from "./dataStoreContext";
+import {
+    FluidDataStoreContext,
+    LocalFluidDataStoreContext,
+    RemotedFluidDataStoreContext,
+    createAttributesBlob,
+} from "./dataStoreContext";
 import { FluidHandleContext } from "./dataStoreHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
@@ -1336,7 +1342,7 @@ export class ContainerRuntime extends EventEmitter
 
     private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
         if (type === ContainerMessageType.Attach) {
-            const attachMessage = contents as IAttachMessage;
+            const attachMessage = contents as InboundAttachMessage;
             if (attachMessage.id === SchedulerType) {
                 return false;
             }
@@ -1396,7 +1402,7 @@ export class ContainerRuntime extends EventEmitter
     }
 
     private processAttachMessage(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {
-        const attachMessage = message.contents as IAttachMessage;
+        const attachMessage = message.contents as InboundAttachMessage;
         // The local object has already been attached
         if (local) {
             assert(this.pendingAttach.has(attachMessage.id));
@@ -1415,7 +1421,8 @@ export class ContainerRuntime extends EventEmitter
         }
 
         // Include the type of attach message which is the pkg of the store to be
-        // used by RemotedFluidDataStoreContext  in case it is not in the snapshot.
+        // used by RemotedFluidDataStoreContext in case it is not in the snapshot.
+        const pkg = [attachMessage.type];
         const remotedFluidDataStoreContext = new RemotedFluidDataStoreContext(
             attachMessage.id,
             snapshotTreeP,
@@ -1428,9 +1435,12 @@ export class ContainerRuntime extends EventEmitter
                 {
                     type: CreateSummarizerNodeSource.FromAttach,
                     sequenceNumber: message.sequenceNumber,
-                    snapshot: attachMessage.snapshot,
+                    snapshot: attachMessage.snapshot ?? {
+                        id: null,
+                        entries: [createAttributesBlob(pkg)],
+                    },
                 }),
-            [attachMessage.type]);
+            pkg);
 
         // If a non-local operation then go and create the object, otherwise mark it as officially attached.
         assert(!this.contexts.has(attachMessage.id), "Store attached with existing ID");
