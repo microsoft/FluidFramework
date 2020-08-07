@@ -6,11 +6,10 @@
 import { getSessionStorageContainer } from "@fluidframework/get-session-storage-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
-import { DraftJsObject } from "../src/fluid-object";
-import { DraftJsContainer } from "../src/container";
-
-// Re-export everything
-export { DraftJsObject as DraftJsExample, DraftJsContainer };
+import {
+    DraftJsContainer,
+    DraftJsObject,
+} from "../src";
 
 // Since this is a single page fluid application we are generating a new document id
 // if one was not provided
@@ -26,7 +25,8 @@ const documentId = window.location.hash.substring(1);
  * requires making async calls.
  */
 export async function createContainerAndRenderInElement(elementId: string, createNewFlag: boolean) {
-    // Get the Fluid Container associated with the provided id
+    // The SessionStorage Container is an in-memory Fluid container that uses the SessionSession storage
+    // to store ops.
     const container = await getSessionStorageContainer(documentId, DraftJsContainer, createNewFlag);
 
     // Get the Default Object from the Container
@@ -40,8 +40,13 @@ export async function createContainerAndRenderInElement(elementId: string, creat
     window["fluidStarted"] = true;
 }
 
+/**
+ * For local testing we have two div's that we are rendering into independently.
+ */
 async function setup() {
     await createContainerAndRenderInElement("content1", createNew);
+    // The second time we don't need to createNew because we know a Container
+    // object exists.
     await createContainerAndRenderInElement("content2", false);
 }
 

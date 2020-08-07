@@ -10,7 +10,7 @@ import { DraftJsObject } from "./fluid-object";
 import { DraftJsContainer } from "./container";
 
 // Re-export everything
-export { DraftJsObject as DraftJsExample, DraftJsContainer };
+export { DraftJsObject, DraftJsContainer };
 
 // Since this is a single page fluid application we are generating a new document id
 // if one was not provided
