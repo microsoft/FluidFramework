@@ -55,7 +55,7 @@ export class TestHistorian implements IHistorian {
         const blob = await this.blobs.findOne({ _id: sha });
         return {
             content: Buffer.from(blob.content, blob.encoding).toString("base64"),
-            encoding: blob.encoding,
+            encoding: "base64",
             sha: blob._id,
             size: blob.content.length,
             url: "",
