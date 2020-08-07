@@ -6,7 +6,7 @@
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap } from "@fluidframework/map";
 import {
-    FluidComponentMap,
+    FluidObjectMap,
     IFluidState,
     IViewState,
     ViewToFluidMap,
@@ -30,7 +30,7 @@ import { getComponentSchema } from "./getComponentSchema";
  * @param syncedState - The shared map this component synced state is stored on
  * @param viewState - The current view state
  * @param setState - Callback to update the react view state
- * @param fluidComponentMap - A map of component handle paths to their respective components
+ * @param fluidObjectMap - A map of component handle paths to their respective components
  * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
  * respective converters
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
@@ -50,7 +50,7 @@ export function syncState<
         isSyncedStateUpdate?: boolean,
         isLocal?: boolean
     ) => void,
-    fluidComponentMap: FluidComponentMap,
+    fluidObjectMap: FluidObjectMap,
     fluidToView: FluidToViewMap<SV, SF>,
     viewToFluid?: ViewToFluidMap<SV, SF>,
 ) {
@@ -58,7 +58,7 @@ export function syncState<
     const currentFluidState = getFluidState(
         syncedStateId,
         syncedState,
-        fluidComponentMap,
+        fluidObjectMap,
         fluidToView,
     );
     if (currentFluidState === undefined) {
@@ -79,9 +79,9 @@ export function syncState<
         fluidMatchingMapHandle,
     } = componentSchemaHandles;
 
-    const viewMatchingMap = fluidComponentMap.get(viewMatchingMapHandle.absolutePath)
+    const viewMatchingMap = fluidObjectMap.get(viewMatchingMapHandle.absolutePath)
         ?.component as ISharedMap;
-    const fluidMatchingMap = fluidComponentMap.get(fluidMatchingMapHandle.absolutePath)
+    const fluidMatchingMap = fluidObjectMap.get(fluidMatchingMapHandle.absolutePath)
         ?.component as ISharedMap;
 
     if (viewMatchingMap === undefined || fluidMatchingMap === undefined) {
@@ -115,7 +115,7 @@ export function syncState<
 
     // Create the combined view state by combining the current view with the new Fluid state
     // after it has been converted
-    let combinedViewState = { ...viewState, ...{ fluidComponentMap } };
+    let combinedViewState = { ...viewState, ...{ fluidObjectMap } };
     Object.entries(currentFluidState).forEach(([fluidKey, fluidValue]) => {
         const needsConverter = fluidMatchingMap.get(fluidKey);
         let partialViewState = {};
@@ -124,7 +124,7 @@ export function syncState<
                 syncedStateId,
                 syncedState,
                 fluidKey as keyof SF,
-                fluidComponentMap,
+                fluidObjectMap,
                 fluidToView,
                 combinedViewState,
                 combinedFluidState,
@@ -148,7 +148,7 @@ export function syncState<
             syncedStateId,
             syncedState,
             runtime,
-            fluidComponentMap,
+            fluidObjectMap,
             fluidToView,
             combinedViewState,
             combinedFluidState,

@@ -7,7 +7,7 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
-    FluidReactComponent,
+    FluidReactView,
     IFluidState,
     IViewState,
     SyncedDataObject,
@@ -68,7 +68,7 @@ interface ICounterState {
 type CounterViewState = IViewState & ICounterState;
 type CounterFluidState = IFluidState & ICounterState;
 
-class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
+class CounterReactView extends FluidReactView<CounterViewState, CounterFluidState> {
     constructor(props) {
         super(props);
         this.state = {};

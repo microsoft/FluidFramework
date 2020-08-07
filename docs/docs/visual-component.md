@@ -544,7 +544,7 @@ import {
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import {
-    FluidReactComponent,
+    FluidReactView,
     IFluidState,
     IViewState,
     FluidToViewMap,
@@ -588,7 +588,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     }
 }
 
-class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
+class CounterReactView extends FluidReactView<CounterViewState, CounterFluidState> {
     constructor(props) {
         super(props);
         this.state = {};
@@ -694,7 +694,7 @@ Okay, now we have everything necessary to pass in as props to our `CounterReactV
 We're ready to go through our view, which is now super simple due to the setup we did in the Fluid component itself.
 
 ```typescript
-class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
+class CounterReactView extends FluidReactView<CounterViewState, CounterFluidState> {
     constructor(props) {
         super(props);
         this.state = {};
@@ -714,7 +714,7 @@ class CounterReactView extends FluidReactComponent<CounterViewState, CounterFlui
 ```
 
 We can see that the state is initially empty as it only consists of the `SharedCounter` DDS, and we know the
-`FluidReactComponent` will be handling the loading of that since we passed it as a key in the `fluidToView` map.
+`FluidReactView` will be handling the loading of that since we passed it as a key in the `fluidToView` map.
 
 The view itself can now directly use the `this.state.counter.value` and we can update it by simply using
 `this.state.counter.increment(1)`. This will directly update the `this.state.counter.value` without needing any event

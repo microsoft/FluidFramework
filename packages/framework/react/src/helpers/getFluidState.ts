@@ -10,7 +10,7 @@ import {
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IViewConverter,
-    FluidComponentMap,
+    FluidObjectMap,
     IViewState,
     IFluidState,
     ISyncedState,
@@ -30,7 +30,7 @@ export function getFluidState<
 >(
     syncedStateId: string,
     syncedState: ISyncedState,
-    componentMap: FluidComponentMap,
+    componentMap: FluidObjectMap,
     fluidToView?: Map<keyof SF, IViewConverter<SV, SF>>,
 ): SF | undefined {
     const componentStateHandle = syncedState.get<IFluidHandle<ISharedMap>>(

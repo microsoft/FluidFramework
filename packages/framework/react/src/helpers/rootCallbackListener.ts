@@ -6,7 +6,7 @@
 import { ISharedMap, IDirectoryValueChanged } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
-    FluidComponentMap,
+    FluidObjectMap,
     ViewToFluidMap,
     FluidToViewMap,
     IViewState,
@@ -21,7 +21,7 @@ import { ISyncedState } from "..";
 /**
  * The callback that is added to the "valueChanged" event on the IComponentListened this
  * is passed in to. This will trigger state updates when the synced state value is updated
- * @param fluidComponentMap - A map of component handle paths to their respective components
+ * @param fluidObjectMap - A map of component handle paths to their respective components
  * @param syncedStateId - Unique ID for this synced component's state
  * @param syncedState - The shared map this component's synced state is stored on
  * @param runtime - The data store runtime
@@ -36,7 +36,7 @@ export const syncedStateCallbackListener = <
     SV extends IViewState,
     SF extends IFluidState
 >(
-    fluidComponentMap: FluidComponentMap,
+    fluidObjectMap: FluidObjectMap,
     storedHandleMap: ISharedMap,
     syncedStateId,
     syncedState: ISyncedState,
@@ -53,7 +53,7 @@ export const syncedStateCallbackListener = <
     const currentFluidState = getFluidState(
         syncedStateId,
         syncedState,
-        fluidComponentMap,
+        fluidObjectMap,
         fluidToView,
     );
     if (currentFluidState === undefined) {
@@ -71,7 +71,7 @@ export const syncedStateCallbackListener = <
             runtime,
             state,
             setState,
-            fluidComponentMap,
+            fluidObjectMap,
             fluidToView,
             viewToFluid,
         );
@@ -87,13 +87,13 @@ export const syncedStateCallbackListener = <
                 syncedStateId,
                 syncedState,
                 change.key as keyof SF,
-                fluidComponentMap,
+                fluidObjectMap,
                 fluidToView,
                 state,
                 currentFluidState,
             );
             state[stateKey as string] = newPartialState[stateKey];
-            state.fluidComponentMap = fluidComponentMap;
+            state.fluidObjectMap = fluidObjectMap;
             setState(state, true, local);
         } else {
             throw Error(

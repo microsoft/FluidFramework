@@ -7,12 +7,12 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDirectoryValueChanged, SharedMap } from "@fluidframework/map";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import {
-    FluidComponentMap,
+    FluidObjectMap,
     IFluidState,
     IViewState,
     IFluidConverter,
 } from "../interface";
-import { IFluidComponent } from "..";
+import { IFluidObjectMapItem } from "..";
 
 export function getByFluidKey<
     SV extends IViewState,
@@ -29,12 +29,12 @@ export async function asyncForEach(
     array: IFluidHandle[],
     callback: (
         handle: IFluidHandle,
-        fluidComponentMap: FluidComponentMap,
+        fluidObjectMap: FluidObjectMap,
         syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
         refreshView: () => void,
         storedHandleMap: SharedMap,
     ) => Promise<void>,
-    fluidComponentMap: FluidComponentMap,
+    fluidObjectMap: FluidObjectMap,
     syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
     refreshView: () => void,
     storedHandleMap: SharedMap,
@@ -42,7 +42,7 @@ export async function asyncForEach(
     const promises: Promise<void>[] = [];
     for (const value of array) {
         promises.push(
-            callback(value, fluidComponentMap, syncedStateCallback, refreshView, storedHandleMap),
+            callback(value, fluidObjectMap, syncedStateCallback, refreshView, storedHandleMap),
         );
     }
     await Promise.all(promises);
@@ -53,18 +53,18 @@ export const addComponent = async <
     SF extends IFluidState
 >(
     handle: IFluidHandle,
-    fluidComponentMap: FluidComponentMap,
+    fluidObjectMap: FluidObjectMap,
     syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
     refreshView: () => void,
     storedHandleMap: SharedMap,
 ): Promise<void> => {
-    const maybeValue: IFluidComponent | undefined = fluidComponentMap.get(handle.absolutePath);
-    let value: IFluidComponent = {
+    const maybeValue: IFluidObjectMapItem | undefined = fluidObjectMap.get(handle.absolutePath);
+    let value: IFluidObjectMapItem = {
         isListened: false,
         isRuntimeMap: false,
     };
     if (maybeValue === undefined) {
-        fluidComponentMap.set(
+        fluidObjectMap.set(
             handle.absolutePath,
             value,
         );
@@ -72,7 +72,7 @@ export const addComponent = async <
         value = maybeValue;
     }
     value.isListened = false;
-    fluidComponentMap.set(handle.absolutePath, value);
+    fluidObjectMap.set(handle.absolutePath, value);
     if (!storedHandleMap.has(handle.absolutePath)) {
         storedHandleMap.set(handle.absolutePath, handle);
     }
@@ -86,7 +86,7 @@ export const addComponent = async <
         }
         value.component = component;
         value.isListened = true;
-        fluidComponentMap.set(handle.absolutePath, value);
+        fluidObjectMap.set(handle.absolutePath, value);
     });
 };
 

@@ -30,7 +30,7 @@ import {
  * @param syncedState - The component's shared state map
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
  * respective converters
- * @param dataProps - Contains the runtime and fluidComponentMap to create and store DDS'
+ * @param dataProps - Contains the runtime and fluidObjectMap to create and store DDS'
  * @param state - Current view state
  * @param setState - Callback to update view state
  * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
@@ -61,7 +61,7 @@ export async function initializeState<
     if (componentSchemaHandles?.storedHandleMapHandle.absolutePath === undefined) {
         throw Error(`Component schema not initialized prior to render for ${syncedStateId}`);
     }
-    const storedHandleMap = dataProps.fluidComponentMap.get(
+    const storedHandleMap = dataProps.fluidObjectMap.get(
         componentSchemaHandles?.storedHandleMapHandle.absolutePath,
     )?.component as SharedMap;
     if (storedHandleMap === undefined) {
@@ -75,7 +75,7 @@ export async function initializeState<
     const currentFluidState = getFluidState(
         syncedStateId,
         syncedState,
-        dataProps.fluidComponentMap,
+        dataProps.fluidObjectMap,
         fluidToView,
     );
     if (currentFluidState === undefined) {
@@ -102,7 +102,7 @@ export async function initializeState<
         local: boolean,
     ) => {
         const callback = syncedStateCallbackListener(
-            dataProps.fluidComponentMap,
+            dataProps.fluidObjectMap,
             storedHandleMap,
             syncedStateId,
             syncedState,
@@ -122,14 +122,14 @@ export async function initializeState<
         local: boolean,
     ) => {
         const handle = storedHandleMap.get<IFluidHandle>(change.key);
-        if (handle !== undefined && !state.fluidComponentMap?.has(handle.absolutePath)) {
-            state.fluidComponentMap?.set(handle.absolutePath, {
+        if (handle !== undefined && !state.fluidObjectMap?.has(handle.absolutePath)) {
+            state.fluidObjectMap?.set(handle.absolutePath, {
                 isListened: false,
             });
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             updateStateAndComponentMap<SV, SF>(
                 [handle],
-                dataProps.fluidComponentMap,
+                dataProps.fluidObjectMap,
                 storedHandleMap,
                 true,
                 syncedStateId,
@@ -146,7 +146,7 @@ export async function initializeState<
 
     return updateStateAndComponentMap<SV, SF>(
         unlistenedHandles,
-        dataProps.fluidComponentMap,
+        dataProps.fluidObjectMap,
         storedHandleMap,
         true,
         syncedStateId,

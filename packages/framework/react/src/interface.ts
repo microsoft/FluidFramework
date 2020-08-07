@@ -9,7 +9,7 @@ import {
     IFluidLoadable,
     IFluidObject,
 } from "@fluidframework/core-interfaces";
-import { SyncedDataObject } from "./fluidDataObject";
+import { SyncedDataObject } from "./syncedDataObject";
 
 /**
  * The combined state contains the fluid and view states and the data props
@@ -31,7 +31,7 @@ export interface ICombinedState<
     fluidState?: SF;
     /**
      * Data props that are loaded in during the Fluid initialization step. This contains the runtime
-     * and the fluid component map, along with any other properties the user wants to pass to reducers
+     * and the fluid object map, along with any other properties the user wants to pass to reducers
      * and selectors
      */
     dataProps: C;
@@ -71,8 +71,8 @@ export type FluidToViewMap<SV, SF> = Map<keyof SF, IViewConverter<SV, SF>>;
  * The fluid reducer, containing an object that is keyed by function name and contains state update and
  * effect functions. Each function will have the view state, fluid state, and data props passed into it
  * as parameters in the combined state. State update functions are used to modify values on the state and return
- * the updated state and any new component handles. Effect functions use values on the state to apply changes
- * elsewhere. They do not return any new components or state.
+ * the updated state and any new Fluid object handles. Effect functions use values on the state to apply changes
+ * elsewhere. They do not return any new objects or state.
  */
 export interface IFluidReducer<
     SV extends IViewState,
@@ -151,7 +151,7 @@ export interface IViewConverter<
     viewConverter?: (
         viewState: SV,
         fluidState: Partial<SF>,
-        fluidComponentMap: FluidComponentMap
+        fluidObjectMap: FluidObjectMap
     ) => Partial<SV>;
     /**
      * If this is a fluid DDS SharedObject type (i.e. SharedCounter, SharedMap), supply its create function
@@ -223,7 +223,7 @@ export interface IViewState
      * Any new components added through reducers/selectors during the React lifecycle
      * will be automatically added to this map and the state will reupdate when they become asynchronously available
      */
-    fluidComponentMap?: FluidComponentMap;
+    fluidObjectMap?: FluidObjectMap;
 }
 
 export type IFluidReactState = IFluidState & IViewState;
@@ -236,7 +236,7 @@ export const instanceOfIComponentLoadable = (
 /**
  * The values stored in the fluid component map
  */
-export interface IFluidComponent {
+export interface IFluidObjectMapItem {
     /**
      * The actual Fluid component that the path this value is keyed against leads to
      */
@@ -261,7 +261,7 @@ export interface IFluidComponent {
 /**
  * A map of the component handle path to the Fluid component object
  */
-export type FluidComponentMap = Map<string, IFluidComponent>;
+export type FluidObjectMap = Map<string, IFluidObjectMapItem>;
 
 /**
  * Base interface to extend from for the data props that will be passed in for reducers and
@@ -277,7 +277,7 @@ export interface IFluidDataProps {
      * can be view/data components, and they will be asynchronously loaded here so that they are,
      * in turn, synchronously available for the view when the state updates after they are fetched
      */
-    fluidComponentMap: FluidComponentMap;
+    fluidObjectMap: FluidObjectMap;
 }
 
 /**
@@ -438,7 +438,7 @@ export interface FluidComponentSelectorFunction<
     > {
     /**
      * Similar to the FluidSelectorFunction's function but this also takes in a
-     * handle if we need to fetch a component from the fluidComponentMap
+     * handle if we need to fetch a component from the fluidObjectMap
      */
     function: (
         handle: IFluidHandle<any>,

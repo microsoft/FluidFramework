@@ -12,18 +12,18 @@ import { SharedMap, ISharedMap } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import {
-    FluidComponentMap,
+    FluidObjectMap,
     SyncedStateConfig,
     ISyncedStateConfig,
     IViewState,
     IFluidState,
     ISyncedState,
-} from "../interface";
+} from "./interface";
 import {
     generateComponentSchema,
     setComponentSchema,
     getComponentSchema,
-} from "../helpers";
+} from "./helpers";
 
 /**
  * SyncedDataObject is a base component for components with views. It extends DataObject.
@@ -45,7 +45,7 @@ export abstract class SyncedDataObject<
     E extends IEvent = IEvent
     > extends DataObject<P, S, E> implements IFluidHTMLView {
     private readonly syncedStateConfig: SyncedStateConfig = new Map();
-    private readonly fluidComponentMap: FluidComponentMap = new Map();
+    private readonly fluidObjectMap: FluidObjectMap = new Map();
     private readonly syncedStateDirectoryId = "syncedState";
     private internalSyncedState: ISharedMap | undefined;
 
@@ -102,7 +102,7 @@ export abstract class SyncedDataObject<
     public get dataProps() {
         return {
             runtime: this.runtime,
-            fluidComponentMap: this.fluidComponentMap,
+            fluidObjectMap: this.fluidObjectMap,
         };
     }
 
@@ -165,7 +165,7 @@ export abstract class SyncedDataObject<
             const storedFluidState = SharedMap.create(this.runtime);
             // Add it to the fluid component map so that it will have a listener added to it once
             // we enter the render lifecycle
-            this.fluidComponentMap.set(storedFluidState.handle.absolutePath, {
+            this.fluidObjectMap.set(storedFluidState.handle.absolutePath, {
                 component: storedFluidState,
                 isRuntimeMap: true,
             });
@@ -182,7 +182,7 @@ export abstract class SyncedDataObject<
                 const createCallback = value.sharedObjectCreate;
                 if (createCallback !== undefined) {
                     const sharedObject = createCallback(this.runtime);
-                    this.fluidComponentMap.set(sharedObject.handle.absolutePath, {
+                    this.fluidObjectMap.set(sharedObject.handle.absolutePath, {
                         component: sharedObject,
                         listenedEvents: value.listenedEvents ?? ["valueChanged"],
                     });
@@ -210,21 +210,21 @@ export abstract class SyncedDataObject<
                 storedHandleMapHandle: componentSchema.storedHandleMap
                     .handle as IFluidHandle<SharedMap>,
             };
-            this.fluidComponentMap.set(
+            this.fluidObjectMap.set(
                 componentSchema.fluidMatchingMap.handle.absolutePath,
                 {
                     component: componentSchema.fluidMatchingMap,
                     isRuntimeMap: true,
                 },
             );
-            this.fluidComponentMap.set(
+            this.fluidObjectMap.set(
                 componentSchema.viewMatchingMap.handle.absolutePath,
                 {
                     component: componentSchema.viewMatchingMap,
                     isRuntimeMap: true,
                 },
             );
-            this.fluidComponentMap.set(
+            this.fluidObjectMap.set(
                 componentSchema.storedHandleMap.handle.absolutePath,
                 {
                     component: componentSchema.storedHandleMap,
@@ -262,7 +262,7 @@ export abstract class SyncedDataObject<
             const storedFluidState = await storedFluidStateHandle.get();
             // Add it to the fluid component map so that it will have a listener added to it once
             // we enter the render lifecycle
-            this.fluidComponentMap.set(storedFluidStateHandle.absolutePath, {
+            this.fluidObjectMap.set(storedFluidStateHandle.absolutePath, {
                 component: storedFluidState,
                 isRuntimeMap: true,
             });
@@ -281,7 +281,7 @@ export abstract class SyncedDataObject<
                             `Failed to find ${fluidKey} in synced state`,
                         );
                     }
-                    this.fluidComponentMap.set(handle.absolutePath, {
+                    this.fluidObjectMap.set(handle.absolutePath, {
                         component: await handle.get(),
                         listenedEvents: value.listenedEvents ?? ["valueChanged"],
                     });
@@ -291,7 +291,7 @@ export abstract class SyncedDataObject<
                         : storedFluidState.get(fluidKey);
                     const handle = storedValue?.IFluidHandle;
                     if (handle !== undefined) {
-                        this.fluidComponentMap.set(handle.absolutePath, {
+                        this.fluidObjectMap.set(handle.absolutePath, {
                             component: await handle.get(),
                             listenedEvents: value.listenedEvents ?? [
                                 "valueChanged",
@@ -311,21 +311,21 @@ export abstract class SyncedDataObject<
                     ),
                 );
             }
-            this.fluidComponentMap.set(
+            this.fluidObjectMap.set(
                 componentSchemaHandles.fluidMatchingMapHandle.absolutePath,
                 {
                     component: await componentSchemaHandles.fluidMatchingMapHandle.get(),
                     isRuntimeMap: true,
                 },
             );
-            this.fluidComponentMap.set(
+            this.fluidObjectMap.set(
                 componentSchemaHandles.viewMatchingMapHandle.absolutePath,
                 {
                     component: await componentSchemaHandles.viewMatchingMapHandle.get(),
                     isRuntimeMap: true,
                 },
             );
-            this.fluidComponentMap.set(
+            this.fluidObjectMap.set(
                 componentSchemaHandles.storedHandleMapHandle.absolutePath,
                 {
                     component: await componentSchemaHandles.storedHandleMapHandle.get(),

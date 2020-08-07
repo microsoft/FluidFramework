@@ -16,9 +16,9 @@ import {
 import { syncState, initializeState } from "./helpers";
 
 /**
- * A react component with a synced state, initial props, and a Fluid-to-view state two-way mapping
+ * A React view with a synced state, initial props, and a Fluid-to-view state two-way mapping
  */
-export abstract class FluidReactComponent<SV extends IViewState,
+export abstract class FluidReactView<SV extends IViewState,
     SF extends IFluidState> extends React.Component<IFluidProps<SV, SF>, SV> {
     private readonly _syncedStateId: string;
     private readonly _syncedState: ISyncedState;
@@ -77,7 +77,7 @@ export abstract class FluidReactComponent<SV extends IViewState,
                 this._dataProps.runtime,
                 newState,
                 this._setState.bind(this),
-                this._dataProps.fluidComponentMap,
+                this._dataProps.fluidObjectMap,
                 this._fluidToView,
                 this._viewToFluid,
             );
@@ -98,7 +98,7 @@ export abstract class FluidReactComponent<SV extends IViewState,
             this._dataProps.runtime,
             newState,
             this._setState.bind(this),
-            this._dataProps.fluidComponentMap,
+            this._dataProps.fluidObjectMap,
             this._fluidToView,
             this._viewToFluid,
         );

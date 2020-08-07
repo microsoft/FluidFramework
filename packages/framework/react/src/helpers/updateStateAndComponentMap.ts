@@ -7,7 +7,7 @@ import { IDirectoryValueChanged, SharedMap } from "@fluidframework/map";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
-    FluidComponentMap,
+    FluidObjectMap,
     IFluidState,
     IViewState,
     ViewToFluidMap,
@@ -19,9 +19,9 @@ import { ISyncedState } from "..";
 
 /**
  * Add listeners too all the new handles passed in, store their respective components
- * on the fluidComponentMap, and then update both the local and synced state
+ * on the fluidObjectMap, and then update both the local and synced state
  * @param newHandleList - List of IComponentHandles for new components that need to be added to the map
- * @param fluidComponentMap - A map of component handle paths to their respective components
+ * @param fluidObjectMap - A map of component handle paths to their respective components
  * @param isSyncedStateUpdate - Is the update from a local state update or from one triggered by the synced state
  * @param syncedStateId - Unique ID for this synced component's state
  * @param syncedState - The shared map this component's synced state is stored on
@@ -40,7 +40,7 @@ export const updateStateAndComponentMap = async <
     SF extends IFluidState
 >(
     newHandleList: IFluidHandle[],
-    fluidComponentMap: FluidComponentMap,
+    fluidObjectMap: FluidObjectMap,
     storedHandleMap: SharedMap,
     isSyncedStateUpdate: boolean,
     syncedStateId: string,
@@ -55,7 +55,7 @@ export const updateStateAndComponentMap = async <
     asyncForEach(
         newHandleList,
         addComponent,
-        fluidComponentMap,
+        fluidObjectMap,
         syncedStateCallback,
         () =>
             syncState(
@@ -65,7 +65,7 @@ export const updateStateAndComponentMap = async <
                 runtime,
                 viewState,
                 setState,
-                fluidComponentMap,
+                fluidObjectMap,
                 fluidToView,
                 viewToFluid,
             ),
@@ -78,7 +78,7 @@ export const updateStateAndComponentMap = async <
             runtime,
             viewState,
             setState,
-            fluidComponentMap,
+            fluidObjectMap,
             fluidToView,
             viewToFluid,
         ),

@@ -2,9 +2,9 @@
 
 The Fluid Frameworks React package provides the base hooks and component class for building React components that uses a synced state provided by Fluid. Its goal is to make it very easy for a React developer to build large, scalable React apps with synced Fluid components.
 
-## FluidReactComponent
+## FluidReactView
 
-This is the base level FluidReactComponent that offers a synced view state and a mapping between the view and synced state stored in the root. This should be used for creating small-scale React apps that don't involve complex nested Fluid components or data management systems. All values that are set in the state of this component are automatically also set on the root and passed to other clients rendering this component in the same session.
+This is the base level FluidReactView that offers a synced view state and a mapping between the view and synced state stored in the root. This should be used for creating small-scale React apps that don't involve complex nested Fluid components or data management systems. All values that are set in the state of this component are automatically also set on the root and passed to other clients rendering this component in the same session.
 
 ## useStateFluid
 
@@ -16,10 +16,10 @@ This folder contains DDS specific hooks for setting state on a SharedMap and pow
 
 ## useReducerFluid
 
-This is the hook of choice for larger-scale applications that require more complex mutations, need to work with multiple Fluid components, and need to have a division between data and view models. Here, instead of having only the view state to manipulate, users have both the view state and the fluid state, with the former containing primitives used for rendering and the latter containing Fluid components to manipulate data in a synced manner. This hook also introduces the concept of a local FluidComponentMap that stores and listens to changes on already fetched components.
+This is the hook of choice for larger-scale applications that require more complex mutations, need to work with multiple Fluid components, and need to have a division between data and view models. Here, instead of having only the view state to manipulate, users have both the view state and the fluid state, with the former containing primitives used for rendering and the latter containing Fluid components to manipulate data in a synced manner. This hook also introduces the concept of a local FluidObjectMap that stores and listens to changes on already fetched components.
 
 
-Reducers offer ways of mutating the state whereas selectors offer ways of fetching data from other components. When either involves the addition of new components locally, these are added to the FluidComponentMap so that they can be accessed by the view synchronously.
+Reducers offer ways of mutating the state whereas selectors offer ways of fetching data from other components. When either involves the addition of new components locally, these are added to the FluidObjectMap so that they can be accessed by the view synchronously.
 
 
 Any updates to the root state are converted to updates in the view using the provided fluidConverters in the fluidToView map, and vice versa. This allows changes locally to reflect on the root, and root changes to also be translated back to local state updates.

@@ -69,7 +69,7 @@ export function useReducerFluid<
     if (componentSchemaHandles?.storedHandleMapHandle.absolutePath === undefined) {
         throw Error(`Component schema not initialized prior to render for ${syncedStateId}`);
     }
-    const storedHandleMap = dataProps.fluidComponentMap.get(
+    const storedHandleMap = dataProps.fluidObjectMap.get(
         componentSchemaHandles?.storedHandleMapHandle.absolutePath,
     )?.component as SharedMap;
     if (storedHandleMap === undefined) {
@@ -91,7 +91,7 @@ export function useReducerFluid<
             const currentFluidState = getFluidState(
                 syncedStateId,
                 syncedState,
-                dataProps.fluidComponentMap,
+                dataProps.fluidObjectMap,
                 fluidToView,
             );
             if (currentFluidState === undefined) {
@@ -129,7 +129,7 @@ export function useReducerFluid<
                         // Fetch any new components and add a listener to their synced state.
                         // Then update the view state.
                         const callback = syncedStateCallbackListener(
-                            combinedDispatchDataProps.fluidComponentMap,
+                            combinedDispatchDataProps.fluidObjectMap,
                             storedHandleMap,
                             syncedStateId,
                             syncedState,
@@ -142,7 +142,7 @@ export function useReducerFluid<
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         updateStateAndComponentMap(
                             result.newComponentHandles,
-                            combinedDispatchDataProps.fluidComponentMap,
+                            combinedDispatchDataProps.fluidObjectMap,
                             storedHandleMap,
                             false,
                             syncedStateId,
@@ -163,7 +163,7 @@ export function useReducerFluid<
                             combinedDispatchDataProps.runtime,
                             result.state.viewState,
                             setState,
-                            combinedDispatchDataProps.fluidComponentMap,
+                            combinedDispatchDataProps.fluidObjectMap,
                             fluidToView,
                             viewToFluid,
                         );
@@ -176,7 +176,7 @@ export function useReducerFluid<
                         ...args,
                     ).then((result: IStateUpdateResult<SV, SF, C>) => {
                         const callback = syncedStateCallbackListener(
-                            combinedDispatchDataProps.fluidComponentMap,
+                            combinedDispatchDataProps.fluidObjectMap,
                             storedHandleMap,
                             syncedStateId,
                             syncedState,
@@ -190,7 +190,7 @@ export function useReducerFluid<
                             // eslint-disable-next-line @typescript-eslint/no-floating-promises
                             updateStateAndComponentMap(
                                 result.newComponentHandles,
-                                combinedDispatchDataProps.fluidComponentMap,
+                                combinedDispatchDataProps.fluidObjectMap,
                                 storedHandleMap,
                                 false,
                                 syncedStateId,
@@ -210,7 +210,7 @@ export function useReducerFluid<
                                 combinedDispatchDataProps.runtime,
                                 result.state.viewState,
                                 setState,
-                                combinedDispatchDataProps.fluidComponentMap,
+                                combinedDispatchDataProps.fluidObjectMap,
                                 fluidToView,
                                 viewToFluid,
                             );
@@ -228,7 +228,7 @@ export function useReducerFluid<
                             combinedDispatchDataProps.runtime,
                             combinedDispatchState.viewState,
                             setState,
-                            combinedDispatchDataProps.fluidComponentMap,
+                            combinedDispatchDataProps.fluidObjectMap,
                             fluidToView,
                             viewToFluid,
                         ),
@@ -242,7 +242,7 @@ export function useReducerFluid<
                         combinedDispatchDataProps.runtime,
                         combinedDispatchState.viewState,
                         setState,
-                        combinedDispatchDataProps.fluidComponentMap,
+                        combinedDispatchDataProps.fluidObjectMap,
                         fluidToView,
                         viewToFluid,
                     );
@@ -302,7 +302,7 @@ export function useReducerFluid<
             const currentFluidState = getFluidState(
                 syncedStateId,
                 syncedState,
-                dataProps.fluidComponentMap,
+                dataProps.fluidObjectMap,
                 fluidToView,
             );
             if (currentFluidState === undefined) {
@@ -336,7 +336,7 @@ export function useReducerFluid<
                     if (
                         handle !== undefined &&
                         instanceOfComponentSelectorFunction<SV, SF, C>(action) &&
-                        combinedFetchDataProps.fluidComponentMap.get(
+                        combinedFetchDataProps.fluidObjectMap.get(
                             handle.absolutePath,
                         ) === undefined
                     ) {
@@ -358,7 +358,7 @@ export function useReducerFluid<
                     // callback when it has finished to provide the updated map in the state
                     if (newHandles.length > 0) {
                         const callback = syncedStateCallbackListener(
-                            combinedFetchDataProps.fluidComponentMap,
+                            combinedFetchDataProps.fluidObjectMap,
                             storedHandleMap,
                             syncedStateId,
                             syncedState,
@@ -371,7 +371,7 @@ export function useReducerFluid<
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         updateStateAndComponentMap(
                             newHandles,
-                            combinedFetchDataProps.fluidComponentMap,
+                            combinedFetchDataProps.fluidObjectMap,
                             storedHandleMap,
                             true,
                             syncedStateId,
@@ -417,7 +417,7 @@ export function useReducerFluid<
     const fluidState = getFluidState(
         syncedStateId,
         syncedState,
-        dataProps.fluidComponentMap,
+        dataProps.fluidObjectMap,
         fluidToView,
     );
 

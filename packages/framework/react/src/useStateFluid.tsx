@@ -71,7 +71,7 @@ export function useStateFluid<
                     dataProps.runtime,
                     newCombinedState,
                     reactSetState,
-                    dataProps.fluidComponentMap,
+                    dataProps.fluidObjectMap,
                     fluidToView,
                     viewToFluid,
                 );
