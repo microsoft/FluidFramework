@@ -70,6 +70,7 @@ import {
 import {
     FlushMode,
     IAttachMessage,
+    IFluidDataStoreScope,
     IFluidDataStoreContext,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
@@ -1213,22 +1214,40 @@ export class ContainerRuntime extends EventEmitter
         }
     }
 
-    public async createDataStore(pkg: string | string[], scope?: IFluidObject): Promise<IFluidRouter> {
-        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg]).realize(scope);
+    public async createDataStore(
+        pkg: string | string[],
+        scope?: IFluidDataStoreScope): Promise<IFluidRouter>
+    {
+        return this._createDataStore(pkg, uuid(), scope);
     }
 
-    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
-        const context = this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], rootDataStoreId);
-        const fluidDataStore = await context.realize();
+    public async createRootDataStore(
+        pkg: string | string[],
+        rootDataStoreId: string,
+        scope?: IFluidDataStoreScope): Promise<IFluidRouter>
+    {
+        const fluidDataStore = await this._createDataStore(pkg, rootDataStoreId, scope);
         fluidDataStore.bindToContext();
         return fluidDataStore;
+    }
+
+    private async _createDataStore(
+        pkg: string | string[],
+        id: string,
+        scope?: IFluidDataStoreScope): Promise<IFluidDataStoreChannel>
+    {
+        const initScope = scope ?? {
+            loadable: {},
+            runtimeEnvironment: {},
+        };
+        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id).realize(initScope);
     }
 
     private canSendOps() {
         return this.connected && !this.deltaManager.readonly;
     }
 
-    private _createFluidDataStoreContext(pkg: string[], id = uuid()) {
+    private _createFluidDataStoreContext(pkg: string[], id) {
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), "Creating store with existing ID");

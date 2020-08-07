@@ -13,6 +13,7 @@ import {
     IProvideFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
     NamedFluidDataStoreRegistryEntry,
+    IFluidDataStoreScope,
 } from "@fluidframework/runtime-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
@@ -24,8 +25,12 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ISharedComponentProps,
     PureDataObject,
-    PureDataObjectInitialState,
 } from "../components";
+
+interface IPureDataObjectInitialState<TProps>{
+    IPureDataObjectInitialState?: IPureDataObjectInitialState<TProps>;
+    props?: TProps;
+}
 
 /**
  * PureDataObjectFactory is a barebones IFluidDataStoreFactory for use with PureDataObject.
@@ -78,7 +83,7 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
      *
      * @param context - component context used to load a data store runtime
      */
-    public instantiateDataStore(context: IFluidDataStoreContext, scope?: IFluidObject): void {
+    public instantiateDataStore(context: IFluidDataStoreContext, scope?: IFluidDataStoreScope): void {
         // Create a new runtime for our component
         // The runtime is what Fluid uses to create DDS' and route to your component
         const runtime = FluidDataStoreRuntime.load(
@@ -114,13 +119,13 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
     private async instantiateInstance(
         runtime: FluidDataStoreRuntime,
         context: IFluidDataStoreContext,
-        scope?: IFluidObject,
+        scope?: IFluidDataStoreScope,
     ) {
         const dependencyContainer = new DependencyContainer(context.scope.IFluidDependencySynthesizer);
         const providers = dependencyContainer.synthesize<P>(this.optionalProviders, {});
         // Create a new instance of our component
         const instance = new this.ctor({ runtime, context, providers });
-        await instance.initializeInternal((scope as any)?.PureDataObjectInitialState);
+        await instance.initializeInternal(scope?.runtimeEnvironment?.IPureDataObjectInitialState?.props);
         return instance;
     }
 
@@ -142,8 +147,17 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
         }
         const packagePath = await context.composeSubpackagePath(this.type);
 
-        const scope = { [PureDataObjectInitialState]: initialState };
-        const router = await context.containerRuntime.createDataStore(packagePath, scope as IFluidObject);
+        const props: IPureDataObjectInitialState<S> = {
+            props: initialState,
+        };
+
+        const scope: IFluidDataStoreScope = {
+            loadable: {},
+            runtimeEnvironment: {
+                IPureDataObjectInitialState: props,
+            },
+        };
+        const router = await context.containerRuntime.createDataStore(packagePath, scope);
         return requestFluidObject<PureDataObject<P, S>>(router, "/");
     }
 }

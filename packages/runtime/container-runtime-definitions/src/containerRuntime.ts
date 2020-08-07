@@ -31,6 +31,7 @@ import {
     IFluidDataStoreChannel,
     IFluidDataStoreContext,
     IInboundSignalMessage,
+    IFluidDataStoreScope,
 } from "@fluidframework/runtime-definitions";
 import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
@@ -91,7 +92,7 @@ export interface IContainerRuntime extends
      * @param id - Id supplied during creating the component.
      * @param wait - True if you want to wait for it.
      */
-    getDataStore(id: string, wait?: boolean): Promise<IFluidDataStoreChannel>;
+    getDataStore(id: string, wait?: boolean, scope?: IFluidDataStoreScope): Promise<IFluidDataStoreChannel>;
 
     /**
      * Creates root data store in container. Such store is automatically bound to container, and thus is
@@ -103,7 +104,10 @@ export interface IContainerRuntime extends
      * @param rootDataStoreId - data store ID. IDs naming space is global in container. If collision on name occurs,
      * it results in container corruption - loading this file after that will always result in error.
      */
-    createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
+    createRootDataStore(
+        pkg: string | string[],
+        rootDataStoreId: string,
+        scope?: IFluidDataStoreScope): Promise<IFluidRouter>;
 
     /**
      * Returns the current quorum.

@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
-import { IFluidDataStoreContext } from "./componentContext";
+import { IFluidDataStoreContext, IFluidDataStoreScope } from "./componentContext";
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -35,6 +34,8 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
      * serialize enough state in data store itself for future invocations to have same environment.
      * Usually this is done by working with IFluidLoadable objects and storing handles to those objects in root
      * directory for future reference.
+     * It's undefined when loading existing data store, and not undefined (maybe empty object if not provided by
+     * calleee) when create new data store.
      */
-    instantiateDataStore(context: IFluidDataStoreContext, scope?: IFluidObject): void;
+    instantiateDataStore(context: IFluidDataStoreContext, scope?: IFluidDataStoreScope): void;
 }

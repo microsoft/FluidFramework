@@ -23,8 +23,6 @@ import { IEvent } from "@fluidframework/common-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { serviceRoutePathRoot } from "../containerServices";
 
-export const PureDataObjectInitialState = "PDO_InitArgs";
-
 export interface ISharedComponentProps<P extends IFluidObject = object> {
     readonly runtime: IFluidDataStoreRuntime,
     readonly context: IFluidDataStoreContext,

@@ -38,6 +38,7 @@ import {
     FluidDataStoreRegistryEntry,
     IFluidDataStoreChannel,
     IAttachMessage,
+    IFluidDataStoreScope,
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
@@ -227,11 +228,11 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return deferred.promise;
     }
 
-    public async realize(scope?: IFluidObject): Promise<IFluidDataStoreChannel> {
-        // scope can be provided only on creation path, where first realize() call is guaranteed to be bring it
-        assert(scope === undefined || this.componentRuntimeDeferred === undefined);
+    public async realize(scope?: IFluidDataStoreScope): Promise<IFluidDataStoreChannel> {
+        // scope can be provided only on creation path, where first realize() call is guaranteed to bring it
+        assert((scope === undefined) === (this.channelDeferred !== undefined));
 
-        if (!this.componentRuntimeDeferred) {
+        if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             const details = await this.getInitialSnapshotDetails();
             // Base snapshot is the baseline where pending ops are applied to.
@@ -479,7 +480,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             throw new Error("Runtime already bound");
         }
 
-        assert (this.componentRuntimeDeferred !== undefined);
+        assert (this.channelDeferred !== undefined);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pending = this.pending!;

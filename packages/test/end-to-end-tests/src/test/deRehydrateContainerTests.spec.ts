@@ -17,8 +17,8 @@ import {
 } from "@fluidframework/test-utils";
 import { SharedMap } from "@fluidframework/map";
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 describe(`Dehydrate Rehydrate Container Test`, () => {
     const codeDetails: IFluidCodeDetails = {
@@ -59,13 +59,12 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     const createPeerComponent = async (
         containerRuntime: IContainerRuntimeBase,
     ) => {
-        const peerComponentRuntimeChannel = await (containerRuntime as IContainerRuntime)
-            .createDataStoreWithRealizationFn(["default"]);
-        const peerComponent =
-            (await peerComponentRuntimeChannel.request({ url: "/" })).value as ITestFluidComponent;
+        const peerComponent = await requestFluidObject<ITestFluidComponent>(
+            await containerRuntime.createDataStore(["default"]),
+            "/");
         return {
             peerComponent,
-            peerComponentRuntimeChannel,
+            peerComponentRuntimeChannel: peerComponent.channel,
         };
     };
 

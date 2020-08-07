@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
+    IFluidLoadable,
     IFluidRouter,
     IProvideFluidHandleContext,
     IProvideFluidSerializer,
@@ -99,7 +100,7 @@ export interface IContainerRuntimeBase extends
      * Usually this is done by working with IFluidLoadable objects and storing handles to those objects in root
      * directory for future reference.
      */
-    createDataStore(pkg: string | string[], scope?: IFluidObject): Promise<IFluidRouter>;
+    createDataStore(pkg: string | string[], scope?: IFluidDataStoreScope): Promise<IFluidRouter>;
 
     /**
      * Get an absolute url for a provided container-relative request.
@@ -342,4 +343,9 @@ export interface IFluidDataStoreContext extends EventEmitter {
      * otherwise the original subpackage
      */
     composeSubpackagePath(subpackage: string): Promise<string[]>;
+}
+
+export interface IFluidDataStoreScope {
+   loadable: {[key: string]: IFluidObject & IFluidLoadable};
+   runtimeEnvironment: {[key: string]: any };
 }
