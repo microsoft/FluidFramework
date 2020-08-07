@@ -11,7 +11,6 @@ import {
     IFluidHandle,
     IFluidLoadable,
 } from "@fluidframework/component-core-interfaces";
-import { IGenericBlob } from "@fluidframework/container-definitions";
 import {
     ComponentCursorDirection,
     IComponentCursor,
@@ -30,7 +29,7 @@ import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@flu
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { blobUploadHandler } from "../blob";
+// import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
 import { Cursor, IRange } from "./cursor";
@@ -2977,8 +2976,8 @@ export interface IListReferenceDoc extends IReferenceDoc {
     selectionIndex: number;
 }
 
+/*
 export function makeBlobRef(blob: IGenericBlob, cb: (irdoc: IReferenceDoc) => void) {
-    /* eslint-disable default-case */
     switch (blob.type) {
         case "image": {
             const image = document.createElement("img");
@@ -3013,8 +3012,8 @@ export function makeBlobRef(blob: IGenericBlob, cb: (irdoc: IReferenceDoc) => vo
             video.load();
         }
     }
-    /* eslint-enable default-case */
 }
+*/
 
 export interface IFlowViewModes {
     showBookmarks?: boolean;
@@ -3178,11 +3177,13 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.cursor = new FlowCursor(this.viewportDiv);
         this.setViewOption(this.options);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        /*
         blobUploadHandler(
             element,
             this.collabDocument,
             (incl: IGenericBlob) => this.insertBlobInternal(incl),
         );
+        */
 
         // HACK: Expose "insertText" via window to Shared Browser Extension
         //       for 2018/Oct demo.
@@ -4643,6 +4644,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.images = images.IFluidObjectCollection;
     }
 
+    /*
     private insertBlobInternal(blob: IGenericBlob) {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.collabDocument.getBlob(blob.id)
@@ -4655,6 +4657,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 });
             });
     }
+    */
 
     public copy() {
         const sel = this.cursor.getSelection();

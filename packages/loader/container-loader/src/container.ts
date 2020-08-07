@@ -20,7 +20,6 @@ import {
     IContainerEvents,
     IDeltaManager,
     IFluidCodeDetails,
-    IGenericBlob,
     ILoader,
     IRuntimeFactory,
     LoaderHeader,
@@ -86,7 +85,6 @@ import {
     ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import { Audience } from "./audience";
-import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
@@ -219,7 +217,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private pendingClientId: string | undefined;
     private loaded = false;
     private _attachState = AttachState.Detached;
-    private blobManager: BlobManager | undefined;
 
     // Active chaincode and associated runtime
     private storageService: IDocumentStorageService | undefined | null;
@@ -533,7 +530,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             // This we can probably just pass the storage service to the blob manager - although ideally
             // there just isn't a blob manager
-            this.blobManager = await this.loadBlobManager(this.storageService, undefined);
             this._attachState = AttachState.Attached;
             this.emit("attached");
             // We know this is create new flow.
@@ -767,7 +763,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private snapshotBase(): ITree {
         const entries: ITreeEntry[] = [];
 
-        const blobMetaData = this.blobManager!.getBlobMetadata();
+        const blobMetaData = (this.context as any).runtime.blobManager.getBlobIds();
         entries.push({
             mode: FileMode.File,
             path: ".blobs",
@@ -894,8 +890,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const maybeSnapshotTree = specifiedVersion === null ? undefined
             : await this.fetchSnapshotTree(specifiedVersion);
 
-        const blobManagerP = this.loadBlobManager(this.storageService, maybeSnapshotTree);
-
         const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
 
         // Attach op handlers to start processing ops
@@ -925,9 +919,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             });
         }
 
-        // LoadContext directly requires blobManager and protocolHandler to be ready, and eventually calls
+        // LoadContext directly requires protocolHandler to be ready, and eventually calls
         // instantiateRuntime which will want to know existing state.  Wait for these promises to finish.
-        [this.blobManager, this.protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP, loadDetailsP]);
+        [this.protocolHandler] = await Promise.all([protocolHandlerP, loadDetailsP]);
 
         await this.loadContext(attributes, maybeSnapshotTree);
 
@@ -1107,21 +1101,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             });
 
         return protocol;
-    }
-
-    private async loadBlobManager(
-        storage: IDocumentStorageService,
-        tree: ISnapshotTree | undefined,
-    ): Promise<BlobManager> {
-        const blobHash = tree?.blobs[".blobs"];
-        const blobs: IGenericBlob[] = blobHash !== undefined
-            ? await readAndParse<IGenericBlob[]>(storage, blobHash)
-            : [];
-
-        const blobManager = new BlobManager(storage);
-        blobManager.loadBlobMetadata(blobs);
-
-        return blobManager;
     }
 
     private getCodeDetailsFromQuorum(): IFluidCodeDetails | undefined {
@@ -1466,7 +1445,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             chaincode,
             snapshot ?? null,
             attributes,
-            this.blobManager,
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
@@ -1504,7 +1482,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             runtimeFactory,
             { id: null, blobs: {}, commits: {}, trees: {} },    // TODO this will be from the offline store
             attributes,
-            this.blobManager,
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,

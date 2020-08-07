@@ -15,7 +15,6 @@ import {
     IAudience,
     IBlobManager,
     IDeltaManager,
-    IGenericBlob,
     ContainerWarning,
     ILoader,
     BindState,
@@ -344,10 +343,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
     public getAudience(): IAudience {
         return this._containerRuntime.getAudience();
-    }
-
-    public async getBlobMetadata(): Promise<IGenericBlob[]> {
-        return this.blobManager.getBlobMetadata();
     }
 
     /**

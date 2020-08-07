@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/*
 import * as api from "@fluid-internal/client-api";
 import { getFileBlobType, IGenericBlob, IImageBlob, IVideoBlob } from "@fluidframework/container-definitions";
 
@@ -160,3 +161,4 @@ async function videoHandler(videoFile: File, incl: IVideoBlob): Promise<IVideoBl
     });
     return urlObjP;
 }
+*/

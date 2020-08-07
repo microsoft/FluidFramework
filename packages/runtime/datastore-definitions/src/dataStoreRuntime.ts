@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { Buffer } from "buffer";
 import { EventEmitter } from "events";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandleContext,
     IFluidSerializer,
     IFluidRouter,
+    IFluidHandle,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IDeltaManager,
-    IGenericBlob,
     ContainerWarning,
     ILoader,
     AttachState,
@@ -101,7 +102,7 @@ export interface IFluidDataStoreRuntime extends
      * Api to upload a blob of data.
      * @param file - blob to be uploaded.
      */
-    uploadBlob(file: IGenericBlob): Promise<IGenericBlob>;
+    uploadBlob(file: Buffer): Promise<IFluidHandle>;
 
     /**
      * Submits the signal to be sent to other clients.
@@ -114,12 +115,7 @@ export interface IFluidDataStoreRuntime extends
      * Api to get the blob for a particular id.
      * @param blobId - ID of the required blob.
      */
-    getBlob(blobId: string): Promise<IGenericBlob | undefined>;
-
-    /**
-     * Api to get the blob metadata.
-     */
-    getBlobMetadata(): Promise<IGenericBlob[]>;
+    getBlob(blobId: string): Promise<IFluidHandle>;
 
     /**
      * Returns the current quorum.

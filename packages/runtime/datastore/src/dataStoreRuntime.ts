@@ -16,7 +16,6 @@ import {
     IAudience,
     IBlobManager,
     IDeltaManager,
-    IGenericBlob,
     ContainerWarning,
     ILoader,
     BindState,
@@ -418,25 +417,17 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         return this.snapshotFn(message);
     }
 
-    public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
+    public async uploadBlob(file: Buffer): Promise<IFluidHandle> {
         this.verifyNotClosed();
 
-        const blob = await this.blobManager.createBlob(file);
-        file.id = blob.id;
-        file.url = blob.url;
-
-        return file;
+        return this.blobManager.createBlob(file);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getBlob(blobId: string): Promise<IGenericBlob | undefined> {
+    public getBlob(blobId: string): Promise<IFluidHandle> {
         this.verifyNotClosed();
 
         return this.blobManager.getBlob(blobId);
-    }
-
-    public async getBlobMetadata(): Promise<IGenericBlob[]> {
-        return this.blobManager.getBlobMetadata();
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {

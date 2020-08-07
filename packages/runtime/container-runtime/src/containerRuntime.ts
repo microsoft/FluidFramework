@@ -107,8 +107,10 @@ import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
 import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
+import { BlobManager } from "./blobManager";
 
 const chunksBlobName = ".chunks";
+const blobsBlobName = ".blobs";
 
 export enum ContainerMessageType {
     // An op to be delivered to component
@@ -119,6 +121,8 @@ export enum ContainerMessageType {
 
     // Chunked operation.
     ChunkedOp = "chunkedOp",
+
+    BlobAttach = "blobAttach"
 }
 
 export interface IChunkedOp {
@@ -215,6 +219,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         case ContainerMessageType.ComponentOp:
         case ContainerMessageType.ChunkedOp:
         case ContainerMessageType.Attach:
+        case ContainerMessageType.BlobAttach:
         case MessageType.Operation:
             return true;
         default:
@@ -475,10 +480,17 @@ export class ContainerRuntime extends EventEmitter
             ? await readAndParse<[string, string[]][]>(context.storage!, chunkId)
             : [];
 
+        const blobId = context.baseSnapshot?.blobs[blobsBlobName];
+        const blobs = blobId
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            ? await readAndParse<string[]>(context.storage!, blobId)
+            : [];
+
         const runtime = new ContainerRuntime(
             context,
             componentRegistry,
             chunks,
+            blobs,
             runtimeOptions,
             containerScope,
             requestHandler);
@@ -518,10 +530,10 @@ export class ContainerRuntime extends EventEmitter
         return this.context.clientDetails;
     }
 
-    public get blobManager(): IBlobManager {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.context.blobManager!;
-    }
+    // public get blobManager(): IBlobManager {
+    //     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    //     return this.context.blobManager!;
+    // }
 
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this.context.deltaManager;
@@ -639,6 +651,7 @@ export class ContainerRuntime extends EventEmitter
     private readonly summarizer: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
+    public readonly blobManager: IBlobManager;
     private readonly pendingStateManager: PendingStateManager;
 
     // Local copy of incomplete received chunks.
@@ -654,6 +667,7 @@ export class ContainerRuntime extends EventEmitter
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
         chunks: [string, string[]][],
+        blobs: string[],
         private readonly runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
             enableWorker: false,
@@ -751,6 +765,13 @@ export class ContainerRuntime extends EventEmitter
                 this.summarizerNode.getCreateChildFn(key, { type: CreateSummarizerNodeSource.FromSummary }));
             this.setNewContext(key, componentContext);
         }
+
+        this.blobManager = new BlobManager(
+            this.IFluidHandleContext,
+            this.storage,
+            (blobId) => this.submit(ContainerMessageType.BlobAttach, blobId),
+        );
+        this.blobManager.loadBlobHandles(blobs);
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
@@ -905,6 +926,21 @@ export class ContainerRuntime extends EventEmitter
                     value: `${schedulerId} not found`,
                 };
             }
+        } else if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === "blobs") {
+            const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
+            if (handle) {
+                return {
+                    status: 200,
+                    mimeType: "fluid/object",
+                    value: handle.get(),
+                };
+            } else {
+                return {
+                    status: 404,
+                    mimeType: "text/plain",
+                    value: "blob not found",
+                };
+            }
         }
 
         if (this.requestHandler !== undefined) {
@@ -960,6 +996,7 @@ export class ContainerRuntime extends EventEmitter
             const content = JSON.stringify([...this.chunkMap]);
             summaryTreeBuilder.addBlob(chunksBlobName, content);
         }
+        summaryTreeBuilder.addBlob(blobsBlobName, JSON.stringify(this.blobManager.getBlobIds()));
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {
@@ -1079,6 +1116,8 @@ export class ContainerRuntime extends EventEmitter
                 case ContainerMessageType.ComponentOp:
                     this.processComponentOp(message, local, localMessageMetadata);
                     break;
+                case ContainerMessageType.BlobAttach:
+                    this.processBlobAttachMessage(message.contents);
                 default:
             }
 
@@ -1439,6 +1478,10 @@ export class ContainerRuntime extends EventEmitter
         const transformed = { ...message, contents: envelope.contents };
         const componentContext = this.getContext(envelope.address);
         componentContext.process(transformed, local, localMessageMetadata);
+    }
+
+    private processBlobAttachMessage(blobId: string) {
+        this.blobManager.setAttached(blobId);
     }
 
     private bindComponent(componentRuntime: IFluidDataStoreChannel): void {
@@ -1837,6 +1880,9 @@ export class ContainerRuntime extends EventEmitter
                 break;
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);
+            case ContainerMessageType.BlobAttach:
+                this.submit(type, content, localOpMetadata);
+                break;
             default:
                 unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
         }

@@ -435,10 +435,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         return this.blobManager.getBlob(blobId);
     }
 
-    public async getBlobMetadata(): Promise<IGenericBlob[]> {
-        return this.blobManager.getBlobMetadata();
-    }
-
     public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.verifyNotClosed();
         switch (message.type) {

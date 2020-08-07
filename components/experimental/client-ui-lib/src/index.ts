@@ -20,4 +20,4 @@ export { CharacterCodes, Paragraph, Table };
 
 export { Text };
 
-export * from "./blob";
+// export * from "./blob";

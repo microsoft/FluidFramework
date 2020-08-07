@@ -24,7 +24,6 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
-import { IBlobManager } from "./blobs";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { ICodeLoader, ILoader } from "./loader";
 import { IMessageScheduler } from "./messageScheduler";
@@ -107,7 +106,6 @@ export interface IContainerContext extends IMessageScheduler, IDisposable {
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly parentBranch: string | null;
-    readonly blobManager: IBlobManager | undefined;
     readonly storage: IDocumentStorageService | undefined | null;
     readonly connected: boolean;
     readonly branch: string;
