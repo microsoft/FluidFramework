@@ -16,10 +16,10 @@ import { getFluidState } from "./getFluidState";
 /**
  * Return a partial view state containing the fluid state key identified converted into its
  * corresponding view state value in the partial view state returned
- * @param syncedStateId - Unique ID for this synced component's state
- * @param syncedState - The shared map this component shared state is stored on
+ * @param syncedStateId - Unique ID for the synced state of this view
+ * @param syncedState - The shared map this shared state is stored on
  * @param fluidKey - The key of the value within the Fluid state that we want converted
- * @param fluidObjectMap - A map of component handle paths to their respective components
+ * @param fluidObjectMap - A map of Fluid handle paths to their Fluid objects
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
  * respective converters
  * @param combinedFluidState - Optional param containing the combined Fluid state so far to fetch from
@@ -36,18 +36,18 @@ export function getViewFromFluid<
     viewState: SV,
     combinedFluidState?: Partial<SF>,
 ): Partial<SV> {
-    const componentState = getFluidState(
+    const fluidObjectState = getFluidState(
         syncedStateId,
         syncedState,
         fluidObjectMap,
         fluidToView,
     );
-    if (componentState === undefined) {
+    if (fluidObjectState === undefined) {
         throw Error(
             "Attempted to fetch view from fluid state before it was initialized",
         );
     }
-    let value = componentState[fluidKey];
+    let value = fluidObjectState[fluidKey];
     if (combinedFluidState !== undefined) {
         value = combinedFluidState[fluidKey] ?? value;
     }
@@ -58,9 +58,9 @@ export function getViewFromFluid<
         return viewConverter(viewState, partialFluidState, fluidObjectMap);
     } else {
         const partialViewState: Partial<SV> = {};
-        const valueAsIComponentHandle = (value as IFluidObject).IFluidHandle;
-        const convertedValue = valueAsIComponentHandle !== undefined
-            ? fluidObjectMap.get(valueAsIComponentHandle.absolutePath)
+        const valueAsIFluidHandle = (value as IFluidObject).IFluidHandle;
+        const convertedValue = valueAsIFluidHandle !== undefined
+            ? fluidObjectMap.get(valueAsIFluidHandle.absolutePath)
             : value;
         partialViewState[fluidKey as string] = convertedValue;
         return partialViewState;

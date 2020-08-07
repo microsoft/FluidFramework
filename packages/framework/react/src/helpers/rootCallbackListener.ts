@@ -19,11 +19,11 @@ import { getFluidState } from ".";
 import { ISyncedState } from "..";
 
 /**
- * The callback that is added to the "valueChanged" event on the IComponentListened this
+ * The callback that is added to the "valueChanged" event on the Fluid object this
  * is passed in to. This will trigger state updates when the synced state value is updated
- * @param fluidObjectMap - A map of component handle paths to their respective components
- * @param syncedStateId - Unique ID for this synced component's state
- * @param syncedState - The shared map this component's synced state is stored on
+ * @param fluidObjectMap - A map of Fluid handle paths to their Fluid objects
+ * @param syncedStateId - Unique ID for this synced Fluid object's state
+ * @param syncedState - The shared map this Fluid object's synced state is stored on
  * @param runtime - The data store runtime
  * @param state - The current view state
  * @param setState - Callback to update the react view state
@@ -79,7 +79,7 @@ export const syncedStateCallbackListener = <
         viewToFluid !== undefined &&
         viewToFluidKeys.includes(change.key)
     ) {
-        // If the update is to a child component, trigger only a view update as the child itself will
+        // If the update is to a child Fluid object, trigger only a view update as the child itself will
         // update its Fluid update
         const stateKey = getByFluidKey(change.key, viewToFluid);
         if (stateKey !== undefined) {

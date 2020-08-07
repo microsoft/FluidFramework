@@ -17,7 +17,7 @@ import { getFluidFromView } from "./getFluidFromView";
 import { getViewFromFluid } from "./getViewFromFluid";
 import { getFluidState } from "./getFluidState";
 import { setFluidState } from "./setFluidState";
-import { getComponentSchema } from "./getComponentSchema";
+import { getSchema } from "./getSchema";
 
 /**
  * Function to combine both the view and Fluid states so that they are in sync. If the update
@@ -26,11 +26,11 @@ import { getComponentSchema } from "./getComponentSchema";
  * If it is an update triggered from a remote change on the synced state, the new Fluid state from the synced state
  * is used to overwrite the local synced state and the new local view is created accordingly.
  * @param isSyncedStateUpdate - Is the update from a local state update or from one triggered by the synced state
- * @param syncedStateId - Unique ID for this synced component's state
- * @param syncedState - The shared map this component synced state is stored on
+ * @param syncedStateId - Unique ID for this synced Fluid object's state
+ * @param syncedState - The shared map this Fluid object synced state is stored on
  * @param viewState - The current view state
  * @param setState - Callback to update the react view state
- * @param fluidObjectMap - A map of component handle paths to their respective components
+ * @param fluidObjectMap - A map of Fluid handle paths to their Fluid objects
  * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
  * respective converters
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
@@ -66,18 +66,18 @@ export function syncState<
             "Attempted to sync view and fluid states before fluid state was initialized",
         );
     }
-    // Fetch the component schema
-    const componentSchemaHandles = getComponentSchema(
+    // Fetch the schema
+    const schemaHandles = getSchema(
         syncedStateId,
         syncedState,
     );
-    if (componentSchemaHandles === undefined) {
+    if (schemaHandles === undefined) {
         throw Error("No schema found stored on the root");
     }
     const {
         viewMatchingMapHandle,
         fluidMatchingMapHandle,
-    } = componentSchemaHandles;
+    } = schemaHandles;
 
     const viewMatchingMap = fluidObjectMap.get(viewMatchingMapHandle.absolutePath)
         ?.fluidObject as ISharedMap;

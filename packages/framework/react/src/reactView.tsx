@@ -87,7 +87,7 @@ export abstract class FluidReactView<SV extends IViewState,
     }
 
     /**
-     * Function to update the current state. It overloads the React component setState function
+     * Function to update the current state. It overloads the React setState function
      * @param newState - New state to be set both locally and on the synced state
      */
     public setState(newState: SV) {

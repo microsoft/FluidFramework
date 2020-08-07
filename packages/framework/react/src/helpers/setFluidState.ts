@@ -15,19 +15,20 @@ import {
 
 /**
  * Store the Fluid state onto the shared synced state
- * @param syncedStateId - Unique ID to use for storing the component's synced state in the map
+ * @param syncedStateId - Unique ID to use for storing the Fluid object's synced state in the map
  * @param syncedState - The shared map that will be used to store the synced state
  * @param runtime - The data store runtime
- * @param componentMap - A map of component handle paths to their respective components
+ * @param fluidObjectMap - A map of Fluid handle paths to their Fluid objects
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
  * respective converters
- * @param newFluidState - The Fluid state to store on to the syncedState, after converting components to their handles
+ * @param newFluidState - The Fluid state to store on to the syncedState,
+ * after converting Fluid objects to their handles
  */
 export function setFluidState<SV, SF>(
     syncedStateId: string,
     syncedState: ISyncedState,
     runtime: IFluidDataStoreRuntime,
-    componentMap: FluidObjectMap,
+    fluidObjectMap: FluidObjectMap,
     fluidToView: Map<keyof SF, IViewConverter<SV, SF>>,
     newViewState: SV,
     newFluidState?: SF,
@@ -36,11 +37,11 @@ export function setFluidState<SV, SF>(
     const storedStateHandle = syncedState.get<IFluidHandle>(
         `syncedState-${syncedStateId}`,
     );
-    let storedState = componentMap.get(storedStateHandle?.absolutePath)
+    let storedState = fluidObjectMap.get(storedStateHandle?.absolutePath)
         ?.fluidObject as ISharedMap;
     if (storedStateHandle === undefined || storedState === undefined) {
         const newState = SharedMap.create(runtime);
-        componentMap.set(newState.handle.absolutePath, {
+        fluidObjectMap.set(newState.handle.absolutePath, {
             fluidObject: newState,
             isRuntimeMap: true,
         });
@@ -57,7 +58,7 @@ export function setFluidState<SV, SF>(
         if (createCallback !== undefined) {
             if (storedState.get(fluidKey) === undefined) {
                 const sharedObject = createCallback(runtime);
-                componentMap.set(sharedObject.handle.absolutePath, {
+                fluidObjectMap.set(sharedObject.handle.absolutePath, {
                     fluidObject: sharedObject,
                     listenedEvents: fluidToView?.get(fluidKey as keyof SF)
                         ?.listenedEvents ?? ["valueChanged"],

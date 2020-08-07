@@ -48,7 +48,7 @@ export async function asyncForEach(
     await Promise.all(promises);
 }
 
-export const addComponent = async <
+export const addFluidObject = async <
     SV extends IViewState,
     SF extends IFluidState
 >(
@@ -76,15 +76,15 @@ export const addComponent = async <
     if (!storedHandleMap.has(handle.absolutePath)) {
         storedHandleMap.set(handle.absolutePath, handle);
     }
-    return handle.get().then((component) => {
+    return handle.get().then((fluidObject) => {
         if (value.isRuntimeMap) {
-            (component as SharedMap).on("valueChanged", syncedStateCallback);
+            (fluidObject as SharedMap).on("valueChanged", syncedStateCallback);
         } else if (value.listenedEvents !== undefined) {
             for (const event of value.listenedEvents) {
-                (component as SharedObject).on(event, refreshView);
+                (fluidObject as SharedObject).on(event, refreshView);
             }
         }
-        value.fluidObject = component;
+        value.fluidObject = fluidObject;
         value.isListened = true;
         fluidObjectMap.set(handle.absolutePath, value);
     });

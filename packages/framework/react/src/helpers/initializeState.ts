@@ -18,16 +18,16 @@ import {
 } from "../interface";
 import {
     syncedStateCallbackListener,
-    updateStateAndComponentMap,
-    getComponentSchema,
+    updateStateAndFluidObjectMap,
+    getSchema,
     getFluidState,
 } from ".";
 
 /**
  * Fetch the synced state for this view from the SyncedDataObject sharedState and add
  * listeners for all state updates
- * @param syncedStateId - Unique ID for this synced component's state
- * @param syncedState - The component's shared state map
+ * @param syncedStateId - Unique ID for this synced data object's state
+ * @param syncedState - The synced data object's shared state map
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
  * respective converters
  * @param dataProps - Contains the runtime and fluidObjectMap to create and store DDS'
@@ -54,15 +54,15 @@ export async function initializeState<
     fluidToView: FluidToViewMap<SV, SF>,
     viewToFluid?: ViewToFluidMap<SV, SF>,
 ): Promise<void> {
-    const componentSchemaHandles = getComponentSchema(
+    const schemaHandles = getSchema(
         syncedStateId,
         syncedState,
     );
-    if (componentSchemaHandles?.storedHandleMapHandle.absolutePath === undefined) {
-        throw Error(`Component schema not initialized prior to render for ${syncedStateId}`);
+    if (schemaHandles?.storedHandleMapHandle.absolutePath === undefined) {
+        throw Error(`Schema not initialized prior to render for ${syncedStateId}`);
     }
     const storedHandleMap = dataProps.fluidObjectMap.get(
-        componentSchemaHandles?.storedHandleMapHandle.absolutePath,
+        schemaHandles?.storedHandleMapHandle.absolutePath,
     )?.fluidObject as SharedMap;
     if (storedHandleMap === undefined) {
         throw Error(`Stored handle map not initialized prior to render for ${syncedStateId}`);
@@ -88,8 +88,8 @@ export async function initializeState<
             throw Error("Cannot find fluidToView value");
         }
         if (value.sharedObjectCreate !== undefined) {
-            const component = currentFluidState[fluidStateKey] as any;
-            unlistenedHandles.push(component.handle);
+            const fluidObject = currentFluidState[fluidStateKey] as any;
+            unlistenedHandles.push(fluidObject.handle);
         }
     }
 
@@ -115,7 +115,7 @@ export async function initializeState<
         return callback(change, local);
     };
 
-    // Add the callback to the component's own synced state
+    // Add the callback to the fluidObject's own synced state
     syncedState.addValueChangedListener(syncedStateCallback);
     storedHandleMap.on("valueChanged", (
         change: IDirectoryValueChanged,
@@ -127,7 +127,7 @@ export async function initializeState<
                 isListened: false,
             });
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            updateStateAndComponentMap<SV, SF>(
+            updateStateAndFluidObjectMap<SV, SF>(
                 [handle],
                 dataProps.fluidObjectMap,
                 storedHandleMap,
@@ -144,7 +144,7 @@ export async function initializeState<
         }
     });
 
-    return updateStateAndComponentMap<SV, SF>(
+    return updateStateAndFluidObjectMap<SV, SF>(
         unlistenedHandles,
         dataProps.fluidObjectMap,
         storedHandleMap,

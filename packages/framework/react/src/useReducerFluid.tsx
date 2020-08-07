@@ -13,7 +13,7 @@ import {
     instanceOfStateUpdateFunction,
     instanceOfAsyncStateUpdateFunction,
     instanceOfSelectorFunction,
-    instanceOfComponentSelectorFunction,
+    instanceOfFluidObjectSelectorFunction,
     instanceOfEffectFunction,
     instanceOfAsyncEffectFunction,
     IStateUpdateResult,
@@ -25,11 +25,11 @@ import {
 } from "./interface";
 import { useStateFluid } from "./useStateFluid";
 import {
-    updateStateAndComponentMap,
+    updateStateAndFluidObjectMap,
     syncedStateCallbackListener,
     getFluidState,
     syncState,
-    getComponentSchema,
+    getSchema,
 } from "./helpers";
 
 export function useReducerFluid<
@@ -62,15 +62,15 @@ export function useReducerFluid<
     const syncedState = syncedDataObject.syncedState;
     const { fluidToView, viewToFluid } = config as ISyncedStateConfig<SV, SF>;
 
-    const componentSchemaHandles = getComponentSchema(
+    const schemaHandles = getSchema(
         syncedStateId,
         syncedState,
     );
-    if (componentSchemaHandles?.storedHandleMapHandle.absolutePath === undefined) {
+    if (schemaHandles?.storedHandleMapHandle.absolutePath === undefined) {
         throw Error(`Component schema not initialized prior to render for ${syncedStateId}`);
     }
     const storedHandleMap = dataProps.fluidObjectMap.get(
-        componentSchemaHandles?.storedHandleMapHandle.absolutePath,
+        schemaHandles?.storedHandleMapHandle.absolutePath,
     )?.fluidObject as SharedMap;
     if (storedHandleMap === undefined) {
         throw Error(`Stored handle map not initialized prior to render for ${syncedStateId}`);
@@ -87,7 +87,7 @@ export function useReducerFluid<
             dispatchState?: ICombinedState<SV, SF, C>,
             ...args: any
         ) => {
-            // Retrieve the current state that is stored on the synced state for this component ID
+            // Retrieve the current state that is stored on the synced state for this Fluid object ID
             const currentFluidState = getFluidState(
                 syncedStateId,
                 syncedState,
@@ -120,13 +120,13 @@ export function useReducerFluid<
             if (action !== undefined) {
                 if (instanceOfStateUpdateFunction<SV, SF, C>(action)) {
                     // If its a synchronous state update function, call it and inspect the result
-                    // for new component handles
+                    // for new Fluid object handles
                     const result = (action.function as any)(
                         combinedDispatchState,
                         ...args,
                     );
                     if (result.newComponentHandles !== undefined) {
-                        // Fetch any new components and add a listener to their synced state.
+                        // Fetch any new Fluid objects and add a listener to their synced state.
                         // Then update the view state.
                         const callback = syncedStateCallbackListener(
                             combinedDispatchDataProps.fluidObjectMap,
@@ -140,7 +140,7 @@ export function useReducerFluid<
                             viewToFluid,
                         );
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        updateStateAndComponentMap(
+                        updateStateAndFluidObjectMap(
                             result.newComponentHandles,
                             combinedDispatchDataProps.fluidObjectMap,
                             storedHandleMap,
@@ -186,10 +186,10 @@ export function useReducerFluid<
                             fluidToView,
                             viewToFluid,
                         );
-                        if (result.newComponentHandles !== undefined) {
+                        if (result.newFluidHandles !== undefined) {
                             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                            updateStateAndComponentMap(
-                                result.newComponentHandles,
+                            updateStateAndFluidObjectMap(
+                                result.newFluidHandles,
                                 combinedDispatchDataProps.fluidObjectMap,
                                 storedHandleMap,
                                 false,
@@ -287,18 +287,19 @@ export function useReducerFluid<
 
     // Fetch is an in-memory object similar to dispatch, but now made for selector actions.
     // Selectors are NOT used for updating the state but instead to be able to access
-    // and add other Fluid components using the handle provided. If the handle provided is not available
-    // in our component map, it will be dynamically updated and setState will be called again with the updated component
-    // map available for use. Alternatively, if you would like to pre-load components before React is initialized,
+    // and add other Fluid Fluid objects using the handle provided. If the handle provided is not available
+    // in our Fluid object map, it will be dynamically updated and setState will be called again
+    // with the updated Fluid object map available for use.
+    // Alternatively, if you would like to pre-load Fluid objects before React is initialized,
     // you can do so and provide them in dataProps.
-    // Fetch can also be used to retrieve data from these components as they will also be available as a parameter.
+    // Fetch can also be used to retrieve data from these Fluid objects as they will also be available as a parameter.
     const fetch = React.useCallback(
         (
             type: keyof B,
             fetchState?: ICombinedState<SV, SF, C>,
             handle?: IFluidHandle,
         ) => {
-            // Retrieve the current state that is stored on the syncedState for this component ID
+            // Retrieve the current state that is stored on the syncedState for this Fluid object ID
             const currentFluidState = getFluidState(
                 syncedStateId,
                 syncedState,
@@ -331,11 +332,11 @@ export function useReducerFluid<
             if (action !== undefined) {
                 if (instanceOfSelectorFunction<SV, SF, C>(action)) {
                     // Add any new handles that were returned by the selector to our list
-                    // to be loaded to the fluid component map
+                    // to be loaded to the fluid Fluid object map
                     let newHandles: IFluidHandle[] = [];
                     if (
                         handle !== undefined &&
-                        instanceOfComponentSelectorFunction<SV, SF, C>(action) &&
+                        instanceOfFluidObjectSelectorFunction<SV, SF, C>(action) &&
                         combinedFetchDataProps.fluidObjectMap.get(
                             handle.absolutePath,
                         ) === undefined
@@ -354,7 +355,7 @@ export function useReducerFluid<
                             actionResult.newComponentHandles,
                         );
                     }
-                    // If there are handles, start a call to update the component map and then call the set state
+                    // If there are handles, start a call to update the Fluid object map and then call the set state
                     // callback when it has finished to provide the updated map in the state
                     if (newHandles.length > 0) {
                         const callback = syncedStateCallbackListener(
@@ -369,7 +370,7 @@ export function useReducerFluid<
                             viewToFluid,
                         );
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        updateStateAndComponentMap(
+                        updateStateAndFluidObjectMap(
                             newHandles,
                             combinedFetchDataProps.fluidObjectMap,
                             storedHandleMap,
@@ -401,8 +402,8 @@ export function useReducerFluid<
         [selector, viewState, setState, dataProps],
     );
 
-    // The combined selector is then similarly created with the Fluid-specific logic of adding any new components
-    // to our component map interjected into the setState logic
+    // The combined selector is then similarly created with the Fluid-specific logic of adding any new Fluid objects
+    // to our Fluid object map interjected into the setState logic
     const combinedSelector = {};
     Object.entries(selector).forEach(([functionName, functionItem], i) => {
         combinedSelector[functionName] = {
@@ -413,7 +414,7 @@ export function useReducerFluid<
         };
     });
 
-    // Retrieve the current state that is stored on the syncedState for this component ID
+    // Retrieve the current state that is stored on the syncedState for this Fluid object ID
     const fluidState = getFluidState(
         syncedStateId,
         syncedState,

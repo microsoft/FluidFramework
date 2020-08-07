@@ -577,7 +577,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
                 syncedStateId={"clicker"}
                 root={this.root}
                 dataProps={{
-                    fluidComponentMap: new Map(),
+                    fluidObjectMap: new Map(),
                     runtime: this.runtime,
                 }}
                 fluidToView={fluidToView}
@@ -649,7 +649,7 @@ public render(element: HTMLElement) {
             syncedStateId={"clicker"}
             root={this.root}
             dataProps={{
-                fluidComponentMap: new Map(),
+                fluidObjectMap: new Map(),
                 runtime: this.runtime,
             }}
             fluidToView={fluidToView}
@@ -684,7 +684,7 @@ Okay, now we have everything necessary to pass in as props to our `CounterReactV
   clicker being render alongside this one in this component, it should receive its own ID to prevent one from
   interfering in the updates of the other
 - `root` - The same `SharedDirectory` provided by `this.root` from `PrimedComponent`
-- `dataProps.fluidComponentMap` - This can just take a new `Map` instance for now but will need to be filled when
+- `dataProps.fluidObjectMap` - This can just take a new `Map` instance for now but will need to be filled when
   establishing multi-component relationships in more complex cases. This map is where all the DDS' that we use are
   stored after being fetched from their handles, and it used to make the corresponding component synchronously available
   in the view.

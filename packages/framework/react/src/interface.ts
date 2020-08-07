@@ -261,22 +261,22 @@ export interface IFluidObjectMapItem {
 }
 
 /**
- * A map of the component handle path to the Fluid component object
+ * A map of the Fluid object handle absolute path to the Fluid object
  */
 export type FluidObjectMap = Map<string, IFluidObjectMapItem>;
 
 /**
  * Base interface to extend from for the data props that will be passed in for reducers and
- * selectors to use to offer inter-component operability
+ * selectors to use to offer inter-Fluid object operability
  */
 export interface IFluidDataProps {
     /**
-     * The Fluid data store runtime passed in from component initialization
+     * The Fluid data store runtime passed in from Fluid object initialization
      */
     runtime: IFluidDataStoreRuntime;
     /**
-     * The running map of all the Fluid components being used to render the React component. This
-     * can be view/data components, and they will be asynchronously loaded here so that they are,
+     * The running map of all the Fluid objects being used to render the React view. This
+     * can be view/data Fluid objects, and they will be asynchronously loaded here so that they are,
      * in turn, synchronously available for the view when the state updates after they are fetched
      */
     fluidObjectMap: FluidObjectMap;
@@ -343,8 +343,8 @@ export interface FluidStateUpdateFunction<
     > {
     /**
      * The function defined here will take the combined state and update either
-     * the fluid state, the view state, or both. The new combined state and any new component handles
-     * to load in are returned by the function.
+     * the fluid state, the view state, or both. The new combined state and any new Fluid object
+     * handles to load in are returned by the function.
      */
     function: (
         oldState?: ICombinedState<SV, SF, C>,
@@ -372,7 +372,7 @@ export interface FluidAsyncStateUpdateFunction<
     /**
      * The function defined here will take the combined state and update either
      * the fluid state, the view state, or both in an async manner. The new combined state and any new
-     * component handles to load in will be returned by the function when it finishes.
+     * Fluid object handles to load in will be returned by the function when it finishes.
      */
     asyncFunction: (
         oldState?: ICombinedState<SV, SF, C>,
@@ -393,10 +393,10 @@ export interface IStateUpdateResult<
      */
     state: ICombinedState<SV, SF, C>;
     /**
-     * Any new components that were added in due this function need to have
+     * Any new Fluid objects that were added in due this function need to have
      * their corresponding handles passed in so that the object can also be loaded for all other users
      */
-    newComponentHandles?: IFluidHandle[];
+    newFluidHandles?: IFluidHandle[];
 }
 
 export const instanceOfAsyncStateUpdateFunction = <
@@ -418,20 +418,20 @@ export interface FluidSelectorFunction<
     > {
     /**
      * The function defined here will take the combined state and return
-     * to the view any values that it needs  from other values/components that were passed
+     * to the view any values that it needs  from other values/Fluid objects that were passed
      * in to the data props on initializing.
-     * It will also return any new component handles that will be needed for other users to render the view value
+     * It will also return any new Fluid handles that will be needed for other users to render the view value
      */
     function: (
         state?: ICombinedState<SV, SF, C>
     ) => {
         result: any | undefined;
-        newComponentHandles?: IFluidHandle[];
+        newFluidHandles?: IFluidHandle[];
     };
 }
 
 /**
- * Definition for a component selector function used in selectors
+ * Definition for a Fluid object selector function used in selectors
  */
 export interface FluidObjectSelectorFunction<
     SV extends IViewState,
@@ -440,14 +440,14 @@ export interface FluidObjectSelectorFunction<
     > {
     /**
      * Similar to the FluidSelectorFunction's function but this also takes in a
-     * handle if we need to fetch a component from the fluidObjectMap
+     * handle if we need to fetch a Fluid object from the fluidObjectMap
      */
     function: (
         handle: IFluidHandle<any>,
         state?: ICombinedState<SV, SF, C>,
     ) => {
         result: IFluidObject | undefined;
-        newComponentHandles?: IFluidHandle[];
+        newFluidHandles?: IFluidHandle[];
     };
 }
 
@@ -460,7 +460,7 @@ export const instanceOfSelectorFunction = <
 ): object is FluidSelectorFunction<SV, SF, C> =>
     object === Object(object) && "function" in object;
 
-export const instanceOfComponentSelectorFunction = <
+export const instanceOfFluidObjectSelectorFunction = <
     SV extends IViewState,
     SF extends IFluidState,
     C extends IFluidDataProps
@@ -480,7 +480,7 @@ export interface IFluidReducerProps<
     C extends IFluidDataProps
     > {
     /**
-     * Unique ID to use for storing the component's synced state in the SyncedDataObject's syncedState SharedMap
+     * Unique ID to use for storing the view's synced state in the SyncedDataObject's syncedState SharedMap
      */
     syncedStateId: string;
     /**
@@ -489,18 +489,18 @@ export interface IFluidReducerProps<
     syncedDataObject: SyncedDataObject;
     /**
      * The Fluid reducer containing all the functions as defined by an extension of the IFluidReducer type.
-     * Any mutations to the state, or effects outside of the component involving the state should be done here.
+     * Any mutations to the state, or effects outside of the Fluid object involving the state should be done here.
      */
     reducer: A;
     /**
      * The Fluid selector containing all the functions as defined by an extension of the IFluidSelector
-     * type. Any fetching of new components or data from other components should be done here.
+     * type. Any fetching of new Fluid objects or data from other Fluid objects should be done here.
      */
     selector: B;
     /**
      * Data props that are loaded in during the Fluid initialization step. This contains the runtime
-     * and the fluid component map
-     * TODO: Move data props out as it can be fetched from synced component but
+     * and the fluid object map
+     * TODO: Move data props out as it can be fetched from synced Fluid data object but
      * still needs to be extensible for reducers
      */
     dataProps?: C;
@@ -545,7 +545,7 @@ export interface FluidContext<
     C
     > {
     /**
-     * The context provider component that will give the FluidContextState to
+     * The context provider React component that will give the FluidContextState to
      * its children
      */
     Provider: React.ProviderExoticComponent<
@@ -571,7 +571,7 @@ export interface FluidContext<
 
 export interface ISyncedStateConfig<SV, SF> {
     /**
-     * Unique ID to use for storing the component's synced state in the SyncedDataObject's syncedState SharedMap
+     * Unique ID to use for storing the view's synced state in the SyncedDataObject's syncedState SharedMap
      */
     syncedStateId: string;
     /**
