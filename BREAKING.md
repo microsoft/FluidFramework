@@ -10,6 +10,7 @@
 - [Package Renames](#package-renames)
 - [IComponent and IComponent Interfaces Removed](#IComponent-and-IComponent-Interfaces-Removed)
 - [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
+- [LastEditedTrackerComponent renamed to LastEditedTrackerDataObject](#lasteditedtrackercomponent-renamed)
 
 ### Container runtime event changes
 Container runtime now emits the event "fluidDataStoreInstantiated" instead of "componentInstantiated"
@@ -49,6 +50,9 @@ In 0.24 IComponent and IComponent interfaces were deprecated, they are being rem
 
 ### odsp-utils Changes
 To support additional authentication scenarios, the signature and/or name of a few auth-related functions was modified.
+
+### LastEditedTrackerComponent renamed
+It is renamed to LastEditedTrackerDataObject
 
 ## 0.24 Breaking Changes
 This release only contains renames. There are no functional changes in this release. You should ensure you have integrated and validated up to release 0.23 before integrating this release.
