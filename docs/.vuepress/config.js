@@ -218,115 +218,33 @@ const getDocsSidebar = () => {
                 "",
                 "dev-env.md",
                 "hello-world.md",
-                "playground.md",
-                "learn.md",
-            ]
-        },
-        {
-            title: "Recipes and examples",
-            collapsable: false,
-            children: [
-                "data-stores.md",
-                "view-adapters.md",
             ]
         },
         {
             title: "Main concepts",
             collapsable: false,
             children: [
-                "guide.md",
                 "architecture.md",
                 "dds.md",
-                "interfaces.md",
-                "aqueduct.md",
+                "interfaces-aqueduct.md",
                 "hosts.md",
                 "containers-runtime.md",
                 "server.md",
             ]
         },
         {
-            title: "DDS reference",
-            collapsable: false,
-            // path: "dds",
-            children: [
-                // "overview",
-                "SharedDirectory.md",
-                "SharedMap.md",
-                "SharedCell.md",
-                "SharedCounter.md",
-                {
-                    title: "Sequences",
-                    path: "sequences",
-                    children: [
-                        "SharedNumberSequence.md",
-                        "SharedObjectSequence.md",
-                        "SharedString.md",
-                    ],
-                },
-                "SharedMatrix.md",
-                "consensus.md",
-            ]
-        },
-        {
-            title: "Testing",
-            collapsable: false,
-            children: [
-                "testing.md",
-            ]
-        },
-        {
-            title: "For contributors",
+            title: "FAQ",
             collapsable: true,
-            children: [
-                "conduct.md",
-                "release-process.md",
-                "breaking-changes.md",
-                "compatibility.md",
-                "tob.md",
-                "dds-anatomy.md",
-                "doc-system.md",
-            ]
+            path: "faq.md",
         },
-    ];
-}
-
-const getTutorialsSidebar = () => {
-    return [
-        {
-            title: "Tutorials",
-            collapsable: false,
-            // path: "",
-            children: [
-                "",
-                "dice-roller.md",
-                "sudoku.md",
-            ]
-        },
-        {
-            title: "Examples",
-            collapsable: false,
-            // path: "",
-            children: [
-                "badge.md",
-            ]
-        },
-
-    ];
-}
-
-const getHowSidebar = () => {
-    return [
-        "",
     ];
 }
 
 const getAllSidebars = () => {
     return {
         "/docs/": getDocsSidebar(),
-        "/tutorials/": getTutorialsSidebar(),
         "/api/": getApiSidebar(),
         "/community/": getCommunitySidebar(),
-        "/how/": getHowSidebar(),
     };
 }
 
@@ -413,7 +331,7 @@ module.exports = {
         anchor: {
             permalink: true,
             permalinkBefore: true,
-            permalinkSymbol: permalinkSymbol(),
+            // permalinkSymbol: permalinkSymbol(),
         },
         lineNumbers: true,
         extractHeaders: ["h2", "h3", "h4"],
