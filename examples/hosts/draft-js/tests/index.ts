@@ -6,8 +6,8 @@
 import { getSessionStorageContainer } from "@fluidframework/get-session-storage-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
-import { DraftJsObject } from "./fluid-object";
-import { DraftJsContainer } from "./container";
+import { DraftJsObject } from "../src/fluid-object";
+import { DraftJsContainer } from "../src/container";
 
 // Re-export everything
 export { DraftJsObject as DraftJsExample, DraftJsContainer };

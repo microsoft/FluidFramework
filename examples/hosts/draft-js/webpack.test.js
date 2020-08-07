@@ -8,26 +8,22 @@ const merge = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = env => {
-    const isProduction = env && env.production;
-
-    return merge({
+    return ({
         entry: {
-            app: "./src/index.ts"
+            app: "./tests/index.ts"
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
         },
         module: {
-            rules: [
-                {
-                    test: /\.tsx?$/,
-                    loader: "ts-loader"
-                },
-                {
-                    test: /\.css$/i,
-                    use: ['style-loader', 'css-loader'],
-                }
-            ],
+            rules: [{
+                test: /\.tsx?$/,
+                loader: "ts-loader"
+            },
+            {
+                test: /\.css$/i,
+                use: ['style-loader', 'css-loader'],
+            }]
         },
         output: {
             filename: "[name].bundle.js",
@@ -40,12 +36,11 @@ module.exports = env => {
         },
         plugins: [
             new HtmlWebpackPlugin({
-                template: "./public/index.html",
+                template: "./tests/index.html",
                 chunks: ["app"],
             }),
-            // new CleanWebpackPlugin(),
         ],
-    }, isProduction
-        ? require("./webpack.prod")
-        : require("./webpack.dev"));
+        mode: "development",
+        devtool: "inline-source-map"
+    });
 };
