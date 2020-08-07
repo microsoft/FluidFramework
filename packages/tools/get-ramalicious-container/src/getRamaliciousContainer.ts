@@ -7,8 +7,8 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
-import { LocalResolver } from "@fluidframework/local-driver";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { LocalResolver, LocalDocumentServiceFactory, LocalSessionStorageDbFactory } from "@fluidframework/local-driver";
 
 /**
  * Connect to the Ram-a-licious service and retrieve a Container with the given ID running the given code.
@@ -20,13 +20,9 @@ export async function getRamaliciousContainer(
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
 ): Promise<Container> {
-    const documentServiceFactory = new RouterliciousDocumentServiceFactory(
-        false,
-        new DefaultErrorTracking(),
-        false,
-        true,
-        undefined,
-    );
+    const deltaConn = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory(documentId));
+    const documentServiceFactory = new LocalDocumentServiceFactory(deltaConn);
+    const url = `${window.location.origin}/${documentId}`;
 
     const urlResolver = new LocalResolver();
 
@@ -51,10 +47,10 @@ export async function getRamaliciousContainer(
         // proposal), but the Container will only give us a NullRuntime if there's no proposal.  So we'll use a fake
         // proposal.
         container = await loader.createDetachedContainer({ package: "", config: {} });
-        await container.attach({ url: documentId });
+        await container.attach({ url });
     } else {
         // The InsecureTinyliciousUrlResolver expects the url of the request to be the documentId.
-        container = await loader.resolve({ url: documentId });
+        container = await loader.resolve({ url });
         // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
         // new container here, where we expect this to be loading an existing container.
         if (!container.existing) {

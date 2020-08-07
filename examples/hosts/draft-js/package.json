@@ -32,6 +32,7 @@
     "@fluidframework/aqueduct": "^0.25.0",
     "@fluidframework/datastore-definitions": "^0.25.0",
     "@fluidframework/get-tinylicious-container": "^0.25.0",
+    "@fluidframework/get-ramalicious-container": "^0.25.0",
     "@fluidframework/map": "^0.25.0",
     "@fluidframework/merge-tree": "^0.25.0",
     "@fluidframework/protocol-definitions": "^0.1010.0",

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
+// import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
+import { getRamaliciousContainer } from "@fluidframework/get-ramalicious-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
 import { DraftJsObject } from "./fluid-object";
@@ -14,9 +15,9 @@ export { DraftJsObject as DraftJsExample, DraftJsContainer };
 
 // Since this is a single page fluid application we are generating a new document id
 // if one was not provided
-let createNew = false;
+// let createNew = false;
 if (window.location.hash.length === 0) {
-    createNew = true;
+    // createNew = true;
     window.location.hash = Date.now().toString();
 }
 const documentId = window.location.hash.substring(1);
@@ -27,13 +28,15 @@ const documentId = window.location.hash.substring(1);
  */
 async function start() {
     // Get the Fluid Container associated with the provided id
-    const container = await getTinyliciousContainer(documentId, DraftJsContainer, createNew);
+    const container = await getRamaliciousContainer(documentId, DraftJsContainer, true);
 
     // Get the Default Object from the Container
     const defaultObject = await getDefaultObjectFromContainer<DraftJsObject>(container);
 
     // For now we will just reach into the FluidObject to render it
-    defaultObject.render(document.getElementById("content"));
+    defaultObject.render(document.getElementById("content1"));
+
+    defaultObject.render(document.getElementById("content2"));
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line dot-notation
