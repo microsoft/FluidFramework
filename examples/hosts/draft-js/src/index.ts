@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getSessionStorageContainer } from "@fluidframework/get-session-storage-container";
+import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
 import { DraftJsObject } from "./fluid-object";
@@ -27,21 +27,13 @@ const documentId = window.location.hash.substring(1);
  */
 async function start() {
     // Get the Fluid Container associated with the provided id
-    const container = await getSessionStorageContainer(documentId, DraftJsContainer, createNew);
+    const container = await getTinyliciousContainer(documentId, DraftJsContainer, createNew);
 
     // Get the Default Object from the Container
     const defaultObject = await getDefaultObjectFromContainer<DraftJsObject>(container);
 
     // For now we will just reach into the FluidObject to render it
-    defaultObject.render(document.getElementById("content1"));
-
-    const container2 = await getSessionStorageContainer(documentId, DraftJsContainer, false);
-
-    // Get the Default Object from the Container
-    const defaultObject2 = await getDefaultObjectFromContainer<DraftJsObject>(container2);
-
-    // For now we will just reach into the FluidObject to render it
-    defaultObject2.render(document.getElementById("content2"));
+    defaultObject.render(document.getElementById("content"));
 }
 
 start().catch((e)=> {
