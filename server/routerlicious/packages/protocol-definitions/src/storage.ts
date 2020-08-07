@@ -92,7 +92,7 @@ export interface ISnapshotTree {
 }
 
 /**
- * Represents a version of the snapshot of a component
+ * Represents a version of the snapshot of a data store
  */
 export interface IVersion {
     // Version ID
