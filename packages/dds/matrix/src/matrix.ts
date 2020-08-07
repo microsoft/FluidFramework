@@ -69,9 +69,9 @@ export class SharedMatrix<T extends Serializable = Serializable>
     private readonly rows: PermutationVector;   // Map logical row to storage handle (if any)
     private readonly cols: PermutationVector;   // Map logical col to storage handle (if any)
 
-    private cells = new SparseArray2D<T>();             // Stores cell values.
-    private annotations = new SparseArray2D<T>();      // Tracks cell annotations.
-    private pending = new SparseArray2D<number>();      // Tracks pending writes.
+    private cells = new SparseArray2D<T>();         // Stores cell values.
+    private annotations = new SparseArray2D<T>();   // Tracks cell annotations.
+    private pending = new SparseArray2D<number>();  // Tracks pending writes.
 
     constructor(runtime: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
@@ -91,8 +91,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
             this.onColHandlesRecycled);
     }
 
-    private get rowMap() { return this.rows.handleMap; }
-    private get colMap() { return this.cols.handleMap; }
+    private get rowHandles() { return this.rows.handleCache; }
+    private get colHandles() { return this.cols.handleCache; }
 
     public static create<T extends Serializable = Serializable>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedMatrixFactory.Type) as SharedMatrix<T>;
@@ -117,12 +117,14 @@ export class SharedMatrix<T extends Serializable = Serializable>
     public get colCount() { return this.cols.getLength(); }
 
     public getCell(row: number, col: number): T | undefined | null {
-        // Perf: Bounds checking is performed inside the implementation for 'getHandle()'
+        // Perf: When possible, bounds checking is performed inside the implementation for
+        //       'getHandle()' so that it can be elided in the case of a cache hit.  This
+        //       yields an ~40% improvement in the case of a cache hit (node v12 x64)
 
         // Map the logical (row, col) to associated storage handles.
-        const rowHandle = this.rowMap.getHandle(row);
+        const rowHandle = this.rowHandles.getHandle(row);
         if (isHandleValid(rowHandle)) {
-            const colHandle = this.colMap.getHandle(col);
+            const colHandle = this.colHandles.getHandle(col);
             if (isHandleValid(colHandle)) {
                 return this.cells.getCell(rowHandle, colHandle);
             }

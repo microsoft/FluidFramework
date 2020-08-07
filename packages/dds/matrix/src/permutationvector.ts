@@ -23,7 +23,7 @@ import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import { HandleTable, Handle, isHandleValid } from "./handletable";
 import { serializeBlob, deserializeBlob } from "./serialization";
-import { HandleCache } from "./handlemap";
+import { HandleCache } from "./handlecache";
 
 const enum SnapshotPath {
     segments = "segments",
@@ -112,7 +112,7 @@ export class PermutationSegment extends BaseSegment {
 
 export class PermutationVector extends Client {
     private handleTable = new HandleTable<never>(); // Tracks available storage handles for rows.
-    public readonly handleMap = new HandleCache(this);
+    public readonly handleCache = new HandleCache(this);
 
     constructor(
         path: string,
@@ -145,7 +145,7 @@ export class PermutationVector extends Client {
     public getMaybeHandle(pos: number): Handle {
         assert(0 <= pos && pos < this.getLength());
 
-        return this.handleMap.getHandle(pos);
+        return this.handleCache.getHandle(pos);
     }
 
     public getAllocatedHandle(pos: number): Handle {
@@ -165,7 +165,7 @@ export class PermutationVector extends Client {
             /* accum: */ undefined,
             /* splitRange: */ true);
 
-        this.handleMap.add(pos, handle);
+        this.handleCache.addHandle(pos, handle);
 
         return handle;
     }
@@ -198,35 +198,37 @@ export class PermutationVector extends Client {
         //
         //       If we find that we frequently need a reverse handle -> position lookup, we could maintain
         //       one using the Tiny-Calc adjust tree.
-        let containingSegment: PermutationSegment | undefined;
+        let containingSegment!: PermutationSegment;
         let containingOffset: number;
 
-        this.walkSegments((segment) => {
-            const { start, cachedLength } = segment as PermutationSegment;
+        this.mergeTree.walkAllSegments(
+            this.mergeTree.root,
+            (segment) => {
+                const { start, cachedLength } = segment as PermutationSegment;
 
-            // If the segment is unallocated, skip it.
-            if (!isHandleValid(start)) {
+                // If the segment is unallocated, skip it.
+                if (!isHandleValid(start)) {
+                    return true;
+                }
+
+                const end = start + cachedLength;
+
+                if (start <= handle && handle < end) {
+                    containingSegment = segment as PermutationSegment;
+                    containingOffset = handle - start;
+                    return false;
+                }
+
                 return true;
-            }
+            });
 
-            const end = start + cachedLength;
-
-            if (start <= handle && handle < end) {
-                containingSegment = segment as PermutationSegment;
-                containingOffset = handle - start;
-                return false;
-            }
-
-            return true;
-        });
-
-        // SharedMatrix must verify that 'localSeq' used to originally submit this op is still the
-        // most recently pending write to the row/col handle before calling 'getPositionForResubmit'
-        // to ensure the handle has not been removed or recycled (See comments in `resubmitCore()`).
-
-        if (containingSegment === undefined) {
-            return -1;
-        }
+        // We are guaranteed to find the handle in the PermutationVector, even if the corresponding
+        // row/col has been removed, because handles are not recycled until the containing segment
+        // is unlinked from the MergeTree.
+        //
+        // Therefore, either a row/col removal has been ACKed, in which case there will be no pending
+        // ops that reference the stale handle, or the removal is unACKed, in which case the handle
+        // has not yet been recycled.
 
         assert(isHandleValid(containingSegment.start));
 
@@ -276,28 +278,35 @@ export class PermutationVector extends Client {
 
         switch (operation) {
             case MergeTreeDeltaType.INSERT:
-                // Notify the matrix of inserted positions.  The matrix in turn notifies any IMatrixConsumers.
+                // Pass 1: Perform any internal maintenance first to avoid reentrancy.
                 for (const { segment, position } of ranges) {
                     // HACK: We need to include the allocated handle in the segment's JSON reperesntation
                     //       for snapshots, but need to ignore the remote client's handle allocations when
                     //       processing remote ops.
                     segment.reset();
 
-                    this.handleMap.itemsChanged(position, /* deleteCount: */ 0, /* insertCount: */ segment.cachedLength);
+                    this.handleCache.itemsChanged(
+                        position,
+                        /* deleteCount: */ 0,
+                        /* insertCount: */ segment.cachedLength);
                 }
 
-                // Notify the matrix of inserted positions.  The matrix in turn notifies any IMatrixConsumers.
+                // Pass 2: Notify the 'deltaCallback', which may involve callbacks into user code.
                 for (const { segment, position } of ranges) {
                     this.deltaCallback(position, /* numRemoved: */ 0, /* numInserted: */ segment.cachedLength);
                 }
                 break;
 
             case MergeTreeDeltaType.REMOVE: {
+                // Pass 1: Perform any internal maintenance first to avoid reentrancy.
                 for (const { segment, position } of ranges) {
-                    this.handleMap.itemsChanged(position, /* deleteCount: */ segment.cachedLength, /* insertCount: */ 0);
+                    this.handleCache.itemsChanged(
+                        position, /* deleteCount: */
+                        segment.cachedLength,
+                        /* insertCount: */ 0);
                 }
 
-                // Notify the matrix of removed positions.  The matrix in turn notifies any IMatrixConsumers.
+                // Pass 2: Notify the 'deltaCallback', which may involve callbacks into user code.
                 for (const { segment, position } of ranges) {
                     this.deltaCallback(position, /* numRemoved: */ segment.cachedLength, /* numInsert: */ 0);
                 }
