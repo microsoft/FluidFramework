@@ -42,13 +42,11 @@ export const createComponentResponse = (component: IFluidObject) => {
 };
 
 class LegacyUriHandle<T = IFluidObject & IFluidLoadable> implements IFluidHandle<T> {
-    public readonly path: string;
     public readonly isAttached = true;
 
     public get IFluidHandle(): IFluidHandle { return this; }
 
     public constructor(public readonly absolutePath, public readonly runtime: IContainerRuntimeBase) {
-        this.path = absolutePath;
     }
 
     public attachGraph() {
@@ -56,15 +54,15 @@ class LegacyUriHandle<T = IFluidObject & IFluidLoadable> implements IFluidHandle
     }
 
     public async get(): Promise<any> {
-        throw new Error("AAA");
+        const response = await this.runtime.IFluidHandleContext.resolveHandle({ url: this.absolutePath });
+        if (response.status === 200 && response.mimeType === "fluid/object") {
+            return response.value;
+        }
+        throw new Error(`Failed to resolve container path ${this.absolutePath}`);
     }
 
     public bind(handle: IFluidHandle) {
         throw new Error("Cannot bind to LegacyUriHandle");
-    }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        return this.runtime.IFluidHandleContext.resolveHandle(this.absolutePath);
     }
 }
 

@@ -83,10 +83,7 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultData
             await runtime.getDataStore(ContainerRuntimeFactoryWithDefaultDataStore.defaultComponentId),
             "");
 
-        setupLastEditedTrackerForContainer(tracker, runtime)
-            .catch((error) => {
-                console.error(error);
-            });
+        setupLastEditedTrackerForContainer(tracker.IFluidLastEditedTracker, runtime);
     }
 }
 

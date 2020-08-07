@@ -49,14 +49,11 @@ function getLastEditDetailsFromMessage(
  * @param runtime - The container runtime whose messages are to be tracked.
  * @param shouldDiscardMessageFn - Function that tells if a message should not be considered in computing last edited.
  */
-export async function setupLastEditedTrackerForContainer(
+export function setupLastEditedTrackerForContainer(
     lastEditedTracker: IFluidLastEditedTracker,
     runtime: IContainerRuntime,
     shouldDiscardMessageFn: (message: ISequencedDocumentMessage) => boolean = shouldDiscardMessageDefault,
 ) {
-    // Stores the last edit details until the component has loaded.
-    let pendingLastEditDetails: ILastEditDetails | undefined;
-
     // Register an op listener on the runtime. If the component has loaded, it passes the last edited information to its
     // last edited tracker. If the component hasn't loaded, store the last edited information temporarily.
     runtime.on("op", (message: ISequencedDocumentMessage) => {
@@ -75,17 +72,6 @@ export async function setupLastEditedTrackerForContainer(
             return;
         }
 
-        if (lastEditedTracker !== undefined) {
-            // Update the last edited tracker if the component has loaded.
-            lastEditedTracker.updateLastEditDetails(lastEditDetails);
-        } else {
-            // If the component hasn't loaded, store the last edited details temporarily.
-            pendingLastEditDetails = lastEditDetails;
-        }
+        lastEditedTracker.updateLastEditDetails(lastEditDetails);
     });
-
-    // Now that the component has loaded, pass any pending last edit details to its last edited tracker.
-    if (pendingLastEditDetails !== undefined) {
-        lastEditedTracker.updateLastEditDetails(pendingLastEditDetails);
-    }
 }
