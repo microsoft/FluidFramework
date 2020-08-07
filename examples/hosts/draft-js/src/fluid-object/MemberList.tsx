@@ -12,7 +12,7 @@ import "./css/MemberList.css";
 
 interface IProps {
     /**
-   * From the component, this.runtime.getQuorum()
+   * From Fluid, this.runtime.getQuorum()
    */
     quorum: IQuorum;
     /**

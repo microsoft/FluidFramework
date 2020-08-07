@@ -1,6 +1,8 @@
 # Breaking changes
 
 ## 0.25 Breaking Changes
+- [Container runtime event changes](#Container-runtime-event-changes)
+- [Component is removed from telemetry event names](#Component-is-removed-from-telemetry-event-names)
 - [IComponentContextLegacy is removed](#IComponentContextLegacy-is-removed)
 - [IContainerRuntimeBase._createDataStoreWithProps() is removed](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
 - [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
@@ -8,6 +10,16 @@
 - [Package Renames](#package-renames)
 - [IComponent and IComponent Interfaces Removed](#IComponent-and-IComponent-Interfaces-Removed)
 - [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
+
+### Container runtime event changes
+Container runtime now emits the event "fluidDataStoreInstantiated" instead of "componentInstantiated"
+
+### Component is removed from telemetry event names
+The following telemetry event names have been updated to drop references to the term component:
+
+ComponentRuntimeDisposeError -> ChannelDisposeError
+ComponentContextDisposeError -> FluidDataStoreContextDisposeError
+SignalComponentNotFound -> SignalFluidDataStoreNotFound
 
 ### IComponentContextLegacy is removed
 Deprecated in 0.18, removed.
@@ -28,9 +40,9 @@ Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altoget
 
 ### Package Renames
 As a follow up to the changes in 0.24 we are updating a number of package names
-- `@fluidframework/component-core-interfaces` is renamed to `@fluidframework/core-interfaces`
-- `@fluidframework/component-runtime-definitions` is renamed to `@fluidframework/datastore-definitions`
-- `@fluidframework/component-runtime` is renamed to `@fluidframework/datastore`
+- `@fluidframework/core-interfaces` is renamed to `@fluidframework/core-interfaces`
+- `@fluidframework/datastore-definitions` is renamed to `@fluidframework/datastore-definitions`
+- `@fluidframework/datastore` is renamed to `@fluidframework/datastore`
 
 ### IComponent and IComponent Interfaces Removed
 In 0.24 IComponent and IComponent interfaces were deprecated, they are being removed in this build. Please move to IFluidObject and IFluidObject interfaces.
@@ -90,7 +102,7 @@ All renames are 1-1, and global case senstive and whole word find replace for al
 
             "ContainerRuntimeFactoryWithDefaultComponent": "ContainerRuntimeFactoryWithDefaultDataStore",
 
-            "defaultComponentRuntimeRequestHandler": "defaultDataStoreRuntimeRequestHandler"
+            "defaultComponentRuntimeRequestHandler": "defaultRouteRequestHandler"
         },
         "methods": {
             "getComponent": "requestFluidObject",
@@ -187,7 +199,7 @@ All renames are 1-1, and global case senstive and whole word find replace for al
 Component Runtime no longer fires the collaborating event on attaching. Now it fires `attaching` event.
 
 ### ISharedObjectFactory
-`ISharedObjectFactory` renamed to `IChannelFactory` and moved from `@fluidframework/shared-object-base` to `@fluidframework/component-runtime-definitions`
+`ISharedObjectFactory` renamed to `IChannelFactory` and moved from `@fluidframework/shared-object-base` to `@fluidframework/datastore-definitions`
 
 ### LocalSessionStorageDbFactory moved to @fluidframework/local-driver
 Previously, `LocalSessionStorageDbFactory` was part of the `@fluidframework/webpack-component-loader` package.  It has been moved to the `@fluidframework/local-driver` package.
@@ -226,7 +238,8 @@ example:
 ``` typescript
     const builder = new RuntimeRequestHandlerBuilder();
     builder.pushHandler(...this.requestHandlers);
-    builder.pushHandler(componentRuntimeRequestHandler);
+    builder.pushHandler(defaultRouteRequestHandler("defaultComponent"));
+    builder.pushHandler(deprecated_innerRequestHandler());
 
     const runtime = await ContainerRuntime.load(
         context,
@@ -356,7 +369,7 @@ The `createValueType()` method on `SharedMap` and `SharedDirectory` was deprecat
 isLocal api is removed from the repo. It is now replaced with isAttached which tells that the entity is attached or getting attached to storage. So its meaning is opposite to isLocal.
 
 ### register/attach api renames on handles, components and dds
-Register on dds and attach on component runtime is renamed to bindToContext(). attach on handles is renamed to attachGraph().
+Register on dds and attach on data store runtime is renamed to bindToContext(). attach on handles is renamed to attachGraph().
 
 ### Error handling changes
 ErrorType enum has been broken into 3 distinct enums / layers:

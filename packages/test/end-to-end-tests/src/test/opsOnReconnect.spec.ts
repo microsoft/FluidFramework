@@ -99,7 +99,7 @@ describe("Ops on Reconnect", () => {
                 return;
             }
             const message = unpackRuntimeMessage(containerMessage);
-            if (message.type === ContainerMessageType.ComponentOp) {
+            if (message.type === ContainerMessageType.FluidDataStoreOp) {
                 const envelope = message.contents as IEnvelope;
                 if (envelope.address !== `${SchedulerType}`) {
                     // The client ID of firstContainer should have changed on disconnect.

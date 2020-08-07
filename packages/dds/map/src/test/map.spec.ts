@@ -17,17 +17,17 @@ import { MapFactory, SharedMap } from "../map";
 describe("Map", () => {
     let map: SharedMap;
     let factory: MapFactory;
-    let componentRuntime: MockFluidDataStoreRuntime;
+    let dataStoreRuntime: MockFluidDataStoreRuntime;
 
     beforeEach(async () => {
-        componentRuntime = new MockFluidDataStoreRuntime();
+        dataStoreRuntime = new MockFluidDataStoreRuntime();
         factory = new MapFactory();
-        map = new SharedMap("testMap", componentRuntime, MapFactory.Attributes);
+        map = new SharedMap("testMap", dataStoreRuntime, MapFactory.Attributes);
     });
 
     describe("SharedMap in local state", () => {
         beforeEach(() => {
-            componentRuntime.local = true;
+            dataStoreRuntime.local = true;
         });
 
         it("Can create a new map", () => {
@@ -70,7 +70,7 @@ describe("Map", () => {
                 map.set("first", "second");
                 map.set("third", "fourth");
                 map.set("fifth", "sixth");
-                const subMap = factory.create(componentRuntime, "subMap");
+                const subMap = factory.create(dataStoreRuntime, "subMap");
                 map.set("object", subMap.handle);
 
                 const parsed = map.getSerializableStorage();
@@ -91,7 +91,7 @@ describe("Map", () => {
                 map.set("third", "fourth");
                 map.set("fifth", undefined);
                 assert.ok(map.has("fifth"));
-                const subMap = factory.create(componentRuntime, "subMap");
+                const subMap = factory.create(dataStoreRuntime, "subMap");
                 map.set("object", subMap.handle);
 
                 const parsed = map.getSerializableStorage();
@@ -108,8 +108,8 @@ describe("Map", () => {
             });
 
             it("Should serialize an object with nested handles", async () => {
-                const subMap = factory.create(componentRuntime, "subMap");
-                const subMap2 = factory.create(componentRuntime, "subMap2");
+                const subMap = factory.create(dataStoreRuntime, "subMap");
+                const subMap2 = factory.create(dataStoreRuntime, "subMap2");
                 const containingObject = {
                     subMapHandle: subMap.handle,
                     nestedObj: {
@@ -137,7 +137,7 @@ describe("Map", () => {
 
                 const services = new MockSharedObjectServices({ header: content });
                 const loadedMap = await factory.load(
-                    componentRuntime, "mapId", services, "branchId", factory.attributes,
+                    dataStoreRuntime, "mapId", services, "branchId", factory.attributes,
                 );
                 assert(loadedMap.get("key") === "value");
             });
@@ -161,7 +161,7 @@ describe("Map", () => {
 
                 const services = new MockSharedObjectServices({ header: content });
                 const loadedMap = await factory.load(
-                    componentRuntime, "mapId", services, "branchId", factory.attributes,
+                    dataStoreRuntime, "mapId", services, "branchId", factory.attributes,
                 );
                 assert(loadedMap.get("key") === "value");
             });
@@ -211,7 +211,7 @@ describe("Map", () => {
                     blob0: content2,
                 });
                 const loadedMap = await factory.load(
-                    componentRuntime, "mapId", services, "branchId", factory.attributes,
+                    dataStoreRuntime, "mapId", services, "branchId", factory.attributes,
                 );
                 assert(loadedMap.get("key") === "value");
                 assert(loadedMap.get("longValue") === longString);
@@ -233,8 +233,8 @@ describe("Map", () => {
          *   when it gets a remote op with the same key, it ignores it as it has a pending set with the same key.
          */
         it("should correctly process a set operation sent in local state", async () => {
-            // Set the component runtime to local.
-            componentRuntime.local = true;
+            // Set the data store runtime to local.
+            dataStoreRuntime.local = true;
 
             // Set a key in local state.
             const key = "testKey";
@@ -243,17 +243,17 @@ describe("Map", () => {
 
             // Load a new SharedMap in connected state from the snapshot of the first one.
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const componentRuntime2 = new MockFluidDataStoreRuntime();
-            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = MockSharedObjectServices.createFromTree(map.snapshot());
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
-            const map2 = new SharedMap("testMap2", componentRuntime2, MapFactory.Attributes);
+            const map2 = new SharedMap("testMap2", dataStoreRuntime2, MapFactory.Attributes);
             await map2.load("branchId", services2);
 
             // Now connect the first SharedMap
-            componentRuntime.local = false;
-            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+            dataStoreRuntime.local = false;
+            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
             const services1 = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(undefined),
@@ -284,7 +284,7 @@ describe("Map", () => {
         beforeEach(async () => {
             // Connect the first map
             containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+            const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
             const services = {
                 deltaConnection: containerRuntime.createDeltaConnection(),
                 objectStorage: new MockStorage(undefined),
@@ -292,9 +292,9 @@ describe("Map", () => {
             map.connect(services);
 
             // Create and connect a second map
-            const componentRuntime2 = new MockFluidDataStoreRuntime();
-            map2 = new SharedMap("testMap2", componentRuntime2, MapFactory.Attributes);
-            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            map2 = new SharedMap("testMap2", dataStoreRuntime2, MapFactory.Attributes);
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(undefined),
@@ -352,7 +352,7 @@ describe("Map", () => {
             });
 
             it("Should be able to set a shared object handle as a key", () => {
-                const subMap = factory.create(componentRuntime, "subMap");
+                const subMap = factory.create(dataStoreRuntime, "subMap");
                 map.set("test", subMap.handle);
 
                 containerRuntimeFactory.processAllMessages();
@@ -370,8 +370,8 @@ describe("Map", () => {
             });
 
             it("Should be able to set and retrieve a plain object with nested handles", async () => {
-                const subMap = factory.create(componentRuntime, "subMap");
-                const subMap2 = factory.create(componentRuntime, "subMap2");
+                const subMap = factory.create(dataStoreRuntime, "subMap");
+                const subMap2 = factory.create(dataStoreRuntime, "subMap2");
                 const containingObject = {
                     subMapHandle: subMap.handle,
                     nestedObj: {
