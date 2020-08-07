@@ -53,7 +53,7 @@
     "tsfmt:fix": "lerna run tsfmt:fix --no-sort --stream --no-bail",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\"",
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
-    "watch:tsc": "lerna run --parallel tsc -- -- --watch",
+    "watch:tsc": "lerna run --parallel tsc -- -- --watch"
   },
   "nyc": {
     "all": true,
