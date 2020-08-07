@@ -14,11 +14,11 @@ import { LocalResolver, LocalDocumentServiceFactory, LocalSessionStorageDbFactor
 let deltaConn;
 
 /**
- * Connect to the Ram-a-licious service and retrieve a Container with the given ID running the given code.
+ * Connect to the local SessionStorage Fluid service and retrieve a Container with the given ID running the given code.
  * @param documentId - The document id to retrieve or create
  * @param containerRuntimeFactory - The container factory to be loaded in the container
  */
-export async function getRamaliciousContainer(
+export async function getSessionStorageContainer(
     documentId: string,
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,

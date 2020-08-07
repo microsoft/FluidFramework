@@ -1,5 +1,5 @@
 {
-  "name": "@fluidframework/get-ramalicious-container",
+  "name": "@fluidframework/get-session-storage-container",
   "version": "0.25.0",
   "description": "Tool for getting a Ram-a-licious configured container for testing app scenarios",
   "repository": "microsoft/FluidFramework",
