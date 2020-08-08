@@ -94,7 +94,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         assert.strictEqual(protocolAttributes.minimumSequenceNumber, 0, "Min Seq number should be 0");
 
         // Check for default dataStore
-        const defaultDataStoreBlobId = snapshotTree.trees.default.blobs[".dataStore"];
+        const defaultDataStoreBlobId = snapshotTree.trees.default.blobs[".component"];
         const dataStoreAttributes = JSON.parse(
             Buffer.from(snapshotTree.trees.default.blobs[defaultDataStoreBlobId], "base64").toString());
         assert.strictEqual(dataStoreAttributes.pkg, JSON.stringify(["default"]), "Package name should be default");
