@@ -70,7 +70,7 @@ describe("Data Store Context Tests", () => {
             } as ContainerRuntime;
         });
 
-        it("Check LocalDataStore Attributes", () => {
+        it("Check LocalDataStore Attributes", async () => {
             localDataStoreContext = new LocalFluidDataStoreContext(
                 dataStoreId,
                 ["TestDataStore1"],
@@ -81,8 +81,7 @@ describe("Data Store Context Tests", () => {
                 createSummarizerNodeFn,
                 attachCb);
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            localDataStoreContext.realize();
+            await localDataStoreContext.realize();
             const attachMessage = localDataStoreContext.generateAttachMessage();
 
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
@@ -125,7 +124,8 @@ describe("Data Store Context Tests", () => {
             registryWithSubRegistries.IFluidDataStoreFactory = registryWithSubRegistries;
             registryWithSubRegistries.IFluidDataStoreRegistry = registryWithSubRegistries;
             registryWithSubRegistries.get = async (pkg) => Promise.resolve(registryWithSubRegistries);
-            registryWithSubRegistries.instantiateDataStore = (context: IFluidDataStoreContext) => { };
+            registryWithSubRegistries.instantiateDataStore =
+                async (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
@@ -143,8 +143,7 @@ describe("Data Store Context Tests", () => {
                 createSummarizerNodeFn,
                 attachCb);
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            localDataStoreContext.realize();
+            await localDataStoreContext.realize();
 
             const attachMessage = localDataStoreContext.generateAttachMessage();
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
