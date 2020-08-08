@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidDataStoreContext, IFluidDataStoreScope } from "./componentContext";
+import { IFluidDataStoreContext, IFluidDataStoreChannel } from "./componentContext";
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -29,13 +29,6 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
     /**
      * Generates runtime for the component from the component context. Once created should be bound to the context.
      * @param context - Context for the component.
-     * @param scope - scope object provided by instantiator of data store on creation. It defines an environment for
-     * data store. It may contain various background services, factories, etc. It's responsibility of data store to
-     * serialize enough state in data store itself for future invocations to have same environment.
-     * Usually this is done by working with IFluidLoadable objects and storing handles to those objects in root
-     * directory for future reference.
-     * It's undefined when loading existing data store, and not undefined (maybe empty object if not provided by
-     * calleee) when create new data store.
      */
-    instantiateDataStore(context: IFluidDataStoreContext, scope?: IFluidDataStoreScope): void;
+    instantiateDataStore(context: IFluidDataStoreContext): Promise<IFluidDataStoreChannel>;
 }

@@ -48,7 +48,7 @@ export class PureDataObjectFactory<T extends PureDataObject> implements IFluidDa
 
     public get IFluidDataStoreFactory() { return this; }
 
-    public instantiateDataStore(context: IFluidDataStoreContext): void {
+    public async instantiateDataStore(context: IFluidDataStoreContext) {
         const runtime = this.createRuntime(context);
 
         // Note this may synchronously return an instance or a deferred LazyPromise,
@@ -66,6 +66,8 @@ export class PureDataObjectFactory<T extends PureDataObject> implements IFluidDa
 
             return instance.request(request);
         });
+
+        return runtime;
     }
 
     public async create(parentContext: IFluidDataStoreContext, props?: any) {

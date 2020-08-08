@@ -482,7 +482,7 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
         return runtime;
     }
 
-    public instantiateDataStore(context: IFluidDataStoreContext): void {
+    public async instantiateDataStore(context: IFluidDataStoreContext) {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
@@ -497,6 +497,8 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
             const progressCollection = await progressCollectionP;
             return progressCollection.request(request);
         });
+
+        return runtime;
     }
 }
 

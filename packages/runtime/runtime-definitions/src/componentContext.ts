@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
-    IFluidLoadable,
     IFluidRouter,
     IProvideFluidHandleContext,
     IProvideFluidSerializer,
@@ -94,13 +93,17 @@ export interface IContainerRuntimeBase extends
      * (or any of its parts, like DDS) into already attached DDS (or non-attached DDS that will eventually
      * gets attached to storage) will result in this store being attached to storage.
      * @param pkg - Package name of the data store factory
-     * @param scope - scope object provided by instantiator of data store. It defines an environment for data store
-     * It may contain various background services, factories, etc. It's responsibility of data store to
-     * serialize enough state in data store itself for future invocations to have same environment.
-     * Usually this is done by working with IFluidLoadable objects and storing handles to those objects in root
-     * directory for future reference.
      */
-    createDataStore(pkg: string | string[], scope?: IFluidDataStoreScope): Promise<IFluidRouter>;
+    createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
+
+    /**
+     * Creates data store. Returns router of data store. Data store is not bound to container,
+     * store in such state is not persisted to storage (file). Storing a handle to this store
+     * (or any of its parts, like DDS) into already attached DDS (or non-attached DDS that will eventually
+     * gets attached to storage) will result in this store being attached to storage.
+     * @param pkg - Package name of the data store factory
+     */
+    createDetachedDataStore(): IFluidDataStoreContextDetached;
 
     /**
      * Get an absolute url for a provided container-relative request.
@@ -300,11 +303,6 @@ export interface IFluidDataStoreContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
-     * Binds a runtime to the context.
-     */
-    bindRuntime(dataStoreRuntime: IFluidDataStoreChannel): void;
-
-    /**
      * Register the runtime to the container
      * @param dataStoreRuntime - runtime to attach
      */
@@ -345,7 +343,9 @@ export interface IFluidDataStoreContext extends EventEmitter {
     composeSubpackagePath(subpackage: string): Promise<string[]>;
 }
 
-export interface IFluidDataStoreScope {
-   loadable: {[key: string]: IFluidObject & IFluidLoadable};
-   runtimeEnvironment: {[key: string]: any };
+export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
+    /**
+     * Binds a runtime to the context.
+     */
+    bindDetachedRuntime(dataStoreRuntime: IFluidDataStoreChannel, pkg: string[]): void;
 }

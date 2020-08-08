@@ -218,7 +218,7 @@ class SmdeFactory implements IFluidDataStoreFactory {
 
     public get IFluidDataStoreFactory() { return this; }
 
-    public instantiateDataStore(context: IFluidDataStoreContext): void {
+    public async instantiateDataStore(context: IFluidDataStoreContext) {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         const sequenceFactory = SharedString.getFactory();
@@ -236,6 +236,8 @@ class SmdeFactory implements IFluidDataStoreFactory {
             const progressCollection = await progressCollectionP;
             return progressCollection.request(request);
         });
+
+        return runtime;
     }
 }
 

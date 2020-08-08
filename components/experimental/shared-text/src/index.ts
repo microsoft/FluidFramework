@@ -85,7 +85,7 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
     public get IFluidDataStoreFactory() { return this; }
     public get IRuntimeFactory() { return this; }
 
-    public instantiateDataStore(context: IFluidDataStoreContext): void {
+    public async instantiateDataStore(context: IFluidDataStoreContext) {
         return sharedTextComponent.instantiateDataStore(context);
     }
 

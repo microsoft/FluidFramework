@@ -38,8 +38,8 @@ import {
     FluidDataStoreRegistryEntry,
     IFluidDataStoreChannel,
     IAttachMessage,
-    IFluidDataStoreScope,
     IFluidDataStoreContext,
+    IFluidDataStoreContextDetached,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IInboundSignalMessage,
@@ -161,6 +161,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this._attachState;
     }
 
+    protected detachedRuntimeCreation = false;
     public readonly bindToContext: (channel: IFluidDataStoreChannel) => void;
     protected channel: IFluidDataStoreChannel | undefined;
     private loaded = false;
@@ -220,52 +221,54 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         // Error messages contain package names that is considered Personal Identifiable Information
         // Mark it as such, so that if it ever reaches telemetry pipeline, it has a chance to remove it.
         (error as any).containsPII = true;
-
-        // This is always called with a channelDeferred in realize();
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const deferred = this.channelDeferred!;
-        deferred.reject(error);
-        return deferred.promise;
+        throw error;
     }
 
-    public async realize(scope?: IFluidDataStoreScope): Promise<IFluidDataStoreChannel> {
-        // Back-compat: Can't enable it in 0.25, enable in later version!
-        // scope can be provided only on creation path, where first realize() call is guaranteed to bring it
-        // assert((scope === undefined) === (this.channelDeferred !== undefined));
-
+    public async realize(): Promise<IFluidDataStoreChannel> {
+        assert(!this.detachedRuntimeCreation);
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
-            const details = await this.getInitialSnapshotDetails();
-            // Base snapshot is the baseline where pending ops are applied to.
-            // It is important that this be in sync with the pending ops, and also
-            // that it is set here, before bindRuntime is called.
-            this._baseSnapshot = details.snapshot;
-            const packages = details.pkg;
-            let entry: FluidDataStoreRegistryEntry | undefined;
-            let registry: IFluidDataStoreRegistry | undefined = this._containerRuntime.IFluidDataStoreRegistry;
-            let factory: IFluidDataStoreFactory | undefined;
-            let lastPkg: string | undefined;
-            for (const pkg of packages) {
-                if (!registry) {
-                    return this.rejectDeferredRealize(`No registry for ${lastPkg} package`);
-                }
-                lastPkg = pkg;
-                entry = await registry.get(pkg);
-                if (!entry) {
-                    return this.rejectDeferredRealize(`Registry does not contain entry for the package ${pkg}`);
-                }
-                factory = entry.IFluidDataStoreFactory;
-                registry = entry.IFluidDataStoreRegistry;
+            this.realizeCore().catch((error) => {
+                this.channelDeferred?.reject(error);
+            });
+        }
+        return this.channelDeferred.promise;
+    }
+
+    private async realizeCore(): Promise<void> {
+        this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
+        const details = await this.getInitialSnapshotDetails();
+        // Base snapshot is the baseline where pending ops are applied to.
+        // It is important that this be in sync with the pending ops, and also
+        // that it is set here, before bindRuntime is called.
+        this._baseSnapshot = details.snapshot;
+        const packages = details.pkg;
+        let entry: FluidDataStoreRegistryEntry | undefined;
+        let registry: IFluidDataStoreRegistry | undefined = this._containerRuntime.IFluidDataStoreRegistry;
+        let factory: IFluidDataStoreFactory | undefined;
+        let lastPkg: string | undefined;
+        for (const pkg of packages) {
+            if (!registry) {
+                return this.rejectDeferredRealize(`No registry for ${lastPkg} package`);
             }
-            if (factory === undefined) {
-                return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
+            lastPkg = pkg;
+            entry = await registry.get(pkg);
+            if (!entry) {
+                return this.rejectDeferredRealize(`Registry does not contain entry for the package ${pkg}`);
             }
-            // During this call we will invoke the instantiate method - which will call back into us
-            // via the bindRuntime call to resolve channelDeferred
-            factory.instantiateDataStore(this, scope);
+            factory = entry.IFluidDataStoreFactory;
+            registry = entry.IFluidDataStoreRegistry;
+        }
+        if (factory === undefined) {
+            return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
         }
 
-        return this.channelDeferred.promise;
+        const channel = await factory.instantiateDataStore(this);
+
+        // back-compat: <= 0.25 allows returning nothing and calling bindRuntime() later directly.
+        if (channel !== undefined) {
+            this.bindRuntime(channel);
+        }
     }
 
     /**
@@ -353,14 +356,14 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             }
         }
 
+        await this.realize();
+
         const { pkg } = await this.getInitialSnapshotDetails();
 
         const attributes: IFluidDataStoreAttributes = {
             pkg: JSON.stringify(pkg),
             snapshotFormatVersion: currentSnapshotFormatVersion,
         };
-
-        await this.realize();
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const entries = await this.channel!.snapshotInternal(fullTree);
@@ -375,14 +378,14 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     }
 
     private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
+        await this.realize();
+
         const { pkg } = await this.getInitialSnapshotDetails();
 
         const attributes: IFluidDataStoreAttributes = {
             pkg: JSON.stringify(pkg),
             snapshotFormatVersion: currentSnapshotFormatVersion,
         };
-
-        await this.realize();
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const channel = this.channel!;
@@ -481,30 +484,44 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             throw new Error("Runtime already bound");
         }
 
-        assert (this.channelDeferred !== undefined);
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const pending = this.pending!;
-
-        if (pending.length > 0) {
-            // Apply all pending ops
-            for (const op of pending) {
-                channel.process(op, false, undefined /* localOpMetadata */);
+        try
+        {
+            if (this.channelDeferred === undefined) {
+                // create deferred first, such that we can reject it in catch() block if assert fires.
+                this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
+                assert(this.detachedRuntimeCreation);
+                this.detachedRuntimeCreation = false;
+            } else {
+                assert(!this.detachedRuntimeCreation);
             }
+            // pkg should be set for all paths except possibly for detached creation
+            assert(this.pkg !== undefined, "Please call bindDetachedRuntime()!");
+
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const pending = this.pending!;
+
+            if (pending.length > 0) {
+                // Apply all pending ops
+                for (const op of pending) {
+                    channel.process(op, false, undefined /* localOpMetadata */);
+                }
+            }
+
+            this.pending = undefined;
+
+            // And now mark the runtime active
+            this.loaded = true;
+            this.channel = channel;
+
+            // Freeze the package path to ensure that someone doesn't modify it when it is
+            // returned in packagePath().
+            Object.freeze(this.pkg);
+
+            // And notify the pending promise it is now available
+            this.channelDeferred.resolve(this.channel);
+        } catch (error) {
+            this.channelDeferred?.reject(error);
         }
-
-        this.pending = undefined;
-
-        // And now mark the runtime active
-        this.loaded = true;
-        this.channel = channel;
-
-        // Freeze the package path to ensure that someone doesn't modify it when it is
-        // returned in packagePath().
-        Object.freeze(this.pkg);
-
-        // And notify the pending promise it is now available
-        this.channelDeferred.resolve(this.channel);
 
         // notify the runtime if they want to propagate up. Used for logging.
         this.containerRuntime.notifyDataStoreInstantiated(this);
@@ -665,10 +682,10 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     }
 }
 
-export class LocalFluidDataStoreContext extends FluidDataStoreContext {
+export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     constructor(
         id: string,
-        pkg: string[],
+        pkg: string[] | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject & IFluidObject,
@@ -730,5 +747,71 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
             pkg: this.pkg!,
             snapshot: undefined,
         };
+    }
+}
+
+export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
+    constructor(
+        id: string,
+        pkg: string[],
+        runtime: ContainerRuntime,
+        storage: IDocumentStorageService,
+        scope: IFluidObject & IFluidObject,
+        summaryTracker: SummaryTracker,
+        createSummarizerNode: CreateChildSummarizerNodeFn,
+        bindChannel: (channel: IFluidDataStoreChannel) => void,
+    ) {
+        super(
+            id,
+            pkg,
+            runtime,
+            storage,
+            scope,
+            summaryTracker,
+            createSummarizerNode,
+            bindChannel);
+    }
+}
+
+export class LocalDetachedFluidDataStoreContext
+    extends LocalFluidDataStoreContextBase
+    implements IFluidDataStoreContextDetached
+{
+    constructor(
+        id: string,
+        runtime: ContainerRuntime,
+        storage: IDocumentStorageService,
+        scope: IFluidObject & IFluidObject,
+        summaryTracker: SummaryTracker,
+        createSummarizerNode: CreateChildSummarizerNodeFn,
+        bindChannel: (channel: IFluidDataStoreChannel) => void,
+    ) {
+        super(
+            id,
+            undefined, // pkg
+            runtime,
+            storage,
+            scope,
+            summaryTracker,
+            createSummarizerNode,
+            bindChannel);
+        assert(this.pkg === undefined);
+        this.detachedRuntimeCreation = true;
+    }
+
+    public bindDetachedRuntime(runtime, pkg: string[]) {
+        assert(this.detachedRuntimeCreation);
+        assert(this.pkg === undefined);
+
+        assert(pkg !== undefined);
+        this.pkg = pkg;
+        super.bindRuntime(runtime);
+    }
+
+    protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+        if (this.detachedRuntimeCreation) {
+            throw new Error("Detached Fluid Data Store context can't be realized! Please attach runtime first!");
+        }
+        return super.getInitialSnapshotDetails();
     }
 }

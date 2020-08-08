@@ -55,7 +55,7 @@ describe("Data Store Context Tests", () => {
         beforeEach(async () => {
             const factory: IFluidDataStoreFactory = {
                 get IFluidDataStoreFactory() { return factory; },
-                instantiateDataStore: (context: IFluidDataStoreContext) => { },
+                instantiateDataStore: async (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime(),
             };
             const registry: IFluidDataStoreRegistry = {
                 get IFluidDataStoreRegistry() { return registry; },
@@ -82,7 +82,6 @@ describe("Data Store Context Tests", () => {
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localDataStoreContext.realize();
-            localDataStoreContext.bindRuntime(new MockFluidDataStoreRuntime());
             const attachMessage = localDataStoreContext.generateAttachMessage();
 
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
@@ -145,7 +144,6 @@ describe("Data Store Context Tests", () => {
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localDataStoreContext.realize();
-            localDataStoreContext.bindRuntime(new MockFluidDataStoreRuntime());
 
             const attachMessage = localDataStoreContext.generateAttachMessage();
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
@@ -174,7 +172,7 @@ describe("Data Store Context Tests", () => {
             const factory: { [key: string]: any } = {};
             factory.IFluidDataStoreFactory = factory;
             factory.instantiateDataStore =
-                (context: IFluidDataStoreContext) => { context.bindRuntime(new MockFluidDataStoreRuntime()); };
+                (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime();
             const registry: { [key: string]: any } = {};
             registry.IFluidDataStoreRegistry = registry;
             registry.get = async (pkg) => Promise.resolve(factory);

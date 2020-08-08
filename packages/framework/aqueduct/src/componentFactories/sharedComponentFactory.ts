@@ -13,7 +13,6 @@ import {
     IProvideFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
     NamedFluidDataStoreRegistryEntry,
-    IFluidDataStoreScope,
 } from "@fluidframework/runtime-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
@@ -26,11 +25,6 @@ import {
     ISharedComponentProps,
     PureDataObject,
 } from "../components";
-
-interface IPureDataObjectInitialState<TProps>{
-    IPureDataObjectInitialState?: IPureDataObjectInitialState<TProps>;
-    initialState?: TProps;
-}
 
 /**
  * PureDataObjectFactory is a barebones IFluidDataStoreFactory for use with PureDataObject.
@@ -83,7 +77,16 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
      *
      * @param context - component context used to load a data store runtime
      */
-    public instantiateDataStore(context: IFluidDataStoreContext, scope?: IFluidDataStoreScope): void {
+    public async instantiateDataStore(context: IFluidDataStoreContext) {
+        return this.instantiateDataStoreCore(context);
+    }
+
+        /**
+     * This is where we do component setup.
+     *
+     * @param context - component context used to load a data store runtime
+     */
+    protected instantiateDataStoreCore(context: IFluidDataStoreContext, props?: S) {
         // Create a new runtime for our component
         // The runtime is what Fluid uses to create DDS' and route to your component
         const runtime = FluidDataStoreRuntime.load(
@@ -97,18 +100,20 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
         // run the initialization.
         if (!this.onDemandInstantiation || !runtime.existing) {
             // Create a new instance of our component up front
-            instanceP = this.instantiateInstance(runtime, context, scope);
+            instanceP = this.instantiateInstance(runtime, context, props);
         }
 
         runtime.registerRequestHandler(async (request: IRequest) => {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             if (!instanceP) {
                 // Create a new instance of our component on demand
-                instanceP = this.instantiateInstance(runtime, context, scope);
+                instanceP = this.instantiateInstance(runtime, context, props);
             }
             const instance = await instanceP;
             return instance.request(request);
         });
+
+        return runtime;
     }
 
     /**
@@ -119,13 +124,13 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
     private async instantiateInstance(
         runtime: FluidDataStoreRuntime,
         context: IFluidDataStoreContext,
-        scope?: IFluidDataStoreScope,
+        props?: S,
     ) {
         const dependencyContainer = new DependencyContainer(context.scope.IFluidDependencySynthesizer);
         const providers = dependencyContainer.synthesize<P>(this.optionalProviders, {});
         // Create a new instance of our component
         const instance = new this.ctor({ runtime, context, providers });
-        await instance.initializeInternal(scope?.runtimeEnvironment?.IPureDataObjectInitialState?.initialState);
+        await instance.initializeInternal(props);
         return instance;
     }
 
@@ -147,16 +152,10 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
         }
         const packagePath = await context.composeSubpackagePath(this.type);
 
-        const props: IPureDataObjectInitialState<S> = { initialState };
-        props.IPureDataObjectInitialState = props;
+        const newContext = context.containerRuntime.createDetachedDataStore();
+        const runtime = this.instantiateDataStoreCore(newContext, initialState);
+        newContext.bindDetachedRuntime(runtime, packagePath);
 
-        const scope: IFluidDataStoreScope = {
-            loadable: {},
-            runtimeEnvironment: {
-                IPureDataObjectInitialState: props,
-            },
-        };
-        const router = await context.containerRuntime.createDataStore(packagePath, scope);
-        return requestFluidObject<PureDataObject<P, S>>(router, "/");
+        return requestFluidObject<PureDataObject<P, S>>(runtime, "/");
     }
 }

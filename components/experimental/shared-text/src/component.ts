@@ -310,7 +310,7 @@ class TaskScheduler {
     }
 }
 
-export function instantiateDataStore(context: IFluidDataStoreContext): void {
+export function instantiateDataStore(context: IFluidDataStoreContext) {
     const modules = new Map<string, any>();
 
     // Create channel factories
@@ -339,4 +339,6 @@ export function instantiateDataStore(context: IFluidDataStoreContext): void {
         const runner = await runnerP;
         return runner.request(request);
     });
+
+    return runtime;
 }

@@ -41,7 +41,7 @@ export class Chaincode implements IFluidDataStoreFactory {
 
     public constructor(private readonly closeFn: () => void) { }
 
-    public instantiateDataStore(context: IFluidDataStoreContext): void {
+    public async instantiateDataStore(context: IFluidDataStoreContext) {
         // Create channel factories
         const mapFactory = map.SharedMap.getFactory();
         const sharedStringFactory = sequence.SharedString.getFactory();
@@ -95,6 +95,8 @@ export class Chaincode implements IFluidDataStoreFactory {
                 value: document,
             };
         });
+
+        return runtime;
     }
 }
 

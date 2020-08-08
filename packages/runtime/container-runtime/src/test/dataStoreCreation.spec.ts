@@ -56,9 +56,7 @@ describe("Data Store Creation Tests", () => {
             const registryEntries = new Map(entries);
             const factory: IFluidDataStoreFactory = {
                 get IFluidDataStoreFactory() { return factory; },
-                instantiateDataStore: (context: IFluidDataStoreContext) => {
-                    context.bindRuntime(new MockFluidDataStoreRuntime());
-                },
+                instantiateDataStore: async (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime(),
             };
             const registry: IFluidDataStoreRegistry = {
                 get IFluidDataStoreRegistry() { return registry; },

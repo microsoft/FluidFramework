@@ -102,7 +102,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             dataStoreRegistry,
             logger);
 
-        context.bindRuntime(runtime);
         return runtime;
     }
 

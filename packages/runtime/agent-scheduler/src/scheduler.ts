@@ -480,7 +480,7 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 
     public get IFluidDataStoreFactory() { return this; }
 
-    public instantiateDataStore(context: IFluidDataStoreContext): void {
+    public async instantiateDataStore(context: IFluidDataStoreContext) {
         const mapFactory = SharedMap.getFactory();
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const dataTypes = new Map<string, IChannelFactory>();
@@ -499,5 +499,7 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
             const taskManager = await taskManagerP;
             return taskManager.request(request);
         });
+
+        return runtime;
     }
 }

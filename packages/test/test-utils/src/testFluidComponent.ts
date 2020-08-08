@@ -138,7 +138,7 @@ export class TestFluidComponentFactory implements IFluidDataStoreFactory {
      */
     constructor(private readonly factoryEntries: ChannelFactoryRegistry) { }
 
-    public instantiateDataStore(context: IFluidDataStoreContext): void {
+    public async instantiateDataStore(context: IFluidDataStoreContext) {
         const dataTypes = new Map<string, IChannelFactory>();
 
         // Add SharedMap's factory which will be used to create the root map.
@@ -171,5 +171,7 @@ export class TestFluidComponentFactory implements IFluidDataStoreFactory {
             const testFluidComponent = await testFluidComponentP;
             return testFluidComponent.request(request);
         });
+
+        return runtime;
     }
 }

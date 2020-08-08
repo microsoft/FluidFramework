@@ -70,8 +70,8 @@ import {
 import {
     FlushMode,
     IAttachMessage,
-    IFluidDataStoreScope,
     IFluidDataStoreContext,
+    IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
     IEnvelope,
@@ -96,7 +96,12 @@ import {
     RequestParser,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
-import { FluidDataStoreContext, LocalFluidDataStoreContext, RemotedFluidDataStoreContext } from "./dataStoreContext";
+import {
+    FluidDataStoreContext,
+    LocalFluidDataStoreContext,
+    LocalDetachedFluidDataStoreContext,
+    RemotedFluidDataStoreContext,
+} from "./dataStoreContext";
 import { FluidHandleContext } from "./dataStoreHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
@@ -1214,33 +1219,36 @@ export class ContainerRuntime extends EventEmitter
         }
     }
 
-    public async createDataStore(
-        pkg: string | string[],
-        scope?: IFluidDataStoreScope): Promise<IFluidRouter>
+    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter>
     {
-        return this._createDataStore(pkg, uuid(), scope);
+        return this._createDataStore(pkg);
     }
 
-    public async createRootDataStore(
-        pkg: string | string[],
-        rootDataStoreId: string,
-        scope?: IFluidDataStoreScope): Promise<IFluidRouter>
+    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>
     {
-        const fluidDataStore = await this._createDataStore(pkg, rootDataStoreId, scope);
+        const fluidDataStore = await this._createDataStore(pkg, rootDataStoreId);
         fluidDataStore.bindToContext();
         return fluidDataStore;
     }
 
-    private async _createDataStore(
-        pkg: string | string[],
-        id: string,
-        scope?: IFluidDataStoreScope): Promise<IFluidDataStoreChannel>
+    public createDetachedDataStore(): IFluidDataStoreContextDetached {
+        const id = uuid();
+        const context = new LocalDetachedFluidDataStoreContext(
+            id,
+            this,
+            this.storage,
+            this.containerScope,
+            this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
+            this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
+            (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+        );
+        this.setupNewContext(context);
+        return context;
+    }
+
+    private async _createDataStore(pkg: string | string[], id = uuid()): Promise<IFluidDataStoreChannel>
     {
-        const initScope = scope ?? {
-            loadable: {},
-            runtimeEnvironment: {},
-        };
-        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id).realize(initScope);
+        return this._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id).realize();
     }
 
     private canSendOps() {
@@ -1248,10 +1256,6 @@ export class ContainerRuntime extends EventEmitter
     }
 
     private _createFluidDataStoreContext(pkg: string[], id) {
-        this.verifyNotClosed();
-
-        assert(!this.contexts.has(id), "Creating store with existing ID");
-        this.notBoundContexts.add(id);
         const context = new LocalFluidDataStoreContext(
             id,
             pkg,
@@ -1262,12 +1266,18 @@ export class ContainerRuntime extends EventEmitter
             this.summarizerNode.getCreateChildFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
         );
+        this.setupNewContext(context);
+        return context;
+    }
 
+    private setupNewContext(context) {
+        this.verifyNotClosed();
+        const id = context.id;
+        assert(!this.contexts.has(id), "Creating store with existing ID");
+        this.notBoundContexts.add(id);
         const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
         this.contexts.set(id, context);
-
-        return context;
     }
 
     public getQuorum(): IQuorum {
