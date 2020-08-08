@@ -544,7 +544,7 @@ export class RunningSummarizer implements IDisposable {
     }
 
     private summarizeTimerHandler(time: number, count: number) {
-        this.logger.sendErrorEvent({
+        this.logger.sendPerformanceEvent({
             eventName: "SummarizeTimeout",
             timeoutTime: time,
             timeoutCount: count,
