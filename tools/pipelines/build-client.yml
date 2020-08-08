@@ -22,7 +22,12 @@ trigger:
     - lerna-package-lock.json
     - tools/build-server-resources
     - tools/pipelines/build-client.yml
+    - tools/pipelines/build-docs-latest.yml
+    - tools/pipelines/build-docs-release.yml
+    - tools/pipelines/build-docs-n1.yml
+    - tools/pipelines/templates/build-docs-steps.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/deploy-docs-steps.yml
     - tools/pipelines/templates/publish-npm-package.yml
 
 pr:
