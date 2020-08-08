@@ -6,10 +6,16 @@
 cd ..
 
 # echo "===================================npm clean"
-# npm run clean
+npm run clean
 
-# echo "===================================npm install"
-# npm install --unsafe-perm
+# echo "===================================npm install client"
+npm install --unsafe-perm
+
+# echo "===================================npm install server"
+cd server/routerlicious
+npm install --unsafe-perm
+cd ../..
+# npm run build:fast -- --install --server
 
 echo "===================================npm clean all"
 npm run build:fast -- --clean --all
@@ -22,5 +28,8 @@ npm run build:fast -- --install --symlink --all
 
 echo "===================================npm run build:fast -- --nolint --all -s build -s build:docs"
 npm run build:fast -- --nolint --all -s build -s build:docs
+
+echo "===================================npm run build:gendocs"
+npm run build:gendocs
 
 cd docs

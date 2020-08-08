@@ -1,21 +1,33 @@
 # Build docs for the whole repo
 # All generated files will be in _api-extractor-temp
 
-Push-Location ../
+cd ..
 
-Write-Output "===================================npm clean"
+# echo "===================================npm clean"
 npm run clean
 
-Write-Output "===================================npm install"
+# echo "===================================npm install client"
 npm install
 
-Write-Output "===================================npm clean all"
-npm run build:fast -- --clean
+# echo "===================================npm install server"
+cd server/routerlicious
+npm install
+cd ../..
+# npm run build:fast -- --install --server
 
-Write-Output "===================================npm build:fast --install --symlink --all"
+echo "===================================npm clean all"
+npm run build:fast -- --clean --all
+
+echo "===================================npm build:fast --symlink --all"
+npm run build:fast -- --install --symlink:full --all
+
+echo "===================================npm build:fast --install --symlink --all"
 npm run build:fast -- --install --symlink --all
 
-Write-Output "===================================npm run build:fast -- --nolint --all -s build -s build:docs"
+echo "===================================npm run build:fast -- --nolint --all -s build -s build:docs"
 npm run build:fast -- --nolint --all -s build -s build:docs
 
-Pop-Location
+echo "===================================npm run build:gendocs"
+npm run build:gendocs
+
+cd docs
