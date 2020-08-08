@@ -38,7 +38,7 @@ import {
 } from "@fluidframework/protocol-base";
 import * as moniker from "moniker";
 import * as winston from "winston";
-import { gitHashFile } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8, gitHashFile, IsoBuffer, toUtf8 } from "@fluidframework/common-utils";
 
 const StartingSequenceNumber = 0;
 
@@ -199,7 +199,7 @@ export class DocumentStorage implements IDocumentStorage {
             let quorumValues;
             for (const blob of fullTree.blobs) {
                 if (blob.sha === fullTree.quorumValues) {
-                    quorumValues = JSON.parse(Buffer.from(blob.content, blob.encoding).toString()) as
+                    quorumValues = JSON.parse(toUtf8(blob.content, blob.encoding)) as
                         [string, { value: string }][];
 
                     for (const quorumValue of quorumValues) {
@@ -255,7 +255,7 @@ export class DocumentStorage implements IDocumentStorage {
             const branchP = gitManager.upsertRef(name, head.object.sha);
             const [attributesContent] = await Promise.all([attributesContentP, branchP]);
 
-            const attributesJson = Buffer.from(attributesContent.content, "base64").toString("utf-8");
+            const attributesJson = fromBase64ToUtf8(attributesContent.content);
             const attributes = JSON.parse(attributesJson) as IDocumentAttributes;
             minimumSequenceNumber = attributes.minimumSequenceNumber;
             sequenceNumber = attributes.sequenceNumber;
@@ -472,7 +472,7 @@ function getIdFromPathCore(
 }
 
 async function writeSummaryBlob(
-    content: string | Buffer,
+    content: string | IsoBuffer,
     blobsShaCache: Set<string>,
     manager: IGitManager,
 ): Promise<string> {
@@ -481,7 +481,7 @@ async function writeSummaryBlob(
         : { parsedContent: content.toString("base64"), encoding: "base64" };
 
     // The gitHashFile would return the same hash as returned by the server as blob.sha
-    const hash = await gitHashFile(Buffer.from(parsedContent, encoding));
+    const hash = await gitHashFile(IsoBuffer.from(parsedContent, encoding));
     if (!blobsShaCache.has(hash)) {
         const blob = await manager.createBlob(parsedContent, encoding);
         blobsShaCache.add(blob.sha);

@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+import { IsoBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
@@ -19,7 +20,6 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker, SummarizerNode } from "@fluidframework/runtime-utils";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     IFluidDataStoreAttributes,
     LocalFluidDataStoreContext,
@@ -192,7 +192,7 @@ describe("Data Store Context Tests", () => {
                 pkg: JSON.stringify(["TestDataStore1"]),
                 snapshotFormatVersion: "0.1",
             };
-            const buffer = Buffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
+            const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
             const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
             const snapshotTree: ISnapshotTree = {
                 id: "dummy",
@@ -225,7 +225,7 @@ describe("Data Store Context Tests", () => {
             dataStoreAttributes = {
                 pkg: "TestDataStore1",
             };
-            const buffer = Buffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
+            const buffer = IsoBuffer.from(JSON.stringify(dataStoreAttributes), "utf-8");
             const blobCache = new Map<string, string>([["fluidDataStoreAttributes", buffer.toString("base64")]]);
             const snapshotTree: ISnapshotTree = {
                 id: "dummy",
