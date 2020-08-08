@@ -37,7 +37,7 @@ export class PureDataObjectFactory<T extends PureDataObject> implements IFluidDa
             this.IFluidDataStoreRegistry = new FluidDataStoreRegistry(
                 components.map(
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    (factory) => [factory.type!, factory]) as NamedFluidDataStoreRegistryEntries);
+                    (factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries);
         }
 
         this.ISharedObjectRegistry = new Map(

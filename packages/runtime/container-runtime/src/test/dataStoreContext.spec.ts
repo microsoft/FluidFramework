@@ -54,6 +54,7 @@ describe("Data Store Context Tests", () => {
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
             const factory: IFluidDataStoreFactory = {
+                type: "store-type",
                 get IFluidDataStoreFactory() { return factory; },
                 instantiateDataStore: async (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime(),
             };
