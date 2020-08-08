@@ -13,6 +13,8 @@ import { LocalResolver, LocalDocumentServiceFactory, LocalSessionStorageDbFactor
 // The deltaConnection needs to be shared across the Loader instances for collaboration to happen
 const deltaConnectionMap = new Map<string, ILocalDeltaConnectionServer>();
 
+const urlResolver = new LocalResolver();
+
 /**
  * Connect to the local SessionStorage Fluid service and retrieve a Container with the given ID running the given code.
  * @param documentId - The document id to retrieve or create
@@ -31,8 +33,6 @@ export async function getSessionStorageContainer(
 
     const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnection);
     const url = `${window.location.origin}/${documentId}`;
-
-    const urlResolver = new LocalResolver();
 
     // To bypass proposal-based loading, we need a codeLoader that will return our already-in-memory container factory.
     // The expected format of that response is an IFluidModule with a fluidExport.
