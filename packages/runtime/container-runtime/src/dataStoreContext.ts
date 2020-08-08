@@ -161,6 +161,8 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this._attachState;
     }
 
+    protected IFluidDataStoreRegistry: IFluidDataStoreRegistry | undefined;
+
     protected detachedRuntimeCreation = false;
     public readonly bindToContext: (channel: IFluidDataStoreChannel) => void;
     protected channel: IFluidDataStoreChannel | undefined;
@@ -263,6 +265,8 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
         }
 
+        assert(this.IFluidDataStoreRegistry === undefined);
+        this.IFluidDataStoreRegistry = registry;
         const channel = await factory.instantiateDataStore(this);
 
         // back-compat: <= 0.25 allows returning nothing and calling bindRuntime() later directly.
@@ -495,7 +499,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
                 assert(!this.detachedRuntimeCreation);
             }
             // pkg should be set for all paths except possibly for detached creation
-            assert(this.pkg !== undefined, "Please call bindDetachedRuntime()!");
+            assert(this.pkg !== undefined, "Please call attachRuntime()!");
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const pending = this.pending!;
@@ -554,7 +558,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
         // to the packagePath. If not, look into the global registry and the packagePath becomes just the
         // passed package.
-        if (await this.channel?.IFluidDataStoreRegistry?.get(subpackage)) {
+        if (await this.IFluidDataStoreRegistry?.get(subpackage)) {
             packagePath.push(subpackage);
         } else {
             if (!(await this._containerRuntime.IFluidDataStoreRegistry.get(subpackage))) {
@@ -799,12 +803,18 @@ export class LocalDetachedFluidDataStoreContext
         this.detachedRuntimeCreation = true;
     }
 
-    public bindDetachedRuntime(runtime, pkg: string[]) {
+    public attachRuntime(runtime, pkg: string[], entry: FluidDataStoreRegistryEntry) {
         assert(this.detachedRuntimeCreation);
         assert(this.pkg === undefined);
 
         assert(pkg !== undefined);
         this.pkg = pkg;
+
+        assert(this.IFluidDataStoreRegistry === undefined);
+        this.IFluidDataStoreRegistry = entry.IFluidDataStoreRegistry;
+
+        assert(entry.IFluidDataStoreFactory?.type === pkg[pkg.length - 1]);
+
         super.bindRuntime(runtime);
     }
 

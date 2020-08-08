@@ -42,7 +42,6 @@ import {
 import {
     IAttachMessage,
     IFluidDataStoreContext,
-    IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
     IEnvelope,
     IInboundSignalMessage,
@@ -83,7 +82,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     public static load(
         context: IFluidDataStoreContext,
         sharedObjectRegistry: ISharedObjectRegistry,
-        dataStoreRegistry?: IFluidDataStoreRegistry,
     ): FluidDataStoreRuntime {
         const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { dataStoreId: uuid() });
         const runtime = new FluidDataStoreRuntime(
@@ -99,7 +97,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             context.getAudience(),
             context.snapshotFn,
             sharedObjectRegistry,
-            dataStoreRegistry,
             logger);
 
         return runtime;
@@ -153,7 +150,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     public get IFluidSerializer() { return this.dataStoreContext.containerRuntime.IFluidSerializer; }
 
     public get IFluidHandleContext() { return this; }
-    public get IFluidDataStoreRegistry() { return this.dataStoreRegistry; }
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
@@ -184,7 +180,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         private readonly audience: IAudience,
         private readonly snapshotFn: (message: string) => Promise<void>,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
-        private readonly dataStoreRegistry: IFluidDataStoreRegistry | undefined,
         public readonly logger: ITelemetryLogger,
     ) {
         super();

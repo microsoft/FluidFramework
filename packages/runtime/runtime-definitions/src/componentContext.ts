@@ -29,7 +29,7 @@ import {
     ISnapshotTree,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IProvideFluidDataStoreRegistry } from "./componentRegistry";
+import { IProvideFluidDataStoreRegistry, FluidDataStoreRegistryEntry } from "./componentRegistry";
 import { IInboundSignalMessage } from "./protocol";
 import { ISummaryTreeWithStats, ISummarizerNode, SummarizeInternalFn, CreateChildSummarizerNodeParam } from "./summary";
 
@@ -347,5 +347,8 @@ export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
     /**
      * Binds a runtime to the context.
      */
-    bindDetachedRuntime(dataStoreRuntime: IFluidDataStoreChannel, pkg: string[]): void;
+    attachRuntime(
+        dataStoreRuntime: IFluidDataStoreChannel,
+        pkg: string[],
+        entry: FluidDataStoreRegistryEntry): void;
 }

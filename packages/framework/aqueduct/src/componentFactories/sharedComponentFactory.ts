@@ -10,6 +10,7 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
+    FluidDataStoreRegistryEntry,
     IProvideFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
     NamedFluidDataStoreRegistryEntry,
@@ -92,7 +93,6 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
         const runtime = FluidDataStoreRuntime.load(
             context,
             this.sharedObjectRegistry,
-            this.registry,
         );
 
         let instanceP: Promise<PureDataObject>;
@@ -154,7 +154,13 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
 
         const newContext = context.containerRuntime.createDetachedDataStore();
         const runtime = this.instantiateDataStoreCore(newContext, initialState);
-        newContext.bindDetachedRuntime(runtime, packagePath);
+
+        const entry: FluidDataStoreRegistryEntry = {
+            IFluidDataStoreRegistry: this.registry,
+            IFluidDataStoreFactory: this,
+        };
+
+        newContext.attachRuntime(runtime, packagePath, entry);
 
         return requestFluidObject<PureDataObject<P, S>>(runtime, "/");
     }

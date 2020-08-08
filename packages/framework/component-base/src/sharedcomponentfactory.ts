@@ -107,7 +107,6 @@ export class PureDataObjectFactory<T extends PureDataObject> implements IFluidDa
         return FluidDataStoreRuntime.load(
             context,
             this.ISharedObjectRegistry,
-            this.IFluidDataStoreRegistry,
         );
     }
 }
