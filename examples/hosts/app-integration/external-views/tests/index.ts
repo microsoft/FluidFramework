@@ -28,19 +28,16 @@ const documentId = window.location.hash.substring(1);
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-export async function createContainerAndRenderInElement(elementId: string, createNewFlag: boolean) {
-    // The SessionStorage Container is an in-memory Fluid container that uses the SessionSession storage
+export async function createContainerAndRenderInElement(element: HTMLElement, createNewFlag: boolean) {
+    // The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
     // to store ops.
     const container = await getSessionStorageContainer(documentId, DiceRollerContainerRuntimeFactory, createNewFlag);
 
     // Get the Default Object from the Container
     const defaultObject = await getDefaultObjectFromContainer<DiceRoller>(container);
 
-    // For now we will just reach into the FluidObject to render it
-    // defaultObject.render(document.getElementById(elementId));
-
-    const div = document.getElementById(elementId) as HTMLDivElement;
-    ReactDOM.render(React.createElement(PrettyDiceRollerView, { model: defaultObject }), div);
+    // Connect the view and model
+    ReactDOM.render(React.createElement(PrettyDiceRollerView, { model: defaultObject }), element);
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line dot-notation
@@ -51,10 +48,17 @@ export async function createContainerAndRenderInElement(elementId: string, creat
  * For local testing we have two div's that we are rendering into independently.
  */
 async function setup() {
-    await createContainerAndRenderInElement("content1", createNew);
-    // The second time we don't need to createNew because we know a Container
-    // object exists.
-    await createContainerAndRenderInElement("content2", false);
+    const leftElement = document.getElementById("sbs-left");
+    if (leftElement === null) {
+        throw new Error("sbs-left does not exist");
+    }
+    await createContainerAndRenderInElement(leftElement, createNew);
+    const rightElement = document.getElementById("sbs-right");
+    if (rightElement === null) {
+        throw new Error("sbs-right does not exist");
+    }
+    // The second time we don't need to createNew because we know a Container exists.
+    await createContainerAndRenderInElement(rightElement, false);
 }
 
 setup().catch((e)=> {

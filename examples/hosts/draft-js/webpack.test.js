@@ -40,7 +40,6 @@ module.exports = env => {
         plugins: [
             new HtmlWebpackPlugin({
                 template: "./tests/index.html",
-                chunks: ["app"],
             }),
         ],
         mode: "development",

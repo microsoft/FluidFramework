@@ -6,10 +6,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test application</title>
+    <title>Test - DraftJs</title>
 </head>
-<body style="margin: 0; height: 100%; overflow: hidden;">
-    <span id="content1" style="position: absolute; min-height: 100%; width: 48vw; padding:1vw; left:0; top:0;"></span>
-    <span id="content2" style="position: absolute; min-height: 100%; width: 48vw; padding:1vw; right:0; top:0;"></span>
+<body style="margin: 0; height: 100%;">
+    <div id="content" style="min-height: 100%; display: flex;">
+        <div id="sbs-left" style="flex-grow: 1; width: 50%; border: 1px solid lightgray; box-sizing: border-box; position: relative;"></div>
+        <div id="sbs-right" style="flex-grow: 1; width: 50%; border: 1px solid lightgray; box-sizing: border-box; position: relative;"></div>
+    </div>
 </body>
 </html>

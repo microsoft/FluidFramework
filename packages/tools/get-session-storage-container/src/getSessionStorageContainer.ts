@@ -7,11 +7,11 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { LocalResolver, LocalDocumentServiceFactory, LocalSessionStorageDbFactory } from "@fluidframework/local-driver";
 
 // The deltaConnection needs to be shared across the Loader instances for collaboration to happen
-let deltaConn;
+const deltaConnectionMap = new Map<string, ILocalDeltaConnectionServer>();
 
 /**
  * Connect to the local SessionStorage Fluid service and retrieve a Container with the given ID running the given code.
@@ -23,8 +23,13 @@ export async function getSessionStorageContainer(
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
 ): Promise<Container> {
-    deltaConn = deltaConn ?? LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory(documentId));
-    const documentServiceFactory = new LocalDocumentServiceFactory(deltaConn);
+    let deltaConnection = deltaConnectionMap.get(documentId);
+    if (deltaConnection === undefined) {
+        deltaConnection = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory(documentId));
+        deltaConnectionMap.set(documentId, deltaConnection);
+    }
+
+    const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnection);
     const url = `${window.location.origin}/${documentId}`;
 
     const urlResolver = new LocalResolver();
