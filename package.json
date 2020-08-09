@@ -13,7 +13,7 @@
     "build:fast": "fluid-build --root .",
     "build:full": "npm run build:genver && npm run build:full:compile && npm run lint && npm run build:docs",
     "build:full:compile": "lerna run build:full:compile --stream",
-    "build:gendocs": "api-documenter markdown -i _api-extractor-temp/doc-models -o docs/api",
+    "build:gendocs": "cp server/routerlicious/_api-extractor-temp/doc-models/* ./_api-extractor-temp/doc-models/ && api-documenter markdown -i _api-extractor-temp/doc-models -o docs/api",
     "build:genver": "lerna run build:genver --stream --parallel",
     "bump-version": "fluid-bump-version --root .",
     "ci:build": "npm run build:genver && lerna run build:compile --stream",
