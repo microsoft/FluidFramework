@@ -18,7 +18,7 @@ The following overview shows the various levels and their corresponding contract
 - Loader: @fluidframework/container-definitions
   - The core framework responsible for loading runtime code into a container
 - Runtime: @fluidframework/runtime-definitions
-  - A base set of runtime code that supports the Fluid component model, summarization, and other core Fluid features
+  - A base set of runtime code that supports the Fluid model, summarization, and other core Fluid features
 - Framework: @fluidframework/framework-definitions
   - A set of base implementations and helper utilities to support developers building on Fluid
 
