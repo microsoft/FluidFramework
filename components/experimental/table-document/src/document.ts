@@ -79,7 +79,7 @@ export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> impl
         const component = await TableSlice.getFactory().createInstance(
             this.context,
             { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol },
-        ) as TableSlice;
+        );
         this.root.set(sliceId, component.handle);
         return component;
     }

@@ -8,9 +8,10 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
     IFluidLastEditedTracker,
     IProvideFluidLastEditedTracker,
-    LastEditedTrackerComponentName,
+    LastEditedTrackerComponent,
 } from "@fluidframework/last-edited-experimental";
 import { IFluidHTMLView, IProvideFluidHTMLView } from "@fluidframework/view-interfaces";
+import { Vltava } from "../vltava";
 
 export const AnchorName = "anchor";
 
@@ -48,10 +49,10 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
     }
 
     protected async initializingFirstTime() {
-        const defaultComponent = await this.createFluidObject("vltava");
+        const defaultComponent = await Vltava.getFactory().createInstance(this.context);
         this.root.set(this.defaultComponentId, defaultComponent.handle);
 
-        const lastEditedComponent = await this.createFluidObject(LastEditedTrackerComponentName);
+        const lastEditedComponent = await LastEditedTrackerComponent.getFactory().createInstance(this.context);
         this.root.set(this.lastEditedComponentId, lastEditedComponent.handle);
     }
 

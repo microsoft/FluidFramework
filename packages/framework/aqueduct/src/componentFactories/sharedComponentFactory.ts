@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
+import assert from "assert";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
-    FluidDataStoreRegistryEntry,
     IProvideFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
     NamedFluidDataStoreRegistryEntry,
@@ -20,7 +20,6 @@ import {
     ComponentSymbolProvider,
     DependencyContainer,
 } from "@fluidframework/synthesize";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import {
     ISharedComponentProps,
@@ -36,21 +35,24 @@ import {
  * P - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced component may take during creation
  */
-export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implements
-    IFluidDataStoreFactory,
-    Partial<IProvideFluidDataStoreRegistry>
+export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
+    implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
 {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IFluidDataStoreRegistry | undefined;
 
     constructor(
         public readonly type: string,
-        private readonly ctor: new (props: ISharedComponentProps<P>) => PureDataObject<P, S>,
+        private readonly ctor: new (props: ISharedComponentProps<P>) => TObj,
         sharedObjects: readonly IChannelFactory[],
         private readonly optionalProviders: ComponentSymbolProvider<P>,
         registryEntries?: NamedFluidDataStoreRegistryEntries,
         private readonly onDemandInstantiation = true,
     ) {
+        // empty string is not allowed!
+        if (!this.type) {
+            throw new Error("undefined type member");
+        }
         if (registryEntries !== undefined) {
             this.registry = new FluidDataStoreRegistry(registryEntries);
         }
@@ -146,22 +148,37 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
     public async createInstance(
         context: IFluidDataStoreContext,
         initialState?: S,
-    ): Promise<IFluidObject & IFluidLoadable> {
-        if (this.type === "") {
-            throw new Error("undefined type member");
-        }
-        const packagePath = await context.composeSubpackagePath(this.type);
+    ) {
+        const parentPath = context.packagePath;
+        assert(parentPath.length > 0);
+        // A factory could not contain the registry for itself. So if it is the same the last snapshot
+        // pkg, return our package path.
+        assert(parentPath[parentPath.length - 1] !== this.type);
+        const packagePath = [...parentPath, this.type];
+
+        const factory = await context.IFluidDataStoreRegistry?.get(this.type);
+        assert(factory === this.IFluidDataStoreFactory);
+
+        // const packagePath = await context.composeSubpackagePath(this.type);
 
         const newContext = context.containerRuntime.createDetachedDataStore();
-        const runtime = this.instantiateDataStoreCore(newContext, initialState);
 
-        const entry: FluidDataStoreRegistryEntry = {
-            IFluidDataStoreRegistry: this.registry,
-            IFluidDataStoreFactory: this,
-        };
+        // const runtime = this.instantiateDataStoreCore(newContext, initialState);
+        const runtime = FluidDataStoreRuntime.load(
+            newContext,
+            this.sharedObjectRegistry,
+        );
 
-        newContext.attachRuntime(runtime, packagePath, entry);
+        const instanceP = this.instantiateInstance(runtime, newContext, initialState);
 
-        return requestFluidObject<PureDataObject<P, S>>(runtime, "/");
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const instance = await instanceP;
+            return instance.request(request);
+        });
+
+        // FluidDataStoreRegistryEntry
+        newContext.attachRuntime(runtime, packagePath, this);
+
+        return instanceP;
     }
 }

@@ -85,7 +85,7 @@ describe("FluidOjectHandle", () => {
         const firstContainer = await createContainer();
         firstContainerComponent1 = await requestFluidObject("default", firstContainer);
         firstContainerComponent2 =
-            await TestSharedComponentFactory.createInstance(firstContainerComponent1._context) as TestSharedComponent;
+            await TestSharedComponentFactory.createInstance(firstContainerComponent1._context);
 
         const secondContainer = await createContainer();
         secondContainerComponent1 = await requestFluidObject("default", secondContainer);

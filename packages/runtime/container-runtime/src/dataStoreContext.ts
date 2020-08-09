@@ -89,8 +89,8 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     public get packagePath(): readonly string[] {
         // The store must be loaded before the path is accessed.
         assert(this.loaded);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.pkg!;
+        assert(this.pkg !== undefined);
+        return this.pkg;
     }
 
     public get parentBranch(): string | null {
@@ -161,7 +161,11 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this._attachState;
     }
 
-    protected IFluidDataStoreRegistry: IFluidDataStoreRegistry | undefined;
+    public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
+        return this.registry;
+    }
+
+    protected registry: IFluidDataStoreRegistry | undefined;
 
     protected detachedRuntimeCreation = false;
     public readonly bindToContext: (channel: IFluidDataStoreChannel) => void;
@@ -245,6 +249,8 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         // that it is set here, before bindRuntime is called.
         this._baseSnapshot = details.snapshot;
         const packages = details.pkg;
+        assert(this.pkg === packages);
+
         let entry: FluidDataStoreRegistryEntry | undefined;
         let registry: IFluidDataStoreRegistry | undefined = this._containerRuntime.IFluidDataStoreRegistry;
         let factory: IFluidDataStoreFactory | undefined;
@@ -265,8 +271,8 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
         }
 
-        assert(this.IFluidDataStoreRegistry === undefined);
-        this.IFluidDataStoreRegistry = registry;
+        assert(this.registry === undefined);
+        this.registry = registry;
         const channel = await factory.instantiateDataStore(this);
 
         // back-compat: <= 0.25 allows returning nothing and calling bindRuntime() later directly.
@@ -558,7 +564,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
         // to the packagePath. If not, look into the global registry and the packagePath becomes just the
         // passed package.
-        if (await this.IFluidDataStoreRegistry?.get(subpackage)) {
+        if (await this.registry?.get(subpackage)) {
             packagePath.push(subpackage);
         } else {
             if (!(await this._containerRuntime.IFluidDataStoreRegistry.get(subpackage))) {
@@ -810,8 +816,8 @@ export class LocalDetachedFluidDataStoreContext
         assert(pkg !== undefined);
         this.pkg = pkg;
 
-        assert(this.IFluidDataStoreRegistry === undefined);
-        this.IFluidDataStoreRegistry = entry.IFluidDataStoreRegistry;
+        assert(this.registry === undefined);
+        this.registry = entry.IFluidDataStoreRegistry;
 
         assert(entry.IFluidDataStoreFactory?.type === pkg[pkg.length - 1]);
 
