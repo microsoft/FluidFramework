@@ -27,6 +27,7 @@ echo "===================================npm run build:fast -- --nolint --all -s
 npm run build:fast -- --nolint --all -s build -s build:docs
 
 echo "===================================npm run build:gendocs"
+cp server/routerlicious/_api-extractor-temp/doc-models/* ./_api-extractor-temp/doc-models/
 npm run build:gendocs
 
 cd docs
