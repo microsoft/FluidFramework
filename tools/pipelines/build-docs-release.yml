@@ -103,7 +103,7 @@ stages:
 
 - stage: deploy
   displayName: Deploy Stage
-  pool: Default
+  pool: Main
   dependsOn: build
   jobs:
     - deployment: current_release

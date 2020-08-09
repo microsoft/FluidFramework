@@ -92,7 +92,7 @@ stages:
 
 - stage: deploy
   displayName: Deploy Stage
-  pool: Default
+  pool: Main
   dependsOn: build
   jobs:
     - deployment: old_release
