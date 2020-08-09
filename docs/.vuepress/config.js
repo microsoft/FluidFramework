@@ -19,48 +19,73 @@ const RELEASE_URL = BASE_URL;
 const N1_URL = `${BASE_URL}/versions/${N1_VERSION}/`;
 const MASTER_BRANCH_URL = `${BASE_URL}/versions/latest/`;
 
-const packagesToExclude = [
-    "client-api",
-    "host-service-interfaces",
-    "iframe-host",
-    "index",
-];
-
 const apiMapping = new Map([
     ["aqueduct", "Framework"],
-    ["core-interfaces", "Framework"],
-    ["framework-interfaces", "Framework"],
-    ["undo-redo", "Framework"],
+    ["base-host", "Hosts"],
     ["cell", "Distributed Data Structures"],
-    ["counter", "Distributed Data Structures"],
-    ["ink", "Distributed Data Structures"],
-    ["map", "Distributed Data Structures"],
-    ["sequence", "Distributed Data Structures"],
-    ["matrix", "Distributed Data Structures"],
-    ["ordered-collection", "Distributed Data Structures"],
-    ["register-collection", "Distributed Data Structures"],
-    ["shared-object-base", "Distributed Data Structures"],
-    ["component-runtime", "Runtime"],
-    ["container-runtime", "Runtime"],
-    ["runtime-definitions", "Runtime"],
-    ["container-loader", "Loader"],
+    ["client-api", "Excluded"],
+    ["common-definitions", "Internal"],
+    ["common-utils", "Miscellaneous"],
+    ["component-base", "Runtime"],
     ["container-definitions", "Loader"],
-    ["execution-context-loader", "Loader"],
-    ["web-code-loader", "Loader"],
+    ["container-loader", "Loader"],
+    ["container-runtime-definitions", "Loader"],
+    ["container-runtime", "Loader"],
+    ["container-utils", "Loader"],
+    ["core-interfaces", "Framework"],
+    ["counter", "Distributed Data Structures"],
+    ["datastore-definitions", "Framework"],
+    ["datastore", "Framework"],
+    ["dds-interceptions", "Miscellaneous"],
+    ["debugger", "Tools"],
     ["driver-base", "Driver"],
     ["driver-definitions", "Driver"],
-    ["file-driver", "Driver"],
-    ["iframe-driver", "Driver"],
-    ["replay-driver", "Driver"],
-    ["routerlicious-driver", "Driver"],
-    ["base-host", "Hosts"],
-    ["debugger", "Tools"],
-    ["merge-tree-client-replay", "Tools"],
-    ["replay-tool", "Tools"],
-    ["common-utils", "Miscellaneous"],
-    ["common-definitions", "Internal"],
     ["driver-utils", "Internal"],
+    ["execution-context-loader", "Loader"],
+    ["file-driver", "Driver"],
+    ["framework-interfaces", "Framework"],
+    ["host-service-interfaces", "Excluded"],
+    ["iframe-driver", "Driver"],
+    ["iframe-host", "Excluded"],
+    ["index", "Excluded"],
+    ["ink", "Distributed Data Structures"],
+    ["last-edited-experimental", "Experimental"],
+    ["map", "Distributed Data Structures"],
+    ["matrix", "Distributed Data Structures"],
+    ["merge-tree-client-replay", "Tools"],
+    ["mocha-test-setup", "Excluded"],
+    ["odsp-driver", "Driver"],
+    ["ordered-collection", "Distributed Data Structures"],
+    ["protocol-base", "Protocol"],
+    ["protocol-definitions", "Protocol"],
+    ["react-inputs", "Miscellaneous"],
+    ["react", "Miscellaneous"],
+    ["register-collection", "Distributed Data Structures"],
+    ["replay-driver", "Driver"],
+    ["replay-tool", "Tools"],
+    ["request-handler", "Unknown"],
+    ["routerlicious-driver", "Driver"],
+    ["runtime-definitions", "Runtime"],
+    ["runtime-utils", "Runtime"],
+    ["sequence", "Distributed Data Structures"],
+    ["shared-object-base", "Distributed Data Structures"],
+    ["shared-summary-block", "Unknown"],
+    ["synthesize", "Distributed Data Structures"],
+    ["telemetry-utils", "Distributed Data Structures"],
+    ["test-utils", "Distributed Data Structures"],
+    ["undo-redo", "Framework"],
+    ["view-adapters", "Framework"],
+    ["view-interfaces", "Framework"],
+    ["web-code-loader", "Loader"],
 ]);
+
+
+// let packagesToExclude = [];
+// for (const [key, value] of apiMapping) {
+//     if (value === "Excluded") {
+//         packagesToExclude.push(key);
+//     }
+// }
 
 const compact = (input) => {
     return input.filter(x => x);
@@ -138,7 +163,7 @@ const getApiSidebar = () => {
 
     for (const file of files) {
         const packageName = packageFromFilePath(file);
-        if (packagesToExclude.includes(packageName)) {
+        if (apiMapping.get(packageName) === "Excluded") {
             continue;
         }
 
