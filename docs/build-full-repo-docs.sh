@@ -5,17 +5,16 @@
 
 cd ..
 
-# echo "===================================npm clean"
+echo "===================================npm clean"
 npm run clean
 
-# echo "===================================npm install client"
+echo "===================================npm install client"
 npm install --unsafe-perm
 
-# echo "===================================npm install server"
+echo "===================================npm install server"
 cd server/routerlicious
 npm install --unsafe-perm
 cd ../..
-# npm run build:fast -- --install --server
 
 echo "===================================npm clean all"
 npm run build:fast -- --clean --all
