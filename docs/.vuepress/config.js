@@ -116,20 +116,29 @@ const packageFromFilePath = (filepath) => {
 }
 
 const getNav = () => {
-    const nav = [
+    let nav = [
         { text: "What is Fluid?", link: "/what-is-fluid.md" },
         { text: "Docs", link: "/docs/" },
         { text: "API", link: "/api/" },
         { text: "Community", link: "/community/" },
-        {
+    ];
+
+    if (THIS_VERSION === N1_VERSION) {
+        nav.push({
             text: "Versions",
             items: [
                 { text: `v${RELEASE_VERSION}`, link: BASE_URL },
-                { text: `v${N1_VERSION}`, link: N1_URL },
                 { text: `Bleeding edge`, link: MASTER_BRANCH_URL }
             ]
-        },
-    ];
+        });
+    } else if (THIS_VERSION === RELEASE_VERSION) {
+        nav.push({
+            text: "Versions",
+            items: [
+                { text: `Bleeding edge`, link: MASTER_BRANCH_URL }
+            ]
+        });
+    }
 
     function filterFalsy(item) {
         if (item) {
