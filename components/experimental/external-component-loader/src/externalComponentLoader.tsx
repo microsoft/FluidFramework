@@ -35,7 +35,7 @@ export class ExternalComponentLoader extends DataObject {
      * @param componentUrl - the URL of the component to create, adding it to the registry if needed.
      */
     public async createComponentFromUrl(componentUrl: string): Promise<IFluidLoadable> {
-        const urlReg = await this.runtime.IFluidDataStoreRegistry?.get("url");
+        const urlReg = await this.context.IFluidDataStoreRegistry?.get("url");
         if (urlReg?.IFluidDataStoreRegistry === undefined) {
             throw new Error("Couldn't get url component registry");
         }
