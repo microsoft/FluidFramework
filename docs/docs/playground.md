@@ -1,4 +1,0 @@
-# Playground
-
-## NOT YET WRITTEN
-

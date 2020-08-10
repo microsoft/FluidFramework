@@ -13,7 +13,7 @@ import { IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 // (Lookup table ~17% faster than inlining the bit-twiddling on Node v12 x64)
 // (Array<T> ~2% faster than typed array on Node v12 x64)
 const x8ToInterlacedX16 =
-new Array(256).fill(0).map((value, i) => {
+    new Array(256).fill(0).map((value, i) => {
         /* eslint-disable no-param-reassign */
         i = (i | (i << 4)) & 0x0f0f; // .... 7654 .... 3210
         i = (i | (i << 2)) & 0x3333; // ..76 ..54 ..32 ..10
