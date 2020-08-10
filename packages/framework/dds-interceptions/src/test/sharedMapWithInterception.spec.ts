@@ -20,7 +20,7 @@ describe("Shared Map with Interception", () => {
         const documentId = "fakeId";
         const attributionKey = (key: string) => `${key}.attribution`;
         let sharedMap: SharedMap;
-        let componentContext: IFluidDataStoreContext;
+        let dataStoreContext: IFluidDataStoreContext;
 
         function orderSequentially(callback: () => void): void {
             callback();
@@ -36,7 +36,7 @@ describe("Shared Map with Interception", () => {
             dataStoreRuntime.bindToContext();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            componentContext = { containerRuntime: { orderSequentially } } as IFluidDataStoreContext;
+            dataStoreContext = { containerRuntime: { orderSequentially } } as IFluidDataStoreContext;
         });
 
         // Verifies that the props are stored correctly in the given map under a key derived from the
@@ -59,7 +59,7 @@ describe("Shared Map with Interception", () => {
 
         it("should be able to intercept SharedMap set method in the wrapper", async () => {
             const sharedMapWithInterception =
-                createSharedMapWithInterception(sharedMap, componentContext, interceptionCb);
+                createSharedMapWithInterception(sharedMap, dataStoreContext, interceptionCb);
             const key: string = "color";
             const value: string = "green";
             sharedMapWithInterception.set(key, value);
@@ -68,7 +68,7 @@ describe("Shared Map with Interception", () => {
 
         it("should be able to see changes made by the wrapper from the underlying shared map", async () => {
             const sharedMapWithInterception =
-                createSharedMapWithInterception(sharedMap, componentContext, interceptionCb);
+                createSharedMapWithInterception(sharedMap, dataStoreContext, interceptionCb);
             const key: string = "style";
             const value: string = "bold";
             sharedMapWithInterception.set(key, value);
@@ -77,7 +77,7 @@ describe("Shared Map with Interception", () => {
 
         it("should be able to see changes made by the underlying shared map from the wrapper", async () => {
             const sharedMapWithInterception =
-                createSharedMapWithInterception(sharedMap, componentContext, interceptionCb);
+                createSharedMapWithInterception(sharedMap, dataStoreContext, interceptionCb);
             const key: string = "font";
             const value: string = "Arial";
             sharedMap.set(key, value);
@@ -104,7 +104,7 @@ describe("Shared Map with Interception", () => {
             // Create the interception wrapper with a callback that calls set on the wrapper. The set method should
             // throw an assertion as this will cause infinite recursion.
             sharedMapWithInterception =
-                createSharedMapWithInterception(sharedMap, componentContext, recursiveInterceptionCb);
+                createSharedMapWithInterception(sharedMap, dataStoreContext, recursiveInterceptionCb);
 
             let asserted: boolean = false;
             try {
