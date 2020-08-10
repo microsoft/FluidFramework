@@ -7,7 +7,7 @@ import { Container } from "@fluidframework/container-loader";
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { IDiceRoller } from "../component";
+import { IDiceRoller } from "../dataObject";
 import { DiceRollerContainerRuntimeFactory } from "../container";
 import { PrettyDiceRollerView } from "./views";
 
@@ -31,7 +31,7 @@ async function start(): Promise<void> {
         await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
 
     // For this basic scenario, I'm just requesting the default view.  Nothing stopping me from issuing alternate
-    // requests (e.g. for other components or views) if I wished.
+    // requests (e.g. for other data objects or views) if I wished.
     const url = "/";
     const response = await container.request({ url });
 
