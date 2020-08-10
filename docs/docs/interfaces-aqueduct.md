@@ -35,7 +35,7 @@ described in more detail below.
 
 The Fluid component model supports a delegation and feature detection mechanism. As is typical in JavaScript, a feature
 detection pattern can be used to determine what capabilities are exposed by a component. The `IComponent` interface
-serves as a Fluid-specific form of TypeScript's `any` that developers can cast objects to in order to probe for
+serves as a Fluid-specific form of TypeScript's [`unknown`](https://www.typescriptlang.org/docs/handbook/basic-types.html#unknown), with built-in [typeguards](https://www.typescriptlang.org/docs/handbook/advanced-types.html#type-guards-and-differentiating-types) so developers can cast objects to it and then probe for
 implemented component interfaces.
 
 For example, if you need to determine the capabilities that a component exposes, you first cast the object as an
@@ -45,20 +45,19 @@ example:
 ```typescript
 let component = anyObject as IComponent;
 // We call bar on the component if it supports it.
-const isFooBar = component.IComponentFooBar;
-if (isFooBar) {
-    await component.bar();
+const fooBar = component.IComponentFooBar;
+if (fooBar !== undefined) {
+    await fooBar.bar();
 }
 ```
 
-In the example above, the code is checking to see if the component supports `IComponentFooBar`. If it does, an object will
-be returned and `bar()` will be called on it. If the component does not support `IComponentFooBar`, then it will return
-`undefined`.
+In the example above, the code is checking to see if the component can provide an `IComponentFooBar`. If it does,
+an object implementing `IComponentFooBar` object will be returned and `bar()` can be called on it.
+If the component does not support `IComponentFooBar`, then `undefined` will be returned.
 
-In addition to the feature detection mechanism, Fluid also supports a delegation pattern. Rather than implementing
-`IComponent*` interfaces itself, a component may instead delegate that responsibility by implementing
-`IProvideComponent*` interfaces. This requires the component to implement a property that returns the appropriate
-`IComponent*` interface.
+This illustrates the delegation pattern, in addition to the feature detection mechanism. Note that `component` _is_ not an `IComponentFooBar`,
+but rather it _has_ one. This delegation is streamlined with the "IProvide" pattern, where a corresponding `IProvideComponent*` interface
+is defined for each `IComponent*` interface. These interfaces specify a property that returns the appropriate `IComponent*` interface.
 
 For example, consider the `IProvideComponentLoadable` interface:
 
@@ -66,6 +65,13 @@ For example, consider the `IProvideComponentLoadable` interface:
 export interface IProvideComponentLoadable {
     readonly IComponentLoadable: IComponentLoadable;
 }
+```
+
+When implementing only the `IProvideComponentLoadable` interface, the component must be able to return
+an `IComponentLoadable` object, but it does not need to implement that interface itself and can instead delegate to a
+different object. That said, `IComponentLoadable` does extend `IProvideComponentLoadable`:
+
+```typescript
 /**
  * A shared component has a URL from which it can be referenced
  */
@@ -78,10 +84,8 @@ export interface IComponentLoadable extends IProvideComponentLoadable {
 }
 ```
 
-Notice that there is an inheritance relationship between the `IProvideComponentLoadable` and `IComponentLoadable`
-interfaces. When implementing only the `IProvideComponentLoadable` interface, the component still must be able to return
-an `IComponentLoadable` object, but it does not need to implement that interface itself and can instead delegate to a
-different object.
+The inheritance relationship seen here between `IProvideComponentLoadable` and `IComponentLoadable`
+is common, as is the implementation of `IProvideComponentLoadable.IComponentLoadable` which simply returns `this`.
 
 ## Fluid component interfaces
 
