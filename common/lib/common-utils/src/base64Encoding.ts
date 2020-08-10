@@ -12,8 +12,8 @@ export const fromUtf8ToBase64 = (input: string): string => IsoBuffer.from(input,
 /**
  * Convenience function to convert unknown encoding to utf8 that avoids
  * buffer copies/encode ops when no conversion is needed
- * @param input
- * @param encoding
+ * @param input - The source string to convert
+ * @param encoding - The source string's encoding
  */
 export const toUtf8 = (input: string, encoding: string): string => {
     switch (encoding) {
