@@ -18,6 +18,7 @@ import {
 import {
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreFactory,
+    IFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 
@@ -44,7 +45,7 @@ export class InternalRegistry implements IFluidDataStoreRegistry, IComponentInte
 
     public async get(name: string): Promise<Readonly<IProvideFluidDataStoreFactory | undefined>> {
         const index = this.containerComponentArray.findIndex(
-            (containerComponent) => name === containerComponent.type,
+            (containerComponent) => name === containerComponent.factory.type,
         );
         if (index >= 0) {
             return this.containerComponentArray[index].factory;
@@ -60,7 +61,7 @@ export class InternalRegistry implements IFluidDataStoreRegistry, IComponentInte
 
     public hasCapability(type: string, capability: keyof IFluidObject) {
         const index = this.containerComponentArray.findIndex(
-            (containerComponent) => type === containerComponent.type,
+            (containerComponent) => type === containerComponent.factory.type,
         );
         return index >= 0 && this.containerComponentArray[index].capabilities.includes(capability);
     }
@@ -94,45 +95,40 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultData
 const generateFactory = () => {
     const containerComponentsDefinition: IInternalRegistryEntry[] = [
         {
-            type: "clicker",
-            factory: Promise.resolve(ClickerInstantiationFactory),
+            factory: ClickerInstantiationFactory,
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Clicker",
             fabricIconName: "NumberField",
         },
         {
-            type: "tabs",
-            factory: Promise.resolve(TabsComponent.getFactory()),
+            factory: TabsComponent.getFactory(),
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Tabs",
             fabricIconName: "BrowserTab",
         },
         {
-            type: "spaces",
-            factory: Promise.resolve(Spaces.getFactory()),
+            factory: Spaces.getFactory(),
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Spaces",
             fabricIconName: "SnapToGrid",
         },
         {
-            type: "codemirror",
-            factory: Promise.resolve(cmfe),
+            factory: cmfe,
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Codemirror",
             fabricIconName: "Code",
         },
         {
-            type: "prosemirror",
-            factory: Promise.resolve(pmfe),
+            factory: pmfe,
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Prosemirror",
             fabricIconName: "Edit",
         },
     ];
 
-    const containerComponents: [string, Promise<IProvideFluidDataStoreFactory>][] = [];
+    const containerComponents: [string, Promise<IFluidDataStoreFactory>][] = [];
     containerComponentsDefinition.forEach((value) => {
-        containerComponents.push([value.type, value.factory]);
+        containerComponents.push([value.factory.type, Promise.resolve(value.factory)]);
     });
 
     // The last edited tracker component provides container level tracking of last edits. This is the first

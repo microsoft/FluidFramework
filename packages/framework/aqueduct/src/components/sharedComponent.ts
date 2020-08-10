@@ -143,20 +143,6 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
     }
 
     /**
-     * Calls create, initialize, and attach on a new component with random generated ID
-     *
-     * @param pkg - package name for the new component
-     * @param props - optional props to be passed in
-     */
-    protected async createFluidObject<T extends IFluidObject & IFluidLoadable>(
-        pkg: string,
-    ): Promise<T> {
-        const packagePath = await this.context.composeSubpackagePath(pkg);
-        const router = await this.context.containerRuntime.createDataStore(packagePath);
-        return requestFluidObject<T>(router, "/");
-    }
-
-    /**
      * Retreive component using the handle get or the older requestFluidObject_UNSAFE call to fetch by ID
      *
      * @param key - key that object (handle/id) is stored with in the directory

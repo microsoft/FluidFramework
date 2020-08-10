@@ -8,6 +8,7 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import React from "react";
 
@@ -89,7 +90,7 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
         );
     }
 
-    private async createNewTab(type: string) {
-        await this.props.dataModel.createTab(type);
+    private async createNewTab(factory: IFluidDataStoreFactory) {
+        await this.props.dataModel.createTab(factory);
     }
 }

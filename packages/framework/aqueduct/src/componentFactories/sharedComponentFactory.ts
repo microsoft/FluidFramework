@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest, IFluidObject } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
@@ -16,6 +16,7 @@ import {
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ComponentSymbolProvider,
     DependencyContainer,
@@ -25,6 +26,64 @@ import {
     ISharedComponentProps,
     PureDataObject,
 } from "../components";
+
+async function buildSubPath(context: IFluidDataStoreContext, factory: IFluidDataStoreFactory) {
+    const parentPath = context.packagePath;
+    assert(parentPath.length > 0);
+    // A factory could not contain the registry for itself. So if it is the same the last snapshot
+    // pkg, return our package path.
+    assert(parentPath[parentPath.length - 1] !== factory.type);
+    const packagePath = [...parentPath, factory.type];
+
+    const factory2 = await context.IFluidDataStoreRegistry?.get(factory.type);
+    assert(factory2 === factory);
+    return packagePath;
+}
+
+/*
+ * An association of identifiers to component registry entries, where the
+ * entries can be used to create components.
+ */
+export interface IFluidDataObjectFactory {
+    createInstance<
+        P,
+        S,
+        TObject extends PureDataObject<P,S>,
+        TFactory extends PureDataObjectFactory<TObject, P,S>>
+    (subFactory: TFactory, props?: S): Promise<TObject>;
+
+    createAnonymousInstance<T = IFluidObject>(
+        subFactory: IFluidDataStoreFactory,
+        request?: string | IRequest): Promise<T>;
+}
+
+class FluidDataObjectFactory {
+    constructor(private readonly context: IFluidDataStoreContext) {
+    }
+
+    public async createInstance<
+        P,
+        S,
+        TObject extends PureDataObject<P,S>,
+        TFactory extends PureDataObjectFactory<TObject,P,S>>(subFactory: TFactory, props?: S)
+    {
+        return subFactory.createInstance(this.context, props);
+    }
+
+    public async createAnonymousInstance<T = IFluidObject>(
+        subFactory: IFluidDataStoreFactory,
+        request: string | IRequest = "/")
+    {
+        const packagePath = await buildSubPath(this.context, subFactory);
+        const router = await this.context.containerRuntime.createDataStore(packagePath);
+        return requestFluidObject<T>(router, request);
+    }
+}
+
+export const getFluidObjectFactoryFromInstance = (context: IFluidDataStoreContext) =>
+    new FluidDataObjectFactory(context);
+
+export type AnonymousPureDataObjectFactory = PureDataObjectFactory<PureDataObject, object, undefined>;
 
 /**
  * PureDataObjectFactory is a barebones IFluidDataStoreFactory for use with PureDataObject.
@@ -146,22 +205,12 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
      * for attaching the component to the provided runtime's container such as by storing its handle
      */
     public async createInstance(
-        context: IFluidDataStoreContext,
+        parentContext: IFluidDataStoreContext,
         initialState?: S,
     ) {
-        const parentPath = context.packagePath;
-        assert(parentPath.length > 0);
-        // A factory could not contain the registry for itself. So if it is the same the last snapshot
-        // pkg, return our package path.
-        assert(parentPath[parentPath.length - 1] !== this.type);
-        const packagePath = [...parentPath, this.type];
+        const packagePath = await buildSubPath(parentContext, this);
 
-        const factory = await context.IFluidDataStoreRegistry?.get(this.type);
-        assert(factory === this.IFluidDataStoreFactory);
-
-        // const packagePath = await context.composeSubpackagePath(this.type);
-
-        const newContext = context.containerRuntime.createDetachedDataStore();
+        const newContext = parentContext.containerRuntime.createDetachedDataStore();
 
         // const runtime = this.instantiateDataStoreCore(newContext, initialState);
         const runtime = FluidDataStoreRuntime.load(

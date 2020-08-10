@@ -5,24 +5,29 @@
 
 import { EventEmitter } from "events";
 
-import { IFluidObject, IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import {
+    IFluidObject,
+    IFluidHandle,
+    IFluidLoadable,
+} from "@fluidframework/core-interfaces";
 import {
     ISharedDirectory,
     IDirectory,
     IDirectoryValueChanged,
 } from "@fluidframework/map";
-import {
-    ISequencedDocumentMessage,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+
+import { IFluidDataObjectFactory } from "@fluidframework/aqueduct";
 
 import { v4 as uuid } from "uuid";
 
 import { IComponentInternalRegistry } from "../../interfaces";
 
 export interface ITabsTypes {
-    type: string;
     friendlyName: string;
     fabricIconName: string;
+    factory: IFluidDataStoreFactory;
 }
 
 export interface ITabsModel {
@@ -33,7 +38,7 @@ export interface ITabsModel {
 export interface ITabsDataModel extends EventEmitter {
     getComponentTab(id: string): Promise<IFluidObject | undefined>;
     getTabIds(): string[];
-    createTab(type: string): Promise<string>;
+    createTab(factory: IFluidDataStoreFactory): Promise<string>;
     getNewTabTypes(): ITabsTypes[];
 }
 
@@ -43,8 +48,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
     constructor(
         public root: ISharedDirectory,
         private readonly internalRegistry: IComponentInternalRegistry,
-        private readonly createFluidObject: <T extends IFluidObject & IFluidLoadable>
-            (pkg: string) => Promise<T>,
+        private readonly createSubObject: IFluidDataObjectFactory,
         private readonly getFluidObjectFromDirectory: <T extends IFluidObject & IFluidLoadable>(
             id: string,
             directory: IDirectory,
@@ -73,11 +77,11 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         return Array.from(this.tabs.keys());
     }
 
-    public async createTab(type: string): Promise<string> {
+    public async createTab(factory: IFluidDataStoreFactory): Promise<string> {
         const newKey = uuid();
-        const component = await this.createFluidObject<IFluidObject & IFluidLoadable>(type);
+        const component = await this.createSubObject.createAnonymousInstance<IFluidLoadable>(factory);
         this.tabs.set(newKey, {
-            type,
+            type: factory.type,
             handleOrId: component.handle,
         });
 
@@ -99,9 +103,9 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         const response: ITabsTypes[] = [];
         this.internalRegistry.getFromCapability("IFluidHTMLView").forEach((e) => {
             response.push({
-                type: e.type,
                 friendlyName: e.friendlyName,
                 fabricIconName: e.fabricIconName,
+                factory: e.factory,
             });
         });
         return response;

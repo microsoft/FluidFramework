@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import {
+    DataObject,
+    DataObjectFactory,
+    getFluidObjectFactoryFromInstance,
+} from "@fluidframework/aqueduct";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
@@ -47,7 +51,7 @@ export class TabsComponent extends DataObject implements IFluidHTMLView {
             new TabsDataModel(
                 this.root,
                 registryDetails,
-                this.createFluidObject.bind(this),
+                getFluidObjectFactoryFromInstance(this.context),
                 this.getFluidObjectFromDirectory.bind(this),
             );
     }
