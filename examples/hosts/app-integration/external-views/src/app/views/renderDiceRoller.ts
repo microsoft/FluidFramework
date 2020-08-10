@@ -5,6 +5,11 @@
 
 import { IDiceRoller } from "../../component";
 
+/**
+ * Render an IDiceRoller into a given div as a text character, with a button to roll it.
+ * @param diceRoller - The Data Object to be rendered
+ * @param div - The div to render into
+ */
 export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
     const wrapperDiv = document.createElement("div");
     wrapperDiv.style.textAlign = "center";
@@ -22,12 +27,13 @@ export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
     wrapperDiv.append(diceCharDiv, rollButton);
 
     // Get the current value of the shared data to update the view whenever it changes.
-    const rerender = () => {
+    const updateDiceChar = () => {
+        // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
         diceCharDiv.textContent = String.fromCodePoint(0x267F + diceRoller.value);
         diceCharDiv.style.color = `hsl(${diceRoller.value * 60}, 70%, 50%)`;
     };
-    rerender();
+    updateDiceChar();
 
     // Use the diceRolled event to trigger the rerender whenever the value changes.
-    diceRoller.on("diceRolled", rerender);
+    diceRoller.on("diceRolled", updateDiceChar);
 }
