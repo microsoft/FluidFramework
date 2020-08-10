@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { toUtf8 } from "@fluidframework/common-utils";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IDocumentAttributes, ISequencedDocumentMessage, IProtocolState } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
@@ -41,11 +40,14 @@ export async function fetchLatestSummaryState(
             gitManager.getContent(existingRef.object.sha, ".logTail/logTail"),
         ]);
         const attributes =
-            JSON.parse(toUtf8(attributesContent.content, attributesContent.encoding)) as IDocumentAttributes;
-        const scribe = toUtf8(scribeContent.content, scribeContent.encoding);
-        const deli = JSON.parse(toUtf8(deliContent.content, deliContent.encoding)) as IDeliCheckpoint;
+            JSON.parse(Buffer.from(attributesContent.content, attributesContent.encoding)
+                .toString()) as IDocumentAttributes;
+        const scribe = Buffer.from(scribeContent.content, scribeContent.encoding).toString();
+        const deli = JSON.parse(
+            Buffer.from(deliContent.content, deliContent.encoding).toString()) as IDeliCheckpoint;
         const term = deli.term;
-        const messages = JSON.parse(toUtf8(opsContent.content, opsContent.encoding)) as ISequencedDocumentMessage[];
+        const messages = JSON.parse(
+            Buffer.from(opsContent.content, opsContent.encoding).toString()) as ISequencedDocumentMessage[];
 
         return {
             term,

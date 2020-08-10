@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
-    "@fluidframework/common-utils": "^0.22.0-0"
+    "buffer": "^4.3.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",

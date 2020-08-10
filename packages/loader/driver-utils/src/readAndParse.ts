@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { Buffer } from "buffer";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 
 /**
@@ -15,6 +15,8 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
  */
 export async function readAndParse<T>(storage: Pick<IDocumentStorageService, "read">, id: string): Promise<T> {
     const encoded = await storage.read(id);
-    const decoded = fromBase64ToUtf8(encoded);
+    const decoded = Buffer
+        .from(encoded, "base64")
+        .toString();
     return JSON.parse(decoded) as T;
 }

@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { gitHashFile, IsoBuffer } from "@fluidframework/common-utils";
+import { gitHashFile } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy } from "@fluidframework/protocol-base";
@@ -87,7 +87,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         throw new Error("NOT IMPLEMENTED!");
     }
 
-    public async createBlob(file: IsoBuffer): Promise<ICreateBlobResponse> {
+    public async createBlob(file: Buffer): Promise<ICreateBlobResponse> {
         const response = this.manager.createBlob(file.toString("base64"), "base64");
         return response.then((r) => ({ id: r.sha, url: r.url }));
     }
@@ -186,13 +186,13 @@ export class DocumentStorageService implements IDocumentStorageService {
         return this.getIdFromPathCore(handleType, path.slice(1), previousSnapshot.trees[key]);
     }
 
-    private async writeSummaryBlob(content: string | IsoBuffer): Promise<string> {
+    private async writeSummaryBlob(content: string | Buffer): Promise<string> {
         const { parsedContent, encoding } = typeof content === "string"
             ? { parsedContent: content, encoding: "utf-8" }
             : { parsedContent: content.toString("base64"), encoding: "base64" };
 
         // The gitHashFile would return the same hash as returned by the server as blob.sha
-        const hash = await gitHashFile(IsoBuffer.from(parsedContent, encoding));
+        const hash = gitHashFile(Buffer.from(parsedContent, encoding));
         if (!this.blobsShaCache.has(hash)) {
             this.blobsShaCache.set(hash, "");
             const blob = await this.manager.createBlob(parsedContent, encoding);

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from "@fluidframework/common-utils";
+import { Buffer } from "buffer";
 import {
     IDocumentStorageService,
     ISummaryContext,
@@ -48,7 +48,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
         return this.internalStorageService.downloadSummary(handle);
     }
 
-    public async createBlob(file: IsoBuffer): Promise<ICreateBlobResponse> {
+    public async createBlob(file: Buffer): Promise<ICreateBlobResponse> {
         return this.internalStorageService.createBlob(file);
     }
 

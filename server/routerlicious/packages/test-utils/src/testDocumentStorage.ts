@@ -27,7 +27,7 @@ import {
     getGitMode,
     getGitType,
 } from "@fluidframework/protocol-base";
-import { gitHashFile, IsoBuffer } from "@fluidframework/common-utils";
+import { gitHashFile } from "@fluidframework/common-utils";
 
 const StartingSequenceNumber = 0;
 
@@ -311,7 +311,7 @@ function getIdFromPathCore(
 }
 
 async function writeSummaryBlob(
-    content: string | IsoBuffer,
+    content: string | Buffer,
     blobsShaCache: Set<string>,
     manager: IGitManager,
 ): Promise<string> {
@@ -320,7 +320,7 @@ async function writeSummaryBlob(
         : { parsedContent: content.toString("base64"), encoding: "base64" };
 
     // The gitHashFile would return the same hash as returned by the server as blob.sha
-    const hash = await gitHashFile(IsoBuffer.from(parsedContent, encoding));
+    const hash = gitHashFile(Buffer.from(parsedContent, encoding));
     if (!blobsShaCache.has(hash)) {
         const blob = await manager.createBlob(parsedContent, encoding);
         blobsShaCache.add(blob.sha);

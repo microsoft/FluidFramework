@@ -58,10 +58,10 @@
     "@fluidframework/datastore-definitions": "^0.25.0",
     "@fluidframework/local-driver": "^0.25.0",
     "@fluidframework/map": "^0.25.0",
-    "@fluidframework/protocol-definitions": "^0.1011.0-0",
+    "@fluidframework/protocol-definitions": "^0.1010.0",
     "@fluidframework/request-handler": "^0.25.0",
     "@fluidframework/runtime-definitions": "^0.25.0",
-    "@fluidframework/server-local-server": "^0.1011.0-0"
+    "@fluidframework/server-local-server": "^0.1010.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",

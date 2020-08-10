@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     ITree,
     SummaryType,
@@ -39,7 +38,7 @@ export function mergeStats(...stats: ISummaryStats[]): ISummaryStats {
 
 export function getBlobSize(content: ISummaryBlob["content"]): number {
     if (typeof content === "string") {
-        return IsoBuffer.from(content, "utf8").byteLength;
+        return Buffer.byteLength(content);
     } else {
         return content.byteLength;
     }
@@ -73,7 +72,7 @@ export function calculateStats(summary: ISummaryTree): ISummaryStats {
     return stats;
 }
 
-export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | IsoBuffer): void {
+export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Buffer): void {
     const blob: ISummaryBlob = {
         type: SummaryType.Blob,
         content,
@@ -103,7 +102,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     private readonly summaryTree: { [path: string]: SummaryObject } = {};
     private summaryStats: ISummaryStats;
 
-    public addBlob(key: string, content: string | IsoBuffer): void {
+    public addBlob(key: string, content: string | Buffer): void {
         // Prevent cloning by directly referencing underlying private properties
         addBlobToSummary({
             summary: {
@@ -160,9 +159,9 @@ export function convertToSummaryTree(
             switch (entry.type) {
                 case TreeEntry[TreeEntry.Blob]: {
                     const blob = entry.value as IBlob;
-                    let content: string | IsoBuffer;
+                    let content: string | Buffer;
                     if (blob.encoding === "base64") {
-                        content = IsoBuffer.from(blob.contents, "base64");
+                        content = Buffer.from(blob.contents, "base64");
                     } else {
                         content = blob.contents;
                     }
