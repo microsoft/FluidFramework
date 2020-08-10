@@ -178,7 +178,10 @@
                     "packages/agents/"
                 ],
                 "deps": [
-                    "Framework"
+                    "Framework",
+                    "Driver",
+                    "Routerlicious-Driver",
+                    "Test"
                 ]
             },
             "Build": {

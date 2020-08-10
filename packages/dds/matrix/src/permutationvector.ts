@@ -15,77 +15,104 @@ import {
     IMergeTreeDeltaOpArgs,
     IMergeTreeDeltaCallbackArgs,
     MergeTreeDeltaType,
+    IMergeTreeMaintenanceCallbackArgs,
+    MergeTreeMaintenanceType,
 } from "@fluidframework/merge-tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
-import { HandleTable, Handle } from "./handletable";
+import { HandleTable, Handle, isHandleValid } from "./handletable";
 import { serializeBlob, deserializeBlob } from "./serialization";
+import { HandleCache } from "./handlecache";
 
 const enum SnapshotPath {
     segments = "segments",
-    handles = "handles",
     handleTable = "handleTable",
 }
 
+type PermutationSegmentSpec = [number, number];
+
 export class PermutationSegment extends BaseSegment {
     public static readonly typeString: string = "PermutationSegment";
+    private _start = Handle.unallocated;
 
     public static fromJSONObject(spec: any) {
-        return new PermutationSegment(spec);
+        const [length, start] = spec as PermutationSegmentSpec;
+        return new PermutationSegment(length, start);
     }
 
     public readonly type = PermutationSegment.typeString;
 
-    constructor(length: number) {
+    constructor(length: number, start = Handle.unallocated) {
         super();
+        this._start = start;
         this.cachedLength = length;
     }
 
+    public get start() { return this._start; }
+    public set start(value: Handle) {
+        assert.equal(this._start, Handle.unallocated);
+        assert(isHandleValid(value));
+
+        this._start = value;
+    }
+
+    public reset() {
+        this._start = Handle.unallocated;
+    }
+
     public toJSONObject() {
-        return this.cachedLength;
+        return [this.cachedLength, this.start];
     }
 
     public clone(start = 0, end = this.cachedLength) {
-        const b = new PermutationSegment(end - start);
+        const b = new PermutationSegment(
+            /* length: */ end - start,
+            /* start: */ this.start + start);
         this.cloneInto(b);
         return b;
     }
 
-    public canAppend(segment: ISegment) { return true; }
+    public canAppend(segment: ISegment) {
+        const asPerm = segment as PermutationSegment;
+
+        return this.start === Handle.unallocated
+            ? asPerm.start === Handle.unallocated
+            : asPerm.start === this.start + this.cachedLength;
+    }
 
     public append(segment: ISegment) {
-        // Note: Must call 'appendLocalRefs' before modifying this segment's length as
+        // Note: Must call 'LocalReferenceCollection.append(..)' before modifying this segment's length as
         //       'this.cachedLength' is used to adjust the offsets of the local refs.
         LocalReferenceCollection.append(this, segment);
 
         this.cachedLength += segment.cachedLength;
     }
 
-    // TODO: retain removed items for undo
-    // returns true if entire run removed
-    public removeRange(start: number, end: number) {
-        this.cachedLength -= (end - start);
-        return this.cachedLength === 0;
-    }
-
     protected createSplitSegmentAt(pos: number) {
         assert(0 < pos && pos < this.cachedLength);
 
-        const leafSegment = new PermutationSegment(this.cachedLength - pos);
+        const leafSegment = new PermutationSegment(
+            /* length: */ this.cachedLength - pos,
+            /* start: */ this.start === Handle.unallocated
+                ? Handle.unallocated
+                : this.start + pos);
+
         this.cachedLength = pos;
 
         return leafSegment;
     }
 
     public toString() {
-        return `<${this.cachedLength} handles>`;
+        return this.start === Handle.unallocated
+            ? `<${this.cachedLength} empty>`
+            : `<${this.cachedLength}: ${this.start}..${this.start + this.cachedLength - 1}>`;
     }
 }
 
 export class PermutationVector extends Client {
     private handleTable = new HandleTable<never>(); // Tracks available storage handles for rows.
-    public handles: number[] = [];
+    public readonly handleCache = new HandleCache(this);
 
     constructor(
         path: string,
@@ -99,10 +126,10 @@ export class PermutationVector extends Client {
             ChildLogger.create(logger, `Matrix.${path}.MergeTreeClient`), {
             ...runtime.options,
             newMergeTreeSnapshotFormat: true,   // Temporarily force new snapshot format until it is the default.
-        },                                      // (See https://github.com/microsoft/FluidFramework/issues/84)
-        );
+        });                                     // (See https://github.com/microsoft/FluidFramework/issues/84)
 
         this.mergeTreeDeltaCallback = this.onDelta;
+        this.mergeTreeMaintenanceCallback = this.onMaintenance;
     }
 
     public insert(start: number, length: number) {
@@ -115,12 +142,30 @@ export class PermutationVector extends Client {
         return this.removeRangeLocal(start, start + length);
     }
 
-    public getAllocatedHandle(pos: number): Handle {
-        let handle = this.handles[pos];
+    public getMaybeHandle(pos: number): Handle {
+        assert(0 <= pos && pos < this.getLength());
 
-        if (handle === Handle.unallocated) {
-            handle = this.handles[pos] = this.handleTable.allocate();
+        return this.handleCache.getHandle(pos);
+    }
+
+    public getAllocatedHandle(pos: number): Handle {
+        let handle = this.getMaybeHandle(pos);
+        if (isHandleValid(handle)) {
+            return handle;
         }
+
+        this.walkSegments(
+            (segment) => {
+                const asPerm = segment as PermutationSegment;
+                asPerm.start = handle = this.handleTable.allocate();
+                return true;
+            },
+            pos,
+            pos + 1,
+            /* accum: */ undefined,
+            /* splitRange: */ true);
+
+        this.handleCache.addHandle(pos, handle);
 
         return handle;
     }
@@ -153,19 +198,46 @@ export class PermutationVector extends Client {
         //
         //       If we find that we frequently need a reverse handle -> position lookup, we could maintain
         //       one using the Tiny-Calc adjust tree.
-        const currentPosition = this.handles.indexOf(handle);
+        let containingSegment!: PermutationSegment;
+        let containingOffset: number;
 
-        // SharedMatrix must verify that 'localSeq' used to originally submit this op is still the
-        // most recently pending write to the row/col handle before calling 'getPositionForResubmit'
-        // to ensure the handle has not been removed or recycled (See comments in `resubmitCore()`).
-        assert(currentPosition >= 0,
-            "Caller must ensure 'handle' has not been removed/recycled.");
+        this.mergeTree.walkAllSegments(
+            this.mergeTree.root,
+            (segment) => {
+                const { start, cachedLength } = segment as PermutationSegment;
+
+                // If the segment is unallocated, skip it.
+                if (!isHandleValid(start)) {
+                    return true;
+                }
+
+                const end = start + cachedLength;
+
+                if (start <= handle && handle < end) {
+                    containingSegment = segment as PermutationSegment;
+                    containingOffset = handle - start;
+                    return false;
+                }
+
+                return true;
+            });
+
+        // We are guaranteed to find the handle in the PermutationVector, even if the corresponding
+        // row/col has been removed, because handles are not recycled until the containing segment
+        // is unlinked from the MergeTree.
+        //
+        // Therefore, either a row/col removal has been ACKed, in which case there will be no pending
+        // ops that reference the stale handle, or the removal is unACKed, in which case the handle
+        // has not yet been recycled.
+
+        assert(isHandleValid(containingSegment.start));
 
         // Once we know the current position of the handle, we can use the MergeTree to get the segment
         // containing this position and use 'findReconnectionPosition' to adjust for the local ops that
         // have not yet been submitted.
-        const { segment, offset } = this.getContainingSegment(currentPosition);
-        return this.findReconnectionPostition(segment, localSeq) + offset;
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.findReconnectionPostition(containingSegment, localSeq) + containingOffset!;
     }
 
     // Constructs an ITreeEntry for the cell data.
@@ -179,20 +251,15 @@ export class PermutationVector extends Client {
                     value: super.snapshot(runtime, handle, /* catchUpMsgs: */[]),
                 },
                 serializeBlob(runtime, handle, SnapshotPath.handleTable, this.handleTable.snapshot()),
-                serializeBlob(runtime, handle, SnapshotPath.handles, this.handles),
             ],
             id: null,   // eslint-disable-line no-null/no-null
         };
     }
 
     public async load(runtime: IFluidDataStoreRuntime, storage: IChannelStorageService, branchId?: string) {
-        const [handleTableData, handles] = await Promise.all([
-            await deserializeBlob(runtime, storage, SnapshotPath.handleTable),
-            await deserializeBlob(runtime, storage, SnapshotPath.handles),
-        ]);
+        const handleTableData = await deserializeBlob(runtime, storage, SnapshotPath.handleTable);
 
         this.handleTable = HandleTable.load<never>(handleTableData);
-        this.handles = handles;
 
         return super.load(runtime, new ObjectStoragePartition(storage, SnapshotPath.segments), branchId);
     }
@@ -204,48 +271,44 @@ export class PermutationVector extends Client {
         // Apply deltas in descending order to prevent positions from shifting.
         const ranges = deltaSegments
             .map(({ segment }) => ({
+                segment: segment as PermutationSegment,
                 position: this.getPosition(segment),
-                length: segment.cachedLength,
             }))
             .sort((left, right) => left.position - right.position);
 
         switch (operation) {
             case MergeTreeDeltaType.INSERT:
-                for (const { position, length } of ranges) {
-                    // Note: Using the spread operator with `.splice()` can exhaust the stack.
-                    this.handles = this.handles.slice(0, position)
-                        .concat(new Array(length).fill(Handle.unallocated))
-                        .concat(this.handles.slice(position));
+                // Pass 1: Perform any internal maintenance first to avoid reentrancy.
+                for (const { segment, position } of ranges) {
+                    // HACK: We need to include the allocated handle in the segment's JSON reperesntation
+                    //       for snapshots, but need to ignore the remote client's handle allocations when
+                    //       processing remote ops.
+                    segment.reset();
+
+                    this.handleCache.itemsChanged(
+                        position,
+                        /* deleteCount: */ 0,
+                        /* insertCount: */ segment.cachedLength);
                 }
 
-                // Notify the matrix of inserted positions.  The matrix in turn notifies any IMatrixConsumers.
-                for (const { position, length } of ranges) {
-                    this.deltaCallback(position, /* numRemoved: */ 0, /* numInserted: */ length);
+                // Pass 2: Notify the 'deltaCallback', which may involve callbacks into user code.
+                for (const { segment, position } of ranges) {
+                    this.deltaCallback(position, /* numRemoved: */ 0, /* numInserted: */ segment.cachedLength);
                 }
                 break;
 
             case MergeTreeDeltaType.REMOVE: {
-                let freed: number[] = [];
-
-                for (const { position, length } of ranges) {
-                    const removed = this.handles.splice(position, /* deleteCount: */ length);
-
-                    // Note: Using the spread operator with `.splice()` can exhaust the stack.
-                    freed = freed.concat(removed.filter((handle) => handle !== Handle.unallocated));
+                // Pass 1: Perform any internal maintenance first to avoid reentrancy.
+                for (const { segment, position } of ranges) {
+                    this.handleCache.itemsChanged(
+                        position, /* deleteCount: */
+                        segment.cachedLength,
+                        /* insertCount: */ 0);
                 }
 
-                // Notify matrix that handles are about to be freed.  The matrix is responsible for clearing
-                // the rows/cols prior to free to ensure recycled row/cols are initially empty.
-                this.handlesRecycledCallback(freed);
-
-                // Now that the physical storage has been cleared, add the recycled handles back to the free pool.
-                for (const handle of freed) {
-                    this.handleTable.free(handle);
-                }
-
-                // Notify the matrix of removed positions.  The matrix in turn notifies any IMatrixConsumers.
-                for (const { position, length } of ranges) {
-                    this.deltaCallback(position, /* numRemoved: */ length, /* numInsert: */ 0);
+                // Pass 2: Notify the 'deltaCallback', which may involve callbacks into user code.
+                for (const { segment, position } of ranges) {
+                    this.deltaCallback(position, /* numRemoved: */ segment.cachedLength, /* numInsert: */ 0);
                 }
                 break;
             }
@@ -255,7 +318,41 @@ export class PermutationVector extends Client {
         }
     };
 
+    private readonly onMaintenance = (args: IMergeTreeMaintenanceCallbackArgs) => {
+        if (args.operation === MergeTreeMaintenanceType.UNLINK) {
+            let freed: number[] = [];
+
+            for (const { segment } of args.deltaSegments) {
+                const asPerm = segment as PermutationSegment;
+                if (isHandleValid(asPerm.start)) {
+                    // Note: Using the spread operator with `.splice()` can exhaust the stack.
+                    freed = freed.concat(
+                        new Array(asPerm.cachedLength)
+                            .fill(0)
+                            .map((value, index) => index + asPerm.start),
+                    );
+                }
+            }
+
+            // Notify matrix that handles are about to be freed.  The matrix is responsible for clearing
+            // the rows/cols prior to free to ensure recycled row/cols are initially empty.
+            this.handlesRecycledCallback(freed);
+
+            // Now that the physical storage has been cleared, add the recycled handles back to the free pool.
+            for (const handle of freed) {
+                this.handleTable.free(handle);
+            }
+        }
+    };
+
     public toString() {
-        return this.handles.map((handle, index) => `${index}:${handle}`).join(" ");
+        const s: string[] = [];
+
+        this.walkSegments((segment) => {
+            s.push(`${segment}`);
+            return true;
+        });
+
+        return s.join("");
     }
 }

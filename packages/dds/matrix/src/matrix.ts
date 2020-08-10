@@ -32,8 +32,9 @@ import { MatrixOp } from "./ops";
 import { PermutationVector } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from "./runtime";
-import { Handle } from "./handletable";
+import { Handle, isHandleValid } from "./handletable";
 import { deserializeBlob, serializeBlob } from "./serialization";
+import { ensureRange } from "./range";
 
 const enum SnapshotPath {
     rows = "rows",
@@ -68,9 +69,9 @@ export class SharedMatrix<T extends Serializable = Serializable>
     private readonly rows: PermutationVector;   // Map logical row to storage handle (if any)
     private readonly cols: PermutationVector;   // Map logical col to storage handle (if any)
 
-    private cells = new SparseArray2D<T>();             // Stores cell values.
-    private annotations = new SparseArray2D<T>();      // Tracks cell annotations.
-    private pending = new SparseArray2D<number>();      // Tracks pending writes.
+    private cells = new SparseArray2D<T>();         // Stores cell values.
+    private annotations = new SparseArray2D<T>();   // Tracks cell annotations.
+    private pending = new SparseArray2D<number>();  // Tracks pending writes.
 
     constructor(runtime: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
@@ -89,6 +90,9 @@ export class SharedMatrix<T extends Serializable = Serializable>
             this.onColDelta,
             this.onColHandlesRecycled);
     }
+
+    private get rowHandles() { return this.rows.handleCache; }
+    private get colHandles() { return this.cols.handleCache; }
 
     public static create<T extends Serializable = Serializable>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedMatrixFactory.Type) as SharedMatrix<T>;
@@ -113,29 +117,24 @@ export class SharedMatrix<T extends Serializable = Serializable>
     public get colCount() { return this.cols.getLength(); }
 
     public getCell(row: number, col: number): T | undefined | null {
+        // Perf: When possible, bounds checking is performed inside the implementation for
+        //       'getHandle()' so that it can be elided in the case of a cache hit.  This
+        //       yields an ~40% improvement in the case of a cache hit (node v12 x64)
+
         // Map the logical (row, col) to associated storage handles.
-        const rowHandle = this.rows.handles[row];
-
-        // Perf: Leverage the JavaScript behavior of returning `undefined` for out of bounds
-        //       array access to detect bad coordinates. (~4% faster vs. an unconditional
-        //       assert with range check on node v12 x64)
-        if (!(rowHandle >= Handle.valid)) {
-            assert(rowHandle === Handle.unallocated, "'row' out of range.");
-            assert(0 <= col && col < this.colCount, "'col' out of range.");
-            return undefined;
+        const rowHandle = this.rowHandles.getHandle(row);
+        if (isHandleValid(rowHandle)) {
+            const colHandle = this.colHandles.getHandle(col);
+            if (isHandleValid(colHandle)) {
+                return this.cells.getCell(rowHandle, colHandle);
+            }
+        } else {
+            // If we early exit because the given rowHandle is unallocated, we still need to
+            // bounds-check the 'col' parameter.
+            ensureRange(col, this.cols.getLength());
         }
 
-        const colHandle = this.cols.handles[col];
-
-        // Perf: Leverage the JavaScript behavior of returning `undefined` for out of bounds
-        //       array access to detect bad coordinates. (~4% faster vs. an unconditional
-        //       assert with range check on node v12 x64)
-        if (!(colHandle >= Handle.valid)) {
-            assert(colHandle === Handle.unallocated, "'col' out of range.");
-            return undefined;
-        }
-
-        return this.cells.getCell(rowHandle, colHandle);
+        return undefined;
     }
 
     public get matrixProducer(): IMatrixProducer<T | undefined | null> { return this; }
@@ -155,8 +154,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
         const colCount = spec?.colCount ?? this.colCount;
         for (let i = 0; i < rowCount; i++) {
             const row = rowStart + i;
-            const rowHandle = this.rows.handles[row];
-            if (rowHandle === Handle.unallocated) {
+            const rowHandle = this.rows.getMaybeHandle(row);
+            if (!isHandleValid(rowHandle)) {
                 if (includeEmpty) {
                     for (let j = 0; j < colCount; j++) {
                         callback(undefined, row, colStart + j);
@@ -166,8 +165,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
             }
             for (let j = 0; j < colCount; j++) {
                 const col = colStart + j;
-                const colHandle = this.cols.handles[col];
-                if (colHandle === Handle.unallocated) {
+                const colHandle = this.cols.getMaybeHandle(col);
+                if (!isHandleValid(colHandle)) {
                     if (includeEmpty) {
                         callback(undefined, row, col);
                     }
@@ -258,18 +257,14 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     public getAnnotation(row: number, col: number): T | undefined | null {
-        const rowHandle = this.rows.handles[row];
-        if (!(rowHandle >= Handle.valid)) {
-            assert(rowHandle === Handle.unallocated, "'row' out of range.");
-            assert(0 <= col && col < this.colCount, "'col' out of range.");
-            return undefined;
+        const rowHandle = this.rows.getMaybeHandle(row);
+        if (isHandleValid(rowHandle)) {
+            const colHandle = this.cols.getMaybeHandle(col);
+            if (isHandleValid(colHandle)) {
+                return this.annotations.getCell(rowHandle, colHandle);
+            }
         }
-        const colHandle = this.cols.handles[col];
-        if (!(colHandle >= Handle.valid)) {
-            assert(colHandle === Handle.unallocated, "'col' out of range.");
-            return undefined;
-        }
-        return this.annotations.getCell(rowHandle, colHandle);
+        return undefined;
     }
 
     public setAnnotation(row: number, col: number, value: T) {
@@ -445,13 +440,15 @@ export class SharedMatrix<T extends Serializable = Serializable>
                     const row = this.rows.getPositionForResubmit(rowHandle, localSeq);
                     const col = this.cols.getPositionForResubmit(colHandle, localSeq);
 
-                    this.setCellCore(
-                        row,
-                        col,
-                        setOp.value,
-                        rowHandle,
-                        colHandle,
-                    );
+                    if (row >= 0 && col >= 0) {
+                        this.setCellCore(
+                            row,
+                            col,
+                            setOp.value,
+                            rowHandle,
+                            colHandle,
+                        );
+                    }
                 }
                 break;
             }
@@ -515,8 +512,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                             const rowHandle = this.rows.getAllocatedHandle(adjustedRow);
                             const colHandle = this.cols.getAllocatedHandle(adjustedCol);
 
-                            assert(rowHandle >= Handle.valid
-                                && colHandle >= Handle.valid);
+                            assert(isHandleValid(rowHandle) && isHandleValid(colHandle));
 
                             // If there is a pending (unACKed) local write to the same cell, skip the current op
                             // since it "happened before" the pending write.

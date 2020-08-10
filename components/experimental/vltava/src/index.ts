@@ -11,8 +11,8 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-    LastEditedTrackerComponentName,
-    LastEditedTrackerComponent,
+    LastEditedTrackerDataObjectName,
+    LastEditedTrackerDataObject,
     setupLastEditedTrackerForContainer,
 } from "@fluidframework/last-edited-experimental";
 import {
@@ -138,7 +138,7 @@ const generateFactory = () => {
     // The last edited tracker component provides container level tracking of last edits. This is the first
     // component that is loaded.
     containerComponents.push(
-        [LastEditedTrackerComponentName, Promise.resolve(LastEditedTrackerComponent.getFactory())]);
+        [LastEditedTrackerDataObjectName, Promise.resolve(LastEditedTrackerDataObject.getFactory())]);
 
     // We don't want to include the default wrapper component in our list of available components
     containerComponents.push([AnchorName, Promise.resolve(Anchor.getFactory())]);

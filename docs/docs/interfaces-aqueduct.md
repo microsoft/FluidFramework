@@ -99,10 +99,18 @@ These interfaces will be optional in many contexts but could be required by cert
 application may refuse to load components that don't implement certain interfaces. This could include supporting
 capabilities such as search, cursoring, clipboard support, and much more.
 
-## Next: a ride on the Aqueduct
+## The @fluidframework/aqueduct package
 
-We'll return to interfaces shortly, when we discuss how Fluid components can render UI. But first, we'll dive into how
-the `@fluidframework/aqueduct` package makes it easy to create Fluid components.
+![Aqueduct](https://openclipart.org/image/400px/5073)
+
+The Aqueduct is a library for building Fluid components within the Fluid Framework. Its goal is to provide a thin layer
+over the existing Fluid Framework interfaces that allows developers to get started quickly with component development.
+
+You don't have to use the Aqueduct. It is an example of an abstraction layer built on top of the base Fluid Framework
+with a focus on making component development easier, and as such you can choose to implement components without it.
+
+Having said that, if you're new to Fluid, we think you'll be more effective with it than without it.
+
 
 
 !!!include(links.md)!!!
