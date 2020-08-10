@@ -89,8 +89,6 @@ class FluidDataObjectFactory {
 export const getFluidObjectFactoryFromInstance = (context: IFluidDataStoreContext) =>
     new FluidDataObjectFactory(context);
 
-export type AnonymousPureDataObjectFactory = PureDataObjectFactory<PureDataObject, object, undefined>;
-
 /**
  * PureDataObjectFactory is a barebones IFluidDataStoreFactory for use with PureDataObject.
  * Consumers should typically use DataObjectFactory instead unless creating
