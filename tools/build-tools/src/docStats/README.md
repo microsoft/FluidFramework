@@ -42,7 +42,7 @@ fluid-doc-stats _api-extractor-temp/doc-models
                     container-definitions.api.json:   73/ 282  25.89%
                  execution-context-loader.api.json:    1/   4  25.00%
                           web-code-loader.api.json:    5/  21  23.81%
-                component-core-interfaces.api.json:   14/  59  23.73%
+                core-interfaces.api.json:   14/  59  23.73%
                                  debugger.api.json:   16/  69  23.19%
                         container-runtime.api.json:   53/ 230  23.04%
                             replay-driver.api.json:   23/ 109  21.10%

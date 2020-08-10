@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject, IFluidLoadable, IRequest } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
@@ -75,7 +75,7 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
     /**
      * This is where we do component setup.
      *
-     * @param context - component context used to load a component runtime
+     * @param context - component context used to load a data store runtime
      */
     public instantiateDataStore(context: IFluidDataStoreContext): void {
         this.instantiateComponentWithInitialState(context, undefined);
@@ -83,7 +83,7 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
 
     /**
      * Private method for component instantiation that exposes initial state
-     * @param context - Component context used to load a component runtime
+     * @param context - Component context used to load a data store runtime
      * @param initialState  - The initial state to provide the created component
      */
     private instantiateComponentWithInitialState(
@@ -118,8 +118,8 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
 
     /**
      * Instantiate and initialize the component object
-     * @param runtime - component runtime created for the component context
-     * @param context - component context used to load a component runtime
+     * @param runtime - data store runtime created for the component context
+     * @param context - component context used to load a data store runtime
      */
     private async instantiateInstance(
         runtime: FluidDataStoreRuntime,

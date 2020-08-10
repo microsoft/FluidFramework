@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { ICodeAllowList, IProxyLoaderFactory, IFluidCodeResolver } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 

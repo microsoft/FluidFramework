@@ -71,8 +71,8 @@ describe("ConsensusOrderedCollection", () => {
 
                 const acquiredValue = await removeItem();
                 assert.strictEqual(acquiredValue.absolutePath, handle.absolutePath);
-                const component = await handle.get();
-                assert.strictEqual(component.url, testCollection.url);
+                const dataStore = await handle.get();
+                assert.strictEqual(dataStore.url, testCollection.url);
 
                 assert.strictEqual(await removeItem(), undefined);
             });
@@ -174,15 +174,15 @@ describe("ConsensusOrderedCollection", () => {
         generate([1, 2], [1, 2],
             () => {
                 containerRuntimeFactory = new MockContainerRuntimeFactory();
-                const componentRuntime = new MockFluidDataStoreRuntime();
-                const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+                const dataStoreRuntime = new MockFluidDataStoreRuntime();
+                const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
                 const services: IChannelServices = {
                     deltaConnection: containerRuntime.createDeltaConnection(),
                     objectStorage: new MockStorage(),
                 };
 
                 counter++;
-                const testCollection = factory.create(componentRuntime, `consensus-ordered-collection_${counter}`);
+                const testCollection = factory.create(dataStoreRuntime, `consensus-ordered-collection_${counter}`);
                 testCollection.connect(services);
                 return testCollection;
             },
@@ -200,7 +200,7 @@ describe("ConsensusOrderedCollection", () => {
 
         async function createConsensusOrderedCollection(
             id: string,
-            componentRuntime: MockFluidDataStoreRuntime,
+            dataStoreRuntime: MockFluidDataStoreRuntime,
             deltaConnection: IDeltaConnection,
         ): Promise<IConsensusOrderedCollection> {
             const services: IChannelServices = {
@@ -208,7 +208,7 @@ describe("ConsensusOrderedCollection", () => {
                 objectStorage: new MockStorage(),
             };
 
-            const consensusOrderedCollection = factory.create(componentRuntime, id);
+            const consensusOrderedCollection = factory.create(dataStoreRuntime, id);
             consensusOrderedCollection.connect(services);
             return consensusOrderedCollection;
         }
@@ -217,22 +217,22 @@ describe("ConsensusOrderedCollection", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Create first ConsensusOrderedCollection
-            const componentRuntime1 = new MockFluidDataStoreRuntime();
-            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
+            const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
             const deltaConnection1 = containerRuntime1.createDeltaConnection();
             testCollection1 = await createConsensusOrderedCollection(
                 "consensus-ordered-collection1",
-                componentRuntime1,
+                dataStoreRuntime1,
                 deltaConnection1,
             );
 
             // Create second ConsensusOrderedCollection
-            const componentRuntime2 = new MockFluidDataStoreRuntime();
-            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const deltaConnection2 = containerRuntime2.createDeltaConnection();
             testCollection2 = await createConsensusOrderedCollection(
                 "consensus-ordered-collection2",
-                componentRuntime2,
+                dataStoreRuntime2,
                 deltaConnection2,
             );
         });

@@ -4,7 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@fluidframework/merge-tree";
 import {
     positionToRowCol,

@@ -9,7 +9,7 @@ import {
     IFluidConfiguration,
     IFluidLoadable,
     IFluidHandleContext,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { FluidOjectHandle } from "@fluidframework/datastore";
 
 import { DependencyContainer } from "..";
@@ -22,9 +22,6 @@ const mockHandleContext: IFluidHandleContext = {
     IFluidHandleContext: undefined as any,
 
     attachGraph: () => {
-        throw new Error("Method not implemented.");
-    },
-    bind: () => {
         throw new Error("Method not implemented.");
     },
     request: () => {

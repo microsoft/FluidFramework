@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { Loader, Container } from "@fluidframework/container-loader";
 import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { initializeContainerCode } from "@fluidframework/base-host";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";

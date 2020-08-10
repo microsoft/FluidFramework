@@ -11,7 +11,7 @@ import {
     IProvideFluidHandle,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { AsyncComponentProvider, ComponentKey } from "@fluidframework/synthesize";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -206,7 +206,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * @param id - component id
      */
     protected async requestFluidObject_UNSAFE<T extends IFluidObject>(id: string): Promise<T> {
-        return requestFluidObject(this.context.containerRuntime, `/${id}`);
+        return requestFluidObject(this.context.containerRuntime.IFluidHandleContext, `/${id}`);
     }
 
     /**
@@ -214,12 +214,12 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * @param id - service id
      */
     protected async getService<T extends IFluidObject>(id: string): Promise<T> {
-        return requestFluidObject(this.context.containerRuntime, `/${serviceRoutePathRoot}/${id}`);
+        return requestFluidObject(this.context.containerRuntime.IFluidHandleContext, `/${serviceRoutePathRoot}/${id}`);
     }
 
     /**
      * Called the first time the component is initialized (new creations with a new
-     * component runtime)
+     * data store runtime)
      *
      * @param props - Optional props to be passed in on create
      * @deprecated 0.16 Issue #1635 Initial props should be provided through a factory override
@@ -228,7 +228,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
 
     /**
      * Called every time but the first time the component is initialized (creations
-     * with an existing component runtime)
+     * with an existing data store runtime)
      */
     protected async initializingFromExisting(): Promise<void> { }
 

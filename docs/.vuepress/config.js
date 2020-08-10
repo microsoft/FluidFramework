@@ -19,48 +19,73 @@ const RELEASE_URL = BASE_URL;
 const N1_URL = `${BASE_URL}/versions/${N1_VERSION}/`;
 const MASTER_BRANCH_URL = `${BASE_URL}/versions/latest/`;
 
-const packagesToExclude = [
-    "client-api",
-    "host-service-interfaces",
-    "iframe-host",
-    "index",
-];
-
 const apiMapping = new Map([
     ["aqueduct", "Framework"],
-    ["component-core-interfaces", "Framework"],
-    ["framework-interfaces", "Framework"],
-    ["undo-redo", "Framework"],
+    ["base-host", "Hosts"],
     ["cell", "Distributed Data Structures"],
-    ["counter", "Distributed Data Structures"],
-    ["ink", "Distributed Data Structures"],
-    ["map", "Distributed Data Structures"],
-    ["sequence", "Distributed Data Structures"],
-    ["matrix", "Distributed Data Structures"],
-    ["ordered-collection", "Distributed Data Structures"],
-    ["register-collection", "Distributed Data Structures"],
-    ["shared-object-base", "Distributed Data Structures"],
-    ["component-runtime", "Runtime"],
-    ["container-runtime", "Runtime"],
-    ["runtime-definitions", "Runtime"],
-    ["container-loader", "Loader"],
+    ["client-api", "Excluded"],
+    ["common-definitions", "Internal"],
+    ["common-utils", "Miscellaneous"],
+    ["component-base", "Runtime"],
     ["container-definitions", "Loader"],
-    ["execution-context-loader", "Loader"],
-    ["web-code-loader", "Loader"],
+    ["container-loader", "Loader"],
+    ["container-runtime-definitions", "Loader"],
+    ["container-runtime", "Loader"],
+    ["container-utils", "Loader"],
+    ["core-interfaces", "Framework"],
+    ["counter", "Distributed Data Structures"],
+    ["datastore-definitions", "Framework"],
+    ["datastore", "Framework"],
+    ["dds-interceptions", "Miscellaneous"],
+    ["debugger", "Tools"],
     ["driver-base", "Driver"],
     ["driver-definitions", "Driver"],
-    ["file-driver", "Driver"],
-    ["iframe-driver", "Driver"],
-    ["replay-driver", "Driver"],
-    ["routerlicious-driver", "Driver"],
-    ["base-host", "Hosts"],
-    ["debugger", "Tools"],
-    ["merge-tree-client-replay", "Tools"],
-    ["replay-tool", "Tools"],
-    ["common-utils", "Miscellaneous"],
-    ["common-definitions", "Internal"],
     ["driver-utils", "Internal"],
+    ["execution-context-loader", "Loader"],
+    ["file-driver", "Driver"],
+    ["framework-interfaces", "Framework"],
+    ["host-service-interfaces", "Excluded"],
+    ["iframe-driver", "Driver"],
+    ["iframe-host", "Excluded"],
+    ["index", "Excluded"],
+    ["ink", "Distributed Data Structures"],
+    ["last-edited-experimental", "Experimental"],
+    ["map", "Distributed Data Structures"],
+    ["matrix", "Distributed Data Structures"],
+    ["merge-tree-client-replay", "Tools"],
+    ["mocha-test-setup", "Excluded"],
+    ["odsp-driver", "Driver"],
+    ["ordered-collection", "Distributed Data Structures"],
+    ["protocol-base", "Protocol"],
+    ["protocol-definitions", "Protocol"],
+    ["react-inputs", "Miscellaneous"],
+    ["react", "Miscellaneous"],
+    ["register-collection", "Distributed Data Structures"],
+    ["replay-driver", "Driver"],
+    ["replay-tool", "Tools"],
+    ["request-handler", "Unknown"],
+    ["routerlicious-driver", "Driver"],
+    ["runtime-definitions", "Runtime"],
+    ["runtime-utils", "Runtime"],
+    ["sequence", "Distributed Data Structures"],
+    ["shared-object-base", "Distributed Data Structures"],
+    ["shared-summary-block", "Unknown"],
+    ["synthesize", "Distributed Data Structures"],
+    ["telemetry-utils", "Distributed Data Structures"],
+    ["test-utils", "Distributed Data Structures"],
+    ["undo-redo", "Framework"],
+    ["view-adapters", "Framework"],
+    ["view-interfaces", "Framework"],
+    ["web-code-loader", "Loader"],
 ]);
+
+
+// let packagesToExclude = [];
+// for (const [key, value] of apiMapping) {
+//     if (value === "Excluded") {
+//         packagesToExclude.push(key);
+//     }
+// }
 
 const compact = (input) => {
     return input.filter(x => x);
@@ -91,20 +116,29 @@ const packageFromFilePath = (filepath) => {
 }
 
 const getNav = () => {
-    const nav = [
+    let nav = [
         { text: "What is Fluid?", link: "/what-is-fluid.md" },
         { text: "Docs", link: "/docs/" },
         { text: "API", link: "/api/" },
         { text: "Community", link: "/community/" },
-        {
+    ];
+
+    if (THIS_VERSION === N1_VERSION) {
+        nav.push({
             text: "Versions",
             items: [
                 { text: `v${RELEASE_VERSION}`, link: BASE_URL },
-                { text: `v${N1_VERSION}`, link: N1_URL },
                 { text: `Bleeding edge`, link: MASTER_BRANCH_URL }
             ]
-        },
-    ];
+        });
+    } else if (THIS_VERSION === RELEASE_VERSION) {
+        nav.push({
+            text: "Versions",
+            items: [
+                { text: `Bleeding edge`, link: MASTER_BRANCH_URL }
+            ]
+        });
+    }
 
     function filterFalsy(item) {
         if (item) {
@@ -138,7 +172,7 @@ const getApiSidebar = () => {
 
     for (const file of files) {
         const packageName = packageFromFilePath(file);
-        if (packagesToExclude.includes(packageName)) {
+        if (apiMapping.get(packageName) === "Excluded") {
             continue;
         }
 
@@ -193,115 +227,33 @@ const getDocsSidebar = () => {
                 "",
                 "dev-env.md",
                 "hello-world.md",
-                "playground.md",
-                "learn.md",
-            ]
-        },
-        {
-            title: "Recipes and examples",
-            collapsable: false,
-            children: [
-                "data-stores.md",
-                "view-adapters.md",
             ]
         },
         {
             title: "Main concepts",
             collapsable: false,
             children: [
-                "guide.md",
                 "architecture.md",
                 "dds.md",
-                "interfaces.md",
-                "aqueduct.md",
+                "interfaces-aqueduct.md",
                 "hosts.md",
                 "containers-runtime.md",
                 "server.md",
             ]
         },
         {
-            title: "DDS reference",
-            collapsable: false,
-            // path: "dds",
-            children: [
-                // "overview",
-                "SharedDirectory.md",
-                "SharedMap.md",
-                "SharedCell.md",
-                "SharedCounter.md",
-                {
-                    title: "Sequences",
-                    path: "sequences",
-                    children: [
-                        "SharedNumberSequence.md",
-                        "SharedObjectSequence.md",
-                        "SharedString.md",
-                    ],
-                },
-                "SharedMatrix.md",
-                "consensus.md",
-            ]
-        },
-        {
-            title: "Testing",
-            collapsable: false,
-            children: [
-                "testing.md",
-            ]
-        },
-        {
-            title: "For contributors",
+            title: "FAQ",
             collapsable: true,
-            children: [
-                "conduct.md",
-                "release-process.md",
-                "breaking-changes.md",
-                "compatibility.md",
-                "tob.md",
-                "dds-anatomy.md",
-                "doc-system.md",
-            ]
+            path: "faq.md",
         },
-    ];
-}
-
-const getTutorialsSidebar = () => {
-    return [
-        {
-            title: "Tutorials",
-            collapsable: false,
-            // path: "",
-            children: [
-                "",
-                "dice-roller.md",
-                "sudoku.md",
-            ]
-        },
-        {
-            title: "Examples",
-            collapsable: false,
-            // path: "",
-            children: [
-                "badge.md",
-            ]
-        },
-
-    ];
-}
-
-const getHowSidebar = () => {
-    return [
-        "",
     ];
 }
 
 const getAllSidebars = () => {
     return {
         "/docs/": getDocsSidebar(),
-        "/tutorials/": getTutorialsSidebar(),
         "/api/": getApiSidebar(),
         "/community/": getCommunitySidebar(),
-        "/how/": getHowSidebar(),
     };
 }
 
@@ -388,7 +340,7 @@ module.exports = {
         anchor: {
             permalink: true,
             permalinkBefore: true,
-            permalinkSymbol: permalinkSymbol(),
+            // permalinkSymbol: permalinkSymbol(),
         },
         lineNumbers: true,
         extractHeaders: ["h2", "h3", "h4"],

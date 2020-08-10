@@ -11,7 +11,7 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore";
 import {
     IContainerContext,
@@ -30,10 +30,12 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
-import {
-    IContainerRuntime,
-} from "@fluidframework/container-runtime-definitions";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
+import {
+    deprecated_innerRequestHandler,
+    buildRuntimeRequestHandler,
+} from "@fluidframework/request-handler";
+import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import Axios from "axios";
 
 import * as scribe from "./tools-core";
@@ -466,21 +468,10 @@ class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
-            async (request: IRequest, containerRuntime: IContainerRuntime) => {
-                console.log(request.url);
-
-                const requestUrl = request.url.length > 0 && request.url.startsWith("/")
-                    ? request.url.substr(1)
-                    : request.url;
-                const trailingSlash = requestUrl.indexOf("/");
-
-                const componentId = requestUrl
-                    ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-                    : defaultComponentId;
-                const component = await containerRuntime.getDataStore(componentId, true);
-
-                return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
-            },
+            buildRuntimeRequestHandler(
+                defaultRouteRequestHandler(defaultComponentId),
+                deprecated_innerRequestHandler,
+            ),
             { generateSummaries: true });
 
         // On first boot create the base component

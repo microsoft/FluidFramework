@@ -20,7 +20,7 @@ Please see specific sections for more details on these states and events - this 
 
 ## Expectations from container runtime and components implementers
 1. Respect ["readonly" state](#Readonly-states). In this state container runtime (and components) should not allow changes to local state, as these changes will be lost on container being closed.
-2. Maintain Ops in flight until observed they are acknowledged by server. Resubmit any lost Ops on reconnection. This is done by DDSs in stock implementations of container & component runtimes provided by Fluid Framework
+2. Maintain Ops in flight until observed they are acknowledged by server. Resubmit any lost Ops on reconnection. This is done by DDSs in stock implementations of container & data store runtimes provided by Fluid Framework
 3. Respect "["disconnected" and "connected"](#Connectivity-events) states and do not not submit Ops when disconnected.
 4. Respect ["dispose"](#Closure) event and treat it as combination of "readonly" and "disconnected" states. I.e. it should be fully operatable (render content), but not allow edits. This is equivalent to "closed" event on container for hosts, but is broader (includes container's code version upgrades).
 

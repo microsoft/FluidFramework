@@ -18,16 +18,16 @@ import { ISharedCell } from "../interfaces";
 
 describe("Cell", () => {
     let cell: SharedCell;
-    let componentRuntime: MockFluidDataStoreRuntime;
+    let dataStoreRuntime: MockFluidDataStoreRuntime;
 
     beforeEach(async () => {
-        componentRuntime = new MockFluidDataStoreRuntime();
-        cell = new SharedCell("cell", componentRuntime, CellFactory.Attributes);
+        dataStoreRuntime = new MockFluidDataStoreRuntime();
+        cell = new SharedCell("cell", dataStoreRuntime, CellFactory.Attributes);
     });
 
     describe("SharedCell in local state", () => {
         beforeEach(() => {
-            componentRuntime.local = true;
+            dataStoreRuntime.local = true;
         });
 
         it("Can create a cell", () => {
@@ -52,7 +52,7 @@ describe("Cell", () => {
             assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
 
             const services = MockSharedObjectServices.createFromTree(cell.snapshot());
-            const cell2 = new SharedCell("cell2", componentRuntime, CellFactory.Attributes);
+            const cell2 = new SharedCell("cell2", dataStoreRuntime, CellFactory.Attributes);
             await cell2.load("branchId", services);
 
             assert.equal(cell2.get(), "testValue", "Could not load SharedCell from snapshot");
@@ -61,8 +61,8 @@ describe("Cell", () => {
 
     describe("SharedCell op processing in local state", () => {
         it("should correctly process a set operation sent in local state", async () => {
-            // Set the component runtime to local.
-            componentRuntime.local = true;
+            // Set the dataStore runtime to local.
+            dataStoreRuntime.local = true;
 
             // Set a value in local state.
             const value = "testValue";
@@ -70,17 +70,17 @@ describe("Cell", () => {
 
             // Load a new SharedCell in connected state from the snapshot of the first one.
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const componentRuntime2 = new MockFluidDataStoreRuntime();
-            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = MockSharedObjectServices.createFromTree(cell.snapshot());
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
-            const cell2 = new SharedCell("cell2", componentRuntime2, CellFactory.Attributes);
+            const cell2 = new SharedCell("cell2", dataStoreRuntime2, CellFactory.Attributes);
             await cell2.load("branchId", services2);
 
             // Now connect the first SharedCell
-            componentRuntime.local = false;
-            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+            dataStoreRuntime.local = false;
+            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
             const services1 = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(undefined),
@@ -112,8 +112,8 @@ describe("Cell", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactory();
 
             // Connect the first SharedCell.
-            componentRuntime.local = false;
-            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+            dataStoreRuntime.local = false;
+            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
             const services1 = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
@@ -121,14 +121,14 @@ describe("Cell", () => {
             cell.connect(services1);
 
             // Create and connect a second SharedCell.
-            const componentRuntime2 = new MockFluidDataStoreRuntime();
-            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
 
-            cell2 = new SharedCell("cell2", componentRuntime2, CellFactory.Attributes);
+            cell2 = new SharedCell("cell2", dataStoreRuntime2, CellFactory.Attributes);
             cell2.connect(services2);
         });
 
@@ -168,8 +168,8 @@ describe("Cell", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Connect the first SharedCell.
-            componentRuntime.local = false;
-            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+            dataStoreRuntime.local = false;
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
             const services1 = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
@@ -177,14 +177,14 @@ describe("Cell", () => {
             cell.connect(services1);
 
             // Create and connect a second SharedCell.
-            const componentRuntime2 = new MockFluidDataStoreRuntime();
-            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
 
-            cell2 = new SharedCell("cell2", componentRuntime2, CellFactory.Attributes);
+            cell2 = new SharedCell("cell2", dataStoreRuntime2, CellFactory.Attributes);
             cell2.connect(services2);
         });
 

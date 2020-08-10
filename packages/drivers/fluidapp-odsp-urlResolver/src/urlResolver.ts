@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { strict as assert } from "assert";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { createOdspUrl, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
@@ -17,17 +18,30 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         const reqUrl = new URL(request.url);
         const server = reqUrl.hostname.toLowerCase();
+        let contents: { drive: string; item: string; site: string } | undefined;
         if (fluidOfficeServers.includes(server)) {
             // eslint-disable-next-line @typescript-eslint/no-use-before-define
-            const contents = await initializeFluidOffice(reqUrl);
-            if (!contents) {
-                return undefined;
-            }
-            const urlToBeResolved = createOdspUrl(contents.site, contents.drive, contents.item, "");
-            const odspDriverUrlResolver: IUrlResolver = new OdspDriverUrlResolver();
-            return odspDriverUrlResolver.resolve({ url: urlToBeResolved });
+            contents = await initializeFluidOffice(reqUrl);
+        } else if (server === "www.office.com") {
+            const getRequiredParam = (name: string): string => {
+                const value = reqUrl.searchParams.get(name);
+                assert(value, `Missing ${name} from office.com URL parameter`);
+                return value;
+            };
+            contents = {
+                drive: getRequiredParam("drive"),
+                item: getRequiredParam("item"),
+                site: getRequiredParam("siteUrl"),
+            };
+        } else {
+            return undefined;
         }
-        return undefined;
+        if (!contents) {
+            return undefined;
+        }
+        const urlToBeResolved = createOdspUrl(contents.site, contents.drive, contents.item, "");
+        const odspDriverUrlResolver: IUrlResolver = new OdspDriverUrlResolver();
+        return odspDriverUrlResolver.resolve({ url: urlToBeResolved });
     }
 
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.

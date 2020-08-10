@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
     IFluidHTMLView,
     IFluidMountableView,
@@ -13,7 +13,7 @@ import * as ReactDOM from "react-dom";
 
 /**
  * Abstracts mounting of views for usage outside of their bundle.  Supports React elements, as well as
- * components that implement IFluidHTMLView.
+ * objects that implement IFluidHTMLView.
  *
  * The MountableView must be applied from within the same bundle that provides the view, and then that MountableView
  * can be used by a separate bundle.  Attempting to apply a MountableView to a view that was retrieved from a separate

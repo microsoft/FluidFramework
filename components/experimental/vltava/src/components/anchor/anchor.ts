@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
     IFluidLastEditedTracker,
     IProvideFluidLastEditedTracker,
-    LastEditedTrackerComponentName,
+    LastEditedTrackerDataObjectName,
 } from "@fluidframework/last-edited-experimental";
 import { IFluidHTMLView, IProvideFluidHTMLView } from "@fluidframework/view-interfaces";
 
@@ -41,7 +41,7 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
 
     public get IFluidLastEditedTracker() {
         if (!this.lastEditedComponent) {
-            throw new Error("LastEditedTrackerComponent was not initialized properly");
+            throw new Error("LastEditedTrackerDataObject was not initialized properly");
         }
 
         return this.lastEditedComponent;
@@ -51,7 +51,7 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
         const defaultComponent = await this.createFluidObject("vltava");
         this.root.set(this.defaultComponentId, defaultComponent.handle);
 
-        const lastEditedComponent = await this.createFluidObject(LastEditedTrackerComponentName);
+        const lastEditedComponent = await this.createFluidObject(LastEditedTrackerDataObjectName);
         this.root.set(this.lastEditedComponentId, lastEditedComponent.handle);
     }
 

@@ -5,7 +5,7 @@
 
 import { IUser } from "@fluidframework/protocol-definitions";
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideFluidLastEditedTracker>> { }
 }

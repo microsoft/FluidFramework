@@ -25,7 +25,7 @@ The details returned in getLastEditDetails contain the `IUser` object and the `t
 
 # Last Edited Tracker Component
 
-LastEditedTrackerComponent is a runtime component built on top of the LastEditedTracker. It creates and manages the SharedSummaryBlock so that the developer doesn't have to know about it or manage it.
+LastEditedTrackerDataObject is a runtime component built on top of the LastEditedTracker. It creates and manages the SharedSummaryBlock so that the developer doesn't have to know about it or manage it.
 
 It implements IProvideComponentLastEditedTracker and returns an IComponentLastEditedTracker which is an instance of LastEditedTracker above.
 
