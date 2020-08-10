@@ -9,6 +9,7 @@ import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/da
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
+    IContainerRuntimeBase,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
@@ -27,13 +28,18 @@ import {
     PureDataObject,
 } from "../components";
 
-async function buildSubPath(context: IFluidDataStoreContext, factory: IFluidDataStoreFactory) {
-    const parentPath = context.packagePath;
-    assert(parentPath.length > 0);
-    // A factory could not contain the registry for itself. So if it is the same the last snapshot
-    // pkg, return our package path.
-    assert(parentPath[parentPath.length - 1] !== factory.type);
-    const packagePath = [...parentPath, factory.type];
+async function buildSubPath(context: IFluidDataStoreContext | IContainerRuntimeBase, factory: IFluidDataStoreFactory) {
+    let packagePath: string[];
+    if ("containerRuntime" in context) {
+        const parentPath = context.packagePath;
+        assert(parentPath.length > 0);
+        // A factory could not contain the registry for itself. So if it is the same the last snapshot
+        // pkg, return our package path.
+        assert(parentPath[parentPath.length - 1] !== factory.type);
+        packagePath = [...parentPath, factory.type];
+    } else {
+        packagePath = [factory.type];
+    }
 
     const factory2 = await context.IFluidDataStoreRegistry?.get(factory.type);
     assert(factory2 === factory);
@@ -205,12 +211,13 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
      * for attaching the component to the provided runtime's container such as by storing its handle
      */
     public async createInstance(
-        parentContext: IFluidDataStoreContext,
+        parentContext: IFluidDataStoreContext | IContainerRuntimeBase,
         initialState?: S,
     ) {
         const packagePath = await buildSubPath(parentContext, this);
 
-        const newContext = parentContext.containerRuntime.createDetachedDataStore();
+        const containerRuntime = "containerRuntime" in parentContext ? parentContext.containerRuntime : parentContext;
+        const newContext = containerRuntime.createDetachedDataStore();
 
         // const runtime = this.instantiateDataStoreCore(newContext, initialState);
         const runtime = FluidDataStoreRuntime.load(
