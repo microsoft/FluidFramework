@@ -22,6 +22,6 @@ import { DiceRollerInstantiationFactory } from "../dataObject";
 export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
     DiceRollerInstantiationFactory.type,
     new Map([
-        [DiceRollerInstantiationFactory.type, Promise.resolve(DiceRollerInstantiationFactory)],
+        DiceRollerInstantiationFactory.registryEntry,
     ]),
 );
