@@ -211,7 +211,7 @@
                     "@fluidframework/local-web-host",
                     "@fluidframework/local-driver",
                     "@fluidframework/test-runtime-utils",
-                    "@fluidframework/webpack-component-loader"
+                    "@fluidframework/webpack-fluid-loader"
                 ],
                 "dirs": [
                     "packages/test/"
