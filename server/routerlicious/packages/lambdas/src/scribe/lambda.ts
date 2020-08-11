@@ -268,7 +268,11 @@ export class ScribeLambda extends SequencedLambda {
                     this.protocolHandler.processMessage(message, false);
                 }
             } catch (error) {
-                this.context.log.error(`Protocol error ${error}`, { messageMetaData });
+                this.context.log.error(`Protocol error ${error}`,
+                {
+                    documentId: this.documentId,
+                    tenantId: this.tenantId,
+                });
             }
         }
     }
