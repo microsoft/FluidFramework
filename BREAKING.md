@@ -44,6 +44,7 @@ As a follow up to the changes in 0.24 we are updating a number of package names
 - `@fluidframework/core-interfaces` is renamed to `@fluidframework/core-interfaces`
 - `@fluidframework/datastore-definitions` is renamed to `@fluidframework/datastore-definitions`
 - `@fluidframework/datastore` is renamed to `@fluidframework/datastore`
+- `@fluidframework/webpack-component-loader` is renamed to `@fluidframework/webpack-fluid-loader`
 
 ### IComponent and IComponent Interfaces Removed
 In 0.24 IComponent and IComponent interfaces were deprecated, they are being removed in this build. Please move to IFluidObject and IFluidObject interfaces.

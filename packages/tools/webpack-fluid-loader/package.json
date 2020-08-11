@@ -1,7 +1,7 @@
 {
-  "name": "@fluidframework/webpack-component-loader",
+  "name": "@fluidframework/webpack-fluid-loader",
   "version": "0.25.0",
-  "description": "Component loader for webpack-dev-server",
+  "description": "Fluid object loader for webpack-dev-server",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

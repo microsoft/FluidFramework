@@ -77,20 +77,20 @@ export type RouteOptions =
     | ITinyliciousRouteOptions
     | IOdspRouteOptions;
 
-function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
+function wrapIfFluidPackage(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
     if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
-        const componentFactory = fluidModule.fluidExport.IFluidDataStoreFactory;
+        const dataStoreFactory = fluidModule.fluidExport.IFluidDataStoreFactory;
 
         const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
             packageJson.name,
             new Map([
-                [packageJson.name, Promise.resolve(componentFactory)],
+                [packageJson.name, Promise.resolve(dataStoreFactory)],
             ]),
         );
         return {
             fluidExport: {
                 IRuntimeFactory: runtimeFactory,
-                IFluidDataStoreFactory: componentFactory,
+                IFluidDataStoreFactory: dataStoreFactory,
             },
         };
     }
@@ -150,7 +150,7 @@ async function createWebLoader(
     const documentServiceFactory = getDocumentServiceFactory(documentId, options);
     const codeLoader = new WebCodeLoader(new WebpackCodeResolver(options));
 
-    await codeLoader.seedModule(codeDetails, wrapIfComponentPackage(codeDetails.package as IFluidPackage, fluidModule));
+    await codeLoader.seedModule(codeDetails, wrapIfFluidPackage(codeDetails.package as IFluidPackage, fluidModule));
 
     return new Loader(
         urlResolver,
@@ -231,21 +231,21 @@ export async function start(
     }
 
     const reqParser = new RequestParser({ url });
-    const componentUrl = `/${reqParser.createSubRequest(4).url}`;
+    const fluidObjectUrl = `/${reqParser.createSubRequest(4).url}`;
 
-    // Load and render the component.
-    await getComponentAndRender(container1, componentUrl, leftDiv);
+    // Load and render the fluid object.
+    await getFluidObjectAndRender(container1, fluidObjectUrl, leftDiv);
     // Handle the code upgrade scenario (which fires contextChanged)
     container1.on("contextChanged", () => {
-        getComponentAndRender(container1, componentUrl, leftDiv).catch(() => { });
+        getFluidObjectAndRender(container1, fluidObjectUrl, leftDiv).catch(() => { });
     });
 
-    // We have rendered the component. If the container is detached, attach it now.
+    // We have rendered the fluid object. If the container is detached, attach it now.
     if (container1.attachState === AttachState.Detached) {
         await attachContainer(container1, urlResolver, documentId, url, rightDiv, manualAttach);
     }
 
-    // For side by side mode, we need to create a second container and component.
+    // For side by side mode, we need to create a second container and fluid object.
     if (rightDiv) {
         // Create a new loader that is used to load the second container.
         const loader2 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
@@ -254,15 +254,15 @@ export async function start(
         const requestUrl2 = await urlResolver.getAbsoluteUrl(container1.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
 
-        await getComponentAndRender(container2, componentUrl, rightDiv);
+        await getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv);
         // Handle the code upgrade scenario (which fires contextChanged)
         container2.on("contextChanged", () => {
-            getComponentAndRender(container2, componentUrl, rightDiv).catch(() => { });
+            getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv).catch(() => { });
         });
     }
 }
 
-async function getComponentAndRender(container: Container, url: string, div: HTMLDivElement) {
+async function getFluidObjectAndRender(container: Container, url: string, div: HTMLDivElement) {
     const response = await container.request({
         headers: {
             mountableView: true,
@@ -272,31 +272,30 @@ async function getComponentAndRender(container: Container, url: string, div: HTM
 
     if (response.status !== 200 ||
         !(
-            response.mimeType === "fluid/object" ||
-            response.mimeType === "fluid/component"
+            response.mimeType === "fluid/object"
         )) {
         return false;
     }
 
-    const component = response.value as IFluidObject;
-    if (component === undefined) {
+    const fluidObject = response.value as IFluidObject;
+    if (fluidObject === undefined) {
         return;
     }
 
     // We should be retaining a reference to mountableView long-term, so we can call unmount() on it to correctly
     // remove it from the DOM if needed.
-    const mountableView: IFluidMountableView = component.IFluidMountableView;
+    const mountableView: IFluidMountableView = fluidObject.IFluidMountableView;
     if (mountableView !== undefined) {
         mountableView.mount(div);
         return;
     }
 
     // If we don't get a mountable view back, we can still try to use a view adapter.  This won't always work (e.g.
-    // if the response is a React-based component using hooks) and is not the preferred path, but sometimes it
+    // if the response is a React-based fluid object using hooks) and is not the preferred path, but sometimes it
     // can work.
-    console.warn(`Container returned a non-IFluidMountableView.  This can cause errors when mounting components `
+    console.warn(`Container returned a non-IFluidMountableView.  This can cause errors when mounting fluid objects `
         + `with React hooks across bundle boundaries.  URL: ${url}`);
-    const view = new HTMLViewAdapter(component);
+    const view = new HTMLViewAdapter(fluidObject);
     view.render(div, { display: "block" });
 }
 

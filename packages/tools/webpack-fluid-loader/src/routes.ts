@@ -51,7 +51,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             Axios.get(tinyliciousUrls.hostUrl).then().catch((err) => {
                 throw new Error(`
 
-                You're running the Webpack-Component-Loader with Tinylicious.
+                You're running the Webpack-Fluid-Loader with Tinylicious.
                 Tinylicious isn't running. Start the Fluid Framework Tinylicious server.
                 `);
             });
@@ -270,7 +270,7 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     <div id="content" style="min-height: 100%;">
     </div>
 
-    <script src="/node_modules/@fluidframework/webpack-component-loader/dist/fluid-loader.bundle.js"></script>
+    <script src="/node_modules/@fluidframework/webpack-fluid-loader/dist/fluid-loader.bundle.js"></script>
     ${packageJson.fluid.browser.umd.files.map((file) => `<script src="/${file}"></script>\n`)}
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};
