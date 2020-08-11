@@ -46,7 +46,7 @@
     "@fluidframework/framework-interfaces": "^0.25.0",
     "@fluidframework/get-tinylicious-container": "^0.25.0",
     "@fluidframework/map": "^0.25.0",
-    "@fluidframework/protocol-definitions": "^0.1010.0",
+    "@fluidframework/protocol-definitions": "^0.1011.0-0",
     "@fluidframework/react-inputs": "^0.25.0",
     "@fluidframework/request-handler": "^0.25.0",
     "@fluidframework/runtime-definitions": "^0.25.0",

@@ -21,8 +21,8 @@ export interface IProvideComponentInternalRegistry {
  * Provides functionality to retrieve subsets of an internal registry.
  */
 export interface IComponentInternalRegistry extends IProvideComponentInternalRegistry {
-    getFromCapability(type: keyof (IFluidObject & IFluidObject)): IInternalRegistryEntry[];
-    hasCapability(type: string, capability: keyof (IFluidObject & IFluidObject)): boolean;
+    getFromCapability(type: keyof (IFluidObject)): IInternalRegistryEntry[];
+    hasCapability(type: string, capability: keyof (IFluidObject)): boolean;
 }
 
 /**
@@ -31,7 +31,7 @@ export interface IComponentInternalRegistry extends IProvideComponentInternalReg
 export interface IInternalRegistryEntry {
     type: string;
     factory: Promise<IProvideFluidDataStoreFactory>;
-    capabilities: (keyof (IFluidObject & IFluidObject))[];
+    capabilities: (keyof (IFluidObject))[];
     friendlyName: string;
     fabricIconName: string;
 }

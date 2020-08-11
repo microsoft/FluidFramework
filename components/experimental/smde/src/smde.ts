@@ -206,7 +206,7 @@ export class Smde extends EventEmitter implements
 
     // TODO: this should be an utility.
     private isReadonly() {
-        const runtimeAsComponent = this.context.containerRuntime as IFluidObject & IFluidObject;
+        const runtimeAsComponent = this.context.containerRuntime as IFluidObject;
         const scopes = runtimeAsComponent.IFluidConfiguration?.scopes;
         return scopes !== undefined && !scopes.includes("doc:write");
     }
