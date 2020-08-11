@@ -863,7 +863,8 @@ export class Client {
 
             if (resetOp.type === ops.MergeTreeDeltaType.GROUP) {
                 if (Array.isArray(segmentGroup)) {
-                    assert.equal(resetOp.ops.length, segmentGroup.length);
+                    assert.equal(resetOp.ops.length, segmentGroup.length,
+                        "Number of ops in 'resetOp' must match the number of segment groups provided.");
 
                     for (let i = 0; i < resetOp.ops.length; i++) {
                         opList.push(
@@ -872,7 +873,8 @@ export class Client {
                 } else {
                     // A group op containing a single op will pass a direct reference to 'segmentGroup'
                     // rather than an array of segment groups.  (See 'peekPendingSegmentGroups()')
-                    assert.equal(resetOp.ops.length, 1);
+                    assert.equal(resetOp.ops.length, 1,
+                        "Number of ops in 'resetOp' must match the number of segment groups provided.");
                     opList.push(...this.resetPendingDeltaToOps(resetOp.ops[0], segmentGroup));
                 }
             } else {
