@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/agent-scheduler",
   "version": "0.25.0",
-  "description": "Component in charge of distributing agents across instances of a component",
+  "description": "Built in runtime object for distributing agents across instances of a container",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

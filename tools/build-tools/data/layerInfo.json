@@ -172,13 +172,17 @@
             },
             "Examples": {
                 "dot": false,
+                "dev": true,
                 "dirs": [
                     "components/",
                     "examples/",
                     "packages/agents/"
                 ],
                 "deps": [
-                    "Framework"
+                    "Framework",
+                    "Driver",
+                    "Routerlicious-Driver",
+                    "Test"
                 ]
             },
             "Build": {

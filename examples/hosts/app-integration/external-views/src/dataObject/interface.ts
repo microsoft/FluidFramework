@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 
 /**
- * IDiceRoller describes the public API surface for our dice roller component.
+ * IDiceRoller describes the public API surface for our dice roller data object.
  */
 export interface IDiceRoller extends EventEmitter {
     /**

@@ -19,7 +19,7 @@ export class TestContainerRuntimeFactory implements IRuntimeFactory {
         public type: string,
         public componentFactory: IFluidDataStoreFactory,
         public runtimeOptions: IContainerRuntimeOptions,
-    ) {}
+    ) { }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const builder = new RuntimeRequestHandlerBuilder();
