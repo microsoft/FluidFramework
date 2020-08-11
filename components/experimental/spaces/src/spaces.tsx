@@ -54,15 +54,13 @@ export class Spaces extends DataObject implements IFluidHTMLView {
     private storageComponent: SpacesStorage<ISpacesItem> | undefined;
     private baseUrl: string | undefined;
 
-    public static get ComponentName() { return "@fluid-example/spaces"; }
-
     private static readonly factory = new DataObjectFactory(
-        Spaces.ComponentName,
+        "@fluid-example/spaces",
         Spaces,
         [],
         {},
         [
-            [SpacesStorage.ComponentName, Promise.resolve(SpacesStorage.getFactory())],
+            SpacesStorage.getFactory(),
             ...spacesRegistryEntries,
         ],
     );

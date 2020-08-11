@@ -73,10 +73,10 @@ describe("loader/runtime compatibility", () => {
 
             const containersP: Promise<Container | old.Container>[] = [
                 createContainer( // new everything
-                    { fluidExport: createRuntimeFactory(TestComponent.type, createPrimedComponentFactory()) },
+                    { fluidExport: createRuntimeFactory(createPrimedComponentFactory()) },
                     args.deltaConnectionServer),
                 createContainerWithOldLoader( // old loader, new container/component runtimes
-                    { fluidExport: createRuntimeFactory(TestComponent.type, createPrimedComponentFactory()) },
+                    { fluidExport: createRuntimeFactory(createPrimedComponentFactory()) },
                     args.deltaConnectionServer),
                 createContainerWithOldLoader( // old everything
                     { fluidExport: createOldRuntimeFactory(TestComponent.type, createOldPrimedComponentFactory()) },
@@ -85,7 +85,7 @@ describe("loader/runtime compatibility", () => {
                     { fluidExport: createOldRuntimeFactory(TestComponent.type, createOldPrimedComponentFactory()) },
                     args.deltaConnectionServer),
                 createContainer( // new loader/container runtime, old component runtime
-                    { fluidExport: createRuntimeFactory(TestComponent.type, createOldPrimedComponentFactory()) },
+                    { fluidExport: createRuntimeFactory(createOldPrimedComponentFactory()) },
                     args.deltaConnectionServer),
             ];
 

@@ -12,7 +12,6 @@ import {
     FluidDataStoreRegistryEntry,
     IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-import { IFluidObject } from "@fluidframework/core-interfaces";
 import { WebCodeLoader, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 
 /**
@@ -48,7 +47,7 @@ export class UrlRegistry implements IFluidDataStoreRegistry {
         return this.urlRegistryMap.get(name);
     }
 
-    private async loadEntrypoint(name: string): Promise<IFluidObject | undefined> {
+    private async loadEntrypoint(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
         if (this.isUrl(name)) {
             if (!this.loadingPackages.has(name)) {
                 this.loadingPackages.set(name, this.loadPackage(name));
@@ -62,7 +61,7 @@ export class UrlRegistry implements IFluidDataStoreRegistry {
             },
         };
         const fluidModule = await this.webloader.load(codeDetails);
-        return fluidModule.fluidExport;
+        return fluidModule.fluidExport as FluidDataStoreRegistryEntry;
     }
 
     private async loadPackage(url: string): Promise<IFluidPackage> {

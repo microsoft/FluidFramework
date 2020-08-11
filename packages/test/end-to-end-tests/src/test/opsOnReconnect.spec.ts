@@ -60,21 +60,32 @@ describe("Ops on Reconnect", () => {
     }
 
     async function createContainer(): Promise<Container> {
-        const factory: TestFluidComponentFactory = new TestFluidComponentFactory(
+        const defaultFactory: TestFluidComponentFactory = new TestFluidComponentFactory(
             [
                 [map1Id, SharedMap.getFactory()],
                 [map2Id, SharedMap.getFactory()],
                 [directoryId, SharedDirectory.getFactory()],
                 [stringId, SharedString.getFactory()],
             ],
+            "default",
+        );
+
+        const component2Factory: TestFluidComponentFactory = new TestFluidComponentFactory(
+            [
+                [map1Id, SharedMap.getFactory()],
+                [map2Id, SharedMap.getFactory()],
+                [directoryId, SharedDirectory.getFactory()],
+                [stringId, SharedString.getFactory()],
+            ],
+            "component2",
         );
 
         const runtimeFactory =
             new ContainerRuntimeFactoryWithDefaultDataStore(
                 "default",
                 [
-                    ["default", Promise.resolve(factory)],
-                    ["component2", Promise.resolve(factory)],
+                    defaultFactory,
+                    component2Factory,
                 ],
             );
 

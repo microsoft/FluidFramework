@@ -7,15 +7,11 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/aqueduct";
 
-import { VersiontestInstantiationFactory } from "./main";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-const fluidPackageName = pkg.name as string;
+import { VersiontestInstantiationFactory1 } from "./main";
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    fluidPackageName,
-    new Map([
-        [fluidPackageName, Promise.resolve(VersiontestInstantiationFactory)],
-    ]),
+    VersiontestInstantiationFactory1.type,
+    [
+        VersiontestInstantiationFactory1,
+    ],
 );

@@ -25,11 +25,6 @@ const triangleCoordinateComponentId2 = "triangle2";
 const triangleCoordinateComponentId3 = "triangle3";
 const constellationComponentId = "constellation";
 
-const registryEntries = new Map([
-    Coordinate.getFactory().registryEntry,
-    Constellation.getFactory().registryEntry,
-]);
-
 // Just a little helper, since we're going to create multiple coordinates.
 const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string) => {
     const simpleCoordinateComponentRuntime =
@@ -81,7 +76,14 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
     constructor() {
         // We'll use a MountableView so webpack-component-loader can display us,
         // and add our default view request handler.
-        super(registryEntries, [], [mountableViewRequestHandler(MountableView, [defaultViewRequestHandler])]);
+        super(
+            [
+                Coordinate.getFactory(),
+                Constellation.getFactory(),
+            ],
+            [],
+            [mountableViewRequestHandler(MountableView, [defaultViewRequestHandler])],
+        );
     }
 
     /**
@@ -109,7 +111,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
         // Create the constellation component
         const constellationComponent = await requestFluidObject<Constellation>(
-            await runtime.createRootDataStore(Constellation.ComponentName, constellationComponentId),
+            await runtime.createRootDataStore(Constellation.getFactory().type, constellationComponentId),
             constellationComponentId); // FOLLOW UP: This looks wrong, it should be empty string or slash
 
         // Add a few stars

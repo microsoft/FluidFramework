@@ -8,6 +8,7 @@ import { TableDocument, TableDocumentType } from "@fluid-example/table-document"
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
+import { DelayLoadingFactoryAdapter } from "@fluidframework/container-runtime";
 import { GridView } from "./grid";
 import * as styles from "./index.css";
 
@@ -105,5 +106,8 @@ const factory = new DataObjectFactory(
     [],
     {},
     [
-        [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
+        new DelayLoadingFactoryAdapter(
+            TableDocumentType,
+            import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory()),
+        ),
     ]);

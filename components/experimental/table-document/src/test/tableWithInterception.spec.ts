@@ -11,7 +11,6 @@ import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server"
 import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 import { ITable } from "../table";
 import { TableDocument } from "../document";
-import { TableDocumentType } from "../componentTypes";
 import { createTableWithInterception } from "../interception";
 
 describe("Table Document with Interception", () => {
@@ -65,10 +64,8 @@ describe("Table Document with Interception", () => {
 
         beforeEach(async () => {
             const factory = new ContainerRuntimeFactoryWithDefaultDataStore(
-                TableDocumentType,
-                new Map([
-                    [TableDocumentType, Promise.resolve(TableDocument.getFactory())],
-                ]),
+                TableDocument.getFactory().type,
+                [TableDocument.getFactory()],
             );
 
             const deltaConnectionServer = LocalDeltaConnectionServer.create();

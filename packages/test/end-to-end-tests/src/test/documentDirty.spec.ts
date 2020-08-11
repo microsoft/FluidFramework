@@ -70,13 +70,14 @@ describe("Document Dirty", () => {
             [
                 [mapId, SharedMap.getFactory()],
             ],
+            "default",
         );
 
         const runtimeFactory =
             new ContainerRuntimeFactoryWithDefaultDataStore(
                 "default",
                 [
-                    ["default", Promise.resolve(factory)],
+                    factory,
                 ],
             );
 

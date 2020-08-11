@@ -11,6 +11,6 @@ export * from "./spacesView";
 export * from "./storage";
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    Spaces.ComponentName,
-    [[Spaces.ComponentName, Promise.resolve(Spaces.getFactory())]],
+    Spaces.getFactory().type,
+    [Spaces.getFactory()],
 );

@@ -58,8 +58,8 @@ export const SimpleComponentEmbedInstantiationFactory = new DataObjectFactory(
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     SimpleComponentEmbedInstantiationFactory.type,
-    new Map([
+    [
         SimpleComponentEmbedInstantiationFactory.registryEntry,
         ClickerInstantiationFactory.registryEntry,
-    ]),
+    ],
 );

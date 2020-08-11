@@ -4,7 +4,7 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { FluidSudoku, FluidSudokuName } from "./fluidSudoku";
+import { FluidSudoku } from "./fluidSudoku";
 import { ISudokuViewProps, SudokuView } from "./react/sudokuView";
 
 /**
@@ -16,8 +16,8 @@ import { ISudokuViewProps, SudokuView } from "./react/sudokuView";
  * 2. Map of string to factory for all components
  */
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    FluidSudokuName,
-    new Map([[FluidSudokuName, Promise.resolve(FluidSudoku.getFactory())]])
+    FluidSudoku.getFactory().type,
+    [FluidSudoku.getFactory()]
 );
 
-export { ISudokuViewProps, FluidSudoku, FluidSudokuName, SudokuView };
+export { ISudokuViewProps, FluidSudoku, SudokuView };

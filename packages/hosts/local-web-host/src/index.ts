@@ -19,6 +19,7 @@ import { IFluidObject } from "@fluidframework/core-interfaces";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { initializeContainerCode } from "@fluidframework/base-host";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
+import { RenamingFactoryAdapter } from "@fluidframework/container-runtime";
 
 export async function createLocalContainerFactory(
     entryPoint: Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IFluidModule>,
@@ -36,7 +37,7 @@ export async function createLocalContainerFactory(
             factory.IRuntimeFactory :
             new ContainerRuntimeFactoryWithDefaultDataStore(
                 "default",
-                [["default", Promise.resolve(factory.IFluidDataStoreFactory)]],
+                [new RenamingFactoryAdapter("default", factory.IFluidDataStoreFactory)],
             );
 
     const codeLoader: ICodeLoader = {

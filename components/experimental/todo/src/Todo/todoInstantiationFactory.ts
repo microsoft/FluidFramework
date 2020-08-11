@@ -10,11 +10,10 @@ import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { TodoItem } from "../TodoItem";
 
-import { TodoName } from "./Todo";
 import { Todo } from "./index";
 
 export const TodoInstantiationFactory: IFluidDataStoreFactory = new DataObjectFactory(
-    TodoName,
+    "@fluid-example/todo",
     Todo,
     [
         SharedMap.getFactory(),
@@ -22,7 +21,7 @@ export const TodoInstantiationFactory: IFluidDataStoreFactory = new DataObjectFa
         SharedCell.getFactory(),
     ],
     {},
-    new Map([
+    [
         TodoItem.getFactory().registryEntry,
-    ]),
+    ],
 );

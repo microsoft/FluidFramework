@@ -4,12 +4,16 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { DelayLoadingFactoryAdapter } from "@fluidframework/container-runtime";
 import { tableViewType } from "./tableview";
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     tableViewType,
-    new Map([
-        // eslint-disable-next-line max-len
-        [tableViewType, import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableview").then((m) => m.TableView.getFactory())],
-    ]),
+    [
+        new DelayLoadingFactoryAdapter(
+            tableViewType,
+            import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableview")
+                .then((m) => m.TableView.getFactory()),
+        ),
+    ],
 );

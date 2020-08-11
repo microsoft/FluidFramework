@@ -30,7 +30,7 @@ export interface IComponentInternalRegistry extends IProvideComponentInternalReg
  */
 export interface IInternalRegistryEntry {
     type: string;
-    factory: Promise<IProvideFluidDataStoreFactory>;
+    factory: IProvideFluidDataStoreFactory;
     capabilities: (keyof (IFluidObject & IFluidObject))[];
     friendlyName: string;
     fabricIconName: string;

@@ -29,7 +29,6 @@ export interface ILoadTest {
 const wait = async (timeMs: number) => new Promise((resolve) => setTimeout(resolve, timeMs));
 
 class LoadTestComponent extends DataObject implements ILoadTest {
-    public static ComponentName = "StressTestComponent";
     private opCount = 0;
     private sentCount = 0;
     private state: string = "not started";
@@ -128,13 +127,13 @@ class LoadTestComponent extends DataObject implements ILoadTest {
 }
 
 const LoadTestComponentInstantiationFactory = new DataObjectFactory(
-    LoadTestComponent.ComponentName,
+    "StressTestComponent",
     LoadTestComponent,
     [],
     {},
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    LoadTestComponent.ComponentName,
-    new Map([[LoadTestComponent.ComponentName, Promise.resolve(LoadTestComponentInstantiationFactory)]]),
+    LoadTestComponentInstantiationFactory.type,
+    [LoadTestComponentInstantiationFactory],
 );

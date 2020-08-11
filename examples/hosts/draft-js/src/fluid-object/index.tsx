@@ -23,10 +23,8 @@ export class DraftJsObject extends DataObject implements IFluidHTMLView {
 
     public get IFluidHTMLView() { return this; }
 
-    public static get Name() { return "@fluid-example/draft-js"; }
-
     public static readonly factory = new DataObjectFactory(
-        DraftJsObject.Name,
+        "@fluid-example/draft-js",
         DraftJsObject,
         [SharedMap.getFactory(), SharedString.getFactory()],
         {},

@@ -7,8 +7,6 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { WaterPark } from "./waterPark";
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    WaterPark.ComponentName,
-    new Map([
-        [WaterPark.ComponentName, Promise.resolve(WaterPark.getFactory())],
-    ]),
+    WaterPark.getFactory().type,
+    [WaterPark.getFactory()],
 );

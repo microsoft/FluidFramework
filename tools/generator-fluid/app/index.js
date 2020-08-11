@@ -274,11 +274,11 @@ module.exports = class extends Generator {
     const variableStatement = file.getVariableStatement("fluidExport");
     const varDec = variableStatement.getDeclarations()[0];
     const initializer = `new ContainerRuntimeFactoryWithDefaultDataStore(
-        ${this._componentClassName()}.ComponentName,
-        new Map([
-            [${this._componentClassName()}.ComponentName, Promise.resolve(${this._componentClassName()}.factory)],
+        ${this._componentClassName()}.factory.type,
+        [
+            ${this._componentClassName()}.factory,
             // Add another component here to create it within the container
-        ]))`
+        ])`
     varDec.set({initializer});
 
     // Formatting is needed for this file because the above initializer set won't set the indent correctly

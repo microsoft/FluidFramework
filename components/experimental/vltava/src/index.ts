@@ -11,14 +11,13 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-    LastEditedTrackerComponentName,
     LastEditedTrackerComponent,
     setupLastEditedTrackerForContainer,
 } from "@fluidframework/last-edited-experimental";
 import {
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreFactory,
-    NamedFluidDataStoreRegistryEntries,
+    FluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 
 import {
@@ -26,7 +25,6 @@ import {
     AnchorName,
     TabsComponent,
     Vltava,
-    VltavaName,
 } from "./components";
 import {
     IComponentInternalRegistry,
@@ -69,7 +67,7 @@ export class InternalRegistry implements IFluidDataStoreRegistry, IComponentInte
 export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultDataStore {
     constructor(
         defaultComponentName: string,
-        registryEntries: NamedFluidDataStoreRegistryEntries,
+        registryEntries: FluidDataStoreRegistryEntries,
     ) {
         super(defaultComponentName, registryEntries);
     }
@@ -95,58 +93,53 @@ const generateFactory = () => {
     const containerComponentsDefinition: IInternalRegistryEntry[] = [
         {
             type: "clicker",
-            factory: Promise.resolve(ClickerInstantiationFactory),
+            factory: ClickerInstantiationFactory,
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Clicker",
             fabricIconName: "NumberField",
         },
         {
             type: "tabs",
-            factory: Promise.resolve(TabsComponent.getFactory()),
+            factory: TabsComponent.getFactory(),
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Tabs",
             fabricIconName: "BrowserTab",
         },
         {
             type: "spaces",
-            factory: Promise.resolve(Spaces.getFactory()),
+            factory: Spaces.getFactory(),
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Spaces",
             fabricIconName: "SnapToGrid",
         },
         {
             type: "codemirror",
-            factory: Promise.resolve(cmfe),
+            factory: cmfe,
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Codemirror",
             fabricIconName: "Code",
         },
         {
             type: "prosemirror",
-            factory: Promise.resolve(pmfe),
+            factory: pmfe,
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Prosemirror",
             fabricIconName: "Edit",
         },
     ];
 
-    const containerComponents: [string, Promise<IProvideFluidDataStoreFactory>][] = [];
+    const containerComponents: IProvideFluidDataStoreFactory[] = [];
     containerComponentsDefinition.forEach((value) => {
-        containerComponents.push([value.type, value.factory]);
+        containerComponents.push(value.factory);
     });
 
     // The last edited tracker component provides container level tracking of last edits. This is the first
     // component that is loaded.
-    containerComponents.push(
-        [LastEditedTrackerComponentName, Promise.resolve(LastEditedTrackerComponent.getFactory())]);
+    containerComponents.push(LastEditedTrackerComponent.getFactory());
 
     // We don't want to include the default wrapper component in our list of available components
-    containerComponents.push([AnchorName, Promise.resolve(Anchor.getFactory())]);
-    containerComponents.push([VltavaName, Promise.resolve(Vltava.getFactory())]);
-
-    const containerRegistries: NamedFluidDataStoreRegistryEntries = [
-        ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],
-    ];
+    containerComponents.push(Anchor.getFactory());
+    containerComponents.push(Vltava.getFactory());
 
     // TODO: You should be able to specify the default registry instead of just a list of components
     // and the default registry is already determined Issue:#1138
@@ -154,7 +147,6 @@ const generateFactory = () => {
         AnchorName,
         [
             ...containerComponents,
-            ...containerRegistries,
         ],
     );
 };

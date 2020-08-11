@@ -8,12 +8,16 @@
 import "./publicpath";
 
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import {
+    ContainerRuntime,
+    DelayLoadingFactoryAdapter,
+    RenamingFactoryAdapter,
+} from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
-    NamedFluidDataStoreRegistryEntries,
+    FluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
     deprecated_innerRequestHandler,
@@ -49,11 +53,11 @@ const DefaultComponentName = "text";
 // };
 /* eslint-enable max-len */
 
-const defaultRegistryEntries: NamedFluidDataStoreRegistryEntries = [
-    ["@fluid-example/math", math.then((m) => m.fluidExport)],
-    ["@fluid-example/progress-bars", progressBars.then((m) => m.fluidExport)],
-    ["@fluid-example/video-players", videoPlayers.then((m) => m.fluidExport)],
-    ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
+const defaultRegistryEntries: FluidDataStoreRegistryEntries = [
+    new DelayLoadingFactoryAdapter("@fluid-example/math", math.then((m) => m.fluidExport)),
+    new DelayLoadingFactoryAdapter("@fluid-example/progress-bars", progressBars.then((m) => m.fluidExport)),
+    new DelayLoadingFactoryAdapter("@fluid-example/video-players", videoPlayers.then((m) => m.fluidExport)),
+    new DelayLoadingFactoryAdapter("@fluid-example/image-collection", images.then((m) => m.fluidExport)),
 ];
 
 class MyRegistry implements IFluidDataStoreRegistry {
@@ -97,11 +101,8 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
             context,
             [
                 ...defaultRegistryEntries,
-                [SharedTextFactoryComponent.type, Promise.resolve(this)],
-                [
-                    "verdaccio",
-                    Promise.resolve(new MyRegistry(context, "https://pragueauspkn.azureedge.net")),
-                ],
+                this,
+                new RenamingFactoryAdapter("verdaccio", new MyRegistry(context, "https://pragueauspkn.azureedge.net")),
             ],
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(DefaultComponentName),

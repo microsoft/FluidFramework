@@ -9,7 +9,7 @@
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
     deprecated_innerRequestHandler,
     buildRuntimeRequestHandler,
@@ -22,16 +22,12 @@ class CodeMirrorFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
-            ["@fluid-example/smde", Promise.resolve(smde)],
-        ]);
-
         const defaultComponentId = "default";
-        const defaultComponent = "@fluid-example/smde";
+        const defaultComponent = smde.type;
 
         const runtime = await ContainerRuntime.load(
             context,
-            registry,
+            [smde],
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
                 deprecated_innerRequestHandler),

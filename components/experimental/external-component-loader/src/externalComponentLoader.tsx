@@ -9,6 +9,7 @@ import {
     IFluidLoadable,
     IFluidRouter,
 } from "@fluidframework/core-interfaces";
+import { RenamingFactoryAdapter } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { UrlRegistry } from "./urlRegistry";
 
@@ -23,7 +24,7 @@ export class ExternalComponentLoader extends DataObject {
         ExternalComponentLoader,
         [],
         {},
-        [["url", Promise.resolve(new UrlRegistry())]],
+        [new RenamingFactoryAdapter("url", new UrlRegistry())],
     );
 
     public static getFactory() {

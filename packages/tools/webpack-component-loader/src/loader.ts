@@ -24,6 +24,7 @@ import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import { extractPackageIdentifierDetails, WebCodeLoader } from "@fluidframework/web-code-loader";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { RequestParser } from "@fluidframework/runtime-utils";
+import { RenamingFactoryAdapter } from "@fluidframework/container-runtime";
 import { MultiUrlResolver } from "./multiResolver";
 import { getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 
@@ -83,9 +84,9 @@ function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidM
 
         const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
             packageJson.name,
-            new Map([
-                [packageJson.name, Promise.resolve(componentFactory)],
-            ]),
+            [
+                new RenamingFactoryAdapter(packageJson.name, componentFactory),
+            ],
         );
         return {
             fluidExport: {

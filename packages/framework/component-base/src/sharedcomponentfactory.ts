@@ -10,7 +10,7 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
-    NamedFluidDataStoreRegistryEntries,
+    FluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
     IFluidDataStoreRuntime,
@@ -35,9 +35,7 @@ export class PureDataObjectFactory<T extends PureDataObject> implements IFluidDa
     ) {
         if (components !== undefined) {
             this.IFluidDataStoreRegistry = new FluidDataStoreRegistry(
-                components.map(
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    (factory) => [factory.type!, factory]) as NamedFluidDataStoreRegistryEntries);
+                components as FluidDataStoreRegistryEntries);
         }
 
         this.ISharedObjectRegistry = new Map(

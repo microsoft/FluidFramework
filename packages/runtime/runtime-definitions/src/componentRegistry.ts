@@ -14,16 +14,12 @@ declare module "@fluidframework/core-interfaces" {
  * A single registry entry that may be used to create components
  */
 export type FluidDataStoreRegistryEntry =
-    Readonly<Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>>;
-/**
- * An associated pair of an identifier and registry entry.  Registry entries
- * may be dynamically loaded.
- */
-export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
+    Readonly<Partial<IProvideFluidDataStoreRegistry> & IProvideFluidDataStoreFactory>;
+
 /**
  * An iterable itentifier/registry entry pair list
  */
-export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry>;
+export type FluidDataStoreRegistryEntries = Iterable<FluidDataStoreRegistryEntry>;
 
 export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry = "IFluidDataStoreRegistry";
 

@@ -24,7 +24,7 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
     /**
      * String that uniquely identifies the type of component created by this factory.
      */
-    type?: string;
+    type: string;
 
     /**
      * Generates runtime for the component from the component context. Once created should be bound to the context.

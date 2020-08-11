@@ -19,7 +19,7 @@ import {
 import {
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
-    NamedFluidDataStoreRegistryEntries,
+    FluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { DependencyContainer, DependencyContainerRegistry } from "@fluidframework/synthesize";
 
@@ -41,7 +41,7 @@ export class BaseContainerRuntimeFactory implements
      * @param requestHandlers - Request handlers for containers produced
      */
     constructor(
-        private readonly registryEntries: NamedFluidDataStoreRegistryEntries,
+        private readonly registryEntries: FluidDataStoreRegistryEntries,
         private readonly providerEntries: DependencyContainerRegistry = [],
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
     ) {

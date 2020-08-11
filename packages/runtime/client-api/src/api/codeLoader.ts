@@ -20,7 +20,7 @@ import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
-    NamedFluidDataStoreRegistryEntries,
+    FluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
 import {
@@ -103,7 +103,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
     constructor(
         private readonly runtimeOptions: IContainerRuntimeOptions,
-        private readonly registries: NamedFluidDataStoreRegistryEntries) {
+        private readonly registries: FluidDataStoreRegistryEntries) {
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
@@ -112,7 +112,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             [
-                [chaincode.type, Promise.resolve(chaincode)],
+                chaincode,
                 ...this.registries,
             ],
             buildRuntimeRequestHandler(
@@ -135,7 +135,7 @@ export class CodeLoader implements ICodeLoader {
 
     constructor(
         runtimeOptions: IContainerRuntimeOptions,
-        registries: NamedFluidDataStoreRegistryEntries = [],
+        registries: FluidDataStoreRegistryEntries = [],
     ) {
         this.fluidModule = {
             fluidExport: new ChaincodeFactory(

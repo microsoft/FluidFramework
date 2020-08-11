@@ -73,16 +73,14 @@ export interface IWaterparkItem {
 export class WaterPark extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
-    public static get ComponentName() { return "@fluid-example/waterpark"; }
-
     private static readonly factory = new DataObjectFactory(
-        WaterPark.ComponentName,
+        "@fluid-example/waterpark",
         WaterPark,
         [],
         {},
         [
-            [SpacesStorage.ComponentName, Promise.resolve(SpacesStorage.getFactory())],
-            [ExternalComponentLoader.ComponentName, Promise.resolve(ExternalComponentLoader.getFactory())],
+            SpacesStorage.getFactory(),
+            ExternalComponentLoader.getFactory(),
         ],
     );
 

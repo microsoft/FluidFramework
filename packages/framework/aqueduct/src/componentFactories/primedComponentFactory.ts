@@ -13,7 +13,7 @@ import {
     SharedMap,
 } from "@fluidframework/map";
 import {
-    NamedFluidDataStoreRegistryEntries,
+    FluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ComponentSymbolProvider } from "@fluidframework/synthesize";
@@ -40,7 +40,7 @@ export class DataObjectFactory<
         ctor: new (props: ISharedComponentProps<P>) => DataObject<P, S>,
         sharedObjects: readonly IChannelFactory[] = [],
         optionalProviders: ComponentSymbolProvider<P>,
-        registryEntries?: NamedFluidDataStoreRegistryEntries,
+        registryEntries?: FluidDataStoreRegistryEntries,
         onDemandInstantiation = true,
     ) {
         const mergedObjects = [...sharedObjects];

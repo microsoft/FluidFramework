@@ -44,6 +44,12 @@ const TestSharedComponentFactory = new DataObjectFactory(
     [SharedMap.getFactory()],
     []);
 
+const TestDefaultSharedComponentFactory = new DataObjectFactory(
+    "default",
+    TestSharedComponent,
+    [SharedMap.getFactory()],
+    []);
+
 describe("FluidOjectHandle", () => {
     const id = "fluid-test://localhost/componentHandleTest";
     const codeDetails: IFluidCodeDetails = {
@@ -70,8 +76,8 @@ describe("FluidOjectHandle", () => {
             new ContainerRuntimeFactoryWithDefaultDataStore(
                 "default",
                 [
-                    ["default", Promise.resolve(TestSharedComponentFactory)],
-                    ["TestSharedComponent", Promise.resolve(TestSharedComponentFactory)],
+                    TestDefaultSharedComponentFactory,
+                    TestSharedComponentFactory,
                 ],
             );
 

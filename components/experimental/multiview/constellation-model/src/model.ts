@@ -19,8 +19,6 @@ const starListKey = "stars";
  * The Constellation is our implementation of the IConstellation interface.
  */
 export class Constellation extends DataObject implements IConstellation {
-    public static get ComponentName() { return "@fluid-example/constellation"; }
-
     private _stars: ICoordinate[] = [];
 
     public static getFactory() {
@@ -28,13 +26,11 @@ export class Constellation extends DataObject implements IConstellation {
     }
 
     private static readonly factory = new DataObjectFactory(
-        Constellation.ComponentName,
+        "@fluid-example/constellation",
         Constellation,
         [],
         {},
-        new Map([
-            Coordinate.getFactory().registryEntry,
-        ]),
+        [Coordinate.getFactory()],
     );
 
     protected async initializingFirstTime() {

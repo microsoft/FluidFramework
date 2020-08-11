@@ -9,7 +9,7 @@ import {
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     FluidDataStoreRegistryEntry,
-    NamedFluidDataStoreRegistryEntries,
+    FluidDataStoreRegistryEntries,
     SummarizeInternalFn,
     CreateChildSummarizerNodeFn,
     CreateSummarizerNodeSource,
@@ -21,6 +21,7 @@ import { SummaryTracker, SummarizerNode } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { LocalFluidDataStoreContext } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
+import { FluidDataStoreRegistry } from "../dataStoreRegistry";
 
 describe("Data Store Creation Tests", () => {
     describe("Store creation via local context creation and realize", () => {
@@ -51,10 +52,12 @@ describe("Data Store Creation Tests", () => {
         // Helper function that creates a FluidDataStoreRegistryEntry with the registry entries
         // provided to it.
         function createDataStoreRegistryEntry(
-            entries: NamedFluidDataStoreRegistryEntries,
+            type: string,
+            entries: FluidDataStoreRegistryEntries,
         ): FluidDataStoreRegistryEntry {
-            const registryEntries = new Map(entries);
+            const registryEntries = new FluidDataStoreRegistry(entries);
             const factory: IFluidDataStoreFactory = {
+                type,
                 get IFluidDataStoreFactory() { return factory; },
                 instantiateDataStore: (context: IFluidDataStoreContext) => {
                     context.bindRuntime(new MockFluidDataStoreRuntime());
@@ -75,19 +78,19 @@ describe("Data Store Creation Tests", () => {
 
         beforeEach(async () => {
             // DataStore B is a leaf dataStore and its registry does not have any entries.
-            const entryB = createDataStoreRegistryEntry([]);
+            const entryB = createDataStoreRegistryEntry(dataStoreBName, []);
             // DataStore C is a leaf dataStore and its registry does not have any entries.
-            const entryC = createDataStoreRegistryEntry([]);
+            const entryC = createDataStoreRegistryEntry(dataStoreCName, []);
             // DataStore A's registry has entries for dataStore B and dataStore C.
-            const entryA = createDataStoreRegistryEntry([
-                [dataStoreBName, Promise.resolve(entryB)],
-                [dataStoreCName, Promise.resolve(entryC)],
+            const entryA = createDataStoreRegistryEntry(dataStoreAName, [
+                entryB,
+                entryC,
             ]);
             // The default dataStore's registry has entry for only dataStore A.
-            const entryDefault = createDataStoreRegistryEntry([[dataStoreAName, Promise.resolve(entryA)]]);
+            const entryDefault = createDataStoreRegistryEntry(defaultName, [entryA]);
 
             // Create the global registry for the container that can only create the default dataStore.
-            const globalRegistryEntries = new Map([[defaultName, Promise.resolve(entryDefault)]]);
+            const globalRegistryEntries = new FluidDataStoreRegistry([entryDefault]);
             const globalRegistry: IFluidDataStoreRegistry = {
                 get IFluidDataStoreRegistry() { return globalRegistry; },
                 get: async (pkg) => globalRegistryEntries.get(pkg),

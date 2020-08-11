@@ -109,7 +109,7 @@ describe("context reload", function() {
         const type = TestComponent.type;
         return new ContainerRuntimeFactoryWithDefaultDataStore(
             type,
-            [[type, Promise.resolve(new DataObjectFactory(type, component, [], {}))]],
+            [new DataObjectFactory(type, component, [], {})],
         );
     };
 

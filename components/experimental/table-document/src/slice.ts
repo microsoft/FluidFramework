@@ -10,7 +10,6 @@ import { CellRange } from "./cellrange";
 import { ConfigKey } from "./configKey";
 import { TableDocument } from "./document";
 import { ITable, TableDocumentItem } from "./table";
-import { TableSliceType } from "./componentTypes";
 
 export interface ITableSliceConfig {
     docId: string;
@@ -25,7 +24,7 @@ export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITa
     public static getFactory() { return TableSlice.factory; }
 
     private static readonly factory = new DataObjectFactory(
-        TableSliceType,
+        "@fluid-example/table-document/TableSlice",
         TableSlice,
         [],
         {},

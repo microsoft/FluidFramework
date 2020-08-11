@@ -17,8 +17,6 @@ const diceValueKey = "diceValue";
  * The DiceRoller is our implementation of the IDiceRoller interface.
  */
 export class DiceRoller extends DataObject implements IDiceRoller {
-    public static get ComponentName() { return "@fluid-example/dice-roller"; }
-
     /**
      * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the
      * component and all work will resolve before the view is presented to any user.
@@ -52,7 +50,7 @@ export class DiceRoller extends DataObject implements IDiceRoller {
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
 export const DiceRollerInstantiationFactory = new DataObjectFactory(
-    DiceRoller.ComponentName,
+    "@fluid-example/dice-roller",
     DiceRoller,
     [],
     {},

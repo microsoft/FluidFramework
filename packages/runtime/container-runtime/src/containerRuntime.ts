@@ -76,7 +76,7 @@ import {
     IEnvelope,
     IInboundSignalMessage,
     ISignalEnvelop,
-    NamedFluidDataStoreRegistryEntries,
+    FluidDataStoreRegistryEntries,
     SchedulerType,
     ISummaryTreeWithStats,
     ISummaryStats,
@@ -428,10 +428,10 @@ export const schedulerId = SchedulerType;
 
 // Wraps the provided list of packages and augments with some system level services.
 class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
-    constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
+    constructor(namedEntries: FluidDataStoreRegistryEntries) {
         super([
             ...namedEntries,
-            [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
+            new AgentSchedulerFactory(),
         ]);
     }
 }
@@ -455,7 +455,7 @@ export class ContainerRuntime extends EventEmitter
      */
     public static async load(
         context: IContainerContext,
-        registryEntries: NamedFluidDataStoreRegistryEntries,
+        registryEntries: FluidDataStoreRegistryEntries,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IFluidObject & IFluidObject = context.scope,

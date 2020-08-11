@@ -16,11 +16,12 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IEvent } from "@fluidframework/common-definitions";
 import { CellRange } from "./cellrange";
-import { TableDocumentType } from "./componentTypes";
 import { ConfigKey } from "./configKey";
 import { debug } from "./debug";
 import { TableSlice } from "./slice";
 import { ITable, TableDocumentItem } from "./table";
+
+export const TableDocumentType = "@fluid-example/table-document/TableDocument";
 
 export interface ITableDocumentEvents extends IEvent {
     (event: "op",

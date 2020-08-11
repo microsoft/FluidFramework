@@ -16,7 +16,6 @@ export class TestContainerRuntimeFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
     constructor(
-        public type: string,
         public componentFactory: IFluidDataStoreFactory,
         public runtimeOptions: IContainerRuntimeOptions,
     ) {}
@@ -29,13 +28,13 @@ export class TestContainerRuntimeFactory implements IRuntimeFactory {
 
         const runtime = await ContainerRuntime.load(
             context,
-            [[this.type, Promise.resolve(this.componentFactory)]],
+            [this.componentFactory],
             async (req, rt) => builder.handleRequest(req, rt),
             this.runtimeOptions,
         );
 
         if (!runtime.existing) {
-            await runtime.createRootDataStore(this.type, "default");
+            await runtime.createRootDataStore(this.componentFactory.type, "default");
         }
 
         return runtime;

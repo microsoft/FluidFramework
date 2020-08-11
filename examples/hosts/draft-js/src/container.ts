@@ -20,6 +20,6 @@ import { DraftJsObject } from "./fluid-object";
  * FluidObjects.
  */
 export const DraftJsContainer = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DraftJsObject.Name,
-    new Map([DraftJsObject.factory.registryEntry]),
+    DraftJsObject.factory.type,
+    [DraftJsObject.factory.registryEntry],
 );

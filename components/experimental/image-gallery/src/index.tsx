@@ -18,8 +18,6 @@ import "react-image-gallery/styles/css/image-gallery.css";
 import "./Styles.css";
 import { ISharedMap } from "@fluidframework/map";
 
-const imageGalleryName = "@fluid-example/image-gallery";
-
 export class ImageGalleryComponent extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
@@ -99,15 +97,13 @@ export class ImageGalleryComponent extends DataObject implements IFluidHTMLView 
 }
 
 export const ImageGalleryInstantiationFactory = new DataObjectFactory(
-    imageGalleryName,
+    "@fluid-example/image-gallery",
     ImageGalleryComponent,
     [],
     {},
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    imageGalleryName,
-    new Map([
-        [imageGalleryName, Promise.resolve(ImageGalleryInstantiationFactory)],
-    ]),
+    ImageGalleryInstantiationFactory.type,
+    [ImageGalleryInstantiationFactory],
 );

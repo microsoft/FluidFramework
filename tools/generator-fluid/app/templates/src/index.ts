@@ -8,8 +8,7 @@ export { DiceRoller };
  * as a component that can be created in the container.
  */
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DiceRoller.ComponentName,
-    new Map([
-        [DiceRoller.ComponentName, Promise.resolve(DiceRoller.factory)],
-        // Add another component here to create it within the container
-    ]));
+    DiceRoller.factory.type,
+    // Add another component here to create it within the container
+    [DiceRoller.factory],
+);

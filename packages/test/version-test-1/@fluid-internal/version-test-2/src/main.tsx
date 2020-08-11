@@ -15,7 +15,6 @@ import ReactDOM from "react-dom";
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 const pkg = require("../package.json");
 const pkgversion = pkg.version as string;
-const versionTest2Name = pkg.name as string;
 
 export class VersionTest extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
@@ -97,4 +96,5 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
     }
 }
 
-export const VersiontestInstantiationFactory = new DataObjectFactory(versionTest2Name, VersionTest, [], {});
+export const VersiontestInstantiationFactory1 = new DataObjectFactory("@fluid-internal/version-test-1", VersionTest, [], {});
+export const VersiontestInstantiationFactory2 = new DataObjectFactory("@fluid-internal/version-test-2", VersionTest, [], {});

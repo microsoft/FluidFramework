@@ -14,8 +14,6 @@ const diceValueKey = "diceValue";
  * Fluid component
  */
 export class DiceRoller extends DataObject implements IFluidHTMLView {
-    public static get ComponentName() { return "dice-roller"; }
-
     public get IFluidHTMLView() { return this; }
 
     /**
@@ -23,7 +21,7 @@ export class DiceRoller extends DataObject implements IFluidHTMLView {
      * dependencies of the component.
      */
     public static readonly factory = new DataObjectFactory(
-        DiceRoller.ComponentName,
+        "dice-roller",
         DiceRoller,
         [],
         {},

@@ -7,7 +7,7 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/aqueduct";
 
-import { DiceRoller, DiceRollerInstantiationFactory } from "../component";
+import { DiceRollerInstantiationFactory } from "../component";
 
 /**
  * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultDataStore also enables dynamic loading in
@@ -21,8 +21,6 @@ import { DiceRoller, DiceRollerInstantiationFactory } from "../component";
  * components.
  */
 export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DiceRoller.ComponentName,
-    new Map([
-        [DiceRoller.ComponentName, Promise.resolve(DiceRollerInstantiationFactory)],
-    ]),
+    DiceRollerInstantiationFactory.type,
+    [DiceRollerInstantiationFactory],
 );

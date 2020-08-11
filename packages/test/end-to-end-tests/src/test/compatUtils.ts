@@ -100,11 +100,10 @@ export const createOldTestFluidComponentFactory = (registry?: ChannelFactoryRegi
 };
 
 export const createRuntimeFactory = (
-    type: string,
     componentFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
     runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): IRuntimeFactory => {
-    return new TestContainerRuntimeFactory(type, componentFactory as IFluidDataStoreFactory, runtimeOptions);
+    return new TestContainerRuntimeFactory(componentFactory as IFluidDataStoreFactory, runtimeOptions);
 };
 
 // TODO: once 0.25 is released this can import the old version of TestContainerRuntimeFactory used above
@@ -164,7 +163,6 @@ export const compatTest = (
         const makeTestContainer = async (registry?: ChannelFactoryRegistry) => createContainerWithOldLoader(
             {
                 fluidExport: createRuntimeFactory(
-                    TestComponent.type,
                     options.testFluidComponent
                         ? createTestFluidComponentFactory(registry)
                         : createPrimedComponentFactory(),
@@ -230,7 +228,6 @@ export const compatTest = (
         const makeTestContainer = async (registry: ChannelFactoryRegistry) => createContainer(
             {
                 fluidExport: createRuntimeFactory(
-                    OldTestComponent.type,
                     options.testFluidComponent
                         ? createOldTestFluidComponentFactory(registry)
                         : createOldPrimedComponentFactory(),

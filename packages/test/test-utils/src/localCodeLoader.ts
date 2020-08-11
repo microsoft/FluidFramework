@@ -11,6 +11,7 @@ import {
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { RenamingFactoryAdapter } from "@fluidframework/container-runtime";
 
 // Represents the entry point for a fluid container.
 export type fluidEntryPoint = Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IFluidModule>;
@@ -63,11 +64,14 @@ export class LocalCodeLoader implements ICodeLoader {
         if (entryPoint === undefined) {
             throw new Error(`Cannot find package ${pkdId}`);
         }
-        const factory: Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory> =
-            entryPoint.fluidExport ?? entryPoint;
+        const factory = entryPoint.fluidExport ?? entryPoint;
+
         const runtimeFactory: IProvideRuntimeFactory =
             factory.IRuntimeFactory ??
-            new ContainerRuntimeFactoryWithDefaultDataStore("default", [["default", Promise.resolve(factory)]]);
+            new ContainerRuntimeFactoryWithDefaultDataStore(
+                "default",
+                [new RenamingFactoryAdapter("default", factory)],
+            );
 
         const fluidModule: IFluidModule = { fluidExport: runtimeFactory };
         return fluidModule;

@@ -117,11 +117,11 @@ export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements I
             SharedCell.getFactory(),
         ],
         {},
-        new Map([
+        [
             TextBoxInstantiationFactory.registryEntry,
             TextListInstantiationFactory.registryEntry,
             ClickerInstantiationFactory.registryEntry,
-        ]),
+        ],
     );
 
     // start IFluidHTMLView

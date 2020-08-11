@@ -34,10 +34,6 @@ export interface IDiceRoller extends EventEmitter {
  * Fluid component
  */
 export class DiceRoller extends PrimedComponent implements IDiceRoller, IFluidHTMLView {
-    public static get ComponentName() {
-        return "DiceRoller";
-    }
-
     public get IFluidHTMLView() { return this; }
 
     /**
@@ -45,7 +41,7 @@ export class DiceRoller extends PrimedComponent implements IDiceRoller, IFluidHT
      * dependencies of the component.
      */
     public static readonly factory = new PrimedComponentFactory(
-        DiceRoller.ComponentName,
+        "DiceRoller",
         DiceRoller,
         [],
         {},

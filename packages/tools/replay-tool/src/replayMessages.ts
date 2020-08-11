@@ -39,6 +39,9 @@ import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@fluidframework/replay-driver";
+import {
+    IProvideFluidDataStoreFactory,
+} from "@fluidframework/runtime-definitions";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
@@ -67,6 +70,22 @@ function expandTreeForReadability(tree: ITree): ITree {
         newTree.entries.push(newNode);
     }
     return newTree;
+}
+
+/**
+ * Fake data store factory.
+ * Creates "default" data store runtime that is configured with default set of DDSs and some default request handler.
+ */
+class FakeFactory implements IProvideFluidDataStoreFactory {
+    private readonly subFactory = new API.Chaincode(() => {
+        throw new Error("Can't close Document");
+    });
+
+    constructor(public readonly type: string) {}
+
+    public get IFluidDataStoreFactory() { return this; }
+
+    public readonly instantiateDataStore = this.subFactory.instantiateDataStore.bind(this.subFactory);
 }
 
 /**
@@ -289,27 +308,24 @@ class Document {
 
         const resolver = new ContainerUrlResolver(
             new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
-        const chaincode = new API.Chaincode(() => {
-            throw new Error("Can't close Document");
-        });
         const codeLoader = new API.CodeLoader({ generateSummaries: false },
             [
-                ["@ms/atmentions", Promise.resolve(chaincode)],
-                ["@ms/augloop", Promise.resolve(chaincode)],
-                ["@ms/catalog", Promise.resolve(chaincode)],
-                ["@ms/scriptor", Promise.resolve(chaincode)],
-                ["@ms/discover", Promise.resolve(chaincode)],
-                ["@ms/registro", Promise.resolve(chaincode)],
-                ["@ms/formula", Promise.resolve(chaincode)],
-                ["@ms/application-services", Promise.resolve(chaincode)],
-                ["@ms/undo-stack", Promise.resolve(chaincode)],
-                ["@ms/commanding-surface", Promise.resolve(chaincode)],
-                ["@ms/dias", Promise.resolve(chaincode)],
-                ["@ms/scriptor/Titulo", Promise.resolve(chaincode)],
-                ["@fluidx/tasks", Promise.resolve(chaincode)],
-                ["@ms/tablero/TableroView", Promise.resolve(chaincode)],
-                ["@ms/tablero/TableroDocument", Promise.resolve(chaincode)],
-                ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
+                new FakeFactory("@ms/atmentions"),
+                new FakeFactory("@ms/augloop"),
+                new FakeFactory("@ms/catalog"),
+                new FakeFactory("@ms/scriptor"),
+                new FakeFactory("@ms/discover"),
+                new FakeFactory("@ms/registro"),
+                new FakeFactory("@ms/formula"),
+                new FakeFactory("@ms/application-services"),
+                new FakeFactory("@ms/undo-stack"),
+                new FakeFactory("@ms/commanding-surface"),
+                new FakeFactory("@ms/dias"),
+                new FakeFactory("@ms/scriptor/Titulo"),
+                new FakeFactory("@fluidx/tasks"),
+                new FakeFactory("@ms/tablero/TableroView"),
+                new FakeFactory("@ms/tablero/TableroDocument"),
+                new FakeFactory("@fluid-example/table-document/TableDocument"),
             ]);
         const options = {};
 

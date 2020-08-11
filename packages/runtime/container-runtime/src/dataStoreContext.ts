@@ -240,6 +240,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             let registry: IFluidDataStoreRegistry | undefined = this._containerRuntime.IFluidDataStoreRegistry;
             let factory: IFluidDataStoreFactory | undefined;
             let lastPkg: string | undefined;
+            assert(packages.length !== 0, "No package information");
             for (const pkg of packages) {
                 if (!registry) {
                     return this.rejectDeferredRealize(`No registry for ${lastPkg} package`);

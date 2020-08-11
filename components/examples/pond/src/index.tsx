@@ -20,10 +20,6 @@ import {
 import { IComponentUserInformation } from "./interfaces";
 import { userInfoFactory } from "./providers";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const PondName = pkg.name as string;
-
 /**
  * Basic Pond example using stock component classes.
  *
@@ -100,14 +96,14 @@ export class Pond extends DataObject implements IFluidHTMLView {
     public static getFactory() { return Pond.factory; }
 
     private static readonly factory = new DataObjectFactory(
-        PondName,
+        "@fluid-example/pond",
         Pond,
         [SharedDirectory.getFactory()],
         {},
-        new Map([
+        [
             Clicker.getFactory().registryEntry,
             ExampleUsingProviders.getFactory().registryEntry,
-        ]),
+        ],
     );
 }
 
@@ -115,9 +111,9 @@ export class Pond extends DataObject implements IFluidHTMLView {
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     Pond.getFactory().type,
-    new Map([
+    [
         Pond.getFactory().registryEntry,
-    ]),
+    ],
     [
         {
             type: IComponentUserInformation,

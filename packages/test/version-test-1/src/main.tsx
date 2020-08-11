@@ -20,7 +20,6 @@ const signalKey = {
     upgradeHighPriority: "upgrade high priority",
     upgradeLowPriority: "upgrade low priority",
 };
-const versionTest1Name = pkg.name as string;
 
 export class VersionTest extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
@@ -120,4 +119,7 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
     }
 }
 
-export const VersiontestInstantiationFactory = new DataObjectFactory(versionTest1Name, VersionTest, [], {});
+export const VersiontestInstantiationFactory1 =
+    new DataObjectFactory("@fluid-internal/version-test-1", VersionTest, [], {});
+export const VersiontestInstantiationFactory2 =
+    new DataObjectFactory("@fluid-internal/version-test-2", VersionTest, [], {});

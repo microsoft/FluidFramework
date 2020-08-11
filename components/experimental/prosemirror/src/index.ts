@@ -9,7 +9,7 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
     deprecated_innerRequestHandler,
     buildRuntimeRequestHandler,
@@ -17,21 +17,15 @@ import {
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { fluidExport as smde } from "./prosemirror";
 
-const defaultComponent = smde.type;
-
 class ProseMirrorFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
-            [defaultComponent, Promise.resolve(smde)],
-        ]);
-
         const defaultComponentId = "default";
 
         const runtime = await ContainerRuntime.load(
             context,
-            registry,
+            [smde],
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
                 deprecated_innerRequestHandler,
@@ -43,7 +37,7 @@ class ProseMirrorFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            await runtime.createRootDataStore(defaultComponent, defaultComponentId);
+            await runtime.createRootDataStore(smde.type, defaultComponentId);
         }
 
         return runtime;

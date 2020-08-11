@@ -11,8 +11,8 @@ import {
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
-    NamedFluidDataStoreRegistryEntries,
-    NamedFluidDataStoreRegistryEntry,
+    FluidDataStoreRegistryEntries,
+    FluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
@@ -47,7 +47,7 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
         private readonly ctor: new (props: ISharedComponentProps<P>) => PureDataObject<P, S>,
         sharedObjects: readonly IChannelFactory[],
         private readonly optionalProviders: ComponentSymbolProvider<P>,
-        registryEntries?: NamedFluidDataStoreRegistryEntries,
+        registryEntries?: FluidDataStoreRegistryEntries,
         private readonly onDemandInstantiation = true,
     ) {
         if (registryEntries !== undefined) {
@@ -68,8 +68,8 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
      * entries that differ only in this way into the same array.
      * @returns The NamedFluidDataStoreRegistryEntry
      */
-    public get registryEntry(): NamedFluidDataStoreRegistryEntry {
-        return [this.type, Promise.resolve(this)];
+    public get registryEntry(): FluidDataStoreRegistryEntry {
+        return this;
     }
 
     /**
