@@ -77,7 +77,7 @@ export interface IFrameOuterHostConfig {
 
     // A component that gives host provided capabilities/configurations
     // to the component in the container(such as auth).
-    scope?: IFluidObject & IFluidObject;
+    scope?: IFluidObject;
 
     proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
 }

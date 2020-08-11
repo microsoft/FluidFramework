@@ -38,7 +38,7 @@ describe("Data Store Creation Tests", () => {
          */
 
         let storage: IDocumentStorageService;
-        let scope: IFluidObject & IFluidObject;
+        let scope: IFluidObject;
         const attachCb = (mR: IFluidDataStoreChannel) => { };
         let containerRuntime: ContainerRuntime;
         const defaultName = "default";
