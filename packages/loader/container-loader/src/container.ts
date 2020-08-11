@@ -782,7 +782,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         entries.push({
             mode: FileMode.File,
             path: ".blobs",
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: JSON.stringify(blobMetaData),
                 encoding: "utf-8",
@@ -793,7 +793,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         entries.push({
             mode: FileMode.File,
             path: "quorumMembers",
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: JSON.stringify(quorumSnapshot.members),
                 encoding: "utf-8",
@@ -802,7 +802,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         entries.push({
             mode: FileMode.File,
             path: "quorumProposals",
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: JSON.stringify(quorumSnapshot.proposals),
                 encoding: "utf-8",
@@ -811,7 +811,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         entries.push({
             mode: FileMode.File,
             path: "quorumValues",
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: JSON.stringify(quorumSnapshot.values),
                 encoding: "utf-8",
@@ -828,7 +828,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         entries.push({
             mode: FileMode.File,
             path: ".attributes",
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: JSON.stringify(documentAttributes),
                 encoding: "utf-8",

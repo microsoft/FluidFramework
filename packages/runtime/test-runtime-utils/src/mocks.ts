@@ -586,7 +586,7 @@ export class MockSharedObjectServices implements IChannelServices {
     public static createFromTree(tree: ITree) {
         const contents: { [key: string]: string } = {};
         for (const entry of tree.entries) {
-            assert(entry.type === TreeEntry[TreeEntry.Blob]);
+            assert(entry.type === TreeEntry.Blob);
             contents[entry.path] = (entry.value as IBlob).contents;
         }
         return new MockSharedObjectServices(contents);

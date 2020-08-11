@@ -114,7 +114,7 @@ export class SnapshotLegacy {
                 {
                     mode: FileMode.File,
                     path: SnapshotLegacy.header,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: serializeAsMinSupportedVersion(
                             SnapshotLegacy.header,
@@ -139,7 +139,7 @@ export class SnapshotLegacy {
             tree.entries.push({
                 mode: FileMode.File,
                 path: SnapshotLegacy.body,
-                type: TreeEntry[TreeEntry.Blob],
+                type: TreeEntry.Blob,
                 value: {
                     contents: serializeAsMinSupportedVersion(
                         SnapshotLegacy.body,
@@ -165,7 +165,7 @@ export class SnapshotLegacy {
         tree.entries.push({
             mode: FileMode.File,
             path: this.mergeTree.options?.catchUpBlobName ?? SnapshotLegacy.catchupOps,
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: serializer ? serializer.stringify(catchUpMsgs, context, bind) : JSON.stringify(catchUpMsgs),
                 encoding: "utf-8",

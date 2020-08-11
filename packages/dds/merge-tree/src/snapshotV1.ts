@@ -112,7 +112,7 @@ export class SnapshotV1 {
             return {
                 mode: FileMode.File,
                 path: id,
-                type: TreeEntry[TreeEntry.Blob],
+                type: TreeEntry.Blob,
                 value: {
                     contents: serializeAsMaxSupportedVersion(
                         id,
@@ -132,7 +132,7 @@ export class SnapshotV1 {
                 {
                     mode: FileMode.File,
                     path: SnapshotLegacy.header,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: serializeAsMaxSupportedVersion(
                             SnapshotLegacy.header,

@@ -342,13 +342,13 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 {
                     mode: FileMode.Directory,
                     path: SnapshotPath.rows,
-                    type: TreeEntry[TreeEntry.Tree],
+                    type: TreeEntry.Tree,
                     value: this.rows.snapshot(this.runtime, this.handle),
                 },
                 {
                     mode: FileMode.Directory,
                     path: SnapshotPath.cols,
-                    type: TreeEntry[TreeEntry.Tree],
+                    type: TreeEntry.Tree,
                     value: this.cols.snapshot(this.runtime, this.handle),
                 },
                 serializeBlob(this.runtime, this.handle, SnapshotPath.cells, [
