@@ -18,9 +18,9 @@ import { spacesItemMap, spacesRegistryEntries, templateDefinitions } from "./spa
 const SpacesStorageKey = "spaces-storage";
 
 /**
- * ISpacesItem stores an itemType and a serializable object pairing.  SpacesObject maps this typename to its itemMap,
+ * ISpacesItem stores an itemType and a serializable object pairing.  Spaces maps this typename to its itemMap,
  * which lets it find how to get an item out of the serializable object.  The serializable object likely includes
- * one or more handles to persisted model components, though could include anything it wants.  So the SpacesObject
+ * one or more handles to persisted model components, though could include anything it wants.  So the Spaces
  * component owns the typenames, but the individual types own their own serializable object format.
  */
 export interface ISpacesItem {
@@ -36,9 +36,9 @@ export interface ISpacesItem {
 }
 
 /**
- * SpacesObject is the main component, which composes a SpacesToolbar with a SpacesStorage.
+ * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.
  */
-export class SpacesObject extends DataObject implements IFluidHTMLView {
+export class Spaces extends DataObject implements IFluidHTMLView {
     private storageComponent: SpacesStorage<ISpacesItem> | undefined;
     private baseUrl: string | undefined;
 
@@ -46,21 +46,21 @@ export class SpacesObject extends DataObject implements IFluidHTMLView {
         return "@fluid-example/spaces";
     }
 
-    private static readonly factory = new DataObjectFactory(SpacesObject.ComponentName, SpacesObject, [], {}, [
+    private static readonly factory = new DataObjectFactory(Spaces.ComponentName, Spaces, [], {}, [
         [SpacesStorage.ComponentName, Promise.resolve(SpacesStorage.getFactory())],
         ...spacesRegistryEntries,
     ]);
 
     public static getFactory() {
-        return SpacesObject.factory;
+        return Spaces.factory;
     }
 
     public get IFluidHTMLView() {
         return this;
     }
 
-    // In order to handle direct links to items, we'll link to the SpacesObject component with a path of the itemId
-    // for the specific item we want.  We route through SpacesObject because it's the one with the registry,
+    // In order to handle direct links to items, we'll link to the Spaces component with a path of the itemId
+    // for the specific item we want.  We route through Spaces because it's the one with the registry,
     // and so it's the one that knows how to getViewForItem().
     public async request(req: IRequest): Promise<IResponse> {
         const requestParser = new RequestParser({ url: req.url });
@@ -83,11 +83,11 @@ export class SpacesObject extends DataObject implements IFluidHTMLView {
     }
 
     /**
-     * Will return a new SpacesObject View
+     * Will return a new Spaces View
      */
     public render(div: HTMLElement) {
         if (this.storageComponent === undefined) {
-            throw new Error("SpacesObject can't render, storage not found");
+            throw new Error("Spaces can't render, storage not found");
         }
 
         const addItem = (type: string) => {
