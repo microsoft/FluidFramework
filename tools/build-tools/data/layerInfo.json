@@ -172,6 +172,7 @@
             },
             "Examples": {
                 "dot": false,
+                "dev": true,
                 "dirs": [
                     "components/",
                     "examples/",
