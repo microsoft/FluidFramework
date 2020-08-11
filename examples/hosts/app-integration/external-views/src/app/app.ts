@@ -37,12 +37,12 @@ async function start(): Promise<void> {
 
     // Verify the response
     if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        throw new Error(`Unable to retrieve component at URL: "${url}"`);
+        throw new Error(`Unable to retrieve data object at URL: "${url}"`);
     } else if (response.value === undefined) {
         throw new Error(`Empty response from URL: "${url}"`);
     }
 
-    // In this app, we know our container code provides a default component that is an IDiceRoller.
+    // In this app, we know our container code provides a default data object that is an IDiceRoller.
     const diceRoller: IDiceRoller = response.value;
 
     // Given an IDiceRoller, we can render its data using the PrettyDiceRollerView we've created in our app.
