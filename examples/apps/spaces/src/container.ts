@@ -19,5 +19,5 @@ import { Spaces } from "./fluid-object/";
 
 export const SpacesContainer = new ContainerRuntimeFactoryWithDefaultDataStore(
     Spaces.ComponentName,
-    [[Spaces.ComponentName, Promise.resolve(Spaces.getFactory())],
-    ]);
+    [[Spaces.ComponentName, Promise.resolve(Spaces.getFactory())]],
+);
