@@ -44,12 +44,12 @@ const snapshotFileName = "header";
  */
 export class MapFactory implements IChannelFactory {
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
+   * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
    */
     public static readonly Type = "https://graph.microsoft.com/types/map";
 
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
+   * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
    */
     public static readonly Attributes: IChannelAttributes = {
         type: MapFactory.Type,
@@ -58,21 +58,21 @@ export class MapFactory implements IChannelFactory {
     };
 
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
+   * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
    */
     public get type() {
         return MapFactory.Type;
     }
 
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
+   * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
    */
     public get attributes() {
         return MapFactory.Attributes;
     }
 
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.load}
+   * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
    */
     public async load(
         runtime: IFluidDataStoreRuntime,
@@ -87,7 +87,7 @@ export class MapFactory implements IChannelFactory {
     }
 
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
+   * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
    */
     public create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap {
         const map = new SharedMap(id, runtime, MapFactory.Attributes);
@@ -98,23 +98,36 @@ export class MapFactory implements IChannelFactory {
 }
 
 /**
- * A SharedMap is a map-like distributed data structure.
+ * The SharedMap distributed data structure can be used to store key-value pairs. It provides the same API for setting
+ * and retrieving values that JavaScript developers are accustomed to with the
+ * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map | Map} built-in object.
+ *
+ * @remarks
+ *
  */
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     /**
-   * Create a new shared map.
-   * @param runtime - Data store runtime the new shared map belongs to
-   * @param id - Optional name of the shared map
-   * @returns Newly create shared map (but not attached yet)
-   */
+    * Create a new shared map.
+    * @param runtime - Data store runtime the new shared map belongs to
+    * @param id - Optional name of the shared map
+    * @returns Newly created shared map
+    *
+    * @example
+    * To create a `SharedMap`, call the static create method:
+    *
+    * ```typescript
+    * const myMap = SharedMap.create(this.runtime, id);
+    * ```
+    *
+    */
     public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap {
         return runtime.createChannel(id, MapFactory.Type) as SharedMap;
     }
 
     /**
-   * Get a factory for SharedMap to register with the data store.
-   * @returns A factory that creates and load SharedMap
-   */
+    * Get a factory for SharedMap to register with the data store.
+    * @returns A factory that creates and load SharedMap
+    */
     public static getFactory(): IChannelFactory {
         return new MapFactory();
     }
@@ -130,7 +143,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     private readonly kernel: MapKernel;
 
     /**
-   * Create a new SharedMap.
+   * You should use the {@link SharedMap.create | create method}.
+   *
    * @param id - String identifier
    * @param runtime - Data store runtime
    * @param attributes - The attributes for the map

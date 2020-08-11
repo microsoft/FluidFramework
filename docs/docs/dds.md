@@ -1,24 +1,42 @@
 # Introducing distributed data structures
 
-::: danger
+<!-- The Fluid Framework is, at its most fundamental, a system to manage and synchronize distributed data. Fluid's approach
+to data is different than other data frameworks you may have used in the past, because it embraces distributed computing
+paradigms and provides a _single_
 
-OUTDATED
+## What's different about Fluid?
+
+Consider a collaborative solution built in a web browser that uses a relational database as a data store. In such a
+solution, when a user loads the application, database queries are issued to pull data from the database and transform it
+into a form that can be used in the browser client side code.
+
+When users edit data,  -->
+
+The primary way that developers interact with the Fluid Framework is through a collection of objects called _distributed
+data structures_. We call them this because they are similar to data structures used commonly when programming, like
+strings, maps/dictionaries, and sequences/lists. The APIs provided by distributed data structures are designed to be
+familiar to programmers who've used these types of data structures before. For example, the `SharedMap` DDS is used to
+store key/value pairs, just like a typical map or dictionary data structure, and provides `get` and `set` methods to
+store and retrieve data in the map.
+
+When using a DDS, you can largely treat it as a local object. You can add data to it, remove data, update it, etc.
+However, a DDS is not _just_ a local object. Fluid's purpose is to make it easier to build systems with _distributed_
+data, where multiple users are editing the same data source. A DDS can be changed not only by your code running locally
+on the client, but also by the Fluid runtime on behalf of other users that are editing.
+
+::: tip
+
+The names of distributed data structures are prefixed with `Shared` by convention. SharedMap, SharedInk, SharedString,
+etc. This prefix indicates that the object is shared between multiple clients.
 
 :::
 
-Much of Fluid's power lies in a set of base primitives called distributed data structures. These data structures, such
-as [SharedMap](./SharedMap.md) and the various types in the @fluidframework/sequence package, are eventually consistent.
-The Fluid runtime manages these data structures; as changes are made locally and remotely, they are merged in seamlessly
-by the runtime.
+When a DDS is changed by the Fluid runtime, it raises an [event](#events). You can listen to these events so that you
+know when data is changed by remote clients and can react appropriately. For example, you may need to recalculate a
+derived value when some data in a DDS changes.
 
-When you're working with a DDS, you can largely treat it as a local object. You can make changes to it as needed.
-However, this local object can be changed not only by your local code, but also by the Fluid runtime. The Fluid runtime
-is responsible for inbounding changes from the server and then replaying those changes locally. This means your code
-should be structured to react to changes to the DDS instances and update accordingly.
-
-As you make changes to the local DDS instance, the changes are sent to the Fluid server. Other clients are notified of
-the change -- or they can query the server for changes -- and then merge the changes in locally. All of this is managed
-by the Fluid runtime.
+Most distributed data structures are _eventually consistent_. This means that, assuming no new changes to the data
+structures, all of the distributed copies of the DDS will reach an identical state in a finite amount of time.
 
 The quality of eventual consistency improves performance because local changes can be made optimistically, knowing that
 the runtime will merge the change in the appropriate way eventually. This is a guarantee made by the Fluid runtime.
@@ -26,103 +44,29 @@ Thus, you need not check for changes prior to 'committing' local changes. If the
 be retrieved and merged in seamlessly, and events will be emitted by the data structures, allowing your code to react to
 the changes if needed. And this all happens _very_ quickly.
 
-There are cases, however, where the eventually consistent guarantee is insufficient. In these cases, the consensus data
-structures are useful. These types of data structures defer applying operations until they're acknowledged by the
-server. This ensures that each client `.pop`s a different value from a stack, for example.
-
-## Creating and storing distributed data structures
-
-### Storing a DDS within another DDS
-
-## Handles
-
-A [Fluid Handle](../../packages/loader/core-interfaces/src/handles.ts) is a handle to a `fluid object`. It is
-used to represent the object and has a function `get()` that returns the underlying object. Handles move the ownership
-of retrieving a `fluid object` from the user of the object to the object itself. The handle can be passed around in the
-system and anyone who has the handle can easily get the underlying object by simply calling `get()`.
-
-### Why use Fluid Handles?
-
-- You should **always** use handles to represent `fluid objects` and store them in a Distributed Data Structure (DDS).
-  This tells the runtime, and the storage, about the usage of the object and that it is referenced. The runtime /
-  storage can then manage the lifetime of the object, and perform important operations such as garbage collection.
-  Otherwise, if the object is not referenced by a handle, it will be garbage collected.
-
-  The exception to this is when the object has to be handed off to an external entity. For example, when copy / pasting
-  an object, the `url` of the object should be handed off to the destination so that it can request the object from the
-  Loader or the Container. In this case, it is the responsiblity of the code doing so to manage the lifetime to this
-  object / url by storing the handle somewhere, so that the object is not garbage collected.
-
-- With handles, the user doesn't have to worry about how to get the underlying object since that itself can differ in
-  different scenarios. It is the responsibility of the handle to retrieve the object and return it.
-
-  For example, the [handle](../../packages/runtime/component-runtime/src/componentHandle.ts) for a `SharedComponent`
-  simply returns the underlying object. But when this handle is stored in a DDS so that it is serialized and then
-  de-seriazlied in a remote client, it is represented by a [remote
-  handle](../../packages/runtime/runtime-utils/src/remoteComponentHandle.ts). The remote handle just has the absolute
-  url to the object and requests the object from the root and returns it.
-
-### How to create a handle?
-
-A handle's primary job is to be able to return the `fluid object` it is representing when `get` is called. So, it needs
-to have access to the object either by directly storing it or by having a mechanism to retrieve it when asked. The
-creation depends on the usage and the implementation.
-
-For example, it can be created with the absolute `url` of the object and a `routeContext` which knows how to get the
-object via the `url`. When `get` is called, it can request the object from the `routeContext` by providing the `url`.
-This is how the [remote handle](../../packages/runtime/runtime-utils/src/remoteComponentHandle.ts) retrieves the
-underlying object.
-
-### Usage
-
-A handle should always be used to represent a fluid object. Following are couple of examples that outline the usage of
-handles to retrieve the underlying object in different scenarios.
-
-#### Basic usage scenario
-
-One of the basic usage of a Fluid Handle is when a client creates a `fluid object` and wants remote clients to be able
-to retrieve and load it. It can store the handle to the object in a DDS and the remote client can retrieve the handle
-and `get` the object.
-
-The following code snippet from the [Pond](../../components/examples/pond/src/index.tsx) Component demonstrates this. It
-creates `Clicker` which is a SharedComponent during first time initialization and stores its `handle` in the `root` DDS.
-Any remote client can retrieve the `handle` from the `root` DDS and get `Clicker` by calling `get()` on the handle:
-
-```typescript
-protected async componentInitializingFirstTime() {
-    // The first client creates `Clicker` and stores the handle in the `root` DDS.
-    const clickerComponent = await Clicker.getFactory().createComponent(this.context);
-    this.root.set(Clicker.ComponentName, clickerComponent.handle);
-}
-
-protected async componentHasInitialized() {
-    // The remote clients retrieve the handle from the `root` DDS and get the `Clicker`.
-    const clicker = await this.root.get<IComponentHandle>(Clicker.ComponentName).get();
-    this.clickerView = new HTMLViewAdapter(clicker);
-}
-```
-
-#### A more complex scenario
-
-Consider a scenario where there are multiple `Containers` and a `fluid object` wants to load another `fluid object`.
-
-If the `request-response` model is used to acheive this, to `request` the object using its `url`, the object loading it
-has to know which `Container` has this object so that it doesn't end up requesting it from the wrong one. It can become
-real complicated real fast as the number of `Components` and `Containers` grow.
-
-This is where Compponent Handles becomes really powerful and make this scenario much simpler. You can pass around the
-`handle` to the `fluid object` across `Containers` and to load it from anywhere, you just have to call `get()` on it.
-
-
-## Events
+There are cases, however, where the eventually consistent guarantee is insufficient. In these cases, the consensus-based
+distributed data structures are useful. These data structures defer applying operations until they're acknowledged by
+the server. This can be used to ensures that each client pops a different value from a distributed stack, for example.
 
 ## Merge behavior
 
-::: danger TODO
+In a distributed system like Fluid, it is critical to understand how to merge changes from multiple clients because it
+enables you to "preserve user intent" when users are collaborating on data. This means that the merge behavior should
+match what users intend or expect as they are editing data.
 
-Merge behavior of each DDS is relevant to their usage.
+In Fluid, the merge behavior is defined by the DDS. The simplest merge strategy, employed by key-value distributed data
+structures like SharedMap, is "Last Writer Wins" (LWW). With this merge strategy, when multiple clients write different
+values to the same key, the value that was written last will overwrite the others. Refer to the sections below for more
+details about the merge strategy used by each DDS.
 
-:::
+
+## Creating and storing distributed data structures
+
+
+
+### Storing a DDS within another DDS
+
+## Events
 
 ## Picking the right data structure
 
@@ -133,5 +77,30 @@ Merge behavior of each DDS is relevant to their usage.
 This is important because it influences the data model.
 
 :::
+
+## Key-value data
+
+### SharedMap
+
+### SharedDirectory
+
+### SharedCell
+
+## Sequences
+
+### SharedNumberSequence
+
+### SharedObjectSequence
+
+### SharedString
+
+## Specialized data structures
+
+### SharedMatrix
+
+### Quorum
+
+## Consensus-based data structures
+
 
 !!!include(links.md)!!!
