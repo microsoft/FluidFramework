@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDiceRoller } from "../../component";
+import { IDiceRoller } from "../../dataObject";
 
 /**
  * Render an IDiceRoller into a given div as a text character, with a button to roll it.
