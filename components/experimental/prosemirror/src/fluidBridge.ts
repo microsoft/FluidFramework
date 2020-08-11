@@ -542,13 +542,12 @@ function generateFragment(segments: ISegment[]) {
                         nodeStack.pop();
                     } else {
                         // Unmatched open
-                        // eslint-disable-next-line no-shadow
-                        const newNode = { type: nodeType, content: [], _open: true };
+                        const newNode2 = { type: nodeType, content: [], _open: true };
                         if (openTop) {
-                            newNode.content.push(openTop);
+                            newNode2.content.push(openTop);
                         }
 
-                        openTop = newNode;
+                        openTop = newNode2;
                     }
 
                     break;

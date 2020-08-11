@@ -8,15 +8,14 @@ export function lis(seq: number[]) {
         return seq;
     }
 
-    // eslint-disable-next-line no-shadow
-    const piles = seq.reduce<{ value: number, prev?: number }[][]>((result, value) => {
+    const piles = seq.reduce<{ value: number, prev?: number }[][]>((res, value) => {
         let lo = 0;
-        let hi = result.length;
+        let hi = res.length;
 
         while (lo < hi) {
             // eslint-disable-next-line no-bitwise
             const mid = (lo + hi) >> 1;
-            const pile = result[mid];
+            const pile = res[mid];
             if (pile && value > pile[pile.length - 1].value) {
                 lo = mid + 1;
             } else {
@@ -24,16 +23,16 @@ export function lis(seq: number[]) {
             }
         }
 
-        const prevPile = result[lo - 1];
+        const prevPile = res[lo - 1];
         const entry = { value, prev: prevPile && prevPile.length - 1 };
 
-        if (lo === result.length) {
-            result.push([entry]);
+        if (lo === res.length) {
+            res.push([entry]);
         } else {
-            result[lo].push(entry);
+            res[lo].push(entry);
         }
 
-        return result;
+        return res;
     }, []);
 
     const result: number[] = [];

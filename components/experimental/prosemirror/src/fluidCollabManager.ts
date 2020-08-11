@@ -155,21 +155,20 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
             enable: (state) => true,
             run: (state, _, view) => {
                 const { from, to } = state.selection;
-                let attrs = null;
+                let nodeAttrs = null;
                 if (state.selection instanceof NodeSelection && state.selection.node.type === fluidSchema.nodes.fluid) {
-                    attrs = state.selection.node.attrs;
+                    nodeAttrs = state.selection.node.attrs;
                 }
                 openPrompt({
                     title: "Insert component",
                     fields: {
-                        src: new TextField({ label: "Url", required: true, value: attrs && attrs.src }),
-                        title: new TextField({ label: "Title", value: attrs && attrs.title }),
+                        src: new TextField({ label: "Url", required: true, value: nodeAttrs && nodeAttrs.src }),
+                        title: new TextField({ label: "Title", value: nodeAttrs && nodeAttrs.title }),
                         alt: new TextField({
                             label: "Description",
-                            value: attrs ? attrs.alt : state.doc.textBetween(from, to, " "),
+                            value: nodeAttrs ? nodeAttrs.alt : state.doc.textBetween(from, to, " "),
                         }),
                     },
-                    // eslint-disable-next-line no-shadow
                     callback(attrs) {
                         view.dispatch(view.state.tr.replaceSelectionWith(fluidSchema.nodes.fluid.createAndFill(attrs)));
                         view.focus();

@@ -122,9 +122,8 @@ class CodemirrorView implements IFluidHTMLView {
                     this.text.removeText(from, to);
                 }
 
-                // eslint-disable-next-line no-shadow
-                const text = changeObj.text;
-                text.forEach((value, index) => {
+                const changeText = changeObj.text;
+                changeText.forEach((value, index) => {
                     // Insert the updated text
                     if (value) {
                         this.text.insertText(from, value);
@@ -132,7 +131,7 @@ class CodemirrorView implements IFluidHTMLView {
                     }
 
                     // Add in a paragraph marker if this is a multi-line update
-                    if (index !== text.length - 1) {
+                    if (index !== changeText.length - 1) {
                         this.text.insertMarker(
                             from,
                             ReferenceType.Tile,

@@ -183,9 +183,8 @@ export class Smde extends EventEmitter implements
                     this.text.removeText(from, to);
                 }
 
-                // eslint-disable-next-line no-shadow
-                const text = changeObj.text as string[];
-                text.forEach((value, index) => {
+                const changedText = changeObj.text as string[];
+                changedText.forEach((value, index) => {
                     // Insert the updated text
                     if (value) {
                         this.text.insertText(from, value);
@@ -193,7 +192,7 @@ export class Smde extends EventEmitter implements
                     }
 
                     // Add in a paragraph marker if this is a multi-line update
-                    if (index !== text.length - 1) {
+                    if (index !== changedText.length - 1) {
                         this.text.insertMarker(
                             from,
                             ReferenceType.Tile,
