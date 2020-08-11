@@ -23,26 +23,27 @@ interface ISpacesViewProps {
 /**
  * SpacesView is the full view of the Spaces component, including its toolbar and contained items.
  */
-export const SpacesView: React.FC<ISpacesViewProps> = (props: React.PropsWithChildren<ISpacesViewProps>) => {
-    // Editable is a view-only concept; SpacesView is the authority.
-    const [editable, setEditable] = React.useState<boolean>(props.storage.itemList.size === 0);
+export const SpacesView: React.FC<ISpacesViewProps> =
+    (props: React.PropsWithChildren<ISpacesViewProps>) => {
+        // Editable is a view-only concept; SpacesView is the authority.
+        const [editable, setEditable] = React.useState<boolean>(props.storage.itemList.size === 0);
 
-    return (
-        <div className="spaces-view">
-            <SpacesToolbar
-                editable={editable}
-                setEditable={setEditable}
-                itemMap={props.itemMap}
-                addItem={props.addItem}
-                templates={props.templates}
-                applyTemplate={props.applyTemplate}
-            />
-            <SpacesStorageView
-                getViewForItem={props.getViewForItem}
-                getUrlForItem={props.getUrlForItem}
-                storage={props.storage}
-                editable={editable}
-            />
-        </div>
-    );
-};
+        return (
+            <div className="spaces-view">
+                <SpacesToolbar
+                    editable={editable}
+                    setEditable={setEditable}
+                    itemMap={props.itemMap}
+                    addItem={props.addItem}
+                    templates={props.templates}
+                    applyTemplate={props.applyTemplate}
+                />
+                <SpacesStorageView
+                    getViewForItem={props.getViewForItem}
+                    getUrlForItem={props.getUrlForItem}
+                    storage={props.storage}
+                    editable={editable}
+                />
+            </div>
+        );
+    };

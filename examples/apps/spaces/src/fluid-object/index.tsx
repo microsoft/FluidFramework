@@ -6,22 +6,34 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { Layout } from "react-grid-layout";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+    DataObject,
+    DataObjectFactory,
+} from "@fluidframework/aqueduct";
+import {
+    IFluidHandle,
+    IRequest,
+    IResponse,
+} from "@fluidframework/core-interfaces";
 import { AsSerializable } from "@fluidframework/datastore-definitions";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { ISpacesStoredItem, SpacesStorage } from "./storage";
 import { SpacesView } from "./spacesView";
-import { spacesItemMap, spacesRegistryEntries, templateDefinitions } from "./spacesItemMap";
+import {
+    spacesItemMap,
+    spacesRegistryEntries,
+    templateDefinitions,
+} from "./spacesItemMap";
 
 const SpacesStorageKey = "spaces-storage";
 
 /**
  * ISpacesItem stores an itemType and a serializable object pairing.  Spaces maps this typename to its itemMap,
  * which lets it find how to get an item out of the serializable object.  The serializable object likely includes
- * one or more handles to persisted model components, though could include anything it wants.  So the Spaces
- * component owns the typenames, but the individual types own their own serializable object format.
+ * one or more handles to persisted model components, though could include anything it wants.  So the Spaces component
+ * owns the typenames, but the individual types own their own serializable object format.
  */
 export interface ISpacesItem {
     /**
@@ -42,26 +54,28 @@ export class Spaces extends DataObject implements IFluidHTMLView {
     private storageComponent: SpacesStorage<ISpacesItem> | undefined;
     private baseUrl: string | undefined;
 
-    public static get ComponentName() {
-        return "@fluid-example/spaces";
-    }
+    public static get ComponentName() { return "@fluid-example/spaces"; }
 
-    private static readonly factory = new DataObjectFactory(Spaces.ComponentName, Spaces, [], {}, [
-        [SpacesStorage.ComponentName, Promise.resolve(SpacesStorage.getFactory())],
-        ...spacesRegistryEntries,
-    ]);
+    private static readonly factory = new DataObjectFactory(
+        Spaces.ComponentName,
+        Spaces,
+        [],
+        {},
+        [
+            [SpacesStorage.ComponentName, Promise.resolve(SpacesStorage.getFactory())],
+            ...spacesRegistryEntries,
+        ],
+    );
 
     public static getFactory() {
         return Spaces.factory;
     }
 
-    public get IFluidHTMLView() {
-        return this;
-    }
+    public get IFluidHTMLView() { return this; }
 
-    // In order to handle direct links to items, we'll link to the Spaces component with a path of the itemId
-    // for the specific item we want.  We route through Spaces because it's the one with the registry,
-    // and so it's the one that knows how to getViewForItem().
+    // In order to handle direct links to items, we'll link to the Spaces component with a path of the itemId for the
+    // specific item we want.  We route through Spaces because it's the one with the registry, and so it's the one
+    // that knows how to getViewForItem().
     public async request(req: IRequest): Promise<IResponse> {
         const requestParser = new RequestParser({ url: req.url });
         // The only time we have a path will be direct links to items.
@@ -91,9 +105,10 @@ export class Spaces extends DataObject implements IFluidHTMLView {
         }
 
         const addItem = (type: string) => {
-            this.createAndStoreItem(type, { w: 20, h: 5, x: 0, y: 0 }).catch((error) => {
-                console.error(`Error while creating item: ${type}`, error);
-            });
+            this.createAndStoreItem(type, { w: 20, h: 5, x: 0, y: 0 })
+                .catch((error) => {
+                    console.error(`Error while creating item: ${type}`, error);
+                });
         };
 
         ReactDOM.render(
@@ -111,7 +126,8 @@ export class Spaces extends DataObject implements IFluidHTMLView {
     }
 
     protected async initializingFirstTime() {
-        const storageComponent = await this.createFluidObject<SpacesStorage<ISpacesItem>>(SpacesStorage.ComponentName);
+        const storageComponent =
+            await this.createFluidObject<SpacesStorage<ISpacesItem>>(SpacesStorage.ComponentName);
         this.root.set(SpacesStorageKey, storageComponent.handle);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
@@ -121,7 +137,8 @@ export class Spaces extends DataObject implements IFluidHTMLView {
     }
 
     protected async hasInitialized() {
-        this.storageComponent = await this.root.get<IFluidHandle<SpacesStorage<ISpacesItem>>>(SpacesStorageKey)?.get();
+        this.storageComponent =
+            await this.root.get<IFluidHandle<SpacesStorage<ISpacesItem>>>(SpacesStorageKey)?.get();
 
         // We'll cache this async result on initialization, since we need it synchronously during render.
         this.baseUrl = await this.context.getAbsoluteUrl(this.url);
