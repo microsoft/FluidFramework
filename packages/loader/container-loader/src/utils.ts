@@ -4,7 +4,6 @@
  */
 
 import { Buffer } from "buffer";
-import { parse } from "url";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import uuid from "uuid";
 
@@ -20,13 +19,13 @@ export interface IParsedUrl {
 }
 
 export function parseUrl(url: string): IParsedUrl | undefined {
-    const parsed = parse(url, true);
+    const parsed = new URL(url);
 
     const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
-    const match = regex.exec(parsed.pathname!);
+    const match = regex.exec(parsed.pathname);
 
     return (match?.length === 3)
-        ? { id: match[1], path: match[2], version: parsed.query.version as string }
+        ? { id: match[1], path: match[2], version: parsed.searchParams.get("version") }
         : undefined;
 }
 
