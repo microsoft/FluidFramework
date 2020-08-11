@@ -70,10 +70,10 @@ export const unregisterWithMatchMaker = async (
  */
 export class MatchMaker extends BaseContainerService implements IComponentInterfacesRegistry {
     private readonly discoverableInterfacesMap =
-        new Map<keyof (IFluidObject & IFluidObject), IComponentDiscoverableInterfaces[]>();
+        new Map<keyof (IFluidObject), IComponentDiscoverableInterfaces[]>();
 
     private readonly discoverInterfacesMap =
-        new Map<keyof (IFluidObject & IFluidObject), IComponentDiscoverInterfaces[]>();
+        new Map<keyof (IFluidObject), IComponentDiscoverInterfaces[]>();
 
     public get IComponentInterfacesRegistry() { return this; }
 
@@ -168,7 +168,7 @@ export class MatchMaker extends BaseContainerService implements IComponentInterf
             const discoverComponents = this.discoverInterfacesMap.get(interfaceName);
             if (discoverComponents) {
                 discoverComponents.forEach((component) => {
-                    if (component !== (discoverableComponent as (IFluidObject & IFluidObject))) {
+                    if (component !== (discoverableComponent as (IFluidObject))) {
                         component.notifyComponentsDiscovered(interfaceName, [discoverableComponent]);
                     }
                 });

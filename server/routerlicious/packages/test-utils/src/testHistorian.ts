@@ -13,11 +13,19 @@ import { TestDb } from "./testCollection";
 export class TestHistorian implements IHistorian {
     public readonly endpoint = "";
 
-    private readonly blobs: ICollection<{ _id: string; content: string, encoding: string }>;
-    private readonly commits: ICollection<
-        { _id: string; message: string, tree: string, parents: string[], author: git.IAuthor }>;
-    private readonly trees: ICollection<{ _id: string; tree: git.ICreateTreeEntry[], base_tree?: string }>;
-    private readonly refs: ICollection<{ _id: string; ref: string, sha: string }>;
+    // back-compat 0.1010 old-collection-format
+    private readonly blobs: ICollection<
+        { _id: string; content: string, encoding: string, value?: git.ICreateBlobParams }>;
+    private readonly commits: ICollection<{
+        _id: string;
+        message: string,
+        tree: string,
+        parents: string[],
+        author: git.IAuthor,
+        value?: git.ICreateCommitParams }>;
+    private readonly trees: ICollection<
+        { _id: string; tree: git.ICreateTreeEntry[], base_tree?: string, value?: git.ICreateTreeParams }>;
+    private readonly refs: ICollection<{ _id: string; ref: string, sha: string, value?: git.ICreateRefParams }>;
 
     constructor(db: IDb = new TestDb({})) {
         this.blobs = db.collection("blobs");
@@ -54,10 +62,12 @@ export class TestHistorian implements IHistorian {
     public async getBlob(sha: string): Promise<git.IBlob> {
         const blob = await this.blobs.findOne({ _id: sha });
         return {
-            content: Buffer.from(blob.content, blob.encoding).toString("base64"),
+            content: Buffer.from(
+                blob.content ?? blob.value?.content,
+                blob.encoding ?? blob.value?.encoding).toString("base64"),
             encoding: "base64",
             sha: blob._id,
-            size: blob.content.length,
+            size: blob.content !== undefined ? blob.content.length : blob.value?.content.length,
             url: "",
         };
     }
@@ -67,6 +77,7 @@ export class TestHistorian implements IHistorian {
         await this.blobs.insertOne({
             _id,
             ...blob,
+            value: blob,
         });
         return {
             sha: _id,
@@ -111,11 +122,13 @@ export class TestHistorian implements IHistorian {
             return {
                 author: {} as Partial<git.IAuthor> as git.IAuthor,
                 committer: {} as Partial<git.ICommitter> as git.ICommitter,
-                message: commit.message,
-                parents: commit.parents.map<git.ICommitHash>((p) => ({ sha: p, url: "" })),
+                message: commit.message ?? commit.value?.message,
+                parents: commit.parents !== undefined ?
+                    commit.parents.map<git.ICommitHash>((p) => ({ sha: p, url: "" })) :
+                    commit.value?.parents.map<git.ICommitHash>((p) => ({ sha: p, url: "" })),
                 sha: commit._id,
                 tree: {
-                    sha: commit.tree,
+                    sha: commit.tree ?? commit.value?.tree,
                     url: "",
                 },
                 url: "",
@@ -125,7 +138,7 @@ export class TestHistorian implements IHistorian {
 
     public async createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
         const _id = commit.tree;
-        await this.commits.insertOne({ _id, ...commit });
+        await this.commits.insertOne({ _id, ...commit, value: commit });
         return this.getCommit(_id);
     }
 
@@ -139,10 +152,10 @@ export class TestHistorian implements IHistorian {
         const val = await this.refs.findOne({ _id });
         if (val) {
             return {
-                ref: val.ref,
+                ref: val.ref ?? val.value?.ref,
                 url: "",
                 object: {
-                    sha: val.sha,
+                    sha: val.sha ?? val.value?.sha,
                     url: "",
                     type: "",
                 },
@@ -152,7 +165,7 @@ export class TestHistorian implements IHistorian {
 
     public async createRef(params: git.ICreateRefParams): Promise<git.IRef> {
         const _id = params.ref.startsWith("refs/") ? params.ref.substr(5) : params.ref;
-        await this.refs.insertOne({ _id, ...params });
+        await this.refs.insertOne({ _id, ...params, value: params });
         return this.getRef(params.ref);
     }
 
@@ -185,6 +198,7 @@ export class TestHistorian implements IHistorian {
         await this.trees.insertOne({
             _id,
             ...tree,
+            value: tree,
         });
         return this.getTree(_id, false);
     }
@@ -201,7 +215,7 @@ export class TestHistorian implements IHistorian {
                 url: "",
                 tree: [],
             };
-            for (const entry of tree.tree) {
+            for (const entry of tree.tree ?? tree.value?.tree) {
                 const entryPath: string = path === "" ? entry.path : `${path}/${entry.path}`;
                 const treeEntry: git.ITreeEntry = {
                     mode: entry.mode,
