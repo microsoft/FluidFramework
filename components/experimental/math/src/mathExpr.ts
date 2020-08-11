@@ -369,7 +369,7 @@ export interface IMathCursor {
 export interface IMathMarker extends MergeTree.Marker {
     mathTokens: MathToken[];
     mathText: string;
-    mathInstance?: IFluidObject & IFluidObject;
+    mathInstance?: IFluidObject;
 }
 
 /**

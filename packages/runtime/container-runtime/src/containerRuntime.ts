@@ -458,7 +458,7 @@ export class ContainerRuntime extends EventEmitter
         registryEntries: NamedFluidDataStoreRegistryEntries,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
-        containerScope: IFluidObject & IFluidObject = context.scope,
+        containerScope: IFluidObject = context.scope,
     ): Promise<ContainerRuntime> {
         // Back-compat: <= 0.18 loader
         if (context.deltaManager.lastSequenceNumber === undefined) {
@@ -557,7 +557,7 @@ export class ContainerRuntime extends EventEmitter
         return this._flushMode;
     }
 
-    public get scope(): IFluidObject & IFluidObject {
+    public get scope(): IFluidObject {
         return this.containerScope;
     }
 
@@ -659,7 +659,7 @@ export class ContainerRuntime extends EventEmitter
             generateSummaries: true,
             enableWorker: false,
         },
-        private readonly containerScope: IFluidObject & IFluidObject,
+        private readonly containerScope: IFluidObject,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
     ) {
         super();
