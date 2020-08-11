@@ -10,7 +10,6 @@
  * The following distributed data structures are defined in this package:
  *
  * - {@link @fluidframework/map#SharedMap}
- *
  * - {@link @fluidframework/map#SharedDirectory}
  *
  * @packageDocumentation
