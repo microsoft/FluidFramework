@@ -101,16 +101,14 @@ export class MapFactory implements IChannelFactory {
  * The SharedMap distributed data structure can be used to store key-value pairs. It provides the same API for setting
  * and retrieving values that JavaScript developers are accustomed to with the
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map | Map} built-in object.
- *
- * @remarks
- *
+ * However, the keys of a SharedMap must be strings.
  */
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     /**
      * Create a new shared map.
      * @param runtime - The data store runtime that the new shared map belongs to.
-     * @param id - Optional name of the shared map
-     * @returns Newly created shared map
+     * @param id - Optional name of the shared map.
+     * @returns Newly created shared map.
      *
      * @example
      * To create a `SharedMap`, call the static create method:
@@ -145,9 +143,9 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
     * Do not call the constructor. Instead, you should use the {@link SharedMap.create | create method}.
     *
-    * @param id - String identifier
-    * @param runtime - Data store runtime
-    * @param attributes - The attributes for the map
+    * @param id - String identifier.
+    * @param runtime - Data store runtime.
+    * @param attributes - The attributes for the map.
     */
     constructor(
         id: string,
