@@ -5,10 +5,7 @@
 
 import { EventEmitter } from "events";
 import { Layout } from "react-grid-layout";
-import {
-    DataObject,
-    DataObjectFactory,
-} from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { AsSerializable } from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
 
@@ -25,7 +22,7 @@ export interface ISpacesStorage<T> extends EventEmitter {
      * @param serializableItemData - The data of the item to add.
      * @returns A unique key corresponding to the added item.
      */
-    addItem(serializableItemData: AsSerializable<T>, layout?: Layout): string
+    addItem(serializableItemData: AsSerializable<T>, layout?: Layout): string;
     /**
      * Removes the item specified by the given key.
      * @param key - The key referring to the item to remove.
@@ -52,15 +49,11 @@ export interface ISpacesStoredItem<T> {
  * The type of the item stored is flexible, as long as it is serializable.
  */
 export class SpacesStorage<T> extends DataObject implements ISpacesStorage<T> {
-    public static get ComponentName() { return "@fluid-example/spaces-storage"; }
+    public static get ComponentName() {
+        return "@fluid-example/spaces-storage";
+    }
 
-    private static readonly factory = new DataObjectFactory(
-        SpacesStorage.ComponentName,
-        SpacesStorage,
-        [],
-        {},
-        [],
-    );
+    private static readonly factory = new DataObjectFactory(SpacesStorage.ComponentName, SpacesStorage, [], {}, []);
 
     public static getFactory() {
         return SpacesStorage.factory;

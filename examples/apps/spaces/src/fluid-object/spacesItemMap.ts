@@ -17,8 +17,10 @@ import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import * as React from "react";
 import { Layout } from "react-grid-layout";
 
-export type ICreateAndAttachComponentFunction =
-    <T extends IFluidObject & IFluidLoadable>(pkg: string, props?: any) => Promise<T>;
+export type ICreateAndAttachComponentFunction = <T extends IFluidObject & IFluidLoadable>(
+    pkg: string,
+    props?: any,
+) => Promise<T>;
 
 interface ISingleHandleItem {
     handle: IFluidHandle;
