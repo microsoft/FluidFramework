@@ -6,10 +6,7 @@
 import { getSessionStorageContainer } from "@fluidframework/get-session-storage-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
-import * as React from "react";
-import * as ReactDOM from "react-dom";
-
-import { PrettyDiceRollerView } from "../src/app/views";
+import { renderDiceRoller } from "../src/app/views";
 import {
     DiceRoller,
     DiceRollerContainerRuntimeFactory,
@@ -28,7 +25,7 @@ const documentId = window.location.hash.substring(1);
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-export async function createContainerAndRenderInElement(element: HTMLElement, createNewFlag: boolean) {
+export async function createContainerAndRenderInElement(element: HTMLDivElement, createNewFlag: boolean) {
     // The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
     // to store ops.
     const container = await getSessionStorageContainer(documentId, DiceRollerContainerRuntimeFactory, createNewFlag);
@@ -36,8 +33,8 @@ export async function createContainerAndRenderInElement(element: HTMLElement, cr
     // Get the Default Object from the Container
     const defaultObject = await getDefaultObjectFromContainer<DiceRoller>(container);
 
-    // Connect the view and model
-    ReactDOM.render(React.createElement(PrettyDiceRollerView, { model: defaultObject }), element);
+    // Given an IDiceRoller, we can render its data using the view we've created in our app.
+    renderDiceRoller(defaultObject, element);
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line dot-notation
@@ -48,12 +45,12 @@ export async function createContainerAndRenderInElement(element: HTMLElement, cr
  * For local testing we have two div's that we are rendering into independently.
  */
 async function setup() {
-    const leftElement = document.getElementById("sbs-left");
+    const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
     if (leftElement === null) {
         throw new Error("sbs-left does not exist");
     }
     await createContainerAndRenderInElement(leftElement, createNew);
-    const rightElement = document.getElementById("sbs-right");
+    const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
     if (rightElement === null) {
         throw new Error("sbs-right does not exist");
     }
