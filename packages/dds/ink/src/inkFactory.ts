@@ -5,10 +5,10 @@
 
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelServices,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { Ink } from "./ink";
 import { pkgVersion } from "./packageVersion";
@@ -50,7 +50,7 @@ export class InkFactory implements IChannelFactory {
      * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.load}
      */
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
         branchId: string,
@@ -64,7 +64,7 @@ export class InkFactory implements IChannelFactory {
     /**
      * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
      */
-    public create(runtime: IComponentRuntime, id: string): ISharedObject {
+    public create(runtime: IFluidDataStoreRuntime, id: string): ISharedObject {
         const ink = new Ink(runtime, id, InkFactory.Attributes);
         ink.initializeLocal();
 

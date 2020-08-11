@@ -21,9 +21,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
     makeHandlesSerializable,
@@ -121,17 +121,17 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
     private readonly intervalMapKernel: MapKernel;
     constructor(
-        private readonly componentRuntime: IComponentRuntime,
+        private readonly dataStoreRuntime: IFluidDataStoreRuntime,
         public id: string,
         attributes: IChannelAttributes,
         public readonly segmentFromSpec: (spec: MergeTree.IJSONSegment) => MergeTree.ISegment,
     ) {
-        super(id, componentRuntime, attributes);
+        super(id, dataStoreRuntime, attributes);
 
         this.client = new MergeTree.Client(
             segmentFromSpec,
             ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
-            componentRuntime.options);
+            dataStoreRuntime.options);
 
         super.on("newListener", (event) => {
             switch (event) {
@@ -323,8 +323,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
         const translated = makeHandlesSerializable(
             message,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidSerializer,
+            this.runtime.IFluidHandleContext,
             this.handle);
         const metadata = this.client.peekPendingSegmentGroups(
             message.type === MergeTree.MergeTreeDeltaType.GROUP ? message.ops.length : 1);
@@ -506,14 +506,14 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             // setup a promise to process the
             // catch up ops, and finishing the loading process
             const loadCatchUpOps = catchupOpsP
-                .then((msgs)=>{
+                .then((msgs) => {
                     msgs.forEach((m) => this.processMergeTreeMsg(m));
                     this.loadFinished();
                 })
-                .catch((error)=>{
+                .catch((error) => {
                     this.loadFinished(error);
                 });
-            if (this.componentRuntime.options?.sequenceInitializeFromHeaderOnly !== true) {
+            if (this.dataStoreRuntime.options?.sequenceInitializeFromHeaderOnly !== true) {
                 // if we not doing parital load, await the catch up ops,
                 // and the finalization of the load
                 await loadCatchUpOps;
@@ -580,8 +580,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         rawMessage: ISequencedDocumentMessage) {
         const message = parseHandles(
             rawMessage,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext);
+            this.runtime.IFluidSerializer,
+            this.runtime.IFluidHandleContext);
 
         const ops: MergeTree.IMergeTreeDeltaOp[] = [];
         function transfromOps(event: SequenceDeltaEvent) {

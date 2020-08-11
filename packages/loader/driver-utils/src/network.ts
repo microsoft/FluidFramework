@@ -84,8 +84,7 @@ export function createGenericNetworkError(
     errorMessage: string,
     canRetry: boolean,
     retryAfterSeconds?: number,
-    statusCode?: number)
-{
+    statusCode?: number) {
     if (retryAfterSeconds !== undefined && canRetry) {
         return new ThrottlingError(errorMessage, retryAfterSeconds, statusCode);
     }

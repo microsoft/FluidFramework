@@ -3,37 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
-import {
-    IProvideComponentLastEditedTracker,
-} from "./legacy";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { LastEditedTracker } from "./lastEditedTracker";
 import { IProvideFluidLastEditedTracker } from "./interfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
-export const LastEditedTrackerComponentName = pkg.name as string;
+export const LastEditedTrackerDataObjectName = pkg.name as string;
 
 /**
- * LastEditedTrackerComponent creates a LastEditedTracker that keeps track of the latest edits to the document.
+ * LastEditedTrackerDataObject creates a LastEditedTracker that keeps track of the latest edits to the document.
  */
-export class LastEditedTrackerComponent extends PrimedComponent
-implements IProvideComponentLastEditedTracker, IProvideFluidLastEditedTracker {
-    private static readonly factory = new PrimedComponentFactory(
-        LastEditedTrackerComponentName,
-        LastEditedTrackerComponent,
+export class LastEditedTrackerDataObject extends DataObject
+    implements IProvideFluidLastEditedTracker {
+    private static readonly factory = new DataObjectFactory(
+        LastEditedTrackerDataObjectName,
+        LastEditedTrackerDataObject,
         [SharedSummaryBlock.getFactory()],
         {},
     );
 
     public static getFactory() {
-        return LastEditedTrackerComponent.factory;
+        return LastEditedTrackerDataObject.factory;
     }
 
     private readonly sharedSummaryBlockId = "shared-summary-block-id";
-    private _lastEditedTracker: LastEditedTracker| undefined;
+    private _lastEditedTracker: LastEditedTracker | undefined;
 
     private get lastEditedTracker() {
         if (this._lastEditedTracker === undefined) {
@@ -43,7 +40,6 @@ implements IProvideComponentLastEditedTracker, IProvideFluidLastEditedTracker {
         return this._lastEditedTracker;
     }
 
-    public get IComponentLastEditedTracker() { return this.lastEditedTracker; }
     public get IFluidLastEditedTracker() { return this.lastEditedTracker; }
 
     protected async componentInitializingFirstTime() {
@@ -53,7 +49,7 @@ implements IProvideComponentLastEditedTracker, IProvideFluidLastEditedTracker {
 
     protected async componentHasInitialized() {
         const sharedSummaryBlock =
-            await this.root.get<IComponentHandle<SharedSummaryBlock>>(this.sharedSummaryBlockId).get();
+            await this.root.get<IFluidHandle<SharedSummaryBlock>>(this.sharedSummaryBlockId).get();
         this._lastEditedTracker = new LastEditedTracker(sharedSummaryBlock);
     }
 }

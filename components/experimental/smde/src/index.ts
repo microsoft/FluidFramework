@@ -3,21 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IComponentFactory, FlushMode } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
+import {
+    deprecated_innerRequestHandler,
+    buildRuntimeRequestHandler,
+} from "@fluidframework/request-handler";
+import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { fluidExport as smde } from "./smde";
 
 class SmdeContainerFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const registry = new Map<string, Promise<IComponentFactory>>([
+        const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
             ["@fluid-example/smde", Promise.resolve(smde)],
         ]);
 
@@ -27,21 +31,10 @@ class SmdeContainerFactory implements IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
-            async (request: IRequest, containerRuntime) => {
-                console.log(request.url);
-
-                const requestUrl = request.url.length > 0 && request.url.startsWith("/")
-                    ? request.url.substr(1)
-                    : request.url;
-                const trailingSlash = requestUrl.indexOf("/");
-
-                const componentId = requestUrl
-                    ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-                    : defaultComponentId;
-                const component = await containerRuntime.getComponentRuntime(componentId, true);
-
-                return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
-            },
+            buildRuntimeRequestHandler(
+                defaultRouteRequestHandler(defaultComponentId),
+                deprecated_innerRequestHandler,
+            ),
             { generateSummaries: true });
 
         // Flush mode to manual to batch operations within a turn
@@ -49,11 +42,7 @@ class SmdeContainerFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            await Promise.all([
-                runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
-                    componentRuntime.bindToContext();
-                }),
-            ]);
+            await runtime.createRootDataStore(defaultComponentId, defaultComponent);
         }
 
         return runtime;

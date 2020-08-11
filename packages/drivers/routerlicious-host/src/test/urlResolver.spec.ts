@@ -6,7 +6,7 @@
 import assert from "assert";
 import { AxiosInstance, AxiosResponse } from "axios";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { ContainerUrlResolver } from "../urlResolver";
 
 describe("Routerlicious Host", () => {

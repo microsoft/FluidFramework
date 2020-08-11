@@ -5,10 +5,10 @@
 
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelServices,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import {
     ISharedObject,
 } from "@fluidframework/shared-object-base";
@@ -52,7 +52,7 @@ export class SharedSummaryBlockFactory implements IChannelFactory {
      * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.load}
      */
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
         branchId: string,
@@ -66,7 +66,7 @@ export class SharedSummaryBlockFactory implements IChannelFactory {
     /**
      * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
      */
-    public create(runtime: IComponentRuntime, id: string): ISharedObject {
+    public create(runtime: IFluidDataStoreRuntime, id: string): ISharedObject {
         const sharedSummaryBlock = new SharedSummaryBlock(id, runtime, SharedSummaryBlockFactory.Attributes);
         sharedSummaryBlock.initializeLocal();
 

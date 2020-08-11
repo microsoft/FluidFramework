@@ -51,11 +51,9 @@
     "tsc": "lerna run tsc --stream",
     "tsfmt": "lerna run tsfmt:fix --no-sort --stream --no-bail",
     "tsfmt:fix": "lerna run tsfmt:fix --no-sort --stream --no-bail",
-    "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
+    "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\"",
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
-    "watch:tsc": "lerna run --parallel tsc -- -- --watch",
-    "watch:webpack": "lerna run --parallel webpack -- -- --watch",
-    "webpack": "lerna run --no-sort webpack --stream"
+    "watch:tsc": "lerna run --parallel tsc -- -- --watch"
   },
   "nyc": {
     "all": true,
@@ -72,7 +70,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.1.33217",
+    "@fluidframework/build-tools": "^0.1.35057",
     "@microsoft/api-documenter": "^7.4.6",
     "@microsoft/api-extractor": "^7.7.2",
     "concurrently": "^5.2.0",

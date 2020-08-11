@@ -17,20 +17,20 @@ export const supportedVersions = new Map<string, any>([
     // so for legacy set it to another name to ensure
     // we keep support
     ["legacy", { catchUpBlobName: "randomNameForCatchUpOps" }],
-    ["legacyWithCatchUp", { }],
+    ["legacyWithCatchUp", {}],
     ["v1", { newMergeTreeSnapshotFormat: true }],
 ]);
 
 export function* generateStrings(): Generator<[string, SharedString]> {
     for (const [version, options] of supportedVersions) {
         const documentId = "fakeId";
-        const componentRuntime: mocks.MockComponentRuntime = new mocks.MockComponentRuntime();
+        const dataStoreRuntime: mocks.MockFluidDataStoreRuntime = new mocks.MockFluidDataStoreRuntime();
         for (const key of Object.keys(options)) {
-            componentRuntime.options[key] = options[key];
+            dataStoreRuntime.options[key] = options[key];
         }
         const insertText = "text";
 
-        let sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
+        let sharedString = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
         // Small enough so snapshot won't have body
         for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) / 2; ++i) {
@@ -39,7 +39,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
 
         yield [`${version}/headerOnly`, sharedString];
 
-        sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
+        sharedString = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
         // Big enough that snapshot will have body
         for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
@@ -48,7 +48,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
 
         yield [`${version}/headerAndBody`, sharedString];
 
-        sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
+        sharedString = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
         // Very big sharedString
         for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {
@@ -57,7 +57,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
 
         yield [`${version}/largeBody`, sharedString];
 
-        sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
+        sharedString = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
         // SharedString with markers
         for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
@@ -74,7 +74,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
 
         yield [`${version}/withMarkers`, sharedString];
 
-        sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
+        sharedString = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
         // SharedString with annotations
         for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
@@ -86,7 +86,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
 
         yield [`${version}/withAnnotations`, sharedString];
 
-        sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
+        sharedString = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
         // Very big sharedString
         for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {

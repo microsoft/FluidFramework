@@ -11,7 +11,7 @@ import { DebuggerUI } from "./fluidDebuggerUi";
 export namespace FluidDebugger {
     /**
      * Creates document service wrapper that pops up Debugger window and allows user to play ops one by one.
-     * User can chose to start with any snapshot, or no snapshot.
+     * User can chose to start with any snapshot
      * If pop-ups are disabled, we continue without debugger.
      * @param documentService - original document service to use to fetch ops / snapshots.
      */

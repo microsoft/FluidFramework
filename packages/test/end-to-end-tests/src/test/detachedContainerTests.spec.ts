@@ -4,32 +4,31 @@
  */
 
 import assert from "assert";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { IComponentContext, IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
     ITestFluidComponent,
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
-import { v4 as uuid } from "uuid";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { Deferred } from "@fluidframework/common-utils";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
 import { Ink, IColor } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { SharedCell } from "@fluidframework/cell";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { ComponentMessageType } from "@fluidframework/component-runtime";
+import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 describe("Detached Container", () => {
     const documentId = "detachedContainerTest";
@@ -52,13 +51,13 @@ describe("Detached Container", () => {
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let loader: Loader;
 
-    const createAndAttachComponent = (async (
-        componentContext: IComponentContext,
-        componentId: string,
+    const createFluidObject = (async (
+        componentContext: IFluidDataStoreContext,
         type: string,
     ) => {
-        const doc = await componentContext.createComponent(componentId, type);
-        doc.bindToContext();
+        return requestFluidObject<ITestFluidComponent>(
+            await componentContext.containerRuntime.createDataStore(type),
+            "");
     });
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
@@ -119,19 +118,14 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        if (response.mimeType !== "fluid/component" && response.status !== 200) {
+        if (response.mimeType !== "fluid/object" && response.status !== 200) {
             assert.fail("Root component should be created in detached container");
         }
         const component = response.value as ITestFluidComponent;
 
         // Create a sub component of type TestFluidComponent and verify that it is attached.
-        const subCompId = uuid();
-        await createAndAttachComponent(component.context, subCompId, "default");
-        const subResponse = await container.request({ url: `/${subCompId}` });
-        if (subResponse.mimeType !== "fluid/component" && subResponse.status !== 200) {
-            assert.fail("New components should be created in detached container");
-        }
-        const subComponent = subResponse.value as ITestFluidComponent;
+        const subComponent = await createFluidObject(component.context, "default");
+        component.root.set("attachKey", subComponent.handle);
         assert.strictEqual(subComponent.context.storage, undefined, "No storage should be there!!");
 
         // Get the sub component's root channel and verify that it is attached.
@@ -147,19 +141,13 @@ describe("Detached Container", () => {
         const component = response.value as ITestFluidComponent;
 
         // Create a sub component of type TestFluidComponent.
-        const newComponentId = uuid();
-        await createAndAttachComponent(component.context, newComponentId, "default");
+        const testComponent = await createFluidObject(component.context, "default");
+        component.root.set("attachKey", testComponent.handle);
 
         // Now attach the container
         await container.attach(request);
 
-        // Get the sub component and verify that it is attached.
-        const testResponse = await container.request({ url: `/${newComponentId}` });
-        if (testResponse.mimeType !== "fluid/component" && testResponse.status !== 200) {
-            assert.fail("New components should be created in detached container");
-        }
-        const testComponent = testResponse.value as ITestFluidComponent;
-        assert.strictEqual(testComponent.runtime.IComponentHandleContext.isAttached, true,
+        assert.strictEqual(testComponent.runtime.IFluidHandleContext.isAttached, true,
             "Component should be attached!!");
 
         // Get the sub component's "root" channel and verify that it is attached.
@@ -176,13 +164,11 @@ describe("Detached Container", () => {
         const component = response.value as ITestFluidComponent;
 
         // Create a sub component of type TestFluidComponent.
-        const subCompId = uuid();
-        await createAndAttachComponent(component.context, subCompId, "default");
+        const subComponent1 = await createFluidObject(component.context, "default");
+        component.root.set("attachKey", subComponent1.handle);
 
         // Now attach the container and get the sub component.
         await container.attach(request);
-        const response1 = await container.request({ url: `/${subCompId}` });
-        const subComponent1 = response1.value as ITestFluidComponent;
 
         // Now load the container from another loader.
         const urlResolver2 = new LocalResolver();
@@ -192,9 +178,9 @@ describe("Detached Container", () => {
         const container2 = await loader2.resolve({ url: requestUrl2 });
 
         // Get the sub component and assert that it is attached.
-        const response2 = await container2.request({ url: `/${subCompId}` });
+        const response2 = await container2.request({ url: `/${subComponent1.context.id}` });
         const subComponent2 = response2.value as ITestFluidComponent;
-        assert.strictEqual(subComponent2.runtime.IComponentHandleContext.isAttached, true,
+        assert.strictEqual(subComponent2.runtime.IFluidHandleContext.isAttached, true,
             "Component should be attached!!");
 
         // Verify the attributes of the root channel of both sub components.
@@ -214,9 +200,9 @@ describe("Detached Container", () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.equal(type, MessageType.Operation);
-            assert.equal(contents.type, ContainerMessageType.ComponentOp);
+            assert.equal(contents.type, ContainerMessageType.FluidDataStoreOp);
 
-            assert.equal(contents.contents.contents.type, ComponentMessageType.ChannelOp);
+            assert.equal(contents.contents.contents.type, DataStoreMessageType.ChannelOp);
 
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedStringId, "Address should be shared string");
@@ -282,7 +268,7 @@ describe("Detached Container", () => {
                 testChannelId, "Channel id should match");
             assert.strictEqual(contents.contents.contents.content.type,
                 SharedMap.getFactory().type, "Channel type should match");
-            assert.strictEqual(contents.contents.contents.type, ComponentMessageType.Attach,
+            assert.strictEqual(contents.contents.contents.type, DataStoreMessageType.Attach,
                 "Op should be an attach op");
             defPromise.resolve();
             return 0;
@@ -303,31 +289,31 @@ describe("Detached Container", () => {
 
     it("Fire component attach ops during container attach", async () => {
         const testComponentType = "default";
-        // eslint-disable-next-line prefer-const
-        let peerComponentRuntimeChannel: IComponentRuntimeChannel;
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
-            assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
-            assert.strictEqual(contents.contents.id,
-                peerComponentRuntimeChannel.id, "Component id should match");
-            assert.strictEqual(contents.contents.type,
-                testComponentType, "Component type should match");
-            defPromise.resolve();
-            return 0;
-        };
 
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
         const component = response.value as ITestFluidComponent;
 
         const containerP = container.attach(request);
-        peerComponentRuntimeChannel = await (component.context.containerRuntime as IContainerRuntime)
-            .createComponentWithRealizationFn([testComponentType]);
+        const router = await component.context.containerRuntime.createDataStore([testComponentType]);
+        const comp2 = await requestFluidObject<ITestFluidComponent>(router, "/");
+
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        container.deltaManager.submit = (type, contents, batch, metadata) => {
+            assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
+            assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
+            assert.strictEqual(contents.contents.id,
+                comp2.context.id, "Component id should match");
+            assert.strictEqual(contents.contents.type,
+                testComponentType, "Component type should match");
+            defPromise.resolve();
+            return 0;
+        };
+
         // Fire attach op
-        peerComponentRuntimeChannel.bindToContext();
+        component.root.set("attachComp", comp2.handle);
         await containerP;
         await defPromise.promise;
     });

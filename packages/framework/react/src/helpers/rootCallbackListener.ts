@@ -4,7 +4,7 @@
  */
 
 import { ISharedMap, IDirectoryValueChanged } from "@fluidframework/map";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
     FluidComponentMap,
     ViewToFluidMap,
@@ -24,7 +24,7 @@ import { ISyncedState } from "..";
  * @param fluidComponentMap - A map of component handle paths to their respective components
  * @param syncedStateId - Unique ID for this synced component's state
  * @param syncedState - The shared map this component's synced state is stored on
- * @param runtime - The component runtime
+ * @param runtime - The data store runtime
  * @param state - The current view state
  * @param setState - Callback to update the react view state
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
@@ -40,7 +40,7 @@ export const syncedStateCallbackListener = <
     storedHandleMap: ISharedMap,
     syncedStateId,
     syncedState: ISyncedState,
-    runtime: IComponentRuntime,
+    runtime: IFluidDataStoreRuntime,
     state: SV,
     setState: (
         newState: SV,

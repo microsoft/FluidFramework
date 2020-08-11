@@ -4,16 +4,15 @@
  */
 
 import { ISequencedDocumentMessage, IQuorum } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType  } from "@fluidframework/container-runtime";
+import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IComponent, IFluidObject } from "@fluidframework/component-core-interfaces";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILastEditDetails, IFluidLastEditedTracker } from "./interfaces";
-import { IComponentLastEditedTracker } from "./legacy";
 
 // Default implementation of the shouldDiscardMessageFn function below that tells that all messages other
 // than "Attach" and "Operation" type messages should be discarded.
 function shouldDiscardMessageDefault(message: ISequencedDocumentMessage) {
-    if (message.type === ContainerMessageType.Attach || message.type === ContainerMessageType.ComponentOp) {
+    if (message.type === ContainerMessageType.Attach || message.type === ContainerMessageType.FluidDataStoreOp) {
         return false;
     }
     return true;
@@ -57,7 +56,7 @@ export async function setupLastEditedTrackerForContainer(
     shouldDiscardMessageFn: (message: ISequencedDocumentMessage) => boolean = shouldDiscardMessageDefault,
 ) {
     // eslint-disable-next-line prefer-const
-    let lastEditedTracker: IComponentLastEditedTracker | IFluidLastEditedTracker | undefined;
+    let lastEditedTracker: IFluidLastEditedTracker | undefined;
     // Stores the last edit details until the component has loaded.
     let pendingLastEditDetails: ILastEditDetails | undefined;
 
@@ -68,7 +67,7 @@ export async function setupLastEditedTrackerForContainer(
         // To check for this, we use the runtime's isMessageDirtyable API. If it is not available, we assume
         // that the message should not be discarded.
         const isDirtyable = runtime.IContainerRuntimeDirtyable === undefined
-        ? true : runtime.IContainerRuntimeDirtyable.isMessageDirtyable(message);
+            ? true : runtime.IContainerRuntimeDirtyable.isMessageDirtyable(message);
         if (shouldDiscardMessageFn(message) || !isDirtyable) {
             return;
         }
@@ -88,14 +87,9 @@ export async function setupLastEditedTrackerForContainer(
         }
     });
 
-    const response = await runtime.request({ url: componentId });
-    if (response.status !== 200 || response.mimeType !== "fluid/component") {
-        throw new Error(`Component with id ${componentId} does not exist.`);
-    }
-
     // Get the last edited tracker from the component.
-    const component = response.value as IComponent & IFluidObject;
-    lastEditedTracker = component.IComponentLastEditedTracker ?? component.IFluidLastEditedTracker;
+    const component = await requestFluidObject(runtime.IFluidHandleContext, componentId);
+    lastEditedTracker = component.IFluidLastEditedTracker;
     if (lastEditedTracker === undefined) {
         throw new Error(`Component with id ${componentId} does not have IComponentLastEditedTracker.`);
     }

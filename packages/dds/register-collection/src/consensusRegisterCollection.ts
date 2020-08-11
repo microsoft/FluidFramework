@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8, unreachableCase } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -14,10 +14,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
-} from "@fluidframework/component-runtime-definitions";
-import { unreachableCase } from "@fluidframework/runtime-utils";
+} from "@fluidframework/datastore-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { debug } from "./debug";
@@ -97,16 +96,16 @@ export class ConsensusRegisterCollection<T>
     /**
      * Create a new consensus register collection
      *
-     * @param runtime - component runtime the new consensus register collection belongs to
+     * @param runtime - data store runtime the new consensus register collection belongs to
      * @param id - optional name of the consensus register collection
      * @returns newly create consensus register collection (but not attached yet)
      */
-    public static create<T>(runtime: IComponentRuntime, id?: string) {
+    public static create<T>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, ConsensusRegisterCollectionFactory.Type) as ConsensusRegisterCollection<T>;
     }
 
     /**
-     * Get a factory for ConsensusRegisterCollection to register with the component.
+     * Get a factory for ConsensusRegisterCollection to register with the data store.
      *
      * @returns a factory that creates and load ConsensusRegisterCollection
      */
@@ -122,7 +121,7 @@ export class ConsensusRegisterCollection<T>
      */
     public constructor(
         id: string,
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);
@@ -154,7 +153,7 @@ export class ConsensusRegisterCollection<T>
             // Send the resolve function as the localOpMetadata. This will be provided back to us when the
             // op is ack'd.
             this.submitLocalMessage(message, resolve);
-        // If we fail due to runtime being disposed, it's better to return false then unhandled exception.
+            // If we fail due to runtime being disposed, it's better to return false then unhandled exception.
         }).catch((error) => false);
     }
 
@@ -343,15 +342,15 @@ export class ConsensusRegisterCollection<T>
     }
 
     private stringify(value: any): string {
-        return this.runtime.IComponentSerializer.stringify(
+        return this.runtime.IFluidSerializer.stringify(
             value,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidHandleContext,
             this.handle);
     }
 
     private parse(content: string): any {
-        return this.runtime.IComponentSerializer.parse(
+        return this.runtime.IFluidSerializer.parse(
             content,
-            this.runtime.IComponentHandleContext);
+            this.runtime.IFluidHandleContext);
     }
 }

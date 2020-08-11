@@ -23,6 +23,6 @@ describe("CoordinateContainerRuntimeFactory", () => {
             return document.querySelectorAll("input[type=range]").length;
         });
         // 2 sides, 11 slider views, 2 sliders per view
-        assert(numSliders === 44);
+        assert.strictEqual(numSliders, 44);
     });
 });

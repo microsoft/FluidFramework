@@ -3,4 +3,6 @@
  * Licensed under the MIT License.
  */
 
+export * from "./bufferNode";
+export * from "./hashFileNode";
 export * from "./performanceNowNode";

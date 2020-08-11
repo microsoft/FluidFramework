@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IComponent, IComponentLoadable, IResponse } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IResponse, IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
@@ -15,35 +15,19 @@ import { RequestParser } from "@fluidframework/runtime-utils";
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime)
     => Promise<IResponse | undefined>;
 
-export const componentRuntimeRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IContainerRuntime) => {
-        if (request.pathParts.length > 0) {
-            let wait: boolean | undefined;
-            if (typeof request.headers?.wait === "boolean") {
-                wait = request.headers.wait;
-            }
+/**
+ * @deprecated - please avoid adding new references to this API!
+ * It exposes internal container guts to external world, which is not ideal.
+ * It also relies heavily on internal routing schema (formation of handle URIs) which will change in future
+ * And last, but not least, it does not allow any policy to be implemented around GC of components exposed
+ * through internal URIs. I.e. if there are no other references to such objects, they will be GC'd and
+ * external links would get broken. Maybe that's what is needed in some cases, but better, more centralized
+ * handling of external URI to internal handle is required (in future, we will support weak handle references,
+ * that will allow any GC policy to be implemented by container authors.)
+ */
+export const deprecated_innerRequestHandler = async (request: IRequest, runtime: IContainerRuntime) =>
+    runtime.resolveHandle(request);
 
-            const component = await runtime.getComponentRuntime(request.pathParts[0], wait);
-            const subRequest = request.createSubRequest(1);
-            if (subRequest !== undefined) {
-                return component.request(subRequest);
-            }
-        }
-        return undefined;
-    };
-
-export const createComponentResponse = (component: IComponent) => {
-    return { status: 200, mimeType: "fluid/component", value: component };
+export const createComponentResponse = (component: IFluidObject) => {
+    return { status: 200, mimeType: "fluid/object", value: component };
 };
-
-export function createLoadableComponentRuntimeRequestHandler(component: IComponentLoadable): RuntimeRequestHandler {
-    const pathParts = RequestParser.getPathParts(component.url);
-    return async (request: RequestParser, runtime: IContainerRuntime) => {
-        for (let i = 0; i < pathParts.length; i++) {
-            if (pathParts[i] !== request.pathParts[i]) {
-                return undefined;
-            }
-        }
-        return createComponentResponse(component);
-    };
-}

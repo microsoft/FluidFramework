@@ -14,11 +14,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelServices,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { debug } from "./debug";
 import {
@@ -332,7 +332,7 @@ export class DirectoryFactory {
      * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.load}
      */
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
         branchId: string,
@@ -346,7 +346,7 @@ export class DirectoryFactory {
     /**
      * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
      */
-    public create(runtime: IComponentRuntime, id: string): ISharedDirectory {
+    public create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory {
         const directory = new SharedDirectory(id, runtime, DirectoryFactory.Attributes);
         directory.initializeLocal();
 
@@ -372,16 +372,16 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * Create a new shared directory
      *
-     * @param runtime - Component runtime the new shared directory belongs to
+     * @param runtime - Data store runtime the new shared directory belongs to
      * @param id - Optional name of the shared directory
      * @returns Newly create shared directory (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string): SharedDirectory {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory {
         return runtime.createChannel(id, DirectoryFactory.Type) as SharedDirectory;
     }
 
     /**
-     * Get a factory for SharedDirectory to register with the component.
+     * Get a factory for SharedDirectory to register with the data store.
      *
      * @returns A factory that creates and load SharedDirectory
      */
@@ -420,12 +420,12 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * Constructs a new shared directory. If the object is non-local an id and service interfaces will
      * be provided.
      * @param id - String identifier for the SharedDirectory
-     * @param runtime - Component runtime
+     * @param runtime - Data store runtime
      * @param type - Type identifier
      */
     constructor(
         id: string,
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);
@@ -896,8 +896,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
-                    const translatedValue = this.runtime.IComponentSerializer.parse(
-                        JSON.stringify(op.value.value), this.runtime.IComponentHandleContext);
+                    const translatedValue = this.runtime.IFluidSerializer.parse(
+                        JSON.stringify(op.value.value), this.runtime.IFluidHandleContext);
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IDirectoryValueChanged = { key: op.key, path: op.path, previousValue };
                     this.emit("valueChanged", event, local, message);
@@ -954,12 +954,12 @@ class SubDirectory implements IDirectory {
     /**
      * Constructor.
      * @param directory - Reference back to the SharedDirectory to perform operations
-     * @param runtime - The component runtime this directory is associated with
+     * @param runtime - The data store runtime this directory is associated with
      * @param absolutePath - The absolute path of this IDirectory
      */
     constructor(
         private readonly directory: SharedDirectory,
-        private readonly runtime: IComponentRuntime,
+        private readonly runtime: IFluidDataStoreRuntime,
         public readonly absolutePath: string) {
     }
 
@@ -1018,8 +1018,8 @@ class SubDirectory implements IDirectory {
         const localValue = this.directory.localValueMaker.fromInMemory(value);
         const serializableValue = makeSerializable(
             localValue,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidSerializer,
+            this.runtime.IFluidHandleContext,
             this.directory.handle);
 
         // Set the value locally.
@@ -1404,8 +1404,8 @@ class SubDirectory implements IDirectory {
     public *getSerializedStorage() {
         for (const [key, localValue] of this._storage) {
             const value = localValue.makeSerialized(
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
+                this.runtime.IFluidSerializer,
+                this.runtime.IFluidHandleContext,
                 this.directory.handle);
             const res: [string, ISerializedValue] = [key, value];
             yield res;

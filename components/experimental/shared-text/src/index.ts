@@ -7,16 +7,19 @@
 // eslint-disable-next-line import/no-unassigned-import
 import "./publicpath";
 
-import { IRequest } from "@fluidframework/component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-    IComponentContext,
-    IComponentFactory,
-    IComponentRegistry,
-    NamedComponentRegistryEntries,
+    IFluidDataStoreContext,
+    IFluidDataStoreFactory,
+    IFluidDataStoreRegistry,
+    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
+import {
+    deprecated_innerRequestHandler,
+    buildRuntimeRequestHandler,
+} from "@fluidframework/request-handler";
+import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import * as sharedTextComponent from "./component";
 
 /* eslint-disable max-len */
@@ -46,22 +49,22 @@ const DefaultComponentName = "text";
 // };
 /* eslint-enable max-len */
 
-const defaultRegistryEntries: NamedComponentRegistryEntries = [
+const defaultRegistryEntries: NamedFluidDataStoreRegistryEntries = [
     ["@fluid-example/math", math.then((m) => m.fluidExport)],
     ["@fluid-example/progress-bars", progressBars.then((m) => m.fluidExport)],
     ["@fluid-example/video-players", videoPlayers.then((m) => m.fluidExport)],
     ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
 ];
 
-class MyRegistry implements IComponentRegistry {
+class MyRegistry implements IFluidDataStoreRegistry {
     constructor(
         private readonly context: IContainerContext,
         private readonly defaultRegistry: string) {
     }
 
-    public get IComponentRegistry() { return this; }
+    public get IFluidDataStoreRegistry() { return this; }
 
-    public async get(name: string): Promise<IComponentFactory> {
+    public async get(name: string): Promise<IFluidDataStoreFactory> {
         const scope = `${name.split("/")[0]}:cdn`;
         const config = {};
         config[scope] = this.defaultRegistry;
@@ -71,52 +74,19 @@ class MyRegistry implements IComponentRegistry {
             config,
         };
         const fluidModule = await this.context.codeLoader.load(codeDetails);
-        return fluidModule.fluidExport.IComponentFactory;
+        return fluidModule.fluidExport.IFluidDataStoreFactory;
     }
 }
 
-class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
+class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFactory {
     public static readonly type = "@fluid-example/shared-text";
     public readonly type = SharedTextFactoryComponent.type;
 
-    public get IComponentFactory() { return this; }
+    public get IFluidDataStoreFactory() { return this; }
     public get IRuntimeFactory() { return this; }
 
-    /**
-     * A request handler for a container runtime
-     * @param request - The request
-     * @param runtime - Container Runtime instance
-     */
-    private static async containerRequestHandler(request: IRequest, runtime: IContainerRuntime) {
-        console.log(request.url);
-
-        //
-        // if (request.url === "/graphiql") {
-        //     const runner = (await runtime.request({ url: "/" })).value as sharedTextComponent.SharedTextRunner;
-        //     const sharedText = await runner.getRoot().get<IComponentHandle>("text").get<SharedString>();
-        //     return { status: 200, mimeType: "fluid/component", value: new GraphIQLView(sharedText) };
-        // }
-
-        console.log(request.url);
-        const requestUrl = request.url.length > 0 && request.url.startsWith("/")
-            ? request.url.substr(1)
-            : request.url;
-        const trailingSlash = requestUrl.indexOf("/");
-
-        const componentId = requestUrl
-            ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-            : "text";
-        const component = await runtime.getComponentRuntime(componentId, true);
-
-        return component.request(
-            {
-                headers: request.headers,
-                url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1),
-            });
-    }
-
-    public instantiateComponent(context: IComponentContext): void {
-        return sharedTextComponent.instantiateComponent(context);
+    public instantiateDataStore(context: IFluidDataStoreContext): void {
+        return sharedTextComponent.instantiateDataStore(context);
     }
 
     /**
@@ -133,14 +103,15 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
                     Promise.resolve(new MyRegistry(context, "https://pragueauspkn.azureedge.net")),
                 ],
             ],
-            SharedTextFactoryComponent.containerRequestHandler);
+            buildRuntimeRequestHandler(
+                defaultRouteRequestHandler(DefaultComponentName),
+                deprecated_innerRequestHandler,
+            ),
+        );
 
         // On first boot create the base component
         if (!runtime.existing) {
-            await Promise.all([
-                runtime.createComponent(DefaultComponentName, SharedTextFactoryComponent.type)
-                    .then((componentRuntime) => componentRuntime.bindToContext()),
-            ]);
+            await runtime.createRootDataStore(SharedTextFactoryComponent.type, DefaultComponentName);
         }
 
         return runtime;

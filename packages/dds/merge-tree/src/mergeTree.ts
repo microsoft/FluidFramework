@@ -30,9 +30,6 @@ import * as Properties from "./properties";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 
-// tslint:disable:interface-name
-// tslint:disable:no-suspicious-comment
-
 export interface ReferencePosition {
     properties: Properties.PropertySet;
     refType: ops.ReferenceType;
@@ -813,7 +810,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
             pbuf += JSON.stringify(this.properties, (key, value) => {
                 // Avoid circular reference when stringifying makers containing handles.
                 // (Substitute a debug string instead.)
-                const handle = !!value && value.IComponentHandle;
+                const handle = !!value && value.IFluidHandle;
                 return handle
                     ? `#Handle(${handle.routeContext.path}/${handle.path})`
                     : value;
@@ -1350,6 +1347,15 @@ export class MergeTree {
                                 // eslint-disable-next-line dot-notation
                                 console.log(`${this.getLongClientId(this.collabWindow.clientId)}: Zremove ${segment["text"]}; cli ${this.getLongClientId(segment.clientId)}`);
                             }
+
+                            // Notify maintenance event observers that the segment is being unlinked from the MergeTree.
+                            if (this.mergeTreeMaintenanceCallback) {
+                                this.mergeTreeMaintenanceCallback({
+                                    operation: MergeTreeMaintenanceType.UNLINK,
+                                    deltaSegments: [{ segment }],
+                                });
+                            }
+
                             segment.parent = undefined;
                         }
                         prevSegment = undefined;
@@ -2207,7 +2213,6 @@ export class MergeTree {
                 // LocSegment.seq === 0 when coming from SharedSegmentSequence.loadBody()
                 // In all other cases this has to be true (checked by addToLRUSet):
                 // locSegment.seq > this.collabWindow.currentSeq
-                // tslint:disable-next-line: one-line
                 else if ((locSegment.seq > this.collabWindow.minSeq) &&
                     MergeTree.options.zamboniSegments) {
                     this.addToLRUSet(locSegment, locSegment.seq);

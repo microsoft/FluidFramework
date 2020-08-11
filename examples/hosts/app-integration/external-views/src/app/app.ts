@@ -11,9 +11,14 @@ import { IDiceRoller } from "../component";
 import { DiceRollerContainerRuntimeFactory } from "../container";
 import { PrettyDiceRollerView } from "./views";
 
-// I'm choosing to put the docId in the hash just for my own convenience.  There should be no requirements on the
-// page's URL format deeper in the system.
+// I'm choosing to put the docId in the hash just for my own convenience, so the URL will end up looking something
+// like http://localhost:8080/#1596520748752.  This is not crucial to the scenario -- there should be no requirements
+// on the page's URL format deeper in the system, so you're free to change this however you'd like.
+// Additionally, I'm choosing to create a new document when navigating directly to http://localhost:8080 -- this is
+// also open for customization.
+let createNew = false;
 if (window.location.hash.length === 0) {
+    createNew = true;
     window.location.hash = Date.now().toString();
 }
 const documentId = window.location.hash.substring(1);
@@ -27,7 +32,7 @@ async function getDiceRollerFromContainer(container: Container): Promise<IDiceRo
     const response = await container.request({ url });
 
     // Verify the response
-    if (response.status !== 200 || response.mimeType !== "fluid/component") {
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
         throw new Error(`Unable to retrieve component at URL: "${url}"`);
     } else if (response.value === undefined) {
         throw new Error(`Empty response from URL: "${url}"`);
@@ -45,7 +50,7 @@ async function renderPrettyDiceRoller(diceRoller: IDiceRoller) {
 // Just a helper function to kick things off.  Making it async allows us to use await.
 async function start(): Promise<void> {
     // Get the container to use.  Associate the data with the provided documentId, and run the provided code within.
-    const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory);
+    const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
     const diceRoller = await getDiceRollerFromContainer(container);
     await renderPrettyDiceRoller(diceRoller);
     // Setting "fluidStarted" is just for our test automation

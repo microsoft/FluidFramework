@@ -5,10 +5,10 @@
 
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelServices,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { SharedCounter } from "./counter";
 import { ISharedCounter } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
@@ -34,7 +34,7 @@ export class CounterFactory implements IChannelFactory {
     }
 
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
         branchId: string,
@@ -44,7 +44,7 @@ export class CounterFactory implements IChannelFactory {
         return counter;
     }
 
-    public create(document: IComponentRuntime, id: string): ISharedCounter {
+    public create(document: IFluidDataStoreRuntime, id: string): ISharedCounter {
         const counter = new SharedCounter(id, document, this.attributes);
         counter.initializeLocal();
         return counter;

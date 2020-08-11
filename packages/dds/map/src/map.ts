@@ -12,11 +12,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelServices,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import {
     SharedObject,
 } from "@fluidframework/shared-object-base";
@@ -75,7 +75,7 @@ export class MapFactory implements IChannelFactory {
    * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.load}
    */
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
         branchId: string,
@@ -89,7 +89,7 @@ export class MapFactory implements IChannelFactory {
     /**
    * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
    */
-    public create(runtime: IComponentRuntime, id: string): ISharedMap {
+    public create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap {
         const map = new SharedMap(id, runtime, MapFactory.Attributes);
         map.initializeLocal();
 
@@ -103,16 +103,16 @@ export class MapFactory implements IChannelFactory {
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     /**
    * Create a new shared map.
-   * @param runtime - Component runtime the new shared map belongs to
+   * @param runtime - Data store runtime the new shared map belongs to
    * @param id - Optional name of the shared map
    * @returns Newly create shared map (but not attached yet)
    */
-    public static create(runtime: IComponentRuntime, id?: string): SharedMap {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap {
         return runtime.createChannel(id, MapFactory.Type) as SharedMap;
     }
 
     /**
-   * Get a factory for SharedMap to register with the component.
+   * Get a factory for SharedMap to register with the data store.
    * @returns A factory that creates and load SharedMap
    */
     public static getFactory(): IChannelFactory {
@@ -132,12 +132,12 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
    * Create a new SharedMap.
    * @param id - String identifier
-   * @param runtime - Component runtime
+   * @param runtime - Data store runtime
    * @param attributes - The attributes for the map
    */
     constructor(
         id: string,
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);

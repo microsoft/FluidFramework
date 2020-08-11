@@ -4,11 +4,11 @@
  */
 
 import {
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelServices,
     IChannelAttributes,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 /**
@@ -19,13 +19,13 @@ import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-objec
  */
 export interface IConsensusRegisterCollectionFactory extends IChannelFactory {
     load(
-        document: IComponentRuntime,
+        document: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<IConsensusRegisterCollection>;
 
-    create(document: IComponentRuntime, id: string): IConsensusRegisterCollection;
+    create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection;
 }
 
 export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents {

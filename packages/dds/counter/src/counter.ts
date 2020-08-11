@@ -12,10 +12,10 @@ import {
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { CounterFactory } from "./counterFactory";
 import { debug } from "./debug";
@@ -46,16 +46,16 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     /**
      * Create a new shared counter
      *
-     * @param runtime - component runtime the new shared counter belongs to
+     * @param runtime - data store runtime the new shared counter belongs to
      * @param id - optional name of the shared counter
      * @returns newly create shared counter (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, CounterFactory.Type) as SharedCounter;
     }
 
     /**
-     * Get a factory for SharedCounter to register with the component.
+     * Get a factory for SharedCounter to register with the data store.
      *
      * @returns a factory that creates and load SharedCounter
      */

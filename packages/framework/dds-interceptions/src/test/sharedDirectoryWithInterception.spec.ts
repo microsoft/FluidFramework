@@ -4,9 +4,9 @@
  */
 
 import assert from "assert";
-import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { IDirectory, SharedDirectory, DirectoryFactory } from "@fluidframework/map";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { createDirectoryWithInterception } from "../map";
 
 describe("Shared Directory with Interception", () => {
@@ -16,7 +16,7 @@ describe("Shared Directory with Interception", () => {
         const attributionDirectoryName = "attribution";
         const attributionKey = (key: string) => `${key}.attribution`;
         let sharedDirectory: SharedDirectory;
-        let componentContext: IComponentContext;
+        let dataStoreContext: IFluidDataStoreContext;
 
         // This function gets / creates the attribution directory for the given subdirectory path.
         function getAttributionDirectory(root: IDirectory, path: string) {
@@ -87,12 +87,12 @@ describe("Shared Directory with Interception", () => {
         }
 
         beforeEach(() => {
-            const componentRuntime = new MockComponentRuntime();
-            sharedDirectory = new SharedDirectory(documentId, componentRuntime, DirectoryFactory.Attributes);
-            componentRuntime.bindToContext();
+            const dataStoreRuntime = new MockFluidDataStoreRuntime();
+            sharedDirectory = new SharedDirectory(documentId, dataStoreRuntime, DirectoryFactory.Attributes);
+            dataStoreRuntime.bindToContext();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;
+            dataStoreContext = { containerRuntime: { orderSequentially } } as IFluidDataStoreContext;
         });
 
         // Verifies that the props are stored correctly in the attribution sub directory - a sub directory
@@ -149,7 +149,7 @@ describe("Shared Directory with Interception", () => {
          */
         it("should be able to create an attribution directory tree mirroring the actual directory tree", async () => {
             const root = createDirectoryWithInterception(
-                sharedDirectory, componentContext, mirrorDirectoryInterceptionCb);
+                sharedDirectory, dataStoreContext, mirrorDirectoryInterceptionCb);
 
             const key: string = "level";
             let value: string = "root";
@@ -201,7 +201,7 @@ describe("Shared Directory with Interception", () => {
          * It tests that the wrapper returns the correct subDirectory.
          */
         it("should be able to create an attribution directory for each subdirectory", async () => {
-            const root = createDirectoryWithInterception(sharedDirectory, componentContext, subDirectoryinterceptionCb);
+            const root = createDirectoryWithInterception(sharedDirectory, dataStoreContext, subDirectoryinterceptionCb);
             const key: string = "level";
             let value: string = "root";
             root.set(key, value);
@@ -221,7 +221,7 @@ describe("Shared Directory with Interception", () => {
         });
 
         it("should be able to get a wrapped subDirectory via getSubDirectory and getWorkingDirectory", async () => {
-            const root = createDirectoryWithInterception(sharedDirectory, componentContext, subDirectoryinterceptionCb);
+            const root = createDirectoryWithInterception(sharedDirectory, dataStoreContext, subDirectoryinterceptionCb);
 
             // Create a sub directory and get it via getSubDirectory.
             root.createSubDirectory("foo");
@@ -248,7 +248,7 @@ describe("Shared Directory with Interception", () => {
          * called on a set on the wrapped subdirectory.
          */
         it("should be able to wrap a subDirectory in another interception wrapper", async () => {
-            const root = createDirectoryWithInterception(sharedDirectory, componentContext, setInterceptionCb);
+            const root = createDirectoryWithInterception(sharedDirectory, dataStoreContext, setInterceptionCb);
 
             // Create a sub directory via the wrapper and wrap it in another interception wrapper.
             const foo = root.createSubDirectory("foo");
@@ -259,7 +259,7 @@ describe("Shared Directory with Interception", () => {
                 const attributes = subDirectory.get(attributionKey(key));
                 subDirectory.set(attributionKey(key), { ...attributes, userEmail });
             }
-            const fooWithAttribution = createDirectoryWithInterception(foo, componentContext, interceptionCb);
+            const fooWithAttribution = createDirectoryWithInterception(foo, dataStoreContext, interceptionCb);
 
             // Set a key and verify that user id and user email are set via the interception callbacks.
             const permKey: string = "permission";
@@ -270,7 +270,7 @@ describe("Shared Directory with Interception", () => {
 
         it("should be able to see changes made by the wrapper from the underlying shared directory", async () => {
             const sharedDirectoryWithInterception =
-                createDirectoryWithInterception(sharedDirectory, componentContext, setInterceptionCb);
+                createDirectoryWithInterception(sharedDirectory, dataStoreContext, setInterceptionCb);
             const key: string = "style";
             const value: string = "bold";
             sharedDirectoryWithInterception.set(key, value);
@@ -279,7 +279,7 @@ describe("Shared Directory with Interception", () => {
 
         it("should be able to see changes made by the underlying shared directory from the wrapper", async () => {
             const sharedDirectoryWithInterception =
-                createDirectoryWithInterception(sharedDirectory, componentContext, setInterceptionCb);
+                createDirectoryWithInterception(sharedDirectory, dataStoreContext, setInterceptionCb);
             const key: string = "font";
             const value: string = "Arial";
             sharedDirectory.set(key, value);
@@ -307,7 +307,7 @@ describe("Shared Directory with Interception", () => {
             // Create the interception wrapper with the above callback. The set method should throw an assertion as this
             // will cause infinite recursion.
             sharedDirectoryWithInterception =
-                createDirectoryWithInterception(sharedDirectory, componentContext, recursiveInterceptionCb);
+                createDirectoryWithInterception(sharedDirectory, dataStoreContext, recursiveInterceptionCb);
 
             let asserted: boolean = false;
             try {

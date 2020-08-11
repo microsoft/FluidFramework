@@ -14,32 +14,32 @@ import {
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IDeltaConnection, IChannelServices } from "@fluidframework/component-runtime-definitions";
+import { IDeltaConnection, IChannelServices } from "@fluidframework/datastore-definitions";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection } from "../interfaces";
 
 describe("ConsensusRegisterCollection", () => {
     const crcFactory = new ConsensusRegisterCollectionFactory();
     describe("Api", () => {
-        const componentId = "consensus-register-collection";
+        const dataStoreId = "consensus-register-collection";
         let crc: IConsensusRegisterCollection;
-        let componentRuntime: MockComponentRuntime;
+        let dataStoreRuntime: MockFluidDataStoreRuntime;
         let services: IChannelServices;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
 
         beforeEach(() => {
-            componentRuntime = new MockComponentRuntime();
+            dataStoreRuntime = new MockFluidDataStoreRuntime();
             containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+            const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
             services = {
                 deltaConnection: containerRuntime.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
 
-            crc = crcFactory.create(componentRuntime, componentId);
+            crc = crcFactory.create(dataStoreRuntime, dataStoreId);
         });
 
         describe("Attached, connected", () => {
@@ -130,8 +130,8 @@ describe("ConsensusRegisterCollection", () => {
                 const tree: ITree = buildTree(expectedSerialization);
                 services.objectStorage = new MockStorage(tree);
                 const loadedCrc = await crcFactory.load(
-                    componentRuntime,
-                    componentId,
+                    dataStoreRuntime,
+                    dataStoreId,
                     services,
                     "master",
                     ConsensusRegisterCollectionFactory.Attributes,
@@ -143,8 +143,8 @@ describe("ConsensusRegisterCollection", () => {
                 const tree: ITree = buildTree(legacySharedObjectSerialization);
                 services.objectStorage = new MockStorage(tree);
                 await assert.rejects(crcFactory.load(
-                    componentRuntime,
-                    componentId,
+                    dataStoreRuntime,
+                    dataStoreId,
                     services,
                     "master",
                     ConsensusRegisterCollectionFactory.Attributes,
@@ -166,16 +166,16 @@ describe("ConsensusRegisterCollection", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Create first ConsensusOrderedCollection
-            const componentRuntime1 = new MockComponentRuntime();
-            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
+            const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
             deltaConnection1 = containerRuntime1.createDeltaConnection();
-            testCollection1 = crcFactory.create(componentRuntime1, "consenses-register-collection1");
+            testCollection1 = crcFactory.create(dataStoreRuntime1, "consenses-register-collection1");
 
             // Create second ConsensusOrderedCollection
-            const componentRuntime2 = new MockComponentRuntime();
-            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             deltaConnection2 = containerRuntime2.createDeltaConnection();
-            testCollection2 = crcFactory.create(componentRuntime2, "consenses-register-collection2");
+            testCollection2 = crcFactory.create(dataStoreRuntime2, "consenses-register-collection2");
         });
 
         describe("Object not connected", () => {

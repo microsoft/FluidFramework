@@ -6,23 +6,23 @@
 import { EventEmitter } from "events";
 import {
     IFluidObject,
-    IComponentHandleContext,
-    IComponentLoadable,
-    IComponentRouter,
+    IFluidHandleContext,
+    IFluidLoadable,
+    IFluidRouter,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
-import { IComponentCollection } from "@fluidframework/framework-interfaces";
+} from "@fluidframework/core-interfaces";
+import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { IFluidObjectCollection } from "@fluidframework/framework-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IComponentRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
-import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports,import/no-internal-modules,import/no-unassigned-import
 require("bootstrap/dist/css/bootstrap.min.css");
 
-class ProgressBarView implements IComponentHTMLView {
+class ProgressBarView implements IFluidHTMLView {
     public parent: HTMLElement;
     private barElem: HTMLDivElement;
 
@@ -30,7 +30,7 @@ class ProgressBarView implements IComponentHTMLView {
         this.bar.on("updateValue", this.sizeBarElemToProgress);
     }
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     public remove() {
         this.bar.off("updateValue", this.sizeBarElemToProgress);
@@ -77,25 +77,25 @@ class ProgressBarView implements IComponentHTMLView {
 
 // The "model" side of a progress bar
 export class ProgressBar extends EventEmitter implements
-    IComponentLoadable,
-    IComponentHTMLView,
-    IComponentRouter {
-    public handle: ComponentHandle;
+    IFluidLoadable,
+    IFluidHTMLView,
+    IFluidRouter {
+    public handle: FluidOjectHandle;
 
     constructor(
         public value: number,
         public url: string,
         private readonly keyId: string,
-        context: IComponentHandleContext,
+        context: IFluidHandleContext,
         private readonly collection: ProgressCollection,
     ) {
         super();
-        this.handle = new ComponentHandle(this, keyId, context);
+        this.handle = new FluidOjectHandle(this, keyId, context);
     }
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentHTMLView() { return this; }
-    public get IComponentRouter() { return this; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidHTMLView() { return this; }
+    public get IFluidRouter() { return this; }
 
     public render(elm: HTMLElement) {
         const view = new ProgressBarView(this);
@@ -113,7 +113,7 @@ export class ProgressBar extends EventEmitter implements
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "fluid/component",
+            mimeType: "fluid/object",
             status: 200,
             value: this,
         };
@@ -122,29 +122,29 @@ export class ProgressBar extends EventEmitter implements
 
 export class ProgressCollection
     extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentCollection {
-    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
+    implements IFluidLoadable, IFluidRouter, IFluidObjectCollection {
+    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         const collection = new ProgressCollection(runtime, context);
         await collection.initialize();
 
         return collection;
     }
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
-    public get IComponentCollection() { return this; }
+    public get IFluidLoadable() { return this; }
+    public get IFluidRouter() { return this; }
+    public get IFluidObjectCollection() { return this; }
 
     public url: string;
-    public handle: ComponentHandle;
+    public handle: FluidOjectHandle;
 
     private readonly progressBars = new Map<string, ProgressBar>();
     private root: ISharedMap;
 
-    constructor(private readonly runtime: IComponentRuntime, context: IComponentContext) {
+    constructor(private readonly runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         super();
 
         this.url = context.id;
-        this.handle = new ComponentHandle(this, "", this.runtime.IComponentHandleContext);
+        this.handle = new FluidOjectHandle(this, "", this.runtime.IFluidHandleContext);
     }
 
     public changeValue(key: string, newValue: number) {
@@ -174,7 +174,7 @@ export class ProgressCollection
 
         if (!trimmed) {
             return {
-                mimeType: "fluid/component",
+                mimeType: "fluid/object",
                 status: 200,
                 value: this,
             };
@@ -202,7 +202,7 @@ export class ProgressCollection
                     this.root.get(key),
                     `${this.url}/${key}`,
                     key,
-                    this.runtime.IComponentHandleContext,
+                    this.runtime.IFluidHandleContext,
                     this));
         }
 
@@ -216,7 +216,7 @@ export class ProgressCollection
                         this.root.get(changed.key),
                         `${this.url}/${changed.key}`,
                         changed.key,
-                        this.runtime.IComponentHandleContext,
+                        this.runtime.IFluidHandleContext,
                         this));
                 this.emit("progressAdded", `/${changed.key}`);
             }
@@ -224,18 +224,18 @@ export class ProgressCollection
     }
 }
 
-class ProgressBarsFactory implements IComponentFactory {
+class ProgressBarsFactory implements IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/progress-bars";
     public readonly type = ProgressBarsFactory.type;
 
-    public get IComponentFactory() { return this; }
+    public get IFluidDataStoreFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateDataStore(context: IFluidDataStoreContext): void {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
-        const runtime = ComponentRuntime.load(
+        const runtime = FluidDataStoreRuntime.load(
             context,
             dataTypes,
         );

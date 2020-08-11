@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { BaseContainerService, serviceRoutePathRoot } from "@fluidframework/aqueduct";
-import { IFluidObject, IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
     IComponentInterfacesRegistry,
     IProvideComponentDiscoverableInterfaces,
@@ -13,24 +13,23 @@ import {
     IComponentDiscoverInterfaces,
     IComponentDiscoverableInterfaces,
 } from "@fluidframework/framework-interfaces";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 export const MatchMakerContainerServiceId = "matchMaker";
 
-const getMatchMakerContainerService = async (context: IComponentContext): Promise<IComponentInterfacesRegistry> => {
-    const response = await context.containerRuntime.request({
-        url: `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
-    });
-    if (response.status === 200 && response.mimeType === "fluid/component") {
-        const value = response.value as IFluidObject;
+const getMatchMakerContainerService =
+    async (context: IFluidDataStoreContext): Promise<IComponentInterfacesRegistry> => {
+        const value = await requestFluidObject(
+            context.containerRuntime.IFluidHandleContext,
+            `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`);
         const matchMaker = value.IComponentInterfacesRegistry;
         if (matchMaker) {
             return matchMaker;
         }
-    }
 
-    throw new Error("MatchMaker Container Service not registered");
-};
+        throw new Error("MatchMaker Container Service not registered");
+    };
 
 /**
  * Helper function for registering with the MatchMaker. Manages getting the MatchMaker from the Container before
@@ -40,7 +39,7 @@ const getMatchMakerContainerService = async (context: IComponentContext): Promis
  * @param component - Discover/Discoverable instance
  */
 export const registerWithMatchMaker = async (
-    context: IComponentContext,
+    context: IFluidDataStoreContext,
     component: IProvideComponentDiscoverInterfaces | IProvideComponentDiscoverableInterfaces,
 ): Promise<void> => {
     const matchMaker = await getMatchMakerContainerService(context);
@@ -55,7 +54,7 @@ export const registerWithMatchMaker = async (
  * @param component - Discover/Discoverable instance
  */
 export const unregisterWithMatchMaker = async (
-    context: IComponentContext,
+    context: IFluidDataStoreContext,
     component: IProvideComponentDiscoverInterfaces | IProvideComponentDiscoverableInterfaces,
 ): Promise<void> => {
     const matchMaker = await getMatchMakerContainerService(context);
@@ -71,10 +70,10 @@ export const unregisterWithMatchMaker = async (
  */
 export class MatchMaker extends BaseContainerService implements IComponentInterfacesRegistry {
     private readonly discoverableInterfacesMap =
-        new Map<keyof (IFluidObject & IComponent), IComponentDiscoverableInterfaces[]>();
+        new Map<keyof (IFluidObject & IFluidObject), IComponentDiscoverableInterfaces[]>();
 
     private readonly discoverInterfacesMap =
-        new Map<keyof (IFluidObject & IComponent), IComponentDiscoverInterfaces[]>();
+        new Map<keyof (IFluidObject & IFluidObject), IComponentDiscoverInterfaces[]>();
 
     public get IComponentInterfacesRegistry() { return this; }
 
@@ -169,7 +168,7 @@ export class MatchMaker extends BaseContainerService implements IComponentInterf
             const discoverComponents = this.discoverInterfacesMap.get(interfaceName);
             if (discoverComponents) {
                 discoverComponents.forEach((component) => {
-                    if (component !== (discoverableComponent as (IComponent & IFluidObject))) {
+                    if (component !== (discoverableComponent as (IFluidObject & IFluidObject))) {
                         component.notifyComponentsDiscovered(interfaceName, [discoverableComponent]);
                     }
                 });

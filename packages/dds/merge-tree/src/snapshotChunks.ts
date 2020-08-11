@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 import {
-    IComponentSerializer,
-    IComponentHandleContext,
-    IComponentHandle,
-} from "@fluidframework/component-core-interfaces";
+    IFluidSerializer,
+    IFluidHandleContext,
+    IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
@@ -78,9 +78,9 @@ export function serializeAsMinSupportedVersion(
     chunk: VersionedMergeTreeChunk,
     logger: ITelemetryLogger,
     options: PropertySet | undefined,
-    serializer?: IComponentSerializer,
-    context?: IComponentHandleContext,
-    bind?: IComponentHandle) {
+    serializer?: IFluidSerializer,
+    context?: IFluidHandleContext,
+    bind?: IFluidHandle) {
     let targetChuck: MergeTreeChunkLegacy;
 
     if (chunk.version !== undefined) {
@@ -126,9 +126,9 @@ export function serializeAsMaxSupportedVersion(
     chunk: VersionedMergeTreeChunk,
     logger: ITelemetryLogger,
     options: PropertySet | undefined,
-    serializer?: IComponentSerializer,
-    context?: IComponentHandleContext,
-    bind?: IComponentHandle) {
+    serializer?: IFluidSerializer,
+    context?: IFluidHandleContext,
+    bind?: IFluidHandle) {
     const targetChuck = toLatestVersion(path, chunk, logger, options);
     return serializer !== undefined ? serializer.stringify(targetChuck, context, bind) : JSON.stringify(targetChuck);
 }

@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/multiview-coordinate-model",
-  "version": "0.23.0",
+  "version": "0.25.0",
   "description": "Coordinate model for multiview sample",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -27,6 +27,7 @@
     "start:tinylicious": "webpack-dev-server --config webpack.config.js --package package.json --env.mode tinylicious",
     "test": "npm run test:jest",
     "test:jest": "jest",
+    "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
@@ -34,15 +35,15 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/multiview-coordinate-interface": "^0.23.0",
-    "@fluidframework/aqueduct": "^0.23.0",
-    "@fluidframework/map": "^0.23.0"
+    "@fluid-example/multiview-coordinate-interface": "^0.25.0",
+    "@fluidframework/aqueduct": "^0.25.0",
+    "@fluidframework/map": "^0.25.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@fluidframework/test-tools": "^0.1.0",
-    "@fluidframework/webpack-component-loader": "^0.23.0",
+    "@fluidframework/webpack-component-loader": "^0.25.0",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",
@@ -51,6 +52,7 @@
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^5.2.0",
+    "cross-env": "^7.0.2",
     "eslint": "~6.8.0",
     "eslint-plugin-eslint-comments": "~3.1.2",
     "eslint-plugin-import": "2.20.0",

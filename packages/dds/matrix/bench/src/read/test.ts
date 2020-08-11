@@ -4,26 +4,26 @@
  */
 
 import { benchmark, getTestArgs } from "hotloop";
-import { fill, IArray2D } from "../imports";
+import { fill, IMatrix } from "../imports";
 
-const { row, col, numRows, numCols, fill: shouldFill } = getTestArgs();
+const { row, col, rowCount, colCount, fill: shouldFill } = getTestArgs();
 
-export function pointwise<T>(name: string | undefined, arr: IArray2D<T>) {
+export function pointwise<T>(name: string | undefined, matrix: IMatrix<T>) {
     if (shouldFill) {
-        fill(arr);
+        fill(matrix, row, col, rowCount, colCount);
     }
 
     benchmark(
-        `SUM ${name !== undefined ? name : arr.constructor.name} (${
+        `SUM ${name !== undefined ? name : matrix.constructor.name} (${
             shouldFill
                 ? "full"
                 : "empty"
-        }) Pointwise Read ${numRows}x${numCols} @${row},${col}`,
+        }) Pointwise Read ${rowCount}x${colCount} @${row},${col}`,
         () => {
             let sum = 0;
-            for (let r = row; r < numRows; r++) {
-                for (let c = col; c < numCols; c++) {
-                    sum += (arr.getCell(r, c) as any | 0);
+            for (let r = row; r < rowCount; r++) {
+                for (let c = col; c < colCount; c++) {
+                    sum += (matrix.getCell(r, c) as any | 0);
                 }
             }
             return sum;

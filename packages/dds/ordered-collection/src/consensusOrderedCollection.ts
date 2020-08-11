@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8, unreachableCase } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -14,10 +14,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
+    IFluidDataStoreRuntime,
     IChannelStorageService,
-} from "@fluidframework/component-runtime-definitions";
-import { unreachableCase } from "@fluidframework/runtime-utils";
+} from "@fluidframework/datastore-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import {
@@ -109,7 +108,7 @@ export class ConsensusOrderedCollection<T = any>
      */
     protected constructor(
         id: string,
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
         private readonly data: IOrderedCollection<T>,
     ) {
@@ -345,7 +344,7 @@ export class ConsensusOrderedCollection<T = any>
             // Send the resolve function as the localOpMetadata. This will be provided back to us when the
             // op is ack'd.
             this.submitLocalMessage(message, resolve);
-        // If we fail due to runtime being disposed, it's better to return undefined then unhandled exception.
+            // If we fail due to runtime being disposed, it's better to return undefined then unhandled exception.
         }).catch((error) => undefined);
     }
 
@@ -398,15 +397,15 @@ export class ConsensusOrderedCollection<T = any>
     }
 
     private serializeValue(value) {
-        return this.runtime.IComponentSerializer.stringify(
+        return this.runtime.IFluidSerializer.stringify(
             value,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidHandleContext,
             this.handle);
     }
 
     private deserializeValue(content: string) {
-        return this.runtime.IComponentSerializer.parse(
+        return this.runtime.IFluidSerializer.parse(
             content,
-            this.runtime.IComponentHandleContext);
+            this.runtime.IFluidHandleContext);
     }
 }

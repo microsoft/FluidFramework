@@ -162,6 +162,11 @@ export class InnerDocumentDeltaConnection
         return this.details.initialClients;
     }
 
+    public get lastKnownOpNumber() {
+        // TODO: remove once latest server bits are picked up
+        return (this.details as any).lastKnownOpNumber;
+    }
+
     /**
      * @param socket - websocket to be used
      * @param documentId - ID of the document

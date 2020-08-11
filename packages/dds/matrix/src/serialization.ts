@@ -3,18 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable, IComponentRuntime, IChannelStorageService } from "@fluidframework/component-runtime-definitions";
+import {
+    Serializable,
+    IFluidDataStoreRuntime,
+    IChannelStorageService,
+} from "@fluidframework/datastore-definitions";
 import { FileMode, TreeEntry } from "@fluidframework/protocol-definitions";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 
 export function serializeBlob(
-    runtime: IComponentRuntime,
-    handle: IComponentHandle,
+    runtime: IFluidDataStoreRuntime,
+    handle: IFluidHandle,
     path: string,
     snapshot: Serializable,
 ) {
-    const serializer = runtime.IComponentSerializer;
+    const serializer = runtime.IFluidSerializer;
 
     return {
         mode: FileMode.File,
@@ -22,20 +26,20 @@ export function serializeBlob(
         type: TreeEntry[TreeEntry.Blob],
         value: {
             contents: serializer !== undefined
-                ? serializer.stringify(snapshot, runtime.IComponentHandleContext, handle)
+                ? serializer.stringify(snapshot, runtime.IFluidHandleContext, handle)
                 : JSON.stringify(snapshot),
             encoding: "utf-8",
         },
     };
 }
 
-export async function deserializeBlob(runtime: IComponentRuntime, storage: IChannelStorageService, path: string) {
+export async function deserializeBlob(runtime: IFluidDataStoreRuntime, storage: IChannelStorageService, path: string) {
     const handleTableChunk = await storage.read(path);
     const utf8 = fromBase64ToUtf8(handleTableChunk);
 
-    const serializer = runtime.IComponentSerializer;
+    const serializer = runtime.IFluidSerializer;
     const data = serializer !== undefined
-        ? serializer.parse(utf8, runtime.IComponentHandleContext)
+        ? serializer.parse(utf8, runtime.IFluidHandleContext)
         : JSON.parse(utf8);
 
     return data;

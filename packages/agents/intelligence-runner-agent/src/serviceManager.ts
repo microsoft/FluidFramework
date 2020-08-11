@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import * as Sequence from "@fluidframework/sequence";
@@ -34,7 +34,7 @@ export class IntelligentServicesManager {
                 this.rateLimiter = new RateLimiter(
                     async () => {
                         const output = await this.documentInsights
-                            .get<IComponentHandle<ISharedMap>>(this.sharedString.id)
+                            .get<IFluidHandle<ISharedMap>>(this.sharedString.id)
                             .get();
 
                         // Run the shared services

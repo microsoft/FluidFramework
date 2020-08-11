@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PrimedComponent } from "@fluidframework/aqueduct";
+import { DataObject } from "@fluidframework/aqueduct";
 import { IDirectory } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { TextListView } from "./TextListView";
@@ -18,33 +18,33 @@ export const TextListName = `${pkg.name as string}-textlist`;
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
  * collaborative textarea.
  */
-export class TextList extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class TextList extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private textDirectory: IDirectory;
 
     /**
      * Do creation work
      */
-    protected async componentInitializingFirstTime(_props?: any) {
+    protected async initializingFirstTime() {
         this.textDirectory = this.root.createSubDirectory("textDirectory");
 
         // We want to populate the list of items with an initial shared string
         this.createNewItem();
     }
 
-    protected async componentInitializingFromExisting() {
+    protected async initializingFromExisting() {
         this.textDirectory = this.root.getSubDirectory("textDirectory");
     }
 
-    protected async componentHasInitialized() {
-        console.log("componentHasInitialized setting listener");
+    protected async hasInitialized() {
+        console.log("hasInitialized setting listener");
         this.runtime.on("op", (e) => {
             console.log(JSON.stringify(e));
         });
     }
 
-    // start IComponentHTMLView
+    // start IFluidHTMLView
 
     public render(div: HTMLElement) {
         ReactDOM.render(
@@ -56,7 +56,7 @@ export class TextList extends PrimedComponent implements IComponentHTMLView {
         );
     }
 
-    // end IComponentHTMLView
+    // end IFluidHTMLView
 
     private createNewItem() {
         const uniqueId = this.createUniqueItemId();

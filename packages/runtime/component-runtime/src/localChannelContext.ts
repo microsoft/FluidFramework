@@ -9,11 +9,12 @@ import {
     ISequencedDocumentMessage,
     ITree,
 } from "@fluidframework/protocol-definitions";
-import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreContext, ISummarizeResult } from "@fluidframework/runtime-definitions";
+import { convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
-import { ISharedObjectRegistry } from "./componentRuntime";
+import { ISharedObjectRegistry } from "./dataStoreRuntime";
 
 /**
  * Channel context for a locally created channel
@@ -28,10 +29,10 @@ export class LocalChannelContext implements IChannelContext {
         id: string,
         registry: ISharedObjectRegistry,
         type: string,
-        runtime: IComponentRuntime,
-        private readonly componentContext: IComponentContext,
+        runtime: IFluidDataStoreRuntime,
+        private readonly componentContext: IFluidDataStoreContext,
         private readonly storageService: IDocumentStorageService,
-        private readonly submitFn: (content: any, localOpMetadata: unknown) => number,
+        private readonly submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
     ) {
         const factory = registry.get(type);
@@ -74,6 +75,12 @@ export class LocalChannelContext implements IChannelContext {
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
         return this.getAttachSnapshot();
+    }
+
+    public async summarize(fullTree: boolean = false): Promise<ISummarizeResult> {
+        const snapshot = this.getAttachSnapshot();
+        const summary = convertToSummaryTree(snapshot, fullTree);
+        return summary;
     }
 
     public getAttachSnapshot(): ITree {

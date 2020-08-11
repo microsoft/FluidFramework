@@ -100,7 +100,8 @@ The standalone app is meant to be run in a Linux container. If when running eith
 
 To test simply run `npm test` - either inside of the container or after building locally.
 
-You can use the --grep parameter of mocha to limit to a particilar test or suite of tests. For example, to just run the deli tests, you can use `npm run test -- --grep Deli`.
+You can use the --grep parameter of mocha to limit to a particular test or suite of tests. For example, to just run the
+deli tests, you can use `npm run test -- --grep Deli`.
 
 To debug simply add the mocha --inspect-brk parameter `npm run test -- --inspect-brk`. After which you can
 attach to the running tests with VS Code or any other node debugger.
@@ -113,7 +114,7 @@ If you want to build API documentation locally, see [Building Documentation](htt
 
 Historically: We make use of continuous integration and deployment via VSTS at https://offnet.visualstudio.com/officenet/
 
-Coming Soon... a public facing CI/CD loop 
+Coming Soon... a public facing CI/CD loop
 
 ## Design principals
 

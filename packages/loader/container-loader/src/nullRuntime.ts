@@ -5,11 +5,11 @@
 
 import { EventEmitter } from "events";
 import {
-    IComponentHandleContext,
-    IComponentSerializer,
+    IFluidHandleContext,
+    IFluidSerializer,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IContainerContext,
     IRuntime,
@@ -25,11 +25,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 export class NullRuntime extends EventEmitter implements IRuntime {
-    public get IComponentSerializer(): IComponentSerializer {
+    public get IFluidSerializer(): IFluidSerializer {
         throw new Error("Not implemented");
     }
 
-    public get IComponentHandleContext(): IComponentHandleContext {
+    public get IFluidHandleContext(): IFluidHandleContext {
         throw new Error("Not implemented");
     }
 
@@ -79,9 +79,8 @@ export class NullRuntime extends EventEmitter implements IRuntime {
         throw new Error("Null Runtime should not be attached");
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public request(request: IRequest): Promise<IResponse> {
-        return Promise.resolve({ status: 404, mimeType: "text/plain", value: null });
+    public async request(request: IRequest): Promise<IResponse> {
+        return { status: 404, mimeType: "text/plain", value: null };
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {

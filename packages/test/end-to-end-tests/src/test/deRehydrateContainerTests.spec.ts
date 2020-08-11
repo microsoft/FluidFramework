@@ -12,9 +12,13 @@ import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidf
 import {
     LocalCodeLoader,
     TestFluidComponentFactory,
+    ITestFluidComponent,
+    TestFluidComponent,
 } from "@fluidframework/test-utils";
 import { SharedMap } from "@fluidframework/map";
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 describe(`Dehydrate Rehydrate Container Test`, () => {
     const codeDetails: IFluidCodeDetails = {
@@ -52,6 +56,19 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             new Map<string, IProxyLoaderFactory>());
     }
 
+    const createPeerComponent = async (
+        containerRuntime: IContainerRuntimeBase,
+    ) => {
+        const peerComponentRuntimeChannel = await (containerRuntime as IContainerRuntime)
+            .createDataStoreWithRealizationFn(["default"]);
+        const peerComponent =
+            (await peerComponentRuntimeChannel.request({ url: "/" })).value as ITestFluidComponent;
+        return {
+            peerComponent,
+            peerComponentRuntimeChannel,
+        };
+    };
+
     beforeEach(async () => {
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
         const urlResolver = new LocalResolver();
@@ -72,7 +89,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
         const protocolAttributes: IDocumentAttributes =
             JSON.parse(Buffer.from(snapshotTree.trees[".protocol"].blobs[protocolAttributesBlobId],
-            "base64").toString());
+                "base64").toString());
         assert.strictEqual(protocolAttributes.sequenceNumber, 0, "Seq number should be 0");
         assert.strictEqual(protocolAttributes.minimumSequenceNumber, 0, "Min Seq number should be 0");
 
@@ -102,10 +119,10 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const protocolAttributesBlobId2 = snapshotTree2.trees[".protocol"].blobs.attributes;
         const protocolAttributes1: IDocumentAttributes =
             JSON.parse(Buffer.from(snapshotTree1.trees[".protocol"].blobs[protocolAttributesBlobId1],
-            "base64").toString());
+                "base64").toString());
         const protocolAttributes2: IDocumentAttributes =
             JSON.parse(Buffer.from(snapshotTree2.trees[".protocol"].blobs[protocolAttributesBlobId2],
-            "base64").toString());
+                "base64").toString());
         assert.strictEqual(JSON.stringify(protocolAttributes1), JSON.stringify(protocolAttributes2),
             "Protocol attributes should be same as no change happened");
 
@@ -114,5 +131,23 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             "Test channel 1 should not be present in snapshot 1");
         assert(snapshotTree2.trees.default.trees.test1,
             "Test channel 1 should be present in snapshot 2");
+    });
+
+    it("Dehydrated container snapshot with component handle stored in map of other bound component", async () => {
+        const { container, defaultComponent } =
+            await createDetachedContainerAndGetRootComponent();
+
+        // Create another component
+        const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
+        const component2 = peerComponent.peerComponent as TestFluidComponent;
+
+        // Create a channel
+        const rootOfComponent1 = await (defaultComponent as TestFluidComponent).getSharedObject<SharedMap>(mapId1);
+        rootOfComponent1.set("component2", component2.handle);
+
+        const snapshotTree = JSON.parse(container.serialize());
+
+        assert.strictEqual(Object.keys(snapshotTree.trees).length, 4, "4 trees should be there");
+        assert(snapshotTree.trees[component2.runtime.id], "Handle Bounded component should be in summary");
     });
 });

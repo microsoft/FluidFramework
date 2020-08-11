@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import {
     createOdspUrl,

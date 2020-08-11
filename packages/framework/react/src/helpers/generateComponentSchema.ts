@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedMap } from "@fluidframework/map";
 import {
     IFluidFunctionalComponentFluidState,
@@ -17,7 +17,7 @@ import {
  * Identifies which values within the Fluid and view states match
  * The view and Fluid matching map identify if the value in the respective states
  * needs a converter or not
- * @param runtime - The component runtime used to create the SharedMap objects
+ * @param runtime - The data store runtime used to create the SharedMap objects
  * @param fluidToView - The fluid to view state conversion mapping
  * @param viewToFluid - The view to fluid conversion state mapping
  * */
@@ -25,7 +25,7 @@ export function generateComponentSchema<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
 >(
-    runtime: IComponentRuntime,
+    runtime: IFluidDataStoreRuntime,
     defaultViewState: SV,
     fluidToView: FluidToViewMap<SV, SF>,
     viewToFluid?: ViewToFluidMap<SV, SF>,

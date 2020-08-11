@@ -10,7 +10,7 @@ import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 import * as ui from "./rectangle";
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject
         extends Readonly<Partial<IProvideSearchMenuHost & ISearchMenuClient>> { }
@@ -266,7 +266,6 @@ export function selectionListBoxCreate(
 
         if (item.iconHTML) {
             const icon = document.createElement("span");
-            // tslint:disable:no-inner-html
             icon.innerHTML = item.iconHTML;
             icon.style.marginRight = "2px";
             itemDiv.insertBefore(icon, itemSpan);
