@@ -7,8 +7,8 @@ import React from "react";
 import "react-grid-layout/css/styles.css";
 import { ISpacesItemEntry } from "./spacesItemMap";
 import { ISpacesStorage, SpacesStorageView } from "./storage";
-import { ISpacesItem } from "./spaces";
 import { SpacesToolbar } from "./spacesToolbar";
+import { ISpacesItem } from "./index";
 
 interface ISpacesViewProps {
     itemMap: Map<string, ISpacesItemEntry>;
