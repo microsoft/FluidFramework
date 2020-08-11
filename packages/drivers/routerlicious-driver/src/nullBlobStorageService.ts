@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 
@@ -40,7 +39,7 @@ export class NullBlobStorageService implements IDocumentStorageService {
         return Promise.reject("Invalid operation");
     }
 
-    public async createBlob(file: IsoBuffer): Promise<api.ICreateBlobResponse> {
+    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
         return Promise.reject("Null blob storage can not create blob");
     }
 

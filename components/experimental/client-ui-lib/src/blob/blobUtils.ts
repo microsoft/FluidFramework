@@ -4,7 +4,6 @@
  */
 
 import * as api from "@fluid-internal/client-api";
-import { IsoBuffer } from "@fluidframework/common-utils";
 import { getFileBlobType, IGenericBlob, IImageBlob, IVideoBlob } from "@fluidframework/container-definitions";
 
 export async function blobUploadHandler(
@@ -41,14 +40,14 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
         url: "", // TODO sabroner: can I create the URL locally?
     } as IGenericBlob;
 
-    const arrayBufferP = new Promise<IsoBuffer>((resolve, reject) => {
+    const arrayBufferP = new Promise<Buffer>((resolve, reject) => {
         arrayBufferReader.onerror = (error) => {
             arrayBufferReader.abort();
             reject(`error: ${JSON.stringify(error)}`);
         };
 
         arrayBufferReader.onloadend = () => {
-            const blobData = IsoBuffer.from(arrayBufferReader.result as ArrayBuffer);
+            const blobData = Buffer.from(arrayBufferReader.result as ArrayBuffer);
             resolve(blobData);
         };
         arrayBufferReader.readAsArrayBuffer(file);

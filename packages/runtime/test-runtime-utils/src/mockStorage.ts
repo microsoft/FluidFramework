@@ -4,7 +4,6 @@
  */
 
 import assert from "assert";
-import { IsoBuffer } from "@fluidframework/common-utils";
 import { IBlob, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
@@ -21,7 +20,7 @@ export class MockStorage implements IChannelStorageService {
                         // eslint-disable-next-line prefer-rest-params
                         assert(paths.length === 1, JSON.stringify({ ...arguments }));
                         const blob = entry.value as IBlob;
-                        return IsoBuffer.from(blob.contents, blob.encoding)
+                        return Buffer.from(blob.contents, blob.encoding)
                             .toString("base64");
                     }
                     if (entry.type === "Tree") {

@@ -5,7 +5,6 @@
  */
 
 import { strict as assert } from "assert";
-import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     SummaryObject,
     ISummaryTree,
@@ -48,8 +47,8 @@ describe("Summary Utils", () => {
         let inputTree: ITree;
 
         beforeEach(() => {
-            const base64Content = IsoBuffer.from("test-b64").toString("base64");
-            bufferLength = IsoBuffer.from(base64Content, "base64").byteLength;
+            const base64Content = Buffer.from("test-b64").toString("base64");
+            bufferLength = Buffer.from(base64Content, "base64").byteLength;
             inputTree = {
                 id: null,
                 entries: [
@@ -119,7 +118,7 @@ describe("Summary Utils", () => {
             assert.strictEqual(summaryResults.stats.handleNodeCount, 1);
             assert.strictEqual(summaryResults.stats.treeNodeCount, 2);
             assert.strictEqual(summaryResults.stats.totalBlobSize,
-                bufferLength + IsoBuffer.from("test-blob").byteLength + IsoBuffer.from("test-u8").byteLength);
+                bufferLength + Buffer.byteLength("test-blob") + Buffer.byteLength("test-u8"));
         });
     });
 });

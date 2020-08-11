@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
- import { IsoBuffer } from "@fluidframework/common-utils";
+import { Buffer } from "buffer";
 
 export interface IBlobManager {
     // Rehydrate a blob manager from a snapshot
@@ -32,7 +32,7 @@ export interface IBlobManager {
 export type IGenericBlob = IDataBlob | IImageBlob | IVideoBlob;
 
 export interface IBaseBlob {
-    content: IsoBuffer;
+    content: Buffer;
     id: string;
     size: number;
     fileName: string;

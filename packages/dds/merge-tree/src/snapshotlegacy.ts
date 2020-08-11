@@ -4,7 +4,6 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     IFluidHandle,
     IFluidHandleContext,
@@ -29,7 +28,7 @@ export interface SnapChunk {
     position: number;
     lengthBytes: number;
     sequenceLength: number;
-    buffer?: IsoBuffer;
+    buffer?: Buffer;
 }
 
 export interface SnapshotHeader {
@@ -58,7 +57,7 @@ export class SnapshotLegacy {
 
     header: SnapshotHeader;
     seq: number;
-    buffer: IsoBuffer;
+    buffer: Buffer;
     pendingChunk: SnapChunk;
     segments: ops.IJSONSegment[];
     segmentLengths: number[];

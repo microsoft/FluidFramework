@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { Buffer } from "buffer";
 import { IEventProvider, IErrorEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     ConnectionMode,
     IClient,
@@ -81,7 +81,7 @@ export interface IDocumentStorageService {
     /**
      * Creates a blob out of the given buffer
      */
-    createBlob(file: IsoBuffer): Promise<ICreateBlobResponse>;
+    createBlob(file: Buffer): Promise<ICreateBlobResponse>;
 
     /**
      * Fetch blob Data url
