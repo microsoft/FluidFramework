@@ -46,7 +46,7 @@ export enum DriverErrorType {
 
     /**
      * User does not have write permissions to a file, but is changing content of a file.
-     * That might be indication of some component error - components should not generate ops in readonly mode.
+     * That might be indication of some data store error - data stores should not generate ops in readonly mode.
      */
     writeError = "writeError",
 

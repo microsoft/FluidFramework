@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { IDiceRoller } from "../../component";
+import { IDiceRoller } from "../../dataObject";
 
 interface IPrettyDiceRollerViewProps {
     model: IDiceRoller;

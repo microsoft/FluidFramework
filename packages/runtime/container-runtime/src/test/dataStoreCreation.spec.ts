@@ -101,7 +101,7 @@ describe("Data Store Creation Tests", () => {
             summaryTracker = new SummaryTracker("", 0, 0);
             const summarizerNode = SummarizerNode.createRoot(
                 new TelemetryNullLogger(),
-                (() => {}) as unknown as SummarizeInternalFn,
+                (() => { }) as unknown as SummarizeInternalFn,
                 0,
                 0,
                 true);

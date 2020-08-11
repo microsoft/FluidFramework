@@ -1,8 +1,3 @@
----
-aliases:
- - docs/index.html
----
-
 # Fluid Framework
 
 Fluid Framework is a TypeScript library for building collaborative web applications.

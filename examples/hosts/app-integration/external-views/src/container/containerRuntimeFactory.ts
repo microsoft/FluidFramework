@@ -7,22 +7,21 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/aqueduct";
 
-import { DiceRoller, DiceRollerInstantiationFactory } from "../component";
+import { DiceRollerInstantiationFactory } from "../dataObject";
 
 /**
- * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultDataStore also enables dynamic loading in
- * the EmbeddedComponentLoader.
+ * This does setup for the Container.
  *
  * There are two important things here:
- * 1. Default Component name
- * 2. Map of string to factory for all components
+ * 1. Default data object name
+ * 2. Map of string to factory for all data objects the Container can create directly
  *
- * In this example, we are only registering a single component, but more complex examples will register multiple
- * components.
+ * In this example, we are only registering a single data object, but more complex examples will register multiple
+ * data objects.
  */
 export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DiceRoller.ComponentName,
+    DiceRollerInstantiationFactory.type,
     new Map([
-        [DiceRoller.ComponentName, Promise.resolve(DiceRollerInstantiationFactory)],
+        DiceRollerInstantiationFactory.registryEntry,
     ]),
 );

@@ -13,9 +13,10 @@
     "build:fast": "fluid-build --root .",
     "build:full": "npm run build:genver && npm run build:full:compile && npm run lint && npm run build:docs",
     "build:full:compile": "lerna run build:full:compile --stream",
-    "build:gendocs": "api-documenter markdown -i _api-extractor-temp/doc-models -o docs/api",
+    "build:gendocs": "copyfiles server/routerlicious/_api-extractor-temp/** ./_api-extractor-temp/doc-models/ -f -V && api-documenter markdown -i _api-extractor-temp/doc-models -o docs/api",
     "build:genver": "lerna run build:genver --stream --parallel",
     "bump-version": "fluid-bump-version --root .",
+    "bundle-analysis": "npm run webpack:profile && fluid-collect-bundle-analyses",
     "ci:build": "npm run build:genver && lerna run build:compile --stream",
     "ci:test": "npm run test:report;t1=$?;npm run test:copyresults; exit $t1",
     "ci:test:coverage": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
@@ -64,7 +65,8 @@
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
-    "webpack": "lerna run --no-sort webpack --stream"
+    "webpack": "lerna run --no-sort webpack --stream",
+    "webpack:profile": "lerna run --no-sort webpack:profile --stream"
   },
   "nyc": {
     "all": true,
