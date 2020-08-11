@@ -10,7 +10,7 @@ import { DraftJsObject } from "./fluid-object";
 import { DraftJsContainer } from "./container";
 
 // Re-export everything
-export { DraftJsObject as DraftJsExample, DraftJsContainer };
+export { DraftJsObject, DraftJsContainer };
 
 // Since this is a single page fluid application we are generating a new document id
 // if one was not provided
@@ -34,10 +34,6 @@ async function start() {
 
     // For now we will just reach into the FluidObject to render it
     defaultObject.render(document.getElementById("content"));
-
-    // Setting "fluidStarted" is just for our test automation
-    // eslint-disable-next-line dot-notation
-    window["fluidStarted"] = true;
 }
 
 start().catch((e) => {
