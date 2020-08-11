@@ -812,17 +812,13 @@ function renderSegmentIntoLine(
                 const componentMarker = marker as IComponentViewMarker;
 
                 // Delay load the instance if not available
-                if (!componentMarker.instance) {
-                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                    if (!componentMarker.instanceP) {
-                        componentMarker.instanceP = lineContext.flowView.collabDocument.context.containerRuntime
-                            .request({ url: `/${componentMarker.properties.leafId}` })
-                            .then(async (response) => {
-                                if (response.status !== 200 || response.mimeType !== "fluid/object") {
-                                    return Promise.reject(response);
-                                }
-
-                                const component = response.value as IFluidObject;
+                if (componentMarker.instance === undefined) {
+                    if (componentMarker.instanceP === undefined) {
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                        requestFluidObject(
+                            lineContext.flowView.collabDocument.context.containerRuntime.IFluidHandleContext,
+                            `/${componentMarker.properties.leafId}`)
+                            .then(async (component) => {
                                 if (!HTMLViewAdapter.canAdapt(component)) {
                                     return Promise.reject("component is not viewable");
                                 }

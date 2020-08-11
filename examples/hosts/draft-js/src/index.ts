@@ -36,7 +36,7 @@ async function start() {
     defaultObject.render(document.getElementById("content"));
 }
 
-start().catch((e)=> {
+start().catch((e) => {
     console.error(e);
     console.log(
         "%cEnsure you are running the Tinylicious Fluid Server\nUse:`npm run start:server`",

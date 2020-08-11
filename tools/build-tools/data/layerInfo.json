@@ -170,16 +170,19 @@
                     "Runtime"
                 ]
             },
-            "Component": {
+            "Examples": {
                 "dot": false,
+                "dev": true,
                 "dirs": [
-                    "packages/components/",
                     "components/",
-                    "packages/agents/",
-                    "packages/server/tools-core"
+                    "examples/",
+                    "packages/agents/"
                 ],
                 "deps": [
-                    "Framework"
+                    "Framework",
+                    "Driver",
+                    "Routerlicious-Driver",
+                    "Test"
                 ]
             },
             "Build": {
@@ -211,8 +214,7 @@
                     "@fluidframework/webpack-component-loader"
                 ],
                 "dirs": [
-                    "packages/test/",
-                    "examples/hosts/"
+                    "packages/test/"
                 ]
             }
         }

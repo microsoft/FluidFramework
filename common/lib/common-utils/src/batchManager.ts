@@ -8,7 +8,7 @@
  */
 export class BatchManager<T> {
     private pendingWork = new Map<string, T[]>();
-    private pendingTimer: number | undefined;
+    private pendingTimer: ReturnType<typeof setTimeout> | undefined;
 
     /**
      * Creates an instance of BatchManager.

@@ -9,8 +9,6 @@ OUTDATED
 
 Our Hello World example consists of building a collaborative **Dice Roller**.
 
-![Image 2](./dice-roller-gif.gif)
-
 ---
 
 [[toc]]
@@ -67,8 +65,6 @@ the remainder of the doc understanding.
 ## Component code deep dive
 
 Below is the entirety of our newly created HelloWorld component. We will go through it section by section.
-
-<<< @/tutorials/dice-roller.ts
 
 ### Imports
 
