@@ -1,0 +1,58 @@
+<footer role="contentinfo">
+    <div class="container">
+        <div class="row">
+            <div class="left col-md-7">
+                <ul class="links">
+                    <li>
+                        <span class="message">Fluidify the world!</span>
+                    </li>
+                    <li>
+                        <a href="https://twitter.com/fluidframework" onclick="followOnTwitter()" role="button"
+                            tabindex="0">Follow
+                            @fluidFramework</a>
+                    </li>
+                    <li>
+                        <div class="github-star-button">
+                            <iframe
+                                src="/assets/github-button.html?user=Microsoft&repo=fluidFramework&type=star&count=true"
+                                frameborder="0" scrolling="0" width="130px" height="20px" title="GitHub follow button"
+                                aria-label="GitHub follow button"></iframe>
+                        </div>
+                    </li>
+
+                    <script>
+                        function followOnTwitter() {
+                            var windowFeatures = "location=yes,height=600,width=550,scrollbars=yes,status=yes";
+                            var originalReferer = "&original_referer=" + document.URL;
+                            var screenName = "&screen_name=code";
+                            var URL = "https://twitter.com/intent/follow?" + originalReferer + screenName;
+                            window.open(URL, "_blank", windowFeatures);
+                        }
+                    </script>
+                </ul>
+            </div>
+            <div class="right col-md-5">
+                <ul class="links">
+                    <li><a id="footer-privacy-link" href="https://privacy.microsoft.com/en-us/privacystatement"
+                            target="_blank">Privacy</a></li>
+                    <li><a id="footer-terms-link"
+                            href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx"
+                            target="_blank">Terms of Use</a></li>
+                    <li><a id="footer-license-link" href="/License">License</a></li>
+                </ul>
+                <div class="copyright">
+                    <a id="footer-microsoft-link" class="logo" href="https://www.microsoft.com">
+                        <img class="microsoft-logo" src="/images/microsoft-logo.png" height="20"
+                            alt="Microsoft homepage" />
+                        <img class="microsoft-logo-inverted" src="/images/microsoft-logo-inverted.png" height="20"
+                            alt="Microsoft homepage" />
+                    </a>
+                    <span>&copy; {{ now.Format "2006" }} <span itemprop="publisher" itemscope
+                            itemtype="https://schema.org/Organization">
+                            <span itemprop="name">Microsoft</span></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>

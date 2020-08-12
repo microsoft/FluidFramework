@@ -1,0 +1,63 @@
+{{ $current := . }}
+{{ $currentURL := . | relURL }}
+{{ $package := $current.Params.package }}
+{{ $area := "" }}
+{{ range $name, $frameworks := $.Site.Data.frameworks }}
+{{ range $frameworks }}
+{{ if eq $package .}}
+{{ $area = $name}}
+{{ end }}
+{{ end }}
+{{ end }}
+
+{{ $section := .CurrentSection }}
+{{ $packagePages := where $section.RegularPages "Params.kind" "Package"}}
+
+<nav id="docs-navbar" aria-label="Topics" class="docs-nav visible-md visible-lg">
+    <ul class="nav" id="main-nav">
+        <li {{ if eq .Kind "section" }} class="active" {{ end }}>
+            <a class="docs-home" href="/apis/" {{ if eq .Kind "section" }} aria-label="Current Page: Fluid API Overview"
+                {{ end }}>API Overview</a>
+        </li>
+
+        {{ range $grouping, $names :=  $.Site.Data.frameworks }}
+        {{ $isCurrentArea := (eq $grouping $area) }}
+
+        <li class="panel {{if $isCurrentArea}}active expanded{{else}}collapsed{{end}}">
+            <a class="area" aria-label="{{ $grouping }} drop down" href="#{{ $grouping }}-articles"
+                data-parent="#main-nav" data-toggle="collapse">{{ $grouping | humanize | title }}</a>
+
+            <ul id="{{ $grouping }}-articles" class="collapse {{if $isCurrentArea}}in{{end}}">
+                <!-- list all pages in area -->
+                {{- range $names }}
+                {{ $targetPage := $current }}
+                {{ $isCurrentPage := eq $package . }}
+                {{- range where $packagePages "Params.package" . -}}
+                {{ $targetPage = . }}
+                {{- end }}
+                <li {{ if $isCurrentPage }}class="active" {{ end }}>
+                    <a href="{{$targetPage.Permalink}}"
+                        {{ if $isCurrentPage }}aria-label="Current Page: {{ (path.Base .) | humanize | title }} "
+                        {{ end }}>
+                        {{ (path.Base .) | humanize | title }} </a>
+                </li>
+                {{- end }}
+            </ul>
+        </li>
+        {{- end }}
+    </ul>
+</nav>
+<nav id="small-nav" aria-label="Topics" class="docs-nav hidden-md hidden-lg">
+    <h4>Topics</h4>
+    <select id="small-nav-dropdown">
+        <option value="/api" {{if .IsHome}}selected{{end}}>Overview</option>
+        {{- range $grouping, $names :=  $.Site.Data.frameworks }}
+        <optgroup label="{{ $grouping }}">
+            {{- range $names }}
+            {{ $isCurrentPage := eq $package . }}
+            <option value="{{.}}" {{ if $isCurrentPage }}selected{{end}}>{{ . }}</option>
+            {{ end }}
+        </optgroup>
+        {{- end }}
+    </select>
+</nav>

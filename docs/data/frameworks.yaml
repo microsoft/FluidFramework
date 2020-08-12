@@ -1,0 +1,64 @@
+core:
+- "@fluidframework/aqueduct"
+- "@fluidframework/core-interfaces"
+- "@fluidframework/datastore-definitions"
+- "@fluidframework/datastore"
+- "@fluidframework/framework-interfaces"
+- "@fluidframework/undo-redo"
+- "@fluidframework/view-adapters"
+- "@fluidframework/view-interfaces"
+hosts:
+- "@fluidframework/base-host"
+distributed-data-structures:
+- "@fluidframework/cell"
+- "@fluidframework/counter"
+- "@fluidframework/ink"
+- "@fluidframework/map"
+- "@fluidframework/matrix"
+- "@fluidframework/ordered-collection"
+- "@fluidframework/register-collection"
+- "@fluidframework/sequence"
+- "@fluidframework/shared-object-base"
+- "@fluidframework/synthesize"
+- "@fluidframework/telemetry-utils"
+- "@fluidframework/test-utils"
+internal:
+- "@fluidframework/common-definitions"
+- "@fluidframework/driver-utils"
+miscellaneous:
+- "@fluidframework/common-utils"
+- "@fluidframework/dds-interceptions"
+- "@fluidframework/react-inputs"
+- "@fluidframework/react"
+runtime:
+- "@fluidframework/component-base"
+- "@fluidframework/runtime-definitions"
+- "@fluidframework/runtime-utils"
+loader:
+- "@fluidframework/container-definitions"
+- "@fluidframework/container-loader"
+- "@fluidframework/container-runtime-definitions"
+- "@fluidframework/container-runtime"
+- "@fluidframework/container-utils"
+- "@fluidframework/execution-context-loader"
+- "@fluidframework/web-code-loader"
+tools:
+- "@fluidframework/debugger"
+- "@fluidframework/merge-tree-client-replay"
+- "@fluidframework/replay-tool"
+driver:
+- "@fluidframework/driver-base"
+- "@fluidframework/driver-definitions"
+- "@fluidframework/file-driver"
+- "@fluidframework/iframe-driver"
+- "@fluidframework/odsp-driver"
+- "@fluidframework/replay-driver"
+- "@fluidframework/routerlicious-driver"
+experimental:
+- "@fluidframework/last-edited-experimental"
+protocol:
+- "@fluidframework/protocol-base"
+- "@fluidframework/protocol-definitions"
+unknown:
+- "@fluidframework/request-handler"
+- "@fluidframework/shared-summary-block"

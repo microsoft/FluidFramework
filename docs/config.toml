@@ -1,0 +1,64 @@
+baseURL = "http://example.org/"
+languageCode = "en-us"
+theme = "thxvscode"
+title = "Fluid Framework"
+
+[permalinks]
+page = "/:slug"
+post = "/:year/:month/:day/:title"
+
+[params]
+dateform = "Jan 2, 2006"
+dateformNum = "2006-01-02"
+dateformNumTime = "2006-01-02 15:04 -0700"
+dateformShort = "Jan 2"
+
+[menu]
+
+[[menu.main]]
+name = "What is Fluid?"
+url = "/what-is-fluid"
+weight = -100
+
+[[menu.main]]
+name = "Docs"
+url = "/docs/"
+weight = -90
+
+[[menu.main]]
+name = "API"
+url = "/apis/"
+weight = -80
+
+[[menu.main]]
+name = "Community"
+url = "/"
+weight = -70
+
+[[menu.docs]]
+identifier = "get-started"
+name = "Get Started"
+weight = -100
+
+[[menu.docs]]
+identifier = "concepts"
+name = "Main concepts"
+weight = 0
+
+# [[menu.docs]]
+# name = "Recipes and Examples"
+# url = "/docs/cookbook"
+
+# [[menu.docs]]
+# name = "DDS Reference"
+# url = "/docs/dds-reference"
+
+# [[menu.docs]]
+# name = "Testing"
+# url = "/docs/testing"
+
+[markup]
+[markup.goldmark]
+[markup.goldmark.renderer]
+unsafe = true
+# mark unsafe html as true since api-documenter uses html snipets.

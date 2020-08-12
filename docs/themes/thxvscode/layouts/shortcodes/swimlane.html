@@ -1,0 +1,36 @@
+{{ $id := .Get "id" }}
+{{ $imgURL := .Get "img" }}
+{{ $imgAlt := .Get "imgAlt" }}
+{{ $title := .Get "title" }}
+{{ $subTitle := .Get "subTitle" | safeHTML }}
+{{ $imgPos := .Get "pos" }}
+
+{{ if eq $imgPos "right"}}
+<div id="{{$id}}" class="swimlane">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-4 col-sm-push-8">
+                <img src='{{ $imgURL }}' alt="{{ $imgAlt}}" class="screenshot" />
+            </div>
+            <div class="col-sm-7 col-sm-pull-4">
+                <h2>{{ $title }}</h2>
+                <p>{{ $subTitle }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{{ else }}
+<div id="{{$id}}" class="swimlane">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-4">
+                <img src='{{ $imgURL }}' alt="{{ $imgAlt}}" class="screenshot" />
+            </div>
+            <div class="col-sm-7 col-sm-push-1">
+                <h2>{{ $title }}</h2>
+                <p>{{ $subTitle }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}

@@ -12,3 +12,10 @@ _site/
 
 # every directory under api is generated during a build
 api/**
+
+# hugo
+themes/thxvscode/assets/js/node_modules/
+public/
+assets/doc-models/*.json
+node_modules/
+scripts/api-documenter/temp

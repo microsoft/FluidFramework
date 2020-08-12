@@ -1,0 +1,169 @@
+/*---- Footer ----*/
+// Make footer stick to the bottom of each page
+
+// Medium screen size footer height
+$footerheight: 135px;
+
+body {
+  margin-bottom: $footerheight;
+}
+
+footer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: $footerheight;
+  width: 100%;
+}
+
+footer {
+  background-color: $darkgray;
+  font-size: 12px;
+  color: white;
+  padding: 25px 0;
+
+  #footer-community {
+    color: white;
+    cursor: pointer;
+  }
+
+  .left {
+    font-size: 14px;
+  }
+
+  .message {
+    display: none;
+  }
+
+  .twitter-follow-button {
+    vertical-align: bottom;
+    margin-right: 15px;
+    margin-bottom: 10px;
+  }
+
+  .github-star-button {
+    top: 5px;
+    position: relative;
+  }
+
+  .github-star-button,
+  .twitter-follow-button {
+    margin-bottom: 20px;
+    display: inline-block;
+  }
+
+  .right > * {
+    display: inline-block;
+    vertical-align: top;
+  }
+
+  .links {
+    padding: 0;
+
+    li {
+      display: inline-block;
+      &:not(:last-child) {
+        padding-right: 20px;
+      }
+    }
+
+    a {
+      color: white;
+
+      &:hover {
+        color: $lightpurple;
+        text-decoration: none;
+      }
+    }
+  }
+  .copyright {
+    margin-left: 30px;
+
+    .logo {
+      display: block;
+      margin-bottom: 2px;
+    }
+  }
+}
+
+@media (max-width: $screen-xs) {
+  //Larger footer for smaller screen sizes
+  $footerheight: 170px;
+  footer {
+    height: $footerheight;
+  }
+  body {
+    margin-bottom: $footerheight;
+  }
+  footer .copyright {
+    display: block;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  //Even larger footer for very small screen sizes (e.g. iPhone 4)
+  $footerheight: 200px;
+  footer {
+    height: $footerheight;
+  }
+  body {
+    margin-bottom: $footerheight;
+  }
+  footer .copyright {
+    display: block;
+    margin-left: 0;
+  }
+}
+
+@media (min-width: $screen-lg) {
+  //Smaller footer for very large screen sizes
+  $footerheight: 90px;
+  footer {
+    height: $footerheight;
+  }
+  body {
+    margin-bottom: $footerheight;
+  }
+}
+
+@media (min-width: 400px) {
+  footer .twitter-follow-button {
+    height: 20px; /* DO NOT REMOVE: Weird prerendering issue, causes scrollbar to show if not set */
+  }
+}
+
+@media (min-width: 530px) {
+  footer .message {
+    display: inline-block;
+  }
+  .twitter-follow-button {
+    margin-left: 15px;
+  }
+}
+
+@media (min-width: $screen-md) {
+  footer {
+    .github-star-button,
+    .twitter-follow-button {
+      margin-bottom: 0;
+    }
+  }
+
+  footer .right {
+    margin-top: 0;
+    text-align: right;
+  }
+}
+
+.microsoft-logo-inverted {
+  display: none;
+}
+@media screen and (-ms-high-contrast: black-on-white) {
+  .microsoft-logo {
+    display: none;
+  }
+  .microsoft-logo-inverted {
+    display: inline;
+  }
+}
