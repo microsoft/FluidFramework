@@ -65,13 +65,13 @@ describe("defaultRouteRequestHandler", () => {
     it("Component request with default ID", async () => {
         const handler = defaultRouteRequestHandler("componentId");
 
-        const requestParser = new RequestParser({ url: "", headers: {} });
+        const requestParser = new RequestParser({ url: "", headers: { } });
         const response = await handler(requestParser, runtime);
         assert(response);
         assert.equal(response.status, 200);
         assert.equal(response.value.route, "");
 
-        const requestParser2 = new RequestParser({ url: "/", headers: {} });
+        const requestParser2 = new RequestParser({ url: "/", headers: { } });
         const response2 = await handler(requestParser2, runtime);
         assert(response2);
         assert.equal(response2.status, 200);
