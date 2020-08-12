@@ -35,8 +35,9 @@ Let's look at an example of feature detection using `IFluidObject`:
 ```typescript
 let fluidObject = anyObject as IFluidObject;
 // Query the object to see if it supports IFluidFoo
-const foo: IFluidFoo | undefined = fluidObject.IFluidFoo;
+const foo = fluidObject.IFluidFoo; // foo: IFluidFoo | undefined
 if (foo !== undefined) {
+    // foo: IFluidFoo
     // It does! Now we have an IFluidFoo and can safely call member function bar()
     await foo.bar();
 }
@@ -52,10 +53,10 @@ Let's dig a little deeper into how `IFluidObject` works to see how it also satis
 Remember when we said that `fluidObject.IFluidFoo` is almost like a cast? Well, the emphasis is now on the word _almost_.
 In fact, `fluidObject` itself need not implement `IFluidFoo`. Rather, it must _provide_ an implementation of `IFluidFoo`.
 This is where delegation comes in - `fluidObject.IFluidFoo` may return `fluidObject` itself under the covers,
-or it may delegate to another object implementing that interface.
+or it may delegate by returning another object implementing that interface.
 
 If you search through the FluidFramework codebase, you'll start to notice that many interfaces come in pairs, such as
-`IFluidLoadable` and `IProvideFluidLoadable`. Let's look to see what `IProvideFluidLoadable` looks like:
+`IFluidLoadable` and `IProvideFluidLoadable`. Let's take a look at `IProvideFluidLoadable`:
 
 ```typescript
 export interface IProvideFluidLoadable {
@@ -63,7 +64,7 @@ export interface IProvideFluidLoadable {
 }
 ```
 
-So if you have an `IProvideFluidLoadable`, you may call `.IFluidLoadable` on it to get an `IFluidLoadable`.
+If you have an `IProvideFluidLoadable`, you may call `.IFluidLoadable` on it to get an `IFluidLoadable`.
 Looks familiar, right? Remember `fluidObject.IFluidFoo` in the example above? Well it turns out that `IFluidObject`
 is simply a special combination of `IProvide` interfaces.
 
@@ -73,16 +74,12 @@ Returning to our `IFluidLoadable` example:
 
 ```typescript
 export interface IFluidLoadable extends IProvideFluidLoadable {
-    // Absolute URL to the component within the document
-    readonly url: string;
-
-    // Handle to the loadable component
-    handle: IComponentHandle;
+    ...
 }
 ```
 
 Let's look at an example that shows how a class may implement the `IProvide` interfaces
-two different ways (`...` omissions for clarity):
+two different ways:
 
 ```typescript
 export abstract class PureDataObject<...>
@@ -97,17 +94,18 @@ export abstract class PureDataObject<...>
 ```
 
 `PureDataObject` implements `IProvideFluidLoadable` via `IFluidLoadable`, and thus simply returns `this` in that case.
-But for `IProvideFluidHandle`, it delegates to a private member.
+But for `IProvideFluidHandle`, it delegates to a private member. It's not the concern of the caller which strategy
+is in play - it simply asks for `fluidObject.IFluidLoadable` or `fluidObject.IFluidHandle` and continues on its merry way.
 
 ## The @fluidframework/aqueduct package
 
 ![Aqueduct](https://openclipart.org/image/400px/5073)
 
-The Aqueduct is a library for building Fluid components within the Fluid Framework. Its goal is to provide a thin layer
-over the existing Fluid Framework interfaces that allows developers to get started quickly with component development.
+The Aqueduct is a library to streamline building on the Fluid Framework. Its goal is to provide a thin layer
+over the existing Fluid Framework interfaces that allows developers to get started quickly.
 
 You don't have to use the Aqueduct. It is an example of an abstraction layer built on top of the base Fluid Framework
-with a focus on making component development easier, and as such you can choose to implement components without it.
+with a focus on making development easier, and as such you can choose to forego it.
 
 Having said that, if you're new to Fluid, we think you'll be more effective with it than without it.
 
