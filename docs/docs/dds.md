@@ -1,17 +1,5 @@
 # Introducing distributed data structures
 
-<!-- The Fluid Framework is, at its most fundamental, a system to manage and synchronize distributed data. Fluid's approach
-to data is different than other data frameworks you may have used in the past, because it embraces distributed computing
-paradigms and provides a _single_
-
-## What's different about Fluid?
-
-Consider a collaborative solution built in a web browser that uses a relational database as a data store. In such a
-solution, when a user loads the application, database queries are issued to pull data from the database and transform it
-into a form that can be used in the browser client side code.
-
-When users edit data,  -->
-
 The primary way that developers interact with the Fluid Framework is through a collection of objects called _distributed
 data structures_. We call them this because they are similar to data structures used commonly when programming, like
 strings, maps/dictionaries, and sequences/lists. The APIs provided by distributed data structures are designed to be
@@ -40,13 +28,11 @@ structures, all of the distributed copies of the DDS will reach an identical sta
 
 The quality of eventual consistency improves performance because local changes can be made optimistically, knowing that
 the runtime will merge the change in the appropriate way eventually. This is a guarantee made by the Fluid runtime.
-Thus, you need not check for changes prior to 'committing' local changes. If there are changes on the server, they will
-be retrieved and merged in seamlessly, and events will be emitted by the data structures, allowing your code to react to
-the changes if needed. And this all happens _very_ quickly.
 
 There are cases, however, where the eventually consistent guarantee is insufficient. In these cases, the consensus-based
 distributed data structures are useful. These data structures defer applying operations until they're acknowledged by
 the server. This can be used to ensures that each client pops a different value from a distributed stack, for example.
+
 
 ## Merge behavior
 
@@ -68,21 +54,70 @@ Distributed data structures should be created using their static `create` method
 const myMap = SharedMap.create(this.runtime, id);
 ```
 
+You must pass in an `IFluidDataStoreRuntime` that the DDS will be managed by. We'll cover the runtime in more detail in
+[a later section](./interfaces-aqueduct.md).
 
 
 ### Storing a DDS within another DDS
 
+Distributed data structures can store primitive values like Numbers and strings, JSON-able JavaScript Objects, or other
+distributed data structures. Primitive values and Objects can be stored directly, but when you store a DDS, you must
+store its _handle_, not the object itself.
+
+For example, consider this code:
+
+```ts
+// Create a new map for our Fluid data
+const myMap = SharedMap.create(this.runtime);
+
+// Create a new counter
+const myCounter = SharedCounter.create(this.runtime);
+
+// Store the handle in the map
+myMap.set("counter", myCounter.handle);
+```
+
+Handles are used in Fluid to enable the runtime to implement features like garbage collection.
+
 ## Events
+
+When a distributed data structure is changed by the Fluid runtime, it raises events. You can listen to these events so
+that you know when data is changed by remote clients and can react appropriately. For example, you may need to
+recalculate a derived value when some data in a DDS changes.
+
+```ts
+myMap.on("valueChanged", () => {
+    setSelectedOption(getSelectedOptionKey());
+    setHistoryItems(getHistoryItems());
+});
+```
+
+Refer to the sections below for more details about the events raised by each DDS.
 
 ## Picking the right data structure
 
-### Granularity of collaboration
+Because distributed data structures can be stored within each other, you can combine DDSs to create collaborative data
+models. The following two questions can help determine the best data structures to use for a collaborative data model.
+First, what is the _granularity of collaboration_ that my scenario needs? And how does the merge behavior of a
+distributed data structure affect this?
 
-::: danger TODO
+In your scenario, what do users need to individually edit? For example, imagine that you are storing data about
+geometric shapes because you're building a collaborative editing tool. You might store the coordinates of the shape, its
+length, width, etc.
 
-This is important because it influences the data model.
+When users edit this data, what pieces of the data can be edited simultaneously? This is an important question to answer
+because it influences how you structure the data in Fluid.
 
-:::
+Let's assume for a moment that all of the data about a shape is stored as a JSON object in a `SharedMap`. Recall that
+the SharedMap uses a last writer wins merge strategy. This means that if two users are editing the data at the same
+time, then the one who made the most recent change will overwrite the changes made by the other user.
+
+This may be perfectly fine for your needs. However, if your scenario requires users to edit individual properties of the
+shape, then the SharedMap LWW merge strategy probably won't give you the behavior you want.
+
+However, you could address this problem by storing individual shape properties in SharedMap keys. Instead of storing a
+JSON object with all the data, you can break it apart and store the length in one SharedMap key, the color in another,
+etc. With this data model, users can change individual properties of the shape without overwriting other users' changes.
 
 ## Key-value data
 
