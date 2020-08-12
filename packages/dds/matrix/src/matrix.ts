@@ -29,12 +29,15 @@ import {
 import { MergeTreeDeltaType, IMergeTreeOp, SegmentGroup } from "@fluidframework/merge-tree";
 import { debug } from "./debug";
 import { MatrixOp } from "./ops";
-import { PermutationVector } from "./permutationvector";
+import { PermutationVector, PermutationSegment } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from "./runtime";
 import { Handle, isHandleValid } from "./handletable";
 import { deserializeBlob, serializeBlob } from "./serialization";
 import { ensureRange } from "./range";
+import { IUndoConsumer } from "./types";
+import { MatrixUndoProvider } from "./undoprovider";
+import { undoRemoveRows, undoRemoveCols } from "./internal";
 
 const enum SnapshotPath {
     rows = "rows",
@@ -90,6 +93,15 @@ export class SharedMatrix<T extends Serializable = Serializable>
             this.onColDelta,
             this.onColHandlesRecycled);
     }
+
+    private undo?: MatrixUndoProvider;
+
+    public openUndo(consumer: IUndoConsumer) {
+        assert.equal(this.undo, undefined);
+        this.undo = new MatrixUndoProvider(consumer, this, this.rows, this.cols);
+    }
+
+    // TODO: closeUndo()?
 
     private get rowHandles() { return this.rows.handleCache; }
     private get colHandles() { return this.cols.handleCache; }
@@ -229,6 +241,13 @@ export class SharedMatrix<T extends Serializable = Serializable>
         rowHandle = this.rows.getAllocatedHandle(row),
         colHandle = this.cols.getAllocatedHandle(col),
     ) {
+        if (this.undo !== undefined) {
+            this.undo.cellSet(
+                rowHandle,
+                colHandle,
+                /* oldvalue: */ this.cells.getCell(rowHandle, colHandle));
+        }
+
         this.cells.setCell(rowHandle, colHandle, value);
         this.annotations.setCell(rowHandle, colHandle, undefined);
 
@@ -336,6 +355,76 @@ export class SharedMatrix<T extends Serializable = Serializable>
         this.submitRowMessage(this.rows.remove(rowStart, count));
     }
 
+    public [undoRemoveRows](segment: PermutationSegment) {
+        // (Re)insert the removed number of columns at the original position.
+        const rowStart = this.rows.getPosition(segment);
+        this.insertRows(rowStart, segment.cachedLength);
+
+        // Transfer handles from the original segment to the newly inserted segment.
+        // (This allows us to use getCell(..) below to read the previous cell values)
+        const inserted = this.rows.getContainingSegment(rowStart).segment as PermutationSegment;
+        segment.transferHandlesTo(inserted);
+
+        // Generate setCell ops for each populated cell in the reinserted cols.
+        let rowHandle = inserted.start;
+        const rowCount = inserted.cachedLength;
+        for (let row = rowStart; row < rowStart + rowCount; row++, rowHandle++) {
+            for (let col = 0; col < this.colCount; col++) {
+                const colHandle = this.colHandles.getHandle(col);
+                const value = this.cells.getCell(rowHandle, colHandle);
+                // eslint-disable-next-line no-null/no-null
+                if (value !== undefined && value !== null) {
+                    this.setCellCore(
+                        row,
+                        col,
+                        value,
+                        rowHandle,
+                        colHandle);
+                }
+            }
+        }
+
+        // Avoid reentrancy by raising change notifications after the op is queued.
+        for (const consumer of this.consumers.values()) {
+            consumer.cellsChanged(rowStart, /* colStart: */ 0, rowCount, this.colCount, this);
+        }
+    }
+
+    public [undoRemoveCols](segment: PermutationSegment) {
+        // (Re)insert the removed number of columns at the original position.
+        const colStart = this.cols.getPosition(segment);
+        this.insertCols(colStart, segment.cachedLength);
+
+        // Transfer handles from the original segment to the newly inserted segment.
+        // (This allows us to use getCell(..) below to read the previous cell values)
+        const inserted = this.cols.getContainingSegment(colStart).segment as PermutationSegment;
+        segment.transferHandlesTo(inserted);
+
+        // Generate setCell ops for each populated cell in the reinserted cols.
+        let colHandle = inserted.start;
+        const colCount = inserted.cachedLength;
+        for (let col = colStart; col < colStart + colCount; col++, colHandle++) {
+            for (let row = 0; row < this.rowCount; row++) {
+                const rowHandle = this.rowHandles.getHandle(row);
+                const value = this.cells.getCell(colHandle, rowHandle);
+                // eslint-disable-next-line no-null/no-null
+                if (value !== undefined && value !== null) {
+                    this.setCellCore(
+                        row,
+                        col,
+                        value,
+                        rowHandle,
+                        colHandle);
+                }
+            }
+        }
+
+        // Avoid reentrancy by raising change notifications after the op is queued.
+        for (const consumer of this.consumers.values()) {
+            consumer.cellsChanged(/* rowStart: */ 0, colStart, this.rowCount, colCount, this);
+        }
+    }
+
     public snapshot(): ITree {
         return {
             entries: [
@@ -437,8 +526,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 // to skip resubmitting this op since it is possible the row/col handle has been recycled
                 // and now refers to a different position than when this op was originally submitted.
                 if (this.isLatestPendingWrite(rowHandle, colHandle, localSeq)) {
-                    const row = this.rows.getPositionForResubmit(rowHandle, localSeq);
-                    const col = this.cols.getPositionForResubmit(colHandle, localSeq);
+                    const row = this.rows.handleToPosition(rowHandle, localSeq);
+                    const col = this.cols.handleToPosition(colHandle, localSeq);
 
                     if (row >= 0 && col >= 0) {
                         this.setCellCore(
