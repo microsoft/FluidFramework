@@ -1,0 +1,1 @@
+{"version":3,"file":"PluginLoader.d.ts","sourceRoot":"","sources":["../../src/plugin/PluginLoader.ts"],"names":[],"mappings":"AAOA,OAAO,EAAE,yBAAyB,EAAE,gCAAgC,EAAE,MAAM,6BAA6B,CAAC;AAE1G,OAAO,EAAE,gBAAgB,EAAE,MAAM,iCAAiC,CAAC;AAOnE,qBAAa,YAAY;IAChB,yBAAyB,EAAE,yBAAyB,GAAG,SAAS,CAAC;IAEjE,IAAI,CACT,gBAAgB,EAAE,gBAAgB,EAClC,aAAa,EAAE,MAAM,gCAAgC,GACpD,IAAI;CAsFR"}

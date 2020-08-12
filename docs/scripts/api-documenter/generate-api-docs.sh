@@ -1,0 +1,1 @@
+bin/api-documenter generate --input-folder ../../assets/doc-models --output-folder ../../content/apis/
