@@ -87,6 +87,12 @@ Even if ops are consistently coming in before the `idleTime` is hit, if `maxOps`
 
 The Summarizer defers to the rest of the runtime to actually generate the summary, upload it to storage, and submit the op. Once complete, it will watch for the summary op to be broadcast, and then keep waiting for the summary ack or nack op to come in from the server in response. It will not try to generate another summary while waiting for the ack/nack op. In most cases, the server should response quickly with the ack/nack. In some bad cases, it may never come or take too long, in this case the client will not wait longer than `maxAckWaitTimeout` before trying to generate and send another summary.
 
+##### Retry in "safe" mode
+When an unexpected error is encountered while summarizing or the server sends a nack, the runtime will retry one more time in "safe" mode. This does two things:
+
+1. It first asks the server what the latest successful summary ID is. It does this to be resilient to issues with its own state tracking. This works around the issue where a summary is actually accepted by the server, but it fails to send an ack op.
+2. It then generates the summary with `fullTree` set to true. This will prevent any subtree reuse optimizations. It will try to generate the entire tree, regardless of whether it has changed since last summary or not.
+
 ### Container Runtime
 The Container Runtime is actually responsible for generating the summary, uploading it to storage, and submitting the op.
 
@@ -103,9 +109,3 @@ Within these layers of summary generation, common functionality is encapsulated 
 They work by tracking the latest successful summary reference sequence number as well as the parent path and this node's path part. The paths are important as they can actually change when a "failure" summary is generated. A "failure" summary is when a Fluid Data Store encounters an error while summarizing, if possible it will instead send a handle pointing to the last successful summary of this subtree and a blob of outstanding ops addressed to this data store since that summary. It does this to isolate the problem to a single data store. When this happens, the summary will have nested subtrees for every consecutive failure, which complicates the base path for child nodes in the tree.
 
 They also decide when the subtrees can be reused by comparing their latest change sequence number with the last successful summary sequence number. Then they use their path tracking to figure out what path to send.
-
-#### Retry in "safe" mode
-When an unexpected error is encountered while summarizing or the server sends a nack, the runtime will retry one more time in "safe" mode. This does two things:
-
-1. It first asks the server what the latest successful summary ID is. It does this to be resilient to issues with its own state tracking. This works around the issue where a summary is actually accepted by the server, but it fails to send an ack op.
-2. It then generates the summary with `fullTree` set to true. This will prevent any subtree reuse optimizations. It will try to generate the entire tree, regardless of whether it has changed since last summary or not.
