@@ -45,31 +45,34 @@ if (foo !== undefined) {
 The magic is in the `fluidObject.IFluidFoo` expression. You may think of that `.` almost like a cast operator
 that returns `undefined` if the cast fails - similar to the C# snippet `fluidObject as IFluidFoo`
 (_Note: `as` DOES NOT work that way in TypeScript!_).
-In the next section on delegation you'll see this isn't _quite_ right, but it's a good mental model to start with.
 
 ## Delegation and the IProvide pattern
 
-This illustrates the delegation pattern, in addition to the feature detection mechanism. Note that `component` _is_ not an `IComponentFooBar`,
-but rather it _has_ one. This delegation is streamlined with the "IProvide" pattern, where a corresponding `IProvideComponent*` interface
-is defined for each `IComponent*` interface. These interfaces specify a property that returns the appropriate `IComponent*` interface.
+Let's dig a little deeper into how `IFluidObject` works to see how it also satisfies our design principal around delegation.
+Remember when we said that `fluidObject.IFluidFoo` is almost like a cast? Well, the emphasis is now on the word _almost_.
+In fact, `fluidObject` itself need not implement `IFluidFoo`. Rather, it must _provide_ an implementation of `IFluidFoo`.
+This is where delegation comes in - `fluidObject.IFluidFoo` may return `fluidObject` itself under the covers,
+or it may delegate to another object implementing that interface.
 
-For example, consider the `IProvideComponentLoadable` interface:
+If you search through the FluidFramework codebase, you'll start to notice that many interfaces come in pairs, such as
+`IFluidLoadable` and `IProvideFluidLoadable`. Let's look to see what `IProvideFluidLoadable` looks like:
 
 ```typescript
-export interface IProvideComponentLoadable {
-    readonly IComponentLoadable: IComponentLoadable;
+export interface IProvideFluidLoadable {
+    readonly IFluidLoadable: IFluidLoadable;
 }
 ```
 
-When implementing only the `IProvideComponentLoadable` interface, the component must be able to return
-an `IComponentLoadable` object, but it does not need to implement that interface itself and can instead delegate to a
-different object. That said, `IComponentLoadable` does extend `IProvideComponentLoadable`:
+So if you have an `IProvideFluidLoadable`, you may call `.IFluidLoadable` on it to get an `IFluidLoadable`.
+Looks familiar, right? Remember `fluidObject.IFluidFoo` in the example above? Well it turns out that `IFluidObject`
+is simply a special combination of `IProvide` interfaces.
+
+As mentioned above, the implementation of `.IFluidLoadable` may actually return the object itself.
+In fact this is quite common, and is facilitated by a convention where `IFluidFoo extends IProvideFluidFoo`.
+Returning to our `IFluidLoadable` example:
 
 ```typescript
-/**
- * A shared component has a URL from which it can be referenced
- */
-export interface IComponentLoadable extends IProvideComponentLoadable {
+export interface IFluidLoadable extends IProvideFluidLoadable {
     // Absolute URL to the component within the document
     readonly url: string;
 
@@ -78,12 +81,27 @@ export interface IComponentLoadable extends IProvideComponentLoadable {
 }
 ```
 
-The inheritance relationship seen here between `IProvideComponentLoadable` and `IComponentLoadable`
-is common, as is the implementation of `IProvideComponentLoadable.IComponentLoadable` which simply returns `this`.
+Let's look at an example that shows how a class may implement the `IProvide` interfaces
+two different ways (`...` omissions for clarity):
+
+```typescript
+export abstract class PureDataObject<...>
+    extends ...
+    implements IFluidLoadable, IFluidRouter, IProvideFluidHandle
+{
+    ...
+    private readonly innerHandle: IFluidHandle<this>;
+    ...
+    public get IFluidLoadable() { return this; }
+    public get IFluidHandle() { return this.innerHandle; }
+```
+
+`PureDataObject` implements `IProvideFluidLoadable` via `IFluidLoadable`, and thus simply returns `this` in that case.
+But for `IProvideFluidHandle`, it delegates to a private member.
 
 ## Fluid component interfaces
 
-On top of this simple `IComponent`-based model, Fluid defines a few interfaces, like `IComponentLoadable`, for use
+On top of this simple `IComponent`-based model, Fluid defines a few interfaces, like `IFluidLoadable`, for use
 within the framework. But the full power of the model comes as we explore conventions around advanced scenarios like
 cross-component communication, shared commanding UX, copy/paste, etc.
 
