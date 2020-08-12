@@ -155,6 +155,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             const queuedMessages: ISequencedDocumentMessage[] = [];
             const queuedContents: IContentMessage[] = [];
             const queuedSignals: ISignalMessage[] = [];
+
             const earlyOpHandler = (docId: string, msgs: ISequencedDocumentMessage[]) => {
                 this.logger.info(`Queued early ops: ${msgs.length}`);
                 queuedMessages.push(...msgs);
