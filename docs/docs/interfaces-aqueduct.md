@@ -1,39 +1,21 @@
-# Fluid objects and interfaces
+# DataObjects and interfaces
 
 In the previous section we introduced distributed data structures and demonstrated how to use them. Fluid provides a way
 for us to combine those distributed data structures and our own code (business logic) into a modular, reusable
 piece. This in turn enables us to modularize pieces of our application -- data included -- and re-use them or embed them
 elsewhere.
 
-The key things to understand are:
-
----
-
-[[toc]]
-
----
-
-# Encapsulating data with FluidObjects
-
-## The Aqueduct package
+## The @fluidframework/aqueduct package
 
 ![Aqueduct](https://publicdomainvectors.org/photos/johnny-automatic-Roman-aqueducts.png)
 
-The Aqueduct is a library for building Fluid components within the Fluid Framework. Its goal is to provide a thin layer
-over the existing Fluid Framework interfaces that allows developers to get started quickly with component development.
+The Aqueduct is a library designed to provide a thin layer over the existing Fluid Framework interfaces that allows
+developers to get started quickly with Fluid development.
 
 You don't have to use the Aqueduct. It is an example of an abstraction layer built on top of the base Fluid Framework
-with a focus on making component development easier, and as such you can choose to implement components without it.
+with a focus on making Fluid development easier, and as such you can choose to use Fluid without it.
 
 Having said that, if you're new to Fluid, we think you'll be more effective with it than without it.
-
----
-
-**Contents:**
-
-[[toc]]
-
----
 
 
 ## A note about Containers
@@ -49,13 +31,17 @@ Coming soon
 ```ts
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 
-class MyComponent extends DataObject implements IComponentHTMLView { }
+class MyDataObject extends DataObject implements IFluidHTMLView { }
 ```
 
-[DataObject][] is a base component class that is [primed](https://en.wiktionary.org/wiki/primed#Adjective) with a
-[SharedDirectory][] and task manager. It ensures that both are created and ready for you to access within your component.
+
+[DataObject][] is a base class that contains a [SharedDirectory][] and task manager. It ensures that both are created
+and ready for you to access within your component.
 
 ### The `root` SharedDirectory
+
+DataObject has a `root` property that is a SharedDirectory. Typically you will create your distributed data structures
+during the initialization of the DataObject, as described below.
 
 ### DataObject lifecycle
 
@@ -64,32 +50,32 @@ structures:
 
 ```ts
 /**
- * Called the first time the component is initialized.
+ * Called the first time -- and *only* the first time -- the DataObject is initialized.
  */
-protected async componentInitializingFirstTime(): Promise<void> { }
+protected async initializingFirstTime(): Promise<void> { }
 
 /**
-  * Called every time *except* first time the component is initialized.
+  * Called every time *except* the first time the DataObject is initialized.
   */
-protected async componentInitializingFromExisting(): Promise<void> { }
+protected async initializingFromExisting(): Promise<void> { }
 
 /**
-  * Called every time the component is initialized after create or existing.
+  * Called every time the DataObject is initialized after create or when loaded from existing.
   */
-protected async componentHasInitialized(): Promise<void> { }
+protected async hasInitialized(): Promise<void> { }
 ```
 
-#### componentInitializingFirstTime
+#### initializingFirstTime
 
-ComponentInitializingFirstTime is called only once. It is executed only by the _first_ client to open the component and
+`initializingFirstTime` is called only once. It is executed only by the _first_ client to open the component and
 all work will resolve before the component is presented to any user. You should overload this method to perform
 component setup, which can include creating distributed data structures and populating them with initial data.
 The `root` SharedDirectory can be used in this method.
 
-The following is an example from the Badge component.
+The following is an example from the Badge DataObject.
 
 ```ts{5,10,19}
-protected async componentInitializingFirstTime() {
+protected async initializingFirstTime() {
     // Create a cell to represent the Badge's current state
     const current = SharedCell.create(this.runtime);
     current.set(this.defaultOptions[0]);
@@ -117,20 +103,24 @@ SharedDirectory.
 ::: tip See also
 
 - [Creating and storing distributed data structures](./dds.md#creating-and-storing-distributed-data-structures)
-- [How to write a visual component](./visual-component.md)
 
 :::
 
 #### componentInitializingFromExisting
 
-::: danger TODO
+The `componentInitializingFromExisting` method is called each time the DataObject is loaded _except_ the first time it
+is created. Note that you _do not_ need to overload this method in order to load data in your distributed data
+structures. Data stored within DDSs is automatically loaded into the DDS during initialization; there is no separate
+load step that needs to be accounted for.
 
-- Data in DDS is loaded automatically
-- Can use this to adjust schema over time (?)
+In simple scenarios, you probably won't need to overload this method, since data is automatically loaded, and you'll use
+`initializingFirstTime` to create your data model initially. However, as your data model changes, this method provides
+an entrypoint for you to run upgrade or schema migration code as needed.
 
-:::
+#### hasInitialized
 
-#### On every load
+The `hasInitialized` method is called _each time_ the DataObject is loaded.
+
 
 ::: danger TODO
 
@@ -233,19 +223,6 @@ We are experimenting with a variety of additional interfaces for specific purpos
 These interfaces will be optional in many contexts but could be required by certain applications. For example, an
 application may refuse to load components that don't implement certain interfaces. This could include supporting
 capabilities such as search, cursoring, clipboard support, and much more.
-
-## The @fluidframework/aqueduct package
-
-![Aqueduct](https://openclipart.org/image/400px/5073)
-
-The Aqueduct is a library for building Fluid components within the Fluid Framework. Its goal is to provide a thin layer
-over the existing Fluid Framework interfaces that allows developers to get started quickly with component development.
-
-You don't have to use the Aqueduct. It is an example of an abstraction layer built on top of the base Fluid Framework
-with a focus on making component development easier, and as such you can choose to implement components without it.
-
-Having said that, if you're new to Fluid, we think you'll be more effective with it than without it.
-
 
 
 !!!include(links.md)!!!
