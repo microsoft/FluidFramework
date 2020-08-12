@@ -13,8 +13,8 @@ import { Spaces } from "../src/fluid-object";
 // if one was not provided
 let createNew = false;
 if (window.location.hash.length === 0) {
-  createNew = true;
-  window.location.hash = Date.now().toString();
+    createNew = true;
+    window.location.hash = Date.now().toString();
 }
 const documentId = window.location.hash.substring(1);
 
@@ -23,41 +23,41 @@ const documentId = window.location.hash.substring(1);
  * requires making async calls.
  */
 async function createContainerAndRenderInElement(element: HTMLElement, createNewFlag: boolean) {
-  // The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
-  // to store ops.
-  const container = await getSessionStorageContainer(documentId, SpacesContainer, createNewFlag);
+    // The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
+    // to store ops.
+    const container = await getSessionStorageContainer(documentId, SpacesContainer, createNewFlag);
 
-  // Get the Default Object from the Container
-  const defaultObject = await getDefaultObjectFromContainer<Spaces>(container);
+    // Get the Default Object from the Container
+    const defaultObject = await getDefaultObjectFromContainer<Spaces>(container);
 
-  // For now we will just reach into the FluidObject to render it
-  defaultObject.render(element);
+    // For now we will just reach into the FluidObject to render it
+    defaultObject.render(element);
 
-  // Setting "fluidStarted" is just for our test automation
-  // eslint-disable-next-line dot-notation
-  window["fluidStarted"] = true;
+    // Setting "fluidStarted" is just for our test automation
+    // eslint-disable-next-line dot-notation
+    window["fluidStarted"] = true;
 }
 
 /**
  * For local testing we have two div's that we are rendering into independently.
  */
 async function setup() {
-  const leftElement = document.getElementById("sbs-left");
-  if (leftElement === null) {
-    throw new Error("sbs-left does not exist");
-  }
-  await createContainerAndRenderInElement(leftElement, createNew);
-  const rightElement = document.getElementById("sbs-right");
-  if (rightElement === null) {
-    throw new Error("sbs-right does not exist");
-  }
-  // The second time we don't need to createNew because we know a Container exists.
-  await createContainerAndRenderInElement(rightElement, false);
+    const leftElement = document.getElementById("sbs-left");
+    if (leftElement === null) {
+        throw new Error("sbs-left does not exist");
+    }
+    await createContainerAndRenderInElement(leftElement, createNew);
+    const rightElement = document.getElementById("sbs-right");
+    if (rightElement === null) {
+        throw new Error("sbs-right does not exist");
+    }
+    // The second time we don't need to createNew because we know a Container exists.
+    await createContainerAndRenderInElement(rightElement, false);
 }
 
 setup().catch((e) => {
-  console.error(e);
-  console.log(
-    "%cThere were issues setting up and starting the in memory FLuid Server",
-    "font-size:30px");
+    console.error(e);
+    console.log(
+        "%cThere were issues setting up and starting the in memory FLuid Server",
+        "font-size:30px");
 });
