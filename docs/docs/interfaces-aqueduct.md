@@ -2,12 +2,12 @@
 
 In the previous section we introduced distributed data structures and demonstrated how to use them. Now let's discuss
 how to leverage those distributed data structures from our own code (business logic) to create modular, reusable
-pieces. These pieces fall into the category of the `fluid object`s discussed in the last section,
+pieces. These pieces fall into the category of the `fluid objects` discussed in the last section,
 along with DDSes themselves.
 
 One of the primary design principles in the Fluid Framework is to support feature detection and delegation
-patterns between `fluid object`s.
-**Feature detection** is a technique to dynamically determine the capabilities of another component, while
+patterns between `fluid objects`.
+**Feature detection** is a technique to dynamically determine the capabilities of some object, while
 **delegation** means that the implementation of an interface can be delegated to another object.
 
 ---
@@ -18,41 +18,36 @@ patterns between `fluid object`s.
 
 ## Feature Detection via IFluidObject
 
-In the course of writing code to manipulate DDSes and interact with other `fluid object`s, you will find yourself dealing
+In the course of writing code to manipulate DDSes and interact with other `fluid objects`, you will find yourself dealing
 with Javascript objects you know almost nothing about. To interact with such an object, you'll use Fluid's
 feature detection mechanism, which centers around a special type called `IFluidObject`.
 
 In order to detect features supported by an unknown object, you cast it `IFluidObject` and then query it for a specific
 interface that it may support. The interfaces exposed via `IFluidObject` include many core Fluid interfaces,
-such as `IFluidHandle` or `IFluidLoadable`, and this list can also be augmented using
+such as `IFluidHandle` or `IFluidLoadable`, and this list can be augmented using
 [TypeScript's interface merging capabilities](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#merging-interfaces).
 This enables any Fluid code to "register" an interface as queryable from other Fluid code that imports it.
-The specifics of how these interfaces are declared is not relevant until you want to define your own interfaces.
-We'll cover that in a later section.
+The specifics of how these interfaces are declared is not relevant until you want to define your own interfaces,
+which we'll cover in a later section.
 
-## Delegation and the IProvide pattern
-
-The Fluid component model supports a delegation and feature detection mechanism. As is typical in JavaScript, a feature
-detection pattern can be used to determine what capabilities are exposed by a component. The `IComponent` interface
-serves as a Fluid-specific form of TypeScript's [`unknown`](https://www.typescriptlang.org/docs/handbook/basic-types.html#unknown), with built-in [typeguards](https://www.typescriptlang.org/docs/handbook/advanced-types.html#type-guards-and-differentiating-types) so developers can cast objects to it and then probe for
-implemented component interfaces.
-
-For example, if you need to determine the capabilities that a component exposes, you first cast the object as an
-`IComponent`, and then access the property on the `IComponent` that matches the interface you are testing for. For
-example:
+Let's look at an example of feature detection using `IFluidObject`:
 
 ```typescript
-let component = anyObject as IComponent;
-// We call bar on the component if it supports it.
-const fooBar = component.IComponentFooBar;
-if (fooBar !== undefined) {
-    await fooBar.bar();
+let fluidObject = anyObject as IFluidObject;
+// Query the object to see if it supports IFluidFoo
+const foo: IFluidFoo | undefined = fluidObject.IFluidFoo;
+if (foo !== undefined) {
+    // It does! Now we have an IFluidFoo and can safely call member function bar()
+    await foo.bar();
 }
 ```
 
-In the example above, the code is checking to see if the component can provide an `IComponentFooBar`. If it does,
-an object implementing `IComponentFooBar` object will be returned and `bar()` can be called on it.
-If the component does not support `IComponentFooBar`, then `undefined` will be returned.
+The magic is in the `fluidObject.IFluidFoo` expression. You may think of that `.` almost like a cast operator
+that returns `undefined` if the cast fails - similar to the C# snippet `fluidObject as IFluidFoo`
+(_Note: `as` DOES NOT work that way in TypeScript!_).
+In the next section on delegation you'll see this isn't _quite_ right, but it's a good mental model to start with.
+
+## Delegation and the IProvide pattern
 
 This illustrates the delegation pattern, in addition to the feature detection mechanism. Note that `component` _is_ not an `IComponentFooBar`,
 but rather it _has_ one. This delegation is streamlined with the "IProvide" pattern, where a corresponding `IProvideComponent*` interface
