@@ -257,12 +257,22 @@ export class ScribeLambda extends SequencedLambda {
     private processFromPending(target: number) {
         while (this.pendingMessages.length > 0 && this.pendingMessages.peekFront().sequenceNumber <= target) {
             const message = this.pendingMessages.shift();
-            if (message.contents && typeof message.contents === "string" && message.type !== MessageType.ClientLeave) {
-                const clonedMessage = _.cloneDeep(message);
-                clonedMessage.contents = JSON.parse(clonedMessage.contents);
-                this.protocolHandler.processMessage(clonedMessage, false);
-            } else {
-                this.protocolHandler.processMessage(message, false);
+            try {
+                if (message.contents &&
+                    typeof message.contents === "string" &&
+                    message.type !== MessageType.ClientLeave) {
+                    const clonedMessage = _.cloneDeep(message);
+                    clonedMessage.contents = JSON.parse(clonedMessage.contents);
+                    this.protocolHandler.processMessage(clonedMessage, false);
+                } else {
+                    this.protocolHandler.processMessage(message, false);
+                }
+            } catch (error) {
+                this.context.log.error(`Protocol error ${error}`,
+                {
+                    documentId: this.documentId,
+                    tenantId: this.tenantId,
+                });
             }
         }
     }

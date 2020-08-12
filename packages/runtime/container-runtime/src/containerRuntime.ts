@@ -463,7 +463,7 @@ export class ContainerRuntime extends EventEmitter
         registryEntries: NamedFluidDataStoreRegistryEntries,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions?: IContainerRuntimeOptions,
-        containerScope: IFluidObject & IFluidObject = context.scope,
+        containerScope: IFluidObject = context.scope,
     ): Promise<ContainerRuntime> {
         // Back-compat: <= 0.18 loader
         if (context.deltaManager.lastSequenceNumber === undefined) {
@@ -569,7 +569,7 @@ export class ContainerRuntime extends EventEmitter
         return this._flushMode;
     }
 
-    public get scope(): IFluidObject & IFluidObject {
+    public get scope(): IFluidObject {
         return this.containerScope;
     }
 
@@ -673,7 +673,7 @@ export class ContainerRuntime extends EventEmitter
             generateSummaries: true,
             enableWorker: false,
         },
-        private readonly containerScope: IFluidObject & IFluidObject,
+        private readonly containerScope: IFluidObject,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
     ) {
         super();
@@ -705,28 +705,28 @@ export class ContainerRuntime extends EventEmitter
         const enableSummarizerNode = this.runtimeOptions.enableSummarizerNode
             ?? (typeof localStorage === "object" && localStorage?.fluidDisableSummarizerNode ? false : true);
         const summarizerNode = SummarizerNode.createRoot(
-                this.logger,
-                // Summarize function to call when summarize is called
-                async (fullTree: boolean) => this.summarizeInternal(fullTree),
-                // Latest change sequence number, no changes since summary applied yet
-                loadedFromSequenceNumber,
-                // Summary reference sequence number, undefined if no summary yet
-                context.baseSnapshot ? loadedFromSequenceNumber : undefined,
-                // Disable calls to summarize if not summarizer client, or if runtimeOption is disabled
-                !isSummarizerClient || !enableSummarizerNode,
-                {
-                    // Must set to false to prevent sending summary handle which would be pointing to
-                    // a summary with an older protocol state.
-                    canReuseHandle: false,
-                    // Must set to true to throw on any component failure that was too severe to be handled.
-                    // We also are not decoding the base summaries at the root.
-                    throwOnFailure: true,
-                },
-            );
+            this.logger,
+            // Summarize function to call when summarize is called
+            async (fullTree: boolean) => this.summarizeInternal(fullTree),
+            // Latest change sequence number, no changes since summary applied yet
+            loadedFromSequenceNumber,
+            // Summary reference sequence number, undefined if no summary yet
+            context.baseSnapshot ? loadedFromSequenceNumber : undefined,
+            // Disable calls to summarize if not summarizer client, or if runtimeOption is disabled
+            !isSummarizerClient || !enableSummarizerNode,
+            {
+                // Must set to false to prevent sending summary handle which would be pointing to
+                // a summary with an older protocol state.
+                canReuseHandle: false,
+                // Must set to true to throw on any component failure that was too severe to be handled.
+                // We also are not decoding the base summaries at the root.
+                throwOnFailure: true,
+            },
+        );
 
         const getCreateChildFn = (id: string, createParam: CreateChildSummarizerNodeParam) =>
             (summarizeInternal: SummarizeInternalFn) =>
-            summarizerNode.createChild(summarizeInternal, id, createParam);
+                summarizerNode.createChild(summarizeInternal, id, createParam);
         if (enableSummarizerNode) {
             this.summarizerNode = {
                 enabled: true,
@@ -742,8 +742,8 @@ export class ContainerRuntime extends EventEmitter
             };
         }
 
-         // Extract stores stored inside the snapshot
-         const fluidDataStores = new Map<string, ISnapshotTree | string>();
+        // Extract stores stored inside the snapshot
+        const fluidDataStores = new Map<string, ISnapshotTree | string>();
 
         if (context.baseSnapshot) {
             const baseSnapshot = context.baseSnapshot;
