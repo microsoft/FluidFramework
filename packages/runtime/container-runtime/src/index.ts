@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./blobManager";
 export * from "./containerRuntime";
 export * from "./deltaScheduler";
 export * from "./dataStoreRegistry";

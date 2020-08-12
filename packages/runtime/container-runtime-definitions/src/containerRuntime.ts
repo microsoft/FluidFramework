@@ -3,20 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { Buffer } from "buffer";
 import {
-    IFluidObject,
-    IFluidRouter,
-    IRequest,
-    IResponse,
-} from "@fluidframework/core-interfaces";
-import {
-    IAudience,
-    IBlobManager,
-    IDeltaManager,
-    ContainerWarning,
-    ILoader,
     AttachState,
+    ContainerWarning,
+    IAudience,
+    IDeltaManager,
+    ILoader,
 } from "@fluidframework/container-definitions";
+import { IFluidHandle, IFluidObject, IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
@@ -61,7 +56,6 @@ export interface IContainerRuntime extends
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
     readonly branch: string;
     readonly loader: ILoader;
@@ -148,4 +142,6 @@ export interface IContainerRuntime extends
      * @param request - request to resolve
      */
     resolveHandle(request: IRequest): Promise<IResponse>;
+
+    uploadBlob(blob: Buffer): Promise<IFluidHandle<string>>;
 }

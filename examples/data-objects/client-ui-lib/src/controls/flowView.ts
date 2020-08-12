@@ -23,7 +23,6 @@ import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@flu
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-// import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
 import { Cursor, IRange } from "./cursor";
@@ -2972,45 +2971,6 @@ export interface IListReferenceDoc extends IReferenceDoc {
     selectionIndex: number;
 }
 
-/*
-export function makeBlobRef(blob: IGenericBlob, cb: (irdoc: IReferenceDoc) => void) {
-    switch (blob.type) {
-        case "image": {
-            const image = document.createElement("img");
-            const irdocType = <IReferenceDocType>{
-                name: "image",
-            };
-            const irdoc = <IReferenceDoc>{
-                referenceDocId: blob.id,
-                type: irdocType,
-                url: blob.url,
-            };
-            image.src = blob.url;
-
-            image.onload = () => {
-                irdoc.layout = { ar: image.naturalHeight / image.naturalWidth, dx: 0, dy: 0 };
-                cb(irdoc);
-            };
-            break;
-        }
-        case "video": {
-            const video = document.createElement("video");
-            const irdocType = <IReferenceDocType>{
-                name: "video",
-            };
-            const irdoc = <IReferenceDoc>{
-                referenceDocId: blob.id,
-                type: irdocType,
-                url: blob.url,
-            };
-            video.src = blob.url;
-            cb(irdoc);
-            video.load();
-        }
-    }
-}
-*/
-
 export interface IFlowViewModes {
     showBookmarks?: boolean;
     showComments?: boolean;
@@ -3172,14 +3132,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         this.cursor = new FlowCursor(this.viewportDiv);
         this.setViewOption(this.options);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        /*
-        blobUploadHandler(
-            element,
-            this.collabDocument,
-            (incl: IGenericBlob) => this.insertBlobInternal(incl),
-        );
-        */
 
         // HACK: Expose "insertText" via window to Shared Browser Extension
         //       for 2018/Oct demo.
@@ -4639,21 +4591,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.videoPlayers = videoPlayers.IFluidObjectCollection;
         this.images = images.IFluidObjectCollection;
     }
-
-    /*
-    private insertBlobInternal(blob: IGenericBlob) {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.collabDocument.getBlob(blob.id)
-            .then((finalBlob) => {
-                makeBlobRef(finalBlob, (irdoc) => {
-                    const refProps = {
-                        [Paragraph.referenceProperty]: irdoc,
-                    };
-                    this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, refProps);
-                });
-            });
-    }
-    */
 
     public copy() {
         const sel = this.cursor.getSelection();

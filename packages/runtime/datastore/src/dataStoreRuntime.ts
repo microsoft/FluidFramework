@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IBlobManager,
     IDeltaManager,
     ContainerWarning,
     ILoader,
@@ -92,7 +91,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             context.parentBranch,
             context.existing,
             context.options,
-            context.blobManager,
             context.deltaManager,
             context.getQuorum(),
             context.getAudience(),
@@ -178,7 +176,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         public readonly parentBranch: string | null,
         public existing: boolean,
         public readonly options: any,
-        private readonly blobManager: IBlobManager,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly quorum: IQuorum,
         private readonly audience: IAudience,
@@ -411,17 +408,10 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         return this.snapshotFn(message);
     }
 
-    public async uploadBlob(file: Buffer): Promise<IFluidHandle> {
+    public async uploadBlob(file: Buffer): Promise<IFluidHandle<string>> {
         this.verifyNotClosed();
 
-        return this.blobManager.createBlob(file);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getBlob(blobId: string): Promise<IFluidHandle> {
-        this.verifyNotClosed();
-
-        return this.blobManager.getBlob(blobId);
+        return this.dataStoreContext.uploadBlob(file);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {

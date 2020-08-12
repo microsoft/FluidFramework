@@ -14,10 +14,10 @@ import {
     IFluidSerializer,
     IRequest,
     IResponse,
+    IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IBlobManager,
     IFluidTokenProvider,
     IContainerContext,
     IDeltaManager,
@@ -530,11 +530,6 @@ export class ContainerRuntime extends EventEmitter
         return this.context.clientDetails;
     }
 
-    // public get blobManager(): IBlobManager {
-    //     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    //     return this.context.blobManager!;
-    // }
-
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this.context.deltaManager;
     }
@@ -652,7 +647,7 @@ export class ContainerRuntime extends EventEmitter
     private readonly summarizer: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
-    public readonly blobManager: IBlobManager;
+    private readonly blobManager: BlobManager;
     private readonly pendingStateManager: PendingStateManager;
 
     // Local copy of incomplete received chunks.
@@ -773,7 +768,7 @@ export class ContainerRuntime extends EventEmitter
             this.storage,
             (blobId) => this.submit(ContainerMessageType.BlobAttach, blobId),
         );
-        this.blobManager.loadBlobHandles(blobs);
+        this.blobManager.setAttached(...blobs);
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
@@ -922,6 +917,7 @@ export class ContainerRuntime extends EventEmitter
         const requestParser = new RequestParser(request);
 
         if (requestParser.pathParts.length > 0 && requestParser.pathParts[0] === "blobs") {
+            assert(requestParser.pathParts.length === 2 && !requestParser.query);
             const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
             if (handle) {
                 return {
@@ -997,6 +993,8 @@ export class ContainerRuntime extends EventEmitter
             root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
         }
 
+        root.entries.push(new BlobTreeEntry(blobsBlobName, this.blobManager.snapshot()));
+
         return root;
     }
 
@@ -1005,7 +1003,7 @@ export class ContainerRuntime extends EventEmitter
             const content = JSON.stringify([...this.chunkMap]);
             summaryTreeBuilder.addBlob(chunksBlobName, content);
         }
-        summaryTreeBuilder.addBlob(blobsBlobName, JSON.stringify(this.blobManager.getBlobIds()));
+        summaryTreeBuilder.addBlob(blobsBlobName, this.blobManager.snapshot());
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {
@@ -1756,6 +1754,10 @@ export class ContainerRuntime extends EventEmitter
             contents,
         };
         this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
+    }
+
+    public async uploadBlob(blob: Buffer): Promise<IFluidHandle<string>> {
+        return this.blobManager.createBlob(blob);
     }
 
     private submit(

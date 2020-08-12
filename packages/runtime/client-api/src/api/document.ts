@@ -194,10 +194,6 @@ export class Document extends EventEmitter {
     public async uploadBlob(file: Buffer): Promise<any> {
         return this.runtime.uploadBlob(file);
     }
-
-    public async getBlob(blobId: string): Promise<any> {
-        return this.runtime.getBlob(blobId);
-    }
 }
 
 async function initializeChaincode(container: Container, pkg: IFluidCodeDetails): Promise<void> {

@@ -774,17 +774,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private snapshotBase(): ITree {
         const entries: ITreeEntry[] = [];
 
-        const blobMetaData = (this.context as any).runtime.blobManager.getBlobIds();
-        entries.push({
-            mode: FileMode.File,
-            path: ".blobs",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: JSON.stringify(blobMetaData),
-                encoding: "utf-8",
-            },
-        });
-
         const quorumSnapshot = this.protocolHandler!.quorum.snapshot();
         entries.push({
             mode: FileMode.File,

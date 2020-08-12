@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import {
     IFluidHandle,
     IFluidHandleContext,
@@ -11,7 +10,6 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
-import { IBlobManager } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
@@ -34,7 +32,6 @@ export class BlobHandle implements IFluidHandle {
     public readonly absolutePath: string;
 
     constructor(
-        public readonly blobId: string,
         public readonly path: string,
         public readonly routeContext: IFluidHandleContext,
         public get: () => Promise<any>,
@@ -52,8 +49,7 @@ export class BlobHandle implements IFluidHandle {
     }
 }
 
-export class BlobManager implements IBlobManager {
-    private readonly blobHandles: Map<string, BlobHandle>;
+export class BlobManager {
     private readonly attachedBlobs: Set<string>;
 
     constructor(
@@ -61,65 +57,36 @@ export class BlobManager implements IBlobManager {
         private readonly storage: IDocumentStorageService,
         private readonly sendBlobAttachOp: (blobId: string) => void,
     ) {
-        this.blobHandles = new Map<string, BlobHandle>();
         this.attachedBlobs = new Set<string>();
     }
 
-    public loadBlobHandles(blobIds: string[]) {
-        for (const blobId of blobIds) {
-            this.blobHandles.set(blobId, new BlobHandle(
-                blobId,
-                `blobs/${blobId}`,
-                this.routeContext,
-                async () => this.storage.read(blobId),
-                () => null,
-            ));
-            this.attachedBlobs.add(blobId);
-        }
+    public setAttached(...blobIds: string[]) {
+        blobIds.map((blobId) => this.attachedBlobs.add(blobId));
     }
 
-    public setAttached(blobId: string) {
-        assert(!this.attachedBlobs.has(blobId));
-        if (!this.blobHandles.has(blobId)) {
-            this.blobHandles.set(blobId, new BlobHandle(
-                blobId,
-                `blobs/${blobId}`,
-                this.routeContext,
-                async () => this.storage.read(blobId),
-                () => null,
-            ));
-        }
-        this.attachedBlobs.add(blobId);
-    }
-
-    public getBlobIds(): string[] {
-        return [...this.attachedBlobs];
+    public snapshot(): string {
+        return JSON.stringify([...this.attachedBlobs]);
     }
 
     public async getBlob(blobId: string): Promise<BlobHandle> {
-        const handle = this.blobHandles.get(blobId);
-        if (handle !== undefined) {
-            return handle;
-        }
-        return Promise.reject("Blob does not exist");
+        return new BlobHandle(
+            `blobs/${blobId}`,
+            this.routeContext,
+            async () => this.storage.read(blobId),
+            () => null,
+        );
     }
 
     public async createBlob(blob: Buffer): Promise<BlobHandle> {
         const response = await this.storage.createBlob(blob);
 
         const handle = new BlobHandle(
-            response.id,
             `blobs/${response.id}`,
             this.routeContext,
             async () => this.storage.read(response.id),
             () => this.sendBlobAttachOp(response.id),
         );
 
-        this.blobHandles.set(response.id, handle);
         return handle;
-    }
-
-    public async removeBlob(blobId: string): Promise<void> {
-        return Promise.reject("not implemented");
     }
 }

@@ -8,7 +8,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { BlobHandle, ContainerMessageType } from "@fluidframework/container-runtime";
+import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -70,9 +70,9 @@ describe("blobs", () => {
         await blobOpP;
     });
 
-    it("blobManager loads from snapshot", async function() {
+    it("can get remote attached blob", async function() {
         const testString = "this is a test string";
-        const testString2 = "this is another test string";
+        const testKey = "a blob";
         const container1 = await createContainer();
 
         const summaryP = new Promise((res) => container1.on("op", (op) => {
@@ -83,22 +83,14 @@ describe("blobs", () => {
 
         const component1 = await requestFluidObject<TestComponent>(container1, "default");
 
-        const blob = await component1._runtime.uploadBlob(Buffer.from(testString)) as BlobHandle;
-        component1._root.set("my blob", blob);
-
-        const blob2 = await component1._runtime.uploadBlob(Buffer.from(testString2)) as BlobHandle;
-        component1._root.set("my other blob", blob2);
+        const blob = await component1._runtime.uploadBlob(Buffer.from(testString));
+        component1._root.set(testKey, blob);
 
         await summaryP;
 
         const container2 = await createContainer();
         const component2 = await requestFluidObject<TestComponent>(container2, "default");
-        const blob3 = await component2._runtime.getBlob(blob.blobId) as BlobHandle;
-        assert.strictEqual(blob.blobId, blob3.blobId);
-        assert.strictEqual(await blob.get(), await blob3.get());
-        assert.strictEqual(fromBase64ToUtf8(await blob3.get()), testString);
 
-        assert.strictEqual(fromBase64ToUtf8(await component2._root.get("my blob").get()), testString);
-        assert.strictEqual(fromBase64ToUtf8(await component2._root.get("my other blob").get()), testString2);
+        assert.strictEqual(fromBase64ToUtf8(await component2._root.get(testKey).get()), testString);
     });
 });

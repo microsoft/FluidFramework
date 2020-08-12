@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Buffer } from "buffer";
 import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
@@ -10,10 +11,10 @@ import {
     IFluidRouter,
     IProvideFluidHandleContext,
     IProvideFluidSerializer,
+    IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IBlobManager,
     IDeltaManager,
     ContainerWarning,
     ILoader,
@@ -246,7 +247,6 @@ export interface IFluidDataStoreContext extends EventEmitter {
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
@@ -349,4 +349,6 @@ export interface IFluidDataStoreContext extends EventEmitter {
      * otherwise the original subpackage
      */
     composeSubpackagePath(subpackage: string): Promise<string[]>;
+
+    uploadBlob(blob: Buffer): Promise<IFluidHandle<string>>
 }

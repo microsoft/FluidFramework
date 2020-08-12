@@ -102,7 +102,7 @@ export interface IFluidDataStoreRuntime extends
      * Api to upload a blob of data.
      * @param file - blob to be uploaded.
      */
-    uploadBlob(file: Buffer): Promise<IFluidHandle>;
+    uploadBlob(file: Buffer): Promise<IFluidHandle<string>>;
 
     /**
      * Submits the signal to be sent to other clients.
@@ -110,12 +110,6 @@ export interface IFluidDataStoreRuntime extends
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
-
-    /**
-     * Api to get the blob for a particular id.
-     * @param blobId - ID of the required blob.
-     */
-    getBlob(blobId: string): Promise<IFluidHandle>;
 
     /**
      * Returns the current quorum.
