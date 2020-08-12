@@ -1,4 +1,4 @@
-# Fluid Objects and interfaces
+# Fluid objects and interfaces
 
 In the previous section we introduced distributed data structures and demonstrated how to use them. Now let's discuss
 how to leverage those distributed data structures from our own code (business logic) to create modular, reusable
@@ -98,22 +98,6 @@ export abstract class PureDataObject<...>
 
 `PureDataObject` implements `IProvideFluidLoadable` via `IFluidLoadable`, and thus simply returns `this` in that case.
 But for `IProvideFluidHandle`, it delegates to a private member.
-
-## Fluid component interfaces
-
-On top of this simple `IComponent`-based model, Fluid defines a few interfaces, like `IFluidLoadable`, for use
-within the framework. But the full power of the model comes as we explore conventions around advanced scenarios like
-cross-component communication, shared commanding UX, copy/paste, etc.
-
-::: danger TODO
-
-We are experimenting with a variety of additional interfaces for specific purposes; see the [need link] for more info.
-
-:::
-
-These interfaces will be optional in many contexts but could be required by certain applications. For example, an
-application may refuse to load components that don't implement certain interfaces. This could include supporting
-capabilities such as search, cursoring, clipboard support, and much more.
 
 ## The @fluidframework/aqueduct package
 
