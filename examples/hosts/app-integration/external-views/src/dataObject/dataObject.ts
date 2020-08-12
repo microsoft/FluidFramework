@@ -3,13 +3,32 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
 
-import { IDiceRoller } from "./interface";
+/**
+ * IDiceRoller describes the public API surface for our dice roller data object.
+ */
+export interface IDiceRoller extends EventEmitter {
+    /**
+     * Get the dice value as a number.
+     */
+    readonly value: number;
+
+    /**
+     * Roll the dice.  Will cause a "diceRolled" event to be emitted.
+     */
+    roll: () => void;
+
+    /**
+     * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
+     */
+    on(event: "diceRolled", listener: () => void): this;
+}
 
 const diceValueKey = "diceValue";
 

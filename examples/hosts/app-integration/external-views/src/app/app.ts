@@ -7,7 +7,7 @@ import { Container } from "@fluidframework/container-loader";
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import { IDiceRoller } from "../dataObject";
 import { DiceRollerContainerRuntimeFactory } from "../container";
-import { renderDiceRoller } from "./views";
+import { renderDiceRoller } from "./view";
 
 // I'm choosing to put the docId in the hash just for my own convenience, so the URL will end up looking something
 // like http://localhost:8080/#1596520748752.  This is not crucial to the scenario -- there should be no requirements
