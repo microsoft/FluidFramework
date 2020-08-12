@@ -4,7 +4,9 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IRuntimeFactory } from "@fluidframework/container-definitions";
+import {
+    IRuntimeFactory,
+} from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
     IFluidResolvedUrl,
@@ -98,8 +100,7 @@ export async function getTinyliciousContainer(
         // We're not actually using the code proposal (our code loader always loads the same module regardless of the
         // proposal), but the Container will only give us a NullRuntime if there's no proposal.  So we'll use a fake
         // proposal.
-        const codeDetails = { package: "", config: {} };
-        container = await loader.createDetachedContainer(codeDetails);
+        container = await loader.createDetachedContainer({ package: "", config: {} });
         await container.attach({ url: documentId });
     } else {
         // The InsecureTinyliciousUrlResolver expects the url of the request to be the documentId.

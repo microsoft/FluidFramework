@@ -5,11 +5,7 @@
 
 import assert from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
-import {
-    IFluidCodeDetails,
-    IProxyLoaderFactory,
-    AttachState,
-} from "@fluidframework/container-definitions";
+import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
