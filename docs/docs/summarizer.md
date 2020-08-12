@@ -85,7 +85,7 @@ In general, the summarizer will wait for a break from ops before trying to summa
 
 Even if ops are consistently coming in before the `idleTime` is hit, if `maxOps` (500 ops currently) ops are received or `maxTime` (1 minute currently) passes since the last successful summary, the client will attempt to summarize anyway.
 
-The Summarizer defers to the rest of the runtime to actually generate the summary, upload it to storage, and submit the op. Once complete, it will watch for the summary op to be broadcast, and then keep waiting for the summary ack or nack op to come in from the server in response. It will not try to generate another summary while waiting for the ack/nack op. In most cases, the server should response quickly with the ack/nack. In some bad cases, it may never come or take too long, in this case the client will not wait longer than `maxAckWaitTimeout` before trying to generate and send another summary.
+The Summarizer defers to the rest of the runtime to actually generate the summary, upload it to storage, and submit the op. Once complete, it will watch for the summary op to be broadcast, and then keep waiting for the summary ack or nack op to come in from the server in response. It will not try to generate another summary while waiting for the ack/nack op. In most cases, the server should respond quickly with the ack/nack. In some bad cases, it may never come or take too long, in this case the client will not wait longer than `maxAckWaitTimeout` before trying to generate and send another summary.
 
 ##### Retry in "safe" mode
 When an unexpected error is encountered while summarizing or the server sends a nack, the runtime will retry one more time in "safe" mode. This does two things:
