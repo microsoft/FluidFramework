@@ -4,6 +4,7 @@
  */
 
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
+
 import { IDiceRoller } from "./dataObject";
 import { DiceRollerContainerRuntimeFactory } from "./containerCode";
 import { renderDiceRoller } from "./view";

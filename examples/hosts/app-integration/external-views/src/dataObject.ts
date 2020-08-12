@@ -4,11 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import {
-    DataObject,
-    DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { IValueChanged } from "@fluidframework/map";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.
@@ -47,7 +43,7 @@ export class DiceRoller extends DataObject implements IDiceRoller {
     }
 
     protected async hasInitialized() {
-        this.root.on("valueChanged", (changed: IValueChanged) => {
+        this.root.on("valueChanged", (changed) => {
             if (changed.key === diceValueKey) {
                 this.emit("diceRolled");
             }
