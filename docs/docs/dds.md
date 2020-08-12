@@ -77,7 +77,8 @@ const myCounter = SharedCounter.create(this.runtime);
 myMap.set("counter", myCounter.handle);
 ```
 
-Handles are used in Fluid to enable the runtime to implement features like garbage collection.
+Handles are used in Fluid to enable the runtime to implement features like garbage collection. You can learn more about
+handles in the [handles section](../advanced/handles.md).
 
 ## Events
 
