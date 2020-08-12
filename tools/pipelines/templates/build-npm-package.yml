@@ -228,7 +228,7 @@ stages:
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifacts - bundle-analysis
-            condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
             inputs:
               PathtoPublish: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
               Artifactname: 'bundleAnalysis'
