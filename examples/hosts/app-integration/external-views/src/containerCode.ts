@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
-} from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 
-import { DiceRollerInstantiationFactory } from "../dataObject";
+import { DiceRollerInstantiationFactory } from "./dataObject";
 
 /**
  * This does setup for the Container.

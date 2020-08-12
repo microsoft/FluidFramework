@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Container } from "@fluidframework/container-loader";
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
-import { IDiceRoller } from "../dataObject";
-import { DiceRollerContainerRuntimeFactory } from "../container";
+import { IDiceRoller } from "./dataObject";
+import { DiceRollerContainerRuntimeFactory } from "./containerCode";
 import { renderDiceRoller } from "./view";
 
 // I'm choosing to put the docId in the hash just for my own convenience, so the URL will end up looking something
@@ -25,8 +24,7 @@ document.title = documentId;
 // Just a helper function to kick things off.  Making it async allows us to use await.
 async function start(): Promise<void> {
     // Get the container to use.  Associate the data with the provided documentId, and run the provided code within.
-    const container: Container =
-        await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
+    const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
 
     // For this basic scenario, I'm just requesting the default view.  Nothing stopping me from issuing alternate
     // requests (e.g. for other data objects or views) if I wished.
