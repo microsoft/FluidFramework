@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/agent-scheduler",
   "version": "0.25.0",
-  "description": "Component in charge of distributing agents across instances of a component",
+  "description": "Built in runtime object for distributing agents across instances of a container",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -45,10 +45,10 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.25.0",
-    "@fluidframework/component-runtime": "^0.25.0",
-    "@fluidframework/component-runtime-definitions": "^0.25.0",
     "@fluidframework/container-definitions": "^0.25.0",
+    "@fluidframework/core-interfaces": "^0.25.0",
+    "@fluidframework/datastore": "^0.25.0",
+    "@fluidframework/datastore-definitions": "^0.25.0",
     "@fluidframework/map": "^0.25.0",
     "@fluidframework/register-collection": "^0.25.0",
     "@fluidframework/runtime-definitions": "^0.25.0",

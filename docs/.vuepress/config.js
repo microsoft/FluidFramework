@@ -10,57 +10,82 @@ const process = require("process");
 const INCLUDE_PATH = ".vuepress/includes/";
 const BASE_URL = process.env.BASE_URL || "https://fluid-docs.azurewebsites.net";
 const DOCS_AUDIENCE = process.env.DOCS_AUDIENCE || "";
-const THIS_VERSION = process.env.THIS_VERSION || "0.19";
-const MASTER_BRANCH_VERSION = process.env.MASTER_BRANCH_VERSION || "0.19";
-const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.18";
-const N1_VERSION = process.env.N1_VERSION || "0.17";
+const THIS_VERSION = process.env.THIS_VERSION || "0.25";
+const MASTER_BRANCH_VERSION = process.env.MASTER_BRANCH_VERSION || "0.25";
+const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.24";
+const N1_VERSION = process.env.N1_VERSION || "0.23";
 const VUEPRESS_BASE = process.env.VUEPRESS_BASE || `/versions/${THIS_VERSION}/`;
 const RELEASE_URL = BASE_URL;
 const N1_URL = `${BASE_URL}/versions/${N1_VERSION}/`;
 const MASTER_BRANCH_URL = `${BASE_URL}/versions/latest/`;
 
-const packagesToExclude = [
-    "client-api",
-    "host-service-interfaces",
-    "iframe-host",
-    "index",
-];
-
 const apiMapping = new Map([
     ["aqueduct", "Framework"],
-    ["component-core-interfaces", "Framework"],
-    ["framework-interfaces", "Framework"],
-    ["undo-redo", "Framework"],
+    ["base-host", "Hosts"],
     ["cell", "Distributed Data Structures"],
-    ["counter", "Distributed Data Structures"],
-    ["ink", "Distributed Data Structures"],
-    ["map", "Distributed Data Structures"],
-    ["sequence", "Distributed Data Structures"],
-    ["matrix", "Distributed Data Structures"],
-    ["ordered-collection", "Distributed Data Structures"],
-    ["register-collection", "Distributed Data Structures"],
-    ["shared-object-base", "Distributed Data Structures"],
-    ["component-runtime", "Runtime"],
-    ["container-runtime", "Runtime"],
-    ["runtime-definitions", "Runtime"],
-    ["container-loader", "Loader"],
+    ["client-api", "Excluded"],
+    ["common-definitions", "Internal"],
+    ["common-utils", "Miscellaneous"],
+    ["component-base", "Runtime"],
     ["container-definitions", "Loader"],
-    ["execution-context-loader", "Loader"],
-    ["web-code-loader", "Loader"],
+    ["container-loader", "Loader"],
+    ["container-runtime-definitions", "Loader"],
+    ["container-runtime", "Loader"],
+    ["container-utils", "Loader"],
+    ["core-interfaces", "Framework"],
+    ["counter", "Distributed Data Structures"],
+    ["datastore-definitions", "Framework"],
+    ["datastore", "Framework"],
+    ["dds-interceptions", "Miscellaneous"],
+    ["debugger", "Tools"],
     ["driver-base", "Driver"],
     ["driver-definitions", "Driver"],
-    ["file-driver", "Driver"],
-    ["iframe-driver", "Driver"],
-    ["replay-driver", "Driver"],
-    ["routerlicious-driver", "Driver"],
-    ["base-host", "Hosts"],
-    ["debugger", "Tools"],
-    ["merge-tree-client-replay", "Tools"],
-    ["replay-tool", "Tools"],
-    ["common-utils", "Miscellaneous"],
-    ["common-definitions", "Internal"],
     ["driver-utils", "Internal"],
+    ["execution-context-loader", "Loader"],
+    ["file-driver", "Driver"],
+    ["framework-interfaces", "Framework"],
+    ["host-service-interfaces", "Excluded"],
+    ["iframe-driver", "Driver"],
+    ["iframe-host", "Excluded"],
+    ["index", "Excluded"],
+    ["ink", "Distributed Data Structures"],
+    ["last-edited-experimental", "Experimental"],
+    ["map", "Distributed Data Structures"],
+    ["matrix", "Distributed Data Structures"],
+    ["merge-tree-client-replay", "Tools"],
+    ["mocha-test-setup", "Excluded"],
+    ["odsp-driver", "Driver"],
+    ["ordered-collection", "Distributed Data Structures"],
+    ["protocol-base", "Protocol"],
+    ["protocol-definitions", "Protocol"],
+    ["react-inputs", "Miscellaneous"],
+    ["react", "Miscellaneous"],
+    ["register-collection", "Distributed Data Structures"],
+    ["replay-driver", "Driver"],
+    ["replay-tool", "Tools"],
+    ["request-handler", "Unknown"],
+    ["routerlicious-driver", "Driver"],
+    ["runtime-definitions", "Runtime"],
+    ["runtime-utils", "Runtime"],
+    ["sequence", "Distributed Data Structures"],
+    ["shared-object-base", "Distributed Data Structures"],
+    ["shared-summary-block", "Unknown"],
+    ["synthesize", "Distributed Data Structures"],
+    ["telemetry-utils", "Distributed Data Structures"],
+    ["test-utils", "Distributed Data Structures"],
+    ["undo-redo", "Framework"],
+    ["view-adapters", "Framework"],
+    ["view-interfaces", "Framework"],
+    ["web-code-loader", "Loader"],
 ]);
+
+
+// let packagesToExclude = [];
+// for (const [key, value] of apiMapping) {
+//     if (value === "Excluded") {
+//         packagesToExclude.push(key);
+//     }
+// }
 
 const compact = (input) => {
     return input.filter(x => x);
@@ -91,21 +116,29 @@ const packageFromFilePath = (filepath) => {
 }
 
 const getNav = () => {
-    const nav = [
+    let nav = [
         { text: "What is Fluid?", link: "/what-is-fluid.md" },
-        { text: "Docs", link: "/docs/getting-started.md" },
-        { text: "Tutorials", link: "/tutorials/" },
-        // { text: "Ecosystem", link: "/ecosystem/" },
+        { text: "Docs", link: "/docs/" },
         { text: "API", link: "/api/" },
-        {
+        { text: "Community", link: "/community/" },
+    ];
+
+    if (THIS_VERSION === N1_VERSION) {
+        nav.push({
             text: "Versions",
             items: [
                 { text: `v${RELEASE_VERSION}`, link: BASE_URL },
-                { text: `v${N1_VERSION}`, link: N1_URL },
                 { text: `Bleeding edge`, link: MASTER_BRANCH_URL }
             ]
-        },
-    ];
+        });
+    } else if (THIS_VERSION === RELEASE_VERSION) {
+        nav.push({
+            text: "Versions",
+            items: [
+                { text: `Bleeding edge`, link: MASTER_BRANCH_URL }
+            ]
+        });
+    }
 
     function filterFalsy(item) {
         if (item) {
@@ -139,7 +172,7 @@ const getApiSidebar = () => {
 
     for (const file of files) {
         const packageName = packageFromFilePath(file);
-        if (packagesToExclude.includes(packageName)) {
+        if (apiMapping.get(packageName) === "Excluded") {
             continue;
         }
 
@@ -156,7 +189,7 @@ const getApiSidebar = () => {
     }
 
     // console.log(apiCategories);
-    const categoryToLog = "Framework";
+    const categoryToLog = "Unknown";
     console.log(`Packages with ${categoryToLog} category:`);
     console.log(apiCategories.get(categoryToLog));
 
@@ -173,132 +206,54 @@ const getApiSidebar = () => {
     return apiSidebar;
 }
 
+const getCommunitySidebar = () => {
+    return [
+        "",
+    ];
+}
+
 const getDocsSidebar = () => {
     return [
         {
-            title: "Installation",
+            title: "Roadmap",
+            collapsable: false,
+            path: "roadmap.md",
+        },
+        {
+            title: "Getting started",
             collapsable: false,
             // path: "",
             children: [
-                "getting-started.md",
+                "",
+                "dev-env.md",
                 "hello-world.md",
-                "create-a-new-fluid-component",
             ]
         },
         {
             title: "Main concepts",
             collapsable: false,
             children: [
-                "guide.md",
+                "architecture.md",
                 "dds.md",
-                "components.md",
-                "aqueduct.md",
-                "component-interfaces.md",
+                "interfaces-aqueduct.md",
+                "hosts.md",
+                "containers-runtime.md",
+                "server.md",
             ]
         },
         {
-            title: "DDS reference",
-            collapsable: false,
-            // path: "dds",
-            children: [
-                // "overview",
-                "SharedDirectory.md",
-                "SharedMap.md",
-                "SharedCounter.md",
-                "SharedCell.md",
-                {
-                    title: "Sequences",
-                    path: "sequences.md",
-                    children: [
-                        "SharedNumberSequence.md",
-                        "SharedObjectSequence.md",
-                        "SharedString.md",
-                    ],
-                },
-                "SharedMatrix.md",
-                "consensus.md",
-            ]
-        },
-        {
-            title: "Component model",
-            collapsable: false,
-            children: [
-                "component-design-principles.md",
-            ]
-        },
-        {
-            title: "Guides",
-            collapsable: false,
-            children: [
-                "visual-component.md",
-                // "data-component.md",
-                // "embed-components.md",
-                // "cross-component.md",
-                // "component-patterns.md",
-                // "component-collections.md",
-                // "bots.md",
-                // "component-best-practices.md",
-            ]
-        },
-        {
-            title: "Advanced",
+            title: "FAQ",
             collapsable: true,
-            children: [
-                "tob.md",
-                "dds-anatomy.md",
-                "container-and-component-loading.md",
-            ]
+            path: "faq.md",
         },
-        {
-            title: "Misc",
-            collapsable: true,
-            // path: "",
-            children: [
-                "release-process.md",
-                "breaking-changes.md",
-                "compatibility.md",
-                "doc-system.md",
-            ]
-        },
-    ];
-}
-
-const getTutorialsSidebar = () => {
-    return [
-        {
-            title: "Tutorials",
-            collapsable: false,
-            // path: "",
-            children: [
-                "",
-                "dice-roller.md",
-                "sudoku.md",
-            ]
-        },
-        {
-            title: "Examples",
-            collapsable: false,
-            // path: "",
-            children: [
-                "badge.md",
-            ]
-        },
-
-    ];
-}
-
-const getHowSidebar = () => {
-    return [
-        "",
     ];
 }
 
 const getAllSidebars = () => {
     return {
         "/docs/": getDocsSidebar(),
-        "/tutorials/": getTutorialsSidebar(),
         "/api/": getApiSidebar(),
-        "/how/": getHowSidebar(),
+        "/community/": getCommunitySidebar(),
     };
 }
 
@@ -385,7 +340,7 @@ module.exports = {
         anchor: {
             permalink: true,
             permalinkBefore: true,
-            permalinkSymbol: permalinkSymbol(),
+            // permalinkSymbol: permalinkSymbol(),
         },
         lineNumbers: true,
         extractHeaders: ["h2", "h3", "h4"],

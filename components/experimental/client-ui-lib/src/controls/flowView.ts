@@ -10,14 +10,8 @@ import {
     IFluidObject,
     IFluidHandle,
     IFluidLoadable,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { IGenericBlob } from "@fluidframework/container-definitions";
-import {
-    ComponentCursorDirection,
-    IComponentCursor,
-    IComponentKeyHandlers,
-    IComponentLayout,
-} from "@fluidframework/framework-experimental";
 import {
     IFluidObjectCollection,
 } from "@fluidframework/framework-interfaces";
@@ -38,6 +32,12 @@ import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 import { PresenceSignal } from "./presenceSignal";
 import { Status } from "./status";
+import {
+    CursorDirection,
+    IViewCursor,
+    IKeyHandlers,
+    IViewLayout,
+} from "./layout";
 
 interface IPersistentElement extends HTMLDivElement {
     component: IFluidObject;
@@ -78,12 +78,12 @@ interface IMathOptions {
     display: string;
 }
 
-export interface IMathInstance extends IFluidLoadable, IFluidHTMLView, IComponentCursor,
-    IComponentKeyHandlers, IComponentLayout, SearchMenu.ISearchMenuClient {
+export interface IMathInstance extends IFluidLoadable, IFluidHTMLView, IViewCursor,
+    IKeyHandlers, IViewLayout, SearchMenu.ISearchMenuClient {
     IFluidLoadable: IFluidLoadable;
-    IComponentCursor: IComponentCursor;
-    IComponentKeyHandlers: IComponentKeyHandlers;
-    IComponentLayout: IComponentLayout;
+    IViewCursor: IViewCursor;
+    IKeyHandlers: IKeyHandlers;
+    IViewLayout: IViewLayout;
     ISearchMenuClient: SearchMenu.ISearchMenuClient;
     id: string;
     leafId: string;
@@ -812,17 +812,13 @@ function renderSegmentIntoLine(
                 const componentMarker = marker as IComponentViewMarker;
 
                 // Delay load the instance if not available
-                if (!componentMarker.instance) {
-                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                    if (!componentMarker.instanceP) {
-                        componentMarker.instanceP = lineContext.flowView.collabDocument.context.containerRuntime
-                            .request({ url: `/${componentMarker.properties.leafId}` })
-                            .then(async (response) => {
-                                if (response.status !== 200 || response.mimeType !== "fluid/object") {
-                                    return Promise.reject(response);
-                                }
-
-                                const component = response.value as IFluidObject;
+                if (componentMarker.instance === undefined) {
+                    if (componentMarker.instanceP === undefined) {
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                        requestFluidObject(
+                            lineContext.flowView.collabDocument.context.containerRuntime.IFluidHandleContext,
+                            `/${componentMarker.properties.leafId}`)
+                            .then(async (component) => {
                                 if (!HTMLViewAdapter.canAdapt(component)) {
                                     return Promise.reject("component is not viewable");
                                 }
@@ -2280,7 +2276,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             } else {
                 if (newBlock.instance) {
                     let wpct = 0.75;
-                    const layout = newBlock.instance.IComponentLayout;
+                    const layout = newBlock.instance.IViewLayout;
                     if (layout && layout.requestedWidthPercentage) {
                         wpct = layout.requestedWidthPercentage;
                     }
@@ -2328,7 +2324,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                         newBlock.instanceP = newBlock.properties.leafId.get()
                             .then(async (component: IFluidObject) => {
                                 // TODO below is a temporary workaround. Should every QI interface also implement
-                                // IFluidObject. Then you can go from IFluidHTMLView to IComponentLayout.
+                                // IFluidObject. Then you can go from IFluidHTMLView to IViewLayout.
                                 // Or should you query for each one individually.
                                 if (!HTMLViewAdapter.canAdapt(component)) {
                                     return Promise.reject("component is not viewable");
@@ -3043,7 +3039,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public viewportStartPos: number;
     public viewportEndPos: number;
     public cursorSpan: HTMLSpanElement;
-    public componentCursor: IComponentCursor;
+    public childCursor: IViewCursor;
     public viewportDiv: HTMLDivElement;
     public viewportRect: ui.Rectangle;
     public historyWidget: HTMLDivElement;
@@ -3513,9 +3509,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             }
             this.cursor.pos = span.segPos + computed;
             this.cursor.enable();
-            if (this.componentCursor) {
-                this.componentCursor.leave(ComponentCursorDirection.Airlift);
-                this.componentCursor = undefined;
+            if (this.childCursor) {
+                this.childCursor.leave(CursorDirection.Airlift);
+                this.childCursor = undefined;
             }
             const tilePos = findTile(this, this.cursor.pos, "pg", false);
             if (tilePos) {
@@ -3601,9 +3597,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const position = this.getPosFromPixels(targetLineDiv, x);
         if (position !== undefined) {
             this.cursor.enable();
-            if (this.componentCursor) {
-                this.componentCursor.leave(ComponentCursorDirection.Airlift);
-                this.componentCursor = undefined;
+            if (this.childCursor) {
+                this.childCursor.leave(CursorDirection.Airlift);
+                this.childCursor = undefined;
             }
             this.cursor.pos = position;
             return true;
@@ -3657,8 +3653,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     const mathMarker = marker as IMathViewMarker;
                     this.loadMath(mathMarker);
                     this.cursor.disable();
-                    this.componentCursor = mathMarker.instance;
-                    mathMarker.instance.enter(ComponentCursorDirection.Right);
+                    this.childCursor = mathMarker.instance;
+                    mathMarker.instance.enter(CursorDirection.Right);
                 } else {
                     this.cursorRev();
                 }
@@ -3710,8 +3706,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     const mathMarker = marker as IMathViewMarker;
                     this.loadMath(mathMarker);
                     this.cursor.disable();
-                    this.componentCursor = mathMarker.instance;
-                    mathMarker.instance.enter(ComponentCursorDirection.Left);
+                    this.childCursor = mathMarker.instance;
+                    mathMarker.instance.enter(CursorDirection.Left);
                 } else {
                     this.cursorFwd();
                 }
@@ -4230,7 +4226,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.loadMath(marker);
         }
         if (marker.instance.fwd()) {
-            marker.instance.leave(ComponentCursorDirection.Right);
+            marker.instance.leave(CursorDirection.Right);
             this.cursor.enable();
             this.cursorFwd();
         }
@@ -4243,7 +4239,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.loadMath(marker);
         }
         if (marker.instance.rev()) {
-            marker.instance.leave(ComponentCursorDirection.Left);
+            marker.instance.leave(CursorDirection.Left);
             this.cursorRev();
             this.cursor.enable();
         }
@@ -4583,8 +4579,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             mathInstance.registerSearchMenuHost(this);
         }
         this.cursor.disable();
-        this.componentCursor = mathMarker.instance;
-        mathMarker.instance.enter(ComponentCursorDirection.Left);
+        this.childCursor = mathMarker.instance;
+        mathMarker.instance.enter(CursorDirection.Left);
     }
 
     public insertNewCollectionComponent(collection: IFluidObjectCollection, inline = false) {

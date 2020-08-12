@@ -4,32 +4,29 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
-import {
-    IProvideComponentLastEditedTracker,
-} from "./legacy";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { LastEditedTracker } from "./lastEditedTracker";
 import { IProvideFluidLastEditedTracker } from "./interfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
-export const LastEditedTrackerComponentName = pkg.name as string;
+export const LastEditedTrackerDataObjectName = pkg.name as string;
 
 /**
- * LastEditedTrackerComponent creates a LastEditedTracker that keeps track of the latest edits to the document.
+ * LastEditedTrackerDataObject creates a LastEditedTracker that keeps track of the latest edits to the document.
  */
-export class LastEditedTrackerComponent extends DataObject
-    implements IProvideComponentLastEditedTracker, IProvideFluidLastEditedTracker {
+export class LastEditedTrackerDataObject extends DataObject
+    implements IProvideFluidLastEditedTracker {
     private static readonly factory = new DataObjectFactory(
-        LastEditedTrackerComponentName,
-        LastEditedTrackerComponent,
+        LastEditedTrackerDataObjectName,
+        LastEditedTrackerDataObject,
         [SharedSummaryBlock.getFactory()],
         {},
     );
 
     public static getFactory() {
-        return LastEditedTrackerComponent.factory;
+        return LastEditedTrackerDataObject.factory;
     }
 
     private readonly sharedSummaryBlockId = "shared-summary-block-id";
@@ -43,7 +40,6 @@ export class LastEditedTrackerComponent extends DataObject
         return this._lastEditedTracker;
     }
 
-    public get IComponentLastEditedTracker() { return this.lastEditedTracker; }
     public get IFluidLastEditedTracker() { return this.lastEditedTracker; }
 
     protected async componentInitializingFirstTime() {
@@ -53,7 +49,7 @@ export class LastEditedTrackerComponent extends DataObject
 
     protected async componentHasInitialized() {
         const sharedSummaryBlock =
-            await this.root.get<IComponentHandle<SharedSummaryBlock>>(this.sharedSummaryBlockId).get();
+            await this.root.get<IFluidHandle<SharedSummaryBlock>>(this.sharedSummaryBlockId).get();
         this._lastEditedTracker = new LastEditedTracker(sharedSummaryBlock);
     }
 }

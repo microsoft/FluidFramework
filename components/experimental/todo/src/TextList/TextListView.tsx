@@ -4,7 +4,7 @@
  */
 
 import { CollaborativeInput } from "@fluidframework/react-inputs";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDirectory, IDirectoryValueChanged, ISharedDirectory } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import React, { useEffect, useRef, useState } from "react";

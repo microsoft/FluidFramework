@@ -1,0 +1,11 @@
+{
+    "extends": "../tsconfig.json",
+    "compilerOptions": {
+        "types": [
+            "jest",
+            "jest-environment-puppeteer",
+            "node",
+            "puppeteer"
+        ]
+    }
+}

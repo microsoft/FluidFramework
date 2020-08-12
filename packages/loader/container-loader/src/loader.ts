@@ -10,7 +10,7 @@ import {
     IFluidObject,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     ICodeLoader,
     IContainer,
@@ -144,7 +144,7 @@ export class Loader extends EventEmitter implements ILoader {
         documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
-        private readonly scope: IFluidObject & IFluidObject,
+        private readonly scope: IFluidObject,
         private readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
         logger?: ITelemetryBaseLogger,
     ) {

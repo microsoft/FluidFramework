@@ -12,12 +12,12 @@ import {
     IFluidRunnable,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
-import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/component-runtime";
+} from "@fluidframework/core-interfaces";
+import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore";
 import { LoaderHeader, AttachState } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
     IAgentScheduler,
     IFluidDataStoreContext,
@@ -170,7 +170,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IFluidRout
             const registersP: Promise<void>[] = [];
             for (const taskUrl of taskUrls) {
                 debug(`Registering ${taskUrl}`);
-                // tslint:disable no-null-keyword
                 registersP.push(this.writeCore(taskUrl, null));
             }
             await Promise.all(registersP);
@@ -465,10 +464,10 @@ export class TaskManager implements ITaskManager {
             return Promise.reject(`Invalid agent route: ${url}`);
         }
 
-        const rawComponent = response.value as IFluidObject;
-        const agent = rawComponent.IFluidRunnable;
+        const fluidObject = response.value as IFluidObject;
+        const agent = fluidObject.IFluidRunnable;
         if (agent === undefined) {
-            return Promise.reject("Component does not implement IFluidRunnable");
+            return Promise.reject("Fluid object does not implement IFluidRunnable");
         }
 
         return agent.run();

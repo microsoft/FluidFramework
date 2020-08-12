@@ -1,0 +1,52 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+name: $(Build.BuildId)
+
+# no branch and PR triggers at first
+trigger: none
+pr: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: UseNode@1
+  displayName: Use Node 12.x
+  inputs: 
+    version: 12.x
+
+- task: Npm@1
+  displayName: npm run usePrereleaseDeps
+  inputs:
+    command: 'custom'
+    workingDir: 'packages/test/service-load-test'
+    customCommand: 'run usePrereleaseDeps'
+
+- task: Npm@1
+  displayName: npm i
+  inputs:
+    command: 'custom'
+    workingDir: 'packages/test/service-load-test'
+    customCommand: 'install'
+    customRegistry: 'useFeed'
+    customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+
+- task: Npm@1
+  displayName: npm run build
+  inputs:
+    command: 'custom'
+    workingDir: 'packages/test/service-load-test'
+    customCommand: 'run build'
+
+- task: Npm@1
+  displayName: npm run start:mini
+  env:
+    login__microsoft__clientId: $(clientId)
+    login__microsoft__secret: $(clientSecret)
+  inputs:
+    command: 'custom'
+    workingDir: 'packages/test/service-load-test'
+    customCommand: 'run start:mini -- -w $(Password)'

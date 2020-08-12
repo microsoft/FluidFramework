@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -13,7 +13,7 @@ import {
     IConsensusRegisterCollection,
     ReadPolicy,
 } from "@fluidframework/register-collection";
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,

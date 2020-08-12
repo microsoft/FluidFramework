@@ -39,7 +39,7 @@
   ],
   "dependencies": {
     "@fluidframework/aqueduct": "^0.25.0",
-    "@fluidframework/component-core-interfaces": "^0.25.0",
+    "@fluidframework/core-interfaces": "^0.25.0",
     "@fluidframework/map": "^0.25.0",
     "@fluidframework/view-interfaces": "^0.25.0",
     "react": "^16.10.2",

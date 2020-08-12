@@ -3,4 +3,6 @@
  * Licensed under the MIT License.
  */
 
+export * from "./bufferBrowser";
+export * from "./hashFileBrowser";
 export * from "./performanceNowBrowser";

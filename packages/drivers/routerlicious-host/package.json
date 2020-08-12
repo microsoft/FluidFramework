@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.21.0",
-    "@fluidframework/component-core-interfaces": "^0.25.0",
+    "@fluidframework/core-interfaces": "^0.25.0",
     "@fluidframework/driver-definitions": "^0.25.0",
     "@types/debug": "^4.1.5",
     "axios": "^0.18.0",

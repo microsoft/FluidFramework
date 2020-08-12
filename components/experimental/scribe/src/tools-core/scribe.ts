@@ -5,11 +5,11 @@
 
 import childProcess from "child_process";
 import path from "path";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { ILoader } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedString } from "@fluidframework/sequence";
 import * as author from "./author";
 

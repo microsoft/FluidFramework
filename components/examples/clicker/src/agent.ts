@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidRouter, IFluidRunnable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IFluidRouter, IFluidRunnable, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 
 // Sample agent to run.

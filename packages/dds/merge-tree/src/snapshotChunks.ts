@@ -6,7 +6,7 @@ import {
     IFluidSerializer,
     IFluidHandleContext,
     IFluidHandle,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";

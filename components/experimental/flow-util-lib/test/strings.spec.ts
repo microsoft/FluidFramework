@@ -28,7 +28,6 @@ describe("areStringsEquivalent", () => {
     const values = [undefined, null, "", "0", "1"];
     for (const left of values) {
         for (const right of values) {
-            // tslint:disable-next-line:mocha-no-side-effect-code
             test(left, right);
         }
     }

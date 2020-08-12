@@ -8,7 +8,7 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedDirectory } from "@fluidframework/map";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";

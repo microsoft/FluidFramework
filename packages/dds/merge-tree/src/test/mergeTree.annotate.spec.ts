@@ -20,12 +20,8 @@ describe("MergeTree", () => {
     const branchId = 0;
 
     const annotateStart = 1;
-    // tslint:disable-next-line:mocha-no-side-effect-code
     const markerPosition = annotateStart + 2;
-    // tslint:disable-next-line:mocha-no-side-effect-code
     const annotateEnd = markerPosition + 2;
-
-    // tslint:disable-next-line:mocha-no-side-effect-code
     const splitPos = Math.floor((annotateEnd - annotateStart) / 2) + annotateStart;
 
     beforeEach(() => {

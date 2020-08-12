@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedMap } from "@fluidframework/map";
 import {
     IFluidFunctionalComponentViewState,

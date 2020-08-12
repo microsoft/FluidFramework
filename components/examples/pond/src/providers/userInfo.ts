@@ -8,8 +8,7 @@ import { EventEmitter } from "events";
 import {
     IFluidHandleContext,
     IFluidSerializer,
-    IFluidRouter,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { IQuorum } from "@fluidframework/protocol-definitions";
 import { DependencyContainer } from "@fluidframework/synthesize";
 import { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
@@ -73,7 +72,6 @@ export const userInfoFactory = async (dc: DependencyContainer) => {
         IFluidHandleContext,
         IFluidSerializer,
         IFluidDataStoreRegistry,
-        IFluidRouter,
     }, {});
     const containerRuntime = await s.IContainerRuntime;
     if (containerRuntime !== undefined) {

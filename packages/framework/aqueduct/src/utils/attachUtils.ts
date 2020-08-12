@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 
-export async function waitForAttach(componentRuntime: IFluidDataStoreRuntime): Promise<void> {
-    if (componentRuntime.attachState === AttachState.Attached) {
+export async function waitForAttach(dataStoreRuntime: IFluidDataStoreRuntime): Promise<void> {
+    if (dataStoreRuntime.attachState === AttachState.Attached) {
         return;
     }
 
     return new Promise((resolve) => {
-        componentRuntime.once(
+        dataStoreRuntime.once(
             "attached",
             () => {
                 Promise.resolve().then(() => resolve()).catch(() => { });

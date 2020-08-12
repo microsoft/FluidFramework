@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";

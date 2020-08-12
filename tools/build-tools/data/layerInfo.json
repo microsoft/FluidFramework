@@ -6,7 +6,7 @@
                 "dotSameRank": true,
                 "packages": [
                     "@fluidframework/common-definitions",
-                    "@fluidframework/component-core-interfaces",
+                    "@fluidframework/core-interfaces",
                     "@fluidframework/gitresources"
                 ]
             },
@@ -24,7 +24,7 @@
                 ],
                 "deps": [
                     "Protocol-Definitions",
-                    "@fluidframework/component-core-interfaces"
+                    "@fluidframework/core-interfaces"
                 ]
             },
             "Container-Definitions": {
@@ -33,7 +33,7 @@
                 ],
                 "deps": [
                     "Driver-Definitions",
-                    "@fluidframework/component-core-interfaces"
+                    "@fluidframework/core-interfaces"
                 ]
             }
         }
@@ -121,7 +121,7 @@
                 ],
                 "deps": [
                     "Driver-Utils",
-                    "@fluidframework/component-core-interfaces"
+                    "@fluidframework/core-interfaces"
                 ]
             },
             "Loader": {
@@ -170,16 +170,19 @@
                     "Runtime"
                 ]
             },
-            "Component": {
+            "Examples": {
                 "dot": false,
+                "dev": true,
                 "dirs": [
-                    "packages/components/",
                     "components/",
-                    "packages/agents/",
-                    "packages/server/tools-core"
+                    "examples/",
+                    "packages/agents/"
                 ],
                 "deps": [
-                    "Framework"
+                    "Framework",
+                    "Driver",
+                    "Routerlicious-Driver",
+                    "Test"
                 ]
             },
             "Build": {
@@ -208,11 +211,10 @@
                     "@fluidframework/local-web-host",
                     "@fluidframework/local-driver",
                     "@fluidframework/test-runtime-utils",
-                    "@fluidframework/webpack-component-loader"
+                    "@fluidframework/webpack-fluid-loader"
                 ],
                 "dirs": [
-                    "packages/test/",
-                    "examples/hosts/"
+                    "packages/test/"
                 ]
             }
         }
