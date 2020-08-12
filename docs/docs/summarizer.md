@@ -99,7 +99,7 @@ The Container Runtime is actually responsible for generating the summary, upload
 #### Generating the Summary
 The Container Runtime stores partially received chunked ops in a separate blob. It will then loop through all the Fluid Data Stores it has bound to it and call their respective summarize functions.
 
-Each Fluid Data Store Context will store its metadata in a blob. It will then load/realize itself which loads its Fluid Data Store Runtime, and call that internal summarize function. The Fluid Data Store Runtime will then loop through each Distributed Data Structure it has and call their summarize functions.
+Each Fluid Data Store Context will store its metadata in a blob. It will then load/realize itself which loads its Fluid Data Store Runtime, and call its internal summarize function. The Fluid Data Store Runtime will then loop through each Distributed Data Structure it has and call their summarize functions.
 
 Similarly, each Distributed Data Structure will store its metadata in a blob. It will ensure it is loaded and call its custom serialize function.
 
