@@ -213,9 +213,8 @@ export function insertColumn(
         type: MergeTree.MergeTreeDeltaType.INSERT,
     };
     opList.push(insertColMarkerOp);
-    // eslint-disable-next-line no-shadow
-    for (const row of table.rows) {
-        insertColumnCellForRow(idBase, opList, row, prevColumnId, columnId);
+    for (const currRow of table.rows) {
+        insertColumnCellForRow(idBase, opList, currRow, prevColumnId, columnId);
     }
     const groupOp = <MergeTree.IMergeTreeGroupMsg>{
         ops: opList,
@@ -248,15 +247,13 @@ export function deleteColumn(
         console.log(`delete column from cell ${cell.marker.toString()}`);
     }
     const columnId = cell.columnId;
-    // eslint-disable-next-line no-shadow
-    for (const row of table.rows) {
-        // eslint-disable-next-line no-shadow
-        for (const cell of row.cells) {
-            if (cell.columnId === columnId) {
-                sharedString.annotateMarkerNotifyConsensus(cell.marker, { moribund: clientId }, (m) => {
+    for (const currRow of table.rows) {
+        for (const currCell of currRow.cells) {
+            if (currCell.columnId === columnId) {
+                sharedString.annotateMarkerNotifyConsensus(currCell.marker, { moribund: clientId }, (m) => {
                     sharedString.removeRange(
-                        sharedString.getPosition(cell.marker),
-                        sharedString.getPosition(cell.endMarker));
+                        sharedString.getPosition(currCell.marker),
+                        sharedString.getPosition(currCell.endMarker));
                 });
             }
         }

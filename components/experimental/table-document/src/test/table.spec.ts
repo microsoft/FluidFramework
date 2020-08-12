@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-shadow */
-
 import assert from "assert";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createLocalLoader, OpProcessingController, initializeLocalContainer } from "@fluidframework/test-utils";
@@ -18,13 +16,12 @@ describe("TableDocument", () => {
         package: "tableTestPkg",
         config: {},
     };
-    let table: TableDocument;
+    let tableDocument: TableDocument;
     let opProcessingController: OpProcessingController;
 
     function makeId(type: string) {
-        const id = Math.random().toString(36).substr(2);
-        // console.log(`${type}: ${id}`);
-        return id;
+        const newId =  Math.random().toString(36).substr(2);
+        return newId;
     }
 
     beforeEach(async () => {
@@ -36,7 +33,7 @@ describe("TableDocument", () => {
         if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Default component not found`);
         }
-        table = response.value;
+        tableDocument = response.value;
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);
         opProcessingController.addDeltaManagers(container.deltaManager);
@@ -55,28 +52,28 @@ describe("TableDocument", () => {
     };
 
     const expect = async (expected: readonly (readonly any[])[]) => {
-        assert.strictEqual(table.numRows, expected.length);
-        assert.deepStrictEqual(extract(table), expected);
+        assert.strictEqual(tableDocument.numRows, expected.length);
+        assert.deepStrictEqual(extract(tableDocument), expected);
 
         // Paranoid check that awaiting incoming messages does not change test results.
         await opProcessingController.process();
-        assert.strictEqual(table.numRows, expected.length);
-        assert.deepStrictEqual(extract(table), expected);
+        assert.strictEqual(tableDocument.numRows, expected.length);
+        assert.deepStrictEqual(extract(tableDocument), expected);
     };
 
     it("Initially empty", async () => {
         await expect([]);
-        assert.throws(() => table.getCellValue(0, 0));
+        assert.throws(() => tableDocument.getCellValue(0, 0));
     });
 
     it("Insert row", async () => {
-        table.insertRows(0, 1);
+        tableDocument.insertRows(0, 1);
         await expect([[]]);
     });
 
     it("Insert col", async () => {
-        table.insertRows(0, 1);
-        table.insertCols(0, 1);
+        tableDocument.insertRows(0, 1);
+        tableDocument.insertCols(0, 1);
         await expect([[undefined]]);
     });
 
@@ -84,9 +81,9 @@ describe("TableDocument", () => {
         // GitHub Issue #1683 - Cannot roundtrip non-finite numbers.
         for (const value of ["", "string", 0 /* , -Infinity, +Infinity */]) {
             it(`roundtrip ${JSON.stringify(value)}`, async () => {
-                table.insertRows(0, 1);
-                table.insertCols(0, 1);
-                table.setCellValue(0, 0, value);
+                tableDocument.insertRows(0, 1);
+                tableDocument.insertCols(0, 1);
+                tableDocument.setCellValue(0, 0, value);
                 await expect([[value]]);
             });
         }
@@ -98,15 +95,15 @@ describe("TableDocument", () => {
         // });
 
         it(`all cells`, async () => {
-            for (let row = 0; row < table.numRows; row++) {
-                for (let col = 0; col < table.numCols; col++) {
-                    table.setCellValue(row, col, `${row},${col}`);
+            for (let row = 0; row < tableDocument.numRows; row++) {
+                for (let col = 0; col < tableDocument.numCols; col++) {
+                    tableDocument.setCellValue(row, col, `${row},${col}`);
                 }
             }
 
-            for (let row = 0; row < table.numRows; row++) {
-                for (let col = 0; col < table.numCols; col++) {
-                    assert.strictEqual(table.getCellValue(row, col), `${row},${col}`);
+            for (let row = 0; row < tableDocument.numRows; row++) {
+                for (let col = 0; col < tableDocument.numCols; col++) {
+                    assert.strictEqual(tableDocument.getCellValue(row, col), `${row},${col}`);
                 }
             }
         });
@@ -114,48 +111,48 @@ describe("TableDocument", () => {
 
     describe("annotations", () => {
         it("row", () => {
-            table.insertRows(0, 2);
-            table.insertCols(0, 1);
-            table.annotateRows(0, 1, { id: "row0" });
-            assert.deepEqual(table.getRowProperties(0), { id: "row0" });
-            assert.strictEqual(table.getRowProperties(1), undefined);
+            tableDocument.insertRows(0, 2);
+            tableDocument.insertCols(0, 1);
+            tableDocument.annotateRows(0, 1, { id: "row0" });
+            assert.deepEqual(tableDocument.getRowProperties(0), { id: "row0" });
+            assert.strictEqual(tableDocument.getRowProperties(1), undefined);
         });
 
         it("col", () => {
-            table.insertRows(0, 1);
-            table.insertCols(0, 2);
-            table.annotateCols(0, 1, { id: "col0" });
-            assert.deepEqual(table.getColProperties(0), { id: "col0" });
-            assert.strictEqual(table.getColProperties(1), undefined);
+            tableDocument.insertRows(0, 1);
+            tableDocument.insertCols(0, 2);
+            tableDocument.annotateCols(0, 1, { id: "col0" });
+            assert.deepEqual(tableDocument.getColProperties(0), { id: "col0" });
+            assert.strictEqual(tableDocument.getColProperties(1), undefined);
         });
     });
 
     describe("TableSlice", () => {
         it("range follows edits", async () => {
-            table.insertRows(0, 5);
-            table.insertCols(0, 7);
+            tableDocument.insertRows(0, 5);
+            tableDocument.insertCols(0, 7);
             const min = { row: 1, col: 2 };
             const max = { row: 3, col: 4 };
 
-            table.setCellValue(min.row, min.col, "start");
-            table.setCellValue(max.row, max.col, "end");
+            tableDocument.setCellValue(min.row, min.col, "start");
+            tableDocument.setCellValue(max.row, max.col, "end");
 
-            const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice",
+            const slice = await tableDocument.createSlice(makeId("Table-Slice"), "unnamed-slice",
                 min.row, min.col, max.row, max.col);
             assert.strictEqual(slice.getCellValue(min.row, min.col), "start");
             assert.strictEqual(slice.getCellValue(max.row, max.col), "end");
 
-            table.setCellValue(min.row, min.col, "min");
-            table.setCellValue(max.row, max.col, "max");
+            tableDocument.setCellValue(min.row, min.col, "min");
+            tableDocument.setCellValue(max.row, max.col, "max");
             assert.strictEqual(slice.getCellValue(min.row, min.col), "min");
             assert.strictEqual(slice.getCellValue(max.row, max.col), "max");
         });
 
         it("asserts when outside of slice", async () => {
-            table.insertRows(0, 5);
-            table.insertCols(0, 7);
+            tableDocument.insertRows(0, 5);
+            tableDocument.insertCols(0, 7);
 
-            const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
+            const slice = await tableDocument.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
             assert.throws(() => slice.getCellValue(-1, 0));
             assert.throws(() => slice.getCellValue(3, 0));
             assert.throws(() => slice.getCellValue(0, -1));
@@ -163,10 +160,10 @@ describe("TableDocument", () => {
         });
 
         it("Annotations work when proxied through table slice", async () => {
-            table.insertRows(0, 5);
-            table.insertCols(0, 7);
+            tableDocument.insertRows(0, 5);
+            tableDocument.insertCols(0, 7);
 
-            const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
+            const slice = await tableDocument.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
             slice.annotateRows(0, 1, { id: "row0" });
             assert.deepEqual(slice.getRowProperties(0), { id: "row0" });
             assert.strictEqual(slice.getRowProperties(1), undefined);
@@ -176,10 +173,10 @@ describe("TableDocument", () => {
         });
 
         it("Insert rows and columns work when proxied through table slice", async () => {
-            table.insertRows(0, 5);
-            table.insertCols(0, 7);
+            tableDocument.insertRows(0, 5);
+            tableDocument.insertCols(0, 7);
 
-            const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
+            const slice = await tableDocument.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
             assert.equal(slice.numCols, 3);
             assert.equal(slice.numRows, 3);
 
@@ -192,10 +189,10 @@ describe("TableDocument", () => {
 
     describe("CellRange", () => {
         it("forEachRowMajor visits all cells", async () => {
-            table.insertRows(0, 5);
-            table.insertCols(0, 7);
+            tableDocument.insertRows(0, 5);
+            tableDocument.insertCols(0, 7);
 
-            const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 1, 1, 2, 2);
+            const slice = await tableDocument.createSlice(makeId("Table-Slice"), "unnamed-slice", 1, 1, 2, 2);
             assert.equal(slice.numCols, 2);
             assert.equal(slice.numRows, 2);
 
@@ -209,10 +206,10 @@ describe("TableDocument", () => {
         });
 
         it("forEachColMajor visits all cells", async () => {
-            table.insertRows(0, 5);
-            table.insertCols(0, 7);
+            tableDocument.insertRows(0, 5);
+            tableDocument.insertCols(0, 7);
 
-            const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 1, 1, 2, 2);
+            const slice = await tableDocument.createSlice(makeId("Table-Slice"), "unnamed-slice", 1, 1, 2, 2);
             assert.equal(slice.numCols, 2);
             assert.equal(slice.numRows, 2);
 
