@@ -77,7 +77,7 @@ export type RouteOptions =
     | ITinyliciousRouteOptions
     | IOdspRouteOptions;
 
-function wrapIfFluidPackage(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
+function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
     if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
         const dataStoreFactory = fluidModule.fluidExport.IFluidDataStoreFactory;
 
@@ -150,7 +150,10 @@ async function createWebLoader(
     const documentServiceFactory = getDocumentServiceFactory(documentId, options);
     const codeLoader = new WebCodeLoader(new WebpackCodeResolver(options));
 
-    await codeLoader.seedModule(codeDetails, wrapIfFluidPackage(codeDetails.package as IFluidPackage, fluidModule));
+    await codeLoader.seedModule(
+        codeDetails,
+        wrapWithRuntimeFactoryIfNeeded(codeDetails.package as IFluidPackage, fluidModule),
+    );
 
     return new Loader(
         urlResolver,
