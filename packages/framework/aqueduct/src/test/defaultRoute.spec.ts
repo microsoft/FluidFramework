@@ -56,7 +56,7 @@ async function assertRejected(p: Promise<IResponse | undefined>) {
     try {
         const res = await p;
         assert(res === undefined || res.status === 404, "not rejected");
-    } catch (err) { }
+    } catch (err) {}
 }
 
 describe("defaultRouteRequestHandler", () => {
