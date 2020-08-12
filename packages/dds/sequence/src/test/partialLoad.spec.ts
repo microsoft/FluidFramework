@@ -8,7 +8,7 @@ import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
     MockStorage,
- } from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import { ITree } from "@fluidframework/protocol-definitions";

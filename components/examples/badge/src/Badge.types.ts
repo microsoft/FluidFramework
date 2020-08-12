@@ -17,7 +17,7 @@ export interface IBadgeIcon {
     // When adding new instances, please ensure the types will still
     // be a subset of IIconProps
     iconName: string;
-    style: {color: string};
+    style: { color: string };
 }
 export interface IBadgeHistory {
     value: IBadgeType;
