@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/webpack-component-loader": "^0.25.0",
+    "@fluidframework/webpack-fluid-loader": "^0.25.0",
     "@types/node": "^10.17.24",
     "@types/react-dom": "^16.9.4",
     "@types/react-image-gallery": "^0.8.4",

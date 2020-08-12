@@ -1,5 +1,5 @@
 /*
- * shared-text expects to fill the space provided to it.  When loading in webpack-component-loader, we need to force
+ * shared-text expects to fill the space provided to it.  When loading in webpack-fluid-loader, we need to force
  * the larger size on the #content div or we'll render at 0 height.  shared-text should probably enforce a minimum
  * functional size if the provided space is too small.
  */

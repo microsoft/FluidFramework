@@ -1,15 +1,15 @@
-# @fluidframework/webpack-component-loader
+# @fluidframework/webpack-fluid-loader
 
-This folder contains the webpack-component-loader. This package is meant to be used with the webpack-dev-server and is used by yo fluid as the default `start` option.
+This folder contains the webpack-fluid-loader. This package is meant to be used with the webpack-dev-server and is used by yo fluid as the default `start` option.
 
 This loader is intended for development purposes only and should not be used in production.
 
-The following environment variables can be defined when running webpack-dev-server to change the behavior of webpack-component-loader:
+The following environment variables can be defined when running webpack-dev-server to change the behavior of webpack-fluid-loader:
 
 | variable | description |
 | ---------| ----------- |
 | `mode` | Specify the mode to run in. See modes below. |
-| `single` | Load component normally when using local mode for ordering, etc. |
+| `single` | Load fluid object normally when using local mode for ordering, etc. |
 | `fluidHost` | Host url to target while testing. If you supply this, you must supply a tenant ID and secret |
 | `tenantId` | Tenant ID for your host. If you supply this you must supply a tenant secret |
 | `tenantSecret` | Secret for your tenant |
@@ -20,7 +20,7 @@ The following environment variables can be defined when running webpack-dev-serv
 | ---------| ----------- |
 | `docker` | Use docker running routerlicious server for ordering, etc. You'll need to start this service locally |
 | `r11s`   | Use remote routerlicious server for ordering, etc. |
-| `local`  | Load component in two side-by-side divs using test-driver (default option) |
+| `local`  | Load fluid object in two side-by-side divs using test-driver (default option) |
 | `tinylicous` | Run against a local instance of tinylicious. You'll need to start this service locally |
 | `spo-df` | Use SharePoint DogFood server with your personal OneDrive for storage |
 | `spo` | Use SharePoint server with your personal OneDrive for storage |
@@ -29,7 +29,7 @@ The following environment variables can be defined when running webpack-dev-serv
 
 In all modes you can start a detached container that you can later attach by appending `/manualAttach` to the url. For example - http://localhost:8080/manualAttach.
 
-You can interact with the component and do any number of operations before clicking the `Attach Container` button to attach the container.
+You can interact with the fluid object and do any number of operations before clicking the `Attach Container` button to attach the container.
 
 If in side by side mode, only one side will be visible until attached.
 
@@ -51,7 +51,7 @@ npm run start -- --env.fluidHost https://fluidhost.com --env.tenantId my_tenant 
 - `fluid__webpack__npm`
 
 ### config file:
-or in an optional `config.json` file in the `baseDir` passed into `webpack-component-loader.after()` that looks like this:
+or in an optional `config.json` file in the `baseDir` passed into `webpack-fluid-loader.after()` that looks like this:
 ``` json
 {
     "fluid": {

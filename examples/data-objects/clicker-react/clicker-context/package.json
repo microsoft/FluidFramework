@@ -46,7 +46,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
-    "@fluidframework/webpack-component-loader": "^0.25.0",
+    "@fluidframework/webpack-fluid-loader": "^0.25.0",
     "@microsoft/eslint-config-fluid": "^0.16.0",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
