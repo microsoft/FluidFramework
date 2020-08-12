@@ -7,7 +7,6 @@ import assert from "assert";
 import {
     IFluidCodeDetails,
     IProxyLoaderFactory,
-    DetachedContainerSource,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
@@ -38,10 +37,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         package: "detachedContainerTestPackage1",
         config: {},
     };
-    const source: DetachedContainerSource = {
-        codeDetails,
-        useSnapshot: false,
-    };
+
     const sharedStringId = "ss1Key";
     const sharedMapId = "sm1Key";
     const crcId = "crc1Key";
@@ -58,7 +54,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     let request: IRequest;
 
     async function createDetachedContainerAndGetRootComponent() {
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(codeDetails);
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
         const defaultComponent = response.value;
@@ -195,12 +191,8 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             await createDetachedContainerAndGetRootComponent();
 
         const snapshotTree = JSON.parse(container.serialize());
-        const rehydrationSource: DetachedContainerSource = {
-            snapshot: snapshotTree,
-            useSnapshot: true,
-        };
 
-        const container2 = await loader.createDetachedContainer(rehydrationSource);
+        const container2 = await loader.createDetachedContainerFromSnapshot(snapshotTree);
 
         // Check for scheduler
         const schedulerResponse = await container2.request({ url: "_scheduler" });
@@ -242,12 +234,8 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             await createDetachedContainerAndGetRootComponent();
 
         const snapshotTree = JSON.parse(container.serialize());
-        const rehydrationSource: DetachedContainerSource = {
-            snapshot: snapshotTree,
-            useSnapshot: true,
-        };
 
-        const container2 = await loader.createDetachedContainer(rehydrationSource);
+        const container2 = await loader.createDetachedContainerFromSnapshot(snapshotTree);
         await container2.attach(request);
 
         // Check for scheduler
@@ -295,11 +283,8 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         sharedStringBefore.insertText(0, "Hello");
 
         const snapshotTree = JSON.parse(container.serialize());
-        const rehydrationSource: DetachedContainerSource = {
-            snapshot: snapshotTree,
-            useSnapshot: true,
-        };
-        const container2 = await loader.createDetachedContainer(rehydrationSource);
+
+        const container2 = await loader.createDetachedContainerFromSnapshot(snapshotTree);
 
         const responseAfter = await container2.request({ url: "/" });
         const defaultComponentAfter = responseAfter.value as ITestFluidComponent;
@@ -317,12 +302,8 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const sharedString1 = await defaultComponent1.getSharedObject<SharedString>(sharedStringId);
         sharedString1.insertText(0, str);
         const snapshotTree = JSON.parse(container.serialize());
-        const rehydrationSource: DetachedContainerSource = {
-            snapshot: snapshotTree,
-            useSnapshot: true,
-        };
 
-        const container2 = await loader.createDetachedContainer(rehydrationSource);
+        const container2 = await loader.createDetachedContainerFromSnapshot(snapshotTree);
         const responseBefore = await container2.request({ url: "/" });
         const defaultComponentBefore = responseBefore.value as ITestFluidComponent;
         const sharedStringBefore = await defaultComponentBefore.getSharedObject<SharedString>(sharedStringId);

@@ -9,7 +9,6 @@ import commander from "commander";
 import {
     IProxyLoaderFactory,
     IFluidCodeDetails,
-    DetachedContainerSource,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { OdspDocumentServiceFactory, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
@@ -40,11 +39,6 @@ interface IConfig {
 const codeDetails: IFluidCodeDetails = {
     package: packageName,
     config: {},
-};
-
-const source: DetachedContainerSource = {
-    codeDetails,
-    useSnapshot: false,
 };
 
 const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
@@ -91,7 +85,7 @@ function createLoader(config: IConfig, password: string) {
 
 async function initialize(config: IConfig, password: string) {
     const loader = createLoader(config, password);
-    const container = await loader.createDetachedContainer(source);
+    const container = await loader.createDetachedContainer(codeDetails);
     container.on("error", (error) => {
         console.log(error);
         process.exit(-1);

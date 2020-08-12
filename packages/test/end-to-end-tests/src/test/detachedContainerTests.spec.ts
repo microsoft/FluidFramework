@@ -9,7 +9,6 @@ import {
     IFluidCodeDetails,
     IProxyLoaderFactory,
     AttachState,
-    DetachedContainerSource,
 } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
@@ -41,10 +40,7 @@ describe("Detached Container", () => {
         package: "detachedContainerTestPackage",
         config: {},
     };
-    const source: DetachedContainerSource = {
-        codeDetails: pkg,
-        useSnapshot: false,
-    };
+
     const sharedStringId = "ss1Key";
     const sharedMapId = "sm1Key";
     const crcId = "crc1Key";
@@ -99,7 +95,7 @@ describe("Detached Container", () => {
     });
 
     it("Create detached container", async () => {
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(pkg);
         assert.strictEqual(container.attachState, AttachState.Detached, "Container should be detached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
@@ -114,7 +110,7 @@ describe("Detached Container", () => {
     });
 
     it("Attach detached container", async () => {
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(pkg);
         await container.attach(request);
         assert.strictEqual(container.attachState, AttachState.Attached, "Container should be attached");
         assert.strictEqual(container.closed, false, "Container should be open");
@@ -123,7 +119,7 @@ describe("Detached Container", () => {
     });
 
     it("Components in detached container", async () => {
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(pkg);
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
         if (response.mimeType !== "fluid/object" && response.status !== 200) {
@@ -143,7 +139,7 @@ describe("Detached Container", () => {
     });
 
     it("Components in attached container", async () => {
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(pkg);
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
         const component = response.value as ITestFluidComponent;
@@ -166,7 +162,7 @@ describe("Detached Container", () => {
     });
 
     it("Load attached container and check for components", async () => {
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(pkg);
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
         const component = response.value as ITestFluidComponent;
@@ -204,7 +200,7 @@ describe("Detached Container", () => {
     it("Fire ops during container attach for shared string", async () => {
         const ops = { pos1: 0, seg: "b", type: 0 };
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.equal(type, MessageType.Operation);
@@ -239,7 +235,7 @@ describe("Detached Container", () => {
     it("Fire ops during container attach for shared map", async () => {
         const ops = { key: "1", type: "set", value: { type: "Plain", value: "b" } };
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
@@ -269,7 +265,7 @@ describe("Detached Container", () => {
     it("Fire channel attach ops during container attach", async () => {
         const testChannelId = "testChannel1";
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.id,
@@ -298,7 +294,7 @@ describe("Detached Container", () => {
     it("Fire component attach ops during container attach", async () => {
         const testComponentType = "default";
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(pkg);
 
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
@@ -329,7 +325,7 @@ describe("Detached Container", () => {
     it("Fire ops during container attach for consensus register collection", async () => {
         const op = { key: "1", type: "write", serializedValue: JSON.stringify("b"), refSeq: 0 };
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
@@ -364,7 +360,7 @@ describe("Detached Container", () => {
             value: { type: "Plain", value: "b" },
         };
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
@@ -393,7 +389,7 @@ describe("Detached Container", () => {
     it("Fire ops during container attach for shared cell", async () => {
         const op = { type: "setCell", value: { type: "Plain", value: "b" } };
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
@@ -421,7 +417,7 @@ describe("Detached Container", () => {
 
     it("Fire ops during container attach for shared ink", async () => {
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
@@ -455,7 +451,7 @@ describe("Detached Container", () => {
     it("Fire ops during container attach for consensus ordered collection", async () => {
         const op = { opName: "add", value: JSON.stringify("s") };
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
@@ -486,7 +482,7 @@ describe("Detached Container", () => {
     it("Fire ops during container attach for sparse matrix", async () => {
         const seg = { items: ["s"] };
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
@@ -522,7 +518,7 @@ describe("Detached Container", () => {
     it.skip("Fire ops during container attach for shared matrix", async () => {
         const op = { pos1: 0, seg: 9, type: 0, target: "rows" };
         const defPromise = new Deferred();
-        const container = await loader.createDetachedContainer(source);
+        const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,

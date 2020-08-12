@@ -29,7 +29,6 @@ import {
     ContainerWarning,
     IThrottlingWarning,
     AttachState,
-    DetachedContainerSource,
 } from "@fluidframework/container-definitions";
 import { performanceNow } from "@fluidframework/common-utils";
 import {
@@ -195,7 +194,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         options: any,
         scope: IFluidObject,
         loader: Loader,
-        source: DetachedContainerSource,
+        codeDetails: IFluidCodeDetails | undefined,
+        snapshot: ISnapshotTree | undefined,
         serviceFactory: IDocumentServiceFactory,
         urlResolver: IUrlResolver,
         logger?: ITelemetryBaseLogger,
@@ -210,11 +210,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {},
             logger);
 
-        if (source.useSnapshot) {
-            await container.createDetachedFromSnapshot(source.snapshot);
+        if (snapshot !== undefined) {
+            await container.createDetachedFromSnapshot(snapshot);
         } else {
-            await container.createDetached(source.codeDetails);
+            assert(codeDetails, "One of the source should be there to load from!!");
+            await container.createDetached(codeDetails);
         }
+
         return container;
     }
 

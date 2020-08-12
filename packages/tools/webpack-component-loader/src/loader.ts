@@ -15,7 +15,6 @@ import {
     IProxyLoaderFactory,
     IResolvedFluidCodeDetails,
     isFluidPackage,
-    DetachedContainerSource,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
@@ -189,11 +188,6 @@ export async function start(
         config: {},
     };
 
-    const source: DetachedContainerSource = {
-        codeDetails,
-        useSnapshot: false,
-    };
-
     const urlResolver = new MultiUrlResolver(window.location.origin, options);
 
     // Create the loader that is used to load the Container.
@@ -202,7 +196,7 @@ export async function start(
     let container1: Container;
     if (autoAttach || manualAttach) {
         // For new documents, create a detached container which will be attached later.
-        container1 = await loader1.createDetachedContainer(source);
+        container1 = await loader1.createDetachedContainer(codeDetails);
     } else {
         // For existing documents, we try to load the container with the given documentId.
         const documentUrl = `${window.location.origin}/${documentId}`;
@@ -221,7 +215,7 @@ export async function start(
             url = url.replace(id, documentId);
 
             const newLoader = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
-            container1 = await newLoader.createDetachedContainer(source);
+            container1 = await newLoader.createDetachedContainer(codeDetails);
         }
     }
 
