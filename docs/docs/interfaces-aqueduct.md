@@ -1,11 +1,14 @@
-# Fluid objects and interfaces
+# Fluid Objects and interfaces
 
-In the previous section we introduced distributed data structures and demonstrated how to use them. The Fluid component
-model enables us to combine those distributed data structures and our own code (business logic) into a modular, reusable
-piece. This in turn enables us to modularize pieces of our application -- data included -- and re-use them or embed them
-elsewhere.
+In the previous section we introduced distributed data structures and demonstrated how to use them. Now let's discuss
+how to leverage those distributed data structures from our own code (business logic) to create modular, reusable
+pieces. These pieces fall into the category of the `fluid object`s discussed in the last section,
+along with DDSes themselves.
 
-The key things to understand are:
+One of the primary design principles in the Fluid Framework is to support feature detection and delegation
+patterns between `fluid object`s.
+**Feature detection** is a technique to dynamically determine the capabilities of another component, while
+**delegation** means that the implementation of an interface can be delegated to another object.
 
 ---
 
@@ -13,25 +16,21 @@ The key things to understand are:
 
 ---
 
-A Fluid component is at its core a JavaScript object. Or, stated differently, any JavaScript object _could_ be a Fluid
-component. What makes that object "Fluid" is the interfaces that it exposes through the Fluid component model's feature
-detection mechanism.
+## Feature Detection via IFluidObject
 
-Wow, that was a mouthful! What it means is that Fluid components are just JavaScript objects that implement specific
-interfaces. The Fluid Framework defines an interface, IComponent, which is then augmented using [TypeScript's interface
-merging capabilities](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#merging-interfaces). The
-specifics of how these interfaces are declared is not relevant until you want to define your own interfaces. We'll cover
-that in a later section.
+In the course of writing code to manipulate DDSes and interact with other `fluid object`s, you will find yourself dealing
+with Javascript objects you know almost nothing about. To interact with such an object, you'll use Fluid's
+feature detection mechanism, which centers around a special type called `IFluidObject`.
 
-One of the primary design principles in the Fluid component design is to support delegation and feature detection
-patterns. **Feature detection** is a technique to dynamically determine the capabilities of another component, while
-**delegation** means that the implementation of an interface can be delegated to another object.
+In order to detect features supported by an unknown object, you cast it `IFluidObject` and then query it for a specific
+interface that it may support. The interfaces exposed via `IFluidObject` include many core Fluid interfaces,
+such as `IFluidHandle` or `IFluidLoadable`, and this list can also be augmented using
+[TypeScript's interface merging capabilities](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#merging-interfaces).
+This enables any Fluid code to "register" an interface as queryable from other Fluid code that imports it.
+The specifics of how these interfaces are declared is not relevant until you want to define your own interfaces.
+We'll cover that in a later section.
 
-Using these features within the Fluid Framework itself we define several interfaces, such as `IComponentLoadable`, and
-use the feature detection mechanism to find JavaScript objects that implement that interface. These patterns are
-described in more detail below.
-
-## Feature detection and delegation
+## Delegation and the IProvide pattern
 
 The Fluid component model supports a delegation and feature detection mechanism. As is typical in JavaScript, a feature
 detection pattern can be used to determine what capabilities are exposed by a component. The `IComponent` interface
