@@ -10,7 +10,6 @@ import { SharedMatrix } from "./matrix";
 import { Handle, isHandleValid } from "./handletable";
 import { PermutationSegment, PermutationVector } from "./permutationvector";
 import { IUndoConsumer } from "./types";
-import { undoRemoveRows, undoRemoveCols } from "./internal";
 
 export class VectorUndoProvider {
     constructor (
@@ -74,7 +73,7 @@ export class MatrixUndoProvider<T extends Serializable = Serializable> {
                 this.matrix.removeRows(start, segment.cachedLength);
             },
             /* undoRemove: */ (segment: PermutationSegment) => {
-                this.matrix[undoRemoveRows](segment);
+                this.matrix._undoRemoveRows(segment);
             },
         );
         cols.undo = new VectorUndoProvider(
@@ -84,7 +83,7 @@ export class MatrixUndoProvider<T extends Serializable = Serializable> {
                 this.matrix.removeCols(start, segment.cachedLength);
             },
             /* undoRemove: */ (segment: PermutationSegment) => {
-                this.matrix[undoRemoveCols](segment);
+                this.matrix._undoRemoveCols(segment);
             },
         );
     }

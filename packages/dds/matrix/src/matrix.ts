@@ -37,7 +37,6 @@ import { deserializeBlob, serializeBlob } from "./serialization";
 import { ensureRange } from "./range";
 import { IUndoConsumer } from "./types";
 import { MatrixUndoProvider } from "./undoprovider";
-import { undoRemoveRows, undoRemoveCols } from "./internal";
 
 const enum SnapshotPath {
     rows = "rows",
@@ -355,7 +354,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         this.submitRowMessage(this.rows.remove(rowStart, count));
     }
 
-    public [undoRemoveRows](segment: PermutationSegment) {
+    /** @internal */ public _undoRemoveRows(segment: PermutationSegment) {
         // (Re)insert the removed number of columns at the original position.
         const rowStart = this.rows.getPosition(segment);
         this.insertRows(rowStart, segment.cachedLength);
@@ -390,7 +389,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         }
     }
 
-    public [undoRemoveCols](segment: PermutationSegment) {
+    /** @internal */ public _undoRemoveCols(segment: PermutationSegment) {
         // (Re)insert the removed number of columns at the original position.
         const colStart = this.cols.getPosition(segment);
         this.insertCols(colStart, segment.cachedLength);
