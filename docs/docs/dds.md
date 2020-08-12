@@ -7,9 +7,7 @@ OUTDATED
 :::
 
 Much of Fluid's power lies in a set of base primitives called distributed data structures. These data structures, such
-as [SharedMap](./SharedMap.md) or the various types in the
-[@fluidframework/sequence](https://github.com/microsoft/FluidFramework/blob/master/packages/dds/sequence)
-package, are eventually consistent.
+as [SharedMap](./SharedMap.md) and the various types in the @fluidframework/sequence package, are eventually consistent.
 The Fluid runtime manages these data structures; as changes are made locally and remotely, they are merged in seamlessly
 by the runtime.
 
@@ -30,7 +28,7 @@ the changes if needed. And this all happens _very_ quickly.
 
 There are cases, however, where the eventually consistent guarantee is insufficient. In these cases, the consensus data
 structures are useful. These types of data structures defer applying operations until they're acknowledged by the
-server. This could be used to ensure that each client `.pop`s a different value from a stack, for example.
+server. This ensures that each client `.pop`s a different value from a stack, for example.
 
 ## Creating and storing distributed data structures
 
@@ -38,8 +36,7 @@ server. This could be used to ensure that each client `.pop`s a different value 
 
 ## Handles
 
-A [Fluid Handle](https://github.com/microsoft/FluidFramework/blob/master/packages/loader/core-interfaces/src/handles.ts)
-is a handle to a `fluid object`. It is
+A [Fluid Handle](../../packages/loader/core-interfaces/src/handles.ts) is a handle to a `fluid object`. It is
 used to represent the object and has a function `get()` that returns the underlying object. Handles move the ownership
 of retrieving a `fluid object` from the user of the object to the object itself. The handle can be passed around in the
 system and anyone who has the handle can easily get the underlying object by simply calling `get()`.
