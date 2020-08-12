@@ -22,7 +22,7 @@ describe("external-component-loader", () => {
         await expect(page).toClick("button", { text: "Add Component" });
     });
 
-    it("can dynamically load, enable, and use itself", async () => {
+    it.skip("can dynamically load, enable, and use itself", async () => {
         await expect(page).toFill("input", `${globals.PATH}/file/${path.join(__dirname, "../")}`);
         await expect(page).toClick("button", { text: "Add Component" });
 
