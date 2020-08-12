@@ -98,7 +98,48 @@ describe("Big Matrix", function () {
             checkCorners(matrix2);
         });
 
-        it("remove populated", async () => {
+        it("remove corners (empty)", async () => {
+            matrix1.insertRows(0, Const.excelMaxRows);
+            matrix1.insertCols(0, Const.excelMaxCols);
+
+            expectSize(matrix1, Const.excelMaxRows, Const.excelMaxCols);
+
+            containterRuntimeFactory.processAllMessages();
+
+            expectSize(matrix2, Const.excelMaxRows, Const.excelMaxCols);
+
+            matrix1.removeRows(/* rowStart: */ matrix1.rowCount - 1, /* rowCount: */ 1);
+            matrix1.removeRows(/* rowStart: */ 0, /* rowCount: */ 1);
+            matrix1.removeCols(/* rowStart: */ matrix1.colCount - 1, /* colCount: */ 1);
+            matrix1.removeCols(/* rowStart: */ 0, /* colCount: */ 1);
+
+            expectSize(matrix1, Const.excelMaxRows - 2, Const.excelMaxCols - 2);
+
+            containterRuntimeFactory.processAllMessages();
+
+            expectSize(matrix2, Const.excelMaxRows - 2, Const.excelMaxCols - 2);
+        });
+
+        it("remove all (empty)", async () => {
+            matrix1.insertRows(0, Const.excelMaxRows);
+            matrix1.insertCols(0, Const.excelMaxCols);
+            expectSize(matrix1, Const.excelMaxRows, Const.excelMaxCols);
+
+            containterRuntimeFactory.processAllMessages();
+
+            expectSize(matrix2, Const.excelMaxRows, Const.excelMaxCols);
+
+            matrix1.removeRows(/* rowStart: */ 0, /* rowCount: */ matrix1.rowCount);
+            matrix1.removeCols(/* rowStart: */ 0, /* colCount: */ matrix1.colCount);
+
+            expectSize(matrix1, 0, 0);
+
+            containterRuntimeFactory.processAllMessages();
+
+            expectSize(matrix2, 0, 0);
+        });
+
+        it("remove corners (populated)", async () => {
             matrix1.insertRows(0, Const.excelMaxRows);
             matrix1.insertCols(0, Const.excelMaxCols);
 
@@ -109,8 +150,32 @@ describe("Big Matrix", function () {
 
             checkCorners(matrix2);
 
-            matrix1.removeRows(0, matrix1.rowCount);
-            matrix1.removeCols(0, matrix1.colCount);
+            matrix1.removeRows(/* rowStart: */ matrix1.rowCount - 1, /* rowCount: */ 1);
+            matrix1.removeRows(/* rowStart: */ 0, /* rowCount: */ 1);
+            matrix1.removeCols(/* rowStart: */ matrix1.colCount - 1, /* colCount: */ 1);
+            matrix1.removeCols(/* rowStart: */ 0, /* colCount: */ 1);
+
+            expectSize(matrix1, Const.excelMaxRows - 2, Const.excelMaxCols - 2);
+
+            containterRuntimeFactory.processAllMessages();
+
+            expectSize(matrix2, Const.excelMaxRows - 2, Const.excelMaxCols - 2);
+        });
+
+        it("remove all (corners populated)", async () => {
+            matrix1.insertRows(0, Const.excelMaxRows);
+            matrix1.insertCols(0, Const.excelMaxCols);
+
+            setCorners(matrix1);
+            checkCorners(matrix1);
+
+            containterRuntimeFactory.processAllMessages();
+
+            checkCorners(matrix2);
+
+            matrix1.removeRows(/* rowStart: */ 0, /* rowCount: */ matrix1.rowCount);
+            matrix1.removeCols(/* rowStart: */ 0, /* colCount: */ matrix1.colCount);
+
             expectSize(matrix1, 0, 0);
 
             containterRuntimeFactory.processAllMessages();

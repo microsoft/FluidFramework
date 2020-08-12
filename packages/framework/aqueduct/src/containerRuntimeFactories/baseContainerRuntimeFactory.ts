@@ -12,7 +12,9 @@ import {
     IContainerRuntime,
 } from "@fluidframework/container-runtime-definitions";
 import {
-    RuntimeRequestHandler, RuntimeRequestHandlerBuilder, dataStoreRuntimeRequestHandler,
+    RuntimeRequestHandler,
+    buildRuntimeRequestHandler,
+    deprecated_innerRequestHandler,
 } from "@fluidframework/request-handler";
 import {
     IFluidDataStoreRegistry,
@@ -63,14 +65,12 @@ export class BaseContainerRuntimeFactory implements
         const scope: any = context.scope;
         scope.IFluidDependencySynthesizer = dc;
 
-        const builder = new RuntimeRequestHandlerBuilder();
-        builder.pushHandler(...this.requestHandlers);
-        builder.pushHandler(dataStoreRuntimeRequestHandler);
-
         const runtime = await ContainerRuntime.load(
             context,
             this.registryEntries,
-            async (req, rt) => builder.handleRequest(req, rt),
+            buildRuntimeRequestHandler(
+                ...this.requestHandlers,
+                deprecated_innerRequestHandler),
             undefined,
             scope);
 

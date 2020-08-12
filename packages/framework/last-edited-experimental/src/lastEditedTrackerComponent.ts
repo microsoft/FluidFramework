@@ -11,22 +11,22 @@ import { IProvideFluidLastEditedTracker } from "./interfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
-export const LastEditedTrackerComponentName = pkg.name as string;
+export const LastEditedTrackerDataObjectName = pkg.name as string;
 
 /**
- * LastEditedTrackerComponent creates a LastEditedTracker that keeps track of the latest edits to the document.
+ * LastEditedTrackerDataObject creates a LastEditedTracker that keeps track of the latest edits to the document.
  */
-export class LastEditedTrackerComponent extends DataObject
+export class LastEditedTrackerDataObject extends DataObject
     implements IProvideFluidLastEditedTracker {
     private static readonly factory = new DataObjectFactory(
-        LastEditedTrackerComponentName,
-        LastEditedTrackerComponent,
+        LastEditedTrackerDataObjectName,
+        LastEditedTrackerDataObject,
         [SharedSummaryBlock.getFactory()],
         {},
     );
 
     public static getFactory() {
-        return LastEditedTrackerComponent.factory;
+        return LastEditedTrackerDataObject.factory;
     }
 
     private readonly sharedSummaryBlockId = "shared-summary-block-id";

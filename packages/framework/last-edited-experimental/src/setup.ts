@@ -6,7 +6,7 @@
 import { ISequencedDocumentMessage, IQuorum } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILastEditDetails, IFluidLastEditedTracker } from "./interfaces";
 
 // Default implementation of the shouldDiscardMessageFn function below that tells that all messages other
@@ -87,13 +87,8 @@ export async function setupLastEditedTrackerForContainer(
         }
     });
 
-    const response = await runtime.request({ url: componentId });
-    if (response.status !== 200 || response.mimeType !== "fluid/component") {
-        throw new Error(`Component with id ${componentId} does not exist.`);
-    }
-
     // Get the last edited tracker from the component.
-    const component = response.value as IFluidObject;
+    const component = await requestFluidObject(runtime.IFluidHandleContext, componentId);
     lastEditedTracker = component.IFluidLastEditedTracker;
     if (lastEditedTracker === undefined) {
         throw new Error(`Component with id ${componentId} does not have IComponentLastEditedTracker.`);

@@ -465,10 +465,10 @@ export class TaskManager implements ITaskManager {
             return Promise.reject(`Invalid agent route: ${url}`);
         }
 
-        const rawComponent = response.value as IFluidObject;
-        const agent = rawComponent.IFluidRunnable;
+        const fluidObject = response.value as IFluidObject;
+        const agent = fluidObject.IFluidRunnable;
         if (agent === undefined) {
-            return Promise.reject("Component does not implement IFluidRunnable");
+            return Promise.reject("Fluid object does not implement IFluidRunnable");
         }
 
         return agent.run();

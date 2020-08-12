@@ -18,7 +18,7 @@ describe("diceRoller", () => {
         await page.waitFor(() => window["fluidStarted"]);
     });
 
-    it.skip("The page loads and there's a button with Roll", async () => {
+    it("loads and there's a button with Roll", async () => {
         // Validate there is a button that can be clicked
         await expect(page).toClick("button", { text: "Roll" });
     });

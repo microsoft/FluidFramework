@@ -14,20 +14,18 @@ import {
     IComponentDiscoverableInterfaces,
 } from "@fluidframework/framework-interfaces";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 export const MatchMakerContainerServiceId = "matchMaker";
 
 const getMatchMakerContainerService =
     async (context: IFluidDataStoreContext): Promise<IComponentInterfacesRegistry> => {
-        const response = await context.containerRuntime.request({
-            url: `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
-        });
-        if (response.status === 200 && response.mimeType === "fluid/object") {
-            const value = response.value as IFluidObject;
-            const matchMaker = value.IComponentInterfacesRegistry;
-            if (matchMaker) {
-                return matchMaker;
-            }
+        const value = await requestFluidObject(
+            context.containerRuntime.IFluidHandleContext,
+            `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`);
+        const matchMaker = value.IComponentInterfacesRegistry;
+        if (matchMaker) {
+            return matchMaker;
         }
 
         throw new Error("MatchMaker Container Service not registered");
@@ -72,10 +70,10 @@ export const unregisterWithMatchMaker = async (
  */
 export class MatchMaker extends BaseContainerService implements IComponentInterfacesRegistry {
     private readonly discoverableInterfacesMap =
-        new Map<keyof (IFluidObject & IFluidObject), IComponentDiscoverableInterfaces[]>();
+        new Map<keyof (IFluidObject), IComponentDiscoverableInterfaces[]>();
 
     private readonly discoverInterfacesMap =
-        new Map<keyof (IFluidObject & IFluidObject), IComponentDiscoverInterfaces[]>();
+        new Map<keyof (IFluidObject), IComponentDiscoverInterfaces[]>();
 
     public get IComponentInterfacesRegistry() { return this; }
 
@@ -170,7 +168,7 @@ export class MatchMaker extends BaseContainerService implements IComponentInterf
             const discoverComponents = this.discoverInterfacesMap.get(interfaceName);
             if (discoverComponents) {
                 discoverComponents.forEach((component) => {
-                    if (component !== (discoverableComponent as (IFluidObject & IFluidObject))) {
+                    if (component !== (discoverableComponent as (IFluidObject))) {
                         component.notifyComponentsDiscovered(interfaceName, [discoverableComponent]);
                     }
                 });

@@ -41,7 +41,7 @@ export class ExternalComponentLoader extends DataObject {
         }
 
         // Calling .get() on the urlReg registry will also add it to the registry if it's not already there.
-        const pkgReg = await urlReg.IFluidDataStoreRegistry.get(componentUrl) as IFluidObject & IFluidObject;
+        const pkgReg = await urlReg.IFluidDataStoreRegistry.get(componentUrl) as IFluidObject;
         let router: IFluidRouter;
         if (pkgReg?.IFluidExportDefaultFactoryName !== undefined) {
             router = await this.context.containerRuntime.createDataStore(

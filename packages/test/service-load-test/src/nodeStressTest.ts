@@ -22,7 +22,7 @@ import {
     OdspTokenConfig,
 } from "@fluidframework/tool-utils";
 import { pkgName, pkgVersion } from "./packageVersion";
-import { ITestConfig, IRunConfig, fluidExport, ILoadTest } from "./loadTestComponent";
+import { ITestConfig, IRunConfig, fluidExport, ILoadTest } from "./loadTestDataStore";
 const packageName = `${pkgName}@${pkgVersion}`;
 
 interface ITestConfigs {
@@ -99,11 +99,11 @@ async function initialize(config: IConfig, password: string) {
     const tenant = `https://${config.server}`;
     const request = urlResolver.createCreateNewRequest(tenant, config.driveId, "/test", "test");
     await container.attach(request);
-    const componentUrl = await container.getAbsoluteUrl("/");
-    console.log(componentUrl);
+    const dataStoreUrl = await container.getAbsoluteUrl("/");
+    console.log(dataStoreUrl);
     container.close();
 
-    return componentUrl;
+    return dataStoreUrl;
 }
 
 async function load(config: IConfig, url: string, password: string) {
@@ -184,7 +184,7 @@ async function main() {
     const p: Promise<void>[] = [];
     for (let i = 0; i < config.profiles[profile].numClients; i++) {
         const args = [
-            "dist\\nodeStressTest.js",
+            "./dist/nodeStressTest.js",
             "--password", password,
             "--profile", profile,
             "--runId", i.toString(),

@@ -6,6 +6,8 @@
 import {
     IFluidObject,
     IFluidRouter,
+    IRequest,
+    IResponse,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -65,7 +67,7 @@ export interface IContainerRuntime extends
     readonly loader: ILoader;
     readonly flushMode: FlushMode;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly scope: IFluidObject & IFluidObject;
+    readonly scope: IFluidObject;
     /**
      * Indicates the attachment state of the container to a host service.
      */
@@ -140,4 +142,10 @@ export interface IContainerRuntime extends
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+
+    /**
+     * Resolves handle URI
+     * @param request - request to resolve
+     */
+    resolveHandle(request: IRequest): Promise<IResponse>;
 }
