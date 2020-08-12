@@ -1,36 +1,185 @@
----
-home: true
-# heroImage: /images/homescreen144.png
-heroText: "Fluid Framework"
-showHeroSymbol: true
-tagline: null
-actionText: Get started →
-actionLink: /docs/getting-started.md
-features:
-- title: What is Fluid Framework?
-  details: Some details go here.
-- title: FAQ
-  details: Some details go here.
-- title: Other media
-  details: Some details go here.
----
+# FluidFramework.com Website
 
-<hr></hr>
+This repo hosts the code for https://fluidframework.com
 
-## Try it out
+## Contributing
+
+This project welcomes contributions and suggestions.  Most contributions require you to agree to a
+Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
+the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+
+When you submit a pull request, a CLA bot will automatically determine whether you need to provide
+a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
+provided by the bot. You will only need to do this once across all repos using our CLA.
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
+contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+## Contributing documentation
+
+
+### Setup
+
+The Fluid website is a generated static website based on content found in this
+repository. To contribute new content, or to preview the site, you need to
+install [Hugo](https://gohugo.io), [instructions
+here](https://gohugo.io/getting-started/installing/).
+
+Once you have Hugo installed.
+
+Make sure you are in the `docs` folder (`cd docs`) and then you can start the server:
 
 ```bash
-# install the Fluid Framework project generator
-npm install --global yo generator-fluid
-
-# create a new Fluid Framework project
-yo fluid hellofluid --beginner
-
-# start it up
-cd hellofluid
-npm start
+hugo server
 ```
 
-This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft
-sponsorship.
+
+Open `http://localhost:1313` to preview the site. Any changes to the source
+content will automatically force an HTML re-render allowing you to preview your
+modications in quasi real time.
+
+If you want to debug the generated content, you can build the site and see the
+output in the `public/` folder:
+
+```bash
+hugo
+```
+
+Note that content with a published date in the future or draft flag on won't be
+rendered, you can pass 2 extra flags to preview this content.
+
+```bash
+hugo  server --buildDrafts --buildFuture
+```
+
+If you create a content with a future published date, it won't be automatically
+published at that time, you need to trigger the build process.
+
+
+## New Content
+
+You need to generate new content manually by creating new files by hand or by
+generating them using the `hugo` command as shown below:
+
+### Static doc
+
+```bash
+hugo new docs/concepts/flux-capacitor.md
+```
+
+### Blog post
+
+```bash
+hugo new posts/fluid-everywhere.md
+```
+
+### Content guidelines
+
+Try to use markdown as much as possible, while we enabled HTML embedding in
+Markdown, it is recommended to stick to md and shortcodes/partials.
+
+## Menus
+
+Menus are mainly managed in config.toml but depending on the menu, the sub
+headers might be driven by the content in the repo (pages or data files).
+
+### Main menu (top menu)
+
+The top menu is configured in the `config.toml` file and can look like that:
+
+```toml
+[menu]
+
+[[menu.main]]
+name = "What is Fluid?"
+url = "/what-is-fluid"
+weight = -100
+
+[[menu.main]]
+name = "Docs"
+url = "/docs/"
+weight = -90
+
+```
+
+### Docs menu
+
+The docs menu is implemented in the theme's `_partial/docNav.html` and is using
+the `config.toml` to find the headers and then uses the area attribute of each
+sub section (sub folders in the content folder) to populate the pages displayed
+in the menu.
+
+Here is an example of what `config.toml` could contain:
+
+```toml
+[[menu.docs]]
+identifier = "get-started"
+name = "Get Started"
+weight = -100
+
+[[menu.docs]]
+identifier = "concepts"
+name = "Main concepts"
+weight = 0
+```
+
+Those are headers for the Docs menu, they each have a `name` field which us used
+to display the header in the menu. They also have an `identifier` key which is
+used to map content with matching `area` field (often set to cascade within a
+sub folder). Finally, you have a `weight` field that is used to decide the
+positioning of each item in the menu. The lighter an item is, the higher it goes
+in order (closer to the top).
+
+
+### API menu
+
+The API menu is a bit more complex since it's driven by content. The left menu
+(API overview) is a list of grouped packages, the grouping comes from a yaml
+file in the `data` folder (`packages.yaml`). The API documentation is being generated with
+metadata which allows the template to link pages and load the right information.
+
+### Table of Contents
+
+Some template pages include a TOC of the page, this is generated on the fly by
+reading the headers.
+
+### Social action
+
+There is a menu with actions such as tweeting the page, subscribing to the feed,
+asking questions etc... this is driven from the theme and the information for
+the accounts should be in the config.
+
+
+## Shortcodes
+
+Shortcodes are custom functions that can be called from within the Markdown to
+insert specific content.
+
+
+
+## Working on the template
+
+If you need to work on the scss you need to install [hugo extended](https://gohugo.io/getting-started/installing/).
+The template lives in `themes/thxvscode`.
+
+
+## Generating API docs
+
+The API docs comes from the main code repo where the code is compiled and the
+API is extracted using a fork of api-extractor. The json output is then converted in this
+repo into markdown via a fork of the api-documenter tool.
+
+From this folder and if we have extracted the TS doc as JSON and put the files in `../_api-extractor-temp/doc-models`:
+
+```
+npm run build
+```
+
+This will regenerate the `content/apis/*.md` files from the provided json files.
+Note that the `api-documenter.json` file is used to configure the output.
+
+### Updating the API generator code
+
+
+Feel free to send a PR to [this repo](https://github.com/mattetti/custom-api-documenter)

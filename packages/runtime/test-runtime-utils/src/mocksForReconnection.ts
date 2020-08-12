@@ -33,7 +33,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
             this.clientId = uuid();
             // Update the clientId in FluidDataStoreRuntime.
             this.dataStoreRuntime.clientId = this.clientId;
-            // On reconnection, ask the DDSs to resubmit pending messages.
+            // On reconnection, ask the DDSes to resubmit pending messages.
             this.reSubmitMessages();
         } else {
             const factory = this.factory as MockContainerRuntimeFactoryForReconnection;
@@ -41,7 +41,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
             factory.clearOutstandingClientMessages(this.clientId);
         }
 
-        // Let the DDSs know that the connection state changed.s
+        // Let the DDSes know that the connection state changed.s
         this.deltaConnections.forEach((dc) => {
             dc.setConnectionState(this.connected);
         });
