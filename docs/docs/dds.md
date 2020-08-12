@@ -16,8 +16,8 @@ The primary way that developers interact with the Fluid Framework is through a c
 data structures_. We call them this because they are similar to data structures used commonly when programming, like
 strings, maps/dictionaries, and sequences/lists. The APIs provided by distributed data structures are designed to be
 familiar to programmers who've used these types of data structures before. For example, the `SharedMap` DDS is used to
-store key/value pairs, just like a typical map or dictionary data structure, and provides `get` and `set` methods to
-store and retrieve data in the map.
+store key/value pairs, like a typical map or dictionary data structure, and provides `get` and `set` methods to store
+and retrieve data in the map.
 
 When using a DDS, you can largely treat it as a local object. You can add data to it, remove data, update it, etc.
 However, a DDS is not _just_ a local object. Fluid's purpose is to make it easier to build systems with _distributed_
@@ -61,6 +61,12 @@ details about the merge strategy used by each DDS.
 
 
 ## Creating and storing distributed data structures
+
+Distributed data structures should be created using their static `create` method.
+
+```typescript
+const myMap = SharedMap.create(this.runtime, id);
+```
 
 
 
