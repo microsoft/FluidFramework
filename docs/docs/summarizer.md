@@ -52,6 +52,16 @@ They will have a single metadata blob containing information for how to load the
 ### Summary Handles
 Sometimes nodes/subtrees within the summary remain unchanged since the last successful summary, or want to be reused by the next summary. In this case, when uploading a summary, handles can be used in place of trees or blobs. Handles are pointers to nodes within the previous tree. The handle itself is just a full path to the node it is referencing, for example: "/dataStoreId/ddsId" would reference the subtree for the data structure with ID "ddsId" within the data store with ID "dataStoreId". When uploading to storage, the driver uses this path in conjunction with the previously uploaded summary ID to resolve these handles.
 
+## Summary Life Cycle
+1. Runtime generates summary tree (more details below)
+1. Runtime uploads summary tree to storage, which returns a handle
+1. Runtime submits a "summarize" op to the server containing that uploaded summary handle
+1. Ordering service on server stamps and broadcasts the "summarize" op
+1. Another service on server responds to "summarize" op
+    - The server can reject the summary by sending a "summaryNack" op referencing the sequence number of the "summarize" op
+    - The server can accept the summary, but first it must serialize the protocol state and add it to the posted summary. Then it will need to send a "summaryAck" op with the new handle to the augmented summary
+1. Runtime watches for "summaryAck"/"summaryNack" ops, using them as input to its heuristics determining when to generate summaries
+
 ## Summarizing
 The job of summarizing consists of multiple parts within the runtime. Currently all summarization work is done in a separate agent client, which helps by preventing it from having any local operations to deal with.
 
