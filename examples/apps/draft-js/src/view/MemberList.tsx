@@ -64,7 +64,6 @@ export class MemberList extends React.Component<IProps, IState> {
     public componentWillMount() {
         this.updateMemberList();
         this.props.onAuthorsOp((op, isLocal) => {
-
             if (!isLocal && !this.knownHumanMemberIds.has(op.clientId)) {
                 this.knownHumanMemberIds.add(op.clientId);
                 this.updateMemberList();
