@@ -49,7 +49,7 @@ to retrieve and load it. It can store the handle to the object in a DDS and the 
 and `get` the object.
 
 The following code snippet from the [Pond](../../components/examples/pond/src/index.tsx) Component demonstrates this. It
-creates `Clicker` which is a SharedComponent during first time initialization and stores its `handle` in the `root` DDS.
+creates a `Clicker` object which is a SharedComponent during first time initialization and stores its `handle` in the `root` DDS.
 Any remote client can retrieve the `handle` from the `root` DDS and get `Clicker` by calling `get()` on the handle:
 
 ```typescript

@@ -108,7 +108,7 @@ export class MapFactory implements IChannelFactory {
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     /**
      * Create a new shared map.
-     * @param runtime - Data store runtime the new shared map belongs to
+     * @param runtime - The data store runtime that the new shared map belongs to.
      * @param id - Optional name of the shared map
      * @returns Newly created shared map
      *
@@ -143,7 +143,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     private readonly kernel: MapKernel;
 
     /**
-    * You should use the {@link SharedMap.create | create method}.
+    * Do not call the constructor. Instead, you should use the {@link SharedMap.create | create method}.
     *
     * @param id - String identifier
     * @param runtime - Data store runtime
