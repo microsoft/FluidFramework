@@ -34,14 +34,14 @@ export const FluidDraftJsView: React.FC<IAppProps> = (props) => {
         };
     }, [props.model]);
 
-    const onAuthorsOp = (callback: (op: ISequencedDocumentMessage, isLocal) => void) => {
+    const onNewAuthor = (callback: (op: ISequencedDocumentMessage, isLocal) => void) => {
         const func = (op: ISequencedDocumentMessage, isLocal: boolean) => callback(op, isLocal);
         props.model.authors.on("op", func);
     };
 
     return (
         <div style={{ margin: "20px auto", maxWidth: 800 }}>
-            <MemberList members={members} onAuthorsOp={onAuthorsOp} style={{ textAlign: "right" }} />
+            <MemberList members={members} onNewAuthor={onNewAuthor} style={{ textAlign: "right" }} />
             <FluidEditor
                 sharedString={props.model.text}
                 authors={props.model.authors}

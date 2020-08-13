@@ -12,9 +12,10 @@ import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { insertBlockStart, PresenceManager } from "../utils";
 export interface IFluidDraftJsObject {
-    text?: SharedString | undefined;
-    authors?: SharedMap | undefined;
-    members: IterableIterator<[string, ISequencedClient]>
+    text: SharedString | undefined;
+    authors: SharedMap | undefined;
+    readonly presenceManager: PresenceManager;
+    readonly members: IterableIterator<[string, ISequencedClient]>
     on(event: "addMember" | "removeMember", listener: () => void): this;
 }
 

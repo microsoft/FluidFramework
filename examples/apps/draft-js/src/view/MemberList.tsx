@@ -11,14 +11,14 @@ import "./css/MemberList.css";
 
 interface IProps {
     /**
-   * From Fluid, this.runtime.getQuorum()
-   */
-    members: IterableIterator<[string, ISequencedClient]>;
-    /**
    * Any Distributed Data Structure that users will interact with. A user is not shown in the
    * member list until the have touched this DDS.
    */
-    onAuthorsOp: (func: (op, isLocal) => void) => void;
+    members: IterableIterator<[string, ISequencedClient]>;
+    /**
+   * Callback for when an a new author is added
+   */
+    onNewAuthor: (func: (op, isLocal) => void) => void;
     style?: React.CSSProperties;
 }
 
@@ -63,7 +63,7 @@ export class MemberList extends React.Component<IProps, IState> {
     // eslint-disable-next-line react/no-deprecated
     public componentWillMount() {
         this.updateMemberList();
-        this.props.onAuthorsOp((op, isLocal) => {
+        this.props.onNewAuthor((op, isLocal) => {
             if (!isLocal && !this.knownHumanMemberIds.has(op.clientId)) {
                 this.knownHumanMemberIds.add(op.clientId);
                 this.updateMemberList();
