@@ -80,7 +80,7 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultData
         // Load the last edited tracker component (done by the setup method below). This component provides container
         // level tracking of last edit and has to be loaded before any other component.
         const tracker = await requestFluidObject<IFluidLastEditedTracker>(
-            await runtime.getDataStore(ContainerRuntimeFactoryWithDefaultDataStore.defaultComponentId),
+            await runtime.getRootDataStore(ContainerRuntimeFactoryWithDefaultDataStore.defaultComponentId),
             "");
 
         setupLastEditedTrackerForContainer(tracker.IFluidLastEditedTracker, runtime);

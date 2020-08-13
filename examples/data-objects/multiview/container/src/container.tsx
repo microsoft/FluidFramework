@@ -44,7 +44,7 @@ async function requestObjectStoreFromId<T>(request: RequestParser, runtime: ICon
         headers: request.headers,
     });
     return requestFluidObject<T>(
-        await runtime.getDataStore(id),
+        await runtime.getRootDataStore(id),
         coordinateRequest);
 }
 
