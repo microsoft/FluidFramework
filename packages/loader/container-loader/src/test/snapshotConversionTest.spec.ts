@@ -31,7 +31,7 @@ describe("Dehydrate Container", () => {
                     tree: {
                         ".component": {
                             type: SummaryType.Blob,
-                            content: JSON.stringify("defaultComponent"),
+                            content: JSON.stringify("defaultDataStore"),
                         },
                         "root": {
                             type: SummaryType.Tree,
@@ -51,12 +51,12 @@ describe("Dehydrate Container", () => {
         assert.strictEqual(Object.keys(snapshotTree.trees).length, 2, "2 trees should be there");
         assert.strictEqual(Object.keys(snapshotTree.trees[".protocol"].blobs).length, 4,
             "2 protocol blobs should be there(4 mappings)");
-        const defaultComponentBlobId = snapshotTree.trees.default.blobs[".component"];
-        assert.strictEqual(JSON.parse(Buffer.from(snapshotTree.trees.default.blobs[defaultComponentBlobId], "base64")
-            .toString()), "defaultComponent", "Default component should be there");
+        const defaultDataStoreBlobId = snapshotTree.trees.default.blobs[".component"];
+        assert.strictEqual(JSON.parse(Buffer.from(snapshotTree.trees.default.blobs[defaultDataStoreBlobId], "base64")
+            .toString()), "defaultDataStore", "Default data store should be there");
         const rootAttributesBlobId = snapshotTree.trees.default.trees.root.blobs.attributes;
         assert.strictEqual(JSON.parse(Buffer.from(
             snapshotTree.trees.default.trees.root.blobs[rootAttributesBlobId], "base64").toString()),
-            "rootattributes", "Default component root attributes should be there");
+            "rootattributes", "Default data store root attributes should be there");
     });
 });
