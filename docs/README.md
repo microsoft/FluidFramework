@@ -26,14 +26,16 @@ repository. To contribute new content, or to preview the site, you need to
 install [Hugo](https://gohugo.io), [instructions
 here](https://gohugo.io/getting-started/installing/).
 
-Once you have Hugo installed, you can start the server:
+Once you have Hugo installed.
+
+Make sure you are in the `docs` folder (`cd docs`) and then you can start the server:
 
 ```bash
 hugo server
 ```
 
 
-And open `http://localhost:1313` to preview the site. Any changes to the source
+Open `http://localhost:1313` to preview the site. Any changes to the source
 content will automatically force an HTML re-render allowing you to preview your
 modications in quasi real time.
 

@@ -9,7 +9,8 @@
   "homepage": "https://api-extractor.com/",
   "license": "MIT",
   "scripts": {
-    "build": "gulp test --clean"
+    "build": "gulp test --clean",
+    "api:tomarkdown": "bin/api-documenter generate --input-folder ../../../_api-extractor-temp/doc_models/ --output-folder ../../content/apis/"
   },
   "bin": {
     "api-documenter": "./bin/api-documenter"

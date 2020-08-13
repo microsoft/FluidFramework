@@ -18,6 +18,11 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: false
+      -name: Extract Docs
+          - run: npm install
+          - run: npm run build:fast -- --symlink:full --install --all
+          - run: npm run build:fast -- -s build -s build:docs --nolint --all
+          - run: npm run build:gendocs
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v0.0.1-preview
