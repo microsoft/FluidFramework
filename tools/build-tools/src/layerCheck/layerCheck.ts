@@ -17,6 +17,7 @@ function printUsage() {
 Usage: fluid-layer-check <options>
 Options:
      --dot <path>     Generate *.dot for GraphViz
+     --info <path>    Path to the layer graph json file
      --md             Generate PACKAGES.md file for human consumption
 ${commonOptionString}
 `);
@@ -26,6 +27,7 @@ const packagesMdFileName: string = "PACKAGES.md";
 
 let dotGraphFilePath: string | undefined;
 let writePackagesMd: boolean = false;
+let layerInfoPath: string | undefined;
 
 function parseOptions(argv: string[]) {
     let error = false;
@@ -62,6 +64,16 @@ function parseOptions(argv: string[]) {
             continue;
         }
 
+        if (arg === "--info") {
+            if (i !== process.argv.length - 1) {
+                layerInfoPath = path.resolve(process.argv[++i]);
+                continue;
+            }
+            console.error("ERROR: Missing argument for --info");
+            error = true;
+            break;
+        }
+
         console.error(`ERROR: Invalid arguments ${arg}`);
         error = true;
         break;
@@ -85,7 +97,7 @@ async function main() {
     timer.time("Package scan completed");
 
     try {
-        const layerGraph = LayerGraph.load(resolvedRoot, packages);
+        const layerGraph = LayerGraph.load(resolvedRoot, packages, layerInfoPath);
 
         // Write human-readable package list organized by layer
         if (writePackagesMd) {

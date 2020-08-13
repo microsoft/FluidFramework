@@ -28,7 +28,7 @@ The `index.ts` file is not very interesting and simply defines our exports. We a
 
 **The Fluid component itself** which allows other packages to consume the Fluid component object directly.
 
-**The `fluidExport`** which points to our Fluid component factory is used for dynamic Fluid component loading. Our `webpack-component-loader` uses this to find the Fluid component entry point when running `npm start`.
+**The `fluidExport`** which points to our Fluid component factory is used for dynamic Fluid component loading. Our `webpack-fluid-loader` uses this to find the Fluid component entry point when running `npm start`.
 
 #### `./src/interface.ts`
 

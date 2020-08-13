@@ -11,7 +11,8 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
 import { IQuorum, ISequencedClient } from "@fluidframework/protocol-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { handleFromLegacyUri } from "@fluidframework/request-handler";
 
 export interface IVltavaUserDetails {
     name: string,
@@ -118,7 +119,9 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     }
 
     private async setupLastEditedTracker() {
-        const object = await requestFluidObject(this.context.containerRuntime.IFluidHandleContext, "default");
-        this.lastEditedTracker = object.IFluidLastEditedTracker;
+        const handle = handleFromLegacyUri(
+            ContainerRuntimeFactoryWithDefaultDataStore.defaultComponentId,
+            this.context.containerRuntime);
+        this.lastEditedTracker = (await handle.get()).IFluidLastEditedTracker;
     }
 }

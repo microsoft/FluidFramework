@@ -4,8 +4,8 @@
  */
 import { ISharedCounter } from "@fluidframework/counter";
 import {
-    IFluidFunctionalComponentViewState,
-    IFluidFunctionalComponentFluidState,
+    IViewState,
+    IFluidState,
     IFluidReducer,
     IFluidDataProps,
     FluidStateUpdateFunction,
@@ -14,14 +14,14 @@ import {
 /**
  * The state interface exposed to the view for the synced counter
  */
-export interface ISyncedCounterViewState extends IFluidFunctionalComponentViewState {
+export interface ISyncedCounterViewState extends IViewState {
     value: number;
 }
 
 /**
  * The state interface for the Fluid data source that powers the synced counter
  */
-export interface ISyncedCounterFluidState extends IFluidFunctionalComponentFluidState {
+export interface ISyncedCounterFluidState extends IFluidState {
     counter: ISharedCounter;
 }
 
@@ -37,8 +37,8 @@ export interface ISyncedCounterReducer {
  * state definitions together
  */
 export interface IFluidSyncedCounterReducer<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
     > extends IFluidReducer<SV, SF, IFluidDataProps> {
     increment: FluidStateUpdateFunction<SV, SF, IFluidDataProps>;
 }

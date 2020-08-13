@@ -47,6 +47,10 @@ export class BlobHandle implements IFluidHandle {
     public async request(request: IRequest): Promise<IResponse> {
         return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }
+
+    public async resolveHandle(request: IRequest): Promise<IResponse> {
+        return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+    }
 }
 
 export class BlobManager {

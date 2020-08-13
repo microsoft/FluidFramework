@@ -38,13 +38,15 @@ const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string)
 };
 
 // Just a little helper, since we're going to request multiple coordinates.
-const requestCoordinateFromId = async (request: RequestParser, runtime: IContainerRuntime, id: string) => {
+async function requestObjectStoreFromId<T>(request: RequestParser, runtime: IContainerRuntime, id: string) {
     const coordinateRequest = new RequestParser({
-        url: `${id}`,
+        url: ``,
         headers: request.headers,
     });
-    return requestFluidObject<Coordinate>(runtime.IFluidHandleContext, coordinateRequest);
-};
+    return requestFluidObject<T>(
+        await runtime.getRootDataStore(id),
+        coordinateRequest);
+}
 
 /**
  * When someone requests the default view off our container ("/"), we'll respond with a DefaultView.  To do so,
@@ -53,17 +55,16 @@ const requestCoordinateFromId = async (request: RequestParser, runtime: IContain
 const defaultViewRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length === 0) {
-            const simpleCoordinate = await requestCoordinateFromId(request, runtime, simpleCoordinateComponentId);
-            const triangleCoordinate1 = await requestCoordinateFromId(request, runtime, triangleCoordinateComponentId1);
-            const triangleCoordinate2 = await requestCoordinateFromId(request, runtime, triangleCoordinateComponentId2);
-            const triangleCoordinate3 = await requestCoordinateFromId(request, runtime, triangleCoordinateComponentId3);
-            const constellationRequest = new RequestParser({
-                url: `${constellationComponentId}`,
-                headers: request.headers,
-            });
-            const constellation = await requestFluidObject<Constellation>(
-                runtime.IFluidHandleContext,
-                constellationRequest);
+            const simpleCoordinate = await requestObjectStoreFromId<Coordinate>(
+                request, runtime, simpleCoordinateComponentId);
+            const triangleCoordinate1 = await requestObjectStoreFromId<Coordinate>(
+                request, runtime, triangleCoordinateComponentId1);
+            const triangleCoordinate2 = await requestObjectStoreFromId<Coordinate>(
+                request, runtime, triangleCoordinateComponentId2);
+            const triangleCoordinate3 = await requestObjectStoreFromId<Coordinate>(
+                request, runtime, triangleCoordinateComponentId3);
+            const constellation = await requestObjectStoreFromId<Constellation>(
+                request, runtime, constellationComponentId);
             const viewResponse = (
                 <DefaultView
                     simpleCoordinate={simpleCoordinate}
@@ -79,7 +80,7 @@ const defaultViewRequestHandler: RuntimeRequestHandler =
 
 export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor() {
-        // We'll use a MountableView so webpack-component-loader can display us,
+        // We'll use a MountableView so webpack-fluid-loader can display us,
         // and add our default view request handler.
         super(registryEntries, [], [mountableViewRequestHandler(MountableView, [defaultViewRequestHandler])]);
     }
