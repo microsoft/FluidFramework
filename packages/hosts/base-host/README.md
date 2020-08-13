@@ -1,6 +1,6 @@
 # @fluidframework/base-host
 
-`BaseHost` provides an easy-to-use entry point for hosts of Fluid experiences.  Given a configuration, it helps load and initialize a container and provides helpers to retrieve data stores from that container.
+`BaseHost` provides an easy-to-use entry point for hosts of Fluid experiences.  Given a configuration, it helps load and initialize a container and provides helpers to retrieve fluid objects from that container.
 
 ## BaseHost
 
