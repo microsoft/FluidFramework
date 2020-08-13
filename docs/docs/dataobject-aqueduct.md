@@ -58,9 +58,9 @@ protected async hasInitialized(): Promise<void> { }
 #### initializingFirstTime
 
 `initializingFirstTime` is called only once. It is executed only by the _first_ client to open the DataObject and all
-work will complete before the DataObject is presented to any user. You should overload this method to perform setup,
-which can include creating distributed data structures and populating them with initial data. The `root` SharedDirectory
-can be used in this method.
+work will complete before the is loaded. You should overload this method to perform setup, which can include creating
+distributed data structures and populating them with initial data. The `root` SharedDirectory can be used in this
+method.
 
 The following is an example from the Badge DataObject:
 
