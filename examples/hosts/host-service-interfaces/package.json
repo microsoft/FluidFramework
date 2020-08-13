@@ -1,7 +1,7 @@
 {
-  "name": "@fluidframework/host-service-interfaces",
+  "name": "@fluid-example/host-service-interfaces",
   "version": "0.25.0",
-  "description": "Host component service interfaces",
+  "description": "Example host service interfaces",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
