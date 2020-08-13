@@ -246,7 +246,7 @@ switch (response.mimeType) {
 
 #### IFluidObject interface
 
-The fluid object model supports a delegation and feature detection mechanism. As is typical in JavaScript,
+The Fluid object model supports a delegation and feature detection mechanism. As is typical in JavaScript,
 a feature detection pattern can be used to determine what capabilities are exposed by an object. The `IFluidObject`
 interface serves as a Fluid-specific form of “any” that clients can cast objects to in order to probe for implemented
 object interfaces. For example, if you need to determine the capabilities that an object exposes, you first
