@@ -8,11 +8,10 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
     IFluidLastEditedTracker,
     IProvideFluidLastEditedTracker,
-    LastEditedTrackerDataObjectName,
+    LastEditedTrackerDataObject,
 } from "@fluidframework/last-edited-experimental";
 import { IFluidHTMLView, IProvideFluidHTMLView } from "@fluidframework/view-interfaces";
-
-export const AnchorName = "anchor";
+import { Vltava } from "../vltava";
 
 /**
  * Anchor is an default component is responsible for managing creation and the default component
@@ -31,7 +30,7 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
         return this.defaultComponentInternal;
     }
 
-    private static readonly factory = new DataObjectFactory(AnchorName, Anchor, [], {});
+    private static readonly factory = new DataObjectFactory("anchor", Anchor, [], {});
 
     public static getFactory() {
         return Anchor.factory;
@@ -48,10 +47,10 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
     }
 
     protected async initializingFirstTime() {
-        const defaultComponent = await this.createFluidObject("vltava");
+        const defaultComponent = await Vltava.getFactory().createInstance(this.context);
         this.root.set(this.defaultComponentId, defaultComponent.handle);
 
-        const lastEditedComponent = await this.createFluidObject(LastEditedTrackerDataObjectName);
+        const lastEditedComponent = await LastEditedTrackerDataObject.getFactory().createInstance(this.context);
         this.root.set(this.lastEditedComponentId, lastEditedComponent.handle);
     }
 

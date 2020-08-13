@@ -9,17 +9,13 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { LastEditedTracker } from "./lastEditedTracker";
 import { IProvideFluidLastEditedTracker } from "./interfaces";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const LastEditedTrackerDataObjectName = pkg.name as string;
-
 /**
  * LastEditedTrackerDataObject creates a LastEditedTracker that keeps track of the latest edits to the document.
  */
 export class LastEditedTrackerDataObject extends DataObject
     implements IProvideFluidLastEditedTracker {
     private static readonly factory = new DataObjectFactory(
-        LastEditedTrackerDataObjectName,
+        "@fluidframework/last-edited-experimental",
         LastEditedTrackerDataObject,
         [SharedSummaryBlock.getFactory()],
         {},
@@ -42,12 +38,12 @@ export class LastEditedTrackerDataObject extends DataObject
 
     public get IFluidLastEditedTracker() { return this.lastEditedTracker; }
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const sharedSummaryBlock = SharedSummaryBlock.create(this.runtime);
         this.root.set(this.sharedSummaryBlockId, sharedSummaryBlock.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() { // hasInitialized
         const sharedSummaryBlock =
             await this.root.get<IFluidHandle<SharedSummaryBlock>>(this.sharedSummaryBlockId).get();
         this._lastEditedTracker = new LastEditedTracker(sharedSummaryBlock);

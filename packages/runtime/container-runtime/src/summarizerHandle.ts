@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { FluidOjectHandle } from "@fluidframework/datastore";
-import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 // TODO #2425 Expose Summarizer handle as FluidOjectHandle w/ tests
 export class SummarizerHandle extends FluidOjectHandle {
@@ -17,9 +17,5 @@ export class SummarizerHandle extends FluidOjectHandle {
 
     public bind(handle: IFluidHandle) {
         return;
-    }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        throw Error("Do not try to request on a summarizer handle object.");
     }
 }

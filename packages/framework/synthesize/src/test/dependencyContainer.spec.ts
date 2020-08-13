@@ -15,16 +15,14 @@ import { FluidOjectHandle } from "@fluidframework/datastore";
 import { DependencyContainer } from "..";
 
 const mockHandleContext: IFluidHandleContext = {
-    path: "",
     absolutePath: "",
     isAttached: false,
-    IFluidRouter: undefined as any,
     IFluidHandleContext: undefined as any,
 
     attachGraph: () => {
         throw new Error("Method not implemented.");
     },
-    request: () => {
+    resolveHandle: () => {
         throw new Error("Method not implemented.");
     },
 };

@@ -6,8 +6,8 @@
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedMap } from "@fluidframework/map";
 import {
-    IFluidFunctionalComponentFluidState,
-    IFluidFunctionalComponentViewState,
+    IFluidState,
+    IViewState,
     ViewToFluidMap,
     FluidToViewMap,
     IFluidSchema,
@@ -21,9 +21,9 @@ import {
  * @param fluidToView - The fluid to view state conversion mapping
  * @param viewToFluid - The view to fluid conversion state mapping
  * */
-export function generateComponentSchema<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+export function generateFluidObjectSchema<
+    SV extends IViewState,
+    SF extends IFluidState
 >(
     runtime: IFluidDataStoreRuntime,
     defaultViewState: SV,
@@ -31,7 +31,7 @@ export function generateComponentSchema<
     viewToFluid?: ViewToFluidMap<SV, SF>,
 ): IFluidSchema {
     // matching primitives w/ the same key in view and fluid
-    // true if needs converter or is component, false if not
+    // true if needs converter or is a Fluid object, false if not
     const viewMatchingMap = SharedMap.create(runtime);
     const fluidMatchingMap = SharedMap.create(runtime);
     const storedHandleMap = SharedMap.create(runtime);

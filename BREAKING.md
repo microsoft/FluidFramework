@@ -2,6 +2,7 @@
 
 ## 0.25 Breaking Changes
 - [MockFluidDataStoreRuntime api rename](#MockFluidDataStoreRuntime-api-rename)
+- [Local Web Host API change](#Local-Web-Host-API-change)
 - [Container runtime event changes](#Container-runtime-event-changes)
 - [Component is removed from telemetry event names](#Component-is-removed-from-telemetry-event-names)
 - [IComponentContextLegacy is removed](#IComponentContextLegacy-is-removed)
@@ -16,6 +17,10 @@
 
 ### MockFluidDataStoreRuntime api rename
 Runtime Test Utils's MockFluidDataStoreRuntime now has "requestDataStore" instead of "requestComponent"
+
+### Local Web Host API change
+The renderDefaultComponent function has been updated to be renderDefaultFluidObject
+
 ### Container runtime event changes
 Container runtime now emits the event "fluidDataStoreInstantiated" instead of "componentInstantiated"
 
@@ -45,7 +50,8 @@ Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altoget
 
 ## getDataStore() APIs is removed
 IContainerRuntime.getDataStore() is removed. Only IContainerRuntime.getRootDataStore() is available to retrieve root data stores.
-For couple versions we will allow retrieving non-root data stores using this API, but this functionality is temporary and will be removed soon. We will provide other tools to support backward compatibility.
+For couple versions we will allow retrieving non-root data stores using this API, but this functionality is temporary and will be removed soon.
+You can use handleFromLegacyUri() for creating handles from container-internal URIs (i.e., in format `/${dataStoreId}`) and resolving those containers to get to non-root data stores. Please note that this functionality is strictly added for legacy files! In future, not using handles to refer to content (and storing handles in DDSs) will result in such data stores not being reachable from roots, and thus garbage collected (deleted) from file.
 
 ### Package Renames
 As a follow up to the changes in 0.24 we are updating a number of package names
@@ -315,7 +321,7 @@ getAbsoluteUrl on the container runtime and component context now returns `strin
 import { waitForAttach } from "@fluidframework/aqueduct";
 
 
-protected async componentHasInitialized() {
+protected async hasInitialized() {
         waitForAttach(this.runtime)
             .then(async () => {
                 const url = await this.context.getAbsoluteUrl(this.url);

@@ -4,6 +4,7 @@
  */
 
 import React from "react";
+import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import {
     IButtonStyles,
     IconButton,
@@ -66,7 +67,7 @@ export const NewTabButton: React.FunctionComponent<IButtonExampleProps> =
                 styles={customSplitButtonStyles}
                 menuProps={menuProps}
                 ariaLabel="New item"
-                onClick={() => props.createTab("prosemirror")} // this should be taken from the list
+                onClick={() => props.createTab(pmfe.type)} // this should be taken from the list
                 disabled={disabled}
                 checked={checked}
                 text="hello"
