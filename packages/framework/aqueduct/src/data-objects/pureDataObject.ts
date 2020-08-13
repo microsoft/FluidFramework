@@ -12,7 +12,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
-import { AsyncComponentProvider, ComponentKey } from "@fluidframework/synthesize";
+import { AsyncFluidObjectProvider, FluidObjectKey } from "@fluidframework/synthesize";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { FluidOjectHandle } from "@fluidframework/datastore";
@@ -26,7 +26,7 @@ import { serviceRoutePathRoot } from "../container-services";
 export interface ISharedComponentProps<P extends IFluidObject = object> {
     readonly runtime: IFluidDataStoreRuntime,
     readonly context: IFluidDataStoreContext,
-    readonly providers: AsyncComponentProvider<ComponentKey<P>, ComponentKey<object>>,
+    readonly providers: AsyncFluidObjectProvider<FluidObjectKey<P>, FluidObjectKey<object>>,
 }
 
 /**
@@ -62,7 +62,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      *
      * To define providers set IFluidObject interfaces in the generic O type for your Component
      */
-    protected readonly providers: AsyncComponentProvider<ComponentKey<P>, ComponentKey<object>>;
+    protected readonly providers: AsyncFluidObjectProvider<FluidObjectKey<P>, FluidObjectKey<object>>;
 
     public get disposed() { return this._disposed; }
 

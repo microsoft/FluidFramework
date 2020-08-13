@@ -37,7 +37,7 @@ export type AsyncOptionalFluidObjectProvider<T extends keyof IFluidObject> = {
 };
 
 /**
- * Combined type for Optional and Required Async Component Providers
+ * Combined type for Optional and Required Async Fluid object Providers
  */
 export type AsyncFluidObjectProvider<O extends keyof IFluidObject, R extends keyof IFluidObject>
     = AsyncOptionalFluidObjectProvider<O> & AsyncRequiredFluidObjectProvider<R>;
@@ -48,9 +48,9 @@ export type AsyncFluidObjectProvider<O extends keyof IFluidObject, R extends key
 export type NonNullableFluidObject<T extends keyof IFluidObject> = NonNullable<IFluidObject[T]>;
 
 /**
- * Multiple ways to provide a component.
+ * Multiple ways to provide a fluid object.
  */
-export type ComponentProvider<T extends keyof IFluidObject> =
+export type FluidObjectProvider<T extends keyof IFluidObject> =
     NonNullableFluidObject<T>
     | Promise<NonNullableFluidObject<T>>
     | ((dependencyContainer: DependencyContainer) => NonNullableFluidObject<T>)
@@ -61,7 +61,7 @@ export type ComponentProvider<T extends keyof IFluidObject> =
  */
 export interface ProviderEntry<T extends keyof IFluidObject> {
     type: T;
-    provider: ComponentProvider<T>
+    provider: FluidObjectProvider<T>
 }
 
 /**
