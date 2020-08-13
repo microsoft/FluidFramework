@@ -31,7 +31,7 @@ export class BlobHandle implements IFluidHandle {
     public readonly absolutePath: string;
 
     constructor(
-        public path: string,
+        private readonly path: string,
         private readonly directory: ISharedDirectory,
         public readonly routeContext: IFluidHandleContext,
     ) {
