@@ -57,6 +57,7 @@ import { ContainerRuntime } from "./containerRuntime";
 const currentSnapshotFormatVersion = "0.1";
 
 const attributesBlobKey = ".component";
+
 function createAttributes(pkg: readonly string[]): IFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
     return {
