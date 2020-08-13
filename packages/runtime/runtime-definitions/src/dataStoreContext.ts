@@ -51,7 +51,7 @@ export enum FlushMode {
 }
 
 /**
- * A reduced set of functionality of IContainerRuntime that a dataStoreContext/data store runtime will need
+ * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  */
 export interface IContainerRuntimeBase extends
@@ -99,7 +99,7 @@ export interface IContainerRuntimeBase extends
 
     /**
      * Creates a new data store using an optional realization function.  This API does not allow specifying
-     * the dataStore's id and instead generates a uuid.  Consumers must save another reference to the
+     * the data store's id and instead generates a uuid.  Consumers must save another reference to the
      * data store, such as the handle.
      * @param pkg - Package name of the data store
      * @param realizationFn - Optional function to call to realize the data store over the context default
