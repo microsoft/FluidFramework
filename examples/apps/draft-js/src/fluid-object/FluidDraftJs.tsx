@@ -10,12 +10,12 @@ import {
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { insertBlockStart } from "./RichTextAdapter";
-import { PresenceManager } from "./PresenceManager";
-interface IFluidDraftJsObject {
+import { insertBlockStart, PresenceManager } from "../utils";
+export interface IFluidDraftJsObject {
     text?: SharedString | undefined;
     authors?: SharedMap | undefined;
     members: IterableIterator<[string, ISequencedClient]>
+    on(event: "addMember" | "removeMember", listener: () => void): this;
 }
 
 const addMemberValue = "addMember";

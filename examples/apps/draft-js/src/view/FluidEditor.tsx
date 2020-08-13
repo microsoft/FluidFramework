@@ -7,8 +7,6 @@ import { SharedMap } from "@fluidframework/map";
 import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import { ContentState, Editor, EditorProps, EditorState, RichUtils } from "draft-js";
 import React from "react";
-
-import { getCoauthPresenceDecorator, PresenceManager } from "./PresenceManager";
 import {
     blockRangeToSelection,
     draftStyleToSharedTextProp,
@@ -19,7 +17,9 @@ import {
     TextRange,
     textRangeToBlockTextRange,
     updateTextRange,
-} from "./RichTextAdapter";
+    getCoauthPresenceDecorator,
+    PresenceManager,
+} from "../utils";
 import { BlockStyleControls, InlineStyleControls } from "./StyleControls";
 
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
@@ -62,7 +62,6 @@ const getBlockStyle = (block) => {
  * A wrapper around the Draft.js Editor which connects RichUtils and callbacks to connect Fluid
  */
 export class FluidEditor extends React.Component<IProps, IState> {
-
     constructor(props: IProps) {
         super(props);
 

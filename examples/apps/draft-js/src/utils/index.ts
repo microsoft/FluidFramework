@@ -3,4 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./FluidDraftJs";
+export * from "./PresenceManager";
+export * from "./RichTextAdapter";

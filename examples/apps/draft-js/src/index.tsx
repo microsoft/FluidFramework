@@ -9,8 +9,9 @@ import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { FluidDraftJsObject, FluidDraftJsView } from "./fluid-object";
+import { FluidDraftJsObject } from "./fluid-object";
 import { FluidDraftJsContainer } from "./container";
+import { FluidDraftJsView } from "./view";
 
 // Re-export everything
 export { FluidDraftJsObject, FluidDraftJsContainer };
@@ -34,7 +35,6 @@ async function start() {
 
     // Get the Default Object from the Container
     const defaultObject = await getDefaultObjectFromContainer<FluidDraftJsObject>(container);
-
 
     // Render the content using ReactDOM
     ReactDOM.render(

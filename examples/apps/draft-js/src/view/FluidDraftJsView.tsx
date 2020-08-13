@@ -6,10 +6,9 @@
 import React from "react";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
+import { FluidDraftJsObject, IFluidDraftJsObject } from "../fluid-object";
 import { MemberList } from "./MemberList";
 import { FluidEditor } from "./FluidEditor";
-
-import { FluidDraftJsObject } from "./FluidDraftJs";
 
 interface IAppProps {
     model: FluidDraftJsObject;
@@ -20,7 +19,7 @@ interface IAppProps {
  * The App uses the provided model to interact with Fluid.
  */
 export const FluidDraftJsView: React.FC<IAppProps> = (props) => {
-    const [members, setMembers] = React.useState(props.model.members);
+    const [members, setMembers] = React.useState<IFluidDraftJsObject["members"]>(props.model.members);
 
     React.useEffect(() => {
         const onMembersChange = () => {
@@ -35,7 +34,7 @@ export const FluidDraftJsView: React.FC<IAppProps> = (props) => {
         };
     }, [props.model]);
 
-    const onAuthorsOp = (callback: (op, isLocal) => void) => {
+    const onAuthorsOp = (callback: (op: ISequencedDocumentMessage, isLocal) => void) => {
         const func = (op: ISequencedDocumentMessage, isLocal: boolean) => callback(op, isLocal);
         props.model.authors.on("op", func);
     };
