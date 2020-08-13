@@ -64,7 +64,6 @@
     "debug": "^4.1.1",
     "lodash": "^4.17.19",
     "node-fetch": "^2.2.1",
-    "performance-now": "^2.1.0",
     "sha.js": "^2.4.11",
     "sinon": "^7.4.2",
     "socket.io-client": "^2.1.1",
