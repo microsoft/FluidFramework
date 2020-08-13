@@ -525,7 +525,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return;
     }
 
-    public async requestComponent(request: IRequest): Promise<IResponse> {
+    public async requestDataStore(request: IRequest): Promise<IResponse> {
         return null;
     }
 

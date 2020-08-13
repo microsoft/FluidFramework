@@ -109,7 +109,7 @@ export class ContainerContext implements IContainerContext {
         return this.container.parentBranch;
     }
 
-    // Back-compat: supporting <= 0.16 components
+    // Back-compat: supporting <= 0.16 data stores
     public get connectionState(): ConnectionState {
         return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
@@ -239,7 +239,7 @@ export class ContainerContext implements IContainerContext {
 
         assert(this.connected === connected);
 
-        // Back-compat: supporting <= 0.16 components
+        // Back-compat: supporting <= 0.16 data stores
         if (runtime.setConnectionState !== undefined) {
             runtime.setConnectionState(connected, clientId);
         } else if (runtime.changeConnectionState !== undefined) {

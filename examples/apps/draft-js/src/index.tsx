@@ -6,11 +6,15 @@
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
-import { DraftJsObject } from "./fluid-object";
-import { DraftJsContainer } from "./container";
+import React from "react";
+import ReactDOM from "react-dom";
+
+import { FluidDraftJsObject } from "./fluid-object";
+import { FluidDraftJsContainer } from "./container";
+import { FluidDraftJsView } from "./view";
 
 // Re-export everything
-export { DraftJsObject, DraftJsContainer };
+export { FluidDraftJsObject, FluidDraftJsContainer };
 
 // Since this is a single page fluid application we are generating a new document id
 // if one was not provided
@@ -27,13 +31,19 @@ const documentId = window.location.hash.substring(1);
  */
 async function start() {
     // Get the Fluid Container associated with the provided id
-    const container = await getTinyliciousContainer(documentId, DraftJsContainer, createNew);
+    const container = await getTinyliciousContainer(documentId, FluidDraftJsContainer, createNew);
 
     // Get the Default Object from the Container
-    const defaultObject = await getDefaultObjectFromContainer<DraftJsObject>(container);
+    const defaultObject = await getDefaultObjectFromContainer<FluidDraftJsObject>(container);
 
-    // For now we will just reach into the FluidObject to render it
-    defaultObject.render(document.getElementById("content"));
+    // Render the content using ReactDOM
+    ReactDOM.render(
+        <FluidDraftJsView model={defaultObject} />,
+        document.getElementById("content"));
+
+    // Setting "fluidStarted" is just for our test automation
+    // eslint-disable-next-line dot-notation
+    window["fluidStarted"] = true;
 }
 
 start().catch((e) => {

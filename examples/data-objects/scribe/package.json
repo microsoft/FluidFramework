@@ -32,6 +32,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "@fluid-example/host-service-interfaces": "^0.25.0",
     "@fluid-internal/client-api": "^0.25.0",
     "@fluidframework/aqueduct": "^0.25.0",
     "@fluidframework/container-definitions": "^0.25.0",
@@ -39,7 +40,6 @@
     "@fluidframework/core-interfaces": "^0.25.0",
     "@fluidframework/datastore": "^0.25.0",
     "@fluidframework/datastore-definitions": "^0.25.0",
-    "@fluidframework/host-service-interfaces": "^0.25.0",
     "@fluidframework/map": "^0.25.0",
     "@fluidframework/merge-tree": "^0.25.0",
     "@fluidframework/protocol-definitions": "^0.1011.0-0",

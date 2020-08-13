@@ -11,11 +11,11 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { CharacterMetadata, CompositeDecorator, ContentBlock } from "draft-js";
 import { List } from "immutable";
 
-import { getColorForMember } from "./MemberList";
+import { getColorForMember } from "../view";
 import { BlockTextRange, TextRange, textRangeToBlockTextRangeFromBlocks } from "./RichTextAdapter";
 
-// eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
-import "./css/Presence.css";
+// eslint-disable-next-line import/no-unassigned-import
+import "./Presence.css";
 
 interface Author {
     id: string;

@@ -3,6 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./documentFactory";
-export * from "./graph";
-export * from "./packageManager";
+export * from "./FluidDraftJs";
