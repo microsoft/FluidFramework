@@ -1,4 +1,4 @@
-# DataObjects and interfaces
+# Encapsulating data with `DataObject`
 
 In the previous section we introduced distributed data structures and demonstrated how to use them. We'll now discuss
 how to combine those distributed data structures with custom code (business logic) to create modular, reusable pieces.
@@ -17,6 +17,9 @@ Having said that, if you're new to Fluid, we think you'll be more effective with
 
 ## DataObject
 
+[DataObject][] is a base class that contains a [SharedDirectory][] and task manager. It ensures that both are created
+and ready for you to access within your DataObject subclass.
+
 ```ts
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 
@@ -24,13 +27,11 @@ class MyDataObject extends DataObject implements IFluidHTMLView { }
 ```
 
 
-[DataObject][] is a base class that contains a [SharedDirectory][] and task manager. It ensures that both are created
-and ready for you to access within your component.
-
 ### The `root` SharedDirectory
 
-DataObject has a `root` property that is a SharedDirectory. Typically you will create your distributed data structures
-during the initialization of the DataObject, as described below.
+DataObject has a `root` property that is a [SharedDirectory][]. Typically you will create any additional distributed data
+structures during the initialization of the DataObject, as described below, and store references to them within the root
+SharedDirectory.
 
 ### DataObject lifecycle
 
@@ -56,12 +57,12 @@ protected async hasInitialized(): Promise<void> { }
 
 #### initializingFirstTime
 
-`initializingFirstTime` is called only once. It is executed only by the _first_ client to open the component and
-all work will resolve before the component is presented to any user. You should overload this method to perform
-component setup, which can include creating distributed data structures and populating them with initial data.
-The `root` SharedDirectory can be used in this method.
+`initializingFirstTime` is called only once. It is executed only by the _first_ client to open the DataObject and all
+work will complete before the DataObject is presented to any user. You should overload this method to perform setup,
+which can include creating distributed data structures and populating them with initial data. The `root` SharedDirectory
+can be used in this method.
 
-The following is an example from the Badge DataObject.
+The following is an example from the Badge DataObject:
 
 ```ts{5,10,19}
 protected async initializingFirstTime() {
@@ -95,9 +96,9 @@ SharedDirectory.
 
 :::
 
-#### componentInitializingFromExisting
+#### initializingFromExisting
 
-The `componentInitializingFromExisting` method is called each time the DataObject is loaded _except_ the first time it
+The `initializingFromExisting` method is called each time the DataObject is loaded _except_ the first time it
 is created. Note that you _do not_ need to overload this method in order to load data in your distributed data
 structures. Data stored within DDSes is automatically loaded into the DDS during initialization; there is no separate
 load step that needs to be accounted for.
