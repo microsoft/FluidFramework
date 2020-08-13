@@ -1,16 +1,16 @@
-{{- $headers := findRE "<h[1-2].*?>(.|\n)*?</h[1-2]>" .Content -}}
+{{- $headers := findRE "<h[2].*?>(.|\n)*?</h[2]>" .Content -}}
 {{- $has_headers := ge (len $headers) 1 -}}
 {{- if $has_headers -}}
 {{- $largest := 6 -}}
 {{- range $headers -}}
-{{- $headerLevel := index (findRE "[1-2]" . 1) 0 -}}
+{{- $headerLevel := index (findRE "[2]" . 1) 0 -}}
 {{- $headerLevel := len (seq $headerLevel) -}}
 {{- if lt $headerLevel $largest -}}
 {{- $largest = $headerLevel -}}
 {{- end -}}
 {{- end -}}
 
-{{- $firstHeaderLevel := len (seq (index (findRE "[1-4]" (index $headers 0) 1) 0)) -}}
+{{- $firstHeaderLevel := len (seq (index (findRE "[1-2]" (index $headers 0) 1) 0)) -}}
 
 {{- $.Scratch.Set "bareul" slice -}}
 <nav id="docs-subnavbar" aria-label="On Page" data-spy="affix" data-offset-top="20">
