@@ -6,9 +6,9 @@
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap } from "@fluidframework/map";
 import {
-    FluidComponentMap,
-    IFluidFunctionalComponentFluidState,
-    IFluidFunctionalComponentViewState,
+    FluidObjectMap,
+    IFluidState,
+    IViewState,
     ViewToFluidMap,
     FluidToViewMap,
     ISyncedState,
@@ -17,7 +17,7 @@ import { getFluidFromView } from "./getFluidFromView";
 import { getViewFromFluid } from "./getViewFromFluid";
 import { getFluidState } from "./getFluidState";
 import { setFluidState } from "./setFluidState";
-import { getComponentSchema } from "./getComponentSchema";
+import { getSchema } from "./getSchema";
 
 /**
  * Function to combine both the view and Fluid states so that they are in sync. If the update
@@ -26,19 +26,19 @@ import { getComponentSchema } from "./getComponentSchema";
  * If it is an update triggered from a remote change on the synced state, the new Fluid state from the synced state
  * is used to overwrite the local synced state and the new local view is created accordingly.
  * @param isSyncedStateUpdate - Is the update from a local state update or from one triggered by the synced state
- * @param syncedStateId - Unique ID for this synced component's state
- * @param syncedState - The shared map this component synced state is stored on
+ * @param syncedStateId - Unique ID for this synced Fluid object's state
+ * @param syncedState - The shared map this Fluid object synced state is stored on
  * @param viewState - The current view state
  * @param setState - Callback to update the react view state
- * @param fluidComponentMap - A map of component handle paths to their respective components
+ * @param fluidObjectMap - A map of Fluid handle paths to their Fluid objects
  * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
  * respective converters
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
  * respective converters
  */
 export function syncState<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
     isSyncedStateUpdate: boolean,
     syncedStateId: string,
@@ -50,7 +50,7 @@ export function syncState<
         isSyncedStateUpdate?: boolean,
         isLocal?: boolean
     ) => void,
-    fluidComponentMap: FluidComponentMap,
+    fluidObjectMap: FluidObjectMap,
     fluidToView: FluidToViewMap<SV, SF>,
     viewToFluid?: ViewToFluidMap<SV, SF>,
 ) {
@@ -58,7 +58,7 @@ export function syncState<
     const currentFluidState = getFluidState(
         syncedStateId,
         syncedState,
-        fluidComponentMap,
+        fluidObjectMap,
         fluidToView,
     );
     if (currentFluidState === undefined) {
@@ -66,23 +66,23 @@ export function syncState<
             "Attempted to sync view and fluid states before fluid state was initialized",
         );
     }
-    // Fetch the component schema
-    const componentSchemaHandles = getComponentSchema(
+    // Fetch the schema
+    const schemaHandles = getSchema(
         syncedStateId,
         syncedState,
     );
-    if (componentSchemaHandles === undefined) {
+    if (schemaHandles === undefined) {
         throw Error("No schema found stored on the root");
     }
     const {
         viewMatchingMapHandle,
         fluidMatchingMapHandle,
-    } = componentSchemaHandles;
+    } = schemaHandles;
 
-    const viewMatchingMap = fluidComponentMap.get(viewMatchingMapHandle.absolutePath)
-        ?.component as ISharedMap;
-    const fluidMatchingMap = fluidComponentMap.get(fluidMatchingMapHandle.absolutePath)
-        ?.component as ISharedMap;
+    const viewMatchingMap = fluidObjectMap.get(viewMatchingMapHandle.absolutePath)
+        ?.fluidObject as ISharedMap;
+    const fluidMatchingMap = fluidObjectMap.get(fluidMatchingMapHandle.absolutePath)
+        ?.fluidObject as ISharedMap;
 
     if (viewMatchingMap === undefined || fluidMatchingMap === undefined) {
         throw Error("Failed to fetch shared map DDS' from the schema handles");
@@ -115,7 +115,7 @@ export function syncState<
 
     // Create the combined view state by combining the current view with the new Fluid state
     // after it has been converted
-    let combinedViewState = { ...viewState, ...{ fluidComponentMap } };
+    let combinedViewState = { ...viewState, ...{ fluidObjectMap } };
     Object.entries(currentFluidState).forEach(([fluidKey, fluidValue]) => {
         const needsConverter = fluidMatchingMap.get(fluidKey);
         let partialViewState = {};
@@ -124,7 +124,7 @@ export function syncState<
                 syncedStateId,
                 syncedState,
                 fluidKey as keyof SF,
-                fluidComponentMap,
+                fluidObjectMap,
                 fluidToView,
                 combinedViewState,
                 combinedFluidState,
@@ -148,7 +148,7 @@ export function syncState<
             syncedStateId,
             syncedState,
             runtime,
-            fluidComponentMap,
+            fluidObjectMap,
             fluidToView,
             combinedViewState,
             combinedFluidState,
