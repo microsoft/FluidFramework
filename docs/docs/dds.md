@@ -80,6 +80,7 @@ myMap.set("counter", myCounter.handle);
 Handles are used in Fluid to enable the runtime to implement features like garbage collection. You can learn more about
 handles in the [handles section](../advanced/handles.md).
 
+
 ## Events
 
 When a distributed data structure is changed by the Fluid runtime, it raises events. You can listen to these events so
@@ -94,6 +95,7 @@ myMap.on("valueChanged", () => {
 ```
 
 Refer to the sections below for more details about the events raised by each DDS.
+
 
 ## Picking the right data structure
 
@@ -119,6 +121,10 @@ shape, then the SharedMap LWW merge strategy probably won't give you the behavio
 However, you could address this problem by storing individual shape properties in SharedMap keys. Instead of storing a
 JSON object with all the data, you can break it apart and store the length in one SharedMap key, the color in another,
 etc. With this data model, users can change individual properties of the shape without overwriting other users' changes.
+
+You likely have more than one shape in your data model, so you could create a SharedMap to store all your shapes, then
+store that SharedMap in the root SharedDirectory.
+
 
 ## Key-value data
 
