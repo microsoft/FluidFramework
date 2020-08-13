@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { IRequest, IFluidObject } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
-import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
+import { FluidDataStoreRegistry, buildSubPath } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IContainerRuntimeBase,
@@ -27,24 +26,6 @@ import {
     ISharedComponentProps,
     PureDataObject,
 } from "../data-objects";
-
-async function buildSubPath(context: IFluidDataStoreContext | IContainerRuntimeBase, factory: IFluidDataStoreFactory) {
-    let packagePath: string[];
-    if ("containerRuntime" in context) {
-        const parentPath = context.packagePath;
-        assert(parentPath.length > 0);
-        // A factory could not contain the registry for itself. So if it is the same the last snapshot
-        // pkg, return our package path.
-        assert(parentPath[parentPath.length - 1] !== factory.type);
-        packagePath = [...parentPath, factory.type];
-    } else {
-        packagePath = [factory.type];
-    }
-
-    const factory2 = await context.IFluidDataStoreRegistry?.get(factory.type);
-    assert(factory2 === factory);
-    return packagePath;
-}
 
 /*
  * An association of identifiers to component registry entries, where the
@@ -212,8 +193,6 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
         parentContext: IFluidDataStoreContext | IContainerRuntimeBase,
         initialState?: S,
     ) {
-        const packagePath = await buildSubPath(parentContext, this);
-
         const containerRuntime = "containerRuntime" in parentContext ? parentContext.containerRuntime : parentContext;
         const newContext = containerRuntime.createDetachedDataStore();
 
@@ -230,8 +209,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
             return instance.request(request);
         });
 
-        // FluidDataStoreRegistryEntry
-        newContext.attachRuntime(runtime, packagePath, this);
+        await newContext.attachRuntime(parentContext, this, runtime);
 
         return instanceP;
     }

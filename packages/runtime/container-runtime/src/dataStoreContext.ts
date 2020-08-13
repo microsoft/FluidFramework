@@ -50,6 +50,9 @@ import {
     CreateChildSummarizerNodeFn,
     SummarizeInternalFn,
     CreateChildSummarizerNodeParam,
+    IContainerRuntimeBase,
+    IProvideFluidDataStoreFactory,
+    IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
@@ -58,6 +61,27 @@ import { ContainerRuntime } from "./containerRuntime";
 const currentSnapshotFormatVersion = "0.1";
 
 const attributesBlobKey = ".component";
+
+export async function buildSubPath(
+    context: IFluidDataStoreContext | IContainerRuntimeBase,
+    factory: IFluidDataStoreFactory)
+{
+    let packagePath: string[];
+    if ("containerRuntime" in context) {
+        const parentPath = context.packagePath;
+        assert(parentPath.length > 0);
+        // A factory could not contain the registry for itself. So if it is the same the last snapshot
+        // pkg, return our package path.
+        assert(parentPath[parentPath.length - 1] !== factory.type);
+        packagePath = [...parentPath, factory.type];
+    } else {
+        packagePath = [factory.type];
+    }
+
+    const factory2 = await context.IFluidDataStoreRegistry?.get(factory.type);
+    assert(factory2 === factory);
+    return packagePath;
+}
 
 function createAttributes(pkg: readonly string[]): IFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
@@ -813,19 +837,21 @@ export class LocalDetachedFluidDataStoreContext
         this.detachedRuntimeCreation = true;
     }
 
-    public attachRuntime(runtime, pkg: string[], entry: FluidDataStoreRegistryEntry) {
+    public async attachRuntime(
+        parentContext: IFluidDataStoreContext | IContainerRuntimeBase,
+        // FluidDataStoreRegistryEntry
+        factory: IProvideFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>,
+        dataStoreRuntime: IFluidDataStoreChannel)
+    {
         assert(this.detachedRuntimeCreation);
         assert(this.pkg === undefined);
 
-        assert(pkg !== undefined);
-        this.pkg = pkg;
+        this.pkg = await buildSubPath(parentContext, factory.IFluidDataStoreFactory);
 
         assert(this.registry === undefined);
-        this.registry = entry.IFluidDataStoreRegistry;
+        this.registry = factory.IFluidDataStoreRegistry;
 
-        assert(entry.IFluidDataStoreFactory?.type === pkg[pkg.length - 1]);
-
-        super.bindRuntime(runtime);
+        super.bindRuntime(dataStoreRuntime);
     }
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
