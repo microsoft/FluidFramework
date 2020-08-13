@@ -2,7 +2,7 @@
 
 In the previous section we introduced distributed data structures and demonstrated how to use them. We'll now discuss
 how to combine those distributed data structures with custom code (business logic) to create modular, reusable pieces.
-These pieces fall into the category of the `fluid objects` discussed in the last section, along with DDSes themselves.
+
 
 ## The @fluidframework/aqueduct package
 
