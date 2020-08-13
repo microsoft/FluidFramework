@@ -1,6 +1,6 @@
 # @fluidframework/base-host
 
-`BaseHost` provides an easy-to-use entry point for hosts of Fluid experiences.  Given a configuration, it helps load and initialize a container and provides helpers to retrieve components from that container.
+`BaseHost` provides an easy-to-use entry point for hosts of Fluid experiences.  Given a configuration, it helps load and initialize a container and provides helpers to retrieve data stores from that container.
 
 ## BaseHost
 
@@ -31,10 +31,10 @@ const container = await baseHost.initializeContainer(url, codeDetails);
 
 Once the container is retrieved and initialized this way, requests can be made against it.
 
-`BaseHost` also provides a method `.getComponent()` for retrieving components directly (bypassing the `Container`) for convenience.
+`BaseHost` also provides a method `.requestFluidObject()` for retrieving fluid objects directly (bypassing the `Container`) for convenience.
 
 ```typescript
-const component = await baseHost.getComponent(url);
+const fluidObject = await baseHost.requestFluidObject(url);
 ```
 
 The `Loader` can be also be retrieved via `.getLoader()`.
