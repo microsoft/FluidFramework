@@ -8,14 +8,14 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { DiceRollerInstantiationFactory } from "./dataObject";
 
 /**
- * This does setup for the Container.
+ * The DiceRollerContainerRuntimeFactory is the container code for our scenario.
  *
- * There are two important things here:
- * 1. Default data object name
- * 2. Map of string to factory for all data objects the Container can create directly
+ * Since we only need to instantiate and retrieve a single dice roller for our scenario, we can use a
+ * ContainerRuntimeFactoryWithDefaultDataStore. We provide it with the type of the data object we want to create
+ * and retrieve by default, and the registry entry mapping the type to the factory.
  *
- * In this example, we are only registering a single data object, but more complex examples will register multiple
- * data objects.
+ * This container code will create the single default data object on our behalf and make it available on the
+ * Container with a URL of "/", so it can be retrieved via container.request("/").
  */
 export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
     DiceRollerInstantiationFactory.type,

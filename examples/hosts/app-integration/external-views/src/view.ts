@@ -21,7 +21,7 @@ export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
     const rollButton = document.createElement("button");
     rollButton.style.fontSize = "50px";
     rollButton.textContent = "Roll";
-    // Call the roll method to modify the shared data when the button is clicked
+    // Call the roll method to modify the shared data when the button is clicked.
     rollButton.addEventListener("click", diceRoller.roll);
 
     wrapperDiv.append(diceCharDiv, rollButton);

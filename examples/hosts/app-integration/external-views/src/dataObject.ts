@@ -26,25 +26,29 @@ export interface IDiceRoller extends EventEmitter {
     on(event: "diceRolled", listener: () => void): this;
 }
 
+// The root is map-like, so we'll use this key for storing the value.
 const diceValueKey = "diceValue";
 
 /**
- * The DiceRoller is our implementation of the IDiceRoller interface.
+ * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
 export class DiceRoller extends DataObject implements IDiceRoller {
     /**
-     * initializingFirstTime is called only once, it is executed only by the first client to open the
-     * DataObject and all work will resolve before the view is presented to any user.
-     *
-     * This method is used to perform DataObject setup, which can include setting an initial schema or initial values.
+     * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
+     * initialize the state of the DataObject.
      */
     protected async initializingFirstTime() {
         this.root.set(diceValueKey, 1);
     }
 
+    /**
+     * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
+     * DataObject, by registering an event listener for dice rolls.
+     */
     protected async hasInitialized() {
         this.root.on("valueChanged", (changed) => {
             if (changed.key === diceValueKey) {
+                // When we see the dice value change, we'll emit the diceRolled event we specified in our interface.
                 this.emit("diceRolled");
             }
         });
@@ -61,8 +65,8 @@ export class DiceRoller extends DataObject implements IDiceRoller {
 }
 
 /**
- * The DataObjectFactory declares the DataObject's constructor and defines any additional distributed data structures.
- * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
+ * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
+ * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
 export const DiceRollerInstantiationFactory = new DataObjectFactory(
     "@fluid-example/dice-roller",

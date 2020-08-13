@@ -9,11 +9,13 @@ import { IDiceRoller } from "./dataObject";
 import { DiceRollerContainerRuntimeFactory } from "./containerCode";
 import { renderDiceRoller } from "./view";
 
-// I'm choosing to put the docId in the hash just for my own convenience, so the URL will end up looking something
-// like http://localhost:8080/#1596520748752.  This is not crucial to the scenario -- there should be no requirements
-// on the page's URL format deeper in the system, so you're free to change this however you'd like.
-// Additionally, I'm choosing to create a new document when navigating directly to http://localhost:8080 -- this is
-// also open for customization.
+// In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
+// an existing one.  We also need to provide the unique ID for the document we are creating or loading from.
+
+// In this app, we'll choose to create a new document when navigating directly to http://localhost:8080.  For the ID,
+// we'll choose to use the current timestamp.  We'll also choose to interpret the URL hash as an existing document's
+// ID to load from, so the URL for a document load will look something like http://localhost:8080/#1596520748752.
+// These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
 let createNew = false;
 if (window.location.hash.length === 0) {
     createNew = true;
@@ -22,17 +24,19 @@ if (window.location.hash.length === 0) {
 const documentId = window.location.hash.substring(1);
 document.title = documentId;
 
-// Just a helper function to kick things off.  Making it async allows us to use await.
 async function start(): Promise<void> {
-    // Get the container to use.  Associate the data with the provided documentId, and run the provided code within.
+    // The getTinyliciousContainer helper function facilitates loading our container code into a Container and
+    // connecting to a locally-running test service called Tinylicious.  This will look different when moving to a
+    // production service, but ultimately we'll still be getting a reference to a Container.  The helper function
+    // takes the ID of the document we're creating or loading, the container code to load into it, and a flag to
+    // specify whether we're creating a new document or loading an existing one.
     const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
 
-    // For this basic scenario, I'm just requesting the default view.  Nothing stopping me from issuing alternate
-    // requests (e.g. for other data objects or views) if I wished.
+    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our dice roller is available at the URL "/".
     const url = "/";
     const response = await container.request({ url });
 
-    // Verify the response
+    // Verify the response to make sure we got what we expected.
     if (response.status !== 200 || response.mimeType !== "fluid/object") {
         throw new Error(`Unable to retrieve data object at URL: "${url}"`);
     } else if (response.value === undefined) {
@@ -42,13 +46,9 @@ async function start(): Promise<void> {
     // In this app, we know our container code provides a default data object that is an IDiceRoller.
     const diceRoller: IDiceRoller = response.value;
 
-    // Given an IDiceRoller, we can render its data using the view we've created in our app.
+    // Given an IDiceRoller, we can render the value and provide controls for users to roll it.
     const div = document.getElementById("content") as HTMLDivElement;
     renderDiceRoller(diceRoller, div);
-
-    // Setting "fluidStarted" is just for our test automation
-    // eslint-disable-next-line dot-notation
-    window["fluidStarted"] = true;
 }
 
 start().catch((error) => console.error(error));
