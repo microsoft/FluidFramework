@@ -5,10 +5,10 @@
 
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
-    AsyncComponentProvider,
-    ComponentSymbolProvider,
-    ComponentProvider,
-    ComponentKey,
+    AsyncFluidObjectProvider,
+    FluidObjectSymbolProvider,
+    FluidObjectProvider,
+    FluidObjectKey,
 } from "./types";
 
 declare module "@fluidframework/core-interfaces" {
@@ -24,7 +24,7 @@ export interface IProvideFluidDependencySynthesizer {
 }
 
 /**
- * IComponentSynthesizer can generate IFluidObject Objects based on the IProvideComponent pattern.
+ * IFluidDependencySynthesizer can generate IFluidObjects based on the IProvideFluidObject pattern.
  * It allow for registering providers and uses synthesize to generate a new object with the optional
  * and required types.
  */
@@ -40,7 +40,7 @@ export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynt
      * @param provider - A provider that will resolve the T correctly when asked
      * @throws - If passing a type that's already registered
      */
-    register<T extends keyof IFluidObject>(type: T, provider: ComponentProvider<T>): void;
+    register<T extends keyof IFluidObject>(type: T, provider: FluidObjectProvider<T>): void;
 
     /**
      * Remove a provider
@@ -58,9 +58,9 @@ export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynt
     synthesize<
         O extends IFluidObject,
         R extends IFluidObject,>(
-            optionalTypes: ComponentSymbolProvider<O>,
-            requiredTypes: ComponentSymbolProvider<R>,
-    ): AsyncComponentProvider<ComponentKey<O>, ComponentKey<R>>;
+            optionalTypes: FluidObjectSymbolProvider<O>,
+            requiredTypes: FluidObjectSymbolProvider<R>,
+    ): AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>>;
 
     /**
      * Check if a given type is registered
@@ -72,5 +72,5 @@ export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynt
      * Get a provider. undefined if not available.
      * @param type - Type to get
      */
-    getProvider<T extends keyof IFluidObject>(type: T): ComponentProvider<T> | undefined;
+    getProvider<T extends keyof IFluidObject>(type: T): FluidObjectProvider<T> | undefined;
 }
