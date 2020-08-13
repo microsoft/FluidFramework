@@ -12,40 +12,35 @@ import { SharedMap, ISharedMap } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import {
-    FluidComponentMap,
+    FluidObjectMap,
     SyncedStateConfig,
     ISyncedStateConfig,
-    IFluidFunctionalComponentViewState,
-    IFluidFunctionalComponentFluidState,
+    IViewState,
+    IFluidState,
     ISyncedState,
-} from "../interface";
+} from "./interface";
 import {
-    generateComponentSchema,
-    setComponentSchema,
-    getComponentSchema,
-} from "../helpers";
+    generateFluidObjectSchema,
+    setSchema,
+    getSchema,
+} from "./helpers";
 
 /**
- * SyncedComponent is a base component for components with views. It extends DataObject.
- * In addition to the root and task manager, the SyncedComponent also provides a syncedStateConfig
+ * SyncedDataObject is a base class for Fluid data objects with views. It extends DataObject.
+ * In addition to the root and task manager, the SyncedDataObject also provides a syncedStateConfig
  * and assures that the syncedState will be initialized according the config by the time the view
  * is rendered.
  *
  * As this is used for views, it also implements the IFluidHTMLView interface, and requires
  * the render function to be filled in.
- *
- * Generics (extended from DataObject):
- * P - represents a type that will define optional providers that will be injected
- * S - the initial state type that the produced component may take during creation
- * E - represents events that will be available in the EventForwarder
  */
-export abstract class SyncedComponent<
+export abstract class SyncedDataObject<
     P extends IFluidObject = object,
     S = undefined,
     E extends IEvent = IEvent
     > extends DataObject<P, S, E> implements IFluidHTMLView {
     private readonly syncedStateConfig: SyncedStateConfig = new Map();
-    private readonly fluidComponentMap: FluidComponentMap = new Map();
+    private readonly fluidObjectMap: FluidObjectMap = new Map();
     private readonly syncedStateDirectoryId = "syncedState";
     private internalSyncedState: ISharedMap | undefined;
 
@@ -54,7 +49,7 @@ export abstract class SyncedComponent<
     }
 
     /**
-     * Runs the first time the component is generated and sets up all necessary data structures for the view
+     * Runs the first time the SyncedDataObject is generated and sets up all necessary data structures for the view
      * To extend this function, please call super() prior to adding to functionality to ensure correct initializing
      */
     protected async initializingFirstTime(): Promise<void> {
@@ -64,8 +59,8 @@ export abstract class SyncedComponent<
     }
 
     /**
-     * Runs any time the component is rendered again. It sets up all necessary data structures for the view, along
-     * with any additional ones that may have been added due to user behavior
+     * Runs any time the SyncedDataObject is rendered again. It sets up all necessary data structures for the view,
+     * along with any additional ones that may have been added due to user behavior
      * To extend this function, please call super() prior to adding to functionality to ensure correct initializing
      */
     protected async initializingFromExisting(): Promise<void> {
@@ -74,9 +69,9 @@ export abstract class SyncedComponent<
     }
 
     /**
-     * Returns an interface to interact with the stored synced state for the component. Views can get and fetch values
-     * from it based on their syncedStateId to retrieve their view-specific information. They can also attach listeners
-     * using the addValueChangedListener
+     * Returns an interface to interact with the stored synced state for the SyncedDataObject.
+     * Views can get and fetch values from it based on their syncedStateId to retrieve their view-specific information.
+     * They can also attach listeners using the addValueChangedListener
      */
     public get syncedState(): ISyncedState {
         if (this.internalSyncedState === undefined) {
@@ -102,7 +97,7 @@ export abstract class SyncedComponent<
     public get dataProps() {
         return {
             runtime: this.runtime,
-            fluidComponentMap: this.fluidComponentMap,
+            fluidObjectMap: this.fluidObjectMap,
         };
     }
 
@@ -125,8 +120,8 @@ export abstract class SyncedComponent<
      * that establish the relationship between SV and SF
      */
     public setFluidConfig<
-        SV extends IFluidFunctionalComponentViewState,
-        SF extends IFluidFunctionalComponentFluidState
+        SV extends IViewState,
+        SF extends IFluidState
     >(key: string, value: ISyncedStateConfig<SV, SF>) {
         this.syncedStateConfig.set(key, value);
     }
@@ -140,7 +135,7 @@ export abstract class SyncedComponent<
     }
 
     /**
-     * Returns a view. This function need to be implemented for any consumer of SyncedComponent
+     * Returns a view. This function need to be implemented for any consumer of SyncedDataObject
      * to render values that have been initialized using the syncedStateConfig
      * @param element - The document that the rendered value will be displayed in
      */
@@ -161,12 +156,12 @@ export abstract class SyncedComponent<
                 viewToFluid,
                 defaultViewState,
             } = stateConfig;
-            // Add the SharedMap to store the fluid state
+            // Add the SharedMap to store the Fluid state
             const storedFluidState = SharedMap.create(this.runtime);
-            // Add it to the fluid component map so that it will have a listener added to it once
+            // Add it to the Fluid object map so that it will have a listener added to it once
             // we enter the render lifecycle
-            this.fluidComponentMap.set(storedFluidState.handle.absolutePath, {
-                component: storedFluidState,
+            this.fluidObjectMap.set(storedFluidState.handle.absolutePath, {
+                fluidObject: storedFluidState,
                 isRuntimeMap: true,
             });
             // Add the state to our map of synced states so that we can load it later for persistence
@@ -182,8 +177,8 @@ export abstract class SyncedComponent<
                 const createCallback = value.sharedObjectCreate;
                 if (createCallback !== undefined) {
                     const sharedObject = createCallback(this.runtime);
-                    this.fluidComponentMap.set(sharedObject.handle.absolutePath, {
-                        component: sharedObject,
+                    this.fluidObjectMap.set(sharedObject.handle.absolutePath, {
+                        fluidObject: sharedObject,
                         listenedEvents: value.listenedEvents ?? ["valueChanged"],
                     });
                     storedFluidState.set(fluidKey, sharedObject.handle);
@@ -196,46 +191,46 @@ export abstract class SyncedComponent<
             }
 
             // Generate our schema and store it, so that we don't need to parse our maps each time
-            const componentSchema = generateComponentSchema(
+            const schema = generateFluidObjectSchema(
                 this.runtime,
                 defaultViewState,
                 fluidToView,
                 viewToFluid,
             );
-            const componentSchemaHandles = {
-                fluidMatchingMapHandle: componentSchema.fluidMatchingMap
+            const schemaHandles = {
+                fluidMatchingMapHandle: schema.fluidMatchingMap
                     .handle as IFluidHandle<SharedMap>,
-                viewMatchingMapHandle: componentSchema.viewMatchingMap
+                viewMatchingMapHandle: schema.viewMatchingMap
                     .handle as IFluidHandle<SharedMap>,
-                storedHandleMapHandle: componentSchema.storedHandleMap
+                storedHandleMapHandle: schema.storedHandleMap
                     .handle as IFluidHandle<SharedMap>,
             };
-            this.fluidComponentMap.set(
-                componentSchema.fluidMatchingMap.handle.absolutePath,
+            this.fluidObjectMap.set(
+                schema.fluidMatchingMap.handle.absolutePath,
                 {
-                    component: componentSchema.fluidMatchingMap,
+                    fluidObject: schema.fluidMatchingMap,
                     isRuntimeMap: true,
                 },
             );
-            this.fluidComponentMap.set(
-                componentSchema.viewMatchingMap.handle.absolutePath,
+            this.fluidObjectMap.set(
+                schema.viewMatchingMap.handle.absolutePath,
                 {
-                    component: componentSchema.viewMatchingMap,
+                    fluidObject: schema.viewMatchingMap,
                     isRuntimeMap: true,
                 },
             );
-            this.fluidComponentMap.set(
-                componentSchema.storedHandleMap.handle.absolutePath,
+            this.fluidObjectMap.set(
+                schema.storedHandleMap.handle.absolutePath,
                 {
-                    component: componentSchema.storedHandleMap,
+                    fluidObject: schema.storedHandleMap,
                     isRuntimeMap: true,
                 },
             );
 
-            setComponentSchema(
+            setSchema(
                 syncedStateId,
                 this.syncedState,
-                componentSchemaHandles,
+                schemaHandles,
             );
         }
     }
@@ -260,10 +255,10 @@ export abstract class SyncedComponent<
                 );
             }
             const storedFluidState = await storedFluidStateHandle.get();
-            // Add it to the fluid component map so that it will have a listener added to it once
+            // Add it to the Fluid object map so that it will have a listener added to it once
             // we enter the render lifecycle
-            this.fluidComponentMap.set(storedFluidStateHandle.absolutePath, {
-                component: storedFluidState,
+            this.fluidObjectMap.set(storedFluidStateHandle.absolutePath, {
+                fluidObject: storedFluidState,
                 isRuntimeMap: true,
             });
             // If the view is using any Fluid Components or SharedObjects, asynchronously fetch them
@@ -281,8 +276,8 @@ export abstract class SyncedComponent<
                             `Failed to find ${fluidKey} in synced state`,
                         );
                     }
-                    this.fluidComponentMap.set(handle.absolutePath, {
-                        component: await handle.get(),
+                    this.fluidObjectMap.set(handle.absolutePath, {
+                        fluidObject: await handle.get(),
                         listenedEvents: value.listenedEvents ?? ["valueChanged"],
                     });
                 } else {
@@ -291,8 +286,8 @@ export abstract class SyncedComponent<
                         : storedFluidState.get(fluidKey);
                     const handle = storedValue?.IFluidHandle;
                     if (handle !== undefined) {
-                        this.fluidComponentMap.set(handle.absolutePath, {
-                            component: await handle.get(),
+                        this.fluidObjectMap.set(handle.absolutePath, {
+                            fluidObject: await handle.get(),
                             listenedEvents: value.listenedEvents ?? [
                                 "valueChanged",
                             ],
@@ -300,35 +295,35 @@ export abstract class SyncedComponent<
                     }
                 }
             }
-            const componentSchemaHandles = getComponentSchema(
+            const schemaHandles = getSchema(
                 syncedStateId,
                 this.syncedState,
             );
-            if (componentSchemaHandles === undefined) {
+            if (schemaHandles === undefined) {
                 throw new Error(
                     this.getUninitializedErrorString(
-                        `componentSchema-${syncedStateId}`,
+                        `schema-${syncedStateId}`,
                     ),
                 );
             }
-            this.fluidComponentMap.set(
-                componentSchemaHandles.fluidMatchingMapHandle.absolutePath,
+            this.fluidObjectMap.set(
+                schemaHandles.fluidMatchingMapHandle.absolutePath,
                 {
-                    component: await componentSchemaHandles.fluidMatchingMapHandle.get(),
+                    fluidObject: await schemaHandles.fluidMatchingMapHandle.get(),
                     isRuntimeMap: true,
                 },
             );
-            this.fluidComponentMap.set(
-                componentSchemaHandles.viewMatchingMapHandle.absolutePath,
+            this.fluidObjectMap.set(
+                schemaHandles.viewMatchingMapHandle.absolutePath,
                 {
-                    component: await componentSchemaHandles.viewMatchingMapHandle.get(),
+                    fluidObject: await schemaHandles.viewMatchingMapHandle.get(),
                     isRuntimeMap: true,
                 },
             );
-            this.fluidComponentMap.set(
-                componentSchemaHandles.storedHandleMapHandle.absolutePath,
+            this.fluidObjectMap.set(
+                schemaHandles.storedHandleMapHandle.absolutePath,
                 {
-                    component: await componentSchemaHandles.storedHandleMapHandle.get(),
+                    fluidObject: await schemaHandles.storedHandleMapHandle.get(),
                     isRuntimeMap: true,
                 },
             );

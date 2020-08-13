@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IProvideFluidDataStoreFactory } from "./componentFactory";
+import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -11,8 +11,12 @@ declare module "@fluidframework/core-interfaces" {
 }
 
 /**
+<<<<<<< HEAD:packages/runtime/runtime-definitions/src/componentRegistry.ts
  * A single registry entry that may be used to create components
  * It has to have either factory or registry, or both.
+=======
+ * A single registry entry that may be used to create data stores
+>>>>>>> 944fb36967742538c68e46cbbc782f7f37e920bf:packages/runtime/runtime-definitions/src/dataStoreRegistry.ts
  */
 export type FluidDataStoreRegistryEntry =
     Readonly<Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>>;
@@ -33,8 +37,8 @@ export interface IProvideFluidDataStoreRegistry {
 }
 
 /**
- * An association of identifiers to component registry entries, where the
- * entries can be used to create components.
+ * An association of identifiers to data store registry entries, where the
+ * entries can be used to create data stores.
  */
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
     get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;

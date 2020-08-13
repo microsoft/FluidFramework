@@ -544,9 +544,9 @@ import {
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import {
-    FluidReactComponent,
-    IFluidFunctionalComponentFluidState,
-    IFluidFunctionalComponentViewState,
+    FluidReactView,
+    IFluidState,
+    IViewState,
     FluidToViewMap,
 } from "@fluidframework/react";
 import { SharedCounter } from "@fluidframework/counter";
@@ -558,8 +558,8 @@ interface CounterState {
     counter?: SharedCounter;
 }
 
-type CounterViewState = IFluidFunctionalComponentViewState & CounterState;
-type CounterFluidState = IFluidFunctionalComponentFluidState & CounterState;
+type CounterViewState = IViewState & CounterState;
+type CounterFluidState = IFluidState & CounterState;
 
 
 export class Clicker extends PrimedComponent implements IComponentHTMLView {
@@ -577,7 +577,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
                 syncedStateId={"clicker"}
                 root={this.root}
                 dataProps={{
-                    fluidComponentMap: new Map(),
+                    fluidObjectMap: new Map(),
                     runtime: this.runtime,
                 }}
                 fluidToView={fluidToView}
@@ -588,7 +588,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     }
 }
 
-class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
+class CounterReactView extends FluidReactView<CounterViewState, CounterFluidState> {
     constructor(props) {
         super(props);
         this.state = {};
@@ -624,8 +624,8 @@ interface CounterState {
     counter?: SharedCounter;
 }
 
-type CounterViewState = IFluidFunctionalComponentViewState & CounterState;
-type CounterFluidState = IFluidFunctionalComponentFluidState & CounterState;
+type CounterViewState = IViewState & CounterState;
+type CounterFluidState = IFluidState & CounterState;
 ```
 
 The `CounterViewState` and `CounterFluidState` here both have the `counter` available. The former is what will be used
@@ -649,7 +649,7 @@ public render(element: HTMLElement) {
             syncedStateId={"clicker"}
             root={this.root}
             dataProps={{
-                fluidComponentMap: new Map(),
+                fluidObjectMap: new Map(),
                 runtime: this.runtime,
             }}
             fluidToView={fluidToView}
@@ -684,7 +684,7 @@ Okay, now we have everything necessary to pass in as props to our `CounterReactV
   clicker being render alongside this one in this component, it should receive its own ID to prevent one from
   interfering in the updates of the other
 - `root` - The same `SharedDirectory` provided by `this.root` from `PrimedComponent`
-- `dataProps.fluidComponentMap` - This can just take a new `Map` instance for now but will need to be filled when
+- `dataProps.fluidObjectMap` - This can just take a new `Map` instance for now but will need to be filled when
   establishing multi-component relationships in more complex cases. This map is where all the DDS' that we use are
   stored after being fetched from their handles, and it used to make the corresponding component synchronously available
   in the view.
@@ -694,7 +694,7 @@ Okay, now we have everything necessary to pass in as props to our `CounterReactV
 We're ready to go through our view, which is now super simple due to the setup we did in the Fluid component itself.
 
 ```typescript
-class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
+class CounterReactView extends FluidReactView<CounterViewState, CounterFluidState> {
     constructor(props) {
         super(props);
         this.state = {};
@@ -714,7 +714,7 @@ class CounterReactView extends FluidReactComponent<CounterViewState, CounterFlui
 ```
 
 We can see that the state is initially empty as it only consists of the `SharedCounter` DDS, and we know the
-`FluidReactComponent` will be handling the loading of that since we passed it as a key in the `fluidToView` map.
+`FluidReactView` will be handling the loading of that since we passed it as a key in the `fluidToView` map.
 
 The view itself can now directly use the `this.state.counter.value` and we can update it by simply using
 `this.state.counter.increment(1)`. This will directly update the `this.state.counter.value` without needing any event

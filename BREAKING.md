@@ -1,6 +1,7 @@
 # Breaking changes
 
 ## 0.25 Breaking Changes
+- [Local Web Host API change](#Local-Web-Host-API-change)
 - [Container runtime event changes](#Container-runtime-event-changes)
 - [Component is removed from telemetry event names](#Component-is-removed-from-telemetry-event-names)
 - [IComponentContextLegacy is removed](#IComponentContextLegacy-is-removed)
@@ -13,6 +14,9 @@
 - [IComponent and IComponent Interfaces Removed](#IComponent-and-IComponent-Interfaces-Removed)
 - [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
 - [LastEditedTrackerComponent renamed to LastEditedTrackerDataObject](#lasteditedtrackercomponent-renamed)
+
+### Local Web Host API change
+The renderDefaultComponent function has been updated to be renderDefaultFluidObject
 
 ### Container runtime event changes
 Container runtime now emits the event "fluidDataStoreInstantiated" instead of "componentInstantiated"

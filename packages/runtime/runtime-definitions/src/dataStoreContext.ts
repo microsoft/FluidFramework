@@ -29,8 +29,8 @@ import {
     ISnapshotTree,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IProvideFluidDataStoreFactory } from "./componentFactory";
-import { IProvideFluidDataStoreRegistry } from "./componentRegistry";
+import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
+import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
 import { IInboundSignalMessage } from "./protocol";
 import { ISummaryTreeWithStats, ISummarizerNode, SummarizeInternalFn, CreateChildSummarizerNodeParam } from "./summary";
 import { ITaskManager } from "./agent";
@@ -52,7 +52,7 @@ export enum FlushMode {
 }
 
 /**
- * A reduced set of functionality of IContainerRuntime that a component/data store runtime will need
+ * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  */
 export interface IContainerRuntimeBase extends
@@ -99,17 +99,14 @@ export interface IContainerRuntimeBase extends
     createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
 
     /**
-     * Creates data store. Returns router of data store. Data store is not bound to container,
-     * store in such state is not persisted to storage (file). Storing a handle to this store
-     * (or any of its parts, like DDS) into already attached DDS (or non-attached DDS that will eventually
-     * gets attached to storage) will result in this store being attached to storage.
-     * @param pkg - Package name of the data store factory
+     * Creates detached data store context. only after context.attachRuntime() is called,
+     * data store initialization is considered compete.
      */
     createDetachedDataStore(): IFluidDataStoreContextDetached;
 
     /**
      * Get an absolute url for a provided container-relative request.
-     * Returns undefined if the container or component isn't attached to storage.
+     * Returns undefined if the container or data store isn't attached to storage.
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -131,7 +128,7 @@ export interface IFluidDataStoreChannel extends
     readonly id: string;
 
     /**
-     * Indicates the attachment state of the component to a host service.
+     * Indicates the attachment state of the data store to a host service.
      */
     readonly attachState: AttachState;
 
@@ -157,13 +154,13 @@ export interface IFluidDataStoreChannel extends
     processSignal(message: any, local: boolean): void;
 
     /**
-     * Generates a snapshot of the given component
+     * Generates a snapshot of the given data store
      * @deprecated in 0.22 summarizerNode
      */
     snapshotInternal(fullTree?: boolean): Promise<ITreeEntry[]>;
 
     /**
-     * Generates a summary for the component.
+     * Generates a summary for the data store.
      * Introduced with summarizerNode - will be required in a future release.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      */
@@ -177,7 +174,7 @@ export interface IFluidDataStoreChannel extends
      */
     setConnectionState(connected: boolean, clientId?: string);
 
-    // Back-compat: supporting <= 0.16 components
+    // Back-compat: supporting <= 0.16 data stores
     changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 
     /**
@@ -227,14 +224,14 @@ export interface ISummaryTracker {
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn) => ISummarizerNode;
 
 /**
- * Represents the context for the component. It is used by the data store runtime to
+ * Represents the context for the data store. It is used by the data store runtime to
  * get information and call functionality to the container.
  */
 export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFluidDataStoreRegistry> {
     readonly documentId: string;
     readonly id: string;
     /**
-     * The package path of the component as per the package factory.
+     * The package path of the data store as per the package factory.
      */
     readonly packagePath: readonly string[];
     /**
@@ -253,7 +250,7 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
     /**
-     * Indicates the attachment state of the component to a host service.
+     * Indicates the attachment state of the data store to a host service.
      */
     readonly attachState: AttachState;
 
@@ -320,7 +317,7 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
 
     /**
      * Get an absolute url to the containe rbased on the provided relativeUrl.
-     * Returns undefined if the container or component isn't attached to storage.
+     * Returns undefined if the container or data store isn't attached to storage.
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
