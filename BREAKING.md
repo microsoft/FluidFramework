@@ -13,6 +13,7 @@
 - [IComponent and IComponent Interfaces Removed](#IComponent-and-IComponent-Interfaces-Removed)
 - [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
 - [LastEditedTrackerComponent renamed to LastEditedTrackerDataObject](#lasteditedtrackercomponent-renamed)
+- [ComponentProvider renamed to FluidObjectProvider in @fluidframework/synthesize](#componentProvider-renamed-to-fluidobjectPpovider)
 
 ### Local Web Host API change
 The renderDefaultComponent function has been updated to be renderDefaultFluidObject
@@ -64,6 +65,17 @@ To support additional authentication scenarios, the signature and/or name of a f
 
 ### LastEditedTrackerComponent renamed
 It is renamed to LastEditedTrackerDataObject
+
+### ComponentProvider renamed to FluidObjectProvider 
+
+In the package @fluidframework/synthesize, these types are renamed:
+
+ComponentKey -> FluidObjectKey
+ComponentSymbolProvider -> FluidObjectProvider
+AsyncRequiredcomponentProvider -> AsyncRequiredFluidObjectProvider
+AsyncOptionalComponentProvider -> AsyncOptionalFluidObjectProvider
+AsyncComponentProvider -> AsyncFluidObjectProvider
+NonNullableComponent -> NonNullableFluidObject
 
 ## 0.24 Breaking Changes
 This release only contains renames. There are no functional changes in this release. You should ensure you have integrated and validated up to release 0.23 before integrating this release.
