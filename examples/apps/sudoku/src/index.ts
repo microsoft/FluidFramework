@@ -3,21 +3,45 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { FluidSudoku, FluidSudokuName } from "./fluidSudoku";
+import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
+import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 import { ISudokuViewProps, SudokuView } from "./react/sudokuView";
+import { SudokuContainer } from "./container";
+import { FluidSudoku } from "./fluidSudoku";
+export { ISudokuViewProps, FluidSudoku, SudokuView, SudokuContainer };
+
+// Since this is a single page fluid application we are generating a new document id
+// if one was not provided
+let createNew = false;
+if (window.location.hash.length === 0) {
+    createNew = true;
+    window.location.hash = Date.now().toString();
+}
+const documentId = window.location.hash.substring(1);
 
 /**
- * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultDataStore also enables dynamic loading in the
- * EmbeddedComponentLoader.
- *
- * There are two important things here:
- * 1. Default Component name
- * 2. Map of string to factory for all components
+ * This is a helper function for loading the page. It's required because getting the Fluid Container
+ * requires making async calls.
  */
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    FluidSudokuName,
-    new Map([[FluidSudokuName, Promise.resolve(FluidSudoku.getFactory())]])
-);
+async function start() {
+    // Get the Fluid Container associated with the provided id
+    const container = await getTinyliciousContainer(documentId, SudokuContainer, createNew);
 
-export { ISudokuViewProps, FluidSudoku, FluidSudokuName, SudokuView };
+    // Get the Default Object from the Container
+    const defaultObject = await getDefaultObjectFromContainer<FluidSudoku>(container);
+
+    // For now we will just reach into the FluidObject to render it
+    defaultObject.render(document.getElementById("content") as HTMLElement);
+
+    // Setting "fluidStarted" is just for our test automation
+    // eslint-disable-next-line dot-notation
+    window["fluidStarted"] = true;
+}
+
+start().catch(e => {
+    console.error(e);
+    console.log(
+        "%cEnsure you are running the Tinylicious Fluid Server\nUse:`npm run start:server`",
+        "font-size:30px"
+    );
+});

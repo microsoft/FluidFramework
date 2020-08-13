@@ -3,20 +3,16 @@
  * Licensed under the MIT License.
  */
 
-const CopyPlugin = require("copy-webpack-plugin");
-const fluidRoute = require("@fluidframework/webpack-fluid-loader");
 const path = require("path");
 const merge = require("webpack-merge");
-
-const pkg = require("./package.json");
-const componentName = pkg.name.slice(1);
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = env => {
     const isProduction = env && env.production;
 
     return merge({
         entry: {
-            main: "./src/index.ts",
+            app: "./src/index.ts"
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
@@ -25,13 +21,13 @@ module.exports = env => {
             rules: [
                 {
                     test: /\.tsx?$/,
-                    loader: "ts-loader",
+                    loader: "ts-loader"
                 },
                 {
                     test: /\.css$/i,
-                    use: ["style-loader", "css-loader"],
-                },
-            ]
+                    use: ['style-loader', 'css-loader'],
+                }
+            ],
         },
         output: {
             filename: "[name].bundle.js",
@@ -39,27 +35,16 @@ module.exports = env => {
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939
-            devtoolNamespace: componentName,
-            libraryTarget: "umd",
+            devtoolNamespace: "fluid-example/sudoku",
+            libraryTarget: "umd"
         },
-        plugins: [new CopyPlugin([{
-            from: "src/helpers/*.css",
-            to: path.resolve(__dirname, "dist/helpers"),
-            flatten: true,
-            // toType: "file",
-            // transformPath(targetPath, absolutePath) {
-            //   return path.resolve(__dirname, "dist/foo/");
-            // },
-        }])],
-        devServer: {
-            publicPath: "/dist",
-            stats: "minimal",
-            before: (app, server) => fluidRoute.before(app, server, env),
-            after: (app, server) => fluidRoute.after(app, server, __dirname, env),
-            watchOptions: {
-                ignored: "**/node_modules/**",
-            }
-        }
+        plugins: [
+            new HtmlWebpackPlugin({
+                template: "./public/index.html",
+                chunks: ["app"],
+            }),
+            // new CleanWebpackPlugin(),
+        ],
     }, isProduction
         ? require("./webpack.prod")
         : require("./webpack.dev"));
