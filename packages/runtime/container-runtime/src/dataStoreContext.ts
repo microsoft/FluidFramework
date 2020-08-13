@@ -385,11 +385,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
         const { pkg } = await this.getInitialSnapshotDetails();
 
-        const attributes: IFluidDataStoreAttributes = {
-            pkg: JSON.stringify(pkg),
-            snapshotFormatVersion: currentSnapshotFormatVersion,
-        };
-
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const entries = await this.channel!.snapshotInternal(fullTree);
 
@@ -407,11 +402,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         await this.realize();
 
         const { pkg } = await this.getInitialSnapshotDetails();
-
-        const attributes: IFluidDataStoreAttributes = {
-            pkg: JSON.stringify(pkg),
-            snapshotFormatVersion: currentSnapshotFormatVersion,
-        };
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const channel = this.channel!;
@@ -711,9 +701,6 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 }
 
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
-    // Package is required at time of creation for local data stores
-    protected pkg: readonly string[];
-
     constructor(
         id: string,
         pkg: string[] | undefined,
@@ -735,7 +722,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             BindState.NotBound,
             bindChannel,
             pkg);
-        this.pkg = pkg; // TODO: avoid setting twice
         this.attachListeners();
     }
 
@@ -756,6 +742,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
         const snapshot: ITree = { entries, id: null };
 
+        assert(this.pkg !== undefined);
         const attributesBlob = createAttributesBlob(this.pkg);
         snapshot.entries.push(attributesBlob);
 
@@ -769,6 +756,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     }
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+        assert(this.pkg !== undefined);
         return {
             pkg: this.pkg,
             snapshot: undefined,
