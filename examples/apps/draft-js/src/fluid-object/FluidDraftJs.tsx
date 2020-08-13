@@ -65,6 +65,4 @@ export class FluidDraftJsObject extends DataObject implements IFluidDraftJsObjec
     public get members() {
         return this.runtime.getQuorum().getMembers().entries();
     }
-
-    public runtime = this.runtime;
 }
