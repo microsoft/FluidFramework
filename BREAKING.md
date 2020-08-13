@@ -1,6 +1,7 @@
 # Breaking changes
 
 ## 0.25 Breaking Changes
+- [MockFluidDataStoreRuntime api rename](#MockFluidDataStoreRuntime-api-rename)
 - [Local Web Host API change](#Local-Web-Host-API-change)
 - [Container runtime event changes](#Container-runtime-event-changes)
 - [Component is removed from telemetry event names](#Component-is-removed-from-telemetry-event-names)
@@ -14,6 +15,9 @@
 - [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
 - [LastEditedTrackerComponent renamed to LastEditedTrackerDataObject](#lasteditedtrackercomponent-renamed)
 - [ComponentProvider renamed to FluidObjectProvider in @fluidframework/synthesize](#componentProvider-renamed-to-fluidobjectPpovider)
+
+### MockFluidDataStoreRuntime api rename
+Runtime Test Utils's MockFluidDataStoreRuntime now has "requestDataStore" instead of "requestComponent"
 
 ### Local Web Host API change
 The renderDefaultComponent function has been updated to be renderDefaultFluidObject
