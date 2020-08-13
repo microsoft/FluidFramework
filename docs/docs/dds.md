@@ -1,7 +1,7 @@
 # Introducing distributed data structures
 
 The primary way that developers interact with the Fluid Framework is through a collection of objects called _distributed
-data structures_. We call them this because they are similar to data structures used commonly when programming, like
+data structures_ (DDSes). We call them this because they are similar to data structures used commonly when programming, like
 strings, maps/dictionaries, and sequences/lists. The APIs provided by distributed data structures are designed to be
 familiar to programmers who've used these types of data structures before. For example, the `SharedMap` DDS is used to
 store key/value pairs, like a typical map or dictionary data structure, and provides `get` and `set` methods to store
@@ -19,7 +19,7 @@ etc. This prefix indicates that the object is shared between multiple clients.
 
 :::
 
-When a DDS is changed by the Fluid runtime, it raises an [event](#events). You can listen to these events so that you
+When a DDS is changed by the Fluid runtime, it raises an [event](#events). Your code can listen to these events so that you
 know when data is changed by remote clients and can react appropriately. For example, you may need to recalculate a
 derived value when some data in a DDS changes.
 
@@ -48,7 +48,7 @@ details about the merge strategy used by each DDS.
 
 ## Creating and storing distributed data structures
 
-Distributed data structures should be created using their static `create` method.
+A distributed data structure object is created using its type's static `create` method.
 
 ```typescript
 const myMap = SharedMap.create(this.runtime, id);
