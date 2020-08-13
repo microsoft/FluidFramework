@@ -132,7 +132,7 @@ export class SharedSegmentSequenceRevertable implements IRevertable {
         }
     }
 
-    public disgard() {
+    public discard() {
         while (this.tracking.length > 0) {
             const tracked = this.tracking.pop();
             if (tracked !== undefined) {

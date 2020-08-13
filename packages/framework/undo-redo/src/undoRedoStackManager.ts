@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 
 export interface IRevertable {
     revert();
-    disgard();
+    discard();
 }
 
 enum UndoRedoMode { None, Redo, Undo }
@@ -196,7 +196,7 @@ export class UndoRedoStackManager {
                 while (!redoOpertionStack.empty()) {
                     const redoOperation = redoOpertionStack.pop();
                     if (redoOperation !== undefined) {
-                        redoOperation.disgard();
+                        redoOperation.discard();
                     }
                 }
             }

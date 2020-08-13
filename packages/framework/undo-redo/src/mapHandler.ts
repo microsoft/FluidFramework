@@ -40,7 +40,7 @@ export class SharedMapRevertable implements IRevertable {
         this.map.set(this.changed.key, this.changed.previousValue);
     }
 
-    public disgard() {
+    public discard() {
         return;
     }
 }
