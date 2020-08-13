@@ -9,8 +9,8 @@ import {
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
+    IProvideFluidDataStoreRegistry,
     FluidDataStoreRegistryEntry,
-    IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { WebCodeLoader, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
@@ -18,7 +18,7 @@ import { WebCodeLoader, SemVerCdnCodeResolver } from "@fluidframework/web-code-l
 /**
  * A component registry that can load component via their url
  */
-export class UrlRegistry implements IFluidDataStoreRegistry {
+export class UrlRegistry implements IProvideFluidDataStoreRegistry {
     private static readonly WindowKeyPrefix = "FluidExternalComponent";
 
     private readonly urlRegistryMap = new Map<string, Promise<FluidDataStoreRegistryEntry | undefined>>();

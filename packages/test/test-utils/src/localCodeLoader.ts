@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import {
     ICodeLoader,
@@ -10,10 +11,16 @@ import {
     IFluidModule,
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IProvideFluidDataStoreFactory, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
 
-// Represents the entry point for a fluid container.
-export type fluidEntryPoint = Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IFluidModule>;
+// Represents actia; entry point of fluid package
+export type fluidEntryPointFinal = Partial<
+    IProvideRuntimeFactory &
+    IProvideFluidDataStoreFactory &
+    IProvideFluidDataStoreRegistry>;
+
+// Represents the entry point for a fluid package.
+export type fluidEntryPoint = fluidEntryPointFinal & Partial<IFluidModule>;
 
 /**
  * A simple code loader that caches a mapping of package name to a fluid entry point.
@@ -63,13 +70,17 @@ export class LocalCodeLoader implements ICodeLoader {
         if (entryPoint === undefined) {
             throw new Error(`Cannot find package ${pkdId}`);
         }
-        const factory: Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory> =
-            entryPoint.fluidExport ?? entryPoint;
-        const runtimeFactory: IProvideRuntimeFactory =
-            factory.IRuntimeFactory ??
+
+        const factory = (entryPoint.fluidExport ?? entryPoint) as fluidEntryPointFinal;
+
+        if (factory.IRuntimeFactory !== undefined) {
+            return { fluidExport: factory.IRuntimeFactory };
+        }
+
+        assert(factory.IFluidDataStoreFactory !== undefined || factory.IFluidDataStoreRegistry !== undefined);
+        const fluidExport: IProvideRuntimeFactory =
             new ContainerRuntimeFactoryWithDefaultDataStore("default", [["default", Promise.resolve(factory)]]);
 
-        const fluidModule: IFluidModule = { fluidExport: runtimeFactory };
-        return fluidModule;
+        return { fluidExport };
     }
 }

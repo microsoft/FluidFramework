@@ -62,7 +62,13 @@ const currentSnapshotFormatVersion = "0.1";
 
 const attributesBlobKey = ".component";
 
-export async function buildSubPath(
+/**
+ * Takes context, and creates package path for a sub-entry (represented by factory) in context registry.
+ * Package path returned is used to reach given factory from root (container runtime) registry, and thus
+ * is used to serizlize and de-serialize future data store that such factory would create in future.
+ * Function validates that given factory is present in registry, otherwise it throws.
+ */
+export async function buildRegistryPath(
     context: IFluidDataStoreContext | IContainerRuntimeBase,
     factory: IFluidDataStoreFactory)
 {
@@ -292,7 +298,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
         let entry: FluidDataStoreRegistryEntry | undefined;
         let registry: IFluidDataStoreRegistry | undefined = this._containerRuntime.IFluidDataStoreRegistry;
-        let factory: IFluidDataStoreFactory | undefined;
         let lastPkg: string | undefined;
         for (const pkg of packages) {
             if (!registry) {
@@ -303,9 +308,9 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             if (!entry) {
                 return this.rejectDeferredRealize(`Registry does not contain entry for the package ${pkg}`);
             }
-            factory = entry.IFluidDataStoreFactory;
             registry = entry.IFluidDataStoreRegistry;
         }
+        const factory = entry?.IFluidDataStoreFactory;
         if (factory === undefined) {
             return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
         }
@@ -839,14 +844,13 @@ export class LocalDetachedFluidDataStoreContext
 
     public async attachRuntime(
         parentContext: IFluidDataStoreContext | IContainerRuntimeBase,
-        // FluidDataStoreRegistryEntry
         factory: IProvideFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>,
         dataStoreRuntime: IFluidDataStoreChannel)
     {
         assert(this.detachedRuntimeCreation);
         assert(this.pkg === undefined);
 
-        this.pkg = await buildSubPath(parentContext, factory.IFluidDataStoreFactory);
+        this.pkg = await buildRegistryPath(parentContext, factory.IFluidDataStoreFactory);
 
         assert(this.registry === undefined);
         this.registry = factory.IFluidDataStoreRegistry;

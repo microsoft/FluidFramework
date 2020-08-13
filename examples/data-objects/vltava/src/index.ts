@@ -137,7 +137,7 @@ const generateFactory = () => {
             // We don't want to include the default wrapper component in our list of available components
             Anchor.getFactory().registryEntry,
             Vltava.getFactory().registryEntry,
-            ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],
+            ["internalRegistry", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],
         ],
     );
 };

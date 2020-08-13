@@ -7,12 +7,13 @@
 // eslint-disable-next-line import/no-unassigned-import
 import "./publicpath";
 
+import assert from "assert";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
-    IFluidDataStoreFactory,
-    IFluidDataStoreRegistry,
+    IProvideFluidDataStoreFactory,
+    IProvideFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -56,7 +57,7 @@ const defaultRegistryEntries: NamedFluidDataStoreRegistryEntries = [
     ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
 ];
 
-class MyRegistry implements IFluidDataStoreRegistry {
+class MyRegistry implements IProvideFluidDataStoreRegistry {
     constructor(
         private readonly context: IContainerContext,
         private readonly defaultRegistry: string) {
@@ -64,7 +65,7 @@ class MyRegistry implements IFluidDataStoreRegistry {
 
     public get IFluidDataStoreRegistry() { return this; }
 
-    public async get(name: string): Promise<IFluidDataStoreFactory> {
+    public async get(name: string): Promise<IProvideFluidDataStoreFactory | IProvideFluidDataStoreRegistry> {
         const scope = `${name.split("/")[0]}:cdn`;
         const config = {};
         config[scope] = this.defaultRegistry;
@@ -74,11 +75,14 @@ class MyRegistry implements IFluidDataStoreRegistry {
             config,
         };
         const fluidModule = await this.context.codeLoader.load(codeDetails);
-        return fluidModule.fluidExport.IFluidDataStoreFactory;
+        const moduleExport = fluidModule.fluidExport;
+        assert(moduleExport.IFluidDataStoreFactory !== undefined ||
+            moduleExport.IFluidDataStoreRegistry  !== undefined);
+        return moduleExport as IProvideFluidDataStoreFactory | IProvideFluidDataStoreRegistry;
     }
 }
 
-class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFactory {
+class SharedTextFactoryComponent implements IProvideFluidDataStoreFactory, IRuntimeFactory {
     public static readonly type = "@fluid-example/shared-text";
     public readonly type = SharedTextFactoryComponent.type;
 

@@ -44,7 +44,7 @@ export class TabsComponent extends DataObject implements IFluidHTMLView {
     }
 
     protected async hasInitialized() {
-        const registry = await this.context.containerRuntime.IFluidDataStoreRegistry.get("");
+        const registry = await this.context.containerRuntime.IFluidDataStoreRegistry.get("internalRegistry");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const registryDetails = (registry as IFluidObject).IComponentInternalRegistry!;
         this.dataModelInternal =

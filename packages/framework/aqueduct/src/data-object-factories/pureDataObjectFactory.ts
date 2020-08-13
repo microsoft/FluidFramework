@@ -5,7 +5,7 @@
 
 import { IRequest, IFluidObject } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
-import { FluidDataStoreRegistry, buildSubPath } from "@fluidframework/container-runtime";
+import { FluidDataStoreRegistry, buildRegistryPath } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IContainerRuntimeBase,
@@ -61,7 +61,7 @@ class FluidDataObjectFactory {
         subFactory: IFluidDataStoreFactory,
         request: string | IRequest = "/")
     {
-        const packagePath = await buildSubPath(this.context, subFactory);
+        const packagePath = await buildRegistryPath(this.context, subFactory);
         const router = await this.context.containerRuntime.createDataStore(packagePath);
         return requestFluidObject<T>(router, request);
     }
@@ -141,7 +141,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
             this.sharedObjectRegistry,
         );
 
-        let instanceP: Promise<PureDataObject>;
+        let instanceP: Promise<TObj>;
         // For new runtime, we need to force the component instance to be create
         // run the initialization.
         if (!this.onDemandInstantiation || !runtime.existing) {
@@ -171,7 +171,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
         runtime: FluidDataStoreRuntime,
         context: IFluidDataStoreContext,
         props?: S,
-    ) {
+    ): Promise<TObj> {
         const dependencyContainer = new DependencyContainer(context.scope.IFluidDependencySynthesizer);
         const providers = dependencyContainer.synthesize<P>(this.optionalProviders, {});
         // Create a new instance of our component
@@ -192,7 +192,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
     public async createInstance(
         parentContext: IFluidDataStoreContext | IContainerRuntimeBase,
         initialState?: S,
-    ) {
+    ): Promise<TObj> {
         const containerRuntime = "containerRuntime" in parentContext ? parentContext.containerRuntime : parentContext;
         const newContext = containerRuntime.createDetachedDataStore();
 
