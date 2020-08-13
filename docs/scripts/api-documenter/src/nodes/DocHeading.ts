@@ -10,6 +10,7 @@ import { CustomDocNodeKind } from './CustomDocNodeKind';
 export interface IDocHeadingParameters extends IDocNodeParameters {
   title: string;
   level?: number;
+  id?: string;
 }
 
 /**
@@ -18,6 +19,7 @@ export interface IDocHeadingParameters extends IDocNodeParameters {
 export class DocHeading extends DocNode {
   public readonly title: string;
   public readonly level: number;
+  public readonly id: string;
 
   /**
    * Don't call this directly.  Instead use {@link TSDocParser}
@@ -27,6 +29,7 @@ export class DocHeading extends DocNode {
     super(parameters);
     this.title = parameters.title;
     this.level = parameters.level !== undefined ? parameters.level : 1;
+    this.id = parameters.id !== undefined ? parameters.id : '';
 
     if (this.level < 1 || this.level > 5) {
       throw new Error('IDocHeadingParameters.level must be a number between 1 and 5');

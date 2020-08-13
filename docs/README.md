@@ -182,7 +182,7 @@ This will regenerate the `content/api/*.md` files from the provided json files (
 ### Updating the API generator code
 
 
-Modify the code.
+Modify the code (the bulk of it lives in `scripts/api-documenter/src/documenters/MarkdownDocumenter.ts`)
 Compile from TS to js, run the test suite and regenerate the doc:
 
 ```

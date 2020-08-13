@@ -33,7 +33,11 @@ class CustomMarkdownEmitter extends MarkdownEmitter_1.MarkdownEmitter {
                     default:
                         prefix = '####';
                 }
-                writer.writeLine(prefix + ' ' + this.getEscapedText(docHeading.title));
+                let suffix = '';
+                if (docHeading.id !== '') {
+                    suffix = ` {#${docHeading.id}}`;
+                }
+                writer.writeLine(prefix + ' ' + this.getEscapedText(docHeading.title) + suffix);
                 writer.writeLine();
                 break;
             }

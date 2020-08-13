@@ -61,8 +61,12 @@ export class CustomMarkdownEmitter extends MarkdownEmitter {
           default:
             prefix = '####';
         }
+        let suffix: string = '';
+        if (docHeading.id !== '') {
+          suffix = ` {#${docHeading.id}}`;
+        }
 
-        writer.writeLine(prefix + ' ' + this.getEscapedText(docHeading.title));
+        writer.writeLine(prefix + ' ' + this.getEscapedText(docHeading.title) + suffix);
         writer.writeLine();
         break;
       }
@@ -186,7 +190,7 @@ export class CustomMarkdownEmitter extends MarkdownEmitter {
       console.log(
         colors.yellow(
           `WARNING: Unable to resolve reference "${docLinkTag.codeDestination!.emitAsTsdoc()}": ` +
-            result.errorMessage
+          result.errorMessage
         )
       );
     }

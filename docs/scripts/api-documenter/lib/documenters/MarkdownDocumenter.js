@@ -56,31 +56,35 @@ class MarkdownDocumenter {
         }
         this._writeIndex(this._apiModel);
     }
-    _writeApiItemPage(apiItem) {
+    _writeApiItemPage(apiItem, output) {
         const configuration = this._tsdocConfiguration;
-        const output = new tsdoc_1.DocSection({ configuration: this._tsdocConfiguration });
-        this._writeBreadcrumb(output, apiItem);
+        if (!output) {
+            output = new tsdoc_1.DocSection({ configuration: this._tsdocConfiguration });
+        }
+        if (output instanceof tsdoc_1.DocSection) {
+            this._writeBreadcrumb(output, apiItem);
+        }
         const scopedName = apiItem.getScopedNameWithinPackage();
         switch (apiItem.kind) {
             case "Class" /* Class */:
-                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: `${scopedName} class` }));
+                //output.appendNode(new DocHeading({ configuration, title: `${scopedName} class` }));
                 break;
             case "Enum" /* Enum */:
-                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: `${scopedName} enum` }));
+                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: `${scopedName} enum`, id: this._htmlIDForItem(apiItem) }));
                 break;
             case "Interface" /* Interface */:
-                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: `${scopedName} interface` }));
+                //output.appendNode(new DocHeading({ configuration, title: `${scopedName} interface` }));
                 break;
             case "Constructor" /* Constructor */:
             case "ConstructSignature" /* ConstructSignature */:
-                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: scopedName }));
+                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: scopedName, level: 2, id: this._htmlIDForItem(apiItem) }));
                 break;
             case "Method" /* Method */:
             case "MethodSignature" /* MethodSignature */:
-                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: `${scopedName} method` }));
+                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: apiItem.displayName, level: 2, id: this._htmlIDForItem(apiItem) }));
                 break;
             case "Function" /* Function */:
-                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: `${scopedName} function` }));
+                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: apiItem.displayName, level: 2, id: this._htmlIDForItem(apiItem) }));
                 break;
             case "Model" /* Model */:
                 output.appendNode(new DocHeading_1.DocHeading({ configuration, title: `API Reference` }));
@@ -90,18 +94,18 @@ class MarkdownDocumenter {
                 break;
             case "Package" /* Package */:
                 console.log(`Writing ${apiItem.displayName} package`);
-                const unscopedPackageName = node_core_library_1.PackageName.getUnscopedName(apiItem.displayName);
-                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: `${unscopedPackageName} package` }));
+                // const unscopedPackageName: string = PackageName.getUnscopedName(apiItem.displayName);
+                // output.appendNode(new DocHeading({ configuration, title: `${unscopedPackageName} package` }));
                 break;
             case "Property" /* Property */:
             case "PropertySignature" /* PropertySignature */:
-                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: `${scopedName} property` }));
+                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: apiItem.displayName, level: 2, id: this._htmlIDForItem(apiItem) }));
                 break;
             case "TypeAlias" /* TypeAlias */:
-                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: `${scopedName} type` }));
+                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: apiItem.displayName, level: 2, id: this._htmlIDForItem(apiItem) }));
                 break;
             case "Variable" /* Variable */:
-                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: `${scopedName} variable` }));
+                output.appendNode(new DocHeading_1.DocHeading({ configuration, title: apiItem.displayName, level: 2, id: this._htmlIDForItem(apiItem) }));
                 break;
             default:
                 throw new Error('Unsupported API item kind: ' + apiItem.kind);
@@ -207,7 +211,7 @@ class MarkdownDocumenter {
             return;
         }
         // temp hack to reduce the size of the generated content
-        if (apiItem.kind !== "Package" /* Package */) {
+        if (!this._shouldHaveStandalonePage(apiItem)) {
             return;
         }
         const filename = path.join(this._outputFolder, this._getFilenameForApiItem(apiItem));
@@ -238,6 +242,7 @@ class MarkdownDocumenter {
             convertLineEndings: this._documenterConfig ? this._documenterConfig.newlineKind : "\r\n" /* CrLf */,
             ensureFolderExists: true
         });
+        console.log(filename, "saved to disk");
     }
     _writeHeritageTypes(output, apiItem) {
         const configuration = this._tsdocConfiguration;
@@ -390,9 +395,14 @@ class MarkdownDocumenter {
             configuration,
             headerTitles: ['Type Alias', 'Description']
         });
+        const enumsParagraph = new tsdoc_1.DocParagraph({ configuration });
+        const varsParagraph = new tsdoc_1.DocParagraph({ configuration });
+        const functionsParagraph = new tsdoc_1.DocParagraph({ configuration });
+        const aliasesParagraph = new tsdoc_1.DocParagraph({ configuration });
         const apiMembers = apiContainer.kind === "Package" /* Package */
             ? apiContainer.entryPoints[0].members
             : apiContainer.members;
+        // loop through the members of the package/namespace.
         for (const apiMember of apiMembers) {
             const row = new DocTableRow_1.DocTableRow({ configuration }, [
                 this._createTitleCell(apiMember),
@@ -405,7 +415,7 @@ class MarkdownDocumenter {
                     break;
                 case "Enum" /* Enum */:
                     enumerationsTable.addRow(row);
-                    this._writeApiItemPage(apiMember);
+                    this._writeApiItemPage(apiMember, enumsParagraph);
                     break;
                 case "Interface" /* Interface */:
                     interfacesTable.addRow(row);
@@ -413,19 +423,19 @@ class MarkdownDocumenter {
                     break;
                 case "Namespace" /* Namespace */:
                     namespacesTable.addRow(row);
-                    this._writeApiItemPage(apiMember);
+                    this._writeApiItemPage(apiMember, output);
                     break;
                 case "Function" /* Function */:
                     functionsTable.addRow(row);
-                    this._writeApiItemPage(apiMember);
+                    this._writeApiItemPage(apiMember, functionsParagraph);
                     break;
                 case "TypeAlias" /* TypeAlias */:
                     typeAliasesTable.addRow(row);
-                    this._writeApiItemPage(apiMember);
+                    this._writeApiItemPage(apiMember, aliasesParagraph);
                     break;
                 case "Variable" /* Variable */:
                     variablesTable.addRow(row);
-                    this._writeApiItemPage(apiMember);
+                    this._writeApiItemPage(apiMember, varsParagraph);
                     break;
             }
         }
@@ -457,6 +467,34 @@ class MarkdownDocumenter {
             output.appendNode(new DocHeading_1.DocHeading({ configuration: this._tsdocConfiguration, title: 'Type Aliases' }));
             output.appendNode(typeAliasesTable);
         }
+        const details = new tsdoc_1.DocSection({ configuration }, [
+            new tsdoc_1.DocHtmlStartTag({ configuration: this._tsdocConfiguration, name: "hr" }),
+            new tsdoc_1.DocHtmlStartTag({
+                configuration: this._tsdocConfiguration, name: "div", htmlAttributes: [
+                    new tsdoc_1.DocHtmlAttribute({ configuration: this._tsdocConfiguration, name: "id", value: "package-details" })
+                ]
+            })
+        ]);
+        if (enumsParagraph.nodes.length > 0) {
+            details.appendNode(new DocHeading_1.DocHeading({ configuration, title: 'Enumerations' }));
+            details.appendNode(enumsParagraph);
+        }
+        if (functionsParagraph.nodes.length > 0) {
+            details.appendNode(new DocHeading_1.DocHeading({ configuration, title: 'Functions' }));
+            details.appendNode(functionsParagraph);
+        }
+        if (varsParagraph.nodes.length > 0) {
+            details.appendNode(new DocHeading_1.DocHeading({ configuration, title: 'Variables' }));
+            details.appendNode(varsParagraph);
+        }
+        if (aliasesParagraph.nodes.length > 0) {
+            details.appendNode(new DocHeading_1.DocHeading({ configuration, title: 'Type Aliases' }));
+            details.appendNode(aliasesParagraph);
+        }
+        details.appendNode(new tsdoc_1.DocHtmlEndTag({
+            configuration, name: "div"
+        }));
+        output.appendNode(details);
     }
     /**
      * GENERATE PAGE: CLASS
@@ -479,6 +517,10 @@ class MarkdownDocumenter {
             configuration,
             headerTitles: ['Method', 'Modifiers', 'Description']
         });
+        const constructorsParagraph = new tsdoc_1.DocParagraph({ configuration });
+        const methodsParagraph = new tsdoc_1.DocParagraph({ configuration });
+        const propertiesParagraph = new tsdoc_1.DocParagraph({ configuration });
+        const eventsParagraph = new tsdoc_1.DocParagraph({ configuration });
         for (const apiMember of apiClass.members) {
             switch (apiMember.kind) {
                 case "Constructor" /* Constructor */: {
@@ -487,7 +529,7 @@ class MarkdownDocumenter {
                         this._createModifiersCell(apiMember),
                         this._createDescriptionCell(apiMember)
                     ]));
-                    this._writeApiItemPage(apiMember);
+                    this._writeApiItemPage(apiMember, constructorsParagraph);
                     break;
                 }
                 case "Method" /* Method */: {
@@ -496,7 +538,7 @@ class MarkdownDocumenter {
                         this._createModifiersCell(apiMember),
                         this._createDescriptionCell(apiMember)
                     ]));
-                    this._writeApiItemPage(apiMember);
+                    this._writeApiItemPage(apiMember, methodsParagraph);
                     break;
                 }
                 case "Property" /* Property */: {
@@ -507,6 +549,7 @@ class MarkdownDocumenter {
                             this._createPropertyTypeCell(apiMember),
                             this._createDescriptionCell(apiMember)
                         ]));
+                        this._writeApiItemPage(apiMember, eventsParagraph);
                     }
                     else {
                         propertiesTable.addRow(new DocTableRow_1.DocTableRow({ configuration }, [
@@ -515,8 +558,8 @@ class MarkdownDocumenter {
                             this._createPropertyTypeCell(apiMember),
                             this._createDescriptionCell(apiMember)
                         ]));
+                        this._writeApiItemPage(apiMember, propertiesParagraph);
                     }
-                    this._writeApiItemPage(apiMember);
                     break;
                 }
             }
@@ -537,6 +580,34 @@ class MarkdownDocumenter {
             output.appendNode(new DocHeading_1.DocHeading({ configuration: this._tsdocConfiguration, title: 'Methods' }));
             output.appendNode(methodsTable);
         }
+        const details = new tsdoc_1.DocSection({ configuration: this._tsdocConfiguration }, [
+            new tsdoc_1.DocHtmlStartTag({ configuration: this._tsdocConfiguration, name: "hr" }),
+            new tsdoc_1.DocHtmlStartTag({
+                configuration: this._tsdocConfiguration, name: "div", htmlAttributes: [
+                    new tsdoc_1.DocHtmlAttribute({ configuration: this._tsdocConfiguration, name: "id", value: "class-details" })
+                ]
+            })
+        ]);
+        if (eventsParagraph.nodes.length > 0) {
+            details.appendNode(new DocHeading_1.DocHeading({ configuration: this._tsdocConfiguration, title: 'Events' }));
+            details.appendNode(eventsParagraph);
+        }
+        if (constructorsParagraph.nodes.length > 0) {
+            details.appendNode(new DocHeading_1.DocHeading({ configuration: this._tsdocConfiguration, title: 'Constructors' }));
+            details.appendNode(constructorsParagraph);
+        }
+        if (propertiesParagraph.nodes.length > 0) {
+            details.appendNode(new DocHeading_1.DocHeading({ configuration: this._tsdocConfiguration, title: 'Properties' }));
+            details.appendNode(propertiesParagraph);
+        }
+        if (methodsParagraph.nodes.length > 0) {
+            details.appendNode(new DocHeading_1.DocHeading({ configuration: this._tsdocConfiguration, title: 'Methods' }));
+            details.appendNode(methodsParagraph);
+        }
+        details.appendNode(new tsdoc_1.DocHtmlEndTag({
+            configuration: this._tsdocConfiguration, name: "div"
+        }));
+        output.appendNode(details);
     }
     /**
      * GENERATE PAGE: ENUM
@@ -584,6 +655,9 @@ class MarkdownDocumenter {
             configuration,
             headerTitles: ['Method', 'Description']
         });
+        const eventsParagraph = new tsdoc_1.DocParagraph({ configuration });
+        const propertiesParagraph = new tsdoc_1.DocParagraph({ configuration });
+        const methodsParagraph = new tsdoc_1.DocParagraph({ configuration });
         for (const apiMember of apiClass.members) {
             switch (apiMember.kind) {
                 case "ConstructSignature" /* ConstructSignature */:
@@ -592,7 +666,7 @@ class MarkdownDocumenter {
                         this._createTitleCell(apiMember),
                         this._createDescriptionCell(apiMember)
                     ]));
-                    this._writeApiItemPage(apiMember);
+                    this._writeApiItemPage(apiMember, methodsParagraph);
                     break;
                 }
                 case "PropertySignature" /* PropertySignature */: {
@@ -602,6 +676,7 @@ class MarkdownDocumenter {
                             this._createPropertyTypeCell(apiMember),
                             this._createDescriptionCell(apiMember)
                         ]));
+                        this._writeApiItemPage(apiMember, propertiesParagraph);
                     }
                     else {
                         propertiesTable.addRow(new DocTableRow_1.DocTableRow({ configuration }, [
@@ -609,8 +684,8 @@ class MarkdownDocumenter {
                             this._createPropertyTypeCell(apiMember),
                             this._createDescriptionCell(apiMember)
                         ]));
+                        this._writeApiItemPage(apiMember, eventsParagraph);
                     }
-                    this._writeApiItemPage(apiMember);
                     break;
                 }
             }
@@ -627,6 +702,30 @@ class MarkdownDocumenter {
             output.appendNode(new DocHeading_1.DocHeading({ configuration: this._tsdocConfiguration, title: 'Methods' }));
             output.appendNode(methodsTable);
         }
+        const details = new tsdoc_1.DocSection({ configuration: this._tsdocConfiguration }, [
+            new tsdoc_1.DocHtmlStartTag({ configuration: this._tsdocConfiguration, name: "hr" }),
+            new tsdoc_1.DocHtmlStartTag({
+                configuration: this._tsdocConfiguration, name: "div", htmlAttributes: [
+                    new tsdoc_1.DocHtmlAttribute({ configuration: this._tsdocConfiguration, name: "id", value: "interface-details" })
+                ]
+            })
+        ]);
+        if (eventsParagraph.nodes.length > 0) {
+            details.appendNode(new DocHeading_1.DocHeading({ configuration: this._tsdocConfiguration, title: 'Events' }));
+            details.appendNode(eventsParagraph);
+        }
+        if (propertiesParagraph.nodes.length > 0) {
+            details.appendNode(new DocHeading_1.DocHeading({ configuration: this._tsdocConfiguration, title: 'Properties' }));
+            details.appendNode(propertiesParagraph);
+        }
+        if (methodsParagraph.nodes.length > 0) {
+            details.appendNode(new DocHeading_1.DocHeading({ configuration: this._tsdocConfiguration, title: 'Methods' }));
+            details.appendNode(methodsParagraph);
+        }
+        details.appendNode(new tsdoc_1.DocHtmlEndTag({
+            configuration: this._tsdocConfiguration, name: "div"
+        }));
+        output.appendNode(details);
     }
     /**
      * GENERATE PAGE: FUNCTION-LIKE
@@ -655,7 +754,7 @@ class MarkdownDocumenter {
             ]));
         }
         if (parametersTable.rows.length > 0) {
-            output.appendNode(new DocHeading_1.DocHeading({ configuration: this._tsdocConfiguration, title: 'Parameters' }));
+            output.appendNode(new DocHeading_1.DocHeading({ configuration: this._tsdocConfiguration, title: 'Parameters', level: 4 }));
             output.appendNode(parametersTable);
         }
         if (api_extractor_model_1.ApiReturnTypeMixin.isBaseClassOf(apiParameterListMixin)) {
@@ -768,9 +867,21 @@ class MarkdownDocumenter {
     }
     // prepare the markdown frontmatter by providing the metadata needed to nicely render the page.
     _writeFrontMatter(item) {
-        // TODO: remove, if we generate a single page.
         this._frontMatter.kind = item.kind;
-        this._frontMatter.title = item.canonicalReference.toString().replace(/"/g, '').replace(/!/g, ''); //item.getScopedNameWithinPackage().replace(/"/g, '');
+        this._frontMatter.title = item.displayName.replace(/"/g, '').replace(/!/g, '');
+        switch (item.kind) {
+            case "Class" /* Class */:
+                this._frontMatter.title += " Class";
+                break;
+            case "Interface" /* Interface */:
+                this._frontMatter.title += " Interface";
+                break;
+            case "Package" /* Package */:
+                this._frontMatter.title += " Package";
+                break;
+            default:
+                break;
+        }
         const pkg = item.getAssociatedPackage();
         if (pkg) {
             this._frontMatter.package = pkg.name.replace(/"/g, '').replace(/!/g, '');
@@ -778,8 +889,13 @@ class MarkdownDocumenter {
         else {
             this._frontMatter.package = "undefined";
         }
+        // TODO: list members
     }
     _writeBreadcrumb(output, apiItem) {
+        // no breadcrumbs for inner content
+        if ((apiItem.kind !== "Package" /* Package */) && (apiItem.kind !== "Class" /* Class */) && (apiItem.kind !== "Interface" /* Interface */)) {
+            return;
+        }
         output.appendNodeInParagraph(new tsdoc_1.DocLinkTag({
             configuration: this._tsdocConfiguration,
             tagName: '@link',
@@ -863,7 +979,44 @@ class MarkdownDocumenter {
                     baseName += '/' + qualifiedName;
             }
         }
-        return baseName + '.md';
+        switch (apiItem.kind) {
+            case "Method" /* Method */:
+            case "Property" /* Property */:
+            case "Function" /* Function */:
+            case "Variable" /* Variable */:
+                return '#' + baseName;
+                break;
+            default:
+                return baseName + '.md';
+        }
+    }
+    _htmlIDForItem(apiItem) {
+        if (apiItem.kind === "Model" /* Model */) {
+            return '';
+        }
+        let baseName = '';
+        for (const hierarchyItem of apiItem.getHierarchy()) {
+            let qualifiedName = Utilities_1.Utilities.getSafeFilenameForName(hierarchyItem.displayName);
+            if (api_extractor_model_1.ApiParameterListMixin.isBaseClassOf(hierarchyItem)) {
+                if (hierarchyItem.overloadIndex > 1) {
+                    qualifiedName += `_${hierarchyItem.overloadIndex - 1}`;
+                }
+            }
+            switch (hierarchyItem.kind) {
+                case "Model" /* Model */:
+                case "EntryPoint" /* EntryPoint */:
+                    break;
+                case "Package" /* Package */:
+                    baseName = Utilities_1.Utilities.getSafeFilenameForName(node_core_library_1.PackageName.getUnscopedName(hierarchyItem.displayName));
+                    break;
+                default:
+                    baseName += '-' + qualifiedName;
+            }
+        }
+        return baseName + '-' + apiItem.kind;
+    }
+    _getHrefForApiItem(apiItem) {
+        return '#' + this._htmlIDForItem(apiItem);
     }
     /*
     /
@@ -871,11 +1024,22 @@ class MarkdownDocumenter {
     /
     */
     _getLinkFilenameForApiItem(apiItem) {
-        return '/apis/' + this._getFilenameForApiItem(apiItem);
+        if (apiItem.kind === "Model" /* Model */) {
+            return '/apis/';
+        }
+        if (this._shouldHaveStandalonePage(apiItem)) {
+            return '/apis/' + this._getFilenameForApiItem(apiItem);
+        }
+        else {
+            return this._getHrefForApiItem(apiItem);
+        }
     }
     _deleteOldOutputFiles() {
         console.log('Deleting old output from ' + this._outputFolder);
         node_core_library_1.FileSystem.ensureEmptyFolder(this._outputFolder);
+    }
+    _shouldHaveStandalonePage(apiItem) {
+        return (apiItem.kind === "Package" /* Package */) || (apiItem.kind === "Class" /* Class */) || (apiItem.kind === "Interface" /* Interface */);
     }
 }
 exports.MarkdownDocumenter = MarkdownDocumenter;

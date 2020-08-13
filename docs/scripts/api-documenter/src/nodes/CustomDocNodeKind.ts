@@ -45,11 +45,18 @@ export class CustomDocNodes {
       configuration.docNodeManager.registerAllowableChildren(DocNodeKind.Section, [
         CustomDocNodeKind.Heading,
         CustomDocNodeKind.NoteBox,
-        CustomDocNodeKind.Table
+        CustomDocNodeKind.Table,
+        DocNodeKind.Section
       ]);
 
       configuration.docNodeManager.registerAllowableChildren(DocNodeKind.Paragraph, [
-        CustomDocNodeKind.EmphasisSpan
+        CustomDocNodeKind.EmphasisSpan,
+        CustomDocNodeKind.Heading,
+        DocNodeKind.Paragraph,
+        CustomDocNodeKind.NoteBox,
+        CustomDocNodeKind.Table,
+        CustomDocNodeKind.Table,
+        DocNodeKind.FencedCode
       ]);
 
       CustomDocNodes._configuration = configuration;

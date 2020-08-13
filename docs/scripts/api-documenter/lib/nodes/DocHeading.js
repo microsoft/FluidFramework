@@ -15,6 +15,7 @@ class DocHeading extends tsdoc_1.DocNode {
         super(parameters);
         this.title = parameters.title;
         this.level = parameters.level !== undefined ? parameters.level : 1;
+        this.id = parameters.id !== undefined ? parameters.id : '';
         if (this.level < 1 || this.level > 5) {
             throw new Error('IDocHeadingParameters.level must be a number between 1 and 5');
         }

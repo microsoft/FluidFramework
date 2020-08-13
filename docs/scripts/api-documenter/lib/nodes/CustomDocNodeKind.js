@@ -26,10 +26,17 @@ class CustomDocNodes {
             configuration.docNodeManager.registerAllowableChildren("Section" /* Section */, [
                 "Heading" /* Heading */,
                 "NoteBox" /* NoteBox */,
-                "Table" /* Table */
+                "Table" /* Table */,
+                "Section" /* Section */
             ]);
             configuration.docNodeManager.registerAllowableChildren("Paragraph" /* Paragraph */, [
-                "EmphasisSpan" /* EmphasisSpan */
+                "EmphasisSpan" /* EmphasisSpan */,
+                "Heading" /* Heading */,
+                "Paragraph" /* Paragraph */,
+                "NoteBox" /* NoteBox */,
+                "Table" /* Table */,
+                "Table" /* Table */,
+                "FencedCode" /* FencedCode */
             ]);
             CustomDocNodes._configuration = configuration;
         }

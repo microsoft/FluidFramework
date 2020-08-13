@@ -16,13 +16,14 @@
             <div>
                 <h1>{{ .Title  }}</h1>
                 {{ $section := .CurrentSection }}
+                {{ $packagePages := where $section.RegularPages "Params.kind" "Package" }}
                 {{ range $grouping, $names :=  $.Site.Data.frameworks }}
 
 
                 <h2>{{ $grouping | humanize | title }} packages</h2>
                 <ul>
                     {{ range $names }}
-                    {{ range where $section.RegularPages "Params.title" . }}
+                    {{ range where $packagePages "Params.package" .  }}
                     <li><a href="{{ .Permalink | safeURL }}" title="{{ .Title }}">{{ .Title }}</a></li>
                     {{ end }}
                     {{ end }}

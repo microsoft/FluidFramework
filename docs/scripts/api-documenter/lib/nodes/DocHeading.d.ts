@@ -5,6 +5,7 @@ import { IDocNodeParameters, DocNode } from '@microsoft/tsdoc';
 export interface IDocHeadingParameters extends IDocNodeParameters {
     title: string;
     level?: number;
+    id?: string;
 }
 /**
  * Represents a section header similar to an HTML `<h1>` or `<h2>` element.
@@ -12,6 +13,7 @@ export interface IDocHeadingParameters extends IDocNodeParameters {
 export declare class DocHeading extends DocNode {
     readonly title: string;
     readonly level: number;
+    readonly id: string;
     /**
      * Don't call this directly.  Instead use {@link TSDocParser}
      * @internal

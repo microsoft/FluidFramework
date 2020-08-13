@@ -62,7 +62,10 @@ export declare class MarkdownDocumenter {
     private _appendSection;
     private _appendAndMergeSection;
     private _getFilenameForApiItem;
+    private _htmlIDForItem;
+    private _getHrefForApiItem;
     private _getLinkFilenameForApiItem;
     private _deleteOldOutputFiles;
+    private _shouldHaveStandalonePage;
 }
 //# sourceMappingURL=MarkdownDocumenter.d.ts.map
