@@ -5,3 +5,4 @@
 
 export { SharedMatrix } from "./matrix";
 export { SharedMatrixFactory } from "./runtime";
+export { IUndoConsumer } from "./types";

@@ -26,7 +26,7 @@ import {
     IMatrixIterator,
     MatrixIteratorSpec,
 } from "@tiny-calc/nano";
-import { MergeTreeDeltaType, IMergeTreeOp, SegmentGroup } from "@fluidframework/merge-tree";
+import { MergeTreeDeltaType, IMergeTreeOp, SegmentGroup, ISegment } from "@fluidframework/merge-tree";
 import { debug } from "./debug";
 import { MatrixOp } from "./ops";
 import { PermutationVector, PermutationSegment } from "./permutationvector";
@@ -354,15 +354,17 @@ export class SharedMatrix<T extends Serializable = Serializable>
         this.submitRowMessage(this.rows.remove(rowStart, count));
     }
 
-    /** @internal */ public _undoRemoveRows(segment: PermutationSegment) {
+    /** @internal */ public _undoRemoveRows(segment: ISegment) {
+        const original = segment as PermutationSegment;
+
         // (Re)insert the removed number of columns at the original position.
-        const rowStart = this.rows.getPosition(segment);
-        this.insertRows(rowStart, segment.cachedLength);
+        const rowStart = this.rows.getPosition(original);
+        this.insertRows(rowStart, original.cachedLength);
 
         // Transfer handles from the original segment to the newly inserted segment.
         // (This allows us to use getCell(..) below to read the previous cell values)
         const inserted = this.rows.getContainingSegment(rowStart).segment as PermutationSegment;
-        segment.transferHandlesTo(inserted);
+        original.transferHandlesTo(inserted);
 
         // Generate setCell ops for each populated cell in the reinserted cols.
         let rowHandle = inserted.start;
@@ -389,15 +391,17 @@ export class SharedMatrix<T extends Serializable = Serializable>
         }
     }
 
-    /** @internal */ public _undoRemoveCols(segment: PermutationSegment) {
+    /** @internal */ public _undoRemoveCols(segment: ISegment) {
+        const original = segment as PermutationSegment;
+
         // (Re)insert the removed number of columns at the original position.
-        const colStart = this.cols.getPosition(segment);
-        this.insertCols(colStart, segment.cachedLength);
+        const colStart = this.cols.getPosition(original);
+        this.insertCols(colStart, original.cachedLength);
 
         // Transfer handles from the original segment to the newly inserted segment.
         // (This allows us to use getCell(..) below to read the previous cell values)
         const inserted = this.cols.getContainingSegment(colStart).segment as PermutationSegment;
-        segment.transferHandlesTo(inserted);
+        original.transferHandlesTo(inserted);
 
         // Generate setCell ops for each populated cell in the reinserted cols.
         let colHandle = inserted.start;
