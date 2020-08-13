@@ -29,10 +29,14 @@ structures, all of the distributed copies of the DDS will reach an identical sta
 The quality of eventual consistency improves performance because local changes can be made optimistically, knowing that
 the runtime will merge the change in the appropriate way eventually. This is a guarantee made by the Fluid runtime.
 
-There are cases, however, where the eventually consistent guarantee is insufficient. In these cases, the consensus-based
-distributed data structures are useful. These data structures defer applying operations until they're acknowledged by
-the server. This can be used to ensures that each client pops a different value from a distributed stack, for example.
+Clients must always assume their local view of data is stale since there are potentially changes from remote clients
+that they have not yet received. For scenarios where modification of the data can only be done safely with an up-to-date
+view of the data, Fluid provides consensus-based data structures. These data structures build in protections to prevent modification
+of the data if the unsafe conditions are met, and clients wait to get confirmation from the server before assuming their
+modifications were accepted.
 
+For example, to pop a distributed stack clients need an up-to-date view of the state of the stack. Otherwise, two
+clients may believe they've popped the same item.
 
 ## Merge behavior
 
