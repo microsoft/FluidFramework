@@ -173,19 +173,19 @@ export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements I
         let component: IFluidLoadable;
         switch (type) {
             case "todo":
-                component = await TodoItem.getFactory().createInstance(
+                component = await TodoItem.getFactory().createPeerInstance(
                     this.context,
                     { startingText: type },
                 );
                 break;
             case "clicker":
-                component = await ClickerInstantiationFactory.createInstance(this.context);
+                component = await ClickerInstantiationFactory.createChildInstance(this.context);
                 break;
             case "textBox":
-                component = await TextBoxInstantiationFactory.createInstance(this.context, type);
+                component = await TextBoxInstantiationFactory.createChildInstance(this.context, type);
                 break;
             case "textList":
-                component = await TextListInstantiationFactory.createInstance(this.context);
+                component = await TextListInstantiationFactory.createChildInstance(this.context);
                 break;
             default:
         }

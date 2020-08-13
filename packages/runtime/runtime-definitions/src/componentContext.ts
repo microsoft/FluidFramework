@@ -352,8 +352,8 @@ export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
      * Binds a runtime to the context.
      */
     attachRuntime(
-        parentContext: IFluidDataStoreContext | IContainerRuntimeBase,
-        factory: IProvideFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>,
+        packagePath: Readonly<string[]>,
+        factory: IProvideFluidDataStoreFactory,
         dataStoreRuntime: IFluidDataStoreChannel,
     ): Promise<void>;
 }

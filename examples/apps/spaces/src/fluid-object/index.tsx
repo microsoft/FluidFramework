@@ -127,7 +127,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
     }
 
     protected async initializingFirstTime() {
-        const storageComponent = await SpacesStorage.getFactory().createInstance(this.context);
+        const storageComponent = await SpacesStorage.getFactory().createChildInstance(this.context);
         this.root.set(SpacesStorageKey, storageComponent.handle);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);

@@ -5,7 +5,6 @@
 
 export * from "./containerRuntime";
 export * from "./deltaScheduler";
-export { buildRegistryPath } from "./dataStoreContext";
 export * from "./dataStoreRegistry";
 export * from "./runWhileConnectedCoordinator";
 export * from "./summarizer";

@@ -41,7 +41,6 @@ import {
     IAttachMessage,
     IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
-    IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IInboundSignalMessage,
     ISummarizeResult,
@@ -50,9 +49,7 @@ import {
     CreateChildSummarizerNodeFn,
     SummarizeInternalFn,
     CreateChildSummarizerNodeParam,
-    IContainerRuntimeBase,
     IProvideFluidDataStoreFactory,
-    IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker, addBlobToSummary, convertToSummaryTree } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
@@ -61,33 +58,6 @@ import { ContainerRuntime } from "./containerRuntime";
 const currentSnapshotFormatVersion = "0.1";
 
 const attributesBlobKey = ".component";
-
-/**
- * Takes context, and creates package path for a sub-entry (represented by factory) in context registry.
- * Package path returned is used to reach given factory from root (container runtime) registry, and thus
- * is used to serizlize and de-serialize future data store that such factory would create in future.
- * Function validates that given factory is present in registry, otherwise it throws.
- */
-export async function buildRegistryPath(
-    context: IFluidDataStoreContext | IContainerRuntimeBase,
-    factory: IFluidDataStoreFactory)
-{
-    let packagePath: string[];
-    if ("containerRuntime" in context) {
-        const parentPath = context.packagePath;
-        assert(parentPath.length > 0);
-        // A factory could not contain the registry for itself. So if it is the same the last snapshot
-        // pkg, return our package path.
-        assert(parentPath[parentPath.length - 1] !== factory.type);
-        packagePath = [...parentPath, factory.type];
-    } else {
-        packagePath = [factory.type];
-    }
-
-    const factory2 = await context.IFluidDataStoreRegistry?.get(factory.type);
-    assert(factory2 === factory);
-    return packagePath;
-}
 
 function createAttributes(pkg: readonly string[]): IFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
@@ -267,7 +237,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         }
     }
 
-    private async rejectDeferredRealize(reason: string) {
+    private rejectDeferredRealize(reason: string): never {
         const error = new Error(reason);
         // Error messages contain package names that is considered Personal Identifiable Information
         // Mark it as such, so that if it ever reaches telemetry pipeline, it has a chance to remove it.
@@ -286,6 +256,31 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         return this.channelDeferred.promise;
     }
 
+    protected async factoryFromPackagePath(packages) {
+        assert(this.pkg === packages);
+
+        let entry: FluidDataStoreRegistryEntry | undefined;
+        let registry: IFluidDataStoreRegistry | undefined = this._containerRuntime.IFluidDataStoreRegistry;
+        let lastPkg: string | undefined;
+        for (const pkg of packages) {
+            if (!registry) {
+                this.rejectDeferredRealize(`No registry for ${lastPkg} package`);
+            }
+            lastPkg = pkg;
+            entry = await registry.get(pkg);
+            if (!entry) {
+                this.rejectDeferredRealize(`Registry does not contain entry for the package ${pkg}`);
+            }
+            registry = entry.IFluidDataStoreRegistry;
+        }
+        const factory = entry?.IFluidDataStoreFactory;
+        if (factory === undefined) {
+            this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
+        }
+
+        return { factory, registry };
+    }
+
     private async realizeCore(): Promise<void> {
         this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
         const details = await this.getInitialSnapshotDetails();
@@ -294,29 +289,12 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         // that it is set here, before bindRuntime is called.
         this._baseSnapshot = details.snapshot;
         const packages = details.pkg;
-        assert(this.pkg === packages);
 
-        let entry: FluidDataStoreRegistryEntry | undefined;
-        let registry: IFluidDataStoreRegistry | undefined = this._containerRuntime.IFluidDataStoreRegistry;
-        let lastPkg: string | undefined;
-        for (const pkg of packages) {
-            if (!registry) {
-                return this.rejectDeferredRealize(`No registry for ${lastPkg} package`);
-            }
-            lastPkg = pkg;
-            entry = await registry.get(pkg);
-            if (!entry) {
-                return this.rejectDeferredRealize(`Registry does not contain entry for the package ${pkg}`);
-            }
-            registry = entry.IFluidDataStoreRegistry;
-        }
-        const factory = entry?.IFluidDataStoreFactory;
-        if (factory === undefined) {
-            return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
-        }
+        const { factory, registry } = await this.factoryFromPackagePath(packages);
 
         assert(this.registry === undefined);
         this.registry = registry;
+
         const channel = await factory.instantiateDataStore(this);
 
         // back-compat: <= 0.25 allows returning nothing and calling bindRuntime() later directly.
@@ -843,17 +821,21 @@ export class LocalDetachedFluidDataStoreContext
     }
 
     public async attachRuntime(
-        parentContext: IFluidDataStoreContext | IContainerRuntimeBase,
-        factory: IProvideFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>,
+        packagePath: Readonly<string[]>,
+        registry: IProvideFluidDataStoreFactory,
         dataStoreRuntime: IFluidDataStoreChannel)
     {
         assert(this.detachedRuntimeCreation);
         assert(this.pkg === undefined);
 
-        this.pkg = await buildRegistryPath(parentContext, factory.IFluidDataStoreFactory);
+        const factory = registry.IFluidDataStoreFactory;
+        this.pkg = packagePath;
+
+        const entry = await this.factoryFromPackagePath(this.pkg);
+        assert(entry.factory === factory);
 
         assert(this.registry === undefined);
-        this.registry = factory.IFluidDataStoreRegistry;
+        this.registry = entry.registry;
 
         super.bindRuntime(dataStoreRuntime);
     }

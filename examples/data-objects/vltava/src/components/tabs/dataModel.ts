@@ -79,7 +79,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     public async createTab(factory: IFluidDataStoreFactory): Promise<string> {
         const newKey = uuid();
-        const component = await this.createSubObject.createAnonymousInstance<IFluidLoadable>(factory);
+        const component = await this.createSubObject.createAnonymousChildInstance<IFluidLoadable>(factory);
         this.tabs.set(newKey, {
             type: factory.type,
             handleOrId: component.handle,
