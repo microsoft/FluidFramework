@@ -48,7 +48,7 @@ export type AsyncFluidObjectProvider<O extends keyof IFluidObject, R extends key
 export type NonNullableFluidObject<T extends keyof IFluidObject> = NonNullable<IFluidObject[T]>;
 
 /**
- * Multiple ways to provide a fluid object.
+ * Multiple ways to provide a Fluid object.
  */
 export type FluidObjectProvider<T extends keyof IFluidObject> =
     NonNullableFluidObject<T>

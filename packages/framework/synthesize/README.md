@@ -119,7 +119,7 @@ dc.register(IFoo, fooFactory);
 // Factories can utilize the DependencyContainer if the IFluidObject depends
 // on other providers
 const barFactory = (dc) => new Bar(dc);
-dc.register(Ifoo, barFactory);
+dc.register(IFoo, barFactory);
 ```
 
 ### Async Factory Provider
