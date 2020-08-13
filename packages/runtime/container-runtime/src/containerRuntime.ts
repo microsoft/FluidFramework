@@ -70,6 +70,7 @@ import {
 import {
     FlushMode,
     IAttachMessage,
+    InboundAttachMessage,
     IFluidDataStoreContext,
     IFluidDataStoreRegistry,
     IFluidDataStoreChannel,
@@ -85,6 +86,8 @@ import {
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     CreateSummarizerNodeSource,
+    IAgentScheduler,
+    ITaskManager,
 } from "@fluidframework/runtime-definitions";
 import {
     FluidSerializer,
@@ -93,10 +96,16 @@ import {
     SummarizerNode,
     convertToSummaryTree,
     RequestParser,
+    requestFluidObject,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
-import { FluidDataStoreContext, LocalFluidDataStoreContext, RemotedFluidDataStoreContext } from "./dataStoreContext";
-import { FluidHandleContext } from "./dataStoreHandleContext";
+import {
+    FluidDataStoreContext,
+    LocalFluidDataStoreContext,
+    RemotedFluidDataStoreContext,
+    createAttributesBlob,
+} from "./dataStoreContext";
+import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
 import { ISummarizerRuntime, Summarizer } from "./summarizer";
@@ -667,7 +676,7 @@ export class ContainerRuntime extends EventEmitter
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
 
-        this.IFluidHandleContext = new FluidHandleContext("", this);
+        this.IFluidHandleContext = new ContainerFluidHandleContext("", this);
 
         this.logger = ChildLogger.create(context.logger, undefined, {
             runtimeVersion: pkgVersion,
@@ -1128,7 +1137,11 @@ export class ContainerRuntime extends EventEmitter
         context.processSignal(transformed, local);
     }
 
-    public async getDataStore(id: string, wait = true): Promise<IFluidDataStoreChannel> {
+    public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
+        return this.getDataStore(id, wait);
+    }
+
+    protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
         // Ensure deferred if it doesn't exist which will resolve once the process ID arrives
         const deferredContext = this.ensureContextDeferred(id);
 
@@ -1336,13 +1349,13 @@ export class ContainerRuntime extends EventEmitter
 
     private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
         if (type === ContainerMessageType.Attach) {
-            const attachMessage = contents as IAttachMessage;
-            if (attachMessage.id === SchedulerType) {
+            const attachMessage = contents as InboundAttachMessage;
+            if (attachMessage.id === schedulerId) {
                 return false;
             }
         } else if (type === ContainerMessageType.FluidDataStoreOp) {
             const envelope = contents as IEnvelope;
-            if (envelope.address === SchedulerType) {
+            if (envelope.address === schedulerId) {
                 return false;
             }
         }
@@ -1396,7 +1409,7 @@ export class ContainerRuntime extends EventEmitter
     }
 
     private processAttachMessage(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {
-        const attachMessage = message.contents as IAttachMessage;
+        const attachMessage = message.contents as InboundAttachMessage;
         // The local object has already been attached
         if (local) {
             assert(this.pendingAttach.has(attachMessage.id));
@@ -1415,7 +1428,8 @@ export class ContainerRuntime extends EventEmitter
         }
 
         // Include the type of attach message which is the pkg of the store to be
-        // used by RemotedFluidDataStoreContext  in case it is not in the snapshot.
+        // used by RemotedFluidDataStoreContext in case it is not in the snapshot.
+        const pkg = [attachMessage.type];
         const remotedFluidDataStoreContext = new RemotedFluidDataStoreContext(
             attachMessage.id,
             snapshotTreeP,
@@ -1428,9 +1442,12 @@ export class ContainerRuntime extends EventEmitter
                 {
                     type: CreateSummarizerNodeSource.FromAttach,
                     sequenceNumber: message.sequenceNumber,
-                    snapshot: attachMessage.snapshot,
+                    snapshot: attachMessage.snapshot ?? {
+                        id: null,
+                        entries: [createAttributesBlob(pkg)],
+                    },
                 }),
-            [attachMessage.type]);
+            pkg);
 
         // If a non-local operation then go and create the object, otherwise mark it as officially attached.
         assert(!this.contexts.has(attachMessage.id), "Store attached with existing ID");
@@ -1889,12 +1906,15 @@ export class ContainerRuntime extends EventEmitter
         }
     }
 
-    private async getScheduler() {
-        const schedulerRuntime = await this.getDataStore(schedulerId, true);
-        const schedulerResponse = await schedulerRuntime.request({ url: "" });
-        const schedulerFluidDataStore = schedulerResponse.value as IFluidObject;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return schedulerFluidDataStore.IAgentScheduler!;
+    public async getTaskManager(): Promise<ITaskManager> {
+        return requestFluidObject<ITaskManager>(
+            await this.getDataStore(schedulerId, true),
+            "");
+    }
+
+    public async getScheduler(): Promise<IAgentScheduler> {
+        const taskManager = await this.getTaskManager();
+        return taskManager.IAgentScheduler;
     }
 
     private updateLeader(leadership: boolean) {

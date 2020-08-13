@@ -17,7 +17,7 @@ describe("spaces", () => {
         await page.waitFor(() => window["fluidStarted"]);
     });
 
-    it.skip("There's a button to be clicked", async () => {
+    it("There's a button to be clicked", async () => {
         await expect(page).toClick("button", { text: "Edit: true" });
     });
 });

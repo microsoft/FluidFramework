@@ -1,16 +1,21 @@
 # Breaking changes
 
 ## 0.25 Breaking Changes
+- [Local Web Host API change](#Local-Web-Host-API-change)
 - [Container runtime event changes](#Container-runtime-event-changes)
 - [Component is removed from telemetry event names](#Component-is-removed-from-telemetry-event-names)
 - [IComponentContextLegacy is removed](#IComponentContextLegacy-is-removed)
 - [IContainerRuntimeBase._createDataStoreWithProps() is removed](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
 - [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
 - [createDataStoreWithRealizationFn() APIs moved](#createDataStoreWithRealizationFn()-APIs-moved)
+- [getDataStore() APIs is removed](#getDataStore()-APIs-is-removed)
 - [Package Renames](#package-renames)
 - [IComponent and IComponent Interfaces Removed](#IComponent-and-IComponent-Interfaces-Removed)
 - [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
 - [LastEditedTrackerComponent renamed to LastEditedTrackerDataObject](#lasteditedtrackercomponent-renamed)
+
+### Local Web Host API change
+The renderDefaultComponent function has been updated to be renderDefaultFluidObject
 
 ### Container runtime event changes
 Container runtime now emits the event "fluidDataStoreInstantiated" instead of "componentInstantiated"
@@ -39,11 +44,17 @@ Please switch to using one of the following APIs:
 Removed from IFluidDataStoreContext  & IContainerRuntime.
 Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altogether in same release (more info to follow)
 
+## getDataStore() APIs is removed
+IContainerRuntime.getDataStore() is removed. Only IContainerRuntime.getRootDataStore() is available to retrieve root data stores.
+For couple versions we will allow retrieving non-root data stores using this API, but this functionality is temporary and will be removed soon.
+You can use handleFromLegacyUri() for creating handles from container-internal URIs (i.e., in format `/${dataStoreId}`) and resolving those containers to get to non-root data stores. Please note that this functionality is strictly added for legacy files! In future, not using handles to refer to content (and storing handles in DDSs) will result in such data stores not being reachable from roots, and thus garbage collected (deleted) from file.
+
 ### Package Renames
 As a follow up to the changes in 0.24 we are updating a number of package names
 - `@fluidframework/core-interfaces` is renamed to `@fluidframework/core-interfaces`
 - `@fluidframework/datastore-definitions` is renamed to `@fluidframework/datastore-definitions`
 - `@fluidframework/datastore` is renamed to `@fluidframework/datastore`
+- `@fluidframework/webpack-component-loader` is renamed to `@fluidframework/webpack-fluid-loader`
 
 ### IComponent and IComponent Interfaces Removed
 In 0.24 IComponent and IComponent interfaces were deprecated, they are being removed in this build. Please move to IFluidObject and IFluidObject interfaces.
@@ -306,7 +317,7 @@ getAbsoluteUrl on the container runtime and component context now returns `strin
 import { waitForAttach } from "@fluidframework/aqueduct";
 
 
-protected async componentHasInitialized() {
+protected async hasInitialized() {
         waitForAttach(this.runtime)
             .then(async () => {
                 const url = await this.context.getAbsoluteUrl(this.url);

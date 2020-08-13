@@ -7,15 +7,15 @@ import { IFluidSchemaHandles } from "./internalInterface";
 import { ISyncedState } from "..";
 
 /**
- * Store the component schema on to the shared synced state
- * @param syncedStateId - Unique ID to use for storing the component's synced state in the map
+ * Store the schema on to the shared synced state
+ * @param syncedStateId - Unique ID to use for storing the synced state in the shared map
  * @param syncedState - The shared map that will be used to store the synced state
- * @param componentSchemaHandles - Handles for the schema SharedMaps
+ * @param schemaHandles - Handles for the schema SharedMaps
  */
-export function setComponentSchema(
+export function setSchema(
     syncedStateId: string,
     syncedState: ISyncedState,
-    componentSchemaHandles: IFluidSchemaHandles,
+    schemaHandles: IFluidSchemaHandles,
 ): void {
-    syncedState.set(`componentSchema-${syncedStateId}`, componentSchemaHandles);
+    syncedState.set(`schema-${syncedStateId}`, schemaHandles);
 }

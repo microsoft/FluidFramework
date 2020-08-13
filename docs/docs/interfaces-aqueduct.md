@@ -1,9 +1,9 @@
 # DataObjects and interfaces
 
-In the previous section we introduced distributed data structures and demonstrated how to use them. Fluid provides a way
-for us to combine those distributed data structures and our own code (business logic) into a modular, reusable
-piece. This in turn enables us to modularize pieces of our application -- data included -- and re-use them or embed them
-elsewhere.
+In the previous section we introduced distributed data structures and demonstrated how to use them. Now let's discuss
+how to leverage those distributed data structures from our own code (business logic) to create modular, reusable
+pieces. These pieces fall into the category of the `fluid objects` discussed in the last section,
+along with DDSs themselves.
 
 ## The @fluidframework/aqueduct package
 
@@ -160,91 +160,86 @@ README](https://github.com/microsoft/FluidFramework/blob/master/packages/framewo
 
 ---
 
-A Fluid component is at its core a JavaScript object. Or, stated differently, any JavaScript object _could_ be a Fluid
-component. What makes that object "Fluid" is the interfaces that it exposes through the Fluid component model's feature
-detection mechanism.
+## Feature Detection via IFluidObject
 
-Wow, that was a mouthful! What it means is that Fluid components are just JavaScript objects that implement specific
-interfaces. The Fluid Framework defines an interface, IComponent, which is then augmented using [TypeScript's interface
-merging capabilities](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#merging-interfaces). The
-specifics of how these interfaces are declared is not relevant until you want to define your own interfaces. We'll cover
-that in a later section.
+In the course of writing code to manipulate DDSes and interact with other `fluid objects`, you will find yourself dealing
+with Javascript objects you know almost nothing about. To interact with such an object, you'll use Fluid's
+feature detection mechanism, which centers around a special type called `IFluidObject`.
 
-One of the primary design principles in the Fluid component design is to support delegation and feature detection
-patterns. **Feature detection** is a technique to dynamically determine the capabilities of another component, while
-**delegation** means that the implementation of an interface can be delegated to another object.
+In order to detect features supported by an unknown object, you cast it `IFluidObject` and then query it for a specific
+interface that it may support. The interfaces exposed via `IFluidObject` include many core Fluid interfaces,
+such as `IFluidHandle` or `IFluidLoadable`, and this list can be augmented using
+[TypeScript's interface merging capabilities](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#merging-interfaces).
+This enables any Fluid code to "register" an interface as queryable from other Fluid code that imports it.
+The specifics of how these interfaces are declared is not relevant until you want to define your own interfaces,
+which we'll cover in a later section.
 
-Using these features within the Fluid Framework itself we define several interfaces, such as `IComponentLoadable`, and
-use the feature detection mechanism to find JavaScript objects that implement that interface. These patterns are
-described in more detail below.
-
-## Feature detection and delegation
-
-The Fluid component model supports a delegation and feature detection mechanism. As is typical in JavaScript, a feature
-detection pattern can be used to determine what capabilities are exposed by a component. The `IComponent` interface
-serves as a Fluid-specific form of TypeScript's `any` that developers can cast objects to in order to probe for
-implemented component interfaces.
-
-For example, if you need to determine the capabilities that a component exposes, you first cast the object as an
-`IComponent`, and then access the property on the `IComponent` that matches the interface you are testing for. For
-example:
+Let's look at an example of feature detection using `IFluidObject`:
 
 ```typescript
-let component = anyObject as IComponent;
-// We call bar on the component if it supports it.
-const isFooBar = component.IComponentFooBar;
-if (isFooBar) {
-    await component.bar();
+let fluidObject = anyObject as IFluidObject;
+// Query the object to see if it supports IFluidFoo
+const foo = fluidObject.IFluidFoo; // foo: IFluidFoo | undefined
+if (foo !== undefined) {
+    // foo: IFluidFoo
+    // It does! Now we have an IFluidFoo and can safely call member function bar()
+    await foo.bar();
 }
 ```
 
-In the example above, the code is checking to see if the component supports `IComponentFooBar`. If it does, an object will
-be returned and `bar()` will be called on it. If the component does not support `IComponentFooBar`, then it will return
-`undefined`.
+The magic is in the `fluidObject.IFluidFoo` expression. You may think of that `.` almost like a cast operator
+that returns `undefined` if the cast fails - similar to the C# snippet `fluidObject as IFluidFoo`
+(_Note: `as` DOES NOT work that way in TypeScript!_).
 
-In addition to the feature detection mechanism, Fluid also supports a delegation pattern. Rather than implementing
-`IComponent*` interfaces itself, a component may instead delegate that responsibility by implementing
-`IProvideComponent*` interfaces. This requires the component to implement a property that returns the appropriate
-`IComponent*` interface.
+## Delegation and the IProvide pattern
 
-For example, consider the `IProvideComponentLoadable` interface:
+Let's dig a little deeper into how `IFluidObject` works to see how it also satisfies our design principal around delegation.
+Remember when we said that `fluidObject.IFluidFoo` is almost like a cast? Well, the emphasis is now on the word _almost_.
+In fact, `fluidObject` itself need not implement `IFluidFoo`. Rather, it must _provide_ an implementation of `IFluidFoo`.
+This is where delegation comes in - `fluidObject.IFluidFoo` may return `fluidObject` itself under the covers,
+or it may delegate by returning another object implementing that interface.
+
+If you search through the FluidFramework codebase, you'll start to notice that many interfaces come in pairs, such as
+`IFluidLoadable` and `IProvideFluidLoadable`. Let's take a look at `IProvideFluidLoadable`:
 
 ```typescript
-export interface IProvideComponentLoadable {
-    readonly IComponentLoadable: IComponentLoadable;
-}
-/**
- * A shared component has a URL from which it can be referenced
- */
-export interface IComponentLoadable extends IProvideComponentLoadable {
-    // Absolute URL to the component within the document
-    readonly url: string;
-
-    // Handle to the loadable component
-    handle: IComponentHandle;
+export interface IProvideFluidLoadable {
+    readonly IFluidLoadable: IFluidLoadable;
 }
 ```
 
-Notice that there is an inheritance relationship between the `IProvideComponentLoadable` and `IComponentLoadable`
-interfaces. When implementing only the `IProvideComponentLoadable` interface, the component still must be able to return
-an `IComponentLoadable` object, but it does not need to implement that interface itself and can instead delegate to a
-different object.
+If you have an `IProvideFluidLoadable`, you may call `.IFluidLoadable` on it to get an `IFluidLoadable`.
+Looks familiar, right? Remember `fluidObject.IFluidFoo` in the example above? Well it turns out that `IFluidObject`
+is simply a special combination of `IProvide` interfaces.
 
-## Fluid component interfaces
+As mentioned above, the implementation of `.IFluidLoadable` may actually return the object itself.
+In fact this is quite common, and is facilitated by a convention where `IFluidFoo extends IProvideFluidFoo`.
+Returning to our `IFluidLoadable` example:
 
-On top of this simple `IComponent`-based model, Fluid defines a few interfaces, like `IComponentLoadable`, for use
-within the framework. But the full power of the model comes as we explore conventions around advanced scenarios like
-cross-component communication, shared commanding UX, copy/paste, etc.
+```typescript
+export interface IFluidLoadable extends IProvideFluidLoadable {
+    ...
+}
+```
 
-::: danger TODO
+Let's look at an example that shows how a class may implement the `IProvide` interfaces
+two different ways:
 
-We are experimenting with a variety of additional interfaces for specific purposes; see the [need link] for more info.
+```typescript
+export abstract class PureDataObject<...>
+    extends ...
+    implements IFluidLoadable, IFluidRouter, IProvideFluidHandle
+{
+    ...
+    private readonly innerHandle: IFluidHandle<this>;
+    ...
+    public get IFluidLoadable() { return this; }
+    public get IFluidHandle() { return this.innerHandle; }
+```
 
-:::
-
-These interfaces will be optional in many contexts but could be required by certain applications. For example, an
-application may refuse to load components that don't implement certain interfaces. This could include supporting
-capabilities such as search, cursoring, clipboard support, and much more.
+`PureDataObject` implements `IProvideFluidLoadable` via `IFluidLoadable`, and thus simply returns `this` in that case.
+But for `IProvideFluidHandle`, it delegates to a private member. It's not the concern of the caller which strategy
+is in play - it simply asks for `fluidObject.IFluidLoadable` or `fluidObject.IFluidHandle` and continues on its merry way.
 
 
 !!!include(links.md)!!!

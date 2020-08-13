@@ -35,6 +35,11 @@ export interface IProvideTaskManager {
  */
 export interface ITaskManager extends IProvideTaskManager, IFluidLoadable, IFluidRouter {
     /**
+     * access to IAgentScheduler
+     */
+    readonly IAgentScheduler: IAgentScheduler;
+
+    /**
      * Registers tasks task so that the client can run the task later.
      */
     register(...tasks: ITask[]): void;

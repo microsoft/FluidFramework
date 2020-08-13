@@ -51,9 +51,7 @@
   },
   "dependencies": {
     "@fluidframework/container-definitions": "^0.25.0",
-    "@fluidframework/telemetry-utils": "^0.25.0",
-    "performance-now": "^2.1.0",
-    "uuid": "^3.3.2"
+    "@fluidframework/telemetry-utils": "^0.25.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
