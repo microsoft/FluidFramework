@@ -1,6 +1,7 @@
 # Breaking changes
 
 ## 0.25 Breaking Changes
+- [MockFluidDataStoreRuntime api rename](#MockFluidDataStoreRuntime-api-rename)
 - [Container runtime event changes](#Container-runtime-event-changes)
 - [Component is removed from telemetry event names](#Component-is-removed-from-telemetry-event-names)
 - [IComponentContextLegacy is removed](#IComponentContextLegacy-is-removed)
@@ -13,6 +14,8 @@
 - [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
 - [LastEditedTrackerComponent renamed to LastEditedTrackerDataObject](#lasteditedtrackercomponent-renamed)
 
+### MockFluidDataStoreRuntime api rename
+Runtime Test Utils's MockFluidDataStoreRuntime now has "requestDataStore" instead of "requestComponent"
 ### Container runtime event changes
 Container runtime now emits the event "fluidDataStoreInstantiated" instead of "componentInstantiated"
 
