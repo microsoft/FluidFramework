@@ -14,16 +14,16 @@ import {
     IComponentDiscoverableInterfaces,
 } from "@fluidframework/framework-interfaces";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { handleFromLegacyUri } from "@fluidframework/request-handler";
 
 export const MatchMakerContainerServiceId = "matchMaker";
 
 const getMatchMakerContainerService =
     async (context: IFluidDataStoreContext): Promise<IComponentInterfacesRegistry> => {
-        const value = await requestFluidObject(
-            context.containerRuntime.IFluidHandleContext,
-            `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`);
-        const matchMaker = value.IComponentInterfacesRegistry;
+        const handle = handleFromLegacyUri(
+            `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
+            context.containerRuntime);
+        const matchMaker = (await handle.get()).IComponentInterfacesRegistry;
         if (matchMaker) {
             return matchMaker;
         }

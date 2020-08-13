@@ -5,7 +5,12 @@
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 import assert from "assert";
-import { IRequest, IResponse, IFluidObject, IFluidRouter } from "@fluidframework/core-interfaces";
+import {
+    IRequest,
+    IResponse,
+    IFluidObject,
+    IFluidRouter,
+} from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
@@ -15,6 +20,8 @@ import {
 } from "../requestHandlers";
 
 class MockRuntime {
+    public get IFluidHandleContext() { return this; }
+
     public async getRootDataStore(id, wait): Promise<IFluidRouter> {
         if (id === "componentId") {
             return {
