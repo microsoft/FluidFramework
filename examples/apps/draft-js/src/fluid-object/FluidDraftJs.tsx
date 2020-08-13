@@ -7,16 +7,15 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { SharedMap, IValueChanged } from "@fluidframework/map";
+import { ISequencedClient } from "@fluidframework/protocol-definitions";
+import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { IQuorum } from "@fluidframework/protocol-definitions";
 import { insertBlockStart } from "./RichTextAdapter";
-
+import { PresenceManager } from "./PresenceManager";
 interface IFluidDraftJsObject {
     text?: SharedString | undefined;
     authors?: SharedMap | undefined;
-    quorum?: IQuorum;
-    on(event: "addMember" | "removeMember", listener: () => void): this;
+    members: IterableIterator<[string, ISequencedClient]>
 }
 
 const addMemberValue = "addMember";
@@ -27,6 +26,7 @@ export class FluidDraftJsObject extends DataObject implements IFluidDraftJsObjec
 
     public text: SharedString | undefined;
     public authors: SharedMap | undefined;
+    public presenceManager: PresenceManager;
 
     public static readonly factory = new DataObjectFactory(
         FluidDraftJsObject.Name,
@@ -51,18 +51,20 @@ export class FluidDraftJsObject extends DataObject implements IFluidDraftJsObjec
     protected async hasInitialized() {
         [this.text, this.authors] = await Promise.all([this.root.get("text").get(), this.root.get("authors").get()]);
 
-        // not used yet
-        this.root.on("valueChanged", (changed: IValueChanged) => {
-            if (changed.key === addMemberValue) {
-                this.emit(addMemberValue);
-            }
-            if (changed.key === removeMemberValue) {
-                this.emit(removeMemberValue);
-            }
+        // this.presenceManager = new PresenceManager(this.authors, this.runtime);
+        this.runtime.getQuorum().on(addMemberValue, () => {
+            this.emit(addMemberValue);
         });
+        this.runtime.getQuorum().on(removeMemberValue, () => {
+            this.emit(removeMemberValue);
+        });
+
+        this.presenceManager = new PresenceManager(this.authors, this.runtime);
     }
 
-    public quorum = this.runtime.getQuorum();
+    public get members() {
+        return this.runtime.getQuorum().getMembers().entries();
+    }
 
     public runtime = this.runtime;
 }

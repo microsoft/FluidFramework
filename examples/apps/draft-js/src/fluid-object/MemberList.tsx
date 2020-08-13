@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IQuorum, ISequencedClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import React from "react";
 
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
@@ -14,12 +13,12 @@ interface IProps {
     /**
    * From Fluid, this.runtime.getQuorum()
    */
-    quorum: IQuorum;
+    members: IterableIterator<[string, ISequencedClient]>;
     /**
    * Any Distributed Data Structure that users will interact with. A user is not shown in the
    * member list until the have touched this DDS.
    */
-    authors: ISharedObject;
+    onAuthorsOp: (func: (op, isLocal) => void) => void;
     style?: React.CSSProperties;
 }
 
@@ -64,9 +63,8 @@ export class MemberList extends React.Component<IProps, IState> {
     // eslint-disable-next-line react/no-deprecated
     public componentWillMount() {
         this.updateMemberList();
-        this.props.quorum.on("addMember", this.updateMemberList);
-        this.props.quorum.on("removeMember", this.updateMemberList);
-        this.props.authors.on("op", (op: ISequencedDocumentMessage, isLocal: boolean) => {
+        this.props.onAuthorsOp((op, isLocal) => {
+
             if (!isLocal && !this.knownHumanMemberIds.has(op.clientId)) {
                 this.knownHumanMemberIds.add(op.clientId);
                 this.updateMemberList();
@@ -75,11 +73,8 @@ export class MemberList extends React.Component<IProps, IState> {
     }
 
     private readonly updateMemberList = () => {
-
         const members = Array.from(
-            this.props.quorum
-                .getMembers()
-                .entries(),
+            this.props.members,
         )
             .filter(([id, _]) => this.knownHumanMemberIds.has(id))
             .map(([id, sc]) => {
