@@ -490,16 +490,16 @@ export class ContainerRuntime extends EventEmitter
             : [];
 
         const blobId = context.baseSnapshot?.blobs[blobsBlobName];
-        const blobs = blobId
+        const blobsBlob = blobId
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            ? await readAndParse<string[]>(context.storage!, blobId)
-            : [];
+            ? await context.storage!.read(blobId)
+            : undefined;
 
         const runtime = new ContainerRuntime(
             context,
             registry,
             chunks,
-            blobs,
+            blobsBlob,
             runtimeOptions,
             containerScope,
             requestHandler);
@@ -672,7 +672,7 @@ export class ContainerRuntime extends EventEmitter
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
         chunks: [string, string[]][],
-        blobs: string[],
+        blobsBlob: string | undefined,
         private readonly runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
             enableWorker: false,
@@ -777,7 +777,7 @@ export class ContainerRuntime extends EventEmitter
             this.storage,
             (blobId) => this.submit(ContainerMessageType.BlobAttach, blobId),
         );
-        this.blobManager.setAttached(...blobs);
+        this.blobManager.load(blobsBlob);
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,

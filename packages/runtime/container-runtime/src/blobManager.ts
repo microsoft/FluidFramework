@@ -68,6 +68,13 @@ export class BlobManager {
         blobIds.map((blobId) => this.attachedBlobs.add(blobId));
     }
 
+    public load(blobsBlob?: string) {
+        if (blobsBlob) {
+            const decoded = Buffer.from(blobsBlob, "base64").toString();
+            this.setAttached(...(JSON.parse(decoded) as string[]));
+        }
+    }
+
     public snapshot(): string {
         return JSON.stringify([...this.attachedBlobs]);
     }

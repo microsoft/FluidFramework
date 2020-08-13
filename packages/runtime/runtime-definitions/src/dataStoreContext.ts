@@ -118,6 +118,8 @@ export interface IContainerRuntimeBase extends
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
     getTaskManager(): Promise<ITaskManager>;
+
+    uploadBlob(blob: Buffer): Promise<IFluidHandle<string>>;
 }
 
 /**

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Buffer } from "buffer";
 import {
     AttachState,
     ContainerWarning,
@@ -11,7 +10,7 @@ import {
     IDeltaManager,
     ILoader,
 } from "@fluidframework/container-definitions";
-import { IFluidHandle, IFluidObject, IFluidRouter } from "@fluidframework/core-interfaces";
+import { IFluidObject, IFluidRouter } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
@@ -125,6 +124,4 @@ export interface IContainerRuntime extends
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-
-    uploadBlob(blob: Buffer): Promise<IFluidHandle<string>>;
 }
