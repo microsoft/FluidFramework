@@ -7,7 +7,7 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
-    SyncedComponent,
+    SyncedDataObject,
     setSyncedCounterConfig,
     useSyncedCounter,
 } from "@fluidframework/react";
@@ -18,7 +18,7 @@ import * as ReactDOM from "react-dom";
 // ---- React Functional Component w/ useSyncedCounter ----
 
 interface ICounterReactHookProps {
-    syncedComponent: SyncedComponent,
+    syncedDataObject: SyncedDataObject,
     syncedStateId: string,
 }
 
@@ -26,7 +26,7 @@ function CounterWithHook(
     props: ICounterReactHookProps,
 ) {
     const [value, reducer] = useSyncedCounter(
-        props.syncedComponent,
+        props.syncedDataObject,
         props.syncedStateId,
     );
 
@@ -45,7 +45,7 @@ function CounterWithHook(
 /**
  * ClickerWithHook example using the useSyncedCounter hook
  */
-export class ClickerWithHook extends SyncedComponent {
+export class ClickerWithHook extends SyncedDataObject {
     constructor(props) {
         super(props);
         setSyncedCounterConfig(this, "counter-with-hook");
@@ -55,7 +55,7 @@ export class ClickerWithHook extends SyncedComponent {
         ReactDOM.render(
             <div>
                 <CounterWithHook
-                    syncedComponent={this}
+                    syncedDataObject={this}
                     syncedStateId={"counter-with-hook"}
                 />
             </div>,
