@@ -3,7 +3,7 @@
 In the previous section we introduced distributed data structures and demonstrated how to use them. Now let's discuss
 how to leverage those distributed data structures from our own code (business logic) to create modular, reusable
 pieces. These pieces fall into the category of the `fluid objects` discussed in the last section,
-along with DDSs themselves.
+along with DDSes themselves.
 
 ## The @fluidframework/aqueduct package
 
@@ -110,7 +110,7 @@ SharedDirectory.
 
 The `componentInitializingFromExisting` method is called each time the DataObject is loaded _except_ the first time it
 is created. Note that you _do not_ need to overload this method in order to load data in your distributed data
-structures. Data stored within DDSs is automatically loaded into the DDS during initialization; there is no separate
+structures. Data stored within DDSes is automatically loaded into the DDS during initialization; there is no separate
 load step that needs to be accounted for.
 
 In simple scenarios, you probably won't need to overload this method, since data is automatically loaded, and you'll use
@@ -141,22 +141,32 @@ export a factory class for a DataObject, as the following code illustrates:
 ```ts
 export const BadgeInstantiationFactory = new DataObjectFactory(
     BadgeName, // string
-    Badge,
+    Badge, // a subclass of DataObject
     [
-        SharedMap.getFactory(),
-        SharedCell.getFactory(),
-        SharedObjectSequence.getFactory(),
+      // factories for the DDSes this DataObject uses
+      SharedMap.getFactory(),
+      SharedCell.getFactory(),
+      SharedObjectSequence.getFactory(),
     ],
-    {},
+    {}, // optionalProviders; this is an advanced scenario
+        // outside the scope of this documentation. Despite
+        // being optional, an empty object _must_ be passed
+        // when Providers are not being used.
 );
 ```
 
-The first argument is the string name of the DataObject
+The DataObjectFactory constructor takes the following arguments:
+
+1. The first argument is the string name of the DataObject. This is used in logging.
+1. The DataObject subclass itself.
+1. An array of factories, one for each DDS used by the DataObject.
+1. This argument is used in a more advanced scenario called _Providers_ that is outside the scope of this documentation.
+   Despite being optional, an empty object _must_ be passed when Providers are not being used.
 
 ## Learn more
 
-The Aqueduct contains much more than just DataObject. To dive deeper into the details, see the [Aqueduct package
-README](https://github.com/microsoft/FluidFramework/blob/master/packages/framework/aqueduct/README.md)
+The Aqueduct contains more than just DataObject and DataObjectFactory. To dive deeper into the details, see the
+[Aqueduct package README](https://github.com/microsoft/FluidFramework/blob/master/packages/framework/aqueduct/README.md)
 
 ---
 
