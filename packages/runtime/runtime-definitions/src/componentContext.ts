@@ -10,8 +10,6 @@ import {
     IFluidRouter,
     IProvideFluidHandleContext,
     IProvideFluidSerializer,
-    IRequest,
-    IResponse,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -34,6 +32,7 @@ import {
 import { IProvideFluidDataStoreRegistry } from "./componentRegistry";
 import { IInboundSignalMessage } from "./protocol";
 import { ISummaryTreeWithStats, ISummarizerNode, SummarizeInternalFn, CreateChildSummarizerNodeParam } from "./summary";
+import { ITaskManager } from "./agent";
 
 /**
  * Runtime flush mode handling
@@ -59,7 +58,6 @@ export interface IContainerRuntimeBase extends
     EventEmitter,
     IProvideFluidHandleContext,
     IProvideFluidSerializer,
-    IFluidRouter,
     /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
     IProvideFluidDataStoreRegistry {
 
@@ -76,11 +74,6 @@ export interface IContainerRuntimeBase extends
      * Sets the flush mode for operations on the document.
      */
     setFlushMode(mode: FlushMode): void;
-
-    /**
-     * Executes a request against the container runtime
-     */
-    request(request: IRequest): Promise<IResponse>;
 
     /**
      * Submits a container runtime level signal to be sent to other clients.
@@ -122,6 +115,8 @@ export interface IContainerRuntimeBase extends
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+
+    getTaskManager(): Promise<ITaskManager>;
 }
 
 /**
@@ -275,7 +270,7 @@ export interface IFluidDataStoreContext extends EventEmitter {
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IFluidObject & IFluidObject;
+    readonly scope: IFluidObject;
     readonly summaryTracker: ISummaryTracker;
 
     on(event: "leader" | "notleader" | "attaching" | "attached", listener: () => void): this;

@@ -6,52 +6,37 @@
 import assert from "assert";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
-    OpProcessingController,
-    ITestFluidComponent,
     initializeLocalContainer,
+    ITestFluidComponent,
+    OpProcessingController,
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
+import { compatTest, ICompatTestArgs } from "./compatUtils";
 
-describe("TestSignals", () => {
-    const id = "fluid-test://localhost/localSignalsTest";
-    const codeDetails: IFluidCodeDetails = {
-        package: "localSignalsTestPackage",
-        config: {},
-    };
+const id = "fluid-test://localhost/localSignalsTest";
+const codeDetails: IFluidCodeDetails = {
+    package: "localSignalsTestPackage",
+    config: {},
+};
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let opProcessingController: OpProcessingController;
+const tests = (args: ICompatTestArgs) => {
     let component1: ITestFluidComponent;
     let component2: ITestFluidComponent;
-
-    async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([]);
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-        return initializeLocalContainer(id, loader, codeDetails);
-    }
-
-    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
-        const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
-        }
-        return response.value as ITestFluidComponent;
-    }
+    let opProcessingController: OpProcessingController;
 
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
+        const container1 = await args.makeTestContainer() as Container;
+        component1 = await requestFluidObject<ITestFluidComponent>(container1, "default");
 
-        const container1 = await createContainer();
-        component1 = await requestFluidObject("default", container1);
+        const container2 = await args.makeTestContainer() as Container;
+        component2 = await requestFluidObject<ITestFluidComponent>(container2, "default");
 
-        const container2 = await createContainer();
-        component2 = await requestFluidObject("default", container2);
-
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
         opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
     });
 
@@ -161,8 +146,30 @@ describe("TestSignals", () => {
         assert.equal(user1CompSignalReceivedCount, 1, "client 1 did not receive signal on data store runtime");
         assert.equal(user2CompSignalReceivedCount, 1, "client 2 did not receive signal on data store runtime");
     });
+};
+
+describe("TestSignals", () => {
+    let deltaConnectionServer: ILocalDeltaConnectionServer;
+    const makeTestContainer = async () => {
+        const factory = new TestFluidComponentFactory([]);
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
+        return initializeLocalContainer(id, loader, codeDetails);
+    };
+
+    beforeEach(async () => {
+        deltaConnectionServer = LocalDeltaConnectionServer.create();
+    });
+
+    tests({
+        makeTestContainer,
+        get deltaConnectionServer() { return deltaConnectionServer; },
+    });
 
     afterEach(async () => {
         await deltaConnectionServer.webSocketServer.close();
+    });
+
+    describe("compatibility", () => {
+        compatTest(tests, { testFluidComponent: true });
     });
 });

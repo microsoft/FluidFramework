@@ -160,13 +160,13 @@ component as props.
 
 How does the `puzzle` property get populated? How are distributed data structures created and used?
 
-To answer that question, look at the `componentInitializingFirstTime` method in the `FluidSudoku` class:
+To answer that question, look at the `initializingFirstTime` method in the `FluidSudoku` class:
 
 ```typescript
 private sudokuMapKey = "sudoku-map";
 private puzzle: ISharedMap;
 
-protected async componentInitializingFirstTime() {
+protected async initializingFirstTime() {
     // Create a new map for our Sudoku data
     const map = SharedMap.create(this.runtime);
 
@@ -189,21 +189,21 @@ to store all Fluid data used by your component.
 Notice that we provide a string key, `this.sudokuMapKey`, when we store the `SharedMap`. This is how we will retrieve
 the data structure from the root SharedDirectory later.
 
-`componentInitializingFirstTime` is only called the _first time_ the component is created. This is exactly what we want
+`initializingFirstTime` is only called the _first time_ the component is created. This is exactly what we want
 in order to create the distributed data structures. We don't want to create new SharedMaps every time a client loads the
 component! However, we do need to _load_ the distributed data structures each time the component is loaded.
 
 Distributed data structures are initialized asynchronously, so we need to retrieve them from within an asynchronous
-method. We do that by overloading the `componentHasInitialized` method, then store a local reference to the object
+method. We do that by overloading the `hasInitialized` method, then store a local reference to the object
 (`this.puzzle`) so we can easily use it in synchronous code.
 
 ```typescript
-protected async componentHasInitialized() {
+protected async hasInitialized() {
     this.puzzle = await this.root.get<IComponentHandle>(this.sudokuMapKey).get<ISharedMap>();
 }
 ```
 
-The `componentHasInitialized` method is called once after the component has completed initialization, be it the first
+The `hasInitialized` method is called once after the component has completed initialization, be it the first
 time or subsequent times.
 
 ##### A note about component handles
@@ -222,7 +222,7 @@ await this.root.get<IComponentHandle>(this.sudokuMapKey).get<ISharedMap>();
 
 #### Handling events from distributed data structures
 
-Distributed data structures can be changed by both local code and remote clients. In the `componentHasInitialized`
+Distributed data structures can be changed by both local code and remote clients. In the `hasInitialized`
 method, we also connect a method to be called each time the Sudoku data - the [SharedMap][] - is changed. In our case we
 simply call `render` again. This ensures that our UI updates whenever a remote client changes the Sudoku data.
 
@@ -317,7 +317,7 @@ First, you need to create a `SharedMap` for your presence data.
    private clientPresence: ISharedMap | undefined;
    ```
 
-1. Inside the `componentInitializingFirstTime` method, add the following code to the bottom of the method to create and
+1. Inside the `initializingFirstTime` method, add the following code to the bottom of the method to create and
    register a second `SharedMap`:
 
    ```ts
@@ -328,7 +328,7 @@ First, you need to create a `SharedMap` for your presence data.
 
    Notice that the Fluid runtime is exposed via the `this.runtime` property provided by [PrimedComponent][].
 
-1. Inside the `componentHasInitialized` method, add the following code to the bottom of the method to retrieve the
+1. Inside the `hasInitialized` method, add the following code to the bottom of the method to retrieve the
    presence map when the component initializes:
 
    ```ts
@@ -337,8 +337,8 @@ First, you need to create a `SharedMap` for your presence data.
      .get<ISharedMap>();
    ```
 
-You now have a `SharedMap` to store presence data. When the component is first created, `componentInitializingFirstTime`
-will be called and the presence map will be created. When the component is loaded, `componentHasInitialized` will be
+You now have a `SharedMap` to store presence data. When the component is first created, `initializingFirstTime`
+will be called and the presence map will be created. When the component is loaded, `hasInitialized` will be
 called, which retrieves the `SharedMap` instance.
 
 ### Rendering presence
@@ -412,7 +412,7 @@ for storing the presence data, and a function to update the map with presence da
 
 ### Listening to distributed data structure events
 
-1. Still in `src/fluidSudoku.tsx`, add the following code to the bottom of the `componentHasInitialized` method to call
+1. Still in `src/fluidSudoku.tsx`, add the following code to the bottom of the `hasInitialized` method to call
    render whenever a remote change is made to the presence map:
 
    ```ts

@@ -46,11 +46,10 @@ import {
     IFluidDataStoreChannel,
     IEnvelope,
     IInboundSignalMessage,
-    SchedulerType,
     ISummaryTreeWithStats,
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { generateHandleContextPath, SummaryTreeBuilder, requestFluidObject } from "@fluidframework/runtime-utils";
 import { IChannel, IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
@@ -242,12 +241,11 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         this.emit("dispose");
     }
 
-    public async request(request: IRequest): Promise<IResponse> {
-        // System routes
-        if (request.url === `/${SchedulerType}`) {
-            return this.componentContext.containerRuntime.request(request);
-        }
+    public async resolveHandle(request: IRequest): Promise<IResponse> {
+        return this.request(request);
+    }
 
+    public async request(request: IRequest): Promise<IResponse> {
         // Parse out the leading slash
         const id = request.url.startsWith("/") ? request.url.substr(1) : request.url;
 

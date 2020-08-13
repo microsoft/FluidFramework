@@ -82,7 +82,7 @@ export async function renderDefaultFluidObject(container: Container, div: HTMLEl
     }
 
     // Render the Fluid object with an HTMLViewAdapter to abstract the UI framework used by the component
-    const fluidObject = response.value as IFluidObject & IFluidObject;
+    const fluidObject = response.value as IFluidObject;
     const embed = new HTMLViewAdapter(fluidObject);
     embed.render(div, { display: "block" });
 }

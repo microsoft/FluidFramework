@@ -31,7 +31,7 @@ export interface PromiseCacheOptions {
  * Not exported.
  */
 class GarbageCollector<TKey> {
-    private readonly gcTimeouts = new Map<TKey, number>();
+    private readonly gcTimeouts = new Map<TKey, ReturnType<typeof setTimeout>>();
 
     constructor(
         private readonly expiry: PromiseCacheExpiry,

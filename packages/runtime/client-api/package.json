@@ -45,6 +45,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "@fluidframework/aqueduct": "^0.25.0",
     "@fluidframework/cell": "^0.25.0",
     "@fluidframework/common-utils": "^0.21.0",
     "@fluidframework/container-definitions": "^0.25.0",
@@ -59,7 +60,8 @@
     "@fluidframework/ink": "^0.25.0",
     "@fluidframework/map": "^0.25.0",
     "@fluidframework/ordered-collection": "^0.25.0",
-    "@fluidframework/protocol-definitions": "^0.1010.0",
+    "@fluidframework/protocol-definitions": "^0.1011.0-0",
+    "@fluidframework/request-handler": "^0.25.0",
     "@fluidframework/runtime-definitions": "^0.25.0",
     "@fluidframework/sequence": "^0.25.0",
     "@fluidframework/shared-object-base": "^0.25.0",
