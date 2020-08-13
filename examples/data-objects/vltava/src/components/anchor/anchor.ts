@@ -13,8 +13,6 @@ import {
 import { IFluidHTMLView, IProvideFluidHTMLView } from "@fluidframework/view-interfaces";
 import { Vltava } from "../vltava";
 
-export const AnchorName = "anchor";
-
 /**
  * Anchor is an default component is responsible for managing creation and the default component
  */
@@ -32,7 +30,7 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
         return this.defaultComponentInternal;
     }
 
-    private static readonly factory = new DataObjectFactory(AnchorName, Anchor, [], {});
+    private static readonly factory = new DataObjectFactory("anchor", Anchor, [], {});
 
     public static getFactory() {
         return Anchor.factory;

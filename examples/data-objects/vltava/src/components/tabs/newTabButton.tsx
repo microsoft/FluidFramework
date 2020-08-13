@@ -5,6 +5,7 @@
 
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import React from "react";
+import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import {
     IButtonStyles,
     IconButton,

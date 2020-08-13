@@ -33,6 +33,7 @@ import { IProvideFluidDataStoreFactory } from "./componentFactory";
 import { IProvideFluidDataStoreRegistry } from "./componentRegistry";
 import { IInboundSignalMessage } from "./protocol";
 import { ISummaryTreeWithStats, ISummarizerNode, SummarizeInternalFn, CreateChildSummarizerNodeParam } from "./summary";
+import { ITaskManager } from "./agent";
 
 /**
  * Runtime flush mode handling
@@ -112,6 +113,8 @@ export interface IContainerRuntimeBase extends
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+
+    getTaskManager(): Promise<ITaskManager>;
 }
 
 /**

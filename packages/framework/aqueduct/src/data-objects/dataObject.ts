@@ -10,10 +10,9 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
-import { ITaskManager, SchedulerType } from "@fluidframework/runtime-definitions";
+import { ITaskManager } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IEvent } from "@fluidframework/common-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { BlobHandle } from "./blobHandle";
 import { PureDataObject } from "./pureDataObject";
 
@@ -96,9 +95,7 @@ export abstract class DataObject<P extends IFluidObject = object, S = undefined,
      */
     public async initializeInternal(props?: S): Promise<void> {
         // Initialize task manager.
-        this.internalTaskManager = await requestFluidObject<ITaskManager>(
-            this.context.containerRuntime.IFluidHandleContext,
-            `/${SchedulerType}`);
+        this.internalTaskManager = await this.context.containerRuntime.getTaskManager();
 
         if (!this.runtime.existing) {
             // Create a root directory and register it before calling initializingFirstTime

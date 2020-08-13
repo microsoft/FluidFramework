@@ -24,6 +24,7 @@ import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@flu
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
@@ -815,16 +816,17 @@ function renderSegmentIntoLine(
                 if (componentMarker.instance === undefined) {
                     if (componentMarker.instanceP === undefined) {
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        requestFluidObject(
-                            lineContext.flowView.collabDocument.context.containerRuntime.IFluidHandleContext,
-                            `/${componentMarker.properties.leafId}`)
-                            .then(async (component) => {
-                                if (!HTMLViewAdapter.canAdapt(component)) {
-                                    return Promise.reject("component is not viewable");
-                                }
+                        handleFromLegacyUri(
+                            `/${componentMarker.properties.leafId}`,
+                            lineContext.flowView.collabDocument.context.containerRuntime)
+                        .get()
+                        .then(async (component) => {
+                            if (!HTMLViewAdapter.canAdapt(component)) {
+                                return Promise.reject("component is not viewable");
+                            }
 
-                                return new HTMLViewAdapter(component);
-                            });
+                            return new HTMLViewAdapter(component);
+                        });
 
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         componentMarker.instanceP.then((instance) => {

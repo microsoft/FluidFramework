@@ -51,20 +51,20 @@ structures:
 /**
  * Called the first time the component is initialized.
  */
-protected async componentInitializingFirstTime(): Promise<void> { }
+protected async initializingFirstTime(): Promise<void> { }
 
 /**
   * Called every time *except* first time the component is initialized.
   */
-protected async componentInitializingFromExisting(): Promise<void> { }
+protected async initializingFromExisting(): Promise<void> { }
 
 /**
   * Called every time the component is initialized after create or existing.
   */
-protected async componentHasInitialized(): Promise<void> { }
+protected async hasInitialized(): Promise<void> { }
 ```
 
-#### componentInitializingFirstTime
+#### initializingFirstTime
 
 ComponentInitializingFirstTime is called only once. It is executed only by the _first_ client to open the component and
 all work will resolve before the component is presented to any user. You should overload this method to perform
@@ -74,7 +74,7 @@ The `root` SharedDirectory can be used in this method.
 The following is an example from the Badge component.
 
 ```ts{5,10,19}
-protected async componentInitializingFirstTime() {
+protected async initializingFirstTime() {
     // Create a cell to represent the Badge's current state
     const current = SharedCell.create(this.runtime);
     current.set(this.defaultOptions[0]);
@@ -106,7 +106,7 @@ SharedDirectory.
 
 :::
 
-#### componentInitializingFromExisting
+#### initializingFromExisting
 
 ::: danger TODO
 

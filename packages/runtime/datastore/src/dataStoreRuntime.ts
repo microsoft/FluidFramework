@@ -235,6 +235,10 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         this.emit("dispose");
     }
 
+    public async resolveHandle(request: IRequest): Promise<IResponse> {
+        return this.request(request);
+    }
+
     public async request(request: IRequest): Promise<IResponse> {
         // Parse out the leading slash
         const id = request.url.startsWith("/") ? request.url.substr(1) : request.url;

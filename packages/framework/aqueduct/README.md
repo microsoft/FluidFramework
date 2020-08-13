@@ -28,9 +28,9 @@ The [`SharedComponent`](./src/components/sharedComponent.ts) provides the follow
 
 - Basic set of interface implementations to be loadable in a Fluid Container.
 - Functions for managing component lifecycle.
-  - `componentInitializingFirstTime(props: S)` - called only the first time a component is initialized
-  - `componentInitializingFromExisting()` - called every time except the first time a component is initialized
-  - `componentHasInitialized()` - called every time after `componentInitializingFirstTime` or `componentInitializingFromExisting` executes
+  - `initializingFirstTime(props: S)` - called only the first time a component is initialized
+  - `initializingFromExisting()` - called every time except the first time a component is initialized
+  - `hasInitialized()` - called every time after `initializingFirstTime` or `initializingFromExisting` executes
 - Helper functions for creating and getting other Component Objects in the same Container.
 
 > Note: You probably don't want to inherit from this component directly unless you are creating another base component class. If you have a component that doesn't use Distributed Data Structures you should use Container Services to manage your object.
@@ -47,12 +47,12 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
     private _counter: SharedCounter | undefined;
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const counter = SharedCounter.create(this.runtime);
         this.root.set("clicks", counter.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         const counterHandle = this.root.get<IComponentHandle<SharedCounter>>("clicks");
         this._counter = await counterHandle.get();
     }
@@ -120,7 +120,7 @@ On our example we want to declare that we want the `IComponentUserInfo` Provider
 
 ```typescript
 export class MyExample extends PrimedComponent<IComponentUserInfo> {
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const userInfo = await this.providers.IComponentUserInfo;
         if(userInfo) {
             console.log(userInfo.userCount);

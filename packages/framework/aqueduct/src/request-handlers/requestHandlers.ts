@@ -58,7 +58,9 @@ export const defaultRouteRequestHandler = (defaultRootId: string) => {
     return async (request: IRequest, runtime: IContainerRuntime) => {
         const parser = new RequestParser(request);
         if (parser.pathParts.length === 0) {
-            return runtime.resolveHandle({ url: `/${defaultRootId}${parser.query}`, headers: request.headers });
+            return runtime.IFluidHandleContext.resolveHandle({
+                url: `/${defaultRootId}${parser.query}`,
+                headers: request.headers });
         }
         return undefined; // continue search
     };

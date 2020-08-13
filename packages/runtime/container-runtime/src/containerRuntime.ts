@@ -87,6 +87,8 @@ import {
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
     CreateSummarizerNodeSource,
+    IAgentScheduler,
+    ITaskManager,
 } from "@fluidframework/runtime-definitions";
 import {
     FluidSerializer,
@@ -95,6 +97,7 @@ import {
     SummarizerNode,
     convertToSummaryTree,
     RequestParser,
+    requestFluidObject,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import {
@@ -104,7 +107,7 @@ import {
     RemotedFluidDataStoreContext,
     createAttributesBlob,
 } from "./dataStoreContext";
-import { FluidHandleContext } from "./dataStoreHandleContext";
+import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
 import { ISummarizerRuntime, Summarizer } from "./summarizer";
@@ -675,7 +678,7 @@ export class ContainerRuntime extends EventEmitter
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
 
-        this.IFluidHandleContext = new FluidHandleContext("", this);
+        this.IFluidHandleContext = new ContainerFluidHandleContext("", this);
 
         this.logger = ChildLogger.create(context.logger, undefined, {
             runtimeVersion: pkgVersion,
@@ -1343,12 +1346,12 @@ export class ContainerRuntime extends EventEmitter
     private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
         if (type === ContainerMessageType.Attach) {
             const attachMessage = contents as InboundAttachMessage;
-            if (attachMessage.id === SchedulerType) {
+            if (attachMessage.id === schedulerId) {
                 return false;
             }
         } else if (type === ContainerMessageType.FluidDataStoreOp) {
             const envelope = contents as IEnvelope;
-            if (envelope.address === SchedulerType) {
+            if (envelope.address === schedulerId) {
                 return false;
             }
         }
@@ -1899,12 +1902,15 @@ export class ContainerRuntime extends EventEmitter
         }
     }
 
-    private async getScheduler() {
-        const schedulerRuntime = await this.getDataStore(schedulerId, true);
-        const schedulerResponse = await schedulerRuntime.request({ url: "" });
-        const schedulerFluidDataStore = schedulerResponse.value as IFluidObject;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return schedulerFluidDataStore.IAgentScheduler!;
+    public async getTaskManager(): Promise<ITaskManager> {
+        return requestFluidObject<ITaskManager>(
+            await this.getDataStore(schedulerId, true),
+            "");
+    }
+
+    public async getScheduler(): Promise<IAgentScheduler> {
+        const taskManager = await this.getTaskManager();
+        return taskManager.IAgentScheduler;
     }
 
     private updateLeader(leadership: boolean) {

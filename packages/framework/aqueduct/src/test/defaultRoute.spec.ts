@@ -8,11 +8,18 @@ import assert from "assert";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
-import { IRequest, IResponse, IFluidObject, IFluidRouter } from "@fluidframework/core-interfaces";
+import {
+    IRequest,
+    IResponse,
+    IFluidObject,
+    IFluidRouter,
+} from "@fluidframework/core-interfaces";
 import { createComponentResponse } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "../request-handlers";
 
 class MockRuntime {
+    public get IFluidHandleContext() { return this; }
+
     public async getRootDataStore(id, wait): Promise<IFluidRouter> {
         if (id === "componentId") {
             return {
@@ -29,7 +36,7 @@ class MockRuntime {
         throw new Error("No component");
     }
 
-    public async resolveHandle(request: IRequest) {
+    protected async resolveHandle(request: IRequest) {
         const requestParser = new RequestParser(request);
 
         if (requestParser.pathParts.length > 0) {
@@ -60,7 +67,7 @@ async function assertRejected(p: Promise<IResponse | undefined>) {
 }
 
 describe("defaultRouteRequestHandler", () => {
-    const runtime = new MockRuntime() as IContainerRuntime;
+    const runtime = new MockRuntime() as any as IContainerRuntime;
 
     it("Component request with default ID", async () => {
         const handler = defaultRouteRequestHandler("componentId");

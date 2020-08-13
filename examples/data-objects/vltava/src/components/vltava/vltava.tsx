@@ -13,15 +13,13 @@ import { TabsComponent } from "../tabs";
 import { IVltavaDataModel, VltavaDataModel } from "./dataModel";
 import { VltavaView } from "./view";
 
-export const VltavaName = "vltava";
-
 /**
  * Vltava is an application experience
  */
 export class Vltava extends DataObject implements IFluidHTMLView {
     private dataModelInternal: IVltavaDataModel | undefined;
 
-    private static readonly factory = new DataObjectFactory(VltavaName, Vltava, [], {});
+    private static readonly factory = new DataObjectFactory("vltava", Vltava, [], {});
 
     public static getFactory() {
         return Vltava.factory;
