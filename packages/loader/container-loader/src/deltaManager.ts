@@ -262,7 +262,7 @@ export class DeltaManager
     /**
      * Tells if container is in read-only mode.
      * Components should listen for "readonly" notifications and disallow user
-     * making changes to components.
+     * making changes to data stores.
      * Readonly state can be because of no storage write permission,
      * or due to host forcing readonly mode for container.
      * It is undefined if we have not yet established websocket connection
@@ -304,11 +304,11 @@ export class DeltaManager
     }
 
     /**
-     * Sends signal to runtime (and components) to be read-only.
-     * Hosts may have read only views, indicating to components that no edits are allowed.
+     * Sends signal to runtime (and data stores) to be read-only.
+     * Hosts may have read only views, indicating to data stores that no edits are allowed.
      * This is independent from this._readonlyPermissions (permissions) and this.connectionMode
      * (server can return "write" mode even when asked for "read")
-     * Leveraging same "readonly" event as runtime & components should behave the same in such case
+     * Leveraging same "readonly" event as runtime & data stores should behave the same in such case
      * as in read-only permissions.
      * But this.active can be used by some DDSs to figure out if ops can be sent
      * (for example, read-only view still participates in code proposals / upgrades decisions)
@@ -820,12 +820,12 @@ export class DeltaManager
         this.pending = [];
 
         // Notify everyone we are in read-only state.
-        // Useful for components in case we hit some critical error,
+        // Useful for data stores in case we hit some critical error,
         // to switch to a mode where user edits are not accepted
         this.set_readonlyPermissions(true);
 
         // This needs to be the last thing we do (before removing listeners), as it causes
-        // Container to dispose context and break ability of components / runtime to "hear"
+        // Container to dispose context and break ability of data stores / runtime to "hear"
         // from delta manager, including notification (above) about readonly state.
         this.emit("closed", error);
 
