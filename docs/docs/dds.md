@@ -51,7 +51,7 @@ details about the merge strategy used by each DDS.
 A distributed data structure object is created using its type's static `create` method.
 
 ```typescript
-const myMap = SharedMap.create(this.runtime, id);
+const myMap = SharedMap.create(this.runtime);
 ```
 
 You must pass in an `IFluidDataStoreRuntime` that the DDS will be managed by. We'll cover the runtime in more detail in
@@ -60,7 +60,7 @@ You must pass in an `IFluidDataStoreRuntime` that the DDS will be managed by. We
 
 ### Storing a DDS within another DDS
 
-Distributed data structures can store primitive values like Numbers and strings, JSON-able JavaScript Objects, or other
+Distributed data structures can store primitive values like Numbers and strings, JavaScript Objects, or other
 distributed data structures. Primitive values and Objects can be stored directly, but when you store a DDS, you must
 store its _handle_, not the object itself.
 
