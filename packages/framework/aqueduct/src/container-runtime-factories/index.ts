@@ -4,4 +4,4 @@
  */
 
 export * from "./baseContainerRuntimeFactory";
-export * from "./containerRuntimeFactoryWithDefaultComponent";
+export * from "./containerRuntimeFactoryWithDefaultDataStore";

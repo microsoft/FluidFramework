@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./primedComponentFactory";
-export * from "./sharedComponentFactory";
+export * from "./dataObjectFactory";
+export * from "./pureDataObjectFactory";

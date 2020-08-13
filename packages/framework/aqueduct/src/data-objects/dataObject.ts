@@ -15,7 +15,7 @@ import { v4 as uuid } from "uuid";
 import { IEvent } from "@fluidframework/common-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { BlobHandle } from "./blobHandle";
-import { PureDataObject } from "./sharedComponent";
+import { PureDataObject } from "./pureDataObject";
 
 /**
  * DataObject is a base component that is primed with a root directory and task manager. It

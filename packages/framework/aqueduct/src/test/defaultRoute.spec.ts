@@ -10,7 +10,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
 import { createComponentResponse } from "@fluidframework/request-handler";
-import { defaultRouteRequestHandler } from "../requestHandlers";
+import { defaultRouteRequestHandler } from "../request-handlers";
 
 class MockRuntime {
     public async getDataStore(id, wait): Promise<IFluidDataStoreChannel> {

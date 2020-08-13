@@ -24,7 +24,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ISharedComponentProps,
     PureDataObject,
-} from "../components";
+} from "../data-objects";
 
 /**
  * PureDataObjectFactory is a barebones IFluidDataStoreFactory for use with PureDataObject.

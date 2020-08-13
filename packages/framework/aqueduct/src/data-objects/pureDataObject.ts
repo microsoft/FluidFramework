@@ -20,7 +20,7 @@ import { IDirectory } from "@fluidframework/map";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { serviceRoutePathRoot } from "../containerServices";
+import { serviceRoutePathRoot } from "../container-services";
 
 export interface ISharedComponentProps<P extends IFluidObject = object> {
     readonly runtime: IFluidDataStoreRuntime,

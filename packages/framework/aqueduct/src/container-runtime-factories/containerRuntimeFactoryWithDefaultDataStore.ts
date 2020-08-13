@@ -12,7 +12,7 @@ import {
     RuntimeRequestHandler,
     deprecated_innerRequestHandler,
 } from "@fluidframework/request-handler";
-import { mountableViewRequestHandler, defaultRouteRequestHandler } from "../requestHandlers";
+import { mountableViewRequestHandler, defaultRouteRequestHandler } from "../request-handlers";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
 const defaultComponentId = "default";

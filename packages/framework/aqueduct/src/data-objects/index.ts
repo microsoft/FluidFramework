@@ -4,8 +4,8 @@
  */
 
 export { BlobHandle } from "./blobHandle";
-export { DataObject } from "./primedComponent";
+export { DataObject } from "./dataObject";
 export {
     ISharedComponentProps,
     PureDataObject,
-} from "./sharedComponent";
+} from "./pureDataObject";

@@ -18,8 +18,8 @@ import {
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ComponentSymbolProvider } from "@fluidframework/synthesize";
 
-import { DataObject, ISharedComponentProps } from "../components";
-import { PureDataObjectFactory } from "./sharedComponentFactory";
+import { DataObject, ISharedComponentProps } from "../data-objects";
+import { PureDataObjectFactory } from "./pureDataObjectFactory";
 
 /**
  * DataObjectFactory is the IFluidDataStoreFactory for use with PrimedComponents.
