@@ -8,7 +8,7 @@ import {
     IFluidHandleContext,
     IFluidSerializer,
 } from "@fluidframework/core-interfaces";
-import { RemoteFluidObjectHandle } from "./remoteComponentHandle";
+import { RemoteFluidObjectHandle } from "./remoteDataStoreHandle";
 import { isSerializedHandle } from "./utils";
 
 /**
@@ -31,7 +31,7 @@ function toAbsoluteUrl(handle: IFluidHandle): string {
 }
 
 /**
- * Component serializer implementation
+ * Data Store serializer implementation
  */
 export class FluidSerializer implements IFluidSerializer {
     public get IFluidSerializer() { return this; }
