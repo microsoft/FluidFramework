@@ -5,8 +5,8 @@
 
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 
-import { IDiceRoller } from "./dataObject";
 import { DiceRollerContainerRuntimeFactory } from "./containerCode";
+import { IDiceRoller } from "./dataObject";
 import { renderDiceRoller } from "./view";
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
