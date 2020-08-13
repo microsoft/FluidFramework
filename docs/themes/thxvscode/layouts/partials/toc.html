@@ -1,9 +1,9 @@
-{{- $headers := findRE "<h[1-4].*?>(.|\n)*?</h[1-4]>" .Content -}}
+{{- $headers := findRE "<h[1-2].*?>(.|\n)*?</h[1-2]>" .Content -}}
 {{- $has_headers := ge (len $headers) 1 -}}
 {{- if $has_headers -}}
 {{- $largest := 6 -}}
 {{- range $headers -}}
-{{- $headerLevel := index (findRE "[1-4]" . 1) 0 -}}
+{{- $headerLevel := index (findRE "[1-2]" . 1) 0 -}}
 {{- $headerLevel := len (seq $headerLevel) -}}
 {{- if lt $headerLevel $largest -}}
 {{- $largest = $headerLevel -}}
