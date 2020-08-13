@@ -124,7 +124,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 
     /**
      * Get a factory for SharedMap to register with the data store.
-     * @returns A factory that creates and loads SharedMaps
+     * @returns A factory that creates SharedMaps and loads them from storage.
      */
     public static getFactory(): IChannelFactory {
         return new MapFactory();
