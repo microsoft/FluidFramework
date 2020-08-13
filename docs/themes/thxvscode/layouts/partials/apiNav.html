@@ -2,8 +2,8 @@
 {{ $currentURL := . | relURL }}
 {{ $package := $current.Params.package }}
 {{ $area := "" }}
-{{ range $name, $frameworks := $.Site.Data.frameworks }}
-{{ range $frameworks }}
+{{ range $name, $packages := $.Site.Data.packages }}
+{{ range $packages }}
 {{ if eq $package .}}
 {{ $area = $name}}
 {{ end }}
@@ -20,7 +20,7 @@
                 {{ end }}>API Overview</a>
         </li>
 
-        {{ range $grouping, $names :=  $.Site.Data.frameworks }}
+        {{ range $grouping, $names :=  $.Site.Data.packages }}
         {{ $isCurrentArea := (eq $grouping $area) }}
 
         <li class="panel {{if $isCurrentArea}}active expanded{{else}}collapsed{{end}}">
@@ -51,7 +51,7 @@
     <h4>Topics</h4>
     <select id="small-nav-dropdown">
         <option value="/api" {{if .IsHome}}selected{{end}}>Overview</option>
-        {{- range $grouping, $names :=  $.Site.Data.frameworks }}
+        {{- range $grouping, $names :=  $.Site.Data.packages }}
         <optgroup label="{{ $grouping }}">
             {{- range $names }}
             {{ $isCurrentPage := eq $package . }}

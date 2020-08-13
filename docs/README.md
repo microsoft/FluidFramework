@@ -136,7 +136,7 @@ in order (closer to the top).
 
 The API menu is a bit more complex since it's driven by content. The left menu
 (API overview) is a list of grouped packages, the grouping comes from a yaml
-file in the `data` folder. The API documentation is being generated with
+file in the `data` folder (`packages.yaml`). The API documentation is being generated with
 metadata which allows the template to link pages and load the right information.
 
 ### Table of Contents
