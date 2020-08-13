@@ -30,7 +30,7 @@ export interface IUrlResolver {
     // or do we split the token access from this?
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 
-    // Creates a url for the created container with any component path given in the relative url.
+    // Creates a url for the created container with any data store path given in the relative url.
     getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,

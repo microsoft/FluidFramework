@@ -3,7 +3,9 @@
     "compilerOptions": {
         "types": [
             "jest",
-            "node"
+            "jest-environment-puppeteer",
+            "node",
+            "puppeteer"
         ]
     }
 }

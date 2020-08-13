@@ -84,16 +84,3 @@ ENTRYPOINT ["/tini", "--"]
 
 # And set the default command to start the server
 CMD ["npm", "run", "alfred"]
-
-# Partial Build Target for publishing
-FROM base AS publish
-
-# To auth against private VSTS
-ARG NPM_TOKEN
-
-# Webpack components for publishing
-RUN npm run webpack
-
-# Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
-# 1.13 but Kubernetes is at 1.12 so we prefer tini for now.
-ENTRYPOINT ["/tini", "--"]

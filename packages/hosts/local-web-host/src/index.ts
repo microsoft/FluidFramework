@@ -82,7 +82,7 @@ export async function renderDefaultComponent(container: Container, div: HTMLElem
     }
 
     // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
-    const component = response.value as IFluidObject & IFluidObject;
+    const component = response.value as IFluidObject;
     const embed = new HTMLViewAdapter(component);
     embed.render(div, { display: "block" });
 }

@@ -98,4 +98,16 @@ describe("Buffer isomorphism", () => {
             expect(browserBuffer2.toString()).toEqual(testArrayUtf8[i]);
         }
     });
+
+    test("bytelength is compatible", async () => {
+        const testString = "8J+YgvCfkoHwn4+84oCN4pmC77iP8J+SgfCfj7zigI3wn5KB4oCN4pmC";
+
+        const nodeBufferUtf8 = BufferNode.IsoBuffer.from(testString);
+        const browserBufferUtf8 = BufferBrowser.IsoBuffer.from(testString);
+        expect(nodeBufferUtf8.byteLength).toEqual(browserBufferUtf8.byteLength);
+
+        const nodeBufferBase64 = BufferNode.IsoBuffer.from(testString, "base64");
+        const browserBufferBase64 = BufferBrowser.IsoBuffer.from(testString, "base64");
+        expect(nodeBufferBase64.byteLength).toEqual(browserBufferBase64.byteLength);
+    })
 });

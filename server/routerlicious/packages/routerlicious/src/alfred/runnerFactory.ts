@@ -52,8 +52,8 @@ export class OrdererManager implements core.IOrdererManager {
     public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
         const tenant = await this.tenantManager.getTenant(tenantId);
 
-        winston.info(tenant.orderer);
-        winston.info(tenant.orderer.url);
+        const messageMetaData = { documentId, tenantId };
+        winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
 
         if (tenant.orderer.url !== this.ordererUrl) {
             return Promise.reject("Invalid ordering service endpoint");

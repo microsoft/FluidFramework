@@ -10,19 +10,19 @@ import { LastEditedTracker } from "./lastEditedTracker";
 import { IProvideFluidLastEditedTracker } from "./interfaces";
 
 /**
- * LastEditedTrackerComponent creates a LastEditedTracker that keeps track of the latest edits to the document.
+ * LastEditedTrackerDataObject creates a LastEditedTracker that keeps track of the latest edits to the document.
  */
-export class LastEditedTrackerComponent extends DataObject
+export class LastEditedTrackerDataObject extends DataObject
     implements IProvideFluidLastEditedTracker {
     private static readonly factory = new DataObjectFactory(
         "@fluidframework/last-edited-experimental",
-        LastEditedTrackerComponent,
+        LastEditedTrackerDataObject,
         [SharedSummaryBlock.getFactory()],
         {},
     );
 
     public static getFactory() {
-        return LastEditedTrackerComponent.factory;
+        return LastEditedTrackerDataObject.factory;
     }
 
     private readonly sharedSummaryBlockId = "shared-summary-block-id";

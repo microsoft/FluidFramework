@@ -15,7 +15,7 @@ import {
     IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
 import { createComponentResponse } from "@fluidframework/request-handler";
-import { defaultRouteRequestHandler } from "../requestHandlers";
+import { defaultRouteRequestHandler } from "../request-handlers";
 
 class MockRuntime {
     public get IFluidHandleContext() {

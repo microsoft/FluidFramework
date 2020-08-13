@@ -270,7 +270,7 @@ export interface IFluidDataStoreContext extends EventEmitter {
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IFluidObject & IFluidObject;
+    readonly scope: IFluidObject;
     readonly summaryTracker: ISummaryTracker;
 
     on(event: "leader" | "notleader" | "attaching" | "attached", listener: () => void): this;
