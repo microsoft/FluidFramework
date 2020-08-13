@@ -44,7 +44,7 @@ export interface ITaskManager extends IProvideTaskManager, IFluidLoadable, IFlui
      *
      * @param worker - Flag that will execute tasks in web worker if connected to a service that supports them.
      */
-    pick(componentUrl: string, taskId: string, worker?: boolean): Promise<void>;
+    pick(dataStoreUrl: string, taskId: string, worker?: boolean): Promise<void>;
 }
 
 export const IAgentScheduler: keyof IProvideAgentScheduler = "IAgentScheduler";
@@ -101,7 +101,7 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IFluidRouter, I
      *      automatically, unless release() is called
      * "released" - the task was successfully released back to the pool. Client will not attempt to
      *      re-acquire the task, unless pick() is called.
-     * "lost" - task is lost due to disconnect or component / container being attached.
+     * "lost" - task is lost due to disconnect or data store / container being attached.
      *      Task will be picked up again by some connected client (this client will try as well,
      *      unless release() is called)
      * @param listener - callback notified when change happened for particular key
