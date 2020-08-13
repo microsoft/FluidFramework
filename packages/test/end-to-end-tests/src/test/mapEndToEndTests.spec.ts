@@ -11,62 +11,57 @@ import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    ChannelFactoryRegistry,
     createLocalLoader,
-    OpProcessingController,
-    ITestFluidComponent,
     initializeLocalContainer,
+    ITestFluidComponent,
+    OpProcessingController,
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
+import { compatTest, ICompatTestArgs } from "./compatUtils";
 
-describe("Map", () => {
-    const id = "fluid-test://localhost/mapTest";
-    const mapId = "mapKey";
-    const codeDetails: IFluidCodeDetails = {
-        package: "sharedMapTestPackage",
-        config: {},
-    };
+const id = "fluid-test://localhost/mapTest";
+const mapId = "mapKey";
+const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
+const codeDetails: IFluidCodeDetails = {
+    package: "sharedMapTestPackage",
+    config: {},
+};
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
+async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
+    const response = await container.request({ url: componentId });
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        throw new Error(`Component with id: ${componentId} not found`);
+    }
+    return response.value as ITestFluidComponent;
+}
+
+const tests = (args: ICompatTestArgs) => {
     let opProcessingController: OpProcessingController;
     let component1: ITestFluidComponent;
     let sharedMap1: ISharedMap;
     let sharedMap2: ISharedMap;
     let sharedMap3: ISharedMap;
 
-    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
-        const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
-        }
-        return response.value as ITestFluidComponent;
-    }
-
-    async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([[mapId, SharedMap.getFactory()]]);
-        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-        return initializeLocalContainer(id, loader, codeDetails);
-    }
-
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
-
-        const container1 = await createContainer();
+        const container1 = await args.makeTestContainer(registry) as Container;
         component1 = await requestFluidObject("default", container1);
         sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
 
-        const container2 = await createContainer();
+        const container2 = await args.makeTestContainer(registry) as Container;
         const component2 = await requestFluidObject("default", container2);
         sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
 
-        const container3 = await createContainer();
+        const container3 = await args.makeTestContainer(registry) as Container;
         const component3 = await requestFluidObject("default", container3);
         sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
 
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
         opProcessingController.addDeltaManagers(
             component1.runtime.deltaManager,
             component2.runtime.deltaManager,
-            component3.runtime.deltaManager);
+            component3.runtime.deltaManager,
+        );
 
         sharedMap1.set("testKey1", "testValue");
 
@@ -319,8 +314,30 @@ describe("Map", () => {
         assert.equal(newSharedMap2.get("newKey"), "anotherNewValue", "The new value is not updated in map 2");
         assert.equal(newSharedMap1.get("newKey"), "anotherNewValue", "The new value is not updated in map 1");
     });
+};
+
+describe("Map", () => {
+    let deltaConnectionServer: ILocalDeltaConnectionServer;
+    const makeTestContainer = async () => {
+        const factory = new TestFluidComponentFactory(registry);
+        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
+        return initializeLocalContainer(id, loader, codeDetails);
+    };
+
+    beforeEach(async () => {
+        deltaConnectionServer = LocalDeltaConnectionServer.create();
+    });
+
+    tests({
+        makeTestContainer,
+        get deltaConnectionServer() { return deltaConnectionServer; },
+    });
 
     afterEach(async () => {
         await deltaConnectionServer.webSocketServer.close();
+    });
+
+    describe("compatibility", () => {
+        compatTest(tests, { testFluidComponent: true });
     });
 });

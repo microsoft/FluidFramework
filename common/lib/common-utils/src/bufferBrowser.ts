@@ -33,9 +33,9 @@ export class IsoBuffer extends Uint8Array {
     }
 
     /**
-     * @param value string | ArrayBuffer
-     * @param encodingOrOffset string | number
-     * @param length number
+     * @param value - string | ArrayBuffer
+     * @param encodingOrOffset - string | number
+     * @param length - number
      */
     static from(value, encodingOrOffset?, length?): IsoBuffer {
         if (typeof value === "string") {

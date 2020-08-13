@@ -79,13 +79,17 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         if (document.scribe === undefined || document.scribe === null) {
             context.log.info(`New document. Setting empty scribe checkpoint`, { messageMetaData });
             document.scribe = JSON.stringify(DefaultScribe);
+            opMessages = [];
         } else if (document.scribe === "") {
             if (!latestSummary.fromSummary) {
-                throw Error(`Required summary can't be fetched for ${tenantId}/${documentId}`);
+                context.log.error(`Required summary can't be fetched for`, { messageMetaData });
+                document.scribe = JSON.stringify(DefaultScribe);
+                opMessages = [];
+            } else {
+                context.log.info(`Loading scribe state from service summary`, { messageMetaData });
+                document.scribe = latestSummary.scribe;
+                opMessages = latestSummary.messages;
             }
-            context.log.info(`Loading scribe state from service summary`, { messageMetaData });
-            document.scribe = latestSummary.scribe;
-            opMessages = latestSummary.messages;
         } else {
             context.log.info(`Loading scribe state from cache`, { messageMetaData });
         }

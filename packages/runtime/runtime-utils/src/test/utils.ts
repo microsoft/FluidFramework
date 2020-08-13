@@ -7,19 +7,14 @@ import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfac
 import { RemoteFluidObjectHandle } from "../remoteComponentHandle";
 
 export const mockHandleContext: IFluidHandleContext = {
-    path: "",
     absolutePath: "",
     isAttached: false,
-    IFluidRouter: undefined as any,
     IFluidHandleContext: undefined as any,
 
     attachGraph: () => {
         throw new Error("Method not implemented.");
     },
-    bind: () => {
-        throw new Error("Method not implemented.");
-    },
-    request: () => {
+    resolveHandle: () => {
         throw new Error("Method not implemented.");
     },
 };

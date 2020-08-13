@@ -258,12 +258,12 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
     private _counter: SharedCounter | undefined;
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const counter = SharedCounter.create(this.runtime);
         this.root.set(counterKey, counter.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(counterKey);
         this._counter = await counterHandle.get();
     }
@@ -297,9 +297,9 @@ A good way of understanding what is happening here is thinking about the two dif
 
 To cater to these two scenarios, the Fluid component lifecycle provides three different functions:
 
-- `componentInitializingFirstTime` - This code will be run by clients in the first, new session scenario
-- `componentInitializingFromExisting` - This code will be run by clients in the second, existing session scenario
-- `componentHasInitialized` - This code will be run by clients in both the new and existing session scenarios
+- `initializingFirstTime` - This code will be run by clients in the first, new session scenario
+- `initializingFromExisting` - This code will be run by clients in the second, existing session scenario
+- `hasInitialized` - This code will be run by clients in both the new and existing session scenarios
 
 These all run prior to the first time `render` is called and can be async. As such, this is the perfect place to do any
 setup work, such as assembling any DDS' you will need.
@@ -309,7 +309,7 @@ With this knowledge, let's examine what Clicker is doing with these functions.
 ```typescript
 private _counter: SharedCounter | undefined;
 
-protected async componentInitializingFirstTime() {
+protected async initializingFirstTime() {
     const counter = SharedCounter.create(this.runtime);
     this.root.set(counterKey, counter.handle);
 }
@@ -338,7 +338,7 @@ So, this will ensure that there is always a `Counter` handle available in the ro
 look at how to fetch it.
 
 ```typescript
-protected async componentHasInitialized() {
+protected async hasInitialized() {
     const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(counterKey);
     this._counter = await counterHandle.get();
 }
@@ -346,7 +346,7 @@ protected async componentHasInitialized() {
 
 As we can see here, every client, whether its the first one or one joining an existing session will try to fetch a
 handle from the `root` by looking under the `counterKey` key. Simply calling `await counterHandle.get()` now will give
-us an instance of the same `SharedCounter` we had set in `componentInitializingFirstTime`.
+us an instance of the same `SharedCounter` we had set in `initializingFirstTime`.
 
 In a nutshell, this means that `this._counter` is the same instance of `SharedCounter` for all of the clients that share
 the same `root`.
@@ -373,12 +373,12 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
     private _counter: SharedCounter | undefined;
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const counter = SharedCounter.create(this.runtime);
         this.root.set(counterKey, counter.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(counterKey);
         this._counter = await counterHandle.get();
     }

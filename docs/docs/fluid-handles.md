@@ -53,13 +53,13 @@ creates `Clicker` which is a SharedComponent during first time initialization an
 Any remote client can retrieve the `handle` from the `root` DDS and get `Clicker` by calling `get()` on the handle:
 
 ```typescript
-protected async componentInitializingFirstTime() {
+protected async initializingFirstTime() {
     // The first client creates `Clicker` and stores the handle in the `root` DDS.
     const clickerComponent = await Clicker.getFactory().createComponent(this.context);
     this.root.set(Clicker.ComponentName, clickerComponent.handle);
 }
 
-protected async componentHasInitialized() {
+protected async hasInitialized() {
     // The remote clients retrieve the handle from the `root` DDS and get the `Clicker`.
     const clicker = await this.root.get<IComponentHandle>(Clicker.ComponentName).get();
     this.clickerView = new HTMLViewAdapter(clicker);

@@ -134,7 +134,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         serviceFactory: IDocumentServiceFactory,
         codeLoader: ICodeLoader,
         options: any,
-        scope: IFluidObject & IFluidObject,
+        scope: IFluidObject,
         loader: ILoader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
@@ -191,7 +191,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public static async create(
         codeLoader: ICodeLoader,
         options: any,
-        scope: IFluidObject & IFluidObject,
+        scope: IFluidObject,
         loader: Loader,
         source: IFluidCodeDetails,
         serviceFactory: IDocumentServiceFactory,
@@ -358,7 +358,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     constructor(
         public readonly options: any,
-        private readonly scope: IFluidObject & IFluidObject,
+        private readonly scope: IFluidObject,
         private readonly codeLoader: ICodeLoader,
         private readonly loader: ILoader,
         private readonly serviceFactory: IDocumentServiceFactory,

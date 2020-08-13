@@ -99,6 +99,6 @@ export class BaseHost {
             return undefined;
         }
 
-        return response.value as IFluidObject & IFluidObject;
+        return response.value as IFluidObject;
     }
 }
