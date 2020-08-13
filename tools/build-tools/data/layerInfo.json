@@ -136,7 +136,7 @@
             },
             "Hosts": {
                 "packages": [
-                    "@fluidframework/base-host",
+                    "@fluidframework/base-host"
                 ],
                 "deps": [
                     "Loader",
