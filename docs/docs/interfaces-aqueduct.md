@@ -119,14 +119,19 @@ an entrypoint for you to run upgrade or schema migration code as needed.
 
 #### hasInitialized
 
-The `hasInitialized` method is called _each time_ the DataObject is loaded.
+The `hasInitialized` method is called _each time_ the DataObject is loaded. One common use of this method is to stash
+local references to distributed data structures so that they're available for use in synchronous code. Recall that
+retrieving a value from a DDS is _always_ an asynchronous operation, so they can only be retrieved in an async function.
+`hasInitialized` serves that purpose in the example below.
 
+```ts
+protected async hasInitialized() {
+  this.currentCell = await this.root.get<IFluidHandle<SharedCell>>("myCell").get();
+}
+```
 
-::: danger TODO
+Now any synchronous code can access the SharedCell using `this.currentCell`.
 
-- Data in DDS is loaded automatically
-
-:::
 
 ## DataObjectFactory
 
