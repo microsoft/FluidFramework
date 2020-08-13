@@ -33,14 +33,10 @@
   },
   "dependencies": {
     "@fluidframework/aqueduct": "^0.25.0",
-    "@fluidframework/core-interfaces": "^0.25.0",
     "@fluidframework/counter": "^0.25.0",
-    "@fluidframework/datastore-definitions": "^0.25.0",
     "@fluidframework/react": "^0.25.0",
     "@fluidframework/react-inputs": "^0.25.0",
-    "@fluidframework/runtime-definitions": "^0.25.0",
     "@fluidframework/sequence": "^0.25.0",
-    "@fluidframework/view-interfaces": "^0.25.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
