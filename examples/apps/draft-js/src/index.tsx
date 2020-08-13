@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
-// import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
+import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
+import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -17,12 +17,12 @@ export { FluidDraftJsObject, FluidDraftJsContainer };
 
 // Since this is a single page fluid application we are generating a new document id
 // if one was not provided
-// let createNew = false;
-// if (window.location.hash.length === 0) {
-//     createNew = true;
-//     window.location.hash = Date.now().toString();
-// }
-// const documentId = window.location.hash.substring(1);
+let createNew = false;
+if (window.location.hash.length === 0) {
+    createNew = true;
+    window.location.hash = Date.now().toString();
+}
+const documentId = window.location.hash.substring(1);
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
@@ -30,15 +30,15 @@ export { FluidDraftJsObject, FluidDraftJsContainer };
  */
 async function start() {
     // Get the Fluid Container associated with the provided id
-    // const container = await getTinyliciousContainer(documentId, FluidDraftJsContainer, createNew);
+    const container = await getTinyliciousContainer(documentId, FluidDraftJsContainer, createNew);
 
-    // // Get the Default Object from the Container
-    // const defaultObject = await getDefaultObjectFromContainer<FluidDraftJsObject>(container);
+    // Get the Default Object from the Container
+    const defaultObject = await getDefaultObjectFromContainer<FluidDraftJsObject>(container);
 
 
     // Render the content using ReactDOM
     ReactDOM.render(
-        <FluidDraftJsView />,
+        <FluidDraftJsView model={defaultObject} />,
         document.getElementById("content"));
 
     // Setting "fluidStarted" is just for our test automation

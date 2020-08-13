@@ -19,7 +19,7 @@ interface IProps {
    * Any Distributed Data Structure that users will interact with. A user is not shown in the
    * member list until the have touched this DDS.
    */
-    dds: ISharedObject;
+    authors: ISharedObject;
     style?: React.CSSProperties;
 }
 
@@ -66,7 +66,7 @@ export class MemberList extends React.Component<IProps, IState> {
         this.updateMemberList();
         this.props.quorum.on("addMember", this.updateMemberList);
         this.props.quorum.on("removeMember", this.updateMemberList);
-        this.props.dds.on("op", (op: ISequencedDocumentMessage, isLocal: boolean) => {
+        this.props.authors.on("op", (op: ISequencedDocumentMessage, isLocal: boolean) => {
             if (!isLocal && !this.knownHumanMemberIds.has(op.clientId)) {
                 this.knownHumanMemberIds.add(op.clientId);
                 this.updateMemberList();
@@ -75,6 +75,7 @@ export class MemberList extends React.Component<IProps, IState> {
     }
 
     private readonly updateMemberList = () => {
+
         const members = Array.from(
             this.props.quorum
                 .getMembers()
@@ -102,7 +103,6 @@ export class MemberList extends React.Component<IProps, IState> {
                     id,
                 };
             });
-
         this.setState({ members });
     };
 
