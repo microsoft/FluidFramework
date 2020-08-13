@@ -28,8 +28,6 @@ import {
 import {
     FlushMode,
     IContainerRuntimeBase,
-    IFluidDataStoreChannel,
-    IFluidDataStoreContext,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
 import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
@@ -91,7 +89,7 @@ export interface IContainerRuntime extends
      * @param id - Id supplied during creating the component.
      * @param wait - True if you want to wait for it.
      */
-    getDataStore(id: string, wait?: boolean): Promise<IFluidDataStoreChannel>;
+    getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
 
     /**
      * Creates root data store in container. Such store is automatically bound to container, and thus is
@@ -130,11 +128,6 @@ export interface IContainerRuntime extends
      * Flushes any ops currently being batched to the loader
      */
     flush(): void;
-
-    /**
-     * Used to notify the HostingRuntime that the FluidDataStoreRuntime has be instantiated.
-     */
-    notifyDataStoreInstantiated(componentContext: IFluidDataStoreContext): void;
 
     /**
      * Get an absolute url for a provided container-relative request.

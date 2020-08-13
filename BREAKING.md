@@ -7,6 +7,7 @@
 - [IContainerRuntimeBase._createDataStoreWithProps() is removed](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
 - [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
 - [createDataStoreWithRealizationFn() APIs moved](#createDataStoreWithRealizationFn()-APIs-moved)
+- [getDataStore() APIs is removed](#getDataStore()-APIs-is-removed)
 - [Package Renames](#package-renames)
 - [IComponent and IComponent Interfaces Removed](#IComponent-and-IComponent-Interfaces-Removed)
 - [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
@@ -38,6 +39,10 @@ Please switch to using one of the following APIs:
 ### createDataStoreWithRealizationFn() APIs moved
 Removed from IFluidDataStoreContext  & IContainerRuntime.
 Temporarily exposed on IContainerRuntimeBase. The intent is to remove it altogether in same release (more info to follow)
+
+## getDataStore() APIs is removed
+IContainerRuntime.getDataStore() is removed. Only IContainerRuntime.getRootDataStore() is available to retrieve root data stores.
+For couple versions we will allow retrieving non-root data stores using this API, but this functionality is temporary and will be removed soon. We will provide other tools to support backward compatibility.
 
 ### Package Renames
 As a follow up to the changes in 0.24 we are updating a number of package names

@@ -8,12 +8,12 @@ import assert from "assert";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
-import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, IFluidObject, IFluidRouter } from "@fluidframework/core-interfaces";
 import { createComponentResponse } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "../request-handlers";
 
 class MockRuntime {
-    public async getDataStore(id, wait): Promise<IFluidDataStoreChannel> {
+    public async getRootDataStore(id, wait): Promise<IFluidRouter> {
         if (id === "componentId") {
             return {
                 request: async (r) => {
@@ -36,7 +36,7 @@ class MockRuntime {
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const component = await this.getDataStore(requestParser.pathParts[0], wait);
+            const component = await this.getRootDataStore(requestParser.pathParts[0], wait);
             const subRequest = requestParser.createSubRequest(1);
             if (subRequest !== undefined) {
                 return component.request(subRequest);
