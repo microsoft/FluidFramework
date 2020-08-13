@@ -23,6 +23,7 @@
     "prepack": "npm run webpack",
     "start": "webpack-dev-server",
     "start:server": "tinylicious",
+    "start:test": "webpack-dev-server --config webpack.test.js",
     "test": "npm run test:jest",
     "test:jest": "jest",
     "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
@@ -64,6 +65,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
+    "@fluidframework/get-session-storage-container": "^0.25.0",
     "@fluidframework/test-tools": "^0.1.0",
     "@types/node": "^10.17.24",
     "@types/react": "^16.9.15",
