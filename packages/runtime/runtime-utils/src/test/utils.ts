@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { RemoteFluidObjectHandle } from "../remoteDataStoreHandle";
+import { RemoteFluidObjectHandle } from "../remoteFluidObjectHandle";
 
 export const mockHandleContext: IFluidHandleContext = {
     absolutePath: "",
