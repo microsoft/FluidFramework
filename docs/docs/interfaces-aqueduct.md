@@ -135,6 +135,23 @@ Now any synchronous code can access the SharedCell using `this.currentCell`.
 
 ## DataObjectFactory
 
+DataObjects, like distributed data structures, are created asynchronously using a factory pattern. Therefore you must
+export a factory class for a DataObject, as the following code illustrates:
+
+```ts
+export const BadgeInstantiationFactory = new DataObjectFactory(
+    BadgeName, // string
+    Badge,
+    [
+        SharedMap.getFactory(),
+        SharedCell.getFactory(),
+        SharedObjectSequence.getFactory(),
+    ],
+    {},
+);
+```
+
+The first argument is the string name of the DataObject
 
 ## Learn more
 
