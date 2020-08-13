@@ -6,5 +6,5 @@
 import { IFluidObject } from "@fluidframework/core-interfaces";
 
 export interface IFluidModule {
-    fluidExport: IFluidObject & IFluidObject;
+    fluidExport: IFluidObject;
 }
