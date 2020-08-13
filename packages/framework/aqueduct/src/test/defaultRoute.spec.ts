@@ -18,6 +18,8 @@ import { createComponentResponse } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "../request-handlers";
 
 class MockRuntime {
+    public get IFluidHandleContext() { return this; }
+
     public async getRootDataStore(id, wait): Promise<IFluidRouter> {
         if (id === "componentId") {
             return {
