@@ -8,7 +8,6 @@
 - [IContainerRuntimeBase._createDataStoreWithProps() is removed](#IContainerRuntimeBase._createDataStoreWithProps-is-removed)
 - [_createDataStore() APIs are removed](#_createDataStore-APIs-are-removed)
 - [createDataStoreWithRealizationFn() APIs are removed](#createDataStoreWithRealizationFn()-APIs-are-removed)
-- [createDataStoreWithRealizationFn() APIs moved](#createDataStoreWithRealizationFn()-APIs-moved)
 - [getDataStore() APIs is removed](#getDataStore()-APIs-is-removed)
 - [Package Renames](#package-renames)
 - [IComponent and IComponent Interfaces Removed](#IComponent-and-IComponent-Interfaces-Removed)
@@ -27,7 +26,6 @@ The following telemetry event names have been updated to drop references to the 
 ComponentRuntimeDisposeError -> ChannelDisposeError
 ComponentContextDisposeError -> FluidDataStoreContextDisposeError
 SignalComponentNotFound -> SignalFluidDataStoreNotFound
->>>>>>> c6c090ca861703c5a6773788d131e201a9424dc2
 
 ### IComponentContextLegacy is removed
 Deprecated in 0.18, removed.
