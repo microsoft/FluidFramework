@@ -16,9 +16,9 @@ export interface IReactViewAdapterProps {
 
 /**
  * Abstracts rendering of views as a React component.  Supports React elements, as well as
- * components that implement IFluidHTMLView.
+ * views that implement IFluidHTMLView.
  *
- * If the component is none of these, we render nothing.
+ * If the object is none of these, we render nothing.
  */
 export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
     /**

@@ -33,11 +33,11 @@ describe("Local Driver Resolver", () => {
             assert.equal(resolvedUrl.url, expectedUrl, "The resolved url should match");
         });
 
-        it("should successfully create requestUrl for a component from resolvedUrl", async () => {
+        it("should successfully create requestUrl for a data store from resolvedUrl", async () => {
             const resolvedUrl = await resolver.resolve(request);
-            const componentId = "component";
-            const response = await resolver.getAbsoluteUrl(resolvedUrl, componentId);
-            const expectedUrl = `http://localhost:3000/${documentId}/${componentId}`;
+            const dataStoreId = "datastore";
+            const response = await resolver.getAbsoluteUrl(resolvedUrl, dataStoreId);
+            const expectedUrl = `http://localhost:3000/${documentId}/${dataStoreId}`;
             assert.equal(response, expectedUrl, "The requestUrl should match");
         });
     });

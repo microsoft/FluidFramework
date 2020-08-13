@@ -4,7 +4,7 @@ The Fluid Framework packages are grouped into several categories.
 
 ## Framework
 
-Base classes and interfaces for Fluid Framework that implements basic default behavior of components and containers.
+Base classes and interfaces for Fluid Framework that implements basic default behavior of DataStore and Containers.
 
 ## Distributed data structures
 
@@ -22,7 +22,7 @@ Runtime interfaces and implementation.
 
 ## Loader
 
-Loader for host pages to load a Fluid container, or just a component within the container.
+Loader for host pages to load a Fluid container or just a DataStore within the container.
 
 ## Container
 

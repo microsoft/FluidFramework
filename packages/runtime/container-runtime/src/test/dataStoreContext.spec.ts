@@ -49,7 +49,7 @@ describe("Data Store Context Tests", () => {
     describe("LocalFluidDataStoreContext Initialization", () => {
         let localDataStoreContext: LocalFluidDataStoreContext;
         let storage: IDocumentStorageService;
-        let scope: IFluidObject & IFluidObject;
+        let scope: IFluidObject;
         const attachCb = (mR: IFluidDataStoreChannel) => { };
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
@@ -166,7 +166,7 @@ describe("Data Store Context Tests", () => {
         let remotedDataStoreContext: RemotedFluidDataStoreContext;
         let dataStoreAttributes: IFluidDataStoreAttributes;
         const storage: Partial<IDocumentStorageService> = {};
-        let scope: IFluidObject & IFluidObject;
+        let scope: IFluidObject;
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
             const factory: { [key: string]: any } = {};

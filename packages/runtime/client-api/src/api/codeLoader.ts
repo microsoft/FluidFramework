@@ -123,7 +123,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
             ),
             this.runtimeOptions);
 
-        // On first boot create the base component
+        // On first boot create the base data store
         if (!runtime.existing) {
             await runtime.createRootDataStore("@fluid-internal/client-api", rootStoreId);
         }

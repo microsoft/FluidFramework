@@ -172,13 +172,17 @@
             },
             "Examples": {
                 "dot": false,
+                "dev": true,
                 "dirs": [
                     "components/",
                     "examples/",
                     "packages/agents/"
                 ],
                 "deps": [
-                    "Framework"
+                    "Framework",
+                    "Driver",
+                    "Routerlicious-Driver",
+                    "Test"
                 ]
             },
             "Build": {
@@ -207,7 +211,7 @@
                     "@fluidframework/local-web-host",
                     "@fluidframework/local-driver",
                     "@fluidframework/test-runtime-utils",
-                    "@fluidframework/webpack-component-loader"
+                    "@fluidframework/webpack-fluid-loader"
                 ],
                 "dirs": [
                     "packages/test/"
