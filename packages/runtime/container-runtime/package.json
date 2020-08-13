@@ -73,7 +73,6 @@
     "@types/uuid": "^3.4.4",
     "debug": "^4.1.1",
     "double-ended-queue": "^2.1.0-0",
-    "performance-now": "^2.1.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {

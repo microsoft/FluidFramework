@@ -4,8 +4,8 @@
  */
 import { SharedObjectSequence } from "@fluidframework/sequence";
 import {
-    IFluidFunctionalComponentViewState,
-    IFluidFunctionalComponentFluidState,
+    IViewState,
+    IFluidState,
     IFluidReducer,
     IFluidDataProps,
     FluidStateUpdateFunction,
@@ -14,14 +14,14 @@ import {
 /**
  * The state interface exposed to the view for the synced array
  */
-export interface ISyncedArrayViewState<T> extends IFluidFunctionalComponentViewState {
+export interface ISyncedArrayViewState<T> extends IViewState {
     values: T[];
 }
 
 /**
  * The state interface for the Fluid data source that powers the synced array
  */
-export interface ISyncedArrayFluidState<T> extends IFluidFunctionalComponentFluidState {
+export interface ISyncedArrayFluidState<T> extends IFluidState {
     values: SharedObjectSequence<T>;
 }
 
@@ -38,8 +38,8 @@ export interface ISyncedArrayReducer<T> {
  * state definitions together
  */
 export interface IFluidSyncedArrayReducer<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
     > extends IFluidReducer<SV, SF, IFluidDataProps> {
     add: FluidStateUpdateFunction<SV, SF, IFluidDataProps>;
 }

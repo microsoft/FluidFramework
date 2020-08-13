@@ -498,6 +498,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return;
     }
 
+    public async resolveHandle(request: IRequest): Promise<IResponse> {
+        return this.request(request);
+    }
+
     public async request(request: IRequest): Promise<IResponse> {
         return null;
     }

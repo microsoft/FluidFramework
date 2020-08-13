@@ -7,9 +7,6 @@ import {
     IFluidObject,
     IFluidHandle,
     IFluidHandleContext,
-    IFluidRouter,
-    IRequest,
-    IResponse,
 } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
@@ -20,8 +17,6 @@ export class FluidOjectHandle<T extends IFluidObject = IFluidObject> implements 
     private bound: Set<IFluidHandle> | undefined;
     public readonly absolutePath: string;
 
-    public get IFluidRouter(): IFluidRouter { return this; }
-    public get IFluidHandleContext(): IFluidHandleContext { return this; }
     public get IFluidHandle(): IFluidHandle { return this; }
 
     public get isAttached(): boolean {
@@ -75,13 +70,5 @@ export class FluidOjectHandle<T extends IFluidObject = IFluidObject> implements 
         }
 
         this.bound.add(handle);
-    }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        if (this.value.IFluidRouter !== undefined) {
-            return this.value.IFluidRouter.request(request);
-        } else {
-            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-        }
     }
 }
