@@ -517,8 +517,8 @@ ${lines.join(newline)}
         return packagesMdContents;
     }
 
-    public static load(root: string, packages: Packages) {
-        const layerInfoFile = require(path.join(__dirname, "..", "..", "data", "layerInfo.json"));
+    public static load(root: string, packages: Packages, info?: string) {
+        const layerInfoFile = require(info?? path.join(__dirname, "..", "..", "data", "layerInfo.json"));
         return new LayerGraph(root, layerInfoFile, packages);
     }
 };
