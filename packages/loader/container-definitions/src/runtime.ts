@@ -68,7 +68,7 @@ export interface IRuntime extends IDisposable {
      */
     setConnectionState(connected: boolean, clientId?: string);
 
-    // Back-compat: supporting <= 0.16 components
+    // Back-compat: supporting <= 0.16 data stores
     changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 
     /**
