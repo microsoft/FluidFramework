@@ -25,26 +25,15 @@ The details returned in getLastEditDetails contain the `IUser` object and the `t
 
 # Last Edited Tracker Component
 
-LastEditedTrackerComponent is a runtime component built on top of the LastEditedTracker. It creates and manages the SharedSummaryBlock so that the developer doesn't have to know about it or manage it.
+LastEditedTrackerDataObject is a runtime component built on top of the LastEditedTracker. It creates and manages the SharedSummaryBlock so that the developer doesn't have to know about it or manage it.
 
 It implements IProvideComponentLastEditedTracker and returns an IComponentLastEditedTracker which is an instance of LastEditedTracker above.
 
 # Setup
 
 This package also provides a `setupLastEditedTrackerForContainer` method that can be used to set up a component that provides IComponentLastEditedTracker to track last edited in a Container:
-```
-async function setupLastEditedTrackerForContainer(
-    componentId: string,
-    runtime: IContainerRuntime,
-    shouldDiscardMessageFn: (message: ISequencedDocumentMessage) => boolean = shouldDiscardMessageDefault,
-)
-```
-
-- The component with id "componentId" must implement an IComponentLastEditedTracker.
 - This setup function should be called during container instantiation so that ops are not missed.
-- Requests the root component from the runtime and waits for it to load.
 - Registers an "op" listener on the runtime. On each message, it calls the shouldDiscardMessageFn to check if the message should be discarded. It also discards all scheduler message. If a message is not discarded, it passes the last edited information from the message to the last edited tracker in the component.
-- The last edited information from the last message received before the component is loaded is stored and passed to the tracker once the component loads.
 
 Note:
 - By default, message that are not of `"Attach"` and `"Operation"` type are discarded as per the `shouldDiscardMessageDefault` function:
@@ -75,10 +64,7 @@ public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         await runtime.createComponent(componentId, "lastEditedTracker");
     }
 
-    setupLastEditedTrackerForContainer(componentId, runtime)
-        .catch((error) => {
-            throw error;
-        });
+    setupLastEditedTrackerForContainer(componentId, runtime);
 
     return runtime;
 }

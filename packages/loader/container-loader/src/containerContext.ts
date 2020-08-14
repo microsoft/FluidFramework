@@ -10,7 +10,7 @@ import {
     IFluidConfiguration,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     ICodeLoader,
@@ -47,7 +47,7 @@ import { NullRuntime } from "./nullRuntime";
 export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
-        scope: IFluidObject & IFluidObject,
+        scope: IFluidObject,
         codeLoader: ICodeLoader,
         runtimeFactory: IRuntimeFactory,
         baseSnapshot: ISnapshotTree | null,
@@ -112,7 +112,7 @@ export class ContainerContext implements IContainerContext {
         return this.container.parentBranch;
     }
 
-    // Back-compat: supporting <= 0.16 components
+    // Back-compat: supporting <= 0.16 data stores
     public get connectionState(): ConnectionState {
         return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
@@ -167,7 +167,7 @@ export class ContainerContext implements IContainerContext {
 
     constructor(
         private readonly container: Container,
-        public readonly scope: IFluidObject & IFluidObject,
+        public readonly scope: IFluidObject,
         public readonly codeLoader: ICodeLoader,
         public readonly runtimeFactory: IRuntimeFactory,
         private readonly _baseSnapshot: ISnapshotTree | null,
@@ -243,7 +243,7 @@ export class ContainerContext implements IContainerContext {
 
         assert(this.connected === connected);
 
-        // Back-compat: supporting <= 0.16 components
+        // Back-compat: supporting <= 0.16 data stores
         if (runtime.setConnectionState !== undefined) {
             runtime.setConnectionState(connected, clientId);
         } else if (runtime.changeConnectionState !== undefined) {

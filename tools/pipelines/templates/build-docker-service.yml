@@ -47,7 +47,7 @@ variables:
 jobs:
   - job: build
     displayName: Build Container - ${{ parameters.containerName }}
-    pool: Shared
+    pool: Lite
     steps:
     # Setup
     - checkout: self

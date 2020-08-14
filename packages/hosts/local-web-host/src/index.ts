@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { Loader, Container } from "@fluidframework/container-loader";
 import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { initializeContainerCode } from "@fluidframework/base-host";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
@@ -69,7 +69,7 @@ export async function createLocalContainerFactory(
     };
 }
 
-export async function renderDefaultComponent(container: Container, div: HTMLElement) {
+export async function renderDefaultFluidObject(container: Container, div: HTMLElement) {
     const response = await container.request({ url: "" });
 
     if (response.status !== 200 ||
@@ -77,12 +77,12 @@ export async function renderDefaultComponent(container: Container, div: HTMLElem
             response.mimeType === "fluid/component" ||
             response.mimeType === "fluid/object"
         )) {
-        div.innerText = "Component not found";
+        div.innerText = "Fluid object not found";
         return;
     }
 
-    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
-    const component = response.value as IFluidObject & IFluidObject;
-    const embed = new HTMLViewAdapter(component);
+    // Render the Fluid object with an HTMLViewAdapter to abstract the UI framework used by the component
+    const fluidObject = response.value as IFluidObject;
+    const embed = new HTMLViewAdapter(fluidObject);
     embed.render(div, { display: "block" });
 }

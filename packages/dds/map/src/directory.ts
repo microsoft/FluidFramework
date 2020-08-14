@@ -301,12 +301,12 @@ function serializeDirectory(root: SubDirectory): ITree {
  */
 export class DirectoryFactory {
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
      */
     public static readonly Type = "https://graph.microsoft.com/types/directory";
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
      */
     public static readonly Attributes: IChannelAttributes = {
         type: DirectoryFactory.Type,
@@ -315,21 +315,21 @@ export class DirectoryFactory {
     };
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
      */
     public get type() {
         return DirectoryFactory.Type;
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
      */
     public get attributes() {
         return DirectoryFactory.Attributes;
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.load}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
      */
     public async load(
         runtime: IFluidDataStoreRuntime,
@@ -344,7 +344,7 @@ export class DirectoryFactory {
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
      */
     public create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory {
         const directory = new SharedDirectory(id, runtime, DirectoryFactory.Attributes);
@@ -372,7 +372,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * Create a new shared directory
      *
-     * @param runtime - Component runtime the new shared directory belongs to
+     * @param runtime - Data store runtime the new shared directory belongs to
      * @param id - Optional name of the shared directory
      * @returns Newly create shared directory (but not attached yet)
      */
@@ -381,7 +381,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * Get a factory for SharedDirectory to register with the component.
+     * Get a factory for SharedDirectory to register with the data store.
      *
      * @returns A factory that creates and load SharedDirectory
      */
@@ -420,7 +420,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * Constructs a new shared directory. If the object is non-local an id and service interfaces will
      * be provided.
      * @param id - String identifier for the SharedDirectory
-     * @param runtime - Component runtime
+     * @param runtime - Data store runtime
      * @param type - Type identifier
      */
     constructor(
@@ -954,7 +954,7 @@ class SubDirectory implements IDirectory {
     /**
      * Constructor.
      * @param directory - Reference back to the SharedDirectory to perform operations
-     * @param runtime - The component runtime this directory is associated with
+     * @param runtime - The data store runtime this directory is associated with
      * @param absolutePath - The absolute path of this IDirectory
      */
     constructor(

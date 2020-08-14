@@ -56,7 +56,7 @@ export interface IDeltaHandlerStrategy {
     processSignal: (message: ISignalMessage) => void;
 }
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IFluidObject extends Readonly<Partial<IProvideDeltaSender>> { }
 }
@@ -130,12 +130,12 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 
     /**
      * Tells if container is in read-only mode.
-     * Components should listen for "readonly" notifications and disallow user making changes to components.
+     * Data stores should listen for "readonly" notifications and disallow user making changes to data stores.
      * Readonly state can be because of no storage write permission,
      * or due to host forcing readonly mode for container.
      *
      * We do not differentiate here between no write access to storage vs. host disallowing changes to container -
-     * in all cases container runtime and components should respect readonly state and not allow local changes.
+     * in all cases container runtime and data stores should respect readonly state and not allow local changes.
      *
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.

@@ -1,6 +1,6 @@
 # Fluid Handles
 
-A [Fluid Handle](../../packages/loader/component-core-interfaces/src/handles.ts) is a handle to a `fluid object`. It is
+A [Fluid Handle](../../packages/loader/core-interfaces/src/handles.ts) is a handle to a `fluid object`. It is
 used to represent the object and has a function `get()` that returns the underlying object. Handles move the ownership
 of retrieving a `fluid object` from the user of the object to the object itself. The handle can be passed around in the
 system and anyone who has the handle can easily get the underlying object by simply calling `get()`.
@@ -53,13 +53,13 @@ creates `Clicker` which is a SharedComponent during first time initialization an
 Any remote client can retrieve the `handle` from the `root` DDS and get `Clicker` by calling `get()` on the handle:
 
 ```typescript
-protected async componentInitializingFirstTime() {
+protected async initializingFirstTime() {
     // The first client creates `Clicker` and stores the handle in the `root` DDS.
     const clickerComponent = await Clicker.getFactory().createComponent(this.context);
     this.root.set(Clicker.ComponentName, clickerComponent.handle);
 }
 
-protected async componentHasInitialized() {
+protected async hasInitialized() {
     // The remote clients retrieve the handle from the `root` DDS and get the `Clicker`.
     const clicker = await this.root.get<IComponentHandle>(Clicker.ComponentName).get();
     this.clickerView = new HTMLViewAdapter(clicker);

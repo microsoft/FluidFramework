@@ -6,7 +6,7 @@
 import {
     IFluidObject,
     IFluidRouter,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -26,13 +26,11 @@ import {
 import {
     FlushMode,
     IContainerRuntimeBase,
-    IFluidDataStoreChannel,
-    IFluidDataStoreContext,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
 import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideContainerRuntime>> { }
 }
@@ -65,7 +63,7 @@ export interface IContainerRuntime extends
     readonly loader: ILoader;
     readonly flushMode: FlushMode;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly scope: IFluidObject & IFluidObject;
+    readonly scope: IFluidObject;
     /**
      * Indicates the attachment state of the container to a host service.
      */
@@ -81,15 +79,15 @@ export interface IContainerRuntime extends
     on(event: "connected", listener: (clientId: string) => void): this;
     on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
     on(
-        event: "componentInstantiated",
-        listener: (componentPkgName: string, registryPath: string, createNew: boolean) => void,
+        event: "fluidDataStoreInstantiated",
+        listener: (dataStorePkgName: string, registryPath: string, createNew: boolean) => void,
     ): this;
     /**
-     * Returns the runtime of the component.
-     * @param id - Id supplied during creating the component.
+     * Returns the runtime of the data store.
+     * @param id - Id supplied during creating the data store.
      * @param wait - True if you want to wait for it.
      */
-    getDataStore(id: string, wait?: boolean): Promise<IFluidDataStoreChannel>;
+    getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
 
     /**
      * Creates root data store in container. Such store is automatically bound to container, and thus is
@@ -128,11 +126,6 @@ export interface IContainerRuntime extends
      * Flushes any ops currently being batched to the loader
      */
     flush(): void;
-
-    /**
-     * Used to notify the HostingRuntime that the FluidDataStoreRuntime has be instantiated.
-     */
-    notifyDataStoreInstantiated(componentContext: IFluidDataStoreContext): void;
 
     /**
      * Get an absolute url for a provided container-relative request.

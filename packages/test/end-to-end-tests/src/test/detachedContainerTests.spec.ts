@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
@@ -200,7 +200,7 @@ describe("Detached Container", () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.equal(type, MessageType.Operation);
-            assert.equal(contents.type, ContainerMessageType.ComponentOp);
+            assert.equal(contents.type, ContainerMessageType.FluidDataStoreOp);
 
             assert.equal(contents.contents.contents.type, DataStoreMessageType.ChannelOp);
 

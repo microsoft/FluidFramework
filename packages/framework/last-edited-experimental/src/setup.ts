@@ -6,13 +6,12 @@
 import { ISequencedDocumentMessage, IQuorum } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { ILastEditDetails, IFluidLastEditedTracker } from "./interfaces";
 
 // Default implementation of the shouldDiscardMessageFn function below that tells that all messages other
 // than "Attach" and "Operation" type messages should be discarded.
 function shouldDiscardMessageDefault(message: ISequencedDocumentMessage) {
-    if (message.type === ContainerMessageType.Attach || message.type === ContainerMessageType.ComponentOp) {
+    if (message.type === ContainerMessageType.Attach || message.type === ContainerMessageType.FluidDataStoreOp) {
         return false;
     }
     return true;
@@ -50,16 +49,11 @@ function getLastEditDetailsFromMessage(
  * @param runtime - The container runtime whose messages are to be tracked.
  * @param shouldDiscardMessageFn - Function that tells if a message should not be considered in computing last edited.
  */
-export async function setupLastEditedTrackerForContainer(
-    componentId: string,
+export function setupLastEditedTrackerForContainer(
+    lastEditedTracker: IFluidLastEditedTracker,
     runtime: IContainerRuntime,
     shouldDiscardMessageFn: (message: ISequencedDocumentMessage) => boolean = shouldDiscardMessageDefault,
 ) {
-    // eslint-disable-next-line prefer-const
-    let lastEditedTracker: IFluidLastEditedTracker | undefined;
-    // Stores the last edit details until the component has loaded.
-    let pendingLastEditDetails: ILastEditDetails | undefined;
-
     // Register an op listener on the runtime. If the component has loaded, it passes the last edited information to its
     // last edited tracker. If the component hasn't loaded, store the last edited information temporarily.
     runtime.on("op", (message: ISequencedDocumentMessage) => {
@@ -78,29 +72,6 @@ export async function setupLastEditedTrackerForContainer(
             return;
         }
 
-        if (lastEditedTracker !== undefined) {
-            // Update the last edited tracker if the component has loaded.
-            lastEditedTracker.updateLastEditDetails(lastEditDetails);
-        } else {
-            // If the component hasn't loaded, store the last edited details temporarily.
-            pendingLastEditDetails = lastEditDetails;
-        }
+        lastEditedTracker.updateLastEditDetails(lastEditDetails);
     });
-
-    const response = await runtime.request({ url: componentId });
-    if (response.status !== 200 || response.mimeType !== "fluid/component") {
-        throw new Error(`Component with id ${componentId} does not exist.`);
-    }
-
-    // Get the last edited tracker from the component.
-    const component = response.value as IFluidObject;
-    lastEditedTracker = component.IFluidLastEditedTracker;
-    if (lastEditedTracker === undefined) {
-        throw new Error(`Component with id ${componentId} does not have IComponentLastEditedTracker.`);
-    }
-
-    // Now that the component has loaded, pass any pending last edit details to its last edited tracker.
-    if (pendingLastEditDetails !== undefined) {
-        lastEditedTracker.updateLastEditDetails(pendingLastEditDetails);
-    }
 }

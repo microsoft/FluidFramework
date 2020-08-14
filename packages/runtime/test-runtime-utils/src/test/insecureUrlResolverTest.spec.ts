@@ -6,7 +6,7 @@
 import assert from "assert";
 import { CreateNewHeader, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { InsecureUrlResolver } from "../insecureUrlResolver";
 
 describe("Insecure Url Resolver Test", () => {
@@ -42,12 +42,12 @@ describe("Insecure Url Resolver Test", () => {
         assert.equal(resolvedUrl.url, documentUrl, "Document url should match");
     });
 
-    it("Test RequestUrl for a component", async () => {
+    it("Test RequestUrl for a data store", async () => {
         const resolvedUrl = await resolver.resolve(request);
-        const componentId = "component";
-        const response = await resolver.getAbsoluteUrl(resolvedUrl, componentId);
+        const dataStoreId = "dataStore";
+        const response = await resolver.getAbsoluteUrl(resolvedUrl, dataStoreId);
 
-        const compUrl = `${hostUrl}/${tenantId}/${fileName}/${componentId}`;
+        const compUrl = `${hostUrl}/${tenantId}/${fileName}/${dataStoreId}`;
         assert.equal(response, compUrl, "Url should match");
     });
 });

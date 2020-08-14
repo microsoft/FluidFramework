@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-bitwise, no-shadow */
+/* eslint-disable no-bitwise */
 
 import path from "path";
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -71,7 +71,7 @@ export function propertyCopy() {
     clockStart = clock();
     for (let j = 0; j < iterCount; j++) {
         const bObj = Properties.createMap<number>();
-        map.forEach((v, k) => { bObj[k] = v; });
+        map.forEach((value, key) => { bObj[key] = value; });
     }
     et = elapsedMicroseconds(clockStart);
     perIter = (et / iterCount).toFixed(3);
@@ -80,7 +80,7 @@ export function propertyCopy() {
     clockStart = clock();
     for (let j = 0; j < iterCount; j++) {
         const bmap = new Map<string, number>();
-        map.forEach((v, k) => { bmap.set(k, v); });
+        map.forEach((value, key) => { bmap.set(key, value); });
     }
     et = elapsedMicroseconds(clockStart);
     perIter = (et / iterCount).toFixed(3);
@@ -88,20 +88,20 @@ export function propertyCopy() {
     console.log(
         `map to map foreach prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
     const diffMap = new Map<string, number>();
-    map.forEach((v, k) => {
+    map.forEach((value, key) => {
         if (Math.random() < 0.5) {
-            diffMap.set(k, v);
+            diffMap.set(key, value);
         } else {
-            diffMap.set(k, v * 3);
+            diffMap.set(key, value * 3);
         }
     });
     clockStart = clock();
     const grayMap = new Map<string, number>();
     for (let j = 0; j < iterCount; j++) {
-        map.forEach((v, k) => {
+        map.forEach((value, key) => {
             // eslint-disable-next-line eqeqeq
-            if (diffMap.get(k) != v) {
-                grayMap.set(k, 1);
+            if (diffMap.get(key) != value) {
+                grayMap.set(key, 1);
             }
         });
     }

@@ -4,11 +4,11 @@ This package provides factory methods to create a wrapper around some of the bas
 
 ## Shared String With Interception
 
-It provides `createSharedStringWithInterception` that accepts a SharedString, the component context and a callback, and returns a SharedString object:
+It provides `createSharedStringWithInterception` that accepts a SharedString, the data store context and a callback, and returns a SharedString object:
 ```typescript
 function createSharedStringWithInterception(
     sharedString: SharedString,
-    context: IComponentContext,
+    context: IFluidDataStoreContext,
     propertyInterceptionCallback: (props?: MergeTree.PropertySet) => MergeTree.PropertySet): SharedString;
 ```
 
@@ -18,11 +18,11 @@ For example, to support a feature like simple user attribution, the app can appe
 
 ## Shared Map With Interception
 
-It provides `createSharedMapWithInterception` that accepts a SharedMap, the component context and a callback, and returns a SharedMap object:
+It provides `createSharedMapWithInterception` that accepts a SharedMap, the data store context and a callback, and returns a SharedMap object:
 ```typescript
 function createSharedMapWithInterception(
     sharedMap: SharedMap,
-    context: IComponentContext,
+    context: IFluidDataStoreContext,
     setInterceptionCallback: (sharedMap: ISharedMap, key: string, value: any) => void): SharedMap;
 ```
 
@@ -32,11 +32,11 @@ Example: To support a feature like simple user attribution, in the callback, the
 
 ## Shared Directory / Sub Directory With Interception
 
-It provides `createdDirectoryWithInterception` that accepts an IDirectory object, the component context and a callback, and returns an IDirectory object:
+It provides `createdDirectoryWithInterception` that accepts an IDirectory object, the data store context and a callback, and returns an IDirectory object:
 ```typescript
 function createDirectoryWithInterception<T extends IDirectory>(
     baseDirectory: T,
-    context: IComponentContext,
+    context: IFluidDataStoreContext,
     setInterceptionCallback: (baseDirectory: IDirectory, subDirectory: IDirectory, key: string, value: any) => void): T;
 ```
 It can be used to wrap a SharedDirectory or one of it's subdirectories to get an interception callback when set is called on the object. The callback funtion is passed the following:

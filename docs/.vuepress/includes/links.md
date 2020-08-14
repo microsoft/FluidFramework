@@ -1,19 +1,19 @@
 <!-- Links -->
 
-[IComponentHTMLView]: ../api/component-core-interfaces.icomponenthtmlview.md
-[icomponenthtmlview]: ../api/component-core-interfaces.icomponenthtmlview.md
+[IFluidHTMLView]: ../api/core-interfaces.ifluidhtmlview.md
+[ifluidhtmlview]: ../api/core-interfaces.ifluidhtmlview.md
 
-[IProvideComponentHTMLView]: ../api/component-core-interfaces.iprovidecomponenthtmlview.md
-[iprovidecomponenthtmlview]: ../api/component-core-interfaces.iprovidecomponenthtmlview.md
+[IProvideFluidHTMLView]: ../api/core-interfaces.iprovidefluidhtmlview.md
+[iprovidefluidhtmlview]: ../api/core-interfaces.iprovidefluidhtmlview.md
 
-[PrimedComponent]: ../api/aqueduct.primedcomponent.md
-[primedcomponent]: ../api/aqueduct.primedcomponent.md
+[DataObject]: ../api/aqueduct.dataobject.md
+[dataobject]: ../api/aqueduct.dataobject.md
 
 [SharedDirectory]: ../api/map.shareddirectory.md
 [shareddirectory]: ../api/map.shareddirectory.md
 
-[SharedObjectSequence]: ../api/map.sharedobjectsequence.md
-[sharedobjectsequence]: ../api/map.sharedobjectsequence.md
+[SharedObjectSequence]: ../api/sequence.sharedobjectsequence.md
+[sharedobjectsequence]: ../api/sequence.sharedobjectsequence.md
 
 [SharedMap]: ../api/map.sharedmap.md
 [sharedmap]: ../api/map.sharedmap.md

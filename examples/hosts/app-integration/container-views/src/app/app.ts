@@ -3,16 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { Container } from "@fluidframework/container-loader";
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import { DiceRollerContainerRuntimeFactory } from "../container";
 
-// I'm choosing to put the docId in the hash just for my own convenience.  There should be no requirements on the
-// page's URL format deeper in the system.
+// I'm choosing to put the docId in the hash just for my own convenience, so the URL will end up looking something
+// like http://localhost:8080/#1596520748752.  This is not crucial to the scenario -- there should be no requirements
+// on the page's URL format deeper in the system, so you're free to change this however you'd like.
+// Additionally, I'm choosing to create a new document when navigating directly to http://localhost:8080 -- this is
+// also open for customization.
+let createNew = false;
 if (window.location.hash.length === 0) {
+    createNew = true;
     window.location.hash = Date.now().toString();
 }
 const documentId = window.location.hash.substring(1);
@@ -63,7 +68,7 @@ async function mountDefaultComponentFromContainer(container: Container): Promise
 // Just a helper function to kick things off.  Making it async allows us to use await.
 async function start(): Promise<void> {
     // Get the container to use.  Associate the data with the provided documentId, and run the provided code within.
-    const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory);
+    const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
     await mountDefaultComponentFromContainer(container);
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line dot-notation

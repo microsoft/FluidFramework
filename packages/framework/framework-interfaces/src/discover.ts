@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 
 /**
  * The interfaces in this file are related to component interface discovery. The idea
@@ -23,7 +23,7 @@ import { IFluidObject } from "@fluidframework/component-core-interfaces";
  * Disclaimer: These interfaces are experimental and are subject to change.
  */
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<
         IProvideComponentDiscoverableInterfaces
@@ -48,7 +48,7 @@ export interface IComponentDiscoverableInterfaces extends IProvideComponentDisco
      * The interfaces this component implements that it wants other components to be able
      * to discover.
      */
-    readonly discoverableInterfaces: (keyof (IFluidObject & IFluidObject))[];
+    readonly discoverableInterfaces: (keyof (IFluidObject))[];
 }
 
 export const IComponentDiscoverInterfaces: keyof IProvideComponentDiscoverInterfaces = "IComponentDiscoverInterfaces";
@@ -69,7 +69,7 @@ export interface IComponentDiscoverInterfaces extends IProvideComponentDiscoverI
      * The interfaces this component cares about, i.e. it wants to be notified when other components
      * that implement any of these interfaces are added to the ecosystem.
      */
-    readonly interfacesToDiscover: (keyof (IFluidObject & IFluidObject))[];
+    readonly interfacesToDiscover: (keyof (IFluidObject))[];
 
     /**
      * Invoked when any components that implement any of the interfaces in interfacesToDiscover are
@@ -84,8 +84,8 @@ export interface IComponentDiscoverInterfaces extends IProvideComponentDiscoverI
      * @param components - A list of the components that implement the given interface.
      */
     notifyComponentsDiscovered(
-        interfaceName: keyof (IFluidObject & IFluidObject),
-        components: readonly (IFluidObject & IFluidObject)[]): void;
+        interfaceName: keyof (IFluidObject),
+        components: readonly (IFluidObject)[]): void;
 }
 
 export const IComponentInterfacesRegistry: keyof IProvideComponentInterfacesRegistry = "IComponentInterfacesRegistry";

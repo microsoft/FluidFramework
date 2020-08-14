@@ -10,7 +10,7 @@ import {
     IFluidObject,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     ICodeLoader,
     IContainer,
@@ -144,7 +144,7 @@ export class Loader extends EventEmitter implements ILoader {
         documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
-        private readonly scope: IFluidObject & IFluidObject,
+        private readonly scope: IFluidObject,
         private readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
         logger?: ITelemetryBaseLogger,
     ) {
@@ -219,7 +219,7 @@ export class Loader extends EventEmitter implements ILoader {
         const resolvedAsFluid = await this.resolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
 
-        // Parse URL into components
+        // Parse URL into data stores
         const parsed = parseUrl(resolvedAsFluid.url);
         if (parsed === undefined) {
             return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);

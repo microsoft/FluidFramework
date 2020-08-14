@@ -9,8 +9,6 @@ OUTDATED
 
 Our Hello World example consists of building a collaborative **Dice Roller**.
 
-![Image 2](./dice-roller-gif.gif)
-
 ---
 
 [[toc]]
@@ -67,8 +65,6 @@ the remainder of the doc understanding.
 ## Component code deep dive
 
 Below is the entirety of our newly created HelloWorld component. We will go through it section by section.
-
-<<< @/tutorials/dice-roller.ts
 
 ### Imports
 
@@ -148,17 +144,17 @@ use the `root` `SharedDirectory`.
 
 ```typescript
 /**
- * componentInitializingFirstTime is called only once, it is executed only by the first client to open the
+ * initializingFirstTime is called only once, it is executed only by the first client to open the
  * component and all work will resolve before the view is presented to any user.
  *
  * This method is used to perform component setup, which can include setting an initial schema or initial values.
  */
-protected async componentInitializingFirstTime() {
+protected async initializingFirstTime() {
     this.root.set(diceValueKey, 1);
 }
 ```
 
-The `componentInitializingFirstTime` function is an override lifecycle method that is called the first time the
+The `initializingFirstTime` function is an override lifecycle method that is called the first time the
 component instance is ever created. This is our opportunity to perform setup work that will only ever be run
 once.
 

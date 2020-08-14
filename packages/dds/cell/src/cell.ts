@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { ISerializedHandle } from "@fluidframework/component-core-interfaces";
+import { ISerializedHandle } from "@fluidframework/core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
@@ -57,7 +57,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
     /**
      * Create a new shared cell
      *
-     * @param runtime - component runtime the new shared map belongs to
+     * @param runtime - data store runtime the new shared map belongs to
      * @param id - optional name of the shared map
      * @returns newly create shared map (but not attached yet)
      */
@@ -66,7 +66,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
     }
 
     /**
-     * Get a factory for SharedCell to register with the component.
+     * Get a factory for SharedCell to register with the data store.
      *
      * @returns a factory that creates and load SharedCell
      */
@@ -94,7 +94,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
      * Constructs a new shared cell. If the object is non-local an id and service interfaces will
      * be provided
      *
-     * @param runtime - component runtime the shared map belongs to
+     * @param runtime - data store runtime the shared map belongs to
      * @param id - optional name of the shared map
      */
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {

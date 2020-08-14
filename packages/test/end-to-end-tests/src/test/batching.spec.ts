@@ -6,11 +6,11 @@
 import assert from "assert";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { ContainerMessageType, schedulerId } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IEnvelope, SchedulerType, FlushMode } from "@fluidframework/runtime-definitions";
+import { IEnvelope, FlushMode } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
@@ -59,9 +59,9 @@ describe("Batching", () => {
 
     function setupBacthMessageListener(component: ITestFluidComponent, receivedMessages: ISequencedDocumentMessage[]) {
         component.context.containerRuntime.on("op", (message: ISequencedDocumentMessage) => {
-            if (message.type === ContainerMessageType.ComponentOp) {
+            if (message.type === ContainerMessageType.FluidDataStoreOp) {
                 const envelope = message.contents as IEnvelope;
-                if (envelope.address !== `${SchedulerType}`) {
+                if (envelope.address !== schedulerId) {
                     receivedMessages.push(message);
                 }
             }

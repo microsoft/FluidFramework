@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { RuntimeRequestHandler } from "./requestHandlers";
@@ -31,4 +31,10 @@ export class RuntimeRequestHandlerBuilder {
         }
         return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }
+}
+
+export function buildRuntimeRequestHandler(...handlers: RuntimeRequestHandler[]) {
+    const builder = new RuntimeRequestHandlerBuilder();
+    builder.pushHandler(...handlers);
+    return async (request: IRequest, runtime: IContainerRuntime) => builder.handleRequest(request, runtime);
 }

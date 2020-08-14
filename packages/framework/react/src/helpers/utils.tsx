@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDirectoryValueChanged, SharedMap } from "@fluidframework/map";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import {
-    FluidComponentMap,
-    IFluidFunctionalComponentFluidState,
-    IFluidFunctionalComponentViewState,
+    FluidObjectMap,
+    IFluidState,
+    IViewState,
     IFluidConverter,
 } from "../interface";
-import { IFluidComponent } from "..";
+import { IFluidObjectMapItem } from "..";
 
 export function getByFluidKey<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(searchValue: string, map: Map<keyof SV, IFluidConverter<SV, SF>>) {
     for (const [key, value] of map.entries()) {
         if (value.fluidKey === searchValue) {
@@ -29,12 +29,12 @@ export async function asyncForEach(
     array: IFluidHandle[],
     callback: (
         handle: IFluidHandle,
-        fluidComponentMap: FluidComponentMap,
+        fluidObjectMap: FluidObjectMap,
         syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
         refreshView: () => void,
         storedHandleMap: SharedMap,
     ) => Promise<void>,
-    fluidComponentMap: FluidComponentMap,
+    fluidObjectMap: FluidObjectMap,
     syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
     refreshView: () => void,
     storedHandleMap: SharedMap,
@@ -42,29 +42,29 @@ export async function asyncForEach(
     const promises: Promise<void>[] = [];
     for (const value of array) {
         promises.push(
-            callback(value, fluidComponentMap, syncedStateCallback, refreshView, storedHandleMap),
+            callback(value, fluidObjectMap, syncedStateCallback, refreshView, storedHandleMap),
         );
     }
     await Promise.all(promises);
 }
 
-export const addComponent = async <
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+export const addFluidObject = async <
+    SV extends IViewState,
+    SF extends IFluidState
 >(
     handle: IFluidHandle,
-    fluidComponentMap: FluidComponentMap,
+    fluidObjectMap: FluidObjectMap,
     syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
     refreshView: () => void,
     storedHandleMap: SharedMap,
 ): Promise<void> => {
-    const maybeValue: IFluidComponent | undefined = fluidComponentMap.get(handle.absolutePath);
-    let value: IFluidComponent = {
+    const maybeValue: IFluidObjectMapItem | undefined = fluidObjectMap.get(handle.absolutePath);
+    let value: IFluidObjectMapItem = {
         isListened: false,
         isRuntimeMap: false,
     };
     if (maybeValue === undefined) {
-        fluidComponentMap.set(
+        fluidObjectMap.set(
             handle.absolutePath,
             value,
         );
@@ -72,21 +72,21 @@ export const addComponent = async <
         value = maybeValue;
     }
     value.isListened = false;
-    fluidComponentMap.set(handle.absolutePath, value);
+    fluidObjectMap.set(handle.absolutePath, value);
     if (!storedHandleMap.has(handle.absolutePath)) {
         storedHandleMap.set(handle.absolutePath, handle);
     }
-    return handle.get().then((component) => {
+    return handle.get().then((fluidObject) => {
         if (value.isRuntimeMap) {
-            (component as SharedMap).on("valueChanged", syncedStateCallback);
+            (fluidObject as SharedMap).on("valueChanged", syncedStateCallback);
         } else if (value.listenedEvents !== undefined) {
             for (const event of value.listenedEvents) {
-                (component as SharedObject).on(event, refreshView);
+                (fluidObject as SharedObject).on(event, refreshView);
             }
         }
-        value.component = component;
+        value.fluidObject = fluidObject;
         value.isListened = true;
-        fluidComponentMap.set(handle.absolutePath, value);
+        fluidObjectMap.set(handle.absolutePath, value);
     });
 };
 

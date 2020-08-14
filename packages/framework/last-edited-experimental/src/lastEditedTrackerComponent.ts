@@ -5,28 +5,24 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { LastEditedTracker } from "./lastEditedTracker";
 import { IProvideFluidLastEditedTracker } from "./interfaces";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const LastEditedTrackerComponentName = pkg.name as string;
-
 /**
- * LastEditedTrackerComponent creates a LastEditedTracker that keeps track of the latest edits to the document.
+ * LastEditedTrackerDataObject creates a LastEditedTracker that keeps track of the latest edits to the document.
  */
-export class LastEditedTrackerComponent extends DataObject
+export class LastEditedTrackerDataObject extends DataObject
     implements IProvideFluidLastEditedTracker {
     private static readonly factory = new DataObjectFactory(
-        LastEditedTrackerComponentName,
-        LastEditedTrackerComponent,
+        "@fluidframework/last-edited-experimental",
+        LastEditedTrackerDataObject,
         [SharedSummaryBlock.getFactory()],
         {},
     );
 
     public static getFactory() {
-        return LastEditedTrackerComponent.factory;
+        return LastEditedTrackerDataObject.factory;
     }
 
     private readonly sharedSummaryBlockId = "shared-summary-block-id";
@@ -42,12 +38,12 @@ export class LastEditedTrackerComponent extends DataObject
 
     public get IFluidLastEditedTracker() { return this.lastEditedTracker; }
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const sharedSummaryBlock = SharedSummaryBlock.create(this.runtime);
         this.root.set(this.sharedSummaryBlockId, sharedSummaryBlock.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() { // hasInitialized
         const sharedSummaryBlock =
             await this.root.get<IFluidHandle<SharedSummaryBlock>>(this.sharedSummaryBlockId).get();
         this._lastEditedTracker = new LastEditedTracker(sharedSummaryBlock);
