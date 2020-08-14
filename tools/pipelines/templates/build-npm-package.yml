@@ -283,6 +283,7 @@ stages:
           feeds:
           - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
             environment: fluid-feed
+            customEndPoint: Offnet Packages
             internal: true
           # only publish release bits
           - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
