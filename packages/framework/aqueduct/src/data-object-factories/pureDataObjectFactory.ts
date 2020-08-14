@@ -124,8 +124,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
         registryEntries?: NamedFluidDataStoreRegistryEntries,
         private readonly onDemandInstantiation = true,
     ) {
-        // empty string is not allowed!
-        if (!this.type) {
+        if (this.type === "") {
             throw new Error("undefined type member");
         }
         if (registryEntries !== undefined) {
