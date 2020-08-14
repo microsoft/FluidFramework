@@ -100,7 +100,7 @@ SharedDirectory.
 
 The `initializingFromExisting` method is called each time the DataObject is loaded _except_ the first time it
 is created. Note that you _do not_ need to overload this method in order to load data in your distributed data
-structures. Data stored within DDSes is automatically loaded into the DDS during initialization; there is no separate
+structures. Data already stored within DDSes is automatically loaded into the local client's DDS during initialization; there is no separate
 load step that needs to be accounted for.
 
 In simple scenarios, you probably won't need to overload this method, since data is automatically loaded, and you'll use
