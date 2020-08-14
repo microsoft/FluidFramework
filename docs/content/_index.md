@@ -2,8 +2,11 @@
 title: "Fluid Framework"
 ---
 
-{{< in_your_face lead=`Data sync, <strong>reimagined.</strong>`
-subText="Real time. Web first. Open source." >}}
+{{< jumbotron
+  lead=`Data sync, <strong>reimagined.</strong>`
+  subText="Real time. Web first. Open source."
+  img=`https://media.giphy.com/media/12NUbkX6p4xOO4/source.gif`
+>}}
 
 
 <div class="ctas">
