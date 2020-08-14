@@ -4,16 +4,13 @@ In the previous section we introduced the DataObject, a convenient way to combin
 code (business logic) into a modular, reusable piece. This in turn enables us to modularize pieces of our application –-
 data included.
 
-Fluid can be a very dynamic system. In the course of writing code to manipulate DDSes and interact with other Fluid
-objects, you will find yourself dealing with JavaScript objects you know almost nothing about. To interact with such an
-object, you can use Fluid's feature detection mechanism, which centers around a special interface called `IFluidObject`.
-Feature detection is a technique to dynamically determine the capabilities of another Fluid object.
+Fluid can be a very dynamic system. There are scenarios in which your code will call certain members of an object, _if and only if_, the object has certain capabilities; that is, it implements certain interfaces. So, your code needs a way of detecting whether the object implements specific interfaces. To make this easier, Fluid has a feature detection mechanism, which centers around a special interface called `IFluidObject`. Feature detection is a technique by which one Fluid object can dynamically determine the capabilities of another Fluid object.
 
 In order to detect features supported by an unknown object, you cast it to an `IFluidObject` and then query the object
 for a specific interface that it may support. The interfaces exposed via `IFluidObject` include many core Fluid
-interfaces, such as IFluidHandle or IFluidLoadable, and this list can be augmented using [TypeScript's interface merging
-capabilities](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#merging-interfaces). This enables
-any Fluid code to register an interface as queryable from other Fluid code that imports it. The specifics of how these
+interfaces, such as `IFluidHandle` or `IFluidLoadable`, and this list can be augmented using [TypeScript's interface merging
+capabilities](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#merging-interfaces). This discovery system (see example below) enables
+any Fluid object to record what interfaces it implements and make it possible for other Fluid objects to discover them. The specifics of how these
 interfaces are declared is not relevant until you want to define your own interfaces, which we'll cover in a later
 section.
 
@@ -32,7 +29,7 @@ if (loadable) { // or if (loadable !== undefined)
 ```
 
 Note the `fluidObject.IFluidLoadable` expression and the types of the objects. If the object supports IFluidLoadable,
-then an IFluidLoadable will be returned; otherwise, it will return `undefined`.
+then an IFluidLoadable will be returned; otherwise, `undefined` will be returned.
 
 
 ## Delegation and the _IProvide_ pattern

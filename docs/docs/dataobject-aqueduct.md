@@ -40,17 +40,17 @@ structures:
 
 ```ts
 /**
- * Called the first time -- and *only* the first time -- the DataObject is initialized.
+ * Called the first time, and *only* the first time, that the DataObject is opened on a client. It is _not_ called on any subsequent clients that open it.
  */
 protected async initializingFirstTime(): Promise<void> { }
 
 /**
-  * Called every time *except* the first time the DataObject is initialized.
+  * Called every time the DataObject is initialized _from an existing instance_. Not called the first time the DataObject is initialized.
   */
 protected async initializingFromExisting(): Promise<void> { }
 
 /**
-  * Called every time the DataObject is initialized after create or when loaded from existing.
+  * Called after the DataObject is initialized, regardless of whether it was a first time initialization or an initialization from loading an existing object.
   */
 protected async hasInitialized(): Promise<void> { }
 ```
@@ -58,7 +58,7 @@ protected async hasInitialized(): Promise<void> { }
 #### initializingFirstTime
 
 `initializingFirstTime` is called only once. It is executed only by the _first_ client to open the DataObject and all
-work will complete before the DataObject is loaded. You should overload this method to perform setup, which can include creating
+work will complete before the DataObject is loaded. You should implement this method to perform setup, which can include creating
 distributed data structures and populating them with initial data. The `root` SharedDirectory can be used in this
 method.
 
@@ -99,19 +99,19 @@ SharedDirectory.
 #### initializingFromExisting
 
 The `initializingFromExisting` method is called each time the DataObject is loaded _except_ the first time it
-is created. Note that you _do not_ need to overload this method in order to load data in your distributed data
+is created. Note that you _do not_ need to implement this method in order to load data in your distributed data
 structures. Data already stored within DDSes is automatically loaded into the local client's DDS during initialization; there is no separate
-load step that needs to be accounted for.
+load event handler that needs to be implemented by your code.
 
-In simple scenarios, you probably won't need to overload this method, since data is automatically loaded, and you'll use
+In simple scenarios, you probably won't need to implement this method, since data is automatically loaded, and you'll use
 `initializingFirstTime` to create your data model initially. However, as your data model changes, this method provides
-an entrypoint for you to run upgrade or schema migration code as needed.
+an entry point for you to run upgrade or schema migration code as needed.
 
 #### hasInitialized
 
 The `hasInitialized` method is called _each time_ the DataObject is loaded. One common use of this method is to stash
 local references to distributed data structures so that they're available for use in synchronous code. Recall that
-retrieving a value from a DDS is _always_ an asynchronous operation, so they can only be retrieved in an async function.
+retrieving a value from a DDS is _always_ an asynchronous operation, so they can only be retrieved in an asynchronous function.
 `hasInitialized` serves that purpose in the example below.
 
 ```ts
