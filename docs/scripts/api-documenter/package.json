@@ -10,7 +10,7 @@
   "license": "MIT",
   "scripts": {
     "build": "gulp test --clean",
-    "api:tomarkdown": "bin/api-documenter generate --input-folder ../../../_api-extractor-temp/doc_models/ --output-folder ../../content/apis/"
+    "api:tomarkdown": "bin/api-documenter generate --input-folder ../../../_api-extractor-temp/doc-models/ --output-folder ../../content/apis/"
   },
   "bin": {
     "api-documenter": "./bin/api-documenter"
