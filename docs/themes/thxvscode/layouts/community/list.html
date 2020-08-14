@@ -5,22 +5,17 @@
 {{ define "main" }}
 {{ partial "navbarSticky.html" . }}
 
-<div class="container body-content community">
+<div class="body-content community">
     <div class="row">
-        <div class="col-md-2 community-navbar-container"> </div>
-        <div class="col-sm-9 col-md-8 body">
+        <div class="col-sm-12 col-md-12 body">
 
             <div>
-                <h1>{{ .Title }}</h1>
+                <h1 class="text-center">{{ .Title }}</h1>
+                <div class="row"></div>
                 <div> {{ .Content }}</div>
             </div>
 
         </div>
-        <div class="hidden-xs col-sm-3 col-md-2 community-subnavbar-container">
-            {{ partial "toc.html" .}}
-            <!-- TODO: OR subnav -->
-        </div>
-
     </div>
 </div>
 
