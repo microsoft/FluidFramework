@@ -449,9 +449,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._deltaManager.close(error);
 
-        this.protocolHandler?.close();
+        this._protocolHandler?.close();
 
-        this.context?.dispose(error !== undefined ? new Error(error.message) : undefined);
+        this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
         assert.strictEqual(this.connectionState, ConnectionState.Disconnected, "disconnect event was not raised!");
 
@@ -648,7 +648,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get storage(): IDocumentStorageService | null | undefined {
-        return this.blobsCacheStorageService ?? this.storageService;
+        return this.blobsCacheStorageService ?? this._storageService;
     }
 
     /**
