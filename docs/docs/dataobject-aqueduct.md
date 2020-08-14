@@ -6,11 +6,11 @@ how to combine those distributed data structures with custom code (business logi
 
 ## The @fluidframework/aqueduct package
 
-The Aqueduct is a library designed to provide a thin layer over the existing Fluid Framework interfaces that allows
-developers to get started quickly with Fluid development.
+The Aqueduct library provides a thin layer over the core Fluid Framework interfaces that is designed to help developers
+get started quickly with Fluid development.
 
-You don't have to use the Aqueduct. It is an example of an abstraction layer built on top of the base Fluid Framework
-with a focus on making Fluid development easier, and as such you can choose to use Fluid without it.
+You don't have to use the Aqueduct library. It is an example of an abstraction layer built on top of the base Fluid
+Framework with a focus on making Fluid development easier, and as such you can choose to use Fluid without it.
 
 Having said that, if you're new to Fluid, we think you'll be more effective with it than without it.
 
@@ -125,25 +125,9 @@ Now any synchronous code can access the SharedCell using `this.currentCell`.
 
 ## DataObjectFactory
 
-DataObjects, like distributed data structures, are created asynchronously using a factory pattern. Therefore you must
-export a factory class for a DataObject, as the following code illustrates:
-
-```ts
-export const BadgeInstantiationFactory = new DataObjectFactory(
-    BadgeName, // string
-    Badge, // a subclass of DataObject
-    [
-      // factories for the DDSes this DataObject uses
-      SharedMap.getFactory(),
-      SharedCell.getFactory(),
-      SharedObjectSequence.getFactory(),
-    ],
-    {}, // optionalProviders; this is an advanced scenario
-        // outside the scope of this documentation. Despite
-        // being optional, an empty object _must_ be passed
-        // when Providers are not being used.
-);
-```
+DataObjects, like distributed data structures, are created asynchronously using a factory pattern. (Constructors in
+TypeScript cannot be asynchronous, so a factory pattern is required.) Therefore you must export a factory class for a
+DataObject, as the code below illustrates.
 
 The DataObjectFactory constructor takes the following arguments:
 
@@ -151,9 +135,22 @@ The DataObjectFactory constructor takes the following arguments:
 1. The DataObject subclass itself.
 1. An array of factories, one for each DDS used by the DataObject.
 1. This argument is used in a more advanced scenario called _Providers_ that is outside the scope of this documentation.
-   Despite being optional, an empty object _must_ be passed when Providers are not being used.
+   An empty object must be passed when Providers are not being used.
+
+```ts
+export const BadgeInstantiationFactory = new DataObjectFactory(
+    BadgeName,
+    Badge,
+    [
+      SharedMap.getFactory(),
+      SharedCell.getFactory(),
+      SharedObjectSequence.getFactory(),
+    ],
+    {},
+);
+```
 
 ## Learn more
 
-The Aqueduct contains more than just DataObject and DataObjectFactory. To dive deeper into the details, see the
+The Aqueduct library contains more than just DataObject and DataObjectFactory. To dive deeper into the details, see the
 [Aqueduct package README](https://github.com/microsoft/FluidFramework/blob/master/packages/framework/aqueduct/README.md)

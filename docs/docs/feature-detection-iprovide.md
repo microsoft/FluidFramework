@@ -23,7 +23,7 @@ The following is an example of feature detection using `IFluidObject`:
 const anUnknownObject = anyObject as IFluidObject;
 
 // Query the object to see if it supports IFluidLoadable
-const loadable = fluidObject.IFluidLoadable; // loadable: IFluidLoadable | undefined
+const loadable = anUnknownObject.IFluidLoadable; // loadable: IFluidLoadable | undefined
 
 if (loadable) { // or if (loadable !== undefined)
     // It does! Now we know definitively that loadable's type is IFluidLoadable and we can safely call a method
@@ -31,7 +31,7 @@ if (loadable) { // or if (loadable !== undefined)
 }
 ```
 
-Note the `fluidObject.IFluidLoadable` expression and the types of the objects. If the object supports IFluidLoadable,
+Note the `anUnknownObject.IFluidLoadable` expression and the types of the objects. If the object supports IFluidLoadable,
 then an IFluidLoadable will be returned; otherwise, it will return `undefined`.
 
 
