@@ -1,8 +1,7 @@
 ---
+title: Total Order Broadcast & Eventual Consistency
 uid: total-order-broadcast
 ---
-
-# Total Order Broadcast & Eventual Consistency
 
 ## Fluid Data: Operations all the way down
 

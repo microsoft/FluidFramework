@@ -13,12 +13,6 @@
             <div>
                 <h1>{{ .Title }}</h1>
                 <div> {{ .Content }}</div>
-                {{$area := .Params.area}}
-                <ul>
-                    {{range .CurrentSection.RegularPages}}
-                    <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
-                    {{ end }}
-                </ul>
             </div>
 
         </div>

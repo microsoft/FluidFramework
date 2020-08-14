@@ -3,10 +3,6 @@ title: Fluid Documentation
 meta: "put the meta description of the page in here"
 ---
 
-{{< jumbotron
-lead=`Welcome to <strong>Fluid.</strong>`
-subText="Real Time. Web first. Open Source."
->}}
 
 Fluid Framework is a TypeScript library for building collaborative web applications.
 
@@ -19,7 +15,6 @@ Fluid Framework is a TypeScript library for building collaborative web applicati
 
 TODO: insert carousel
 
-{{< storybook story="dice-roller" >}}
 
 ## What is Fluid?
 

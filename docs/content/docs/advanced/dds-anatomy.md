@@ -1,4 +1,6 @@
-# Anatomy of a distributed data structure
+---
+Title: Anatomy of a distributed data structure
+---
 
 ## Intent
 
