@@ -10,7 +10,7 @@ import {
     IFluidLoadable,
     IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
-import { FluidOjectHandle } from "@fluidframework/datastore";
+import { FluidObjectHandle } from "@fluidframework/datastore";
 
 import { DependencyContainer } from "..";
 
@@ -30,7 +30,7 @@ const mockHandleContext: IFluidHandleContext = {
 class MockLoadable implements IFluidLoadable {
     public get IFluidLoadable() { return this; }
     public get url() { return "url123"; }
-    public get handle() { return new FluidOjectHandle(this, "", mockHandleContext); }
+    public get handle() { return new FluidObjectHandle(this, "", mockHandleContext); }
 }
 
 class MockFluidConfiguration implements IFluidConfiguration {
