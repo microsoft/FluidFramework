@@ -1,3 +1,4 @@
+{{$current := .}}
 <a role="button" id="skip-to-content" class="link-button" href="#main-content">Skip to content<i>&nbsp;</i><span
         class="glyphicon glyphicon-menu-down"></span></a>
 <div class="navbar-fixed-container">
@@ -16,10 +17,10 @@
                 </div>
                 <div class="navbar-collapse collapse">
                     <ul class="nav navbar-nav navbar-left">
-                        {{$section := .Section}}
+
                         {{- range .Site.Menus.main }}
                         {{- if .HasChildren }}
-                        <li {{ if eq $section .Name}}class="active" {{end}}>
+                        <li {{ if eq $current.Permalink .URL}}class="active" {{end}}>
                             <a id="nav-{{ .Name }}" href="{{ .URL | absLangURL }}" class="has-children">{{ .Name }}</a>
                             <span class="sub-menu">
                                 {{- range .Children }}
@@ -28,19 +29,19 @@
                             </span>
                         </li>
                         {{- else }}
-                        <li {{ if eq $section .Name}}class="active" {{end}}>
+                        <li {{ if eq $current.RelPermalink .URL}}class="active" {{end}}>
                             <a id="nav-{{ .Name }}" href="{{ .URL | absLangURL }}">{{ .Name }}</a>
                         </li>
                         {{- end }}
                         {{- end }}
-                        <li {{ if eq $section "search"}}class='search active visible-xs'
-                            {{end}}{{ if ne $section "search"}}class='search visible-xs' {{end}}><a
+                        <li {{ if eq $current "search"}}class='search active visible-xs'
+                            {{end}}{{ if ne $current "search"}}class='search visible-xs' {{end}}><a
                                 href="/Search">Search</a></li>
                         <li class="visible-xs"><a href="/Download">Download</a></li>
                     </ul>
 
                     <ul class="nav navbar-nav navbar-right">
-                        {{if ne $section "search"}}
+                        {{if ne $current "search"}}
                         <li>
                             <a href="/Search" title="Search" class="btn search-btn" id="nav-search">
                                 <img class="search-icon" src="/assets/icons/search.svg" width="16px" height="16px"
