@@ -3,11 +3,11 @@ title: Welcome to the Fluid Community
 ---
 
 <div class="row">
-<div class="col-md-6 col-md-push-3 text-lg">
+<div class="col-md-6 col-md-push-3 text-primary">
 <blockquote>
-<p>We believe that an <strong>open, inclusive and respectful</strong> community will help shape a better future for this project. That's why Fluid is an Open Source Project <a href="https://github.com/microsoft/FluidFramework/blob/master/LICENSE.txt" target="blank">MIT license</a> which adopted the <a href="https://opensource.microsoft.com/codeofconduct/" target="blank">Microsoft Open Source Code of Conduct</a>.
+<p>We believe that an <strong>open, inclusive and respectful</strong> community will help shape a better future for this project. That's why Fluid is an <strong>Open Source</strong> Project <a href="https://github.com/microsoft/FluidFramework/blob/master/LICENSE.txt" target="blank">MIT license</a> which adopted the <a href="https://opensource.microsoft.com/codeofconduct/" target="blank">Microsoft Open Source <strong>Code of Conduct</strong></a>.
 </p>
-<p>Below you will find various ways to get involved in the community.</p>
+<p>Below you will find various ways to get <strong>involved in the community.</strong></p>
 </blockquote>
 </div>
 </div>
