@@ -30,7 +30,7 @@ class MyDataObject extends DataObject implements IFluidHTMLView { }
 ### The `root` SharedDirectory
 
 DataObject has a `root` property that is a [SharedDirectory][]. Typically you will create any additional distributed data
-structures during the initialization of the DataObject, as described below, and store references to them within the root
+structures during the initialization of the DataObject, as described below, and store handles to them within the root
 SharedDirectory.
 
 ### DataObject lifecycle
