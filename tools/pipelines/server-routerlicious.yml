@@ -57,7 +57,7 @@ stages:
   jobs:
     - job: build
       displayName: Build - Server
-      pool: Default
+      pool: Main
       steps:
         # Checkout
         - checkout: self
@@ -65,8 +65,22 @@ stages:
           lfs: false
           submodules: false
 
+        - task: Bash@3
+          displayName: Strip MIT License
+          inputs:
+            targetType: 'inline'
+            workingDirectory: server/routerlicious
+            script: |
+              sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
+              perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
+              git status
+
         # Component detection (not pull request)
         - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+          - task: UseNode@1
+            displayName: Use Node 12.x
+            inputs: 
+              version: 12.x
           - task: npmAuthenticate@0
             displayName: 'npm Authenticate root .npmrc'
             inputs:
