@@ -119,16 +119,18 @@ stages:
                 STORAGE_KEY: $(STORAGE_KEY)
                 DEST_PATH: '/_api-extractor/$(Build.SourceVersion)/'
                 artifactName:  'api-extractor-json'
-
-            # Invoke REST API
-            - task: InvokeRESTAPI@1
-              inputs:
-                connectionType: 'connectedServiceName' # Options: connectedServiceName, connectedServiceNameARM
-                serviceConnection: 'github.com_tylerbutler' # Required when connectionType == ConnectedServiceName
-                #azureServiceConnection: # Required when connectionType == ConnectedServiceNameARM
-                method: 'POST' # Options: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, PATCH
-                headers: '{Accept:application/vnd.github.v3+json}'
-                body: '{"ref": "$(Build.SourceVersion)"}' # Required when method != GET && Method != HEAD
-                urlSuffix: /repos/microsoft/FluidFramework/actions/workflows/{azure-static-web-apps-polite-pebble-004dbbb10.yml/dispatches # Optional
-                waitForCompletion: 'false' # Options: true, false
-                #successCriteria: # Optional
+    - job: trigger_github_action
+      displayName: 'Trigger GitHub Action'
+      pool: server
+      steps:
+      - task: InvokeRESTAPI@1
+        inputs:
+          connectionType: 'connectedServiceName' # Options: connectedServiceName, connectedServiceNameARM
+          serviceConnection: 'github.com_tylerbutler' # Required when connectionType == ConnectedServiceName
+          #azureServiceConnection: # Required when connectionType == ConnectedServiceNameARM
+          method: 'POST' # Options: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, PATCH
+          headers: '{Accept:application/vnd.github.v3+json}'
+          body: '{"ref": "$(Build.SourceVersion)"}' # Required when method != GET && Method != HEAD
+          urlSuffix: /repos/microsoft/FluidFramework/actions/workflows/{azure-static-web-apps-polite-pebble-004dbbb10.yml/dispatches # Optional
+          waitForCompletion: 'false' # Options: true, false
+          #successCriteria: # Optional
