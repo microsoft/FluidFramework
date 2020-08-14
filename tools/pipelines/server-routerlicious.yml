@@ -57,7 +57,7 @@ stages:
   jobs:
     - job: build
       displayName: Build - Server
-      pool: Default
+      pool: Main
       steps:
         # Checkout
         - checkout: self
