@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-export interface IRevertable {
+export interface IRevertible {
     revert();
     discard();
 }
@@ -48,8 +48,8 @@ class Stack<T> {
 /**
  * Helper class for creating the Undo and Redo stacks
  */
-class UndoRedoStack extends Stack<Stack<IRevertable> | undefined> {
-    public push(item: Stack<IRevertable> | undefined) {
+class UndoRedoStack extends Stack<Stack<IRevertible> | undefined> {
+    public push(item: Stack<IRevertible> | undefined) {
         if (item !== undefined) {
             // eslint-disable-next-line @typescript-eslint/unbound-method
             item.itemPushedCallback = () => this.callItemPushedCallback;
@@ -161,7 +161,7 @@ export class UndoRedoStackManager {
         return true;
     }
 
-    public pushToCurrentOperation(revertable: IRevertable) {
+    public pushToCurrentOperation(revertible: IRevertible) {
         let currentStack: UndoRedoStack;
 
         switch (this.mode) {
@@ -183,9 +183,9 @@ export class UndoRedoStackManager {
         }
         const operationStack = currentStack.top();
         if (operationStack === undefined) {
-            currentStack.push(new Stack<IRevertable>(revertable));
+            currentStack.push(new Stack<IRevertible>(revertible));
         } else {
-            operationStack.push(revertable);
+            operationStack.push(revertible);
         }
     }
 
