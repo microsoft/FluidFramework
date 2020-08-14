@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as path from "path";
 import { Package, Packages } from "./npmPackage";
 import { MonoRepo, MonoRepoKind } from "./monoRepo";
 import { FluidPackageCheck } from "./build/fluidPackageCheck";
@@ -28,14 +29,23 @@ export class FluidRepoBase {
 
     // There are two separate definitions for repos as there is a common pattern of there
     // being a Fluid client side and server side repo. However, not all client repos necessarily
-    // need to have a server mono repo. Those that do should drop the undefined type definition.
+    // need to have a server mono repo.
     public readonly clientMonoRepo: MonoRepo;
     public readonly serverMonoRepo: MonoRepo | undefined;
 
     public packages: Packages;
-    constructor(public readonly resolvedRoot: string) {
+    constructor(public readonly resolvedRoot: string, serverPath: string, additionalPackages?: Package[]) {
         this.clientMonoRepo = new MonoRepo(MonoRepoKind.Client, this.resolvedRoot);
-        this.packages = new Packages(this.clientMonoRepo.packages);
+        if (serverPath) {
+            this.serverMonoRepo = new MonoRepo(MonoRepoKind.Server, path.join(this.resolvedRoot, serverPath));
+        }
+        this.packages = new Packages(
+            [
+                ...this.clientMonoRepo.packages,
+                ...(this.serverMonoRepo?.packages || []),
+                ...(additionalPackages || []),
+            ]
+        );
     }
 
     public createPackageMap() {
@@ -95,8 +105,12 @@ export class FluidRepoBase {
         return this.matchWithFilter(pkg => pkg.monoRepo?.kind === matchMonoRepo);
     }
 
+
     public async checkPackages(fix: boolean) {
         for (const pkg of this.packages.packages) {
+            if (FluidPackageCheck.checkScripts(pkg, fix)) {
+                await pkg.savePackageJson();
+            }
             await FluidPackageCheck.checkNpmIgnore(pkg, fix);
             await FluidPackageCheck.checkTsConfig(pkg, fix);
         }

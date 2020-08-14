@@ -132,7 +132,6 @@ export class BuildGraph {
         // TODO: This function can only be called once
         const isUpToDate = await this.isUpToDate();
         if (timer) timer.time(`Check up to date completed`);
-
         logStatus(`Starting npm script "${chalk.cyanBright(this.buildScriptNames.join(" && "))}" for ${this.buildPackages.size} packages, ${this.buildContext.taskStats.leafTotalCount} tasks`);
         if (isUpToDate) {
             return BuildResult.UpToDate;

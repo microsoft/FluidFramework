@@ -93,7 +93,7 @@ async function main() {
     const resolvedRoot = await getResolvedFluidRoot(FluidRepoName.Default);
 
     // Load the package
-    const packages = new FluidRepoBase(resolvedRoot).packages;
+    const packages = new FluidRepoBase(resolvedRoot, "server/routerlicious").packages;
     timer.time("Package scan completed");
 
     try {

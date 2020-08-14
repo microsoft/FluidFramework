@@ -199,7 +199,7 @@ async function main() {
     const resolvedRoot = await getResolvedFluidRoot(FluidRepoName.Default);
 
     // Load the package
-    const repo = new FluidRepoBase(resolvedRoot);
+    const repo = new FluidRepoBase(resolvedRoot, "server/routerlicious");
     timer.time("Package scan completed");
 
     await generateMonoRepoInstallPackageJson(repo.clientMonoRepo);

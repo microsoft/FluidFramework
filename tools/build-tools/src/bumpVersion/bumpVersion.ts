@@ -15,7 +15,7 @@ import { Package } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
 import { GitRepo, fatal, exec, execNoError } from "./utils";
 import * as os from "os";
-import { FDLRepo } from "../FDLBuild/FDLRepo";
+import { assert } from "console";
 
 function printUsage() {
     console.log(
@@ -436,7 +436,7 @@ class BumpVersion {
         this.timer = new Timer(commonOptions.timer);
 
         // Load the package
-        this.repo = new FluidRepoBase(this.gitRepo.resolvedRoot);
+        this.repo = new FluidRepoBase(this.gitRepo.resolvedRoot, "server/routerlicious");
         this.timer.time("Package scan completed");
 
         this.fullPackageMap = this.repo.createPackageMap();
@@ -1048,11 +1048,11 @@ class BumpVersion {
         switch (this.repo.fluidRepoName) {
             case FluidRepoName.FDL:
                 // TODO: Don't hard code order
-                const fluidRepo = this.repo as FDLRepo;
                 await this.releasePackage(depVersions, ["@fluidframework/eslint-config-fluid", "@fluidframework/build-common"]);
                 await this.releasePackage(depVersions, ["@fluidframework/common-definitions"]);
                 await this.releasePackage(depVersions, ["@fluidframework/common-utils"]);
-                await this.releaseMonoRepo(depVersions, fluidRepo.serverMonoRepo);
+                assert(this.repo.serverMonoRepo, "FDL Repo is missing the server mono repo");
+                await this.releaseMonoRepo(depVersions, this.repo.serverMonoRepo!);
                 await this.releaseMonoRepo(depVersions, this.repo.clientMonoRepo);
                 await this.releasePackage(depVersions, [generatorFluidPackageName, "tinylicious"]);
                 break;
@@ -1220,7 +1220,6 @@ class BumpVersion {
 async function main() {
     parseOptions(process.argv);
     // TODO: Figure out how to dynamically get GitHub URL
-    console.log(`hi`);
     const resolvedRoot = await getResolvedFluidRoot(FluidRepoName.Default);
     console.log(`Repo: ${resolvedRoot}`);
     const gitRepo = new GitRepo(resolvedRoot);
