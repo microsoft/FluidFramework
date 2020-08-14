@@ -1,6 +1,6 @@
 ## Feature detection via IFluidObject
 
-In the previous section we introduced DataObjects, a convenient way to combine distributed data structures and our own
+In the previous section we introduced the DataObject, a convenient way to combine distributed data structures and our own
 code (business logic) into a modular, reusable piece. This in turn enables us to modularize pieces of our application –-
 data included.
 
@@ -20,13 +20,13 @@ section.
 The following is an example of feature detection using `IFluidObject`:
 
 ```typescript
-let anUnknownObject = anyObject as IFluidObject;
+const anUnknownObject = anyObject as IFluidObject;
 
 // Query the object to see if it supports IFluidLoadable
 const loadable = fluidObject.IFluidLoadable; // loadable: IFluidLoadable | undefined
 
-if (loadable) { // or if (foo !== undefined)
-    // It does! Now we have an IFluidLoadable and can safely call a method
+if (loadable) { // or if (loadable !== undefined)
+    // It does! Now we know definitively that loadable's type is IFluidLoadable and we can safely call a method
     await loadable.method();
 }
 ```
@@ -54,7 +54,7 @@ export interface IProvideFluidLoadable {
 We call this the _IProvide pattern_. This interface definition means that if we have an `IProvideFluidLoadable`, we may
 call `.IFluidLoadable` on it and get an `IFluidLoadable` back -- which is what we did in the code sample above.
 
-As mentioned earlier, an object that supports IFluidLoadable may choose to return itself. This is quite common in
+As mentioned earlier, an object that implements IFluidLoadable may choose to return itself. This is quite common in
 practice and is facilitated by the following convention: `IFluidFoo extends IProvideFluidFoo`.
 
 Returning to our `IFluidLoadable` example:
