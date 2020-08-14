@@ -19,10 +19,12 @@ jobs:
         with:
           submodules: false
       - name: Extract Docs
-          - run: npm install
-          - run: npm run build:fast -- --symlink:full --install --all
-          - run: npm run build:fast -- -s build -s build:docs --nolint --all
-          - run: npm run build:gendocs
+        id: extract-docs
+        run:  |
+          npm install
+          npm run build:fast -- --symlink:full --install --all
+          npm run build:fast -- -s build -s build:docs --nolint --all
+          npm run build:gendocs
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v0.0.1-preview
