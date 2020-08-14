@@ -26,7 +26,8 @@ jobs:
         id: docs-json
         run: |
           wget https://fluidframework.z19.web.core.windows.net/${{ github.sha }}.tar.gz
-          tar -C /_api-extractor-temp/doc-models/ -zxvf ${{ github.sha }}.tar.gz
+          mkdir -p ./_api-extractor-temp/doc-models/
+          tar -C ./_api-extractor-temp/doc-models/ -zxvf ${{ github.sha }}.tar.gz
       - name: npm run build:gendocs
         id: gendocs
         run: |
