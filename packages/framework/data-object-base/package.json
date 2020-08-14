@@ -1,7 +1,7 @@
 {
-  "name": "@fluidframework/component-base",
+  "name": "@fluidframework/data-object-base",
   "version": "0.25.0",
-  "description": "Component base.",
+  "description": "Data object base for synchronously and lazily loaded object scenarios",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

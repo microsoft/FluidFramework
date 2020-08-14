@@ -5,7 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { PureDataObjectFactory, PureDataObject } from "@fluidframework/component-base";
+import { LazyLoadedDataObjectFactory, LazyLoadedDataObject } from "@fluidframework/component-base";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { FlowDocument } from "../document";
@@ -13,8 +13,8 @@ import { hostType } from "../package";
 import { WebflowView } from "./host";
 import { importDoc } from "./import";
 
-export class WebFlow extends PureDataObject<ISharedDirectory> implements IFluidHTMLView {
-    private static readonly factory = new PureDataObjectFactory<WebFlow>(
+export class WebFlow extends LazyLoadedDataObject<ISharedDirectory> implements IFluidHTMLView {
+    private static readonly factory = new LazyLoadedDataObjectFactory<WebFlow>(
         hostType,
         WebFlow,
         /* root: */ SharedDirectory.getFactory(),

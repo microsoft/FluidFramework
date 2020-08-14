@@ -22,7 +22,7 @@ import { ISharedObject } from "@fluidframework/shared-object-base";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
 
-export abstract class PureDataObject<
+export abstract class LazyLoadedDataObject<
     TRoot extends ISharedObject = ISharedObject,
     TEvents extends IEvent = IEvent>
     extends EventForwarder<TEvents>
@@ -33,10 +33,6 @@ export abstract class PureDataObject<
     public get IFluidLoadable() { return this; }
     public get IFluidHandle() { return this.handle; }
     public get IProvideFluidHandle() { return this; }
-
-    /**
-     * Handle to a shared component
-     */
 
     protected readonly root: TRoot;
 
@@ -74,7 +70,7 @@ export abstract class PureDataObject<
     }
 
     /**
-     * Absolute URL to the component within the document
+     * Absolute URL to the data object within the document
      */
     public get url() { return this.runtime.IFluidHandleContext.absolutePath; }
 
