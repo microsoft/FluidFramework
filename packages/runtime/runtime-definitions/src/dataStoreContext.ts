@@ -333,15 +333,6 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
          */
         createParam: CreateChildSummarizerNodeParam,
     ): CreateChildSummarizerNodeFn;
-
-    /**
-     * Take a package name and transform it into a path that can be used to find it
-     * from this context, such as by looking into subregistries
-     * @param subpackage - The subpackage to find in this context
-     * @returns A list of packages to the subpackage destination if found,
-     * otherwise the original subpackage
-     */
-    composeSubpackagePath(subpackage: string): Promise<string[]>;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {

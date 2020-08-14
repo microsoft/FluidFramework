@@ -187,7 +187,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     protected channel: IFluidDataStoreChannel | undefined;
     private loaded = false;
     protected pending: ISequencedDocumentMessage[] | undefined = [];
-    private channelDeferred: Deferred<IFluidDataStoreChannel> | undefined;
+    protected channelDeferred: Deferred<IFluidDataStoreChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNode;
@@ -282,7 +282,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     }
 
     private async realizeCore(): Promise<void> {
-        this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
         const details = await this.getInitialSnapshotDetails();
         // Base snapshot is the baseline where pending ops are applied to.
         // It is important that this be in sync with the pending ops, and also
@@ -511,16 +510,9 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
         try
         {
-            if (this.channelDeferred === undefined) {
-                // create deferred first, such that we can reject it in catch() block if assert fires.
-                this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
-                assert(this.detachedRuntimeCreation);
-                this.detachedRuntimeCreation = false;
-            } else {
-                assert(!this.detachedRuntimeCreation);
-            }
-            // pkg should be set for all paths except possibly for detached creation
-            assert(this.pkg !== undefined, "Please call attachRuntime()!");
+            assert(!this.detachedRuntimeCreation);
+            assert(this.channelDeferred !== undefined);
+            assert(this.pkg !== undefined);
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const pending = this.pending!;
@@ -557,39 +549,6 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
             return undefined;
         }
         return this._containerRuntime.getAbsoluteUrl(relativeUrl);
-    }
-
-    /**
-     * Take a package name and transform it into a path that can be used to find it
-     * from this context, such as by looking into subregistries
-     * @param subpackage - The subpackage to find in this context
-     * @returns A list of packages to the subpackage destination if found,
-     * otherwise the original subpackage
-     */
-    public async composeSubpackagePath(subpackage: string): Promise<string[]> {
-        const details = await this.getInitialSnapshotDetails();
-        let packagePath: string[] = [...details.pkg];
-
-        // A factory could not contain the registry for itself. So if it is the same the last snapshot
-        // pkg, return our package path.
-        if (packagePath.length > 0 && subpackage === packagePath[packagePath.length - 1]) {
-            return packagePath;
-        }
-
-        // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
-        // to the packagePath. If not, look into the global registry and the packagePath becomes just the
-        // passed package.
-        if (await this.registry?.get(subpackage)) {
-            packagePath.push(subpackage);
-        } else {
-            if (!(await this._containerRuntime.IFluidDataStoreRegistry.get(subpackage))) {
-                throw new Error(`Registry does not contain entry for package '${subpackage}'`);
-            }
-
-            packagePath = [subpackage];
-        }
-
-        return packagePath;
     }
 
     public abstract generateAttachMessage(): IAttachMessage;
@@ -707,6 +666,9 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     }
 }
 
+/**
+ * Base class for detached & attached context classes
+ */
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     constructor(
         id: string,
@@ -771,6 +733,12 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     }
 }
 
+/**
+ * context implementation for "attached" data store runtime.
+ * Various workflows (snapshot creation, requests) result in .realize() being called
+ * on context, resulting in instantiation and attachment of runtime.
+ * Runtime is created using data store factory that is associated with this context.
+ */
 export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
     constructor(
         id: string,
@@ -794,6 +762,12 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
     }
 }
 
+/**
+ * Detached context. Data Store runtime will be attached to it by attachRuntime() call
+ * Before attachment happens, this context is not associated with particular type of runtime
+ * or factory, i.e. it's package path is undefined.
+ * Attachment process provides all missing parts - package path, data store runtime, and data store factory
+ */
 export class LocalDetachedFluidDataStoreContext
     extends LocalFluidDataStoreContextBase
     implements IFluidDataStoreContextDetached
@@ -826,6 +800,7 @@ export class LocalDetachedFluidDataStoreContext
         dataStoreRuntime: IFluidDataStoreChannel)
     {
         assert(this.detachedRuntimeCreation);
+        assert(this.channelDeferred === undefined);
         assert(this.pkg === undefined);
 
         const factory = registry.IFluidDataStoreFactory;
@@ -836,6 +811,9 @@ export class LocalDetachedFluidDataStoreContext
 
         assert(this.registry === undefined);
         this.registry = entry.registry;
+
+        this.detachedRuntimeCreation = false;
+        this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
 
         super.bindRuntime(dataStoreRuntime);
     }

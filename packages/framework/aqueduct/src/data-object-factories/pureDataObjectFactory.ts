@@ -41,22 +41,38 @@ function buildRegistryPath(
 }
 
 /*
- * An association of identifiers to component registry entries, where the
- * entries can be used to create components.
+ * This interface is exposed by data store objects to create sub-objects.
+ * It assumes that factories passed in to methods of this interface are present in registry of object's context
+ * that is represented by this interface.
  */
 export interface IFluidDataObjectFactory {
+    /**
+     * Creates a new child instance of the object. Uses PureDataObjectFactory for that, and thus we
+     * have type information about object created and can pass in initia state.
+     * @param initialState - The initial state to provide to the created component.
+     * @returns an object created by this factory. Data store and objects created are not attached to container.
+     * They get attached only when a handle to one of them is attached to already attached objects.
+     */
     createChildInstance<
         P,
         S,
         TObject extends PureDataObject<P,S>,
         TFactory extends PureDataObjectFactory<TObject, P,S>>
-    (subFactory: TFactory, props?: S): Promise<TObject>;
+    (subFactory: TFactory, initialState?: S): Promise<TObject>;
 
+    /**
+     * Similar to above, but uses any data store factory. Given that there is no type information about such factory
+     * (or objects it creates, hanse "Anonymous" in name), IFluidObject (by default) is returned by doing a request
+     * to created data store.
+     */
     createAnonymousChildInstance<T = IFluidObject>(
         subFactory: IFluidDataStoreFactory,
         request?: string | IRequest): Promise<T>;
 }
 
+/**
+ * An implementation of IFluidDataObjectFactory for PureDataObjectFactory's objects (i.e. PureDataObject).
+ */
 class FluidDataObjectFactory {
     constructor(private readonly context: IFluidDataStoreContext) {
     }
@@ -65,9 +81,9 @@ class FluidDataObjectFactory {
         P,
         S,
         TObject extends PureDataObject<P,S>,
-        TFactory extends PureDataObjectFactory<TObject,P,S>>(subFactory: TFactory, props?: S)
+        TFactory extends PureDataObjectFactory<TObject,P,S>>(subFactory: TFactory, initialState?: S)
     {
-        return subFactory.createChildInstance(this.context, props);
+        return subFactory.createChildInstance(this.context, initialState);
     }
 
     public async createAnonymousChildInstance<T = IFluidObject>(
@@ -215,13 +231,15 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
     }
 
     /**
-     * Implementation of IFluidDataStoreFactory's createInstance method that also exposes an initial
-     * state argument.  Only specific factory instances are intended to take initial state.
-     * @param context - The component context being used to create the component
-     * (the created component will have its own new context created as well)
+     * Creates a new instance of the object. Uses parent context's registry to build package path to this factory.
+     * In other words, registry of context passed in has to contain this factory, with the name that matches
+     * this factory's type.
+     * It is intended to be used by data store objects that create sub-objects.
+     * @param context - The component context being used to create the object
+     * (the created object will have its own new context created as well)
      * @param initialState - The initial state to provide to the created component.
-     * @returns A promise for a component that will have been initialized. Caller is responsible
-     * for attaching the component to the provided runtime's container such as by storing its handle
+     * @returns an object created by this factory. Data store and objects created are not attached to container.
+     * They get attached only when a handle to one of them is attached to already attached objects.
      */
     public async createChildInstance(
         parentContext: IFluidDataStoreContext,
@@ -231,6 +249,16 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
         return this.createInstanceCore(parentContext.containerRuntime, packagePath, initialState);
     }
 
+    /**
+     * Creates a new instance of the object. Uses peer context's registry and its package path to identify this factory.
+     * In other words, registry of context passed in has to have this factory.
+     * Intended to be used by data store objects that need to create peers (similar) instances of existing objects.
+     * @param context - The component context being used to create the object
+     * (the created object will have its own new context created as well)
+     * @param initialState - The initial state to provide to the created component.
+     * @returns an object created by this factory. Data store and objects created are not attached to container.
+     * They get attached only when a handle to one of them is attached to already attached objects.
+     */
     public async createPeerInstance(
         peerContext: IFluidDataStoreContext,
         initialState?: S,
@@ -238,6 +266,16 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
         return this.createInstanceCore(peerContext.containerRuntime, peerContext.packagePath, initialState);
     }
 
+    /**
+     * Creates a new instance of the object. Uses container's registry (root) to find this factory.
+     * It's expected that only container owners would use this functionality, as only such developers
+     * have knowledge of root entries in container registry.
+     * The name in this registry for such record should match type of this factory.
+     * @param runtime - container runtime. It's registry is used to create an object.
+     * @param initialState - The initial state to provide to the created component.
+     * @returns an object created by this factory. Data store and objects created are not attached to container.
+     * They get attached only when a handle to one of them is attached to already attached objects.
+     */
     public async createRootInstance(
         runtime: IContainerRuntimeBase,
         initialState?: S,
@@ -245,7 +283,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
         return this.createInstanceCore(runtime, [this.type], initialState);
     }
 
-    public async createInstanceCore(
+    protected async createInstanceCore(
         containerRuntime: IContainerRuntimeBase,
         packagePath: Readonly<string[]>,
         initialState?: S,
