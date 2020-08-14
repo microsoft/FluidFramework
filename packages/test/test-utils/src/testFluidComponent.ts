@@ -12,26 +12,26 @@ import {
     IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { ITestFluidComponent } from "./interfaces";
+import { ITestFluidObject } from "./interfaces";
 
 /**
- * A test component that will create a shared object for each key-value pair in the factoryEntries passed to load.
+ * A test Fluid object that will create a shared object for each key-value pair in the factoryEntries passed to load.
  * The shared objects can be retrieved by passing the key of the entry to getSharedObject.
  * It exposes the IFluidDataStoreContext and IFluidDataStoreRuntime.
  */
-export class TestFluidComponent implements ITestFluidComponent {
+export class TestFluidObject implements ITestFluidObject {
     public static async load(
         runtime: IFluidDataStoreRuntime,
         channel: IFluidDataStoreChannel,
         context: IFluidDataStoreContext,
         factoryEntries: Map<string, IChannelFactory>) {
-        const component = new TestFluidComponent(runtime, channel, context, factoryEntries);
-        await component.initialize();
+        const fluidObject = new TestFluidObject(runtime, channel, context, factoryEntries);
+        await fluidObject.initialize();
 
-        return component;
+        return fluidObject;
     }
 
-    public get ITestFluidComponent() {
+    public get ITestFluidObject() {
         return this;
     }
 
@@ -46,9 +46,9 @@ export class TestFluidComponent implements ITestFluidComponent {
     private readonly innerHandle: IFluidHandle<this>;
 
     /**
-     * Creates a new TestFluidComponent.
+     * Creates a new TestFluidObject.
      * @param runtime - The data store runtime.
-     * @param context - The componet context.
+     * @param context - The data store context.
      * @param factoryEntries - A list of id to IChannelFactory mapping. For each item in the list,
      * a shared object is created which can be retrieved by calling getSharedObject() with the id;
      */
@@ -108,32 +108,32 @@ export class TestFluidComponent implements ITestFluidComponent {
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
 
 /**
- * Creates a factory for a TestFluidComponent with the given object factory entries. It creates a data store runtime
+ * Creates a factory for a TestFluidObject with the given object factory entries. It creates a data store runtime
  * with the object factories in the entry list. All the entries with an id other than undefined are passed to the
- * component so that it can create a shared object for each.
+ * Fluid object so that it can create a shared object for each.
  *
- * For example, the following will create a component that creates and loads a SharedString and SharedDirectory. It
- * will add SparseMatrix to the data store runtime's factory so that it can be created later.
- *      new TestFluidComponentFactory([
+ * For example, the following will create a Fluid object that creates and loads a SharedString and SharedDirectory. It
+ * will add SparseMatrix to the data store's factory so that it can be created later.
+ *      new TestFluidObjectFactory([
  *          [ "sharedString", SharedString.getFactory() ],
  *          [ "sharedDirectory", SharedDirectory.getFactory() ],
 *          [ undefined, SparseMatrix.getFactory() ],
  *      ]);
  *
- * The SharedString and SharedDirectory can be retrieved via getSharedObject() on the TestFluidComponent as follows:
- *      sharedString = testFluidComponent.getSharedObject<SharedString>("sharedString");
- *      sharedDir = testFluidComponent.getSharedObject<SharedDirectory>("sharedDirectory");
+ * The SharedString and SharedDirectory can be retrieved via getSharedObject() on the TestFluidObject as follows:
+ *      sharedString = testFluidObject.getSharedObject<SharedString>("sharedString");
+ *      sharedDir = testFluidObject.getSharedObject<SharedDirectory>("sharedDirectory");
  */
-export class TestFluidComponentFactory implements IFluidDataStoreFactory {
-    public static readonly type = "TestFluidComponentFactory";
-    public readonly type = TestFluidComponentFactory.type;
+export class TestFluidObjectFactory implements IFluidDataStoreFactory {
+    public static readonly type = "TestFluidObjectFactory";
+    public readonly type = TestFluidObjectFactory.type;
 
     public get IFluidDataStoreFactory() { return this; }
 
     /**
-     * Creates a new TestFluidComponentFactory.
+     * Creates a new TestFluidObjectFactory.
      * @param factoryEntries - A list of id to IChannelFactory mapping. It creates a data store runtime with each
-     * IChannelFactory. Entries with string ids are passed to the component so that it can create a shared object
+     * IChannelFactory. Entries with string ids are passed to the Fluid object so that it can create a shared object
      * for it.
      */
     constructor(private readonly factoryEntries: ChannelFactoryRegistry) { }
@@ -157,19 +157,19 @@ export class TestFluidComponentFactory implements IFluidDataStoreFactory {
         );
 
         // Create a map from the factory entries with entries that don't have the id as undefined. This will be
-        // passed to the component.
-        const factoryEntriesMapForComponent = new Map<string, IChannelFactory>();
+        // passed to the Fluid object.
+        const factoryEntriesMapForObject = new Map<string, IChannelFactory>();
         for (const entry of this.factoryEntries) {
             const id = entry[0];
             if (id !== undefined) {
-                factoryEntriesMapForComponent.set(id, entry[1]);
+                factoryEntriesMapForObject.set(id, entry[1]);
             }
         }
 
-        const testFluidComponentP = TestFluidComponent.load(runtime, runtime, context, factoryEntriesMapForComponent);
+        const testFluidObjectP = TestFluidObject.load(runtime, runtime, context, factoryEntriesMapForObject);
         runtime.registerRequestHandler(async (request: IRequest) => {
-            const testFluidComponent = await testFluidComponentP;
-            return testFluidComponent.request(request);
+            const testFluidObject = await testFluidObjectP;
+            return testFluidObject.request(request);
         });
     }
 }
