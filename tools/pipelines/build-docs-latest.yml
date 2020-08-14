@@ -126,7 +126,7 @@ stages:
       - task: InvokeRESTAPI@1
         inputs:
           connectionType: 'connectedServiceName' # Options: connectedServiceName, connectedServiceNameARM
-          serviceConnection: 'github.com_tylerbutler' # Required when connectionType == ConnectedServiceName
+          serviceConnection: 'GitHub Actions' # Required when connectionType == ConnectedServiceName
           #azureServiceConnection: # Required when connectionType == ConnectedServiceNameARM
           method: 'POST' # Options: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, PATCH
           headers: '{Accept:application/vnd.github.v3+json}'
