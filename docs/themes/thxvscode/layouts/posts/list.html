@@ -7,7 +7,7 @@
 
 <div class="container body-content blog">
     <div class="row">
-        <div class="col-md-2 blog-navbar-container"> </div>
+        <div class="col-md-2 docs-navbar-container">{{ partial "blogNav.html" .}} </div>
         <div class="col-sm-9 col-md-8 body">
 
             {{- if .Content }}
@@ -16,21 +16,9 @@
             </div>
             {{- end }}
 
-            <h2> Latest blog posts</h2>
-            {{- range .Data.Pages.GroupByDate "2006" }}
-            <div class="posts-group">
-                <div class="post-year" id="{{ .Key }}">{{ .Key }}</div>
-                <ul class="posts-list">
-                    {{- range .Pages }}
-                    <li class="post-item">
-                        <a href="{{.RelPermalink}}">
-                            <span class="post-title">{{title .Title}}</span>
-                        </a>
-                    </li>
-                    {{- end }}
-                </ul>
-            </div>
-            {{- end }}
+            {{ range first 5 .Pages }}
+            {{ partial "blog_post.html" .}}
+            {{ end }}
 
         </div>
         <div class="hidden-xs col-sm-3 col-md-2 community-subnavbar-container">

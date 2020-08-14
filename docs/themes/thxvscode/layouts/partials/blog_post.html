@@ -1,0 +1,10 @@
+<article class="thin">
+    <header class="post-header">
+        <div class="post-meta"><span>{{ .Date.Format .Site.Params.dateform }}</span></div>
+        <h1>{{title .Title}}</h1>
+    </header>
+    <div class="content">
+        {{ .Content  }}
+    </div>
+</article>
+<hr class="post-end">
