@@ -13,7 +13,7 @@ title: Welcome to the Fluid Community
 
 {{< swimlane_container fullPage="true" >}}
 
-{{< swimlane title="Code and/or Documentation" subTitle="something GitHub." img="https://media.giphy.com/media/wKHRk5ZUup4xq/giphy.gif" >}}
+{{< swimlane title="Code and/or Documentation" subTitle="something GitHub." img="/images/github_logo.png" >}}
 
 {{< swimlane title="Questions" subTitle="Stack Overflow" pos="right" img="https://media.giphy.com/media/SXHdVRFipKSA4FNhPa/giphy.gif" >}}
 
