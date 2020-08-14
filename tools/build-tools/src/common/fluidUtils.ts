@@ -3,23 +3,40 @@
  * Licensed under the MIT License.
  */
 
+import * as fs from "fs";
 import { commonOptions } from "./commonOptions";
-import { existsSync, realpathAsync, readJsonAsync, lookUpDir } from "./utils";
+import { existsSync, realpathAsync, readJsonAsync, lookUpDir, isDirectory } from "./utils";
 import * as path from "path";
 import { logVerbose } from "./logging";
+import { FluidRepoName } from "./fluidRepoBase";
 
-async function isFluidRootLerna(dir: string) {
+async function isFluidRootLerna(dir: string, fluidRepoName: FluidRepoName) {
     const filename = path.join(dir, "lerna.json");
     if (!existsSync(filename)) {
         logVerbose(`InferRoot: lerna.json not found`);
         return false;
     }
 
-    if (!existsSync(path.join(dir, "server", "routerlicious", "lerna.json"))) {
-        logVerbose(`InferRoot: server/routerlicious/lerna.json not found`);
-        return false;
+    switch(fluidRepoName) {
+        case FluidRepoName.FDL:
+            if (!existsSync(path.join(dir, "server", "routerlicious", "lerna.json"))) {
+                logVerbose(`InferRoot: server/routerlicious/lerna.json not found`);
+                return false;
+            }
+            break;
+        case FluidRepoName.Default:
+            if (existsSync(path.join(dir, "server")) && !existsSync(path.join(dir, "server", "lerna.json"))) {
+                const files = fs.readdirSync(dir);
+                for (const file of files) {
+                    if (isDirectory(file) && existsSync(path.join(file, "lerna.json"))) {
+                        return true;
+                    }
+                    logVerbose(`InferRoot: server/lerna.json not found nor did any child directories within the server folder.
+                    If server packages do exist and are not being detected, please add the specific server path to InferRoot.`);
+                    return false;
+                }
+            }
     }
-
     return true;
 }
 
@@ -38,15 +55,15 @@ async function isFluidRootPackage(dir: string) {
     return false;
 }
 
-async function isFluidRoot(dir: string) {
-    return await isFluidRootLerna(dir) && await isFluidRootPackage(dir);
+async function isFluidRoot(dir: string, fluidRepoName: FluidRepoName) {
+    return await isFluidRootLerna(dir, fluidRepoName) && await isFluidRootPackage(dir);
 }
 
-async function inferRoot() {
+async function inferRoot(fluidRepoName: FluidRepoName) {
     return lookUpDir(process.cwd(), async (curr) => {
         logVerbose(`InferRoot: probing ${curr}`);
         try {
-            if (await isFluidRoot(curr)) {
+            if (await isFluidRoot(curr, fluidRepoName)) {
                 return true;
             }
         } catch {
@@ -55,13 +72,13 @@ async function inferRoot() {
     });
 }
 
-export async function getResolvedFluidRoot() {
+export async function getResolvedFluidRoot(fluidRepoName: FluidRepoName) {
     let checkFluidRoot = true;
     let root = commonOptions.root;
     if (root) {
         logVerbose(`Using argument root @ ${root}`);
     } else {
-        root = await inferRoot();
+        root = await inferRoot(fluidRepoName);
         if (root) {
             checkFluidRoot = false;
             logVerbose(`Using inferred root @ ${root}`);
@@ -74,7 +91,7 @@ export async function getResolvedFluidRoot() {
         }
     }
 
-    if (checkFluidRoot && !isFluidRoot(root)) {
+    if (checkFluidRoot && !isFluidRoot(root, fluidRepoName)) {
         console.error(`ERROR: '${root}' is not a root of fluid repo.`);
         process.exit(-100);
     }

@@ -8,7 +8,7 @@ import { commonOptions, commonOptionString, parseOption } from "../common/common
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { writeFileAsync, appendFileAsync } from "../common/utils";
-import { FluidRepoBase } from "../common/fluidRepoBase";
+import { FluidRepoBase, FluidRepoName } from "../common/fluidRepoBase";
 import path from "path";
 
 function printUsage() {
@@ -90,7 +90,7 @@ parseOptions(process.argv);
 async function main() {
     const timer = new Timer(commonOptions.timer);
 
-    const resolvedRoot = await getResolvedFluidRoot();
+    const resolvedRoot = await getResolvedFluidRoot(FluidRepoName.Default);
 
     // Load the package
     const packages = new FluidRepoBase(resolvedRoot, false).packages;

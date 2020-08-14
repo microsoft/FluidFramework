@@ -57,7 +57,7 @@ export async function execAsync(command: string, options: child_process.ExecOpti
         const p = child_process.exec(command, options, (error, stdout, stderr) => {
             resolve({ error, stdout, stderr });
         });
-        
+
         if (pipeStdIn) {
             p.stdin.write(pipeStdIn);
             p.stdin.end();
@@ -119,6 +119,10 @@ export async function readJsonAsync(filename: string) {
 export function readJsonSync(filename: string) {
     const content = fs.readFileSync(filename, "utf-8");
     return JSON.parse(content);
+}
+
+export async function isDirectory(filename: string) {
+    return (await lstatAsync(filename)).isDirectory();
 }
 
 export async function lookUpDir(dir: string, callback: (currentDir: string) => boolean | Promise<boolean>) {

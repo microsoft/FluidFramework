@@ -13,12 +13,13 @@ import { BuildResult } from "./buildGraph";
 import { parseOptions, options } from "./options";
 import * as path from "path";
 import chalk from "chalk";
+import { FluidRepoName } from "../common/fluidRepoBase";
 
 parseOptions(process.argv);
 
 async function main() {
     const timer = new Timer(commonOptions.timer);
-    const resolvedRoot = await getResolvedFluidRoot();
+    const resolvedRoot = await getResolvedFluidRoot(FluidRepoName.FDL);
 
     logStatus(`Processing ${resolvedRoot}`);
 
@@ -92,7 +93,7 @@ async function main() {
         await repo.checkPackages(options.fix);
         timer.time("Check scripts completed");
 
-        
+
         if (options.clean || options.build !== false) {
             logStatus(`Symlink in ${options.fullSymlink ? "full" : options.fullSymlink === false ? "isolated" : "non-dependent"} mode`);
 

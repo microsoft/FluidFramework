@@ -8,13 +8,14 @@ import * as path from "path";
 import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { FluidRepoBase } from "../common/fluidRepoBase";
+import { FluidRepoBase, FluidRepoName } from "../common/fluidRepoBase";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import * as semver from "semver";
 import { Package } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
 import { GitRepo, fatal, exec, execNoError } from "./utils";
 import * as os from "os";
+import { FluidRepo } from "../fluidBuild/fluidRepo";
 
 function printUsage() {
     console.log(
@@ -540,7 +541,7 @@ class BumpVersion {
 
         if (releaseName === MonoRepoKind[MonoRepoKind.Client]) {
             processMonoRepo(this.repo.clientMonoRepo);
-        } else if (releaseName === MonoRepoKind[MonoRepoKind.Server]) {
+        } else if (releaseName === MonoRepoKind[MonoRepoKind.Server] && this.repo.serverMonoRepo) {
             processMonoRepo(this.repo.serverMonoRepo);
         } else {
             const pkg = this.fullPackageMap.get(releaseName);
@@ -621,7 +622,7 @@ class BumpVersion {
             let pkg: Package | undefined;
             if (name === MonoRepoKind[MonoRepoKind.Client]) {
                 await processMonoRepo(this.repo.clientMonoRepo);
-            } else if (name === MonoRepoKind[MonoRepoKind.Server]) {
+            } else if (name === MonoRepoKind[MonoRepoKind.Server] && this.repo.serverMonoRepo) {
                 await processMonoRepo(this.repo.serverMonoRepo);
             } else {
                 pkg = this.fullPackageMap.get(name);
@@ -651,7 +652,7 @@ class BumpVersion {
             await bumpMonoRepo(this.repo.clientMonoRepo);
         }
 
-        if (serverNeedBump) {
+        if (serverNeedBump && this.repo.serverMonoRepo) {
             console.log("  Bumping server version");
             await bumpMonoRepo(this.repo.serverMonoRepo);
         }
@@ -1044,13 +1045,20 @@ class BumpVersion {
             await this.createBranch(pendingReleaseBranch);
         }
 
-        // TODO: Don't hard code order
-        await this.releasePackage(depVersions, ["@fluidframework/eslint-config-fluid", "@fluidframework/build-common"]);
-        await this.releasePackage(depVersions, ["@fluidframework/common-definitions"]);
-        await this.releasePackage(depVersions, ["@fluidframework/common-utils"]);
-        await this.releaseMonoRepo(depVersions, this.repo.serverMonoRepo);
-        await this.releaseMonoRepo(depVersions, this.repo.clientMonoRepo);
-        await this.releasePackage(depVersions, [generatorFluidPackageName, "tinylicious"]);
+        switch (this.repo.fluidRepoName) {
+            case FluidRepoName.FDL:
+                // TODO: Don't hard code order
+                const fluidRepo = this.repo as FluidRepo;
+                await this.releasePackage(depVersions, ["@fluidframework/eslint-config-fluid", "@fluidframework/build-common"]);
+                await this.releasePackage(depVersions, ["@fluidframework/common-definitions"]);
+                await this.releasePackage(depVersions, ["@fluidframework/common-utils"]);
+                await this.releaseMonoRepo(depVersions, fluidRepo.serverMonoRepo);
+                await this.releaseMonoRepo(depVersions, this.repo.clientMonoRepo);
+                await this.releasePackage(depVersions, [generatorFluidPackageName, "tinylicious"]);
+                break;
+            default:
+                await this.releaseMonoRepo(depVersions, this.repo.clientMonoRepo);
+        }
 
         // ------------------------------------------------------------------------------------------------------------------
         // Create the minor version bump for development in a temporary merge/<original branch> on top of the release commit
@@ -1100,7 +1108,7 @@ class BumpVersion {
             if (ret.error) {
                 fatal("Install failed");
             }
-        } else if (name === MonoRepoKind[MonoRepoKind.Server]) {
+        } else if (name === MonoRepoKind[MonoRepoKind.Server] && this.repo.serverMonoRepo) {
             serverNeedBump = true;
             const ret = await this.repo.serverMonoRepo.install();
             if (ret.error) {
@@ -1211,7 +1219,9 @@ class BumpVersion {
  */
 async function main() {
     parseOptions(process.argv);
-    const resolvedRoot = await getResolvedFluidRoot();
+    // TODO: Figure out how to dynamically get GitHub URL
+    console.log(`hi`);
+    const resolvedRoot = await getResolvedFluidRoot(FluidRepoName.Default);
     console.log(`Repo: ${resolvedRoot}`);
     const gitRepo = new GitRepo(resolvedRoot);
     const remotes = await gitRepo.getRemotes();

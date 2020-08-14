@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import * as path from "path";
 import { Package, Packages } from "../common/npmPackage";
 import { globFn } from "../common/utils";
 import { FluidPackageCheck } from "./fluidPackageCheck";
-import { FluidRepoBase } from "../common/fluidRepoBase";
+import { FluidRepoBase, FluidRepoName } from "../common/fluidRepoBase";
 import { MonoRepoKind } from "../common/monoRepo";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
@@ -21,8 +22,25 @@ export interface IPackageMatchedOptions {
 };
 
 export class FluidRepo extends FluidRepoBase {
+    public fluidRepoName = FluidRepoName.FDL;
+
+    public readonly serverMonoRepo: MonoRepo;
+
     constructor(resolvedRoot: string, services: boolean) {
         super(resolvedRoot, services);
+        this.serverMonoRepo = new MonoRepo(MonoRepoKind.Server, path.join(this.resolvedRoot, "server/routerlicious"));
+        this.packages = new Packages(
+            [
+                ...Packages.loadDir(path.join(this.resolvedRoot, "common")),
+                ...this.serverMonoRepo.packages,
+                ...this.clientMonoRepo.packages,
+                ...Packages.loadDir(path.join(this.resolvedRoot, "tools/generator-fluid")),
+                ...services ?
+                    Packages.loadDir(path.join(this.resolvedRoot, "server"), undefined, ["routerlicious"]):
+                    Packages.loadDir(path.join(this.resolvedRoot, "server/tinylicious")),
+
+            ]
+        );
     }
 
     public async clean() {
