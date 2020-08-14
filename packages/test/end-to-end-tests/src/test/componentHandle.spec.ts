@@ -18,7 +18,7 @@ import {
     createLocalLoader,
     OpProcessingController,
     initializeLocalContainer,
-    TestFluidComponent,
+    TestFluidObject,
 } from "@fluidframework/test-utils";
 
 /**
@@ -203,7 +203,7 @@ describe("FluidOjectHandle", () => {
 
         // Get the handle in the remote client.
         const remoteComponentHandle =
-            secondContainerComponent1._root.get<IFluidHandle<TestFluidComponent>>("component2");
+            secondContainerComponent1._root.get<IFluidHandle<TestFluidObject>>("component2");
 
         // Verify that the remote client's handle has the correct absolute path.
         assert.equal(remoteComponentHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");

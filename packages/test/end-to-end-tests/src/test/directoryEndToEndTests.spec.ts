@@ -13,9 +13,9 @@ import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidf
 import {
     createLocalLoader,
     OpProcessingController,
-    ITestFluidComponent,
+    ITestFluidObject,
     initializeLocalContainer,
-    TestFluidComponentFactory,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
 describe("Directory", () => {
@@ -28,21 +28,21 @@ describe("Directory", () => {
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
-    let component1: ITestFluidComponent;
+    let component1: ITestFluidObject;
     let sharedDirectory1: ISharedDirectory;
     let sharedDirectory2: ISharedDirectory;
     let sharedDirectory3: ISharedDirectory;
 
-    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
+    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidObject> {
         const response = await container.request({ url: componentId });
         if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
-        return response.value as ITestFluidComponent;
+        return response.value as ITestFluidObject;
     }
 
     async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([[directoryId, SharedDirectory.getFactory()]]);
+        const factory = new TestFluidObjectFactory([[directoryId, SharedDirectory.getFactory()]]);
         const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }

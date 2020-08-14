@@ -13,8 +13,8 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
-    ITestFluidComponent,
-    TestFluidComponentFactory,
+    ITestFluidObject,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { Deferred } from "@fluidframework/common-utils";
@@ -55,13 +55,13 @@ describe("Detached Container", () => {
         componentContext: IFluidDataStoreContext,
         type: string,
     ) => {
-        return requestFluidObject<ITestFluidComponent>(
+        return requestFluidObject<ITestFluidObject>(
             await componentContext.containerRuntime.createDataStore(type),
             "");
     });
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
-        const factory: TestFluidComponentFactory = new TestFluidComponentFactory([
+        const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
             [sharedStringId, SharedString.getFactory()],
             [sharedMapId, SharedMap.getFactory()],
             [crcId, ConsensusRegisterCollection.getFactory()],
@@ -121,9 +121,9 @@ describe("Detached Container", () => {
         if (response.mimeType !== "fluid/object" && response.status !== 200) {
             assert.fail("Root component should be created in detached container");
         }
-        const component = response.value as ITestFluidComponent;
+        const component = response.value as ITestFluidObject;
 
-        // Create a sub component of type TestFluidComponent and verify that it is attached.
+        // Create a sub component of type TestFluidObject and verify that it is attached.
         const subComponent = await createFluidObject(component.context, "default");
         component.root.set("attachKey", subComponent.handle);
         assert.strictEqual(subComponent.context.storage, undefined, "No storage should be there!!");
@@ -138,9 +138,9 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const component = response.value as ITestFluidObject;
 
-        // Create a sub component of type TestFluidComponent.
+        // Create a sub component of type TestFluidObject.
         const testComponent = await createFluidObject(component.context, "default");
         component.root.set("attachKey", testComponent.handle);
 
@@ -161,9 +161,9 @@ describe("Detached Container", () => {
         const container = await loader.createDetachedContainer(pkg);
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const component = response.value as ITestFluidObject;
 
-        // Create a sub component of type TestFluidComponent.
+        // Create a sub component of type TestFluidObject.
         const subComponent1 = await createFluidObject(component.context, "default");
         component.root.set("attachKey", subComponent1.handle);
 
@@ -179,7 +179,7 @@ describe("Detached Container", () => {
 
         // Get the sub component and assert that it is attached.
         const response2 = await container2.request({ url: `/${subComponent1.context.id}` });
-        const subComponent2 = response2.value as ITestFluidComponent;
+        const subComponent2 = response2.value as ITestFluidObject;
         assert.strictEqual(subComponent2.runtime.IFluidHandleContext.isAttached, true,
             "Component should be attached!!");
 
@@ -214,7 +214,7 @@ describe("Detached Container", () => {
 
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const component = response.value as ITestFluidObject;
         const testChannel1 = await component.getSharedObject<SharedString>(sharedStringId);
 
         // Fire op before attaching the container
@@ -244,7 +244,7 @@ describe("Detached Container", () => {
 
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const component = response.value as ITestFluidObject;
         const testChannel1 = await component.getSharedObject<SharedMap>(sharedMapId);
 
         // Fire op before attaching the container
@@ -276,7 +276,7 @@ describe("Detached Container", () => {
 
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const component = response.value as ITestFluidObject;
 
         const containerP = container.attach(request);
 
@@ -294,11 +294,11 @@ describe("Detached Container", () => {
 
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const component = response.value as ITestFluidObject;
 
         const containerP = container.attach(request);
         const router = await component.context.containerRuntime.createDataStore([testComponentType]);
-        const comp2 = await requestFluidObject<ITestFluidComponent>(router, "/");
+        const comp2 = await requestFluidObject<ITestFluidObject>(router, "/");
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
@@ -334,7 +334,7 @@ describe("Detached Container", () => {
 
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const component = response.value as ITestFluidObject;
         const testChannel1 = await component.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
 
         // Fire op before attaching the container
@@ -369,7 +369,7 @@ describe("Detached Container", () => {
 
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const component = response.value as ITestFluidObject;
         const testChannel1 = await component.getSharedObject<SharedDirectory>(sharedDirectoryId);
 
         // Fire op before attaching the container
@@ -398,7 +398,7 @@ describe("Detached Container", () => {
 
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const component = response.value as ITestFluidObject;
         const testChannel1 = await component.getSharedObject<SharedCell>(sharedCellId);
 
         // Fire op before attaching the container
@@ -428,7 +428,7 @@ describe("Detached Container", () => {
 
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const component = response.value as ITestFluidObject;
         const testChannel1 = await component.getSharedObject<Ink>(sharedInkId);
 
         // Fire op before attaching the container
@@ -460,7 +460,7 @@ describe("Detached Container", () => {
 
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const component = response.value as ITestFluidObject;
         const testChannel1 = await component.getSharedObject<ConsensusQueue>(cocId);
 
         // Fire op before attaching the container
@@ -496,7 +496,7 @@ describe("Detached Container", () => {
 
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const component = response.value as ITestFluidObject;
         const testChannel1 = await component.getSharedObject<SparseMatrix>(sparseMatrixId);
 
         // Fire op before attaching the container
@@ -527,7 +527,7 @@ describe("Detached Container", () => {
 
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const component = response.value as ITestFluidObject;
         const testChannel1 = await component.getSharedObject<SharedMatrix>(sharedMatrixId);
 
         // Fire op before attaching the container
