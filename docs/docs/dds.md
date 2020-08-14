@@ -23,11 +23,12 @@ When a DDS is changed by the Fluid runtime, it raises an [event](#events). Your 
 know when data is changed by remote clients and can react appropriately. For example, you may need to recalculate a
 derived value when some data in a DDS changes.
 
-Most distributed data structures are _eventually consistent_. This means that, assuming no new changes to the data
+All Fluid distributed data structures are _eventually consistent_. This means that, assuming no new changes to the data
 structures, all of the distributed copies of the DDS will reach an identical state in a finite amount of time.
 
-The quality of eventual consistency improves performance because local changes can be made optimistically, knowing that
-the runtime will merge the change in the appropriate way eventually. This is a guarantee made by the Fluid runtime.
+The quality of eventual consistency can improve performance in many cases because local changes can be made
+optimistically, knowing that the runtime will merge the change in the appropriate way eventually. This is a guarantee
+made by the Fluid runtime.
 
 Clients must always assume their local view of data is stale since there are potentially changes from remote clients
 that they have not yet received. For scenarios where modification of the data can only be done safely with an up-to-date
@@ -64,7 +65,7 @@ You must pass in an `IFluidDataStoreRuntime` that the DDS will be managed by. We
 
 ### Storing a DDS within another DDS
 
-Distributed data structures can store primitive values like Numbers and strings, JavaScript Objects, or other
+Distributed data structures can store primitive values like numbers and strings, JavaScript Objects, or other
 distributed data structures. Primitive values and Objects can be stored directly, but when you store a DDS, you must
 store its _handle_, not the object itself.
 
