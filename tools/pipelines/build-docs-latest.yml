@@ -36,6 +36,7 @@ resources:
     trigger:
       branches:
         include:
+        - docs/hugo
         - pl-test
   - pipeline: common_definitions
     source: Build - common-definitions
@@ -87,20 +88,7 @@ stages:
         MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
         RELEASE_VERSION: $(RELEASE_VERSION)
         N1_VERSION: $(N1_VERSION)
-        VUEPRESS_BASE: '/versions/latest/'
-
-  - job: latest_release_versioned
-    displayName: 'Main branch (/versions/)'
-    steps:
-    - template: templates/build-docs-steps.yml
-      parameters:
-        BASE_URL: $(BASE_URL)
-        THIS_VERSION: $(MASTER_BRANCH_VERSION)
-        MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
-        RELEASE_VERSION: $(RELEASE_VERSION)
-        N1_VERSION: $(N1_VERSION)
-        VUEPRESS_BASE: '/versions/$(MASTER_BRANCH_VERSION)/'
-        artifactName: fluid-docs-version-path
+        artifactName: 'api-extractor-json'
 
 - stage: deploy
   displayName: Deploy Stage
@@ -129,18 +117,18 @@ stages:
               parameters:
                 STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                 STORAGE_KEY: $(STORAGE_KEY)
-                DEST_PATH: '/versions/latest/'
+                DEST_PATH: '/_api-extractor/$(Build.SourceVersion)/'
+                artifactName:  'api-extractor-json'
 
-    - deployment: latest_release_versioned
-      displayName: 'Main branch (/versions/)'
-      environment: 'fluid-docs-cdn'
-      strategy:
-        runOnce:
-          deploy:
-            steps:
-            - template: templates/deploy-docs-steps.yml
-              parameters:
-                STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
-                STORAGE_KEY: $(STORAGE_KEY)
-                DEST_PATH: '/versions/$(MASTER_BRANCH_VERSION)/'
-                artifactName: fluid-docs-version-path
+            # Invoke REST API
+            - task: InvokeRESTAPI@1
+              inputs:
+                connectionType: 'connectedServiceName' # Options: connectedServiceName, connectedServiceNameARM
+                serviceConnection: 'github.com_tylerbutler' # Required when connectionType == ConnectedServiceName
+                #azureServiceConnection: # Required when connectionType == ConnectedServiceNameARM
+                method: 'POST' # Options: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, PATCH
+                headers: '{Accept:application/vnd.github.v3+json}'
+                body: '{"ref": "$(Build.SourceVersion)"}' # Required when method != GET && Method != HEAD
+                urlSuffix: /repos/microsoft/FluidFramework/actions/workflows/{azure-static-web-apps-polite-pebble-004dbbb10.yml/dispatches # Optional
+                waitForCompletion: 'false' # Options: true, false
+                #successCriteria: # Optional
