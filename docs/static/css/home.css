@@ -3,14 +3,6 @@
     font-family: #000000;
     text-align: center;
 }
-.home .cta-icon {
-  background-repeat: no-repeat;
-  width: 5rem;
-  height: 5rem;
-  background-size: 20.6rem 10.4rem;
-  margin: auto;
-  margin-bottom: 1rem;
-}
 
 .home .cta {
   padding: 2rem 0;
@@ -19,11 +11,29 @@
   display: block;
   color: #444;
 }
-
-.home .cta :hover {
-  color: #000000;
-  background: #e3e3e3;
-  text-decoration: none;
+.cta-icon {
+    background-repeat: no-repeat;
+    width: 5rem;
+    height: 5rem;
+    margin: auto;
+    margin-bottom: 1rem;
+    fill: red;
 }
 
+.cta-icon.get-started {
+    background-image: url('/images/start.svg');
+}
+
+.cta-icon.learn {
+    background-image: url('/images/bulb.svg');
+}
+
+.cta-icon.play {
+    background-image: url('/images/experiment.svg');
+}
+
+.cta-icon :hover {
+  color: #000000;
+  text-decoration: none;
+}
 
