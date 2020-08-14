@@ -52,6 +52,10 @@ extends:
     checkoutSubmodules: true
     runBundleAnalysis: true
     preCG:
+    - task: UseNode@1
+      displayName: Use Node 12.x
+      inputs: 
+        version: 12.x
     - task: Npm@1
       displayName: npm ci
       inputs:
