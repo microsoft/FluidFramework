@@ -16,11 +16,6 @@ dateformShort = "Jan 2"
 [menu]
 
 [[menu.main]]
-name = "What is Fluid?"
-url = "/what-is-fluid"
-weight = -100
-
-[[menu.main]]
 name = "Docs"
 url = "/docs/"
 weight = -90
@@ -34,6 +29,11 @@ weight = -80
 name = "Community"
 url = "/"
 weight = -70
+
+[[menu.main]]
+name = "FAQ"
+url = "/faq"
+weight = -60
 
 [[menu.docs]]
 identifier = "get-started"
