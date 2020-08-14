@@ -2,8 +2,8 @@
 title: "Fluid Framework"
 ---
 
-{{< in_your_face lead=`Data synch <strong>re-imagined.</strong>`
-subText="Real Time. Web first. Open Source." >}}
+{{< in_your_face lead=`Data synch, <strong>reimagined.</strong>`
+subText="Real time. Web first. Open source." >}}
 
 
 <div class="ctas">
