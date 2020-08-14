@@ -42,3 +42,13 @@ html {
 .cta-icon.play {
     background-image: url('/images/experiment.svg');
 }
+
+
+#github.swimlane .screenshot  {
+    max-height: 150px;
+}
+#stackoverflow.swimlane .screenshot  {
+    max-height: 150px;
+}
+
+
