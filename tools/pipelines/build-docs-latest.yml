@@ -129,8 +129,8 @@ stages:
           serviceConnection: 'GitHub Actions' # Required when connectionType == ConnectedServiceName
           #azureServiceConnection: # Required when connectionType == ConnectedServiceNameARM
           method: 'POST' # Options: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, PATCH
-          headers: '{Accept:application/vnd.github.v3+json}'
+          headers: '{Accept: application/vnd.github.v3+json}'
           body: '{"ref": "$(Build.SourceVersion)"}' # Required when method != GET && Method != HEAD
-          urlSuffix: /repos/microsoft/FluidFramework/actions/workflows/{azure-static-web-apps-polite-pebble-004dbbb10.yml/dispatches # Optional
+          urlSuffix: repos/microsoft/FluidFramework/actions/workflows/azure-static-web-apps-polite-pebble-004dbbb10.yml/dispatches # Optional
           waitForCompletion: 'false' # Options: true, false
           #successCriteria: # Optional
