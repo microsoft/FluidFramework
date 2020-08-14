@@ -28,7 +28,7 @@ weight = -80
 
 [[menu.main]]
 name = "Community"
-url = "/"
+url = "/community/"
 weight = -70
 
 [[menu.main]]
