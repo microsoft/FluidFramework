@@ -33,24 +33,24 @@ iframe[name='google_conversion_frame'] {
 }
 
 .navbar .navbar-brand {
-//   position: relative;
-//   $brand-logo-width: 24px;
-//   background-size: $brand-logo-width $brand-logo-width;
-//   background-repeat: no-repeat;
-//   background-position: left 50%;
-//   padding-left: ($brand-logo-width + 12px);
-//   font-size: 20px;
-//   letter-spacing: -0.04rem;
-//   color: white;
-//   min-height: 50px;
-//   padding-top: 15px;
-//   line-height: 20px;
-//   @media (max-width: 320px) {
-//     $brand-logo-width: (15px * 1.2);
-//     font-size: 15px;
-//     background-size: $brand-logo-width;
-//     padding-left: ($brand-logo-width + 12px);
-//   }
+  position: relative;
+  $brand-logo-width: 24px;
+  background-size: $brand-logo-width $brand-logo-width;
+  background-repeat: no-repeat;
+  background-position: left 50%;
+  //padding-left: ($brand-logo-width + 12px);
+  font-size: 20px;
+  letter-spacing: -0.04rem;
+  color: white;
+  min-height: 50px;
+  padding-top: 15px;
+  line-height: 20px;
+  @media (max-width: 320px) {
+    $brand-logo-width: (15px * 1.2);
+    font-size: 15px;
+    background-size: $brand-logo-width;
+    padding-left: ($brand-logo-width + 12px);
+  }
 }
 
 .navbar-inverse {
@@ -290,7 +290,6 @@ iframe[name='google_conversion_frame'] {
 
   .navbar .navbar-brand {
     margin-left: 15px;
-    padding-left: 0px;
   }
 
   .navbar-inverse .navbar-nav > li > a {
