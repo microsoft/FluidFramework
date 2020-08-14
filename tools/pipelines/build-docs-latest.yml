@@ -120,7 +120,7 @@ stages:
                 DEST_PATH: '/_api-extractor/$(Build.SourceVersion)/'
                 artifactName:  'api-extractor-json'
 
-- stage: github-action
+- stage: github_actions
   displayName: GitHub Action
   pool: server
   dependsOn: deploy
