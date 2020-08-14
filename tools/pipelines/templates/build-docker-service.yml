@@ -75,6 +75,7 @@ jobs:
         displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/.npmrc'
         inputs:
           workingFile: ${{ parameters.buildDirectory }}/.npmrc
+          customEndpoint: Offnet Packages
 
     # Build
     - task: Docker@2

@@ -23,6 +23,10 @@ parameters:
   type: string
   default: ci:test
 
+- name: taskAuth
+  type: boolean
+  default: true
+
 - name: poolCG
   type: object
   default: Lite
@@ -85,12 +89,6 @@ stages:
               echo Test=${{ parameters.taskTest }}
               echo BuildDoc=${{ parameters.taskBuildDocs }}
               echo TestCoverage=$(testCoverage)
-
-        - task: UseNode@1
-          displayName: Use Node 12.x
-          inputs:
-            version: 12.x
-
         - task: Bash@3
           displayName: Strip MIT License
           inputs:
@@ -102,14 +100,23 @@ stages:
               git status
 
         # Install
+        - task: UseNode@1
+          displayName: Use Node 12.x
+          inputs:
+            version: 12.x
+        - ${{ if eq(parameters.taskAuth, true) }}:
+          - task: npmAuthenticate@0
+            displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/.npmrc'
+            inputs:
+              workingFile: ${{ parameters.buildDirectory }}/.npmrc
+              customEndpoint: Offnet Packages
         - task: Npm@1
           displayName: npm ci
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.buildDirectory }}
             customCommand: 'ci --unsafe-perm'
-            customRegistry: 'useFeed'
-            customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+            customRegistry: 'useNpmrc'
 
         # Set version
         - task: Bash@3
