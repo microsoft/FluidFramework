@@ -25,11 +25,11 @@ parameters:
 
 - name: poolCG
   type: object
-  default: Shared
+  default: Lite
 
 - name: poolBuild
   type: object
-  default: Shared
+  default: Lite
 
 - name: preCG
   type: stepList

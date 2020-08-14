@@ -9,7 +9,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Shared
+  default: Lite
 
 - name: namespace
   type: boolean
