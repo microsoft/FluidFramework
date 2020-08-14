@@ -27,11 +27,12 @@
     {{ $style := resources.Get "scss/style.scss" | resources.ExecuteAsTemplate "css/style.css" . | toCSS | minify | fingerprint -}}
     <link rel="stylesheet" href="{{ $style.Permalink | relURL }}"
         {{ printf "integrity=%q" $style.Data.Integrity | safeHTMLAttr }}>
-    {{- block "head" . -}}{{- end }}
 
     {{- range .Site.Params.customCSS }}
     <link rel="stylesheet" href="{{ . | relURL }}">
     {{- end }}
+    {{- block "head" . -}}{{- end }}
+
 
     {{- if templates.Exists "partials/extra-head.html" -}}
     {{ partial "extra-head.html" . }}

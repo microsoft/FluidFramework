@@ -2,21 +2,16 @@
 title: "Fluid Framework"
 ---
 
-{{< jumbotron
-lead=`Collaborative Data State <strong>Reinvented.</strong>`
-subText="Real Time. Web first. Open Source."
-img="https://code.visualstudio.com/assets/docs/editor/codebasics/seed-search-string-from-selection.gif"
->}}
+{{< in_your_face lead=`Data synch <strong>re-imagined.</strong>`
+subText="Real Time. Web first. Open Source." >}}
 
-{{< swimlane_container >}}
-    {{< swimlane title="Fluid Data Library" subTitle="FDL allows you to manage your data locally while it automatically syncs with other users and your backend in real time."
-    img="https://code.visualstudio.com/assets/images/home-intellisense.svg"
-    >}}
-    {{< swimlane title="Save money and time" subTitle="Reduce your bill and take down latency close to zero by"
-    pos="right"
-    img="https://code.visualstudio.com/assets/images/home-intellisense.svg"
-    >}}
-    {{< swimlane title="Save money and time" subTitle="Reduce your bill and take down latency close to zero by"
-    img="https://code.visualstudio.com/assets/images/home-intellisense.svg"
-    >}}
-{{< /swimlane_container >}}
+
+<div class="ctas">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-4 col-xs-6"><a class="cta" id="home-cta-get-started-link" href="#meet-get-started"><div class="cta-icon get-started"></div>Get Started</a></div>
+            <div class="col-sm-4 col-xs-6"><a class="cta" id="home-cta-learn-link" href="#powerful-learn"><div class="cta-icon learn"></div>Learn More</a></div>
+            <div class="col-sm-4 col-xs-6"><a class="cta" id="home-cta-play-link" href="#built-in-play"><div class="cta-icon play"></div>Play with Fluid</a></div>
+        </div>
+    </div>
+</div>

@@ -5,7 +5,7 @@
 <body>
     {{- partial "header.html" . -}}
     <div id="main">
-        <div role="main" id="main-content">
+        <div role="main" id="main-content" {{ if .IsHome}}class="home" {{ end}}>
             {{- block "main" . }}{{- end }}
         </div>
     </div>
