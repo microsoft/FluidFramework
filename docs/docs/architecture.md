@@ -1,20 +1,20 @@
 # Architecture
 
-Fluid Framework can be broken into three broad parts: The Fluid Loader, Fluid Containers, and the Fluid Service. While
+Fluid Framework can be broken into three broad parts: The Fluid loader, Fluid containers, and the Fluid service. While
 each deserves a deep dive, we'll use this space to explain the areas at a high level, identify the important lower
 level concepts, and discuss some of our key design decisions.
 
 
 ## Summary
 
-The Fluid Loader connects to the Fluid Service to load a Fluid Container. If you are an app developer and you want to
-include Fluid Containers on your page, you'll use the Fluid Loader to load Containers. If you want to create a
-collaborative experience using the Fluid Framework, you'll create a Fluid Container.
+The Fluid loader connects to the Fluid service to load a Fluid container. If you are an app developer and you want to
+include Fluid containers on your page, you'll use the Fluid loader to load containers. If you want to create a
+collaborative experience using the Fluid Framework, you'll create a Fluid container.
 
-A Fluid Container includes state and app logic. It has at least one Fluid Object, which encapsulates app logic. Fluid
-Objects can have state, which is managed by Distributed Data Structures (DDS).
+A Fluid container includes state and app logic. It has at least one Fluid Object, which encapsulates app logic. Fluid
+Objects can have state, which is managed by distributed data structures (DDS).
 
-Distributed Data Structures (DDS) are used to distribute state to clients. Instead of centralizing merge logic in the
+distributed data structures (DDS) are used to distribute state to clients. Instead of centralizing merge logic in the
 server, the server passes changes (aka operations or ops) to clients and the clients perform the merge.
 
 ![A diagram of the Fluid Framework architecture](./images/architecture.png)
@@ -45,17 +45,17 @@ already a system for accessing app logic and app state, we mimicked existing web
 ## System overview
 
 Most developers will use the Fluid Framework to load Fluid content or create Fluid content. In our own words, developers
-are either loading Fluid Containers using the Fluid Loader or developers are creating Fluid Containers to load.
+are either loading Fluid containers using the Fluid loader or developers are creating Fluid containers to load.
 
 Based on our two design principles of "Keep the Server Simple" and "Move Logic to the Client", most of this document
-will focus on the Fluid Loader and the Fluid Container. Let's address the Fluid Service.
+will focus on the Fluid loader and the Fluid container. Let's address the Fluid service.
 
-**Fluid Service**
+**Fluid service**
 
-The Fluid Service is primarily a total order broadcast: it takes in changes (ops) from each client, gives the op a
-monotonically increasing number, and sends the ordered op back to each client. Distributed Data Structures use these ops
-to reconstruct state on each client. The Fluid Service doesn't parse any of these ops; in fact, the service knows
-nothing about the contents of any Fluid Container.
+The Fluid service is primarily a total order broadcast: it takes in changes (ops) from each client, gives the op a
+sequential order number, and sends the ordered op back to each client. Distributed data structures use these ops
+to reconstruct state on each client. The Fluid service doesn't parse any of these ops; in fact, the service knows
+nothing about the contents of any Fluid container.
 
 ![A diagram depicting operations being sent from a Fluid client to a Fluid service](./images/op-send.png)
 ![A diagram depicting operations being broadcast to Fluid clients](./images/op-broadcast.png)
@@ -66,32 +66,32 @@ The service also stores old operations, accessible through the DeltaStorageServi
 Objects. It's worth discussing summaries at length, but for now we can consider that merging 1,000,000 changes could
 take some time, so we summarize the state of the objects and store it on the service for faster loading.
 
-**Fluid Loader**
+**Fluid loader**
 
-The Fluid Loader loads Fluid Containers by connecting to the Fluid Service and fetching Fluid Container code. In this
-way, the Fluid Loader 'mimics the web.' The Fluid Loader resolves a URL using Container Resolver, connects to the Fluid
-Service using the Fluid Service Driver, and loads the correct app code using the Code Loader.
+The Fluid loader loads Fluid containers by connecting to the Fluid service and fetching Fluid container code. In this
+way, the Fluid loader 'mimics the web.' The Fluid loader resolves a URL using **container resolver,** connects to the
+Fluid service using the **Fluid service driver**, and loads the correct app code using the **code loader.**
 
 ![A diagram of the Fluid loading sequence](./images/load-flow.png)
 
 **Container Lookup & Resolver** identifies which service a container is bound to and where in that service it is
-located. The Fluid Service Driver consumes this information.
+located. The Fluid service Driver consumes this information.
 
-The **Fluid Service Driver** connects to the Fluid service, requests space on the server for new Fluid Containers, and
+The **Fluid service Driver** connects to the Fluid service, requests space on the server for new Fluid containers, and
 creates the three objects, **DeltaConnection**, **DeltaStorageService**, and **DocumentStorageService**, that the Fluid
 Container uses to communicate with the server and maintain an eventually consistent state.
 
 The **Container Code Loader** fetches Container Code. Because all clients run the same code, clients use the Code Loader
-to fetch Container Code. The Loader evaluates this code to create Fluid Containers.
+to fetch Container Code. The Loader executes this code to create Fluid containers.
 
-**Fluid Containers**
+**Fluid containers**
 
-The bulk of the code in the Fluid Framework repository is for Fluid Containers. We use the term Fluid Container for two
-connected concepts: the runtime object, and the constructor for that runtime object (Container Code).
+The bulk of the code in the Fluid Framework repository is for Fluid containers. We use the term Fluid container for two
+connected concepts: the runtime object, and the creator of that runtime object (container code).
 
-The Fluid Container is the result of the principle "Move Logic to the Client." The Container includes the merge logic
+The Fluid container is the result of the principle "Move Logic to the Client." The container includes the merge logic
 used to replicate data across connected clients, but can also include additional app logic. The merge logic is
-incapsulated in our lowest level objects, **Distributed Data Structures (DDS)**. App logic operating over this data is
-stored in **Fluid Objects**.
+incapsulated in our lowest level objects, **distributed data structures (DDS)**. App logic operating over this data is
+stored in **Fluid objects**.
 
 ![A diagram of the Fluid loading sequence](./images/fluid-objects.png)
