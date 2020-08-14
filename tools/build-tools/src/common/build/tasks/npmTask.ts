@@ -6,8 +6,9 @@
 import { AsyncPriorityQueue } from "async";
 import { Task, TaskExec } from "./task";
 import { LeafTask } from "./leaf/leafTask";
-import { logVerbose } from "../../common/logging";
+import { logVerbose } from "../../logging";
 import { BuildResult, BuildPackage } from "../buildGraph";
+
 export class NPMTask extends Task {
     constructor(node: BuildPackage, command: string, protected readonly subTasks: Task[]) {
         super(node, command);

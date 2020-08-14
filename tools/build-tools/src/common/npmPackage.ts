@@ -21,7 +21,7 @@ import {
     lookUpDir,
 } from "./utils"
 import { MonoRepo } from "./monoRepo";
-import { options } from "../fluidBuild/options";
+import { options } from "./build/options";
 
 interface IPerson {
     name: string;

@@ -4,8 +4,8 @@
  */
 
 import * as path from "path";
-import { Package } from "../common/npmPackage";
-import { logVerbose, logStatus } from "../common/logging";
+import { Package } from "../npmPackage";
+import { logVerbose } from "../logging";
 import {
     existsSync,
     mkdirAsync,
@@ -15,11 +15,10 @@ import {
     renameAsync,
     lstatAsync,
     realpathAsync,
-} from "../common/utils";
-import { FluidRepo } from "./fluidRepo";
+} from "../utils";
 import * as semver from "semver";
 import * as fs from "fs";
-import { MonoRepo } from "../common/monoRepo";
+import { MonoRepo } from "../monoRepo";
 
 async function writeAndReplace(outFile: string, bakFile: string, content: string) {
     logVerbose(`Writing ${outFile}`);
@@ -124,7 +123,7 @@ export interface ISymlinkOptions {
     fullSymlink: boolean | undefined;
 };
 
-export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackages: Map<string, Package>, options: ISymlinkOptions) {
+export async function symlinkPackage(pkg: Package, buildPackages: Map<string, Package>, options: ISymlinkOptions) {
     let count = 0;
     const monoRepoNodeModulePath = pkg.monoRepo?.getNodeModulePath();
 

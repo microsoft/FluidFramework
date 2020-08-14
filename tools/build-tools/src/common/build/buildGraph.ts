@@ -4,12 +4,12 @@
  */
 
 import { AsyncPriorityQueue } from "async";
-import { logStatus, logVerbose } from "../common/logging";
-import { Package, Packages } from "../common/npmPackage";
+import { logStatus, logVerbose } from "../logging";
+import { Package, Packages } from "../npmPackage";
 import { Task, TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";
-import { Timer } from '../common/timer';
-import { FileHashCache } from "../common/fileHashCache";
+import { Timer } from '../timer';
+import { FileHashCache } from "../fileHashCache";
 import chalk from "chalk";
 import { options } from "./options";
 import * as semver from "semver";

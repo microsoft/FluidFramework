@@ -199,7 +199,7 @@ async function main() {
     const resolvedRoot = await getResolvedFluidRoot(FluidRepoName.Default);
 
     // Load the package
-    const repo = new FluidRepoBase(resolvedRoot, false);
+    const repo = new FluidRepoBase(resolvedRoot);
     timer.time("Package scan completed");
 
     await generateMonoRepoInstallPackageJson(repo.clientMonoRepo);

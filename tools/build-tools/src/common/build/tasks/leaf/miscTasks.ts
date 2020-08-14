@@ -4,8 +4,8 @@
  */
 
 import { LeafTask } from "./leafTask";
-import { toPosixPath, globFn, unquote, statAsync, readFileAsync } from "../../../common/utils";
-import { logVerbose } from "../../../common/logging";
+import { toPosixPath, globFn, unquote, statAsync, readFileAsync } from "../../../utils";
+import { logVerbose } from "../../../logging";
 import * as path from "path";
 import { BuildPackage } from "../../buildGraph";
 
@@ -105,7 +105,6 @@ export class CopyfilesTask extends LeafTask {
                 }
                 currRelPath = currRelPath.substring(index + 1);
             }
-            
             return path.join(dstPath, currRelPath);
         });
         return this.isFileSame(srcFiles, dstFiles);

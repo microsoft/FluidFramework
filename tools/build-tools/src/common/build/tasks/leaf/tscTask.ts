@@ -5,8 +5,8 @@
 
 import * as assert from "assert";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
-import { logVerbose } from "../../../common/logging";
-import { readFileAsync, existsSync } from "../../../common/utils";
+import { logVerbose } from "../../../logging";
+import { readFileAsync, existsSync } from "../../../utils";
 import path from "path";
 import * as ts from "typescript";
 import * as TscUtils from "../../tscUtils";
@@ -46,9 +46,9 @@ export class TscTask extends LeafTask {
 
         // Using tsc incremental information
         const tsBuildInfo = await this.readTsBuildInfo();
-        if (tsBuildInfo === undefined) { 
+        if (tsBuildInfo === undefined) {
             this.logVerboseTrigger("tsBuildInfo not found");
-            return false; 
+            return false;
         }
 
         // Check previous build errors
@@ -119,7 +119,7 @@ export class TscTask extends LeafTask {
         if (this._tsConfig == undefined) {
             const parsedCommand = this.parsedCommandLine;
             if (!parsedCommand) { return undefined; }
-                
+
             const configFileFullPath = this.configFileFullPath;
             if (!configFileFullPath) { return undefined; }
 

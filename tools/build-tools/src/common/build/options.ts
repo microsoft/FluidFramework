@@ -4,9 +4,9 @@
  */
 
 import * as os from "os";
-import { commonOptionString, parseOption } from "../common/commonOptions"
-import { IPackageMatchedOptions } from "./fluidRepo";
+import { commonOptionString, parseOption } from "../commonOptions"
 import { ISymlinkOptions } from "./symlinkUtils";
+import { IPackageMatchedOptions } from "../fluidRepoBase";
 
 interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
     nolint: boolean;

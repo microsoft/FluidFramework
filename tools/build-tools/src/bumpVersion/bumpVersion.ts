@@ -436,7 +436,7 @@ class BumpVersion {
         this.timer = new Timer(commonOptions.timer);
 
         // Load the package
-        this.repo = new FluidRepoBase(this.gitRepo.resolvedRoot, false);
+        this.repo = new FluidRepoBase(this.gitRepo.resolvedRoot);
         this.timer.time("Package scan completed");
 
         this.fullPackageMap = this.repo.createPackageMap();

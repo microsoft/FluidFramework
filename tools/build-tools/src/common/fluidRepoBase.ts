@@ -3,15 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
 import { Package, Packages } from "./npmPackage";
 import { MonoRepo, MonoRepoKind } from "./monoRepo";
+import { FluidPackageCheck } from "./build/fluidPackageCheck";
+import { globFn } from "./utils";
+import { NpmDepChecker } from "./build/npmDepChecker";
+import { ISymlinkOptions, symlinkPackage } from "./build/symlinkUtils";
+import { BuildGraph } from "./build/buildGraph";
+import { logVerbose } from "./logging";
 
 export enum FluidRepoName {
     FDL,
-    Kampa,
     Default
 }
+
+export interface IPackageMatchedOptions {
+    match: string[];
+    all: boolean;
+    server: boolean;
+};
 
 export class FluidRepoBase {
     public fluidRepoName = FluidRepoName.Default;
@@ -23,7 +33,7 @@ export class FluidRepoBase {
     public readonly serverMonoRepo: MonoRepo | undefined;
 
     public packages: Packages;
-    constructor(public readonly resolvedRoot: string, services: boolean) {
+    constructor(public readonly resolvedRoot: string) {
         this.clientMonoRepo = new MonoRepo(MonoRepoKind.Client, this.resolvedRoot);
         this.packages = new Packages(this.clientMonoRepo.packages);
     }
@@ -60,5 +70,86 @@ export class FluidRepoBase {
             return this.packages.noHoistInstall(this.resolvedRoot);
         }
         return FluidRepoBase.ensureInstalled(this.packages.packages);
+    }
+
+
+    public setMatched(options: IPackageMatchedOptions) {
+        const hasMatchArgs = options.match.length;
+
+        if (hasMatchArgs) {
+            let matched = false;
+            options.match.forEach((arg) => {
+                const regExp = new RegExp(arg);
+                if (this.matchWithFilter(pkg => regExp.test(pkg.name))) {
+                    matched = true;
+                }
+            });
+            return matched;
+        }
+
+        if (options.all) {
+            return this.matchWithFilter(pkg => true);
+        }
+
+        const matchMonoRepo = options.server ? MonoRepoKind.Server : MonoRepoKind.Client;
+        return this.matchWithFilter(pkg => pkg.monoRepo?.kind === matchMonoRepo);
+    }
+
+    public async checkPackages(fix: boolean) {
+        for (const pkg of this.packages.packages) {
+            await FluidPackageCheck.checkNpmIgnore(pkg, fix);
+            await FluidPackageCheck.checkTsConfig(pkg, fix);
+        }
+    }
+
+    public async depcheck() {
+        for (const pkg of this.packages.packages) {
+            // Fluid specific
+            let checkFiles: string[];
+            if (pkg.packageJson.dependencies) {
+                const tsFiles = await globFn(`${pkg.directory}/**/*.ts`, { ignore: `${pkg.directory}/node_modules` });
+                const tsxFiles = await globFn(`${pkg.directory}/**/*.tsx`, { ignore: `${pkg.directory}/node_modules` });
+                checkFiles = tsFiles.concat(tsxFiles);
+            } else {
+                checkFiles = [];
+            }
+
+            const npmDepChecker = new NpmDepChecker(pkg, checkFiles);
+            if (await npmDepChecker.run()) {
+                await pkg.savePackageJson();
+            }
+        }
+    }
+
+    public async symlink(options: ISymlinkOptions) {
+        // Only do parallel if we are checking only
+        const result = await this.packages.forEachAsync(pkg => symlinkPackage(pkg, this.createPackageMap(), options), !options.symlink);
+        return Packages.clean(result.filter(entry => entry.count).map(entry => entry.pkg), true);
+    }
+
+    public createBuildGraph(options: ISymlinkOptions, buildScriptNames: string[]) {
+        return new BuildGraph(this.packages.packages, buildScriptNames,
+            (pkg: Package) => {
+                return (dep: Package) => {
+                    return options.fullSymlink || MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);
+                }
+            });
+    }
+
+    private matchWithFilter(callback: (pkg: Package) => boolean) {
+        let matched = false;
+        this.packages.packages.forEach((pkg) => {
+            if (!pkg.matched && callback(pkg)) {
+                logVerbose(`${pkg.nameColored}: matched`);
+                pkg.setMatched();
+                matched = true;
+            }
+        });
+        return matched;
+    }
+
+
+    public async clean() {
+        return Packages.clean(this.packages.packages, false);
     }
 };
