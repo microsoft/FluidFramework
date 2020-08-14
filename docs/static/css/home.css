@@ -13,6 +13,7 @@
 }
 .cta-icon {
     background-repeat: no-repeat;
+    background-position: center;
     width: 5rem;
     height: 5rem;
     margin: auto;
