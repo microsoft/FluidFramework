@@ -119,9 +119,14 @@ stages:
                 STORAGE_KEY: $(STORAGE_KEY)
                 DEST_PATH: '/_api-extractor/$(Build.SourceVersion)/'
                 artifactName:  'api-extractor-json'
+
+- stage: github-action
+  displayName: GitHub Action
+  pool: server
+  dependsOn: deploy
+  jobs:
     - job: trigger_github_action
       displayName: 'Trigger GitHub Action'
-      pool: server
       steps:
       - task: InvokeRESTAPI@1
         inputs:
