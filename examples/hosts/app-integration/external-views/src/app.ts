@@ -27,9 +27,9 @@ document.title = documentId;
 async function start(): Promise<void> {
     // The getTinyliciousContainer helper function facilitates loading our container code into a Container and
     // connecting to a locally-running test service called Tinylicious.  This will look different when moving to a
-    // production service, but ultimately we'll still be getting a reference to a Container.  The helper function
-    // takes the ID of the document we're creating or loading, the container code to load into it, and a flag to
-    // specify whether we're creating a new document or loading an existing one.
+    // production service, but ultimately we'll still be getting a reference to a Container object.  The helper
+    // function takes the ID of the document we're creating or loading, the container code to load into it, and a
+    // flag to specify whether we're creating a new document or loading an existing one.
     const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
 
     // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our dice roller is available at the URL "/".
