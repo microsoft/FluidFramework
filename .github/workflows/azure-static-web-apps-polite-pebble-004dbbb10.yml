@@ -28,10 +28,10 @@ jobs:
           wget https://fluidframework.z19.web.core.windows.net/${{ github.sha }}.tar.gz
           mkdir -p ./_api-extractor-temp/doc-models/
           tar -C ./_api-extractor-temp/doc-models/ -zxvf ${{ github.sha }}.tar.gz
-      - name: npm run build:gendocs
-        id: gendocs
+      - name: npm run build:mdapidocs
+        id: mdapidocs
         run: |
-          npm run build:gendocs
+          npm run build:mdapidocs
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v0.0.1-preview
