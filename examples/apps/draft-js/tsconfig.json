@@ -8,7 +8,8 @@
         "strictNullChecks": false,
         "module": "esnext",
         "outDir": "dist",
-        "jsx": "react"
+        "jsx": "react",
+        "types": ["react", "react-dom", "jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"]
     },
     "include": [
         "src/**/*"

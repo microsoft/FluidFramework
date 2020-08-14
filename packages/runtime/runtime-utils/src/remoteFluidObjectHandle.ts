@@ -12,9 +12,10 @@ import {
 } from "@fluidframework/core-interfaces";
 
 /**
- * Handle to dynamically load a component on a remote client and is created on parsing a seralized FluidOjectHandle.
- * This class is used to generate an IFluidHandle when de-serializing Fluid Component and SharedObject handles
- * that are stored in SharedObjects. The Component or SharedObject corresponding to the IFluidHandle can be
+ * This handle is used to dynamically load a data store on a remote client and is created on parsing a seralized
+ * FluidOjectHandle.
+ * This class is used to generate an IFluidHandle when de-serializing Fluid Data Store and SharedObject handles
+ * that are stored in SharedObjects. The Data Store or SharedObject corresponding to the IFluidHandle can be
  * retrieved by calling `get` on it.
  */
 export class RemoteFluidObjectHandle implements IFluidHandle {
@@ -23,7 +24,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
     public get IFluidHandle() { return this; }
 
     public readonly isAttached = true;
-    private componentP: Promise<IFluidObject> | undefined;
+    private dataStoreP: Promise<IFluidObject> | undefined;
 
     /**
      * Creates a new RemoteFluidObjectHandle when parsing an IFluidHandle.
@@ -44,15 +45,15 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
     }
 
     public async get(): Promise<any> {
-        if (this.componentP === undefined) {
-            this.componentP = this.routeContext.resolveHandle({ url: this.absolutePath })
+        if (this.dataStoreP === undefined) {
+            this.dataStoreP = this.routeContext.resolveHandle({ url: this.absolutePath })
                 .then<IFluidObject>((response) =>
                     response.mimeType === "fluid/object"
                         ? response.value as IFluidObject
                         : Promise.reject("Not found"));
         }
 
-        return this.componentP;
+        return this.dataStoreP;
     }
 
     public attachGraph(): void {
@@ -64,8 +65,8 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        const component = await this.get() as IFluidObject;
-        const router = component.IFluidRouter;
+        const dataStore = await this.get() as IFluidObject;
+        const router = dataStore.IFluidRouter;
 
         return router !== undefined
             ? router.request(request)

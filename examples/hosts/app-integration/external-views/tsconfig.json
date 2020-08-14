@@ -11,6 +11,7 @@
         "types": ["react", "react-dom", "jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"]
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "tests/**/*"
     ]
 }

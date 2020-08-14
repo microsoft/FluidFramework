@@ -4,12 +4,9 @@
  */
 
 import { SharedMap } from "@fluidframework/map";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import { ContentState, Editor, EditorProps, EditorState, RichUtils } from "draft-js";
 import React from "react";
-
-import { getCoauthPresenceDecorator, PresenceManager } from "./PresenceManager";
 import {
     blockRangeToSelection,
     draftStyleToSharedTextProp,
@@ -20,7 +17,9 @@ import {
     TextRange,
     textRangeToBlockTextRange,
     updateTextRange,
-} from "./RichTextAdapter";
+    getCoauthPresenceDecorator,
+    PresenceManager,
+} from "../utils";
 import { BlockStyleControls, InlineStyleControls } from "./StyleControls";
 
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
@@ -29,7 +28,7 @@ import "./css/RichEditor.css";
 interface IProps extends Partial<EditorProps> {
     sharedString: SharedString;
     authors: SharedMap;
-    runtime: IFluidDataStoreRuntime;
+    presenceManager: PresenceManager;
 }
 
 interface IState {
@@ -63,18 +62,14 @@ const getBlockStyle = (block) => {
  * A wrapper around the Draft.js Editor which connects RichUtils and callbacks to connect Fluid
  */
 export class FluidEditor extends React.Component<IProps, IState> {
-    private readonly presenceManager: PresenceManager;
-
     constructor(props: IProps) {
         super(props);
 
         const contentState = ContentState.createFromBlockArray(sharedStringToBlockArary(this.props.sharedString));
         let editorState = EditorState.createWithContent(contentState);
 
-        this.presenceManager = new PresenceManager(this.props.authors, this.props.runtime);
-
         editorState = EditorState.set(editorState, {
-            decorator: getCoauthPresenceDecorator(this.presenceManager),
+            decorator: getCoauthPresenceDecorator(this.props.presenceManager),
         });
 
         this.state = {
@@ -84,7 +79,7 @@ export class FluidEditor extends React.Component<IProps, IState> {
 
     private readonly updateEditorState = (updateSelectionRange: (range: TextRange) => TextRange): void => {
         let blocks = sharedStringToBlockArary(this.props.sharedString);
-        blocks = this.presenceManager.addPresencePlaceholders(blocks);
+        blocks = this.props.presenceManager.addPresencePlaceholders(blocks);
         const newContent = ContentState.createFromBlockArray(blocks);
         let editorState = EditorState.push(this.state.editorState, newContent, "change-block-data");
 
@@ -103,7 +98,7 @@ export class FluidEditor extends React.Component<IProps, IState> {
     componentDidMount() {
         // Give everything a moment to render before rushing into rendering coauth positions.
         setTimeout(() => {
-            this.presenceManager.subscribe(this.updateEditorState);
+            this.props.presenceManager.subscribe(this.updateEditorState);
         }, 200);
     }
 
@@ -129,7 +124,7 @@ export class FluidEditor extends React.Component<IProps, IState> {
         // Store some important variables so we can use them later.
         const newContent = editorState.getCurrentContent();
         // Represent each block marker prefix as a newline, remove presence placeholders
-        const newText = `\n${this.presenceManager.removePlaceholderChars(newContent.getPlainText())}`;
+        const newText = `\n${this.props.presenceManager.removePlaceholderChars(newContent.getPlainText())}`;
         const newSelection = editorState.getSelection();
 
         const oldContent = this.state.editorState.getCurrentContent();
@@ -137,19 +132,21 @@ export class FluidEditor extends React.Component<IProps, IState> {
 
         if (newSelection !== oldSelection) {
             const publishedPosition = newSelection.getHasFocus()
-                ? this.presenceManager.subtractCoauthorPlaceholders(selectionToTextRange(newSelection, newContent))
+                ? this.props.presenceManager.subtractCoauthorPlaceholders(
+                    selectionToTextRange(newSelection, newContent),
+                )
                 : undefined;
-            this.presenceManager.publish(publishedPosition);
+            this.props.presenceManager.publish(publishedPosition);
         }
 
         if (newContent !== oldContent) {
-            let { start, end } = this.presenceManager.subtractCoauthorPlaceholders(
+            let { start, end } = this.props.presenceManager.subtractCoauthorPlaceholders(
                 selectionToTextRange(oldSelection, oldContent),
             );
 
             const changeType = editorState.getLastChangeType();
             if (changeType === "insert-characters" || changeType === "insert-fragment") {
-                const newSelectionAbsolute = this.presenceManager.subtractCoauthorPlaceholders(
+                const newSelectionAbsolute = this.props.presenceManager.subtractCoauthorPlaceholders(
                     selectionToTextRange(newSelection, newContent),
                 );
                 const insertedText = newText.substring(start, newSelectionAbsolute.end);

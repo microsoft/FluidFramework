@@ -3,4 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./containerRuntimeFactory";
+export * from "./PresenceManager";
+export * from "./RichTextAdapter";
