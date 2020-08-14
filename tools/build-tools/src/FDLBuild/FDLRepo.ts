@@ -10,7 +10,7 @@ import { FluidRepoBase, FluidRepoName } from "../common/fluidRepoBase";
 import { MonoRepoKind } from "../common/monoRepo";
 import { MonoRepo } from "../common/monoRepo";
 
-export class FluidRepo extends FluidRepoBase {
+export class FDLRepo extends FluidRepoBase {
     public fluidRepoName = FluidRepoName.FDL;
 
     public readonly serverMonoRepo: MonoRepo;

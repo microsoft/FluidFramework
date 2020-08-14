@@ -15,7 +15,7 @@ import { Package } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
 import { GitRepo, fatal, exec, execNoError } from "./utils";
 import * as os from "os";
-import { FluidRepo } from "../fluidBuild/fluidRepo";
+import { FDLRepo } from "../FDLBuild/FDLRepo";
 
 function printUsage() {
     console.log(
@@ -1048,7 +1048,7 @@ class BumpVersion {
         switch (this.repo.fluidRepoName) {
             case FluidRepoName.FDL:
                 // TODO: Don't hard code order
-                const fluidRepo = this.repo as FluidRepo;
+                const fluidRepo = this.repo as FDLRepo;
                 await this.releasePackage(depVersions, ["@fluidframework/eslint-config-fluid", "@fluidframework/build-common"]);
                 await this.releasePackage(depVersions, ["@fluidframework/common-definitions"]);
                 await this.releasePackage(depVersions, ["@fluidframework/common-utils"]);

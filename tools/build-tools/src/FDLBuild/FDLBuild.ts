@@ -4,7 +4,7 @@
  */
 
 import { commonOptions } from "../common/commonOptions";
-import { FluidRepo } from "./fluidRepo";
+import { FDLRepo } from "./FDLRepo";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { logStatus } from "../common/logging";
 import { Timer } from "../common/timer";
@@ -33,7 +33,7 @@ async function main() {
     }
 
     // Load the package
-    const repo = new FluidRepo(resolvedRoot, options.services);
+    const repo = new FDLRepo(resolvedRoot, options.services);
     timer.time("Package scan completed");
 
     // Set matched package based on options filter
