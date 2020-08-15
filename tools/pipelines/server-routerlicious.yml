@@ -3,7 +3,7 @@
 
 # server-routerlicious pipeline
 
-name: $(Build.BuildId)
+name: $(Date:yyMMdd)$(Rev:.r)
 
 trigger:
   branches:
@@ -44,8 +44,8 @@ variables:
   registry: prague.azurecr.io
   containerName: prague-server
   baseContainerName: $(containerName)-base
-  baseContainerTag: $(baseContainerName):$(Build.BuildId)
-  fullRunnerContainerTag: $(registry)/$(containerName):$(Build.BuildId)
+  baseContainerTag: $(baseContainerName):$(Build.BuildNumber)
+  fullRunnerContainerTag: $(registry)/$(containerName):$(Build.BuildNumber)
   ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
     testConfig: :full
   ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
@@ -128,9 +128,9 @@ stages:
             command: build
             dockerFile: server/routerlicious/Dockerfile
             buildContext: server/routerlicious
-            arguments: --target base --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)
+            arguments: --target base --build-arg VERSION_BUILDNUMBER=$(Build.BuildNumber) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)
             tags: |
-              $(Build.BuildId)
+              $(Build.BuildNumber)
 
         # Pack
         - task: Docker@0
@@ -200,9 +200,9 @@ stages:
               command: build
               dockerFile: server/routerlicious/Dockerfile
               buildContext: server/routerlicious
-              arguments: '--target runner --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)'
+              arguments: '--target runner --build-arg VERSION_BUILDNUMBER=$(Build.BuildNumber) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)'
               tags: |
-                $(Build.BuildId)
+                $(Build.BuildNumber)
           
           - task: Docker@2
             displayName: 'Docker Push - Runner'
@@ -211,7 +211,7 @@ stages:
               repository: $(containerName)
               command: push
               tags: |
-                $(Build.BuildId)
+                $(Build.BuildNumber)
 
         # Cleanup
         - task: Docker@0

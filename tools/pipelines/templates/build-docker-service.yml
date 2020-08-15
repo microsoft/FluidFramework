@@ -36,7 +36,7 @@ variables:
     )}}
   generateNotice: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
   registry: prague.azurecr.io
-  baseContainerTag: ${{ parameters.containerName }}:$(Build.BuildId)
+  baseContainerTag: ${{ parameters.containerName }}:$(Build.BuildNumber)
   ${{ if eq(variables.pushImage, false) }}:
     containerRegistry:
     containerTag: $(baseContainerTag)
@@ -87,7 +87,7 @@ jobs:
         dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
         buildContext: ${{ parameters.buildDirectory }}
         tags: |
-          $(Build.BuildId)
+          $(Build.BuildNumber)
 
     # Lint
     - ${{ if eq(parameters.lint, true) }}:
@@ -130,7 +130,7 @@ jobs:
           repository: ${{ parameters.containerName }}
           command: push
           tags: |
-            $(Build.BuildId)
+            $(Build.BuildNumber)
 
     # Cleanup
     - task: Docker@0

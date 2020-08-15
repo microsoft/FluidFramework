@@ -4,7 +4,7 @@
 # build-docs-latest pipeline
 # This pipeline builds the main branch docs each time the client packages are built
 
-name: $(Build.BuildId)
+name: $(Date:yyMMdd)$(Rev:.r)
 
 variables:
   - name: skipComponentGovernanceDetection

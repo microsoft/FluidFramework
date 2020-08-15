@@ -3,7 +3,7 @@
 
 # build-common-utils pipeline
 
-name: $(Build.BuildId)
+name: $(Date:yyMMdd)$(Rev:.r)
 
 trigger:
   branches:
