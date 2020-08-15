@@ -51,13 +51,21 @@ extends:
     cgSubDirectory: packages
     checkoutSubmodules: true
     preCG:
+    - task: UseNode@1
+      displayName: Use Node 12.x
+      inputs: 
+        version: 12.x    
+    - task: npmAuthenticate@0
+      displayName: 'npm Authenticate root .npmrc'
+      inputs:
+        workingFile: .npmrc
+        customEndpoint: Offnet Packages
     - task: Npm@1
       displayName: npm ci
       inputs:
         command: 'custom'
         customCommand: 'ci --ignore-scripts'
-        customRegistry: 'useFeed'
-        customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+        customRegistry: 'useNpmrc'
 
     - task: Bash@3
       displayName: 'Generate Mono repo package json'
