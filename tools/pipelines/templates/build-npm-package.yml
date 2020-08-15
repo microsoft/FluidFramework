@@ -134,6 +134,7 @@ stages:
           env:
             VERSION_BUILDBRANCH: $(Build.SourceBranch)
             VERSION_BUILDNUMBER: $(Build.BuildNumber)
+            VERSION_BUILD_ID: $(Build.BuildId)
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ parameters.buildDirectory }}
@@ -142,6 +143,11 @@ stages:
 
               echo VERSION_BUILDBRANCH=$VERSION_BUILDBRANCH
               echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
+              echo VERSION_BUILD_ID=$VERSION_BUILD_ID
+
+              if [ "$VERSION_BUILD_ID" == "$VERSION_BUILDNUMBER" ]; then
+                VERSION_IS_ID=true
+              fi
 
               version=`node $(Build.SourcesDirectory)/tools/build-server-resources/build-version.js`
               echo COMPUTED_VERSION=$version

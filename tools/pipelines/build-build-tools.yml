@@ -3,7 +3,7 @@
 
 # build-build-tools pipeline
 
-name: $(Date:yyMMdd)$(Rev:.r)
+name: $(Build.BuildId)
 
 trigger:
   branches:
