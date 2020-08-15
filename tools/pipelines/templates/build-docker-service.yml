@@ -31,11 +31,7 @@ variables:
 - name: skipComponentGovernanceDetection
   value: true
 - name: pushImage
-  value: ${{
-    and(
-      ne(variables['Build.Reason'], 'PullRequest'),
-      eq(variables['Build.SourceBranch'], 'refs/heads/master')
-    )}}
+  value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
 - name: generateNotice
   value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
 - group: container-registry-info
