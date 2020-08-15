@@ -28,21 +28,21 @@ parameters:
 trigger: none
 
 variables:
-  skipComponentGovernanceDetection: true
-  pushImage: ${{
-    and(
-      ne(variables['Build.Reason'], 'PullRequest'),
-      eq(variables['Build.SourceBranch'], 'refs/heads/master')
-    )}}
-  generateNotice: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
-  registry: prague.azurecr.io
-  baseContainerTag: ${{ parameters.containerName }}:$(Build.BuildNumber)
-  ${{ if eq(variables.pushImage, false) }}:
-    containerRegistry:
-    containerTag: $(baseContainerTag)
-  ${{ if eq(variables.pushImage, true) }}:
-    containerRegistry: Fluid Azure Container Registry
-    containerTag: $(registry)/$(baseContainerTag)
+- name: skipComponentGovernanceDetection
+  value: true
+- name: pushImage
+  value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
+- name: generateNotice
+  value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
+- group: container-registry-info
+- name: baseContainerTag
+  value: ${{ parameters.containerName }}:$(Build.BuildNumber)
+- ${{ if eq(variables.pushImage, false) }}:
+  - name: containerTag
+    value: $(baseContainerTag)
+- ${{ if eq(variables.pushImage, true) }}:
+  - name: containerTag
+    value: $(containerRegistryUrl)/$(baseContainerTag)
 
 jobs:
   - job: build
@@ -81,7 +81,7 @@ jobs:
     - task: Docker@2
       displayName: Docker Build
       inputs:
-        containerRegistry: $(containerRegistry)
+        containerRegistry: $(containerRegistryConnection)
         repository: ${{ parameters.containerName }}
         command: build
         dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
@@ -126,7 +126,7 @@ jobs:
       - task: Docker@2
         displayName: Docker Push
         inputs:
-          containerRegistry: $(containerRegistry)
+          containerRegistry: $(containerRegistryConnection)
           repository: ${{ parameters.containerName }}
           command: push
           tags: |
