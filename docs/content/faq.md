@@ -3,17 +3,27 @@
 ## What is Fluid Framework?
 
 Fluid Framework is a collection of client libraries for building applications with distributed state. These libraries
-allow multiple clients to create and operate on shared, synchronized Distributed Data Structures (DDSs) using coding
+allow multiple clients to create and operate on shared, synchronized Distributed Data Structures (DDSes) using coding
 patterns similar to those used to work with local data. Fluid Framework manages connections to services and keeps all
 clients in sync so that developers can focus on the client experience.
+
+Fluid Framework was designed with performance and ease of development as top priorities.
 
 ## Distributed Data Structures
 
 ### What is a DDS?
 
-DDS is short for Distributed Data Structure. DDSs are the foundation of the Fluid Framework. They are designed such
-that the Fluid Runtime is able to keep them in sync across clients while each client operates on the DDSs in largely
-the same way they would operate on local data. The data source for a Fluid solution can represent numerous DDSs.
+DDS is short for Distributed Data Structure. DDSes are the foundation of the Fluid Framework. They are designed such
+that the Fluid Runtime is able to keep them in sync across clients while each client operates on the DDSes in largely
+the same way they would operate on local data. The data source for a Fluid solution can represent numerous DDSes.
+
+There are many types of DDSes including a SharedMap that is a distributed version of a JavaScript Map and a SharedString
+that is designed to enable real-time editing of text data by multiple clients simultaneously. Developers can use the
+DDSes included with Fluid Framework or develop new ones.
+
+Any practical limits on the types of data and size of a DDS will be specific to the implementation of that DDS. DDSes
+can contain text, images, and other binary data and can effectively be any size. However, managing scale on the client
+requires thought, just as it does when working with local data.
 
 ### Where is the data stored?
 
@@ -21,7 +31,7 @@ There are two classes of data storage to discuss when answering this question:
 **session storage** and **persistent storage**.
 
 **Session storage** is managed by the Fluid service and is, essentially, a central record of all the operations (ops)
-performed on the DDSs. This record is used by the Fluid clients to produce identical local instances of the DDSs.
+performed on the DDSes. This record is used by the Fluid clients to produce identical local instances of the DDSes.
 Session storage also includes ops that summarize all past operations to improve performance for clients that join
 sessions later and for efficiencies when saving to persistent storage.
 
@@ -32,33 +42,18 @@ It is important to note that these files share many of the properties of a norma
 location in a file structure, but because these experiences rely on the Fluid service, downloading the files and
 working locally is not supported.
 
-Included in the Fluid ops is a record of all the Fluid components used in the Fluid solution. This doesn't include
-the code of the Fluid component but rather a reference that the Fluid client can use to load the correct components.
-
 ### How is data sync'd?
 
-In order to keep all clients in sync, they must be connected to a central Fluid service. This service's core
-responsibility is sequencing all the incoming Fluid operations and then broadcasting them to all the clients. Because
-the ops are ordered, and because each client is running the same code, the DDSs in each client eventually end up in an
+In order to keep all clients in sync, they must be connected to a Fluid service. This service's core
+responsibility is sequencing all the incoming Fluid operations and then broadcasting them to all clients. Because
+the ops are ordered, and because each client is running the same code, the DDSes in each client eventually end up in an
 identical state.
 
-Note, there isn't only one Fluid service for all Fluid experiences. But for each Fluid experience, there is only one
+Note, there isn't a centralized Fluid service for all Fluid experiences. But for each Fluid experience, there is only one
 Fluid service.
 
-Fluid clients connect to the central Fluid service using the WebSocket protocol. However, the Fluid runtime manages
-all of the connections so that Fluid component developers can focus on local experiences.
-
-### What are the DDSs currently available in the Fluid Framework
-
-Any plans to add more in the future?
-
-Are there any restrictions about the type of snippets or embeds that can be performed?
-
-How do you decide between multiple structures inside the DDS (vs multiple simpler DDSes)?
-
-How big could be the DDS? For e.g. Tables with 100s of rows and columns
-
-Are you able to handle things like images and other data types other than text?
+Fluid clients connect to the Fluid service using the WebSocket protocol. However, the Fluid runtime manages
+all of the connections so that Fluid client developers can focus on local experiences.
 
 ## Scale
 
@@ -96,14 +91,6 @@ multiple clients. So, while you might use Fluid to solve some of the same proble
 the two are not interchangeable. Notably, the server component of a Fluid solution is lightweight and general-purpose
 while a SignalR solution designed to distribute state would require additional server development.
 
-### What is the difference between Fluid Framework and Adaptive Cards?
-
-Coming soon...
-
-### What is the difference between Fluid Framework and DAPR?
-
-Coming soon...
-
 ### Does Fluid use operational transforms?
 
 Fluid does not use Operational Transforms, but we learned a tremendous amount from the literature on OT. While
@@ -116,48 +103,24 @@ Fluid does not use Conflict-Free Replicated Data Types (CRDTs), but our model is
 The Fluid Framework relies on update-based operations that are ordered using our Total Order Broadcast to prevent
 conflicts. This allows us to have non-commutative operations because their is an explicit ordering.
 
-
-## Real-Time Collaboration
+## Use Cases
 
 ### What kind of support is there for real-time editing of text?
 
-This is the first scenario
-
-Can we able to create a collaborative editor like RTE and Word editor with this fluid framework?
-
-Coding tables in Word VB is an awful experience. Does Fluid allow for easier scripting of tables in MS Word to
-collaborate with others whilst creating documents?
-
-Is it possible to provide concurrent editing experience for office documents using fluid?
-
-## Office Ecosystem
-
-### How does Fluid Framework relate to Office Add-ins?
-
-This answer assumes
-
-How do you see a Web App component used in an Office JS Add-ins eg Excel, working with/enabled/leveraged by Fluid?
-
-### Does the fluid framework require Microsoft Office as a backend?
-
-Is Fluid Framework only applicable to the big 4 (Word, Excel, Powerpoint, Outlook) or does it support apps like OneNote
-and Visio?
-
-### Any limitations pertaining O365/M365 GCC tenants?
-
-## Use Cases
+This is the scenario that Fluid was first designed to support. Consequently, Fluid Framework is an ideal foundation
+for rich text editors that support simultaneous editing by multiple clients. The SharedString DDS is
+taylor made for this scenario.
 
 ### Turn-based games?
 
-Would it be possible to allow users to do turn-based actions? For the example, allow them one-by-one to post messages
-and one-by-one to vote?
-
-*Is this something like Poker*Game?
+DDSes can be used to distribute state for games, including who's turn it is. It's up to the client to enforce the rules
+of a game so there may be some interesting problems to solve around preventing cheating but the Fluid team has already
+prototyped several games.
 
 ### Presence, including mouse cursor?
 
-In previous demo I have seen that even mouse pointers of other people were visible in my screen playing with the
-shared HTML elements, is it possible, how does it work?
+Keeping track of and sharing each user's position in a grid, a document, or some other virtual space is an ideal
+task for Fluid Framework because it is designed to enable extraordinary performance.
 
 ## Fluid Server
 
@@ -262,7 +225,7 @@ language or dangerous content like credit card numbers...
 
 What about server-side code, like a bot, interacting with users?
 
-### Can you put security around DDSs such that you only get updates if you're authorized?
+### Can you put security around DDSes such that you only get updates if you're authorized?
 
 ### How do you handle Data Loss/Leakage Prevention?
 
