@@ -13,7 +13,11 @@ steps:
     verbosity: Verbose
     scanType: Register
     alertWarningLevel: High
-
+# NOTICE File Generator requires node
+- task: UseNode@1
+  displayName: Use Node 12.x
+  inputs: 
+    version: 12.x
 - task: msospo.ospo-extension.8d7f9abb-6896-461d-9e25-4f74ed65ddb2.notice@0
   displayName: 'NOTICE File Generator'
 
