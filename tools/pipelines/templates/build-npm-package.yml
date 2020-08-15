@@ -26,6 +26,10 @@ parameters:
 - name: taskAuth
   type: boolean
   default: true
+ 
+- name: extraAuth
+  type: string
+  default:
 
 - name: poolCG
   type: object
@@ -109,6 +113,12 @@ stages:
             displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/.npmrc'
             inputs:
               workingFile: ${{ parameters.buildDirectory }}/.npmrc
+              customEndpoint: Offnet Packages
+        - ${{ if ne(parameters.extraAuth, '') }}:
+          - task: npmAuthenticate@0
+            displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/${{ parameters.extraAuth }}/.npmrc'
+            inputs:
+              workingFile: ${{ parameters.buildDirectory }}/${{ parameters.extraAuth }}/.npmrc
               customEndpoint: Offnet Packages
         - task: Npm@1
           displayName: npm ci
