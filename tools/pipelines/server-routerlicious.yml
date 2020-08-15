@@ -35,21 +35,29 @@ pr:
     - server/routerlicious/kubernetes/routerlicious
 
 variables:
-  skipComponentGovernanceDetection: true
-  pushImage: ${{
+- name: skipComponentGovernanceDetection
+  value: true
+- name: pushImage
+  value: ${{
     and(
-        ne(variables['Build.Reason'], 'PullRequest'),
-        eq(variables['Build.SourceBranch'], 'refs/heads/master')
+      ne(variables['Build.Reason'], 'PullRequest'),
+      eq(variables['Build.SourceBranch'], 'refs/heads/master')
     )}}
-  registry: prague.azurecr.io
-  containerName: prague-server
-  baseContainerName: $(containerName)-base
-  baseContainerTag: $(baseContainerName):$(Build.BuildNumber)
-  fullRunnerContainerTag: $(registry)/$(containerName):$(Build.BuildNumber)
-  ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-    testConfig: :full
-  ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-    testConfig: :ci
+- group: container-registry-info
+- name: containerName
+  value: fluid-server
+- name: baseContainerName
+  value: $(containerName)-base
+- name: baseContainerTag
+  value: $(baseContainerName):$(Build.BuildNumber)
+- name: fullRunnerContainerTag
+  value: $(containerRegistryUrl)/$(containerName):$(Build.BuildNumber)
+- ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+  - name: testConfig
+    value: :full
+- ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+  - name: testConfig
+    value: :ci
 
 stages:
 - stage: build
@@ -195,7 +203,7 @@ stages:
           - task: Docker@2
             displayName: 'Docker Build - Runner'
             inputs:
-              containerRegistry: Fluid Azure Container Registry
+              containerRegistry: $(containerRegistryConnection)
               repository: $(containerName)
               command: build
               dockerFile: server/routerlicious/Dockerfile
@@ -207,7 +215,7 @@ stages:
           - task: Docker@2
             displayName: 'Docker Push - Runner'
             inputs:
-              containerRegistry: Fluid Azure Container Registry
+              containerRegistry: $(containerRegistryConnection)
               repository: $(containerName)
               command: push
               tags: |
@@ -250,6 +258,7 @@ stages:
         feeds:
         - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
           environment: fluid-feed
+          customEndPoint: Offnet Packages
           internal: false
         # only publish release bits
         - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:

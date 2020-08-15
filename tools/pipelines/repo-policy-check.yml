@@ -14,6 +14,10 @@ pr:
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+- name: skipComponentGovernanceDetection
+  value: true
+
 steps:
 - task: UseNode@1
   displayName: Use Node 12.x
