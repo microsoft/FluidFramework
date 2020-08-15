@@ -1,6 +1,6 @@
 {
   "name": "generator-fluid",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A yeoman project generator for fluid components",
   "keywords": [
     "yeoman-generator"

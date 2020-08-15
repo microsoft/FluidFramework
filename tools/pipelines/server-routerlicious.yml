@@ -44,8 +44,8 @@ variables:
   registry: prague.azurecr.io
   containerName: prague-server
   baseContainerName: $(containerName)-base
-  baseContainerTag: $(baseContainerName):$(Build.BuildId)
-  fullRunnerContainerTag: $(registry)/$(containerName):$(Build.BuildId)
+  baseContainerTag: $(baseContainerName):$(Build.BuildNumber)
+  fullRunnerContainerTag: $(registry)/$(containerName):$(Build.BuildNumber)
   ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
     testConfig: :full
   ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
@@ -85,13 +85,13 @@ stages:
             displayName: 'npm Authenticate root .npmrc'
             inputs:
               workingFile: .npmrc
+              customEndpoint: Offnet Packages
           - task: Npm@1
             displayName: npm ci
             inputs:
               command: 'custom'
               customCommand: 'ci --ignore-scripts'
-              customRegistry: 'useFeed'
-              customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+              customRegistry: 'useNpmrc'
           - bash: |
               # Generate the package/package lock for the lerna project so we would scan it.
               node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
@@ -118,6 +118,7 @@ stages:
           displayName: npm Authenticate
           inputs:
             workingFile: server/routerlicious/.npmrc
+            customEndpoint: Offnet Packages
 
         # Build
         - task: Docker@2
@@ -127,9 +128,9 @@ stages:
             command: build
             dockerFile: server/routerlicious/Dockerfile
             buildContext: server/routerlicious
-            arguments: --target base --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)
+            arguments: --target base --build-arg VERSION_BUILDNUMBER=$(Build.BuildNumber) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)
             tags: |
-              $(Build.BuildId)
+              $(Build.BuildNumber)
 
         # Pack
         - task: Docker@0
@@ -199,9 +200,9 @@ stages:
               command: build
               dockerFile: server/routerlicious/Dockerfile
               buildContext: server/routerlicious
-              arguments: '--target runner --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)'
+              arguments: '--target runner --build-arg VERSION_BUILDNUMBER=$(Build.BuildNumber) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)'
               tags: |
-                $(Build.BuildId)
+                $(Build.BuildNumber)
           
           - task: Docker@2
             displayName: 'Docker Push - Runner'
@@ -210,7 +211,7 @@ stages:
               repository: $(containerName)
               command: push
               tags: |
-                $(Build.BuildId)
+                $(Build.BuildNumber)
 
         # Cleanup
         - task: Docker@0
