@@ -3,7 +3,7 @@ title: "Fluid Framework"
 ---
 
 {{< jumbotron
-  lead=`Data sync, <strong>reimagined.</strong>`
+  lead=`Data Sync <strong>Reimagined</strong>`
   subText="Real time. Web first. Open source."
   img=`https://media.giphy.com/media/12NUbkX6p4xOO4/source.gif`
 >}}
