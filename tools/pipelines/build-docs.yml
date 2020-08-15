@@ -40,16 +40,16 @@ resources:
         - pl-test
   - pipeline: common_definitions
     source: Build - common-definitions
-  - pipeline: common_utils
-    source: Build - common-utils
-  - pipeline: client
-    source: Build - client packages
+  # - pipeline: common_utils
+  #   source: Build - common-utils
+  # - pipeline: client
+  #   source: Build - client packages
     trigger:
       branches:
         include:
         - master
-  - pipeline: server
-    source: server-routerlicious
+  # - pipeline: server
+  #   source: server-routerlicious
 
 stages:
 - stage: check
