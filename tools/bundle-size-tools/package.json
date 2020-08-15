@@ -1,0 +1,36 @@
+{
+  "name": "@fluidx/bundle-buddy",
+  "version": "0.0.0",
+  "description": "Utility for analyzing bundle size regressions",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://office.visualstudio.com/DefaultCollection/OC/_git/office-bohemia"
+  },
+  "scripts": {
+    "clean": "node node_modules/@ms/office-bohemia-build-tools/just-scripts.js clean",
+    "build": "node node_modules/@ms/office-bohemia-build-tools/just-scripts.js build",
+    "rebuild": "node node_modules/@ms/office-bohemia-build-tools/just-scripts.js rebuild",
+    "lint": "node node_modules/@ms/office-bohemia-build-tools/just-scripts.js lint",
+    "pack": "node node_modules/@ms/office-bohemia-build-tools/just-scripts.js pack"
+  },
+  "devDependencies": {
+    "@ms/office-bohemia-build-tools": "^0.0.0",
+    "@ms/office-online-tslint": ">=1.0.26 <2.0.0",
+    "@types/jszip": "^3.1.7",
+    "@types/msgpack-lite": "^0.1.6",
+    "@types/node": "^12.12.6",
+    "@types/pako": "^1.0.1",
+    "@types/yargs": "^15.0.4",
+    "@types/webpack": "^4.1.3"
+  },
+  "dependencies": {
+    "azure-devops-node-api": "^10.1.0",
+    "danger": "^10.3.0",
+    "msgpack-lite": "^0.1.26",
+    "pako": "^1.0.10",
+    "tslib": "^1.10.0",
+    "yargs": "^15.3.1",
+    "jszip": "^3.2.2"
+  }
+}
