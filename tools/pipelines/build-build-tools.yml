@@ -36,3 +36,4 @@ extends:
     taskLint: false
     taskTest: false
     taskAuth: false
+    buildNumberInPatch: true

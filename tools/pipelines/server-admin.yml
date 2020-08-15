@@ -3,7 +3,7 @@
 
 # server-admin pipeline
 
-name: $(Date:yyMMdd)$(Rev:.r)
+name: $(Build.BuildId)
 
 trigger:
   branches:

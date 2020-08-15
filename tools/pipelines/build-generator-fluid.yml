@@ -39,3 +39,4 @@ extends:
     taskTest: test
     namespace: false
     extraAuth: app/templates
+    buildNumberInPatch: true
