@@ -50,6 +50,7 @@ extends:
     poolBuild: Main
     cgSubDirectory: packages
     checkoutSubmodules: true
+    runBundleAnalysis: true
     preCG:
     - task: Npm@1
       displayName: npm ci

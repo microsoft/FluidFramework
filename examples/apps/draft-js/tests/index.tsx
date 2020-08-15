@@ -6,8 +6,12 @@
 import { getSessionStorageContainer } from "@fluidframework/get-session-storage-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
-import { DraftJsContainer } from "../src/container";
-import { DraftJsObject } from "../src/fluid-object";
+import React from "react";
+import ReactDOM from "react-dom";
+
+import { FluidDraftJsContainer } from "../src/container";
+import { FluidDraftJsObject } from "../src/fluid-object";
+import { FluidDraftJsView } from "../src/view";
 
 // Since this is a single page fluid application we are generating a new document id
 // if one was not provided
@@ -25,13 +29,15 @@ const documentId = window.location.hash.substring(1);
 async function createContainerAndRenderInElement(element: HTMLElement, createNewFlag: boolean) {
     // The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
     // to store ops.
-    const container = await getSessionStorageContainer(documentId, DraftJsContainer, createNewFlag);
+    const container = await getSessionStorageContainer(documentId, FluidDraftJsContainer, createNewFlag);
 
     // Get the Default Object from the Container
-    const defaultObject = await getDefaultObjectFromContainer<DraftJsObject>(container);
+    const defaultObject = await getDefaultObjectFromContainer<FluidDraftJsObject>(container);
 
-    // For now we will just reach into the FluidObject to render it
-    defaultObject.render(element);
+    // Render the content using ReactDOM
+    ReactDOM.render(
+        <FluidDraftJsView model={defaultObject} />,
+        document.getElementById("content"));
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line dot-notation

@@ -25,11 +25,11 @@ parameters:
 
 - name: poolCG
   type: object
-  default: Shared
+  default: Lite
 
 - name: poolBuild
   type: object
-  default: Shared
+  default: Lite
 
 - name: preCG
   type: stepList
@@ -46,6 +46,10 @@ parameters:
 - name: namespace
   type: boolean
   default: true
+
+- name: runBundleAnalysis
+  type: boolean
+  default: false
 
 trigger: none
 
@@ -84,7 +88,7 @@ stages:
 
         - task: UseNode@1
           displayName: Use Node 12.x
-          inputs: 
+          inputs:
             version: 12.x
 
         - task: Bash@3
@@ -212,6 +216,23 @@ stages:
             PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
             ArtifactName: 'pack'
             publishLocation: 'Container'
+
+        # Collect bundle analysis
+        - ${{ if eq(parameters.runBundleAnalysis, true) }}:
+          - task: Npm@1
+            displayName: npm run bundle-analysis
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run bundle-analysis'
+
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifacts - bundle-analysis
+            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+            inputs:
+              PathtoPublish: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
+              Artifactname: 'bundleAnalysis'
+              publishLocation: 'Container'
 
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:

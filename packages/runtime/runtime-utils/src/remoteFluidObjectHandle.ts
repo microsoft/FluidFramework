@@ -12,8 +12,8 @@ import {
 } from "@fluidframework/core-interfaces";
 
 /**
- * This handle is used to dynamically load a data store on a remote client and is created on parsing a seralized
- * FluidOjectHandle.
+ * This handle is used to dynamically load a data store on a remote client and is created on parsing a serialized
+ * FluidObjectHandle.
  * This class is used to generate an IFluidHandle when de-serializing Fluid Data Store and SharedObject handles
  * that are stored in SharedObjects. The Data Store or SharedObject corresponding to the IFluidHandle can be
  * retrieved by calling `get` on it.
