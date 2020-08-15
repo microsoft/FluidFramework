@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { BundleFileData } from './getBundleFilePathsFromFolder';
 import { runProcessorsOnStatsFile } from '../utilities/runProcessorOnStatsFile';
 import { WebpackStatsProcessor, BundleBuddyConfig, BundleSummaries } from '../BundleBuddyTypes';

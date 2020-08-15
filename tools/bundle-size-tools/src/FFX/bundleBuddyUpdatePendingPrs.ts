@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { getAzureDevopsApi } from './getAzureDevopsApi';
 import { FFXConstants } from './FFXConstants';
 import { getBuildTagForCommit } from './getBuildTagForCommit';

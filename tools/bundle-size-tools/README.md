@@ -1,4 +1,4 @@
-# Bundle buddy
+# @fluidframework/bundle-size-tools
 
 This package contains utility for analyzing bundle sizes to help catch code size regressions at pull request time. This library is meant to be fully extensible to meet the unique needs of any repository, but is currently only being used in the `office-bohemia` repository, so additional work may be necessary in order to make the library more useful for other repositories. As a first step, we've structured code we expect to be specific to the `office-bohemia` repo in a folder called `FFX` (FFX is the abbreviation for the Fluid Framework and Experiences team that maintains the `office-bohemia` repo). Partners looking to try to use this tool can use the contents of this folder as a reference, but should not directly use any of the code in there. It is possible that additional shared utilities could be refactored out of the `FFX` folder to make the library more useful.
 

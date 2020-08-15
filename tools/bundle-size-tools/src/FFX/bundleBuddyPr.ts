@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { getBaselineCommit, getLastCommitHashFromPR, getCiBuildWithCommit } from '../utilities';
 import { getAzureDevopsApi } from './getAzureDevopsApi';
 import { BuildStatus, BuildResult } from 'azure-devops-node-api/interfaces/BuildInterfaces';
@@ -16,8 +21,6 @@ import { compareBundles } from '../compareBundles';
 import { join } from 'path';
 import { getBundleSummaries } from './getBundleSummaries';
 import { getBundleBuddyConfigMap } from './getBundleBuddyConfigMap';
-
-export async function bundleBuddyPr(ci: 'ado' | 'github', pr: 'ado' | 'github', adoToken: string, githubToken);
 
 export async function bundleBuddyPr(adoToken: string, bundleReportPath: string, adoBuildId: number, adoPrId: number) {
   const baselineCommit = getBaselineCommit();
