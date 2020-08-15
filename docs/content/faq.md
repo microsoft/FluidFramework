@@ -7,9 +7,6 @@ allow multiple clients to create and operate on shared, synchronized Distributed
 patterns similar to those used to work with local data. Fluid Framework manages connections to services and keeps all
 clients in sync so that developers can focus on the client experience.
 
-Fluid Framework includes a flexible component model. This model facilitates code reuse and makes it simple to embed
-Fluid components in various application surfaces while those components all connect to the same DDSs.
-
 ## Distributed Data Structures
 
 ### What is a DDS?
@@ -61,41 +58,7 @@ How do you decide between multiple structures inside the DDS (vs multiple simple
 
 How big could be the DDS? For e.g. Tables with 100s of rows and columns
 
-we are able to handle things like images or other data types other than text?
-
-💬 *\[Sam Broner\]*: We have blob support (or did?) but the blobs are not actually in DDS, the manager just says where
-blobs should be. It was almost like a map of image (or other data) urls.
-
-💬 *\[Nick Simons\]*: But more importantly, of course we do! And there are multiple approaches like blob support or
-directly in the DDS.
-
-💬 *\[Sam Broner\]*: Yep!
-
-## Components and Containers
-
-
-### What is a Component?
-
-A component is a piece of JavaScript. While a component could be almost anything, we are usually talking about Fluid
-Components that have two properties: they use IComponent interfaces as an API, and they can (but don't have to)
-contain distributed data structures.
-
-One additional detail: all components within a container share the same record of operations, so an operation in one
-component can be ordered relative to an operation in another component.
-
-### What is a Container?
-
-A container is a collection of components that make up a standalone experience. Containers are the finest grained
-boundary that our service understands, so all of the operations within our container are lumped into record.
-
-Fluid Preview is an example of a Fluid container. Fluid containers always have 1 or more components. To organize our
-components, we often have a default component that delegates to other components, but this isn't required.
-
-### What's the difference between a DDS, a Component, and a Container?
-
-A DDS syncs data and is responsible for state. A component can have any number of DDS, but usually includes
-additional code to **do something** with the state. A container is a full experience that includes one or more
-components and has a 1:1 relationship with the Fluid Service.
+Are you able to handle things like images and other data types other than text?
 
 ## Scale
 
@@ -154,12 +117,6 @@ The Fluid Framework relies on update-based operations that are ordered using our
 conflicts. This allows us to have non-commutative operations because their is an explicit ordering.
 
 
-💬 *\[Sam Broner\]*: This seems hard to put in here, but is true:
-
-💬 *\[Sam Broner\]*: While we don't support peer-to-peer scenarios yet, the Fluid Framework is reliant on a total
-ordering of all operations. While we haven't invested in this yet, a total ordering could be created through vector
-clocks or other distributed ordering techniques.
-
 ## Real-Time Collaboration
 
 ### What kind of support is there for real-time editing of text?
@@ -181,14 +138,14 @@ This answer assumes
 
 How do you see a Web App component used in an Office JS Add-ins eg Excel, working with/enabled/leveraged by Fluid?
 
-### Does the fluid framework require office as a backend?
+### Does the fluid framework require Microsoft Office as a backend?
 
 Is Fluid Framework only applicable to the big 4 (Word, Excel, Powerpoint, Outlook) or does it support apps like OneNote
 and Visio?
 
 ### Any limitations pertaining O365/M365 GCC tenants?
 
-## Other Scenarios
+## Use Cases
 
 ### Turn-based games?
 
@@ -202,7 +159,7 @@ and one-by-one to vote?
 In previous demo I have seen that even mouse pointers of other people were visible in my screen playing with the
 shared HTML elements, is it possible, how does it work?
 
-## Server
+## Fluid Server
 
 ### What needs to be running on the server?
 
@@ -319,46 +276,3 @@ DLP = Data Loss prevention. Preventing data marked as sensitive from leaving env
 ### How is authentication handled?
 
 ### How is authorization handled?
-
-## Getting Started
-
-### Where do we start?
-
-Where can I get the framework and start building a component?
-
-Looks great, can I start writing code/play with samples? If yes, then how, where, when?
-
-Where do we get the Fluid Framework?
-
-How do developers play with Fluid Framework today?
-
-### When can we start?
-
-Is preview of Fluid SDK available right now?
-
-Any approximate idea when the framework will be released? Thanks.
-
-### Where can we access docs for Fluid Framework?
-
-Where could we learn more about DDS objects, especially outside of SharePoint context?
-
-can you please share Microsoft learn or documentations?
-
-Is there currently, or will there be Microsoft docs that talks more about Fluid Framework?
-
-When you say its Open Source, that means I will be able to build components for my web application? How this
-would work?
-
-### Access to Sample Code from Demo
-
-Can we get sample code for this solution please?
-
-## Architecture/Specific/Exclude for now
-
-Can you create distinct sessions with this. Using the example this would meain having x dirrefent sets of sticky notes
-for different groups of users?
-
-Can this work in a way that allows data to be passed to different applications or does it require the same application?
-(Can I use it to pass a sticky note from your React App to Microsoft Teams?
-
-Can I pull data from an on premise server and put it in a dds
