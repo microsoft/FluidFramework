@@ -94,7 +94,7 @@ stages:
   dependsOn: json
   jobs:
     - job: trigger_github_action
-      displayName: 'Trigger GitHub Action'
+      displayName: 'Trigger repository_dispatch'
       steps:
       - task: InvokeRESTAPI@1
         inputs:
@@ -103,7 +103,7 @@ stages:
           #azureServiceConnection: # Required when connectionType == ConnectedServiceNameARM
           method: 'POST' # Options: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, PATCH
           headers: '{"Accept": "application/vnd.github.v3+json"}'
-          body: '{"ref": "$(Build.SourceVersion)"}' # Required when method != GET && Method != HEAD
-          urlSuffix: repos/microsoft/FluidFramework/actions/workflows/azure-static-web-apps-polite-pebble-004dbbb10.yml/dispatches # Optional
+          body: '{"event_type": "Trigger docs"}' # Required when method != GET && Method != HEAD
+          urlSuffix: repos/microsoft/FluidFramework/dispatches # Optional
           waitForCompletion: 'false' # Options: true, false
           #successCriteria: # Optional
