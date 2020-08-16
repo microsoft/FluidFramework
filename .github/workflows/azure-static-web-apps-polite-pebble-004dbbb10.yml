@@ -25,17 +25,29 @@ jobs:
       - name: Download and extract api-extractor JSON
         id: docs-json
         run: |
-          wget -q https://fluidframework.z19.web.core.windows.net/${{ github.sha }}.tar.gz -O api-extractor.tar.gz
+          wget -q https://fluidframework.z19.web.core.windows.net/${{ github.sha }}.tar.gz -O $HOME/api-extractor.tar.gz
           if [ $? -ne 0 ]; then
             echo "${{ github.sha }}.tar.gz not found; downloading latest.tar.gz"
-            wget -q https://fluidframework.z19.web.core.windows.net/latest.tar.gz -O api-extractor.tar.gz
+            wget -q https://fluidframework.z19.web.core.windows.net/latest.tar.gz -O $HOME/api-extractor.tar.gz
           fi
-          mkdir -p ./_api-extractor-temp/doc-models/
-          tar -C ./_api-extractor-temp/doc-models/ -zxvf api-extractor.tar.gz
+          mkdir -pv $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/
+          tar -C $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/ -zxvf $HOME/api-extractor.tar.gz
+          pwd
+          ls -al
       - name: npm run build:mdapidocs
         id: mdapidocs
         run: |
-          npm run build:mdapidocs
+          # npm run build:mdapidocs
+          pwd
+          cd $GITHUB_WORKSPACE
+          pwd
+          ls
+          ls docs
+          ls docs/scripts/
+          ls docs/scripts/api-documenter/
+          cd docs/scripts/api-documenter/
+          npm install && npm run build
+          npm run api:tomarkdown
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v0.0.1-preview
