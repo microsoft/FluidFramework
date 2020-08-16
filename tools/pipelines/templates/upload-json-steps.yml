@@ -10,9 +10,9 @@ parameters:
 - name: STORAGE_KEY
   type: string
 
-- name: artifactName
-  type: string
-  default: fluid-docs
+- name: uploadAsLatest
+  type: boolean
+  default: false
 
 steps:
 - checkout: none
@@ -30,7 +30,7 @@ steps:
 
 # Copy and merge the api-extractor outputs to a central location
 - task: CopyFiles@2
-  displayName: 'Copy _api-extractor-temp'
+  displayName: 'Copy and merge JSON files'
   inputs:
     SourceFolder: $(Pipeline.Workspace)
     Contents: '**/*.api.json'
@@ -51,10 +51,20 @@ steps:
     #quiet: # Optional
 
 - task: AzureCLI@2
-  displayName: 'Azure Blob Upload'
+  displayName: 'Upload JSON'
   inputs:
     azureSubscription: 'fluid-docs'
     scriptType: bash
     scriptLocation: inlineScript
     inlineScript: |
       az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c '$web' -n $(Build.SourceVersion).tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --verbose
+
+- ${{ if eq(parameters.uploadAsLatest, true) }}:
+  - task: AzureCLI@2
+    displayName: 'Upload JSON as latest.tar.gz'
+    inputs:
+      azureSubscription: 'fluid-docs'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c '$web' -n latest.tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --verbose

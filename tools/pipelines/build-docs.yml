@@ -92,6 +92,7 @@ stages:
               parameters:
                 STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                 STORAGE_KEY: $(STORAGE_KEY)
+                uploadAsLatest: true
 
 - stage: github_actions
   displayName: GitHub Action
