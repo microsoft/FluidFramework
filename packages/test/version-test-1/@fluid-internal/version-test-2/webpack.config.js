@@ -7,7 +7,8 @@ const fluidRoute = require("@fluidframework/webpack-fluid-loader");
 const path = require("path");
 const merge = require("webpack-merge");
 
-const fluidObjectName = "fluid-internal/version-test-2";
+const pkg = require("./package.json");
+const fluidObjectName = pkg.name.slice(1);
 
 module.exports = env => {
     const isProduction = env && env.production;
