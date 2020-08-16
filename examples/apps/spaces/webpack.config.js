@@ -54,7 +54,6 @@ module.exports = (env) => {
         plugins: [
             new HtmlWebpackPlugin({
                 template: "./public/index.html",
-                chunks: ["app"],
             }),
         ],
     }, isProduction

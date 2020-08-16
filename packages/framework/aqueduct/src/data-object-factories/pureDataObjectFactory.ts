@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
-    ComponentSymbolProvider,
+    FluidObjectSymbolProvider,
     DependencyContainer,
 } from "@fluidframework/synthesize";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -46,7 +46,7 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
         public readonly type: string,
         private readonly ctor: new (props: ISharedComponentProps<P>) => PureDataObject<P, S>,
         sharedObjects: readonly IChannelFactory[],
-        private readonly optionalProviders: ComponentSymbolProvider<P>,
+        private readonly optionalProviders: FluidObjectSymbolProvider<P>,
         registryEntries?: NamedFluidDataStoreRegistryEntries,
         private readonly onDemandInstantiation = true,
     ) {

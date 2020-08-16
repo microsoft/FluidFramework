@@ -18,8 +18,6 @@ import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import Axios from "axios";
 import { DocumentFactory } from "./documentFactory";
-import { MicrosoftGraph } from "./graph";
-import { PackageManager } from "./packageManager";
 import { IHostServices } from "./services";
 import { seedFromScriptIds } from "./helpers";
 
@@ -115,17 +113,9 @@ export async function initialize(
     user: any,
 ) {
     const documentFactory = new DocumentFactory(config.tenantId);
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    const graph = user.accessToken ? new MicrosoftGraph(user.accessToken) : undefined;
-    const packageManager = new PackageManager(
-        config.packageManager.endpoint,
-        config.packageManager.username,
-        config.packageManager.password);
 
     const services: IHostServices = {
         IDocumentFactory: documentFactory,
-        IMicrosoftGraph: graph,
-        IPackageManager: packageManager,
     };
 
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions

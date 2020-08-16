@@ -58,7 +58,7 @@ stages:
   jobs:
   - job:
     displayName: Component Detection
-    pool: Shared
+    pool: Lite
     steps:
     - script: |
         echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}

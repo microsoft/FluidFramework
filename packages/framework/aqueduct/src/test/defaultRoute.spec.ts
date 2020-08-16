@@ -14,7 +14,7 @@ import {
     IFluidObject,
     IFluidRouter,
 } from "@fluidframework/core-interfaces";
-import { createComponentResponse } from "@fluidframework/request-handler";
+import { createFluidObjectResponse } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "../request-handlers";
 
 class MockRuntime {
@@ -25,7 +25,7 @@ class MockRuntime {
             return {
                 request: async (r) => {
                     if (r.url === "" || r.url === "route") {
-                        return createComponentResponse({ route: r.url } as IFluidObject);
+                        return createFluidObjectResponse({ route: r.url } as IFluidObject);
                     }
                     return { status: 404, mimeType: "text/plain", value: "not found" };
                 },

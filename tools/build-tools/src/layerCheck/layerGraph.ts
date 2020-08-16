@@ -92,7 +92,7 @@ class LayerNode extends BaseNode {
         if (this.packages.size < 2) {
             return `\n    ${nodes.join("\n    ")}`;
         }
-        const sameRank = this.dotSameRank? "\n      rank=\"same\"": "";
+        const sameRank = this.dotSameRank ? "\n      rank=\"same\"" : "";
         return `
     subgraph cluster_${this.dotName} {
       label = "${this.dotName}"${sameRank}
@@ -137,7 +137,7 @@ class GroupNode extends BaseNode {
         // default to true
         return this.groupInfo.dot ?? true;
     }
-    
+
     private get dotSameRank() {
         // default to false
         return this.groupInfo.dotSameRank ?? false;
@@ -155,7 +155,7 @@ class GroupNode extends BaseNode {
     }
 
     public generateDotSubgraph() {
-        const sameRank = this.dotSameRank? "\n    rank=\"same\"": "";
+        const sameRank = this.dotSameRank ? "\n    rank=\"same\"" : "";
         const subGraphs = this.layerNodes.map(layerNode => layerNode.generateDotSubgraph()).join("");
         if (!this.dotGroup) {
             return subGraphs;
@@ -390,7 +390,7 @@ export class LayerGraph {
             return true;
         });
         const dotGraph =
-`strict digraph G { graph [ newrank=true; ranksep=2; compound=true ]; ${this.groupNodes.map(group => group.generateDotSubgraph()).join("")}
+            `strict digraph G { graph [ newrank=true; ranksep=2; compound=true ]; ${this.groupNodes.map(group => group.generateDotSubgraph()).join("")}
   ${dotEdges.join("\n  ")}
 }`;
         return dotGraph;
@@ -428,18 +428,18 @@ export class LayerGraph {
         // Move this root from childrenToVisit to orderedChildren if present
         // This will create at least one new root (i.e. it has no unvisited dependencies)
         allLayers
-        .forEach((l) => {
-            const foundIdx = l.childrenToVisit.findIndex((child) => child?.name === root.node.name);
-            if (foundIdx >= 0) {
-                l.orderedChildren.push(l.childrenToVisit[foundIdx]!);
-                l.childrenToVisit[foundIdx] = undefined;
-            }
-        });
+            .forEach((l) => {
+                const foundIdx = l.childrenToVisit.findIndex((child) => child?.name === root.node.name);
+                if (foundIdx >= 0) {
+                    l.orderedChildren.push(l.childrenToVisit[foundIdx]!);
+                    l.childrenToVisit[foundIdx] = undefined;
+                }
+            });
 
         // Recurse for every layer with no more unvisited dependencies itself (i.e. now a root itself)
         allLayers
-        .filter((l) => l.childrenToVisit.every((c) => !c)) // Also accepts empty childrenToVisit
-        .forEach((newRoot) => this.traverseSubgraph(newRoot, allLayers, orderedLayers));
+            .filter((l) => l.childrenToVisit.every((c) => !c)) // Also accepts empty childrenToVisit
+            .forEach((newRoot) => this.traverseSubgraph(newRoot, allLayers, orderedLayers));
     }
 
     /**
@@ -468,8 +468,8 @@ export class LayerGraph {
         // Take any "roots" (layers with no child dependencies) and traverse those subgraphs,
         // building up orderedLayers as we go
         layers
-        .filter((l) => l.childrenToVisit.length === 0)
-        .forEach((root) => this.traverseSubgraph(root, layers, orderedLayers));
+            .filter((l) => l.childrenToVisit.length === 0)
+            .forEach((root) => this.traverseSubgraph(root, layers, orderedLayers));
 
         return orderedLayers;
     }
@@ -505,7 +505,7 @@ export class LayerGraph {
         assert(packageCount === this.packageNodeMap.size, "ERROR: Did not find all packages while traversing layers");
 
         const packagesMdContents: string =
-`# Package Layers
+            `# Package Layers
 
 [//]: <> (This file is generated, please don't edit it manually!)
 
@@ -517,8 +517,8 @@ ${lines.join(newline)}
         return packagesMdContents;
     }
 
-    public static load(root: string, packages: Packages) {
-        const layerInfoFile = require(path.join(__dirname, "..", "..", "data", "layerInfo.json"));
+    public static load(root: string, packages: Packages, info?: string) {
+        const layerInfoFile = require(info ?? path.join(__dirname, "..", "..", "data", "layerInfo.json"));
         return new LayerGraph(root, layerInfoFile, packages);
     }
 };

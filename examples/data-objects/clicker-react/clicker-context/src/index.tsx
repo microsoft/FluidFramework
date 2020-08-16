@@ -7,12 +7,12 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
-    IFluidFunctionalComponentViewState,
+    IViewState,
     createContextFluid,
     IFluidDataProps,
-    IFluidFunctionalComponentFluidState,
+    IFluidState,
     IFluidContextProps,
-    SyncedComponent,
+    SyncedDataObject,
 } from "@fluidframework/react";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -23,10 +23,10 @@ interface ICounterState {
 }
 
 interface ICounterFunctionalViewState
-    extends IFluidFunctionalComponentViewState,
+    extends IViewState,
     ICounterState {}
 interface ICounterFunctionalFluidState
-    extends IFluidFunctionalComponentFluidState,
+    extends IFluidState,
     ICounterState {}
 
 function CounterReactFunctionalContext(
@@ -73,7 +73,7 @@ function CounterReactFunctionalContext(
 /**
  * Basic ClickerContext example using createContextFluid hook.
  */
-export class ClickerContext extends SyncedComponent {
+export class ClickerContext extends SyncedDataObject {
     constructor(props) {
         super(props);
 
@@ -101,7 +101,7 @@ export class ClickerContext extends SyncedComponent {
             <div>
                 <CounterReactFunctionalContext
                     syncedStateId={"counter-context"}
-                    syncedComponent={this}
+                    syncedDataObject={this}
                 />
             </div>,
             div,

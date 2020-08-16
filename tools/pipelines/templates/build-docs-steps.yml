@@ -67,7 +67,55 @@ steps:
     OverWrite: false
     flattenFolders: true
     CleanTargetFolder: true
+    
+- task: UseNode@1
+  displayName: Use Node 12.x
+  inputs:
+    version: 12.x
+- task: npmAuthenticate@0
+  displayName: 'npm Authenticate root .npmrc'
+  inputs:
+    workingFile: .npmrc
+    customEndpoint: Offnet Packages
+
+- task: Npm@1
+  displayName: npm ci
+  inputs:
+    command: 'custom'
+    customCommand: 'ci --ignore-scripts'
+    customRegistry: 'useNpmrc'
+
+# Build the docs site
+- task: Docker@2
+  displayName: 'Build docs site via docker image'
+  inputs:
+    repository: ${{ parameters.DOCKER_CONTAINER_NAME }}
+    command: build
+    dockerFile: docs/Dockerfile
+    buildContext: $(Build.SourcesDirectory)
+    arguments: |
+      --target ${{ parameters.DOCKER_TARGET }}
+      --build-arg BASE_URL=${{ parameters.BASE_URL }}
+      --build-arg VUEPRESS_BASE=${{ parameters.VUEPRESS_BASE }}
+      --build-arg THIS_VERSION=${{ parameters.THIS_VERSION }}
+      --build-arg MASTER_BRANCH_VERSION=${{ parameters.MASTER_BRANCH_VERSION }}
+      --build-arg RELEASE_VERSION=${{ parameters.RELEASE_VERSION }}
+      --build-arg N1_VERSION=${{ parameters.N1_VERSION }}
+    tags: |
+      $(Build.BuildId)
+
+- task: Docker@0
+  displayName: 'Copy built docs from container'
+  inputs:
+    action: 'Run a Docker command'
+    customCommand: 'run --rm -v $(System.DefaultWorkingDirectory)/fluid-docs:/usr/src/fluid-docs -t ${{ parameters.DOCKER_CONTAINER_NAME }}:$(Build.BuildId) cp -R docs/dist /usr/src/fluid-docs'
 
 # Publish the static site as a pipeline artifact
-- publish: '$(Build.SourcesDirectory)/_api-extractor-temp'
+- publish: $(System.DefaultWorkingDirectory)/fluid-docs/dist
   artifact: ${{ parameters.artifactName }}
+
+- task: Docker@0
+  displayName: 'Remove docker image'
+  inputs:
+    action: 'Run a Docker command'
+    customCommand: 'rmi ${{ parameters.DOCKER_CONTAINER_NAME }}:$(Build.BuildId)'
