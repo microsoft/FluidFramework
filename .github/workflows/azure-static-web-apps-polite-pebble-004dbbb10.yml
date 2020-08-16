@@ -27,8 +27,8 @@ jobs:
         run: |
           wget -q https://fluidframework.z19.web.core.windows.net/${{ github.sha }}.tar.gz -O api-extractor.tar.gz
           if [ $? -ne 0 ]; then
-            wget -q https://fluidframework.z19.web.core.windows.net/latest.tar.gz -O api-extractor.tar.gz
             echo "${{ github.sha }}.tar.gz not found; downloading latest.tar.gz"
+            wget -q https://fluidframework.z19.web.core.windows.net/latest.tar.gz -O api-extractor.tar.gz
           fi
           mkdir -p ./_api-extractor-temp/doc-models/
           tar -C ./_api-extractor-temp/doc-models/ -zxvf api-extractor.tar.gz
