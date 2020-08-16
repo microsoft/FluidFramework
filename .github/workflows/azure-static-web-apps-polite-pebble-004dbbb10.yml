@@ -22,19 +22,28 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: false
-      - name: Download and extract api-extractor JSON
-        id: docs-json
+      - name: Download by SHA
+        id: download-sha
+        uses: carlosperate/download-file-action@v1.0.3
+        with:
+          file-url: https://fluidframework.z19.web.core.windows.net/${{ github.sha }}.tar.gz
+          file-name: api-extractor.tar.gz
+      - name: Download latest
+        id: download-latest
+        if: ${{ failure() }}
+        uses: carlosperate/download-file-action@v1.0.3
+        with:
+          file-url: https://fluidframework.z19.web.core.windows.net/latest.tar.gz
+          file-name: api-extractor.tar.gz
+      - name: Extract api-extractor JSON
+        id: extract-json
         run: |
-          wget -q https://fluidframework.z19.web.core.windows.net/${{ github.sha }}.tar.gz -O $HOME/api-extractor.tar.gz
-          if [ $? -ne 0 ]; then
-            echo "${{ github.sha }}.tar.gz not found; downloading latest.tar.gz"
-            wget -q https://fluidframework.z19.web.core.windows.net/latest.tar.gz -O $HOME/api-extractor.tar.gz
-          fi
+          pwd
           mkdir -pv $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/
-          tar -C $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/ -zxvf $HOME/api-extractor.tar.gz
+          tar -C $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/ -zxvf ${{ steps.download-sh.outputs.file-path }}
           pwd
           ls -al
-      - name: npm run build:mdapidocs
+      - name: Generate TSDoc Markdown
         id: mdapidocs
         run: |
           # npm run build:mdapidocs
