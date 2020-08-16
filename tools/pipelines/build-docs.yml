@@ -96,7 +96,7 @@ stages:
 - stage: github_actions
   displayName: GitHub Action
   pool: server
-  dependsOn: upload_json
+  dependsOn: json
   jobs:
     - job: trigger_github_action
       displayName: 'Trigger repository_dispatch'
