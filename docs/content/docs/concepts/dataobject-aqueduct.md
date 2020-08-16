@@ -1,4 +1,7 @@
-# Encapsulating data with `DataObject`
+---
+title: Encapsulating data with `DataObject`
+menuPosition: 3
+---
 
 In the previous section we introduced distributed data structures and demonstrated how to use them. We'll now discuss
 how to combine those distributed data structures with custom code (business logic) to create modular, reusable pieces.

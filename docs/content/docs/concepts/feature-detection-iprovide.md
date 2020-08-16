@@ -1,4 +1,6 @@
-## Feature detection via IFluidObject
+---
+title: Feature detection via IFluidObject
+---
 
 In the previous section we introduced the DataObject, a convenient way to combine distributed data structures and our own
 code (business logic) into a modular, reusable piece. This in turn enables us to modularize pieces of our application –-
