@@ -48,6 +48,7 @@ resources:
       branches:
         include:
         - master
+        - docs/hugo
         - pl-test
   - pipeline: server
     source: server-routerlicious
