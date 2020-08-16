@@ -40,7 +40,7 @@ jobs:
         run: |
           pwd
           mkdir -pv $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/
-          tar -C $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/ -zxvf ${{ steps.download-sh.outputs.file-path }}
+          tar -C $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/ -zxvf api-extractor.tar.gz
           pwd
           ls -al
       - name: Generate TSDoc Markdown
