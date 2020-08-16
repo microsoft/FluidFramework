@@ -20,14 +20,14 @@ title: "Fluid Framework"
 </div>
 
 {{< swimlane_container >}}
-    {{< swimlane title="Real time"
+    {{< swimlane title="Real Time"
     subTitle="Designed to deliver exceptional performance on an unprecedented scale, Fluid enables instant collaboration with a minimal server footprint."
     img="/images/placeholder.svg" >}}
-    {{< swimlane title="Web first"
+    {{< swimlane title="Web First"
     subTitle="Coded with TypeScript and designed to easily integrate with popular application frameworks such as React, Angular, and Vue. Fluid was born on the Web."
     img="/images/placeholder.svg"
     pos="right" >}}
-    {{< swimlane title="Open source"
+    {{< swimlane title="Open Source"
     subTitle="Everything you need to use Fluid Framework to instantly sync data across clients is open source and on GitHub."
     img="/images/github_logo.png" >}}
 {{< /swimlane_container >}}
