@@ -77,22 +77,26 @@ stages:
         scanType: Register
         alertWarningLevel: High
 
-  - deployment: upload_json
-    displayName: 'Upload JSON'
-    environment: 'fluid-docs-env'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - template: templates/upload-json-steps.yml
-            parameters:
-              STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
-              STORAGE_KEY: $(STORAGE_KEY)
+- stage: json
+  displayName: 'API Extractor'
+  pool: Main
+  jobs:
+    - deployment: upload_json
+      displayName: 'Upload JSON'
+      environment: 'fluid-docs-env'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - template: templates/upload-json-steps.yml
+              parameters:
+                STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+                STORAGE_KEY: $(STORAGE_KEY)
 
 - stage: github_actions
   displayName: GitHub Action
   pool: server
-  dependsOn: json
+  dependsOn: upload_json
   jobs:
     - job: trigger_github_action
       displayName: 'Trigger repository_dispatch'
