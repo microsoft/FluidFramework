@@ -143,10 +143,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         return this._attachState;
     }
 
-    public get isLoadedFromSnapshot(): boolean {
-        return this.dataStoreContext.baseSnapshot !== undefined;
-    }
-
     /**
      * @deprecated - 0.21 back-compat
      */
@@ -207,9 +203,21 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
         if (tree?.trees !== undefined) {
             Object.keys(tree.trees).forEach((path) => {
                 let channelContext: IChannelContext;
-                // If already exists on storage, then create a remote channel. However, if it is loaded from a snpashot
-                // but not yet exists on storage, then create a Local Channel.
-                if (existing) {
+                // If already exists on storage, then create a remote channel.
+                if (dataStoreContext.containerRuntime.isLocalDataStore(id)) {
+                    const channelAttributes = readAndParseFromBlobs<IChannelAttributes>(
+                        tree.trees[path].blobs, tree.trees[path].blobs[".attributes"]);
+                    channelContext = new LocalChannelContext(
+                        path,
+                        this.sharedObjectRegistry,
+                        channelAttributes.type,
+                        this,
+                        this.dataStoreContext,
+                        this.dataStoreContext.storage,
+                        (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
+                        (address: string) => this.setChannelDirty(address),
+                        tree.trees[path]);
+                } else {
                     channelContext = new RemoteChannelContext(
                         this,
                         dataStoreContext,
@@ -229,19 +237,6 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
                             path,
                             { type: CreateSummarizerNodeSource.FromSummary },
                         ));
-                } else {
-                    const channelAttributes = readAndParseFromBlobs<IChannelAttributes>(
-                        tree.trees[path].blobs, tree.trees[path].blobs[".attributes"]);
-                    channelContext = new LocalChannelContext(
-                        path,
-                        this.sharedObjectRegistry,
-                        channelAttributes.type,
-                        this,
-                        this.dataStoreContext,
-                        this.dataStoreContext.storage,
-                        (content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
-                        (address: string) => this.setChannelDirty(address),
-                        tree.trees[path]);
                 }
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -253,8 +248,8 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
 
         this.attachListener();
         // If exists on storage or loaded from a snapshot, it should already be binded.
-        this.bindState = existing || tree !== undefined ? BindState.Bound : BindState.NotBound;
-        this._attachState = existing ? AttachState.Attached : AttachState.Detached;
+        this.bindState = existing ? BindState.Bound : BindState.NotBound;
+        this._attachState = dataStoreContext.attachState;
 
         // If it's existing we know it has been attached.
         if (existing) {

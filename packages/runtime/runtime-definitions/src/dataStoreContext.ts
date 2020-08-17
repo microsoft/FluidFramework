@@ -117,6 +117,12 @@ export interface IContainerRuntimeBase extends
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
     getTaskManager(): Promise<ITaskManager>;
+
+    /**
+     * True if the data store with given id is created by this client.
+     * @param id - id of the data store.
+     */
+    isLocalDataStore(id: string): boolean;
 }
 
 /**

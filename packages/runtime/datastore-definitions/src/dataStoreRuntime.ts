@@ -51,8 +51,6 @@ export interface IFluidDataStoreRuntime extends
 
     readonly existing: boolean;
 
-    readonly isLoadedFromSnapshot: boolean;
-
     readonly parentBranch: string | null;
 
     readonly connected: boolean;

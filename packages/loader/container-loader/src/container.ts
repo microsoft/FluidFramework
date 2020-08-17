@@ -544,8 +544,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.blobManager = await this.loadBlobManager(this.storageService, undefined);
             this._attachState = AttachState.Attached;
             this.emit("attached");
-            // We know this is create new flow.
-            this._existing = false;
             this._parentBranch = this._id;
 
             // Propagate current connection state through the system.
@@ -990,6 +988,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.attachDeltaManagerOpHandler(attributes);
 
+        // We know this is create detached flow without snapshot.
+        this._existing = false;
+
         // Need to just seed the source data in the code quorum. Quorum itself is empty
         this.protocolHandler = this.initializeProtocolState(
             attributes,
@@ -1009,6 +1010,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
         assert.strictEqual(attributes.sequenceNumber, 0, "Seq number in detached container should be 0!!");
         this.attachDeltaManagerOpHandler(attributes);
+
+        // We know this is create detached flow with snapshot.
+        this._existing = true;
 
         // ...load in the existing quorum
         // Initialize the protocol handler

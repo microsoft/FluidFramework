@@ -202,7 +202,8 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     ) {
         super();
 
-        this._attachState = existing ? AttachState.Attached : AttachState.Detached;
+        this._attachState = this.containerRuntime.attachState !== AttachState.Detached && existing ?
+            this.containerRuntime.attachState : AttachState.Detached;
 
         this.bindToContext = (channel: IFluidDataStoreChannel) => {
             assert(this.bindState === BindState.NotBound);
@@ -705,7 +706,7 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
         super(
             runtime,
             id,
-            false,
+            snapshotTree !== undefined ? true : false,
             storage,
             scope,
             summaryTracker,

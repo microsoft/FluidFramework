@@ -78,7 +78,7 @@ export class BaseContainerRuntimeFactory implements
         dc.register(IContainerRuntime, runtime);
 
         // Don't initialize if existing on storage or loaded detached from snapshot(ex. draft mode).
-        if (!(runtime.existing || context.baseSnapshot)) {
+        if (!runtime.existing) {
             // If it's the first time through.
             await this.containerInitializingFirstTime(runtime);
         }
