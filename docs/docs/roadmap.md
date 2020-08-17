@@ -12,4 +12,4 @@ This FluidFramework repo contains a reference implementation of a Fluid server t
 
 ## Microsoft 365 integration
 
-Work is underway to build collaborative experiences in Microsoft 365 clients that leverage the Fluid Framework. An additional SDK will become available in the coming months that will enable developers to build self-contained, portable, collaborative application experiences that customers can enable in multiple Microsoft 365 clients. This SDK will likely be governed by the standard Microsoft SDK license agreement.
+As we looked to release Fluid Framework and get feedback from developers, we’ve gotten feedback that open source projects work best when they are highly focused on particular scenarios – to make them more lightweight and adaptable.  For this reason, we are separating the user experience elements that are connected to Microsoft 365. Stay tuned for updates on an additional SDK for building embeddable components within Microsoft 365.
