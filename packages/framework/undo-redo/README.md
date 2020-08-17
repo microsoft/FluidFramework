@@ -8,7 +8,7 @@ SharedSegmentSequence distributed datastructures.
 The undo redo stack manager is where undo and redo commands are issued, and it holds the stack of all undoable and
 redoable operations. The undo redo stack manager is a stack of stacks.
 
-The outer stack contains operations, and the inner stack contains all the IRevertable objects that make up that
+The outer stack contains operations, and the inner stack contains all the IRevertible objects that make up that
 operation. This allows the consumer of the undo redo stack manager to determine the granularity of what is undone or
 redone.
 
@@ -16,33 +16,33 @@ For instance, you could defined a text operation at the word level, so as a user
 operation whenever the user types a space. By doing this when the user issues an undo mid-word the characters typed
 since the last space would be undone, if they issue another undo the previous word would them be undone.
 
-As mentioned above operations are a stack of IRevertable objects. As suggested by the name, these objects have the
+As mentioned above operations are a stack of IRevertible objects. As suggested by the name, these objects have the
 ability to revert some change which usually means two things. They must be able to track what was changed, and store
 enough metadata to revert that change.
 
-In order to create IRevertable object there are provided undo redo handlers for commonly used data structures.
+In order to create IRevertible object there are provided undo redo handlers for commonly used data structures.
 
 ## Shared Map Undo Redo Handler
 
-The SharedMapUndoRedoHandler generates IRevertable objects, SharedMapRevertable for all local changes made to a SharedMap and pushes them to the current operation on the undo redo stack. These objects are created via the valueChanged event of the SharedMap. This handler will never close the current operation on the stack. This is a fairly simple handler, and a good example to look at for understanding how IRevertable objects should work.
+The SharedMapUndoRedoHandler generates IRevertible objects, SharedMapRevertible for all local changes made to a SharedMap and pushes them to the current operation on the undo redo stack. These objects are created via the valueChanged event of the SharedMap. This handler will never close the current operation on the stack. This is a fairly simple handler, and a good example to look at for understanding how IRevertible objects should work.
 
 ## Shared Segment Sequence Undo Redo Handler
 
-The SharedSegmentSequenceUndoRedoHandler generates IRevertable objects, SharedSegmentSequenceRevertable for any
+The SharedSegmentSequenceUndoRedoHandler generates IRevertible objects, SharedSegmentSequenceRevertible for any
 SharedSegmentSequence based distributed datastructures like SharedString, SharedObjectSequence, and
 SharedNumberSequence.
 
-This handler pushes an SharedSegmentSequenceRevertable for every local Insert, Remove, and Annotate operations made to
+This handler pushes an SharedSegmentSequenceRevertible for every local Insert, Remove, and Annotate operations made to
 the sequence. The objects are created via the sequenceDelta event of the sequence. Like the SharedMapUndoRedoHandler
 this handler will never close the current operation on the stack.
 
 This handler is more complex than the SharedMapUndoRedoHandler. The handler itself batches the SharedSegmentSequence
-changes into the smallest number of IRevertable objects it can to minimize the memory and performance overhead on the
+changes into the smallest number of IRevertible objects it can to minimize the memory and performance overhead on the
 SharedSegmentSequence of tracking changes for revert.
 
-### Shared Segment Sequence Revertable
+### Shared Segment Sequence Revertible
 
-The SharedSegmentSequenceRevertable does the heavy lifting of tracking and reverting changes on the underlying
+The SharedSegmentSequenceRevertible does the heavy lifting of tracking and reverting changes on the underlying
 SharedSegmentSequence. This is accomplished via TrackingGroup objects. A TrackingGroup creates a bi-direction link
 between itself and the segment. This link is maintained across segment movement, splits, merges, and removal. When a
 sequence delta event is fired the segments contained in that event are added to a TrackingGroup. The TrackingGroup is
@@ -58,5 +58,5 @@ TrackingGroup. This overhead manifests in a few ways:
 - Segments can only be merged if they have all the same TrackingGroups.
 
 This object minimizes the number of TrackingGroups created, so this overhead is very low. This undo redo infrastructure
-is entirely in-memory so it does not affect other users or sessions. If custom IRevertable objects use TrackingGroups
+is entirely in-memory so it does not affect other users or sessions. If custom IRevertible objects use TrackingGroups
 this overhead should be kept in mind to avoid possible performance issues.

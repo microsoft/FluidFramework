@@ -157,7 +157,7 @@ export function convertToSummaryTree(
         const builder = new SummaryTreeBuilder();
         for (const entry of snapshot.entries) {
             switch (entry.type) {
-                case TreeEntry[TreeEntry.Blob]: {
+                case TreeEntry.Blob: {
                     const blob = entry.value as IBlob;
                     let content: string | Buffer;
                     if (blob.encoding === "base64") {
@@ -169,7 +169,7 @@ export function convertToSummaryTree(
                     break;
                 }
 
-                case TreeEntry[TreeEntry.Tree]: {
+                case TreeEntry.Tree: {
                     const subtree = convertToSummaryTree(
                         entry.value as ITree,
                         fullTree);
@@ -178,7 +178,7 @@ export function convertToSummaryTree(
                     break;
                 }
 
-                case TreeEntry[TreeEntry.Commit]:
+                case TreeEntry.Commit:
                     assert.fail("Should not have Commit TreeEntry in summary");
 
                 default:

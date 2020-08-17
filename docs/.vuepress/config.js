@@ -235,7 +235,8 @@ const getDocsSidebar = () => {
             children: [
                 "architecture.md",
                 "dds.md",
-                "interfaces-aqueduct.md",
+                "dataobject-aqueduct.md",
+                "feature-detection-iprovide.md",
                 "hosts.md",
                 "containers-runtime.md",
                 "server.md",
