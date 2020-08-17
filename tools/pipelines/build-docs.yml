@@ -24,6 +24,8 @@ variables:
     value: ${{ eq(variables['Build.SourceBranchName'], variables['RELEASE_BRANCH']) }}
   - name: validRun
     value: ${{ or(variables.releasePipeline, variables.n1Pipeline, variables.latestPipeline) }}
+  - name: repoToTrigger
+    value: microsoft/FluidFramework
 
 # no branch and PR triggers
 trigger: none
@@ -111,6 +113,6 @@ stages:
           method: 'POST' # Options: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, PATCH
           headers: '{"Accept": "application/vnd.github.v3+json"}'
           body: '{"event_type": "Trigger docs"}' # Required when method != GET && Method != HEAD
-          urlSuffix: repos/microsoft/FluidFramework/dispatches # Optional
+          urlSuffix: 'repos/${{ variables.repoToTrigger }}/dispatches' # Optional
           waitForCompletion: 'false' # Options: true, false
           #successCriteria: # Optional
