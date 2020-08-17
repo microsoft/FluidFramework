@@ -12,8 +12,8 @@ import { Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import {
     LocalCodeLoader,
-    TestFluidComponentFactory,
-    ITestFluidComponent,
+    TestFluidObjectFactory,
+    ITestFluidObject,
 } from "@fluidframework/test-utils";
 import { SharedMap } from "@fluidframework/map";
 import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
@@ -35,7 +35,7 @@ describe(`r11s End-To-End tests`, () => {
     let loader: Loader;
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
-        const factory: TestFluidComponentFactory = new TestFluidComponentFactory([
+        const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
             [mapId1, SharedMap.getFactory()],
             [mapId2, SharedMap.getFactory()],
         ]);
@@ -60,7 +60,7 @@ describe(`r11s End-To-End tests`, () => {
         componentContext: IFluidDataStoreContext,
         type: string,
     ) => {
-        return requestFluidObject<ITestFluidComponent>(
+        return requestFluidObject<ITestFluidObject>(
             await componentContext.containerRuntime.createDataStore(type),
             "");
     });
@@ -106,7 +106,7 @@ describe(`r11s End-To-End tests`, () => {
         const container = await loader.createDetachedContainer(codeDetails);
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const component = response.value as ITestFluidObject;
 
         // Create a sub component of type TestFluidComponent.
         const subComponent1 = await createFluidObject(component.context, "default");
@@ -124,7 +124,7 @@ describe(`r11s End-To-End tests`, () => {
 
         // Get the sub component and assert that it is attached.
         const response2 = await container2.request({ url: `/${subComponent1.context.id}` });
-        const subComponent2 = response2.value as ITestFluidComponent;
+        const subComponent2 = response2.value as ITestFluidObject;
         assert.strictEqual(subComponent2.runtime.IFluidHandleContext.isAttached, true,
             "Component should be attached!!");
 
@@ -154,7 +154,7 @@ describe(`r11s End-To-End tests`, () => {
 
         // Get the root component from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const component = response.value as ITestFluidObject;
         const testChannel1 = await component.getSharedObject<SharedMap>(mapId1);
 
         // Fire op before attaching the container
