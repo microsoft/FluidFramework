@@ -5,6 +5,7 @@ export interface IMarkdownEmitterOptions {
 export interface IMarkdownEmitterContext<TOptions = IMarkdownEmitterOptions> {
     writer: IndentedWriter;
     insideTable: boolean;
+    insideHTML: boolean;
     boldRequested: boolean;
     italicRequested: boolean;
     writingBold: boolean;

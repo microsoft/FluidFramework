@@ -13,5 +13,7 @@ export declare class CustomMarkdownEmitter extends MarkdownEmitter {
     protected writeNode(docNode: DocNode, context: IMarkdownEmitterContext, docNodeSiblings: boolean): void;
     /** @override */
     protected writeLinkTagWithCodeDestination(docLinkTag: DocLinkTag, context: IMarkdownEmitterContext<ICustomMarkdownEmitterOptions>): void;
+    private _writeMarkdownTable;
+    private _writeHTMLTable;
 }
 //# sourceMappingURL=CustomMarkdownEmitter.d.ts.map
