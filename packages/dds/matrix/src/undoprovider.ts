@@ -18,8 +18,17 @@ export class VectorUndoProvider {
         private readonly undoRemove: (segment: PermutationSegment) => void,
     ) { }
 
-    public record(operation: MergeTreeDeltaOperationType, ranges: { segment: PermutationSegment, position: number }[]) {
+    public record(operation: MergeTreeDeltaOperationType, ranges: { segment: PermutationSegment }[]) {
         if (ranges.length > 0) {
+            // Link each segment to a new TrackingGroup.  A TrackingGroup keeps track of the original
+            // set of linked segments, including any fragmentatiton that occurs due to future splitting.
+            //
+            // A TrackingGroup also prevents removed segments from being unlinked from the tree during
+            // Zamboni and guarantees segments will not be merged/coalesced with segments outside of the
+            // current tracking group.
+            //
+            // These properties allow us to rely on MergeTree.getPosition() to find the locations/lengths
+            // of all content contained within the tracking group in the future.
             const trackingGroup = new TrackingGroup();
             for (const range of ranges) {
                 trackingGroup.link(range.segment);
@@ -50,7 +59,7 @@ export class VectorUndoProvider {
                     sg.trackingCollection.unlink(trackingGroup);
                 }
             },
-            disgard: () => {
+            disgard: () => {    // [sic]
                 while (trackingGroup.size > 0) {
                     trackingGroup.unlink(trackingGroup.segments[0]);
                 }
