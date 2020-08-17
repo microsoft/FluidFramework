@@ -13,9 +13,9 @@ import {
     ChannelFactoryRegistry,
     createLocalLoader,
     initializeLocalContainer,
-    ITestFluidComponent,
+    ITestFluidObject,
     OpProcessingController,
-    TestFluidComponentFactory,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { compatTest, ICompatTestArgs } from "./compatUtils";
 
@@ -34,11 +34,11 @@ const tests = (args: ICompatTestArgs) => {
 
     beforeEach(async () => {
         const container1 = await args.makeTestContainer(registry) as Container;
-        const component1 = await requestFluidObject<ITestFluidComponent>(container1, "default");
+        const component1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         sharedString1 = await component1.getSharedObject<SharedString>(stringId);
 
         const container2 = await args.makeTestContainer(registry) as Container;
-        const component2 = await requestFluidObject<ITestFluidComponent>(container2, "default");
+        const component2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         sharedString2 = await component2.getSharedObject<SharedString>(stringId);
 
         opProcessingController = new OpProcessingController(args.deltaConnectionServer);
@@ -66,7 +66,7 @@ const tests = (args: ICompatTestArgs) => {
 
         // Create a initialize a new container with the same id.
         const newContainer = await args.makeTestContainer(registry) as Container;
-        const newComponent = await requestFluidObject<ITestFluidComponent>(newContainer, "default");
+        const newComponent = await requestFluidObject<ITestFluidObject>(newContainer, "default");
         const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
         assert.equal(newSharedString.getText(), text, "The new container should receive the inserted text on creation");
     });
@@ -75,7 +75,7 @@ const tests = (args: ICompatTestArgs) => {
 describe("SharedString", () => {
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     async function makeTestContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory(registry);
+        const factory = new TestFluidObjectFactory(registry);
         const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }

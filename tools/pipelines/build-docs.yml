@@ -28,7 +28,12 @@ variables:
     value: microsoft/FluidFramework-docs
 
 # no branch and PR triggers
-trigger: none
+trigger:
+  branches:
+    include:
+    - master
+    - release/*
+    - main
 pr: none
 
 resources:

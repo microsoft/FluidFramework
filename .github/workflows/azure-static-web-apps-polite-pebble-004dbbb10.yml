@@ -1,16 +1,7 @@
-name: Azure Static Web Apps CI/CD
+name: polite-pebble
 
 on:
-  push:
-    branches:
-      - docs/hugo
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
-    branches:
-      - docs/hugo
   repository_dispatch:
-    # all types
-  workflow_dispatch:
     # all types
 
 jobs:

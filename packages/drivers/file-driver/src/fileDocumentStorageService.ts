@@ -182,7 +182,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             let dataStoreName = ref ? ref : "container";
             if (tree && tree.entries) {
                 tree.entries.forEach((entry) => {
-                    if (entry.path === ".component" && entry.type === api.TreeEntry[api.TreeEntry.Blob]) {
+                    if (entry.path === ".component" && entry.type === api.TreeEntry.Blob) {
                         const blob: api.IBlob = entry.value as api.IBlob;
                         const content = blob.contents.split(":");
                         if (content[0] === `{"pkg"`) {
@@ -229,7 +229,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
         public async writeOutFullSnapshot(tree: api.ITree) {
             const commits: { [key: string]: api.ITree } = {};
             for (const entry of tree.entries) {
-                if (entry.type === api.TreeEntry[api.TreeEntry.Commit]) {
+                if (entry.type === api.TreeEntry.Commit) {
                     const commitId = entry.value as string;
                     let commit = this.commitsWriter[commitId];
                     if (commit === undefined) {
@@ -265,7 +265,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
         public sortTree(tree: api.ITree) {
             tree.entries.sort((a, b) => a.path.localeCompare(b.path));
             tree.entries.map((entry) => {
-                if (entry.type === api.TreeEntry[api.TreeEntry.Tree]) {
+                if (entry.type === api.TreeEntry.Tree) {
                     this.sortTree(entry.value as api.ITree);
                 }
             });
@@ -279,7 +279,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
                 tree.entries.push({
                     mode: api.FileMode.Directory,
                     path: subTreeId,
-                    type: api.TreeEntry[api.TreeEntry.Tree],
+                    type: api.TreeEntry.Tree,
                     value: subTree,
                 });
             }
@@ -293,7 +293,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
                 tree.entries.push({
                     mode: api.FileMode.File,
                     path: blobName,
-                    type: api.TreeEntry[api.TreeEntry.Blob],
+                    type: api.TreeEntry.Blob,
                     value: blob,
                 });
             }
@@ -306,7 +306,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
 
 function removeNullTreIds(tree: api.ITree) {
     for (const node of tree.entries) {
-        if (node.type === api.TreeEntry[api.TreeEntry.Tree]) {
+        if (node.type === api.TreeEntry.Tree) {
             removeNullTreIds(node.value as api.ITree);
         }
     }
