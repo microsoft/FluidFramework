@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { queryObject } from "@fluidframework/core-interfaces";
 import {
     IFluidHTMLView,
     IFluidHTMLOptions,
@@ -22,10 +22,11 @@ export class HTMLViewAdapter implements IFluidHTMLView {
      * Test whether the given view can be successfully adapted by an HTMLViewAdapter.
      * @param view - the view to test if it is adaptable.
      */
-    public static canAdapt(view: IFluidObject) {
+    public static canAdapt(view: unknown) {
+        const viewObj = view as object;
         return (
-            React.isValidElement(view)
-            || view.IFluidHTMLView !== undefined
+            React.isValidElement(viewObj)
+            || queryObject(viewObj).IFluidHTMLView !== undefined
         );
     }
 
@@ -35,17 +36,19 @@ export class HTMLViewAdapter implements IFluidHTMLView {
      */
     private containerNode: HTMLElement | undefined;
 
+    private readonly view: object;
+
     /**
      * @param view - The view to adapt into an IFluidHTMLView
      */
-    constructor(private readonly view: IFluidObject) { }
+    constructor(view: unknown) { this.view = view as object; }
 
     public render(elm: HTMLElement, options?: IFluidHTMLOptions) {
         // Note that if we're already mounted, this can cause multiple rendering with possibly unintended effects.
         // Probably try to avoid doing this.
         this.containerNode = elm;
 
-        const htmlView = this.view.IFluidHTMLView;
+        const htmlView = queryObject(this.view).IFluidHTMLView;
         if (htmlView !== undefined) {
             htmlView.render(elm, options);
             return;
@@ -80,7 +83,7 @@ export class HTMLViewAdapter implements IFluidHTMLView {
             return;
         }
 
-        const htmlView = this.view.IFluidHTMLView;
+        const htmlView = queryObject(this.view).IFluidHTMLView;
         if (htmlView !== undefined && htmlView.remove !== undefined) {
             htmlView.remove();
             this.containerNode = undefined;
