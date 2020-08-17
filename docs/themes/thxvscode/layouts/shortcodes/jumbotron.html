@@ -20,14 +20,15 @@
 {{ $imgURL = index $allParams 1}}
 {{ end }}
 
+
+{{ if ne $imgURL ""}}
 <div class="jumbotron {{$class}}">
     <div class="container">
         <div class="row">
             <div class="col-md-4 copy">
                 <h1>{{$lead}}</h1>
                 <div class="lead">
-                    <p>
-                        {{ $subText }}</p>
+                    <p>{{ $subText }}</p>
                 </div>
 
                 <div id="download-buttons" class="download-hero alt-downloads"></div>
@@ -39,3 +40,17 @@
         </div>
     </div>
 </div>
+{{ else }}
+<div class="jumbotron {{$class}}">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 col-md-push-3 copy">
+                <h1>{{$lead}}</h1>
+                <div class="lead">
+                    <p>{{ $subText }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
