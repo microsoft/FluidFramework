@@ -29,7 +29,7 @@ function serialize(directory: SharedDirectory): string {
     const tree = directory.snapshot();
     assert(tree.entries.length === 1);
     assert(tree.entries[0].path === "header");
-    assert(tree.entries[0].type === TreeEntry[TreeEntry.Blob]);
+    assert(tree.entries[0].type === TreeEntry.Blob);
     const contents = (tree.entries[0].value as IBlob).contents;
     return JSON.stringify((JSON.parse(contents) as IDirectoryNewStorageFormat).content);
 }

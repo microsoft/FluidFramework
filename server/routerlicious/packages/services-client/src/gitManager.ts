@@ -272,9 +272,9 @@ export class GitManager implements IGitManager {
 
         // Construct a new tree from the collection of hashes
         for (let i = 0; i < files.entries.length; i++) {
-            const type = files.entries[i].type === api.TreeEntry[api.TreeEntry.Tree]
+            const type = files.entries[i].type === api.TreeEntry.Tree
                 ? "tree"
-                : (files.entries[i].type === api.TreeEntry[api.TreeEntry.Blob] ? "blob" : "commit");
+                : (files.entries[i].type === api.TreeEntry.Blob ? "blob" : "commit");
 
             tree.push({
                 mode: files.entries[i].mode,
