@@ -8,6 +8,8 @@ import { IFluidObject } from "@fluidframework/core-interfaces";
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideFluidObjectCollection>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface FluidDataInterfaceCatalog extends Readonly<IProvideFluidObjectCollection> { }
 }
 
 export const IFluidObjectCollection: keyof IProvideFluidObjectCollection = "IFluidObjectCollection";
@@ -21,7 +23,7 @@ export interface IProvideFluidObjectCollection {
  * components in the collection would be like-typed.
  */
 export interface IFluidObjectCollection extends IProvideFluidObjectCollection {
-    createCollectionItem<TOpt = object>(options?: TOpt): IFluidObject;
-    removeCollectionItem(instance: IFluidObject): void;
+    createCollectionItem<TOpt = object>(options?: TOpt): unknown;
+    removeCollectionItem(instance: unknown): void;
     // Need iteration
 }

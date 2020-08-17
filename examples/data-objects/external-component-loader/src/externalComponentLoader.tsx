@@ -5,6 +5,7 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
+    queryObject,
     IFluidObject,
     IFluidLoadable,
     IFluidRouter,
@@ -63,16 +64,19 @@ export class ExternalComponentLoader extends DataObject {
         }
 
         let obj = await requestFluidObject(router, "/");
-        if (obj.IFluidLoadable === undefined) {
+        let loadable = queryObject(obj).IFluidLoadable;
+        if (loadable === undefined) {
             throw new Error(`${componentUrl} must implement the IFluidLoadable interface to be loaded here`);
         }
-        if (obj.IFluidObjectCollection !== undefined) {
-            obj = obj.IFluidObjectCollection.createCollectionItem();
-            if (obj.IFluidLoadable === undefined) {
+        const collection = (queryObject(obj) as IFluidObject).IFluidObjectCollection;
+        if (collection !== undefined) {
+            obj = collection.createCollectionItem();
+            loadable = queryObject(obj).IFluidLoadable;
+            if (loadable === undefined) {
                 throw new Error(`${componentUrl} must implement the IFluidLoadable interface to be loaded here`);
             }
         }
 
-        return obj.IFluidLoadable;
+        return loadable;
     }
 }
