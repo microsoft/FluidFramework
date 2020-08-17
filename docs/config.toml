@@ -70,17 +70,18 @@ weight = 0
 # url = "/docs/testing"
 
 [markup]
-  [markup.goldmark]
-    [markup.goldmark.renderer]
-      # mark unsafe html as true since api-documenter uses html snipets.
-      unsafe = true
-  [markup.highlight]
-    codeFences = true
-    guessSyntax = true
-    hl_Lines = ""
-    lineNoStart = 1
-    lineNos = true
-    lineNumbersInTable = false
-    noClasses = true
-    style = "tango"
-    tabWidth = 4
+[markup.goldmark]
+[markup.goldmark.renderer]
+# mark unsafe html as true since api-documenter uses html snipets.
+unsafe = true
+[markup.highlight]
+codeFences = true
+guessSyntax = true
+hl_Lines = ""
+lineNoStart = 1
+# if you need to turn on line nos, use the highlight shortcode
+lineNos = false
+lineNumbersInTable = false
+noClasses = true
+style = "tango"
+tabWidth = 4
