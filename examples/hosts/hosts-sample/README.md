@@ -78,7 +78,7 @@ from this URL to a Fluid based url of the form:
 And also provided the required access tokens with this. In the above the protocol part of the URL defines which Fluid
 driver to use to to talk to the server. The domain gives the location of the service. Document ID is the identifier for
 the Fluid document. And finally the path is a string handed down to the document itself and allows it to select which
-component to render and parameters for it.
+Fluid Object to render and parameters for it.
 
 Deferring to the host for this resolution allows it to perform access control checks on the user's identity and only
 return the resolved Fluid URL with access tokens if these pass.
@@ -223,16 +223,16 @@ if (response.status !== 200) {
 ```
 
 A mime type is also provided with the request to distinguish the type of object.  The most common thing you'll receive
-is a Fluid component. Components implement the attach interface which allow them to participate in the web component
+is a Fluid Object. Fluid Objects implement the attach interface which allow them to participate in the web component
 model. But a document could also return different mime types like static images, videos, etc...
 
-The host can then switch on the mime type and act accordingly. In the case of the component, we check if is a viewable
+The host can then switch on the mime type and act accordingly. In the case of the Fluid Object, we check if is a viewable
 and provide it a div for it to render.
 
 ```typescript
 switch (response.mimeType) {
     case "fluid/object":
-        // Check if the component is a view
+        // Check if the object is a view
         const fluidObject = response.value as IFluidObject;
         const view = fluidObject.IFluidHTMLView;
         if (!view) {
@@ -251,7 +251,7 @@ a feature detection pattern can be used to determine what capabilities are expos
 interface serves as a Fluid-specific form of “any” that clients can cast objects to in order to probe for implemented
 object interfaces. For example, if you need to determine the capabilities that an object exposes, you first
 cast the object as an `IFluidObject`, and then access the property on the `IFluidObject` that matches the interface you
-are testing for.  The above checks if the component implements `IFluidHTMLView`, and uses it to get the instance
+are testing for.  The above checks if the object implements `IFluidHTMLView`, and uses it to get the instance
 that implements the rendering capability.
 
 ### Quoruming on a code package
@@ -305,10 +305,10 @@ if (!quorum.has("code")) {
 And that's all that's needed to create or load Fluid documents. It's intended to be light weight and simple to get
 setup as a host. And once done you gain full access to the power of the Fluid platform.
 
-Once you have a host setup the next best step to try is using our Fluid generator to create a new component.
+Once you have a host setup the next best step to try is using our Fluid generator to create a new Fluid Object.
 Instructions for that are at https://github.com/Microsoft/FluidFramework/blob/master/tools/generator-fluid/README.md.
 You can then publish this package to Verdaccio and load it inside of your new loader!
 
-When creating your new component also note that the API provides it access to the underlying loader. You can use this
-to follow similar attach steps as above to load components within your component. In this way your component can
+When creating your new Fluid Object also note that the API provides it access to the underlying loader. You can use this
+to follow similar attach steps as above to load objects within your objects. In this way your Fluid Object can
 also serve as a host for other Fluid content.
