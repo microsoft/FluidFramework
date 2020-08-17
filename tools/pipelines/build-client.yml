@@ -78,8 +78,8 @@ extends:
           cp repo-package.json packages/package.json
           cp repo-package-lock.json packages/package-lock.json
 
-env:
-  fluid__webpack__bearerSecret: $(fluid__webpack__bearerSecret)
-  fluid__webpack__fluidHost: $(fluid__webpack__fluidHost)
-  fluid__webpack__tenantId: $(fluid__webpack__tenantId)
-  fluid__webpack__tenantSecret: $(fluid__webpack__tenantSecret)
+    env:
+      fluid__webpack__bearerSecret: $(fluid__webpack__bearerSecret)
+      fluid__webpack__fluidHost: $(fluid__webpack__fluidHost)
+      fluid__webpack__tenantId: $(fluid__webpack__tenantId)
+      fluid__webpack__tenantSecret: $(fluid__webpack__tenantSecret)
