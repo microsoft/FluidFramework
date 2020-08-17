@@ -144,7 +144,7 @@ A Container is a collection of data objects and functionality that produce an ex
 The Aqueduct provides the [`ContainerRuntimeFactoryWithDataStore`](./src/containerRuntimeFactories/containerRuntimeFactoryWithDataStore.ts) that allows you as a Container developer to:
 
 - Define the registry of data objects that can be created
-- Declare the Default data object
+- Declare the default data object
 - Declare [Container Services](###Container-Service-Development)
 - Declare Container Level [Request Handlers](###Container-Level-Request-Handlers)
 
