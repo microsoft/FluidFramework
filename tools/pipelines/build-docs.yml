@@ -62,6 +62,7 @@ resources:
 
 stages:
 - stage: check
+  displayName: Checks
   pool: Lite
   jobs:
   - job:
