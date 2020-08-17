@@ -23,6 +23,7 @@ trigger:
     - tools/build-server-resources
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/publish-npm-package.yml
 
 pr:
@@ -42,6 +43,7 @@ pr:
     - tools/build-server-resources
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
 
 extends:
   template: templates/build-npm-package.yml

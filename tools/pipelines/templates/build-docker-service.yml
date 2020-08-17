@@ -25,6 +25,10 @@ parameters:
   type: string
   default: /home/node/server
 
+- name: buildNumberInPatch
+  type: string
+  default:
+
 trigger: none
 
 variables:
@@ -76,6 +80,12 @@ jobs:
         inputs:
           workingFile: ${{ parameters.buildDirectory }}/.npmrc
           customEndpoint: Offnet Packages
+
+      # Set version
+      - template: include-set-package-version.yml
+        parameters:
+          buildDirectory: ${{ parameters.buildDirectory }}
+          buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 
     # Build
     - task: Docker@2

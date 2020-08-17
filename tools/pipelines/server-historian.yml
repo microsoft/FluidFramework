@@ -14,6 +14,7 @@ trigger:
     - server/historian
     - tools/pipelines/server-historian.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
 
 pr:
@@ -24,6 +25,7 @@ pr:
     include:
     - server/historian
     - tools/pipelines/server-historian.yml
+    - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/build-docker-service.yml
 
 extends:
