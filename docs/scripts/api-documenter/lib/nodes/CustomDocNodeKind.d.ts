@@ -8,7 +8,8 @@ export declare const enum CustomDocNodeKind {
     NoteBox = "NoteBox",
     Table = "Table",
     TableCell = "TableCell",
-    TableRow = "TableRow"
+    TableRow = "TableRow",
+    HtmlLink = "HtmlLink"
 }
 export declare class CustomDocNodes {
     private static _configuration;
