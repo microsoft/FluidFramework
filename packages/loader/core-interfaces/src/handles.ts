@@ -51,8 +51,8 @@ export interface IProvideFluidHandle {
  * Handle to a shared FluidObject
  */
 export interface IFluidHandle<
-    // REVIEW: Constrain `T` to `IFluidObject & IFluidLoadable`?
-    T = IFluidObject & IFluidLoadable
+    // REVIEW: Constrain `T` to `T extends IFluidLoadable`?
+    T = unknown & IFluidLoadable
     > extends IProvideFluidHandle {
 
     /**
