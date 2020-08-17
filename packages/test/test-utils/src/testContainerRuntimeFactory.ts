@@ -17,7 +17,7 @@ export class TestContainerRuntimeFactory implements IRuntimeFactory {
 
     constructor(
         public type: string,
-        public componentFactory: IFluidDataStoreFactory,
+        public dataStoreFactory: IFluidDataStoreFactory,
         public runtimeOptions: IContainerRuntimeOptions,
     ) { }
 
@@ -29,7 +29,7 @@ export class TestContainerRuntimeFactory implements IRuntimeFactory {
 
         const runtime = await ContainerRuntime.load(
             context,
-            [[this.type, Promise.resolve(this.componentFactory)]],
+            [[this.type, Promise.resolve(this.dataStoreFactory)]],
             async (req, rt) => builder.handleRequest(req, rt),
             this.runtimeOptions,
         );
