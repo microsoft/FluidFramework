@@ -14,6 +14,7 @@ class DocTable extends tsdoc_1.DocNode {
         this._rows = [];
         if (parameters) {
             this.cssClass = parameters.cssClass;
+            this.caption = parameters.caption;
             if (parameters.headerTitles) {
                 if (parameters.headerCells) {
                     throw new Error('IDocTableParameters.headerCells and IDocTableParameters.headerTitles' +

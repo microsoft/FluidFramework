@@ -344,7 +344,8 @@ class MarkdownDocumenter {
         const packagesTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Package', 'Description'],
-            cssClass: 'package-list'
+            cssClass: 'package-list',
+            caption: 'List of packages in this model'
         });
         for (const apiMember of apiModel.members) {
             const row = new DocTableRow_1.DocTableRow({ configuration }, [
@@ -371,37 +372,44 @@ class MarkdownDocumenter {
         const classesTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Class', 'Description'],
-            cssClass: 'class-list'
+            cssClass: 'class-list',
+            caption: 'List of classes contained in this package or namespace'
         });
         const enumerationsTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Enumeration', 'Description'],
-            cssClass: 'enum-list'
+            cssClass: 'enum-list',
+            caption: 'List of enums contained in this package or namespace'
         });
         const functionsTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Function', 'Description'],
-            cssClass: 'function-list'
+            cssClass: 'function-list',
+            caption: 'List of functions contained in this package or namespace'
         });
         const interfacesTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Interface', 'Description'],
-            cssClass: 'interface-list'
+            cssClass: 'interface-list',
+            caption: 'List of interfaces contained in this package or namespace'
         });
         const namespacesTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Namespace', 'Description'],
-            cssClass: 'namespace-list'
+            cssClass: 'namespace-list',
+            caption: 'List of namespaces contained in this package or namespace'
         });
         const variablesTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Variable', 'Description'],
-            cssClass: 'variable-list'
+            cssClass: 'variable-list',
+            caption: 'List of variables contained in this package or namespace'
         });
         const typeAliasesTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Type Alias', 'Description'],
-            cssClass: 'alias-list'
+            cssClass: 'alias-list',
+            caption: 'List of type aliases contained in this package or namespace'
         });
         const enumsParagraph = new tsdoc_1.DocParagraph({ configuration });
         const varsParagraph = new tsdoc_1.DocParagraph({ configuration });
@@ -512,22 +520,26 @@ class MarkdownDocumenter {
         const eventsTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Property', 'Modifiers', 'Type', 'Description'],
-            cssClass: 'event-list'
+            cssClass: 'event-list',
+            caption: 'List of events in use in this class'
         });
         const constructorsTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Constructor', 'Modifiers', 'Description'],
-            cssClass: 'constructor-list'
+            cssClass: 'constructor-list',
+            caption: 'List of constructors for this class'
         });
         const propertiesTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Property', 'Modifiers', 'Type', 'Description'],
-            cssClass: 'property-list'
+            cssClass: 'property-list',
+            caption: 'List of properties for this class'
         });
         const methodsTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Method', 'Modifiers', 'Description'],
-            cssClass: 'method-list'
+            cssClass: 'method-list',
+            caption: 'List of methods on this class'
         });
         const constructorsParagraph = new tsdoc_1.DocParagraph({ configuration });
         const methodsParagraph = new tsdoc_1.DocParagraph({ configuration });
@@ -629,7 +641,8 @@ class MarkdownDocumenter {
         const enumMembersTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Member', 'Value', 'Description'],
-            cssClass: 'enum-list'
+            cssClass: 'enum-list',
+            caption: 'List of members in use in this enum'
         });
         for (const apiEnumMember of apiEnum.members) {
             enumMembersTable.addRow(new DocTableRow_1.DocTableRow({ configuration }, [
@@ -659,17 +672,20 @@ class MarkdownDocumenter {
         const eventsTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Property', 'Type', 'Description'],
-            cssClass: 'event-list'
+            cssClass: 'event-list',
+            caption: 'List of events in use in this interface'
         });
         const propertiesTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Property', 'Type', 'Description'],
-            cssClass: 'property-list'
+            cssClass: 'property-list',
+            caption: 'List of properties of this interface'
         });
         const methodsTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Method', 'Description'],
-            cssClass: 'method-list'
+            cssClass: 'method-list',
+            caption: 'List of methods of this class'
         });
         const eventsParagraph = new tsdoc_1.DocParagraph({ configuration });
         const propertiesParagraph = new tsdoc_1.DocParagraph({ configuration });
@@ -751,7 +767,8 @@ class MarkdownDocumenter {
         const parametersTable = new DocTable_1.DocTable({
             configuration,
             headerTitles: ['Parameter', 'Type', 'Description'],
-            cssClass: 'param-list'
+            cssClass: 'param-list',
+            caption: 'List of parameters'
         });
         for (const apiParameter of apiParameterListMixin.parameters) {
             const parameterDescription = new tsdoc_1.DocSection({ configuration });

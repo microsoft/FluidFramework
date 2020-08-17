@@ -448,7 +448,8 @@ export class MarkdownDocumenter {
         const packagesTable: DocTable = new DocTable({
             configuration,
             headerTitles: ['Package', 'Description'],
-            cssClass: 'package-list'
+            cssClass: 'package-list',
+            caption: 'List of packages in this model'
         });
 
         for (const apiMember of apiModel.members) {
@@ -480,43 +481,51 @@ export class MarkdownDocumenter {
         const classesTable: DocTable = new DocTable({
             configuration,
             headerTitles: ['Class', 'Description'],
-            cssClass: 'class-list'
+            cssClass: 'class-list',
+            caption: 'List of classes contained in this package or namespace'
         });
 
         const enumerationsTable: DocTable = new DocTable({
             configuration,
             headerTitles: ['Enumeration', 'Description'],
             cssClass: 'enum-list'
+            ,
+            caption: 'List of enums contained in this package or namespace'
         });
 
         const functionsTable: DocTable = new DocTable({
             configuration,
             headerTitles: ['Function', 'Description'],
-            cssClass: 'function-list'
+            cssClass: 'function-list',
+            caption: 'List of functions contained in this package or namespace'
         });
 
         const interfacesTable: DocTable = new DocTable({
             configuration,
             headerTitles: ['Interface', 'Description'],
-            cssClass: 'interface-list'
+            cssClass: 'interface-list',
+            caption: 'List of interfaces contained in this package or namespace'
         });
 
         const namespacesTable: DocTable = new DocTable({
             configuration,
             headerTitles: ['Namespace', 'Description'],
-            cssClass: 'namespace-list'
+            cssClass: 'namespace-list',
+            caption: 'List of namespaces contained in this package or namespace'
         });
 
         const variablesTable: DocTable = new DocTable({
             configuration,
             headerTitles: ['Variable', 'Description'],
-            cssClass: 'variable-list'
+            cssClass: 'variable-list',
+            caption: 'List of variables contained in this package or namespace'
         });
 
         const typeAliasesTable: DocTable = new DocTable({
             configuration,
             headerTitles: ['Type Alias', 'Description'],
-            cssClass: 'alias-list'
+            cssClass: 'alias-list',
+            caption: 'List of type aliases contained in this package or namespace'
         });
 
         const enumsParagraph: DocParagraph = new DocParagraph({ configuration });
@@ -654,25 +663,29 @@ export class MarkdownDocumenter {
         const eventsTable: DocTable = new DocTable({
             configuration,
             headerTitles: ['Property', 'Modifiers', 'Type', 'Description'],
-            cssClass: 'event-list'
+            cssClass: 'event-list',
+            caption: 'List of events in use in this class'
         });
 
         const constructorsTable: DocTable = new DocTable({
             configuration,
             headerTitles: ['Constructor', 'Modifiers', 'Description'],
-            cssClass: 'constructor-list'
+            cssClass: 'constructor-list',
+            caption: 'List of constructors for this class'
         });
 
         const propertiesTable: DocTable = new DocTable({
             configuration,
             headerTitles: ['Property', 'Modifiers', 'Type', 'Description'],
-            cssClass: 'property-list'
+            cssClass: 'property-list',
+            caption: 'List of properties for this class'
         });
 
         const methodsTable: DocTable = new DocTable({
             configuration,
             headerTitles: ['Method', 'Modifiers', 'Description'],
-            cssClass: 'method-list'
+            cssClass: 'method-list',
+            caption: 'List of methods on this class'
         });
 
 
@@ -801,7 +814,8 @@ export class MarkdownDocumenter {
         const enumMembersTable: DocTable = new DocTable({
             configuration,
             headerTitles: ['Member', 'Value', 'Description'],
-            cssClass: 'enum-list'
+            cssClass: 'enum-list',
+            caption: 'List of members in use in this enum'
         });
 
         for (const apiEnumMember of apiEnum.members) {
@@ -841,19 +855,22 @@ export class MarkdownDocumenter {
         const eventsTable: DocTable = new DocTable({
             configuration,
             headerTitles: ['Property', 'Type', 'Description'],
-            cssClass: 'event-list'
+            cssClass: 'event-list',
+            caption: 'List of events in use in this interface'
         });
 
         const propertiesTable: DocTable = new DocTable({
             configuration,
             headerTitles: ['Property', 'Type', 'Description'],
-            cssClass: 'property-list'
+            cssClass: 'property-list',
+            caption: 'List of properties of this interface'
         });
 
         const methodsTable: DocTable = new DocTable({
             configuration,
             headerTitles: ['Method', 'Description'],
-            cssClass: 'method-list'
+            cssClass: 'method-list',
+            caption: 'List of methods of this class'
         });
 
         const eventsParagraph: DocParagraph = new DocParagraph({ configuration });
@@ -956,6 +973,8 @@ export class MarkdownDocumenter {
             configuration,
             headerTitles: ['Parameter', 'Type', 'Description'],
             cssClass: 'param-list'
+            ,
+            caption: 'List of parameters'
         });
         for (const apiParameter of apiParameterListMixin.parameters) {
             const parameterDescription: DocSection = new DocSection({ configuration });

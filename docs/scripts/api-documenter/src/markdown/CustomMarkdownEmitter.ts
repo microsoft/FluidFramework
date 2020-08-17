@@ -221,6 +221,9 @@ export class CustomMarkdownEmitter extends MarkdownEmitter {
 
         // write the table header
         writer.writeLine(`<table class="table table-striped table-hover ${docTable.cssClass}">`);
+        if (docTable.caption) {
+            writer.writeLine(`<caption>${docTable.caption}</caption>`);
+        }
         writer.writeLine('  <thead>');
         writer.writeLine('    <tr>');
         writer.write('    ');
@@ -246,7 +249,7 @@ export class CustomMarkdownEmitter extends MarkdownEmitter {
                 writer.write('      ');
                 writer.write('<td>');
                 this.writeNode(cell.content, context, false);
-                writer.write('</td>');
+                writer.writeLine('</td>');
             }
             writer.writeLine('    </tr>');
         }

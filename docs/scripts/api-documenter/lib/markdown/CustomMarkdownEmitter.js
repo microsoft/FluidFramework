@@ -167,7 +167,10 @@ class CustomMarkdownEmitter extends MarkdownEmitter_1.MarkdownEmitter {
             }
         }
         // write the table header
-        writer.writeLine(`<table class="table table-hover ${docTable.cssClass}">`);
+        writer.writeLine(`<table class="table table-striped table-hover ${docTable.cssClass}">`);
+        if (docTable.caption) {
+            writer.writeLine(`<caption>${docTable.caption}</caption>`);
+        }
         writer.writeLine('  <thead>');
         writer.writeLine('    <tr>');
         writer.write('    ');
@@ -192,7 +195,7 @@ class CustomMarkdownEmitter extends MarkdownEmitter_1.MarkdownEmitter {
                 writer.write('      ');
                 writer.write('<td>');
                 this.writeNode(cell.content, context, false);
-                writer.write('</td>');
+                writer.writeLine('</td>');
             }
             writer.writeLine('    </tr>');
         }

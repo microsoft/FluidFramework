@@ -8,6 +8,7 @@ export interface IDocTableParameters extends IDocNodeParameters {
     headerCells?: ReadonlyArray<DocTableCell>;
     headerTitles?: string[];
     cssClass?: string;
+    caption?: string;
 }
 /**
  * Represents table, similar to an HTML `<table>` element.
@@ -15,6 +16,7 @@ export interface IDocTableParameters extends IDocNodeParameters {
 export declare class DocTable extends DocNode {
     readonly header: DocTableRow;
     cssClass?: string;
+    caption?: string;
     private _rows;
     constructor(parameters: IDocTableParameters, rows?: ReadonlyArray<DocTableRow>);
     /** @override */
