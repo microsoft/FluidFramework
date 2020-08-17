@@ -102,7 +102,7 @@ The typical usage for testing a fluid object is as follows:
     };
     const entryPoint = new TestFluidObjectFactory([["sharedString", SharedString.getFactory()]]);
     ```
-    > This can replaced by any `IComponentFactory` or `IRuntimeFactory`. When the loader is asked to resolve a Container with the above code details, it will load the above factory.
+    > This can replaced by any `IFluidDataStoreFactory` or `IRuntimeFactory`. When the loader is asked to resolve a Container with the above code details, it will load the above factory.
 
 3. Create a local `Loader`:
     ```typescript
@@ -114,11 +114,11 @@ The typical usage for testing a fluid object is as follows:
     const id = "fluid-test://localhost/sharedStringTest";
     const container = await initializeLocalContainer(id, loader, codeDetails);
     ```
-    > We used the same `IFludCodeDetails` that was used to create the `Loader` in step 3.
+    > We used the same `IFluidCodeDetails` that was used to create the `Loader` in step 3.
 
-5. Create a `fluid object (TestFluidObject)` and get the `SharedString`:
+5. Create a `Fluid object (TestFluidObject)` and get the `SharedString`:
     ```typescript
-    const response = await container.request({ url: "default" }); // "default" represent the default fluid object.
+    const response = await container.request({ url: "default" }); // "default" represent the default Fluid object.
     const fluidObject = response.value as ITestFluidObject;
     const sharedString = await fluidObject.getSharedObject<SharedString>("sharedString");
     ```
