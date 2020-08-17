@@ -20,6 +20,7 @@ import Axios from "axios";
 
 import * as commits from "./commits";
 import * as navbar from "./navbar";
+import { debug } from "./debug";
 
 export { commits };
 export { navbar };
@@ -32,7 +33,7 @@ export async function initialize(
     config: any,
     clientId: string,
 ) {
-    console.log(`Loading ${url}`);
+    debug(`Loading ${url}`);
 
     const documentServiceFactories: IDocumentServiceFactory[] = [];
     // TODO: need to be support refresh token
