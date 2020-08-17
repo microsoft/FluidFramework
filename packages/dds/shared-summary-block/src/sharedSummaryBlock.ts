@@ -109,7 +109,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: JSON.stringify(contentsBlob),
                         encoding: "utf-8",

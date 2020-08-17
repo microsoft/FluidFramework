@@ -5,13 +5,13 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "allowSyntheticDefaultImports": true,
+        "declarationDir": "./dist",
         "jsx": "react",
-        "module": "esnext",
-        "noImplicitAny": true,
-        "outDir": "dist",
-        "strictPropertyInitialization": true,
-        "target": "es6"
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "types": [
+            "mocha"
+        ]
     },
     "include": [
         "src/**/*"
