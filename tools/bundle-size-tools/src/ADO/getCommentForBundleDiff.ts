@@ -4,7 +4,7 @@
  */
 
 import { BundleComparison, BundleMetric } from '../BundleBuddyTypes';
-import { FFXConstants } from './FFXConstants';
+import { Constants } from './Constants';
 
 const bundleDetailsTableHeader = `<table><tr><th>Metric Name</th><th>Baseline Size</th><th>Compare Size</th><th>Size Diff</th></tr>`;
 
@@ -61,11 +61,11 @@ function getBundleDetails(bundleDiff: BundleComparison) {
       return prev + current;
     }, bundleDetailsTableHeader);
 
-  const totalMetric = commonBundleMetrics[FFXConstants.totalSizeMetricName];
+  const totalMetric = commonBundleMetrics[Constants.totalSizeMetricName];
 
   if (!totalMetric) {
     throw new Error(
-      `Could not compute the total size for a bundle, missing metric with name ${FFXConstants.totalSizeMetricName}`
+      `Could not compute the total size for a bundle, missing metric with name ${Constants.totalSizeMetricName}`
     );
   }
 

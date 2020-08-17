@@ -4,7 +4,7 @@
  */
 
 import { WebApi } from 'azure-devops-node-api';
-import { FFXConstants } from './FFXConstants';
+import { Constants } from './Constants';
 import { decompressStatsFile, unzipStream } from '../utilities';
 import * as JSZip from 'jszip';
 import { getBundleFilePathsFromFolder, BundleFileData } from './getBundleFilePathsFromFolder';
@@ -33,16 +33,16 @@ export async function getZipObjectFromArtifact(adoConnection: WebApi, buildNumbe
   const buildApi = await adoConnection.getBuildApi();
 
   const artifactStream = await buildApi.getArtifactContentZip(
-    FFXConstants.projectName,
+    Constants.projectName,
     buildNumber,
-    FFXConstants.bundleAnalysisArtifactName
+    Constants.bundleAnalysisArtifactName
   );
 
   // We want our relative paths to be clean, so navigating JsZip into the top level folder
-  const result = (await unzipStream(artifactStream)).folder(FFXConstants.bundleAnalysisArtifactName);
+  const result = (await unzipStream(artifactStream)).folder(Constants.bundleAnalysisArtifactName);
 
   if (!result) {
-    throw new Error(`getZipObjectFromArtifact could not find the folder ${FFXConstants.bundleAnalysisArtifactName}`);
+    throw new Error(`getZipObjectFromArtifact could not find the folder ${Constants.bundleAnalysisArtifactName}`);
   }
 
   return result;

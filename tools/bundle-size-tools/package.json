@@ -17,8 +17,6 @@
     "yargs": "^15.3.1"
   },
   "devDependencies": {
-    "@ms/office-bohemia-build-tools": "^0.0.0",
-    "@ms/office-online-tslint": ">=1.0.26 <2.0.0",
     "@types/jszip": "^3.1.7",
     "@types/msgpack-lite": "^0.1.6",
     "@types/node": "^12.12.6",

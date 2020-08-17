@@ -4,15 +4,15 @@
  */
 
 import { getEntryStatsProcessor, getTotalSizeStatsProcessor, getBundleBuddyConfigProcessor } from '../statsProcessors';
-import { FFXConstants } from './FFXConstants';
+import { Constants } from './Constants';
 
 /**
- * The set of stats file processors we will run on bundles in the FFX repo
+ * The set of stats file processors we will run on bundles
  */
-export const FFXStatsProcessors = [
+export const DefaultStatsProcessors = [
   getBundleBuddyConfigProcessor({
     metricNameProvider: (chunk) => `${chunk.name}.js <span title="Plus dependencies">ℹ</span>`
   }),
   getEntryStatsProcessor({ metricNameProvider: (chunkName) => `${chunkName}.js` }),
-  getTotalSizeStatsProcessor({ metricName: FFXConstants.totalSizeMetricName })
+  getTotalSizeStatsProcessor({ metricName: Constants.totalSizeMetricName })
 ];

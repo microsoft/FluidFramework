@@ -4,12 +4,12 @@
  */
 
 import { getAzureDevopsApi } from './getAzureDevopsApi';
-import { FFXConstants } from './FFXConstants';
+import { Constants } from './Constants';
 import { getBuildTagForCommit } from './getBuildTagForCommit';
 import { getBuilds } from '../utilities/getBuilds';
-import { FFXStatsProcessors } from './FFXStatsProcessors';
+import { DefaultStatsProcessors } from './DefaultStatsProcessors';
 import { getCommentForBundleDiff } from './getCommentForBundleDiff';
-import { prCommentsUtils } from '@ms/office-bohemia-build-tools/lib/azureDevops/prCommentsUtils';
+import { prCommentsUtils } from './PrCommentsUtils';
 import { compareBundles } from '../compareBundles';
 import {
   getZipObjectFromArtifact,
@@ -43,8 +43,8 @@ export async function bundleBuddyUpdatePendingPrs(
 
   // Get all PRs that were waiting for this baseline
   const pendingPrBuilds = await getBuilds(adoConnection, {
-    project: FFXConstants.projectName,
-    definitions: [FFXConstants.prBuildDefinitionId],
+    project: Constants.projectName,
+    definitions: [Constants.prBuildDefinitionId],
     tagFilters: [pendingBuildTag]
   });
 
@@ -74,14 +74,14 @@ export async function bundleBuddyUpdatePendingPrs(
         bundlePaths: prArtifactFilePaths,
         getStatsFile: (relativePath) => getStatsFileFromZip(prArtifactZip, relativePath),
         getBundleBuddyConfigFile: (bundleName) => configMap.get(bundleName),
-        statsProcessors: FFXStatsProcessors
+        statsProcessors: DefaultStatsProcessors
       });
 
       const baselineSummaries = await getBundleSummaries({
         bundlePaths: baselineFilePaths,
         getStatsFile: (relativePath) => getStatsFileFromFileSystem(join(baselineBundleReportPath, relativePath)),
         getBundleBuddyConfigFile: (bundleName) => configMap.get(bundleName),
-        statsProcessors: FFXStatsProcessors
+        statsProcessors: DefaultStatsProcessors
       });
 
       return compareBundles(baselineSummaries, prSummaries);
@@ -103,7 +103,7 @@ export async function bundleBuddyUpdatePendingPrs(
     const prCommitHash = await getLastCommitHashFromPR(adoConnection, prId);
 
     // TODO: Reuse the ADO connection
-    const prUtil = new prCommentsUtils(FFXConstants.orgUrl, prId, FFXConstants.projectRepoGuid, adoToken);
+    const prUtil = new prCommentsUtils(Constants.orgUrl, prId, Constants.projectRepoGuid, adoToken);
     return prUtil.createOrUpdateThread(message, `bundleBuddy-${prCommitHash}`);
   });
 
@@ -112,6 +112,6 @@ export async function bundleBuddyUpdatePendingPrs(
   const buildApi = await adoConnection.getBuildApi();
   // Remove the pending tag from all PRs
   await Promise.all(
-    pendingPrBuilds.map((build) => buildApi.deleteBuildTag(FFXConstants.projectName, build.id!, pendingBuildTag))
+    pendingPrBuilds.map((build) => buildApi.deleteBuildTag(Constants.projectName, build.id!, pendingBuildTag))
   );
 }

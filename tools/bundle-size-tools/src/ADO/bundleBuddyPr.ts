@@ -6,7 +6,7 @@
 import { getBaselineCommit, getLastCommitHashFromPR, getCiBuildWithCommit } from '../utilities';
 import { getAzureDevopsApi } from './getAzureDevopsApi';
 import { BuildStatus, BuildResult } from 'azure-devops-node-api/interfaces/BuildInterfaces';
-import { FFXConstants } from './FFXConstants';
+import { Constants } from './Constants';
 import { getZipObjectFromArtifact, getBundlePathsFromZipObject, getStatsFileFromZip } from './AdoArtifactFileProvider';
 import {
   getBundlePathsFromFileSystem,
@@ -14,9 +14,9 @@ import {
   getBundleBuddyConfigFromFileSystem
 } from './FileSystemBundleFileProvider';
 import { getBuildTagForCommit } from './getBuildTagForCommit';
-import { prCommentsUtils } from '@ms/office-bohemia-build-tools/lib/azureDevops/prCommentsUtils';
+import { prCommentsUtils } from './PrCommentsUtils';
 import { getCommentForBundleDiff, getSimpleComment } from './getCommentForBundleDiff';
-import { FFXStatsProcessors } from './FFXStatsProcessors';
+import { DefaultStatsProcessors } from './DefaultStatsProcessors';
 import { compareBundles } from '../compareBundles';
 import { join } from 'path';
 import { getBundleSummaries } from './getBundleSummaries';
@@ -27,13 +27,13 @@ export async function bundleBuddyPr(adoToken: string, bundleReportPath: string, 
   console.log(`The baseline commit for this PR is ${baselineCommit}`);
 
   const adoConnection = getAzureDevopsApi(adoToken);
-  const prComments = new prCommentsUtils(FFXConstants.orgUrl, adoPrId, FFXConstants.projectRepoGuid, adoToken);
+  const prComments = new prCommentsUtils(Constants.orgUrl, adoPrId, Constants.projectRepoGuid, adoToken);
 
   const baselineBuild = await getCiBuildWithCommit({
     adoConnection,
     commitHash: baselineCommit,
-    adoProjectName: FFXConstants.projectName,
-    buildDefinitionId: FFXConstants.ciBuildDefinitionId
+    adoProjectName: Constants.projectName,
+    buildDefinitionId: Constants.ciBuildDefinitionId
   });
 
   if (!baselineBuild) {
@@ -59,7 +59,7 @@ export async function bundleBuddyPr(adoToken: string, bundleReportPath: string, 
 
     // Tag the current build as waiting for the results of the master CI
     const buildApi = await adoConnection.getBuildApi();
-    await buildApi.addBuildTag(FFXConstants.projectName, adoBuildId, getBuildTagForCommit(baselineCommit));
+    await buildApi.addBuildTag(Constants.projectName, adoBuildId, getBuildTagForCommit(baselineCommit));
     return;
   }
 
@@ -95,14 +95,14 @@ export async function bundleBuddyPr(adoToken: string, bundleReportPath: string, 
     bundlePaths: baselineZipBundlePaths,
     getStatsFile: (relativePath) => getStatsFileFromZip(baselineZip, relativePath),
     getBundleBuddyConfigFile: (bundleName) => configFileMap.get(bundleName),
-    statsProcessors: FFXStatsProcessors
+    statsProcessors: DefaultStatsProcessors
   });
 
   const prSummaries = await getBundleSummaries({
     bundlePaths: prBundleFileSystemPaths,
     getStatsFile: (relativePath) => getStatsFileFromFileSystem(join(bundleReportPath, relativePath)),
     getBundleBuddyConfigFile: (bundleName) => configFileMap.get(bundleName),
-    statsProcessors: FFXStatsProcessors
+    statsProcessors: DefaultStatsProcessors
   });
 
   const bundleComparisons = compareBundles(baselineSummaries, prSummaries);

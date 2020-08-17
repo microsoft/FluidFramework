@@ -3,25 +3,25 @@
  * Licensed under the MIT License.
  */
 
-export const FFXConstants = {
+export const Constants = {
   // URL for the ADO org
-  orgUrl: 'https://dev.azure.com/office',
+  orgUrl: '',
 
-  // The ADO project that contains the office-bohemia-repo
-  projectName: 'oc',
+  // The ADO project that contains the repo
+  projectName: '',
 
   // The ID for the build that runs against master when PRs are merged
-  ciBuildDefinitionId: 8228,
+  ciBuildDefinitionId: 0,
 
   // The ID for the build that runs to validate PRs
-  prBuildDefinitionId: 8024,
+  prBuildDefinitionId: 0,
 
   // The name of the build artifact that contains the bundle size artifacts
-  bundleAnalysisArtifactName: 'bundle-analysis-reports',
+  bundleAnalysisArtifactName: '',
 
-  // The guid of the office-bohemia repo
-  projectRepoGuid: '74031860-e0cd-45a1-913f-10bbf3f82555',
+  // The guid of the repo
+  projectRepoGuid: '',
 
   // The name of the metric that represents the size of the whole bundle
-  totalSizeMetricName: 'Total Size'
+  totalSizeMetricName: ''
 };
