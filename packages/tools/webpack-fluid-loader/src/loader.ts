@@ -245,18 +245,7 @@ export async function start(
 
     // We have rendered the fluid object. If the container is detached, attach it now.
     if (container1.attachState === AttachState.Detached) {
-        await attachContainer(
-            loader1,
-            container1,
-            fluidObjectUrl,
-            urlResolver,
-            documentId,
-            url,
-            div,
-            leftDiv,
-            rightDiv,
-            manualAttach,
-        );
+        await attachContainer(container1, urlResolver, documentId, url, rightDiv, manualAttach);
     }
 
     // For side by side mode, we need to create a second container and fluid object.
@@ -319,15 +308,11 @@ async function getFluidObjectAndRender(container: Container, url: string, div: H
  * is clicked. Otherwise, it attaches the conatiner right away.
  */
 async function attachContainer(
-    loader: Loader,
     container: Container,
-    fluidObjectUrl: string,
     urlResolver: MultiUrlResolver,
     documentId: string,
     url: string,
-    mainDiv: HTMLDivElement,
-    leftDiv: HTMLDivElement,
-    rightDiv: HTMLDivElement | undefined,
+    div: HTMLDivElement | undefined,
     manualAttach: boolean,
 ) {
     // This is called once loading is complete to replace the url in the address bar with the new `url`.
@@ -336,7 +321,6 @@ async function attachContainer(
         document.title = documentId;
     };
 
-    let currentContainer = container;
     const attached = new Deferred();
     const attachUrl = await urlResolver.createRequestForCreateNew(documentId);
 
@@ -345,50 +329,17 @@ async function attachContainer(
         const attachDiv = document.createElement("div");
         const attachButton = document.createElement("button");
         attachButton.innerText = "Attach Container";
-        const serializeButton = document.createElement("button");
-        serializeButton.innerText = "Serialize";
-        const rehydrateButton = document.createElement("button");
-        rehydrateButton.innerText = "Rehydrate Container";
-        rehydrateButton.hidden = true;
-        const summaryList = document.createElement("select");
-        summaryList.hidden = true;
         attachDiv.append(attachButton);
-        attachDiv.append(serializeButton);
-        attachDiv.append(summaryList);
         document.body.prepend(attachDiv);
 
-        let summaryNum = 1;
-        serializeButton.onclick = () => {
-            summaryList.hidden = false;
-            rehydrateButton.hidden = false;
-            attachDiv.append(rehydrateButton);
-            const summary = currentContainer.serialize();
-            const listItem = document.createElement("option");
-            listItem.innerText = `Summary_${summaryNum}`;
-            summaryNum += 1;
-            listItem.value = summary;
-            summaryList.appendChild(listItem);
-            rehydrateButton.onclick = async () => {
-                const snapshot = summaryList.value;
-                currentContainer = await loader.createDetachedContainerFromSnapshot(JSON.parse(snapshot));
-                currentContainer.removeAllListeners();
-                // Load and render the component.
-                await getFluidObjectAndRender(currentContainer, fluidObjectUrl, rightDiv);
-                // Handle the code upgrade scenario (which fires contextChanged)
-                currentContainer.on("contextChanged", () => {
-                    getFluidObjectAndRender(currentContainer, fluidObjectUrl, rightDiv).catch(() => { });
-                });
-            };
-        };
-
         attachButton.onclick = () => {
-            currentContainer.attach(attachUrl)
+            container.attach(attachUrl)
                 .then(() => {
                     attachDiv.remove();
                     replaceUrl();
 
-                    if (rightDiv) {
-                        rightDiv.innerText = "";
+                    if (div) {
+                        div.innerText = "";
                     }
 
                     attached.resolve();
@@ -398,14 +349,14 @@ async function attachContainer(
         };
 
         // If we are in side-by-side mode, we need to display the following message in the right div passed here.
-        if (rightDiv) {
-            rightDiv.innerText = "Waiting for container attach";
+        if (div) {
+            div.innerText = "Waiting for container attach";
         }
     } else {
-        await currentContainer.attach(attachUrl);
+        await container.attach(attachUrl);
         replaceUrl();
         attached.resolve();
     }
 
-    return Promise.all([attached.promise, Promise.resolve(currentContainer)]);
+    return attached.promise;
 }
