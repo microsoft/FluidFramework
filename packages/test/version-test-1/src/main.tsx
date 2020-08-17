@@ -102,7 +102,7 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
 
     private async upgradeManagerProposeCode(highPriority: boolean) {
         if (this.upgradeManager === undefined) {
-            throw Error("component not initialized; no upgrade manager");
+            throw Error("fluid object not initialized; no upgrade manager");
         }
         await this.upgradeManager.upgrade({
             config: { cdn: `${this.cdn}/@fluid-internal/version-test-2` },
