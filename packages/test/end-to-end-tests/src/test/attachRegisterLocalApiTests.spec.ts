@@ -12,9 +12,9 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
-    ITestFluidComponent,
-    TestFluidComponentFactory,
-    TestFluidComponent,
+    ITestFluidObject,
+    TestFluidObjectFactory,
+    TestFluidObject,
 } from "@fluidframework/test-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -52,7 +52,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         containerRuntime: IContainerRuntimeBase,
     ) => {
         const router = await containerRuntime.createDataStore(["default"]);
-        const peerComponent = await requestFluidObject<ITestFluidComponent>(router, "/");
+        const peerComponent = await requestFluidObject<ITestFluidObject>(router, "/");
         return {
             peerComponent,
             peerComponentRuntimeChannel: peerComponent.channel,
@@ -60,7 +60,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
     };
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
-        const factory: TestFluidComponentFactory = new TestFluidComponentFactory([
+        const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
             [mapId1, SharedMap.getFactory()],
             [mapId2, SharedMap.getFactory()],
         ]);
@@ -377,13 +377,13 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
             // Create another component which returns the runtime channel.
             const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
-            const component2 = peerComponent1.peerComponent as TestFluidComponent;
+            const component2 = peerComponent1.peerComponent as TestFluidObject;
             assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
                 "Component2 should be unattached");
 
             // Create another component which returns the runtime channel.
             const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
-            const component3 = peerComponent2.peerComponent as TestFluidComponent;
+            const component3 = peerComponent2.peerComponent as TestFluidObject;
             assert.strictEqual(component3.runtime.IFluidHandleContext.isAttached, false,
                 "Component3 should be unattached");
 
@@ -426,20 +426,20 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
             // Create another component which returns the runtime channel.
             const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
-            const component2 = peerComponent1.peerComponent as TestFluidComponent;
+            const component2 = peerComponent1.peerComponent as TestFluidObject;
             assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
                 "Component2 should be unattached");
 
             // Create another component which returns the runtime channel.
             // Create another component which returns the runtime channel.
             const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
-            const component3 = peerComponent2.peerComponent as TestFluidComponent;
+            const component3 = peerComponent2.peerComponent as TestFluidObject;
             assert.strictEqual(component3.runtime.IFluidHandleContext.isAttached, false,
                 "Component3 should be unattached");
 
             // Create another component which returns the runtime channel.
             const peerComponent3 = await createPeerComponent(defaultComponent.context.containerRuntime);
-            const component4 = peerComponent3.peerComponent as TestFluidComponent;
+            const component4 = peerComponent3.peerComponent as TestFluidObject;
             assert.strictEqual(component4.runtime.IFluidHandleContext.isAttached, false,
                 "Component4 should be unattached");
 
@@ -554,11 +554,11 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         const { container, defaultComponent } =
             await createDetachedContainerAndGetRootComponent();
         const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
-        const component1 = peerComponent1.peerComponent as TestFluidComponent;
+        const component1 = peerComponent1.peerComponent as TestFluidObject;
         peerComponent1.peerComponentRuntimeChannel.bindToContext();
 
         const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
-        const component2 = peerComponent2.peerComponent as TestFluidComponent;
+        const component2 = peerComponent2.peerComponent as TestFluidObject;
 
         let component1AttachState = AttachState.Detached;
         component1.context.once("attaching", () => {
@@ -595,11 +595,11 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         const { container, defaultComponent } =
             await createDetachedContainerAndGetRootComponent();
         const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
-        const component1 = peerComponent1.peerComponent as TestFluidComponent;
+        const component1 = peerComponent1.peerComponent as TestFluidObject;
         peerComponent1.peerComponentRuntimeChannel.bindToContext();
 
         const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
-        const component2 = peerComponent2.peerComponent as TestFluidComponent;
+        const component2 = peerComponent2.peerComponent as TestFluidObject;
 
         const rootMapOfComponent1 = await component1.getSharedObject<SharedMap>(mapId1);
         rootMapOfComponent1.set("comp2", component2.handle);

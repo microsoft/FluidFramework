@@ -20,7 +20,7 @@ import { LocalCodeLoader } from "./localCodeLoader";
 
 /**
  * Creates a loader with the given package entries and a delta connection server.
- * @param packageEntries - A list of code details to fluid entry points.
+ * @param packageEntries - A list of code details to Fluid entry points.
  * @param deltaConnectionServer - The delta connection server to use as the server.
  */
 export function createLocalLoader(
@@ -47,7 +47,7 @@ export function createLocalLoader(
  * Gets and initializes a container with the given code details from the loader.
  * @param documentId - The documentId for the container.
  * @param loader - The loader to use to initialize the container.
- * @param codeDetails - The code details to retrieve the fluid entry point.
+ * @param codeDetails - The code details to retrieve the Fluid entry point.
  */
 export async function initializeLocalContainer(
     documentId: string,

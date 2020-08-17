@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/build-tools",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Fluid Build tool",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
