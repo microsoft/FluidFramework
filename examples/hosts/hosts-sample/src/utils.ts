@@ -4,7 +4,7 @@
  */
 
 import { parse } from "querystring";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { queryObject } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
@@ -44,9 +44,8 @@ async function attachCore(loader: Loader, url: string, div: HTMLDivElement) {
         return;
     }
 
-    const component = response.value as IFluidObject;
     // Try to render the component if it is a view
-    const view: IFluidHTMLView | undefined = component.IFluidHTMLView;
+    const view: IFluidHTMLView | undefined = queryObject(response.value).IFluidHTMLView;
     if (view !== undefined) {
         view.render(div, { display: "block" });
     }

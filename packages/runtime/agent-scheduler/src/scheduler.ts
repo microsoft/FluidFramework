@@ -6,7 +6,7 @@
 import assert from "assert";
 import { EventEmitter } from "events";
 import {
-    IFluidObject,
+    queryObject,
     IFluidHandle,
     IFluidRouter,
     IFluidRunnable,
@@ -464,8 +464,7 @@ export class TaskManager implements ITaskManager {
             return Promise.reject(`Invalid agent route: ${url}`);
         }
 
-        const fluidObject = response.value as IFluidObject;
-        const agent = fluidObject.IFluidRunnable;
+        const agent = queryObject(response.value).IFluidRunnable;
         if (agent === undefined) {
             return Promise.reject("Fluid object does not implement IFluidRunnable");
         }

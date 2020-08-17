@@ -22,7 +22,7 @@ import { IUser } from "@fluidframework/protocol-definitions";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import { extractPackageIdentifierDetails, WebCodeLoader } from "@fluidframework/web-code-loader";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { queryObject } from "@fluidframework/core-interfaces";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { MultiUrlResolver } from "./multiResolver";
 import { getDocumentServiceFactory } from "./multiDocumentServiceFactory";
@@ -280,14 +280,14 @@ async function getFluidObjectAndRender(container: Container, url: string, div: H
         return false;
     }
 
-    const fluidObject = response.value as IFluidObject;
+    const fluidObject = response.value;
     if (fluidObject === undefined) {
         return;
     }
 
     // We should be retaining a reference to mountableView long-term, so we can call unmount() on it to correctly
     // remove it from the DOM if needed.
-    const mountableView: IFluidMountableView = fluidObject.IFluidMountableView;
+    const mountableView: IFluidMountableView = queryObject(fluidObject).IFluidMountableView;
     if (mountableView !== undefined) {
         mountableView.mount(div);
         return;

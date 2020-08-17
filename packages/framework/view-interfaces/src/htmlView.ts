@@ -40,5 +40,7 @@ declare module "@fluidframework/core-interfaces" {
     /* eslint-disable @typescript-eslint/no-empty-interface */
     export interface IFluidObject extends
         Readonly<Partial<IProvideFluidHTMLView>> { }
+    export interface FluidDataInterfaceCatalog extends
+        Readonly<IProvideFluidHTMLView> { }
     /* eslint-enable @typescript-eslint/no-empty-interface */
 }

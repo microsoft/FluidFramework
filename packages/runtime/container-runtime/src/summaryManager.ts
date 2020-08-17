@@ -13,7 +13,7 @@ import {
     IPromiseTimerResult,
 } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IFluidObject, IRequest, DriverHeader } from "@fluidframework/core-interfaces";
+import { queryObject, IRequest, DriverHeader } from "@fluidframework/core-interfaces";
 import {
     IContainerContext,
     LoaderHeader,
@@ -443,8 +443,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             return Promise.reject<ISummarizer>("Invalid summarizer route");
         }
 
-        const rawFluidObject = response.value as IFluidObject;
-        const summarizer = rawFluidObject.ISummarizer;
+        const summarizer = queryObject(response.value).ISummarizer;
 
         if (!summarizer) {
             return Promise.reject<ISummarizer>("Fluid object does not implement ISummarizer");

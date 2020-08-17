@@ -118,4 +118,7 @@ declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends
         Readonly<Partial<IProvideTaskManager & IProvideAgentScheduler>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface FluidDataInterfaceCatalog extends
+        Readonly<IProvideTaskManager & IProvideAgentScheduler> { }
 }
