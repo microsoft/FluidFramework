@@ -12,7 +12,7 @@ If you want to run this example follow the following steps:
 
 ## Data Objects
 
-There are three primary Data Objects:
+There are three primary data objects:
 
 * The FlowDocument, that encapsulates the SharedString and exposes APIs convenient for editing.
 * The Editor, a JavaScript class that renders the editing surface and updates the FlowDocument in response to user input.
@@ -20,7 +20,7 @@ There are three primary Data Objects:
 
 ## Examples
 
-To host an instance of the Editor, your Fluid Object will need to create an instance of a FlowDocument.  In the Host
+To host an instance of the Editor, your Fluid object will need to create an instance of a FlowDocument.  In the Host
 example, this is done in host/host.ts:
 
 ```ts

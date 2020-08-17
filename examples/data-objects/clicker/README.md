@@ -1,6 +1,6 @@
 # @fluid-example/clicker
 
-**Clicker** is a Fluid Object that displays a number with a button. Pressing the button
+**Clicker** is a Fluid object that displays a number with a button. Pressing the button
 increments the counter. This is a basic example  using the interface model and stock
 classes.
 
