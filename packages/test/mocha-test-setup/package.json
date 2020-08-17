@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/mocha-test-setup",
-  "version": "0.25.0",
+  "version": "0.25.1",
   "description": "Utilities for fluid tests",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -47,7 +47,6 @@
     ],
     "temp-directory": "nyc/.nyc_output"
   },
-  "dependencies": {},
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",

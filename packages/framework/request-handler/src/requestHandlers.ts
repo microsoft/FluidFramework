@@ -28,7 +28,7 @@ export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainer
  * @deprecated - please avoid adding new references to this API!
  * It exposes internal container guts to external world, which is not ideal.
  * It also relies heavily on internal routing schema (formation of handle URIs) which will change in future
- * And last, but not least, it does not allow any policy to be implemented around GC of components exposed
+ * And last, but not least, it does not allow any policy to be implemented around GC of data stores exposed
  * through internal URIs. I.e. if there are no other references to such objects, they will be GC'd and
  * external links would get broken. Maybe that's what is needed in some cases, but better, more centralized
  * handling of external URI to internal handle is required (in future, we will support weak handle references,
@@ -37,8 +37,8 @@ export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainer
 export const deprecated_innerRequestHandler = async (request: IRequest, runtime: IContainerRuntime) =>
     runtime.IFluidHandleContext.resolveHandle(request);
 
-export const createComponentResponse = (component: IFluidObject) => {
-    return { status: 200, mimeType: "fluid/object", value: component };
+export const createFluidObjectResponse = (fluidObject: IFluidObject) => {
+    return { status: 200, mimeType: "fluid/object", value: fluidObject };
 };
 
 class LegacyUriHandle<T = IFluidObject & IFluidLoadable> implements IFluidHandle<T> {
