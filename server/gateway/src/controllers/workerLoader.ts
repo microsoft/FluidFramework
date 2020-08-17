@@ -23,7 +23,6 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { WebCodeLoader, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import Comlink from "comlink";
-import { debug } from "./debug";
 
 // Container load requires a URL resolver although it does not make use of it.
 class NotUsedUrlResolver implements IUrlResolver {
@@ -54,7 +53,8 @@ class WorkerLoader implements ILoader, IFluidRunnable {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        debug(`Request inside web worker: ${JSON.stringify(request, undefined, 2)}`);
+        console.log(`Request inside web worker`);
+        console.log(request);
         const urlObj = parse(this.resolved.url);
         let factory: IDocumentServiceFactory;
         if (urlObj.protocol === "fluid:") {
