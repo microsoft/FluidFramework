@@ -8,6 +8,9 @@ class FrontMatter {
         str.append(`title: "${this.title}"\n`);
         str.append(`kind: "${this.kind}"\n`);
         str.append(`package: "${this.package}"\n`);
+        if (this.metadata) {
+            str.append(`metadata: "${this.metadata}"\n`);
+        }
         str.append("---\n");
         return str.toString();
     }
