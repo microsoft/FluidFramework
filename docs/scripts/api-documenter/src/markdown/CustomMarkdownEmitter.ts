@@ -220,7 +220,7 @@ export class CustomMarkdownEmitter extends MarkdownEmitter {
         }
 
         // write the table header
-        writer.writeLine(`<table class="table table-hover ${docTable.cssClass}">`);
+        writer.writeLine(`<table class="table table-striped table-hover ${docTable.cssClass}">`);
         writer.writeLine('  <thead>');
         writer.writeLine('    <tr>');
         writer.write('    ');
