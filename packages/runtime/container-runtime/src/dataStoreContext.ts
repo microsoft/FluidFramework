@@ -197,6 +197,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         public readonly summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private bindState: BindState,
+        public readonly isLocalDataStore: boolean,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         protected pkg?: readonly string[],
     ) {
@@ -622,6 +623,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             summaryTracker,
             createSummarizerNode,
             BindState.Bound,
+            false,
             () => {
                 throw new Error("Already attached");
             },
@@ -712,6 +714,7 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
             summaryTracker,
             createSummarizerNode,
             snapshotTree ? BindState.Bound : BindState.NotBound,
+            true,
             bindChannel,
             pkg);
         this.pkg = pkg; // TODO: avoid setting twice

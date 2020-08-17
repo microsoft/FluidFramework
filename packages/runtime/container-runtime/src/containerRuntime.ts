@@ -587,10 +587,6 @@ export class ContainerRuntime extends EventEmitter
         return (this.context as any).isAttached() ? AttachState.Attached : AttachState.Detached;
     }
 
-    public isLocalDataStore(id: string): boolean {
-        return this.localContexts.has(id);
-    }
-
     public nextSummarizerP?: Promise<Summarizer>;
     public nextSummarizerD?: Deferred<Summarizer>;
 
@@ -665,7 +661,6 @@ export class ContainerRuntime extends EventEmitter
 
     // Attached and loaded context proxies
     private readonly contexts = new Map<string, FluidDataStoreContext>();
-    private readonly localContexts = new Set<string>();
     // List of pending contexts (for the case where a client knows a store will exist and is waiting
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<FluidDataStoreContext>>();
@@ -792,7 +787,6 @@ export class ContainerRuntime extends EventEmitter
                 } else {
                     throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
                 }
-                this.localContexts.add(key);
                 dataStoreContext = new LocalFluidDataStoreContext(
                     key,
                     pkgFromSnapshot,
@@ -1304,7 +1298,6 @@ export class ContainerRuntime extends EventEmitter
 
         const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
-        this.localContexts.add(id);
         this.contexts.set(id, context);
 
         return context;
@@ -1332,7 +1325,7 @@ export class ContainerRuntime extends EventEmitter
         const deferred = new Deferred<FluidDataStoreContext>();
         this.contextsDeferred.set(id, deferred);
         this.contexts.set(id, context);
-        this.localContexts.add(id);
+
         if (realizationFn) {
             return context.realizeWithFn(realizationFn);
         } else {

@@ -117,12 +117,6 @@ export interface IContainerRuntimeBase extends
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
     getTaskManager(): Promise<ITaskManager>;
-
-    /**
-     * True if the data store with given id is created by this container instance.
-     * @param id - id of the data store.
-     */
-    isLocalDataStore(id: string): boolean;
 }
 
 /**
@@ -260,6 +254,8 @@ export interface IFluidDataStoreContext extends EventEmitter {
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
+    // True if the data store is LocalDataStoreContext.
+    readonly isLocalDataStore: boolean;
     /**
      * Indicates the attachment state of the data store to a host service.
      */
