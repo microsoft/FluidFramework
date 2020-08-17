@@ -8,7 +8,6 @@ import { EventEmitter } from "events";
 import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    queryObject,
     IFluidObject,
     IFluidRouter,
     IFluidHandleContext,

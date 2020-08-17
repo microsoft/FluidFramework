@@ -53,4 +53,6 @@ export interface IFluidMountableView extends IProvideFluidMountableView {
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideFluidMountableView>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface FluidDataInterfaceCatalog extends Readonly<IProvideFluidMountableView> { }
 }

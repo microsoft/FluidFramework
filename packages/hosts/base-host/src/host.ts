@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/core-interfaces";
 import {
     IFluidCodeDetails,
     IProxyLoaderFactory,
@@ -99,6 +98,6 @@ export class BaseHost {
             return undefined;
         }
 
-        return response.value as IFluidObject;
+        return response.value as unknown;
     }
 }

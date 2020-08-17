@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, queryObject } from "@fluidframework/core-interfaces";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
     IFluidLastEditedTracker,
@@ -56,11 +56,11 @@ export class Anchor extends DataObject implements IProvideFluidHTMLView, IProvid
 
     protected async hasInitialized() {
         this.defaultComponentInternal =
-            (await this.root.get<IFluidHandle>(this.defaultComponentId).get())
+            queryObject(await this.root.get<IFluidHandle>(this.defaultComponentId).get())
                 .IFluidHTMLView;
 
         this.lastEditedComponent =
-            (await this.root.get<IFluidHandle>(this.lastEditedComponentId).get())
+            queryObject(await this.root.get<IFluidHandle>(this.lastEditedComponentId).get())
                 .IFluidLastEditedTracker;
     }
 }

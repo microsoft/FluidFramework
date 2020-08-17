@@ -9,6 +9,7 @@ import {
     IFluidHandleContext,
     IRequest,
     IResponse,
+    IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 
 /**
@@ -24,7 +25,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
     public get IFluidHandle() { return this; }
 
     public readonly isAttached = true;
-    private dataStoreP: Promise<IFluidObject> | undefined;
+    private dataStoreP: Promise<IFluidLoadable> | undefined;
 
     /**
      * Creates a new RemoteFluidObjectHandle when parsing an IFluidHandle.
@@ -44,12 +45,13 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
         return this.absolutePath;
     }
 
-    public async get(): Promise<unknown> {
+    public async get(): Promise<IFluidLoadable> {
         if (this.dataStoreP === undefined) {
-            this.dataStoreP = this.routeContext.resolveHandle({ url: this.absolutePath })
-                .then<unknown>((response) =>
+            this.dataStoreP =
+                this.routeContext.resolveHandle({ url: this.absolutePath })
+                .then<IFluidLoadable>((response) =>
                     response.mimeType === "fluid/object"
-                        ? response.value as unknown
+                        ? response.value as IFluidLoadable  //* Fishy...
                         : Promise.reject("Not found"));
         }
 

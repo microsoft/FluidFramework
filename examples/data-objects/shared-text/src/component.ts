@@ -13,6 +13,7 @@ import * as API from "@fluid-internal/client-api";
 import { SharedCell } from "@fluidframework/cell";
 import { performanceNow } from "@fluidframework/common-utils";
 import {
+    queryObject,
     IFluidObject,
     IFluidHandle,
     IFluidLoadable,
@@ -50,7 +51,7 @@ const debug = registerDebug("fluid:shared-text");
  */
 async function getHandle(runtimeP: Promise<IFluidRouter>): Promise<IFluidHandle> {
     const component = await requestFluidObject(await runtimeP, "");
-    return component.IFluidLoadable.handle;
+    return queryObject(component).IFluidLoadable.handle;
 }
 
 export class SharedTextRunner

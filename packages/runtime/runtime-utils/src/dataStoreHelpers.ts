@@ -18,5 +18,5 @@ export async function requestFluidObject<T = unknown>(
     }
 
     assert(response.value);
-    return response.value as T;
+    return response.value as T;  //* Fishy... non-type safe cast, but to the caller it feels so good!
 }

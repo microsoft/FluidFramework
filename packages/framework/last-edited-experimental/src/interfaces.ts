@@ -8,6 +8,8 @@ import { IUser } from "@fluidframework/protocol-definitions";
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideFluidLastEditedTracker>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface FluidDataInterfaceCatalog extends Readonly<IProvideFluidLastEditedTracker> { }
 }
 
 export const IFluidLastEditedTracker: keyof IProvideFluidLastEditedTracker = "IFluidLastEditedTracker";

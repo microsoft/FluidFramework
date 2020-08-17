@@ -7,6 +7,7 @@ import * as SearchMenu from "@fluid-example/search-menu";
 import * as api from "@fluid-internal/client-api";
 import { performanceNow } from "@fluidframework/common-utils";
 import {
+    queryObject,
     IFluidObject,
     IFluidHandle,
     IFluidLoadable,
@@ -4523,7 +4524,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public async insertComponentNew(prefix: string, chaincode: string, inline = false) {
         const router = await this.collabDocument.context.containerRuntime.createDataStore(chaincode);
         const object = await requestFluidObject(router, "");
-        const loadable = object.IFluidLoadable;
+        const loadable = queryObject(object).IFluidLoadable;
 
         const props = {
             crefTest: {
@@ -4588,7 +4589,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public insertNewCollectionComponent(collection: IFluidObjectCollection, inline = false) {
         // TODO - we may want to have a shared component collection?
         const instance = collection.createCollectionItem();
-        const loadable = instance.IFluidLoadable;
+        const loadable = queryObject(instance).IFluidLoadable;
 
         const props = {
             crefTest: {
@@ -4628,17 +4629,16 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     private async openCollections() {
         const root = this.collabDocument.getRoot();
 
-        const [progressBars, math, videoPlayers, images] = await Promise.all([
+        const [progressBars, videoPlayers, images] = await Promise.all([
             root.get<IFluidHandle>("progressBars").get(),
-            root.get<IFluidHandle<IMathCollection>>("math").get(),
             root.get<IFluidHandle>("videoPlayers").get(),
             root.get<IFluidHandle>("images").get(),
         ]);
 
-        this.math = math;
-        this.progressBars = progressBars.IFluidObjectCollection;
-        this.videoPlayers = videoPlayers.IFluidObjectCollection;
-        this.images = images.IFluidObjectCollection;
+        this.math = await root.get<IFluidHandle<IMathCollection>>("math").get();
+        this.progressBars = queryObject(progressBars).IFluidObjectCollection;
+        this.videoPlayers = queryObject(videoPlayers).IFluidObjectCollection;
+        this.images = queryObject(images).IFluidObjectCollection;
     }
 
     private insertBlobInternal(blob: IGenericBlob) {

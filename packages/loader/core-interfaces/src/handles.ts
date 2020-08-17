@@ -4,7 +4,7 @@
  */
 
 import { IRequest, IResponse } from "./fluidRouter";
-import { IFluidObject } from "./fluidObject";
+// import { IFluidObject } from "./fluidObject";
 import { IFluidLoadable } from "./fluidLoadable";
 
 export const IFluidHandleContext: keyof IProvideFluidHandleContext = "IFluidHandleContext";
