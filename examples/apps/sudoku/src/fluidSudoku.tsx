@@ -15,8 +15,6 @@ import { SudokuView } from "./react/sudokuView";
 // eslint-disable-next-line import/no-unassigned-import
 import "./helpers/styles.css";
 
-export const FluidSudokuName = "FluidSudoku";
-
 /**
  * A collaborative Sudoku component built on the Fluid Framework.
  */
@@ -25,11 +23,13 @@ export class FluidSudoku extends DataObject implements IFluidHTMLView {
         return this;
     }
 
+    public static ObjectIdentifier: string = "FluidSudoku";
+
     /**
      * This is where you define all which Distributed Data Structures your component will use
      */
     private static readonly factory = new DataObjectFactory(
-        FluidSudokuName,
+        FluidSudoku.ObjectIdentifier,
         FluidSudoku,
         [SharedMap.getFactory()],
         {}
