@@ -35,21 +35,29 @@ pr:
     - server/routerlicious/kubernetes/routerlicious
 
 variables:
-  skipComponentGovernanceDetection: true
-  pushImage: ${{
+- name: skipComponentGovernanceDetection
+  value: true
+- name: pushImage
+  value: ${{
     and(
-        ne(variables['Build.Reason'], 'PullRequest'),
-        eq(variables['Build.SourceBranch'], 'refs/heads/master')
+      ne(variables['Build.Reason'], 'PullRequest'),
+      eq(variables['Build.SourceBranch'], 'refs/heads/master')
     )}}
-  registry: prague.azurecr.io
-  containerName: prague-server
-  baseContainerName: $(containerName)-base
-  baseContainerTag: $(baseContainerName):$(Build.BuildId)
-  fullRunnerContainerTag: $(registry)/$(containerName):$(Build.BuildId)
-  ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-    testConfig: :full
-  ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-    testConfig: :ci
+- group: container-registry-info
+- name: containerName
+  value: fluid-server
+- name: baseContainerName
+  value: $(containerName)-base
+- name: baseContainerTag
+  value: $(baseContainerName):$(Build.BuildNumber)
+- name: fullRunnerContainerTag
+  value: $(containerRegistryUrl)/$(containerName):$(Build.BuildNumber)
+- ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+  - name: testConfig
+    value: :full
+- ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+  - name: testConfig
+    value: :ci
 
 stages:
 - stage: build
@@ -85,13 +93,13 @@ stages:
             displayName: 'npm Authenticate root .npmrc'
             inputs:
               workingFile: .npmrc
+              customEndpoint: Offnet Packages
           - task: Npm@1
             displayName: npm ci
             inputs:
               command: 'custom'
               customCommand: 'ci --ignore-scripts'
-              customRegistry: 'useFeed'
-              customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+              customRegistry: 'useNpmrc'
           - bash: |
               # Generate the package/package lock for the lerna project so we would scan it.
               node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
@@ -118,6 +126,7 @@ stages:
           displayName: npm Authenticate
           inputs:
             workingFile: server/routerlicious/.npmrc
+            customEndpoint: Offnet Packages
 
         # Build
         - task: Docker@2
@@ -127,9 +136,9 @@ stages:
             command: build
             dockerFile: server/routerlicious/Dockerfile
             buildContext: server/routerlicious
-            arguments: --target base --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)
+            arguments: --target base --build-arg VERSION_BUILDNUMBER=$(Build.BuildNumber) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)
             tags: |
-              $(Build.BuildId)
+              $(Build.BuildNumber)
 
         # Pack
         - task: Docker@0
@@ -194,23 +203,23 @@ stages:
           - task: Docker@2
             displayName: 'Docker Build - Runner'
             inputs:
-              containerRegistry: Fluid Azure Container Registry
+              containerRegistry: $(containerRegistryConnection)
               repository: $(containerName)
               command: build
               dockerFile: server/routerlicious/Dockerfile
               buildContext: server/routerlicious
-              arguments: '--target runner --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)'
+              arguments: '--target runner --build-arg VERSION_BUILDNUMBER=$(Build.BuildNumber) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)'
               tags: |
-                $(Build.BuildId)
+                $(Build.BuildNumber)
           
           - task: Docker@2
             displayName: 'Docker Push - Runner'
             inputs:
-              containerRegistry: Fluid Azure Container Registry
+              containerRegistry: $(containerRegistryConnection)
               repository: $(containerName)
               command: push
               tags: |
-                $(Build.BuildId)
+                $(Build.BuildNumber)
 
         # Cleanup
         - task: Docker@0
@@ -249,6 +258,7 @@ stages:
         feeds:
         - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
           environment: fluid-feed
+          customEndPoint: Offnet Packages
           internal: false
         # only publish release bits
         - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:

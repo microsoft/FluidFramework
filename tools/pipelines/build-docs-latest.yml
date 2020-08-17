@@ -31,12 +31,13 @@ pr: none
 
 resources:
   pipelines:
-  - pipeline: test
-    source: test - trigger
-    trigger:
-      branches:
-        include:
-        - pl-test
+  # - pipeline: test
+  #   source: test - trigger
+  #   trigger:
+  #     branches:
+  #       include:
+  #       - docs/hugo
+  #       - pl-test
   - pipeline: common_definitions
     source: Build - common-definitions
   - pipeline: common_utils
