@@ -1,13 +1,10 @@
 name: ashy-mud
 
 on:
-  push:
-    branches:
-      - docs/hugo
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
-      - docs/hugo
+      - main
   repository_dispatch:
     # all types
   workflow_dispatch:
@@ -15,20 +12,20 @@ on:
 
 jobs:
   build_and_deploy_job:
-    if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch' # || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: false
-      - name: Download by SHA
+      - name: Download JSON by SHA
         id: download-sha
         uses: carlosperate/download-file-action@v1.0.3
         with:
           file-url: https://fluidframework.z19.web.core.windows.net/${{ github.sha }}.tar.gz
           file-name: api-extractor.tar.gz
-      - name: Download latest
+      - name: Download latest JSON
         id: download-latest
         if: ${{ failure() }}
         uses: carlosperate/download-file-action@v1.0.3
@@ -46,18 +43,8 @@ jobs:
       - name: Generate TSDoc Markdown
         id: mdapidocs
         run: |
-          # npm run build:mdapidocs
-          pwd
-          cd $GITHUB_WORKSPACE
-          pwd
-          ls
-          ls docs
-          ls docs/scripts/
-          ls docs/scripts/api-documenter/
-          cd docs/scripts/api-documenter/
-          npm install && npm run build
-          npm run api:tomarkdown
-      - name: Build And Deploy
+          npm run build:mdapidocs
+      - name: Hugo Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v0.0.1-preview
         env:
@@ -76,9 +63,9 @@ jobs:
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
-    name: Close Pull Request Job
+    name: Close PR Job
     steps:
-      - name: Close Pull Request
+      - name: Close PR
         id: closepullrequest
         uses: Azure/static-web-apps-deploy@v0.0.1-preview
         with:
