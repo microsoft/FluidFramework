@@ -119,7 +119,7 @@ export interface IContainerRuntimeBase extends
     getTaskManager(): Promise<ITaskManager>;
 
     /**
-     * True if the data store with given id is created by this client.
+     * True if the data store with given id is created by this container instance.
      * @param id - id of the data store.
      */
     isLocalDataStore(id: string): boolean;
