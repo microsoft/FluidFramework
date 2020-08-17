@@ -69,7 +69,17 @@ weight = 0
 # url = "/docs/testing"
 
 [markup]
-[markup.goldmark]
-[markup.goldmark.renderer]
-unsafe = true
-# mark unsafe html as true since api-documenter uses html snipets.
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      # mark unsafe html as true since api-documenter uses html snipets.
+      unsafe = true
+  [markup.highlight]
+    codeFences = true
+    guessSyntax = true
+    hl_Lines = ""
+    lineNoStart = 1
+    lineNos = false
+    lineNumbersInTable = true
+    noClasses = true
+    style = "tango"
+    tabWidth = 4
