@@ -1,7 +1,7 @@
 {
-  "name": "@fluid-example/simple-component-embed",
+  "name": "@fluid-example/simple-fluidobject-embed",
   "version": "0.25.1",
-  "description": "Simple component embed container",
+  "description": "Simple Fluid object embed container",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

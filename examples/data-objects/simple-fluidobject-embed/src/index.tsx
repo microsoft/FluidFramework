@@ -11,25 +11,25 @@ import {
 import { ClickerInstantiationFactory, Clicker } from "@fluid-example/clicker";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
-const simpleComponentEmbedName = "@fluid-example/simple-component-embed";
+const simpleFluidObjectEmbedName = "@fluid-example/simple-fluidobject-embed";
 
-export class SimpleComponentEmbed extends DataObject implements IFluidHTMLView {
+export class SimpleFluidObjectEmbed extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
     private clicker: Clicker | undefined;
 
     /**
    * This is only run the first time a document is created
-   * Here we will create a new embedded component. This can happen at any time
+   * Here we will create a new embedded Fluid object. This can happen at any time
    * but in this scenario we only want it to be created once.
    */
     protected async initializingFirstTime() {
-        const component = await this.createFluidObject(ClickerInstantiationFactory.type);
-        this.root.set("myEmbeddedCounter", component.handle);
+        const fluidObject = await this.createFluidObject(ClickerInstantiationFactory.type);
+        this.root.set("myEmbeddedCounter", fluidObject.handle);
     }
 
     /**
-   * Get Clicker component using ID from before
+   * Get Clicker using ID from before
    */
     protected async hasInitialized() {
         const handle = this.root.get("myEmbeddedCounter");
@@ -37,29 +37,29 @@ export class SimpleComponentEmbed extends DataObject implements IFluidHTMLView {
     }
 
     public render(div: HTMLDivElement) {
-        // Create a div that we will use to embed the component
+        // Create a div that we will use to embed the Fluid object
         // and attach that div to the page
-        const componentDiv = document.createElement("div");
-        componentDiv.id = "componentDiv";
-        div.appendChild(componentDiv);
+        const fluidObjectDiv = document.createElement("div");
+        fluidObjectDiv.id = "fluidObjectDiv";
+        div.appendChild(fluidObjectDiv);
 
         // Then render the clicker in our div
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.clicker!.render(componentDiv);
+        this.clicker!.render(fluidObjectDiv);
     }
 }
 
-export const SimpleComponentEmbedInstantiationFactory = new DataObjectFactory(
-    simpleComponentEmbedName,
-    SimpleComponentEmbed,
+export const SimpleFluidObjectEmbedInstantiationFactory = new DataObjectFactory(
+    simpleFluidObjectEmbedName,
+    SimpleFluidObjectEmbed,
     [],
     {},
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    SimpleComponentEmbedInstantiationFactory.type,
+    SimpleFluidObjectEmbedInstantiationFactory.type,
     new Map([
-        SimpleComponentEmbedInstantiationFactory.registryEntry,
+        SimpleFluidObjectEmbedInstantiationFactory.registryEntry,
         ClickerInstantiationFactory.registryEntry,
     ]),
 );
