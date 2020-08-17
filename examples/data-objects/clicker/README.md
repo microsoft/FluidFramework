@@ -1,7 +1,7 @@
 # @fluid-example/clicker
 
 **Clicker** is a Fluid object that displays a number with a button. Pressing the button
-increments the counter. This is a basic example  using the interface model and stock
+increments the counter. This is a basic example using the interface model and stock
 classes.
 
 **Clicker** also demonstrates how use the built in taskManager to setup a simple agent.
