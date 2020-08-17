@@ -1,4 +1,4 @@
-baseURL = "http://example.org/"
+baseURL = "http://ashy-mud-0acebac10.azurestaticapps.net/"
 languageCode = "en-us"
 theme = "thxvscode"
 title = "Fluid Framework"
@@ -41,10 +41,15 @@ name = "FAQ"
 url = "/faq"
 weight = -50
 
+[[menu.main]]
+identifier = "roadmap"
+name = "Roadmap"
+weight = 0
+
 [[menu.docs]]
 identifier = "get-started"
 name = "Get Started"
-weight = -100
+weight = -50
 
 [[menu.docs]]
 identifier = "concepts"

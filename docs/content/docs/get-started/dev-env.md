@@ -1,5 +1,5 @@
 ---
-title: Development Environment
+title: Development environment
 menuPosition: 2
 ---
 
