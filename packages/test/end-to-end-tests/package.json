@@ -110,7 +110,6 @@
     "mocha": "^8.0.1",
     "mocha-junit-reporter": "^1.18.0",
     "moniker": "^0.1.2",
-    "nconf": "^0.10.0",
     "nock": "^10.0.1",
     "nyc": "^15.0.0",
     "old-aqueduct": "npm:@fluidframework/aqueduct@^0.24.0",

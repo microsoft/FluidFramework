@@ -5,7 +5,6 @@
 
 import assert from "assert";
 import * as moniker from "moniker";
-import nconf from "nconf";
 import uuid from "uuid";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
@@ -71,11 +70,10 @@ describe(`r11s End-To-End tests`, () => {
     });
 
     function getResolver(): InsecureUrlResolver {
-        const config: nconf.Provider = nconf.env("__");
-        const bearerSecret = config.get("fluid:webpack:bearerSecret");
-        const tenantId = config.get("fluid:webpack:tenantId") ?? "fluid";
-        const tenantSecret = config.get("fluid:webpack:tenantSecret");
-        const fluidHost = config.get("fluid:webpack:fluidHost");
+        const bearerSecret = process.env.fluid__webpack__bearerSecret;
+        const tenantId = process.env.fluid__webpack__tenantId ?? "fluid";
+        const tenantSecret = process.env.fluid__webpack__tenantSecret;
+        const fluidHost = process.env.fluid__webpack__fluidHost;
 
         return new InsecureUrlResolver(
             fluidHost,
