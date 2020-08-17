@@ -57,46 +57,12 @@ class CustomMarkdownEmitter extends MarkdownEmitter_1.MarkdownEmitter {
                 // whereas VS Code's renderer is totally fine with it.
                 writer.ensureSkippedLine();
                 context.insideTable = true;
-                // Markdown table rows can have inconsistent cell counts.  Size the table based on the longest row.
-                let columnCount = 0;
-                if (docTable.header) {
-                    columnCount = docTable.header.cells.length;
+                if (docTable.cssClass) {
+                    this._writeHTMLTable(writer, context, docTable);
                 }
-                for (const row of docTable.rows) {
-                    if (row.cells.length > columnCount) {
-                        columnCount = row.cells.length;
-                    }
+                else {
+                    this._writeMarkdownTable(writer, context, docTable);
                 }
-                // write the table header (which is required by Markdown)
-                writer.write('| ');
-                for (let i = 0; i < columnCount; ++i) {
-                    writer.write(' ');
-                    if (docTable.header) {
-                        const cell = docTable.header.cells[i];
-                        if (cell) {
-                            this.writeNode(cell.content, context, false);
-                        }
-                    }
-                    writer.write(' |');
-                }
-                writer.writeLine();
-                // write the divider
-                writer.write('| ');
-                for (let i = 0; i < columnCount; ++i) {
-                    writer.write(' --- |');
-                }
-                writer.writeLine();
-                for (const row of docTable.rows) {
-                    writer.write('| ');
-                    for (const cell of row.cells) {
-                        writer.write(' ');
-                        this.writeNode(cell.content, context, false);
-                        writer.write(' |');
-                    }
-                    writer.writeLine();
-                }
-                writer.writeLine();
-                context.insideTable = false;
                 break;
             }
             case "EmphasisSpan" /* EmphasisSpan */: {
@@ -128,9 +94,14 @@ class CustomMarkdownEmitter extends MarkdownEmitter_1.MarkdownEmitter {
                 }
                 if (linkText.length > 0) {
                     const encodedLinkText = this.getEscapedText(linkText.replace(/\s+/g, ' '));
-                    context.writer.write('[');
-                    context.writer.write(encodedLinkText);
-                    context.writer.write(`](${filename})`);
+                    if (context.insideHTML) {
+                        context.writer.write(`<a href='${filename}'>${encodedLinkText}</a>`);
+                    }
+                    else {
+                        context.writer.write('[');
+                        context.writer.write(encodedLinkText);
+                        context.writer.write(`](${filename})`);
+                    }
                 }
                 else {
                     console.log(colors.yellow('WARNING: Unable to determine link text'));
@@ -141,6 +112,95 @@ class CustomMarkdownEmitter extends MarkdownEmitter_1.MarkdownEmitter {
             console.log(colors.yellow(`WARNING: Unable to resolve reference "${docLinkTag.codeDestination.emitAsTsdoc()}": ` +
                 result.errorMessage));
         }
+    }
+    _writeMarkdownTable(writer, context, docTable) {
+        // Markdown table rows can have inconsistent cell counts.  Size the table based on the longest row.
+        let columnCount = 0;
+        if (docTable.header) {
+            columnCount = docTable.header.cells.length;
+        }
+        for (const row of docTable.rows) {
+            if (row.cells.length > columnCount) {
+                columnCount = row.cells.length;
+            }
+        }
+        // write the table header (which is required by Markdown)
+        writer.write('| ');
+        for (let i = 0; i < columnCount; ++i) {
+            writer.write(' ');
+            if (docTable.header) {
+                const cell = docTable.header.cells[i];
+                if (cell) {
+                    this.writeNode(cell.content, context, false);
+                }
+            }
+            writer.write(' |');
+        }
+        writer.writeLine();
+        // write the divider
+        writer.write('| ');
+        for (let i = 0; i < columnCount; ++i) {
+            writer.write(' --- |');
+        }
+        writer.writeLine();
+        for (const row of docTable.rows) {
+            writer.write('| ');
+            for (const cell of row.cells) {
+                writer.write(' ');
+                this.writeNode(cell.content, context, false);
+                writer.write(' |');
+            }
+            writer.writeLine();
+        }
+        writer.writeLine();
+        context.insideTable = false;
+    }
+    _writeHTMLTable(writer, context, docTable) {
+        context.insideHTML = true;
+        let columnCount = 0;
+        if (docTable.header) {
+            columnCount = docTable.header.cells.length;
+        }
+        for (const row of docTable.rows) {
+            if (row.cells.length > columnCount) {
+                columnCount = row.cells.length;
+            }
+        }
+        // write the table header
+        writer.writeLine(`<table class="table table-hover ${docTable.cssClass}">`);
+        writer.writeLine('  <thead>');
+        writer.writeLine('    <tr>');
+        writer.write('    ');
+        for (let i = 0; i < columnCount; ++i) {
+            writer.write(' ');
+            if (docTable.header) {
+                const cell = docTable.header.cells[i];
+                if (cell) {
+                    writer.write('<th scope="col">');
+                    this.writeNode(cell.content, context, false);
+                    writer.write('</th>');
+                    writer.writeLine();
+                }
+            }
+        }
+        writer.writeLine('    </tr>');
+        writer.writeLine('  </thead>');
+        writer.writeLine('  <tbody>');
+        for (const row of docTable.rows) {
+            writer.writeLine('    <tr>');
+            for (const cell of row.cells) {
+                writer.write('      ');
+                writer.write('<td>');
+                this.writeNode(cell.content, context, false);
+                writer.write('</td>');
+            }
+            writer.writeLine('    </tr>');
+        }
+        writer.writeLine('  </tbody>');
+        writer.writeLine('</table>');
+        writer.writeLine();
+        context.insideTable = false;
+        context.insideHTML = false;
     }
 }
 exports.CustomMarkdownEmitter = CustomMarkdownEmitter;

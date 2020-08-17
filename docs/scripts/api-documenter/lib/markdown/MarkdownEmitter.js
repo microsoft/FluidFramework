@@ -15,6 +15,7 @@ class MarkdownEmitter {
         const context = {
             writer,
             insideTable: false,
+            insideHTML: false,
             boldRequested: false,
             italicRequested: false,
             writingBold: false,
@@ -172,9 +173,14 @@ class MarkdownEmitter {
     writeLinkTagWithUrlDestination(docLinkTag, context) {
         const linkText = docLinkTag.linkText !== undefined ? docLinkTag.linkText : docLinkTag.urlDestination;
         const encodedLinkText = this.getEscapedText(linkText.replace(/\s+/g, ' '));
-        context.writer.write('[');
-        context.writer.write(encodedLinkText);
-        context.writer.write(`](${docLinkTag.urlDestination})`);
+        if (context.insideHTML) {
+            context.writer.write(`<a href='${docLinkTag.urlDestination.replace(/\.md$/, '/')}'>${encodedLinkText}</a>`);
+        }
+        else {
+            context.writer.write('[');
+            context.writer.write(encodedLinkText);
+            context.writer.write(`](${docLinkTag.urlDestination})`);
+        }
     }
     writePlainText(text, context) {
         const writer = context.writer;

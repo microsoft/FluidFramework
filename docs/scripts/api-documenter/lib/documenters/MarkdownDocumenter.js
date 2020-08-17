@@ -369,31 +369,38 @@ class MarkdownDocumenter {
         const configuration = this._tsdocConfiguration;
         const classesTable = new DocTable_1.DocTable({
             configuration,
-            headerTitles: ['Class', 'Description']
+            headerTitles: ['Class', 'Description'],
+            cssClass: 'class-list'
         });
         const enumerationsTable = new DocTable_1.DocTable({
             configuration,
-            headerTitles: ['Enumeration', 'Description']
+            headerTitles: ['Enumeration', 'Description'],
+            cssClass: 'enum-list'
         });
         const functionsTable = new DocTable_1.DocTable({
             configuration,
-            headerTitles: ['Function', 'Description']
+            headerTitles: ['Function', 'Description'],
+            cssClass: 'function-list'
         });
         const interfacesTable = new DocTable_1.DocTable({
             configuration,
-            headerTitles: ['Interface', 'Description']
+            headerTitles: ['Interface', 'Description'],
+            cssClass: 'interface-list'
         });
         const namespacesTable = new DocTable_1.DocTable({
             configuration,
-            headerTitles: ['Namespace', 'Description']
+            headerTitles: ['Namespace', 'Description'],
+            cssClass: 'namespace-list'
         });
         const variablesTable = new DocTable_1.DocTable({
             configuration,
-            headerTitles: ['Variable', 'Description']
+            headerTitles: ['Variable', 'Description'],
+            cssClass: 'variable-list'
         });
         const typeAliasesTable = new DocTable_1.DocTable({
             configuration,
-            headerTitles: ['Type Alias', 'Description']
+            headerTitles: ['Type Alias', 'Description'],
+            cssClass: 'alias-list'
         });
         const enumsParagraph = new tsdoc_1.DocParagraph({ configuration });
         const varsParagraph = new tsdoc_1.DocParagraph({ configuration });
