@@ -6,9 +6,9 @@ The Aqueduct is a library for building FluidObjects and Containers within the Fl
 
 ## Fluid Object Development
 
-Fluid Object development consists of developing the Data Object and the corresponding Data Object Factory. The Data Object defines the logic of your Fluid Object, whereas the Data Object Factory defines how to initialize your object.
+Fluid object development consists of developing the data object and the corresponding DataObjectFactory. The data object defines the logic of your Fluid object, whereas the DataObjectFactory defines how to initialize your object.
 
-### Data Object Development
+### DataObject Development
 
 The `DataObject` and the `PureDataObject` are the two base data objects provided by the library.
 
@@ -17,7 +17,7 @@ The `DataObject` and the `PureDataObject` are the two base data objects provided
 The [`DataObject`](./src/data-objects/dataObject.ts) extends the [`PureDataObject`](####PureDataObject) and provides all of its functionality as well as the following additional functionality:
 
 - A `root` SharedDirectory that makes creating and storing Distributed Data Structures and Objects easy.
-- Scheduled Task routing that makes it easier to use the Scheduler Fluid Object
+- Scheduled Task routing that makes it easier to use the Scheduler Fluid object
 - Blob Storage implementation that makes it easier to store and retrieve blobs.
 
 > Note: Most developers will want to use the DataObject as their base class to extend.
@@ -27,17 +27,17 @@ The [`DataObject`](./src/data-objects/dataObject.ts) extends the [`PureDataObjec
 The [`PureDataObject`](./src/data-object/PureDataObject.ts) provides the following functionality:
 
 - Basic set of interface implementations to be loadable in a Fluid Container.
-- Functions for managing Fluid Object lifecycle.
-  - `initializingFirstTime(props: S)` - called only the first time a Fluid Object is initialized
-  - `initializingFromExisting()` - called every time except the first time a Fluid Object is initialized
+- Functions for managing Fluid object lifecycle.
+  - `initializingFirstTime(props: S)` - called only the first time a Fluid object is initialized
+  - `initializingFromExisting()` - called every time except the first time a Fluid object is initialized
   - `hasInitialized()` - called every time after `initializingFirstTime` or `initializingFromExisting` executes
-- Helper functions for creating and getting other Data Objects in the same Container.
+- Helper functions for creating and getting other data objects in the same Container.
 
 > Note: You probably don't want to inherit from this data object directly unless you are creating another base data object class. If you have a data object that doesn't use Distributed Data Structures you should use Container Services to manage your object.
 
-#### Data Object Example
+#### DataObject Example
 
-In the below example we have a simple Data Object that will render a value alongside a button the the page. Every time the button is pressed the value will increment. Because this Data Object renders to the DOM it also extends `IFluidHTMLView`.
+In the below example we have a simple data object, Clicker, that will render a value alongside a button the the page. Every time the button is pressed the value will increment. Because this data object renders to the DOM it also extends `IFluidHTMLView`.
 
 ```jsx
 export class Clicker extends DataObject implements IFluidHTMLView {
@@ -74,19 +74,19 @@ export class Clicker extends DataObject implements IFluidHTMLView {
 }
 ```
 
-### Data Object Factory Development
+### DataObjectFactory Development
 
-The Data Object Factory is used to create a Fluid Object and to initialize a Data Object within the context of a Container. The Factory can live alongside a Data Object or within a different package. The Data Object Factory defines the Distributed Data Structures used within the Data Object as well as any Fluid Objects it depends on.
+The DataObjectFactory is used to create a Fluid object and to initialize a data object within the context of a Container. The factory can live alongside a data object or within a different package. The DataObjectFactory defines the Distributed Data Structures used within the data object as well as any Fluid objects it depends on.
 
-The Aqueduct offers a factory for each of the Data Objects provided.
+The Aqueduct offers a factory for each of the data objects provided.
 
 > [`DataObjectFactory`](./src/data-object-factories/dataObjectFactory.ts)
 
 >[`PureDataObjectFactory`](./src/data-object-factories/pureDataObjectFactory.ts)
 
-#### Data Object Factory Example
+#### DataObjectFactory Example
 
-In the below example we build a Data Object Factory for the [`Clicker`](####Data-Object-Example) example above. In the above example we use `this.root` to store our `"clicks"`. The `DataObject` comes with the `SharedDirectory` already initialized so we do not need to add additional Distributed Data Structures.
+In the below example we build a DataObjectFactory for the [`Clicker`](####Data-Object-Example) example above. In the above example we use `this.root` to store our `"clicks"`. The `DataObject` comes with the `SharedDirectory` already initialized so we do not need to add additional Distributed Data Structures.
 
 ```typescript
 export const ClickerInstantiationFactory = new DataObjectFactory(
@@ -101,12 +101,12 @@ This factory can then create Clickers when provided a creating instance context.
 const myClicker = ClickerInstantiationFactory.createInstance(this.context) as Clicker;
 ```
 
-#### Providers in Data Objects
+#### Providers in data objects
 
 The `this.providers` object on `DataObject` is initialized in the constructor and is generated based on Providers provided by the Container. To access a specific provider you need to:
 
 1. Define the type in the generic on Pure/DataObject
-2. Add the symbol to your Factory (see [Data Object Factory Example](####Data-Object-Factory-Example) below)
+2. Add the symbol to your Factory (see [DataObjectFactory Example](####Data-Object-Factory-Example) below)
 
 In the below example we have an `IFluidUserInfo` interface that looks like this:
 
@@ -139,23 +139,23 @@ export const ClickerInstantiationFactory = new DataObjectFactory(
 
 ## Container Development
 
-A Container is a collection of Data Objects and functionality that produce an experience. Containers hold the instances of Data Objects as well as defining the Data Objects that can be created within the Container. Because of this Data Objects cannot be consumed except for when they are within a Container.
+A Container is a collection of data objects and functionality that produce an experience. Containers hold the instances of data objects as well as defining the data objects that can be created within the Container. Because of this data objects cannot be consumed except for when they are within a Container.
 
 The Aqueduct provides the [`ContainerRuntimeFactoryWithDataStore`](./src/containerRuntimeFactories/containerRuntimeFactoryWithDataStore.ts) that allows you as a Container developer to:
 
-- Define the registry of Data Objects that can be created
-- Declare the Default Data Object
+- Define the registry of data objects that can be created
+- Declare the Default data object
 - Declare [Container Services](###Container-Service-Development)
 - Declare Container Level [Request Handlers](###Container-Level-Request-Handlers)
 
 ### Container Object Example
 
-In the below example we will write a Container that exposes the above [`Clicker`](####Data-Object-Example) using the [`Clicker Factory`](####Data-Object-Factory-Example). You will notice below that the Container developer defines the registry name (Data Object type) of the Fluid Object. We also pass in the type of Data Object we want to be the default. The default Data Object is created the first time the Container is created.
+In the below example we will write a Container that exposes the above [`Clicker`](####Data-Object-Example) using the [`Clicker Factory`](####Data-Object-Factory-Example). You will notice below that the Container developer defines the registry name (data object type) of the Fluid object. We also pass in the type of data object we want to be the default. The default data object is created the first time the Container is created.
 
 ```typescript
 export fluidExport = new ContainerRuntimeFactoryWithDataStore(
-  ClickerInstantiationFactory.type, // Default Data Object Type
-  ClickerInstantiationFactory.registryEntry, // Fluid Object Registry
+  ClickerInstantiationFactory.type, // Default data object Type
+  ClickerInstantiationFactory.registryEntry, // Fluid object Registry
   [], // Provider Entries
   [], // Request Handler Routes
 );
@@ -209,7 +209,7 @@ A factory that will return a Promise to the object.
 
 ### Container Level Request Handlers
 
-You can provide custom Request Handlers to the Container. These request handlers are injected after system handlers but before the Data Object get. Request Handlers allow you to intercept request made to the container and return custom responses.
+You can provide custom Request Handlers to the Container. These request handlers are injected after system handlers but before the data object get. Request Handlers allow you to intercept request made to the container and return custom responses.
 
 Consider a scenario where you want to create a random color generator. I could create a RequestHandler that when someone makes a request to the Container for `{url:"color"}` will intercept and return a custom `IResponse` of `{ status:200, type:"text/plain", value:"blue"}`.
 
