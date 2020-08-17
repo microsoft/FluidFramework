@@ -14,9 +14,9 @@ If you want to run this example follow the following steps:
 
 There are three primary data objects:
 
-* The FlowDocument, that encapsulates the SharedString and exposes APIs convenient for editing.
-* The Editor, a JavaScript class that renders the editing surface and updates the FlowDocument in response to user input.
-* The Host, that creates a FlowDocument and attaches an Editor.
+* The FlowDocument - encapsulates the SharedString and exposes APIs convenient for editing.
+* The Editor - renders the editing surface and updates the FlowDocument in response to user input.
+* The Host - creates a FlowDocument and attaches an Editor.
 
 ## Examples
 
