@@ -25,9 +25,23 @@ import * as core from "@fluidframework/server-services-core";
 import { debug } from "./debug";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
+
+/**
+ * Represents a connection to a stream of delta updates
+ */
 export class LocalDocumentDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
     implements IDocumentDeltaConnection {
+    /**
+     * Create a LocalDocumentDeltaConnection
+     * Handle initial messages, contents or signals if they were in queue
+     *
+     * @param tenantId - the ID of the tenant
+     * @param id -
+     * @param token - authorization token for storage service
+     * @param client - information about the client
+     * @param webSocketServer - optional telemetry logger
+     */
     public static async create(
         tenantId: string,
         id: string,
@@ -117,50 +131,86 @@ export class LocalDocumentDeltaConnection
     private readonly emitter = new EventEmitter();
     private readonly submitManager: BatchManager<IDocumentMessage[]>;
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentDeltaConnection.clientId}
+     */
     public get clientId(): string {
         return this.details.clientId;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentDeltaConnection.mode}
+     */
     public get mode(): ConnectionMode {
         return this.details.mode;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentDeltaConnection.claims}
+     */
     public get claims(): ITokenClaims {
         return this.details.claims;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentDeltaConnection.existing}
+     */
     public get existing(): boolean {
         return this.details.existing;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentDeltaConnection.parentBranch}
+     */
     public get parentBranch(): string | null {
         return this.details.parentBranch;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentDeltaConnection.maxMessageSize}
+     */
     public get maxMessageSize(): number {
         return this.details.maxMessageSize;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentDeltaConnection.initialMessages}
+     */
     public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details.initialMessages;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentDeltaConnection.initialContents}
+     */
     public get initialContents(): IContentMessage[] {
         return this.details.initialContents;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentDeltaConnection.initialSignals}
+     */
     public get initialSignals(): ISignalMessage[] {
         return this.details.initialSignals;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentDeltaConnection.initialClients}
+     */
     public get initialClients(): ISignalClient[] {
         return this.details.initialClients;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentDeltaConnection.version}
+     */
     public get version(): string {
         return testProtocolVersions[0];
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentDeltaConnection.serviceConfiguration}
+     */
     public get serviceConfiguration(): IServiceConfiguration {
         return this.details.serviceConfiguration;
     }
@@ -213,6 +263,9 @@ export class LocalDocumentDeltaConnection
         this.submitManager.drain();
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentDeltaConnection.submitAsync}
+     */
     public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.socket.emit(
@@ -229,6 +282,9 @@ export class LocalDocumentDeltaConnection
         });
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentDeltaConnection.disconnect}
+     */
     public disconnect() {
         // Do nothing
     }

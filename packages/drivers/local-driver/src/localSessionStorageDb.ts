@@ -8,7 +8,8 @@ import { ITestDbFactory } from "@fluidframework/server-test-utils";
 import uuid from "uuid";
 
 /**
- * A collection for testing that stores data in the browsers session storage
+ * A collection for local session storage databese
+ * Functions include database operations such as queries, insertion and update.
  */
 class LocalSessionStorageCollection<T> implements ICollection<T> {
     private readonly collectionName: string;
@@ -16,7 +17,14 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         this.collectionName = `${namespace}-${name}`;
     }
 
+    /**
+     *
+     * @param query - data we want to find
+     * @param sort -
+     *
+     */
     public async find(query: any, sort: any): Promise<any[]> {
+        // helper function: get value from db with the key
         function getValueByKey(propertyBag, key: string) {
             const keys = key.split(".");
             let value = propertyBag;
@@ -25,7 +33,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
             });
             return value;
         }
-
+        // getting keys of the query we are trying to find
         const queryKeys = Object.keys(query);
         let filteredCollection = this.getAllInternal();
         queryKeys.forEach((key) => {
@@ -62,16 +70,38 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         return filteredCollection;
     }
 
+    /**
+     * Find all values in the database, returns a promise
+     *
+     * No need to use Promise.resolve() since a promise is returned automatically
+     */
     public async findAll(): Promise<any[]> {
         return Promise.resolve(this.getAllInternal());
     }
 
+    /**
+     * Find the query in the database, returns a promise
+     *
+     *  @param query - data we want to find
+     *
+     * No need to use Promise.resolve() since a promise is returned automatically
+     */
     public async findOne(query: any): Promise<any> {
         return Promise.resolve(this.findOneInternal(query));
     }
 
-    public async update(filter: any, set: any, addToSet: any): Promise<void> {
-        const value = this.findOneInternal(filter);
+    /**
+     * Update value in the database
+     *
+     * First find the query in the db. If it exists, update the value to given set and insert
+     * Otherwise throw error.
+     *
+     *  @param query - data we want to find
+     *  @param set - new values to change to
+     *  @param addToSet - TBD
+     */
+    public async update(query: any, set: any, addToSet: any): Promise<void> {
+        const value = this.findOneInternal(query);
         if (!value) {
             throw new Error("Not found");
         } else {
@@ -82,8 +112,19 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         }
     }
 
-    public async upsert(filter: any, set: any, addToSet: any): Promise<void> {
-        const value = this.findOneInternal(filter);
+    /**
+     * Inserting a set to the value that satisfies given query
+     *
+     * First find the value that satisfies query. If it doesn't exist, insert the set.
+     * Otherwise update the value to be the given set.Then insert updated value to the database.
+     * Upsert means update and insert
+     *
+     *  @param query - data we want to find
+     *  @param set - new values to change to
+     *  @param addToSet - TBD
+     */
+    public async upsert(query: any, set: any, addToSet: any): Promise<void> {
+        const value = this.findOneInternal(query);
         if (!value) {
             this.insertInternal(set);
         } else {
@@ -94,6 +135,15 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         }
     }
 
+    /**
+     * Inset one value into the database
+     *
+     * First find if value already exist. If so, check if the values are equal.
+     * Otherwise insert into the database.
+     *
+     *  @param value - data to insert to the database
+     *
+     */
     public async insertOne(value: any): Promise<any> {
         const presentVal = this.findOneInternal(value);
         // Only raise error when the object is present and the value is not equal.
@@ -107,6 +157,16 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         return this.insertInternal(value);
     }
 
+    /**
+     * Find query or insert if value didn't exist
+     *
+     * First check if query exists in the database
+     * If it exists, return the value and show that it exists
+     * Otherwise, insert the value to the databse and return it, showing that it did not exist.
+     *
+     * @param query - data we want to find
+     * @param value - data to insert to the database if we cannot find query
+     */
     public async findOrCreate(query: any, value: any): Promise<{ value: any, existing: boolean }> {
         const existing = this.findOneInternal(query);
         if (existing) {
@@ -116,22 +176,43 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         return { value, existing: false };
     }
 
+    /**
+     * Insert multiple values in the database, can be either ordered or not
+     *
+     * @param values - data to insert to the database
+     * @param ordered - if data is sorted
+     */
     public async insertMany(values: any[], ordered: boolean): Promise<void> {
         this.insertInternal(...values);
     }
 
-    public async deleteOne(filter: any): Promise<any> {
+    /**
+     * Delete one value that satisfy the query
+     * Not yet implemented
+     */
+    public async deleteOne(query: any): Promise<any> {
         throw new Error("Method not implemented.");
     }
 
-    public async deleteMany(filter: any): Promise<any> {
+    /**
+     * Delete values that satisfy the query.
+     * Not yet implemented
+     */
+    public async deleteMany(query: any): Promise<any> {
         throw new Error("Method not implemented.");
     }
 
+    /**
+     * Create an index
+     * Not yet implemented
+     */
     public async createIndex(index: any, unique: boolean): Promise<void> {
         throw new Error("Method not implemented.");
     }
 
+    /**
+     * Return all values in db
+     */
     private getAllInternal(): any[] {
         const values: string[] = [];
         for (let i = 0; i < sessionStorage.length; i++) {
@@ -145,20 +226,37 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         return values;
     }
 
+    /**
+     * Assign unique id to each value and insert into the db
+     *
+     * @param values - data to insert to the database
+     *
+     */
     private insertInternal(...values: any[]) {
         for (const value of values) {
             if (value) {
                 if (!value._id) {
-                    value._id = uuid();
+                    value._id = uuid();// get unique id
                 }
                 sessionStorage.setItem(`${this.collectionName}-${value._id}`, JSON.stringify(value));
             }
         }
     }
 
+    /**
+     * Find the query in the db
+     *
+     * If the query has an id, we get the json object nd return.
+     * Otherwise we get the keys of the query and go through the db to
+     * compare the values until we find the same one with query and return.
+     * The second part is not so efficient time-wise. Optimization is needed in the future.
+     *
+     * @param query - what to find in the database
+     *
+    */
     private findOneInternal(query: any): any {
         if (query._id) {
-            const json = sessionStorage.getItem(`${this.collectionName}-${query._id}`);
+            const json = sessionStorage.getItem(`${this.collectionName}-${query._id}`);// form of data
             if (json) {
                 return JSON.parse(json);
             }

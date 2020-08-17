@@ -7,6 +7,9 @@ import * as api from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDatabaseManager } from "@fluidframework/server-services-core";
 
+/**
+ * Provides access to the underlying delta storage on the server for local driver.
+ */
 export class LocalDeltaStorageService implements api.IDocumentDeltaStorageService {
     constructor(
         private readonly tenantId: string,
@@ -14,6 +17,9 @@ export class LocalDeltaStorageService implements api.IDocumentDeltaStorageServic
         private readonly databaseManager: IDatabaseManager) {
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentDeltaStorageService.get}
+     */
     public async get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]> {
         const query = { documentId: this.id, tenantId: this.tenantId };
         if (from !== undefined || to !== undefined) {
