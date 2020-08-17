@@ -25,7 +25,7 @@ variables:
   - name: validRun
     value: ${{ or(variables.releasePipeline, variables.n1Pipeline, variables.latestPipeline) }}
   - name: repoToTrigger
-    value: microsoft/FluidFramework
+    value: microsoft/FluidFramework-docs
 
 # no branch and PR triggers
 trigger: none
