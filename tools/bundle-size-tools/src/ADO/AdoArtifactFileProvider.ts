@@ -4,9 +4,8 @@
  */
 
 import { WebApi } from 'azure-devops-node-api';
-import { Constants } from './Constants';
 import { decompressStatsFile, unzipStream } from '../utilities';
-import * as JSZip from 'jszip';
+import JSZip from 'jszip';
 import { getBundleFilePathsFromFolder, BundleFileData } from './getBundleFilePathsFromFolder';
 import { Stats } from 'webpack';
 import { BundleBuddyConfig } from '../BundleBuddyTypes';
@@ -29,20 +28,25 @@ export function getBundlePathsFromZipObject(jsZip: JSZip): BundleFileData[] {
  * @param adoConnection - A connection to the ADO api.
  * @param buildNumber - The ADO build number that contains the artifact we wish to fetch
  */
-export async function getZipObjectFromArtifact(adoConnection: WebApi, buildNumber: number): Promise<JSZip> {
+export async function getZipObjectFromArtifact(
+  adoConnection: WebApi,
+  projectName: string,
+  buildNumber: number,
+  bundleAnalysisArtifactName: string
+): Promise<JSZip> {
   const buildApi = await adoConnection.getBuildApi();
 
   const artifactStream = await buildApi.getArtifactContentZip(
-    Constants.projectName,
+    projectName,
     buildNumber,
-    Constants.bundleAnalysisArtifactName
+    bundleAnalysisArtifactName
   );
 
   // We want our relative paths to be clean, so navigating JsZip into the top level folder
-  const result = (await unzipStream(artifactStream)).folder(Constants.bundleAnalysisArtifactName);
+  const result = (await unzipStream(artifactStream)).folder(bundleAnalysisArtifactName);
 
   if (!result) {
-    throw new Error(`getZipObjectFromArtifact could not find the folder ${Constants.bundleAnalysisArtifactName}`);
+    throw new Error(`getZipObjectFromArtifact could not find the folder ${bundleAnalysisArtifactName}`);
   }
 
   return result;
