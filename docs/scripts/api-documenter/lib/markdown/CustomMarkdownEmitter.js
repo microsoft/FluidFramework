@@ -95,7 +95,7 @@ class CustomMarkdownEmitter extends MarkdownEmitter_1.MarkdownEmitter {
                 if (linkText.length > 0) {
                     const encodedLinkText = this.getEscapedText(linkText.replace(/\s+/g, ' '));
                     if (context.insideHTML) {
-                        context.writer.write(`<a href='${filename}'>${encodedLinkText}</a>`);
+                        context.writer.write(`<a href='${filename.replace(/\.md$/, '/')}'>${encodedLinkText}</a>`);
                     }
                     else {
                         context.writer.write('[');

@@ -447,7 +447,8 @@ export class MarkdownDocumenter {
 
         const packagesTable: DocTable = new DocTable({
             configuration,
-            headerTitles: ['Package', 'Description']
+            headerTitles: ['Package', 'Description'],
+            cssClass: 'package-list'
         });
 
         for (const apiMember of apiModel.members) {
@@ -652,22 +653,26 @@ export class MarkdownDocumenter {
 
         const eventsTable: DocTable = new DocTable({
             configuration,
-            headerTitles: ['Property', 'Modifiers', 'Type', 'Description']
+            headerTitles: ['Property', 'Modifiers', 'Type', 'Description'],
+            cssClass: 'event-list'
         });
 
         const constructorsTable: DocTable = new DocTable({
             configuration,
-            headerTitles: ['Constructor', 'Modifiers', 'Description']
+            headerTitles: ['Constructor', 'Modifiers', 'Description'],
+            cssClass: 'constructor-list'
         });
 
         const propertiesTable: DocTable = new DocTable({
             configuration,
-            headerTitles: ['Property', 'Modifiers', 'Type', 'Description']
+            headerTitles: ['Property', 'Modifiers', 'Type', 'Description'],
+            cssClass: 'property-list'
         });
 
         const methodsTable: DocTable = new DocTable({
             configuration,
-            headerTitles: ['Method', 'Modifiers', 'Description']
+            headerTitles: ['Method', 'Modifiers', 'Description'],
+            cssClass: 'method-list'
         });
 
 
@@ -795,7 +800,8 @@ export class MarkdownDocumenter {
 
         const enumMembersTable: DocTable = new DocTable({
             configuration,
-            headerTitles: ['Member', 'Value', 'Description']
+            headerTitles: ['Member', 'Value', 'Description'],
+            cssClass: 'enum-list'
         });
 
         for (const apiEnumMember of apiEnum.members) {
@@ -834,17 +840,20 @@ export class MarkdownDocumenter {
 
         const eventsTable: DocTable = new DocTable({
             configuration,
-            headerTitles: ['Property', 'Type', 'Description']
+            headerTitles: ['Property', 'Type', 'Description'],
+            cssClass: 'event-list'
         });
 
         const propertiesTable: DocTable = new DocTable({
             configuration,
-            headerTitles: ['Property', 'Type', 'Description']
+            headerTitles: ['Property', 'Type', 'Description'],
+            cssClass: 'property-list'
         });
 
         const methodsTable: DocTable = new DocTable({
             configuration,
-            headerTitles: ['Method', 'Description']
+            headerTitles: ['Method', 'Description'],
+            cssClass: 'method-list'
         });
 
         const eventsParagraph: DocParagraph = new DocParagraph({ configuration });
@@ -945,7 +954,8 @@ export class MarkdownDocumenter {
 
         const parametersTable: DocTable = new DocTable({
             configuration,
-            headerTitles: ['Parameter', 'Type', 'Description']
+            headerTitles: ['Parameter', 'Type', 'Description'],
+            cssClass: 'param-list'
         });
         for (const apiParameter of apiParameterListMixin.parameters) {
             const parameterDescription: DocSection = new DocSection({ configuration });
