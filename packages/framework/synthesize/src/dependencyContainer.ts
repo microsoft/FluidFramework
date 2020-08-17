@@ -6,21 +6,21 @@
 import { IFluidObject } from "@fluidframework/core-interfaces";
 
 import {
-    AsyncComponentProvider,
-    ComponentSymbolProvider,
-    ComponentProvider,
-    ComponentKey,
+    AsyncFluidObjectProvider,
+    FluidObjectSymbolProvider,
+    FluidObjectProvider,
+    FluidObjectKey,
 } from "./types";
 import {
     IFluidDependencySynthesizer,
-} from "./IComponentDependencySynthesizer";
+} from "./IFluidDependencySynthesizer";
 
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will
  * synthesize an object based on them when requested.
  */
 export class DependencyContainer implements IFluidDependencySynthesizer {
-    private readonly providers = new Map<keyof IFluidObject, ComponentProvider<any>>();
+    private readonly providers = new Map<keyof IFluidObject, FluidObjectProvider<any>>();
 
     public get IFluidDependencySynthesizer() { return this; }
 
@@ -36,7 +36,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).register}
      */
-    public register<T extends keyof IFluidObject>(type: T, provider: ComponentProvider<T>): void {
+    public register<T extends keyof IFluidObject>(type: T, provider: FluidObjectProvider<T>): void {
         if (this.has(type)) {
             throw new Error(`Attempting to register a provider of type ${type} that already exists`);
         }
@@ -59,9 +59,9 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
     public synthesize<
         O extends IFluidObject,
         R extends IFluidObject = {}>(
-            optionalTypes: ComponentSymbolProvider<O>,
-            requiredTypes: ComponentSymbolProvider<R>,
-    ): AsyncComponentProvider<ComponentKey<O>, ComponentKey<R>> {
+            optionalTypes: FluidObjectSymbolProvider<O>,
+            requiredTypes: FluidObjectSymbolProvider<R>,
+    ): AsyncFluidObjectProvider<FluidObjectKey<O>, FluidObjectKey<R>> {
         const optionalValues = Object.values(optionalTypes);
         const requiredValues = Object.values(requiredTypes);
 
@@ -87,7 +87,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
     /**
      * {@inheritDoc (IFluidDependencySynthesizer:interface).getProvider}
      */
-    public getProvider<T extends keyof IFluidObject>(type: T): ComponentProvider<T> | undefined {
+    public getProvider<T extends keyof IFluidObject>(type: T): FluidObjectProvider<T> | undefined {
         // If we have the provider return it
         const provider = this.providers.get(type);
         if (provider) {
@@ -102,7 +102,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
     }
 
     private generateRequired<T extends IFluidObject>(
-        types: ComponentSymbolProvider<T>,
+        types: FluidObjectSymbolProvider<T>,
     ) {
         const values: (keyof IFluidObject)[] = Object.values(types);
         return Object.assign({}, ...Array.from(values, (t) => {
@@ -116,7 +116,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
     }
 
     private generateOptional<T extends IFluidObject>(
-        types: ComponentSymbolProvider<T>,
+        types: FluidObjectSymbolProvider<T>,
     ) {
         const values: (keyof IFluidObject)[] = Object.values(types);
         return Object.assign({}, ...Array.from(values, (t) => {
@@ -129,7 +129,7 @@ export class DependencyContainer implements IFluidDependencySynthesizer {
         }));
     }
 
-    private resolveProvider<T extends keyof IFluidObject>(provider: ComponentProvider<T>, t: keyof IFluidObject) {
+    private resolveProvider<T extends keyof IFluidObject>(provider: FluidObjectProvider<T>, t: keyof IFluidObject) {
         // The double nested gets are required for lazy loading the provider resolution
         if (typeof provider === "function") {
             // eslint-disable-next-line @typescript-eslint/no-this-alias

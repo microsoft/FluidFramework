@@ -7,11 +7,12 @@
  * This script is used by the build server to compute the version number of the packages.
  * The release version number is based on what's in the lerna.json/package.json.
  * The CI will supply the build number and branch to determine the prerelease suffix if it is not a tagged build
- * 
+ *
  * Input:
  *      ./lerna.json or ./package.json - base version number to use
  *      env:VERSION_BUILDNUMBER        - monotonically increasing build number from the CI
- *      env:VERSION_BUILDBRANCH        - the build branch/tags that triggered the build 
+ *      env:VERSION_BUILDBRANCH        - the build branch/tags that triggered the build
+ *      env:VERSION_PATCH              - Put the build number in the patch
  * Output:
  *      The computed version output to the console.
  */
@@ -19,47 +20,40 @@
 const fs = require("fs");
 function getFileVersion() {
     if (fs.existsSync("./lerna.json")) {
-        return JSON.parse(fs.readFileSync("./lerna.json")).version;
+        return JSON.parse(fs.readFileSync("./lerna.json", { encoding: "utf8" })).version;
     }
     if (fs.existsSync("./package.json")) {
-        return JSON.parse(fs.readFileSync("./package.json")).version;
+        return JSON.parse(fs.readFileSync("./package.json", { encoding: "utf8" })).version;
     }
     console.error(`ERROR: lerna.json or package.json not found`);
     process.exit(5);
 }
 
-function parseFileVersion(file_version, build_num) {
+function parseFileVersion(file_version, build_id) {
     let split = file_version.split("-");
     let release_version = split[0];
     split.shift();
     let prerelease_version = split.join("-");
-    let isBackCompat = false;
-
     /**
-     * Back compat. Version <= 0.15 (or server 0.1003) we use the build number as the patch number.
+     * Use the build id for patch number if given
      */
-
-    // split the prerelease out
-    const r = release_version.split('.');
-    if (r.length !== 3) {
-        console.error(`ERROR: Invalid format for release version ${release_version}`);
-        process.exit(6);
-    }
-
-    const minor = parseInt(r[1]);
-    if (r[0] === "0" && (minor <= 15 || minor === 1003)) {
-        isBackCompat = true;
-        r[2] = parseInt(r[2]) + parseInt(build_num);
+    if (build_id) {
+        // split the prerelease out
+        const r = release_version.split('.');
+        if (r.length !== 3) {
+            console.error(`ERROR: Invalid format for release version ${release_version}`);
+            process.exit(6);
+        }
+        r[2] = (parseInt(r[2]) + build_id).toString();
         release_version = r.join('.');
     }
-
-    return { release_version, prerelease_version, isBackCompat };
+    return { release_version, prerelease_version };
 }
 
 /**
  * Compute the build suffix
  *
- * The suffix follows the CSemVer-CI format, see https://csemver.org/ 
+ * The suffix follows the CSemVer-CI format, see https://csemver.org/
  *
  * If the build is trigger by tags, no suffix is needed (those are released bits).
  * Otherwise it is a CI only build, and we add the following suffix depending on the branch
@@ -124,13 +118,12 @@ function generateFullVersion(release_version, prerelease_version, build_suffix) 
     return release_version;
 }
 
-function getFullVersion(file_version, arg_build_num, arg_build_branch) {
+function getFullVersion(file_version, arg_build_num, arg_build_branch, patch) {
     // Azure DevOp pass in the build number as $(buildNum).$(buildAttempt).
     // Get the Build number and ignore the attempt number.
-    const build_num = parseInt(arg_build_num.split('.')[0]);
-
-    const { release_version, prerelease_version, isBackCompat } = parseFileVersion(file_version, build_num);
-    const build_suffix = isBackCompat ? "" : getBuildSuffix(arg_build_branch, build_num, true);
+    const build_id = patch ? parseInt(arg_build_num.split('.')[0]) : undefined;
+    const { release_version, prerelease_version } = parseFileVersion(file_version, build_id);
+    const build_suffix = build_id ? "" : getBuildSuffix(arg_build_branch, arg_build_num, true);
     const fullVersion = generateFullVersion(release_version, prerelease_version, build_suffix);
     return fullVersion;
 }
@@ -152,13 +145,12 @@ function generateSimpleVersion(release_version, prerelease_version, build_suffix
     return release_version;
 }
 
-function getSimpleVersion(file_version, arg_build_num, arg_build_branch) {
+function getSimpleVersion(file_version, arg_build_num, arg_build_branch, patch) {
     // Azure DevOp pass in the build number as $(buildNum).$(buildAttempt).
     // Get the Build number and ignore the attempt number.
-    const build_num = parseInt(arg_build_num.split('.')[0]);
-
-    const { release_version, prerelease_version, isBackCompat } = parseFileVersion(file_version, build_num);
-    const build_suffix = isBackCompat ? "" : getBuildSuffix(arg_build_branch, build_num, false);
+    const build_id = patch ? parseInt(arg_build_num.split('.')[0]) : undefined;
+    const { release_version, prerelease_version } = parseFileVersion(file_version, build_id);
+    const build_suffix = build_id ? "" : getBuildSuffix(arg_build_branch, arg_build_num, false);
     const fullVersion = generateSimpleVersion(release_version, prerelease_version, build_suffix);
     return fullVersion;
 }
@@ -166,6 +158,7 @@ function getSimpleVersion(file_version, arg_build_num, arg_build_branch) {
 function main() {
     let isFull = false;
     let arg_build_num;
+    let arg_patch = false;
     let arg_build_branch;
     let file_version;
     for (let i = 2; i < process.argv.length; i++) {
@@ -173,24 +166,25 @@ function main() {
             isFull = true;
             continue;
         }
-
         if (process.argv[i] === "--build") {
             arg_build_num = process.argv[++i];
             continue;
         }
-
         if (process.argv[i] === "--branch") {
             arg_build_branch = process.argv[++i];
             continue;
         }
-
+        if (process.argv[i] === "--patch") {
+            arg_patch = true;
+            continue;
+        }
         if (process.argv[i] === "--base") {
             file_version = process.argv[++i];
             continue;
         }
 
         console.log(`ERROR: Invalid argument ${process.argv[i]}`);
-        process.exit(1)
+        process.exit(1);
     }
 
     if (!arg_build_num) {
@@ -201,11 +195,15 @@ function main() {
         }
     }
 
+    if (!arg_patch) {
+        arg_patch = !!process.env["VERSION_PATCH"];
+    }
+
     if (!arg_build_branch) {
         arg_build_branch = process.env["VERSION_BUILDBRANCH"];
         if (!arg_build_branch) {
-            console.error("ERROR: Missing VERSION_BUILD_BRANCH environment variable");
-            process.exit(4);
+            console.error("ERROR: Missing VERSION_BUILDBRANCH environment variable");
+            process.exit(5);
         }
     }
 
@@ -213,79 +211,15 @@ function main() {
         file_version = getFileVersion();
         if (!file_version) {
             console.error("ERROR: Missing version in lerna.json/package.json");
-            process.exit(2);
+            process.exit(6);
         }
     }
 
     if (isFull) {
-        console.log(getFullVersion(file_version, arg_build_num, arg_build_branch));
+        console.log(getFullVersion(file_version, arg_build_num, arg_build_branch, arg_patch));
     } else {
-        console.log(getSimpleVersion(file_version, arg_build_num, arg_build_branch));
+        console.log(getSimpleVersion(file_version, arg_build_num, arg_build_branch, arg_patch));
     }
 }
 
 main();
-
-/*
-const assert = require("assert").strict;
-function test() {
-    // Test version <= 0.15, no prerelease
-    assert.equal(getFullVersion("0.15.0", "12345", "refs/pull/blah"), "0.15.12345");
-    assert.equal(getFullVersion("0.15.0", "12345", "refs/heads/master"), "0.15.12345");
-    assert.equal(getFullVersion("0.15.0", "12345.0", "refs/heads/release/0.15"), "0.15.12345");
-    assert.equal(getFullVersion("0.15.0", "12345.0", "refs/heads/blah"), "0.15.12345");
-    assert.equal(getFullVersion("0.15.0", "12345.0", "refs/tags/v0.15.x"), "0.15.12345");
-
-    // Test version <= 0.15, with prerelease
-    assert.equal(getFullVersion("0.15.0-rc", "12345.0", "refs/pull/blah"), "0.15.12345-rc");
-    assert.equal(getFullVersion("0.15.0-alpha.1", "12345.0", "refs/heads/master"), "0.15.12345-alpha.1");
-    assert.equal(getFullVersion("0.15.0-beta.2.1", "12345.0", "refs/heads/release/0.15"), "0.15.12345-beta.2.1");
-    assert.equal(getFullVersion("0.15.0-beta.2.1", "12345.0", "refs/heads/blah"), "0.15.12345-beta.2.1");
-    assert.equal(getFullVersion("0.15.0-beta", "12345.0", "refs/tags/v0.15.x"), "0.15.12345-beta");
-
-    // Test version >= 0.16, no prerelease
-    assert.equal(getFullVersion("0.16.0", "12345.0", "refs/pull/blah"), "0.16.0--ci.12345.dev");
-    assert.equal(getFullVersion("0.16.0", "12345.0", "refs/heads/master"), "0.16.0--ci.12345.official");
-    assert.equal(getFullVersion("0.16.0", "12345.0", "refs/heads/release/0.16.0"), "0.16.0--ci.12345.official");
-    assert.equal(getFullVersion("0.16.0", "12345.0", "refs/heads/blah"), "0.16.0--ci.12345.manual");
-    assert.equal(getFullVersion("0.16.0", "12345.0", "refs/tags/v0.16.0"), "0.16.0");
-
-    // Test version >= 0.16, with prerelease
-    assert.equal(getFullVersion("0.16.0-rc", "12345.0", "refs/pull/blah"), "0.16.0-rc.0.0.ci.12345.dev");
-    assert.equal(getFullVersion("0.16.0-alpha.1", "12345.0", "refs/heads/master"), "0.16.0-alpha.1.0.ci.12345.official");
-    assert.equal(getFullVersion("0.16.0-beta.2.1", "12345.0", "refs/heads/release/0.16.1"), "0.16.0-beta.2.1.ci.12345.official");
-    assert.equal(getFullVersion("0.16.0-beta.2.1", "12345.0", "refs/heads/blah"), "0.16.0-beta.2.1.ci.12345.manual");
-    assert.equal(getFullVersion("0.16.0-beta", "12345.0", "refs/tags/v0.16.0"), "0.16.0-beta");
-
-    // Test version <= 0.15, no prerelease
-    assert.equal(getSimpleVersion("0.15.0", "12345.0", "refs/pull/blah"), "0.15.12345");
-    assert.equal(getSimpleVersion("0.15.0", "12345.0", "refs/heads/master"), "0.15.12345");
-    assert.equal(getSimpleVersion("0.15.0", "12345.0", "refs/heads/release/0.15"), "0.15.12345");
-    assert.equal(getSimpleVersion("0.15.0", "12345.0", "refs/heads/blah"), "0.15.12345");
-    assert.equal(getSimpleVersion("0.15.0", "12345.0", "refs/tags/v0.15.x"), "0.15.12345");
-
-    // Test version <= 0.15, with prerelease
-    assert.equal(getSimpleVersion("0.15.0-rc", "12345.0", "refs/pull/blah"), "0.15.12345-rc");
-    assert.equal(getSimpleVersion("0.15.0-alpha.1", "12345.0", "refs/heads/master"), "0.15.12345-alpha.1");
-    assert.equal(getSimpleVersion("0.15.0-beta.2.1", "12345.0", "refs/heads/release/0.15"), "0.15.12345-beta.2.1");
-    assert.equal(getSimpleVersion("0.15.0-beta.2.1", "12345.0", "refs/heads/blah"), "0.15.12345-beta.2.1");
-    assert.equal(getSimpleVersion("0.15.0-beta", "12345.0", "refs/tags/v0.15.x"), "0.15.12345-beta");
-
-    // Test version >= 0.16, no prerelease
-    assert.equal(getSimpleVersion("0.16.0", "12345.0", "refs/pull/blah"), "0.16.0-12345");
-    assert.equal(getSimpleVersion("0.16.0", "12345.0", "refs/heads/master"), "0.16.0-12345");
-    assert.equal(getSimpleVersion("0.16.0", "12345.0", "refs/heads/release/0.16.0"), "0.16.0-12345");
-    assert.equal(getSimpleVersion("0.16.0", "12345.0", "refs/heads/blah"), "0.16.0-12345");
-    assert.equal(getSimpleVersion("0.16.0", "12345.0", "refs/tags/v0.16.0"), "0.16.0");
-
-    // Test version >= 0.16, with prerelease
-    assert.equal(getSimpleVersion("0.16.0-rc", "12345.0", "refs/pull/blah"), "0.16.0-rc.12345");
-    assert.equal(getSimpleVersion("0.16.0-alpha.1", "12345.0", "refs/heads/master"), "0.16.0-alpha.1.12345");
-    assert.equal(getSimpleVersion("0.16.0-beta.2.1", "12345.0", "refs/heads/release/0.16.1"), "0.16.0-beta.2.1.12345");
-    assert.equal(getSimpleVersion("0.16.0-beta.2.1", "12345.0", "refs/heads/blah"), "0.16.0-beta.2.1.12345");
-    assert.equal(getSimpleVersion("0.16.0-beta", "12345.0", "refs/tags/v0.16.0"), "0.16.0-beta");
-    console.log("Test passed!");
-}
-
-test();
-*/

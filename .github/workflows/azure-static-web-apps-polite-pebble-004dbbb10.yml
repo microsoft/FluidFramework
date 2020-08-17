@@ -15,23 +15,48 @@ on:
 
 jobs:
   build_and_deploy_job:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' # || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch' # || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: false
-      - name: Download and extract api-extractor JSON
-        id: docs-json
+      - name: Download by SHA
+        id: download-sha
+        uses: carlosperate/download-file-action@v1.0.3
+        with:
+          file-url: https://fluidframework.z19.web.core.windows.net/${{ github.sha }}.tar.gz
+          file-name: api-extractor.tar.gz
+      - name: Download latest
+        id: download-latest
+        if: ${{ failure() }}
+        uses: carlosperate/download-file-action@v1.0.3
+        with:
+          file-url: https://fluidframework.z19.web.core.windows.net/latest.tar.gz
+          file-name: api-extractor.tar.gz
+      - name: Extract api-extractor JSON
+        id: extract-json
         run: |
-          wget https://fluidframework.z19.web.core.windows.net/${{ github.sha }}.tar.gz
-          mkdir -p ./_api-extractor-temp/doc-models/
-          tar -C ./_api-extractor-temp/doc-models/ -zxvf ${{ github.sha }}.tar.gz
-      - name: npm run build:mdapidocs
+          pwd
+          mkdir -pv $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/
+          tar -C $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/ -zxvf api-extractor.tar.gz
+          pwd
+          ls -al
+      - name: Generate TSDoc Markdown
         id: mdapidocs
         run: |
-          npm run build:mdapidocs
+          # npm run build:mdapidocs
+          pwd
+          cd $GITHUB_WORKSPACE
+          pwd
+          ls
+          ls docs
+          ls docs/scripts/
+          ls docs/scripts/api-documenter/
+          cd docs/scripts/api-documenter/
+          npm install && npm run build
+          npm run api:tomarkdown
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v0.0.1-preview

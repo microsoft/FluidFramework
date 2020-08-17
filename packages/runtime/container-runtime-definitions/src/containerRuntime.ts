@@ -79,12 +79,12 @@ export interface IContainerRuntime extends
     on(event: "connected", listener: (clientId: string) => void): this;
     on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
     on(
-        event: "componentInstantiated",
-        listener: (componentPkgName: string, registryPath: string, createNew: boolean) => void,
+        event: "fluidDataStoreInstantiated",
+        listener: (dataStorePkgName: string, registryPath: string, createNew: boolean) => void,
     ): this;
     /**
-     * Returns the runtime of the component.
-     * @param id - Id supplied during creating the component.
+     * Returns the runtime of the data store.
+     * @param id - Id supplied during creating the data store.
      * @param wait - True if you want to wait for it.
      */
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;

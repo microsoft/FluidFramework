@@ -8,13 +8,13 @@ import {
 } from "@fluidframework/aqueduct";
 import {
     IFluidReducerProps,
-    IFluidFunctionalComponentViewState,
+    IViewState,
     useReducerFluid,
     FluidStateUpdateFunction,
     IFluidDataProps,
-    IFluidFunctionalComponentFluidState,
+    IFluidState,
     IFluidReducer,
-    SyncedComponent,
+    SyncedDataObject,
 } from "@fluidframework/react";
 import { SharedCounter } from "@fluidframework/counter";
 import * as React from "react";
@@ -22,12 +22,12 @@ import * as ReactDOM from "react-dom";
 
 // ---- React Functional Component w/ useReducer ----
 
-interface ICounterReducerViewState extends IFluidFunctionalComponentViewState {
+interface ICounterReducerViewState extends IViewState {
     value: number;
 }
 
 interface ICounterReducerFluidState
-    extends IFluidFunctionalComponentFluidState {
+    extends IFluidState {
     counter: SharedCounter;
 }
 
@@ -95,7 +95,7 @@ function CounterReactFunctionalReducer(
 /**
  * ClickerReducer example using the useReducerFluid hook
  */
-export class ClickerReducer extends SyncedComponent {
+export class ClickerReducer extends SyncedDataObject {
     constructor(props) {
         super(props);
 
@@ -141,7 +141,7 @@ export class ClickerReducer extends SyncedComponent {
             <div>
                 <CounterReactFunctionalReducer
                     syncedStateId={"counter-reducer"}
-                    syncedComponent={this}
+                    syncedDataObject={this}
                     reducer={ActionReducer}
                     selector={{}}
                 />

@@ -5,9 +5,9 @@
 
 import { SharedObjectSequence } from "@fluidframework/sequence";
 import {
-    IFluidFunctionalComponentViewState,
-    IFluidFunctionalComponentFluidState,
-    SyncedComponent,
+    IViewState,
+    IFluidState,
+    SyncedDataObject,
     ICombinedState,
     IFluidDataProps,
     useReducerFluid,
@@ -15,17 +15,17 @@ import {
 import { IFluidSyncedArrayReducer } from "./interface";
 
 export function setFluidSyncedArrayConfig<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
-    syncedComponent: SyncedComponent,
+    syncedDataObject: SyncedDataObject,
     syncedStateId: string,
     viewKey: keyof SV,
     fluidKey: keyof SF,
     defaultViewState: SV,
     sharedObjectCreate = SharedObjectSequence.create,
 ) {
-    syncedComponent.setFluidConfig<SV, SF>(syncedStateId, {
+    syncedDataObject.setFluidConfig<SV, SF>(syncedStateId, {
         syncedStateId,
         fluidToView: new Map([
             [
@@ -70,8 +70,8 @@ export function setFluidSyncedArrayConfig<
 }
 
 export function generateSyncedArrayReducer<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(viewKey: keyof SV, fluidKey: keyof SF): IFluidSyncedArrayReducer<SV, SF> {
     const syncedArrayReducer = {
         add: {
@@ -96,10 +96,10 @@ export function generateSyncedArrayReducer<
 }
 
 export function useSyncedArrayReducerFluid<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
-    syncedComponent: SyncedComponent,
+    syncedDataObject: SyncedDataObject,
     syncedStateId: string,
     viewKey: keyof SV,
     fluidKey: keyof SF,
@@ -114,7 +114,7 @@ export function useSyncedArrayReducerFluid<
         IFluidDataProps
     >(
         {
-            syncedComponent,
+            syncedDataObject,
             syncedStateId,
             reducer: syncedArrayReducer,
             selector: {},

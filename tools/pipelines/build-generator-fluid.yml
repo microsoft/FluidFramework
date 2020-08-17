@@ -38,3 +38,5 @@ extends:
     taskLint: false
     taskTest: test
     namespace: false
+    extraAuth: app/templates
+    buildNumberInPatch: true

@@ -1,6 +1,8 @@
 # Breaking changes
 
 ## 0.25 Breaking Changes
+- [MockFluidDataStoreRuntime api rename](#MockFluidDataStoreRuntime-api-rename)
+- [Local Web Host API change](#Local-Web-Host-API-change)
 - [Container runtime event changes](#Container-runtime-event-changes)
 - [Component is removed from telemetry event names](#Component-is-removed-from-telemetry-event-names)
 - [IComponentContextLegacy is removed](#IComponentContextLegacy-is-removed)
@@ -12,6 +14,13 @@
 - [IComponent and IComponent Interfaces Removed](#IComponent-and-IComponent-Interfaces-Removed)
 - [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
 - [LastEditedTrackerComponent renamed to LastEditedTrackerDataObject](#lasteditedtrackercomponent-renamed)
+- [ComponentProvider renamed to FluidObjectProvider in @fluidframework/synthesize](#componentProvider-renamed-to-fluidobjectPpovider)
+
+### MockFluidDataStoreRuntime api rename
+Runtime Test Utils's MockFluidDataStoreRuntime now has "requestDataStore" instead of "requestComponent"
+
+### Local Web Host API change
+The renderDefaultComponent function has been updated to be renderDefaultFluidObject
 
 ### Container runtime event changes
 Container runtime now emits the event "fluidDataStoreInstantiated" instead of "componentInstantiated"
@@ -60,6 +69,17 @@ To support additional authentication scenarios, the signature and/or name of a f
 
 ### LastEditedTrackerComponent renamed
 It is renamed to LastEditedTrackerDataObject
+
+### ComponentProvider renamed to FluidObjectProvider 
+
+In the package @fluidframework/synthesize, these types are renamed:
+
+ComponentKey -> FluidObjectKey
+ComponentSymbolProvider -> FluidObjectProvider
+AsyncRequiredcomponentProvider -> AsyncRequiredFluidObjectProvider
+AsyncOptionalComponentProvider -> AsyncOptionalFluidObjectProvider
+AsyncComponentProvider -> AsyncFluidObjectProvider
+NonNullableComponent -> NonNullableFluidObject
 
 ## 0.24 Breaking Changes
 This release only contains renames. There are no functional changes in this release. You should ensure you have integrated and validated up to release 0.23 before integrating this release.
@@ -183,7 +203,7 @@ All renames are 1-1, and global case senstive and whole word find replace for al
 
             "SharedObjectComponentHandle": "SharedObjectHandle",
             "RemoteComponentHandle": "RemoteFluidObjectHandle",
-            "ComponentHandle": "FluidOjectHandle",
+            "ComponentHandle": "FluidObjectHandle",
             "ComponentSerializer": "FluidSerializer",
 
             "ComponentHandleContext": "FluidHandleContext",

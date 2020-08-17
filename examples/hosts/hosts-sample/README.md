@@ -231,10 +231,10 @@ and provide it a div for it to render.
 
 ```typescript
 switch (response.mimeType) {
-    case "fluid/component":
+    case "fluid/object":
         // Check if the component is a view
-        const component = response.value as IComponent;
-        const view = component.IComponentHTMLView;
+        const fluidObject = response.value as IFluidObject;
+        const view = fluidObject.IFluidHTMLView;
         if (!view) {
             return;
         }
@@ -244,14 +244,14 @@ switch (response.mimeType) {
 }
 ```
 
-#### IComponent interface
+#### IFluidObject interface
 
-The Fluid component model supports a delegation and feature detection mechanism. As is typical in JavaScript,
-a feature detection pattern can be used to determine what capabilities are exposed by a component. The `IComponent`
+The Fluid object model supports a delegation and feature detection mechanism. As is typical in JavaScript,
+a feature detection pattern can be used to determine what capabilities are exposed by an object. The `IFluidObject`
 interface serves as a Fluid-specific form of “any” that clients can cast objects to in order to probe for implemented
-component interfaces. For example, if you need to determine the capabilities that a component exposes, you first
-cast the object as an `IComponent`, and then access the property on the `IComponent` that matches the interface you
-are testing for.  The above checks if the component implements `IComponentHTMLView`, and uses it to get the instance
+object interfaces. For example, if you need to determine the capabilities that an object exposes, you first
+cast the object as an `IFluidObject`, and then access the property on the `IFluidObject` that matches the interface you
+are testing for.  The above checks if the component implements `IFluidHTMLView`, and uses it to get the instance
 that implements the rendering capability.
 
 ### Quoruming on a code package
@@ -306,7 +306,7 @@ And that's all that's needed to create or load Fluid documents. It's intended to
 setup as a host. And once done you gain full access to the power of the Fluid platform.
 
 Once you have a host setup the next best step to try is using our Fluid generator to create a new component.
-Insructions for that are at https://github.com/Microsoft/FluidFramework/blob/master/tools/generator-fluid/README.md.
+Instructions for that are at https://github.com/Microsoft/FluidFramework/blob/master/tools/generator-fluid/README.md.
 You can then publish this package to Verdaccio and load it inside of your new loader!
 
 When creating your new component also note that the API provides it access to the underlying loader. You can use this
