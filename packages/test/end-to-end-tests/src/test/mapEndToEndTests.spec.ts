@@ -14,9 +14,9 @@ import {
     ChannelFactoryRegistry,
     createLocalLoader,
     initializeLocalContainer,
-    ITestFluidComponent,
+    ITestFluidObject,
     OpProcessingController,
-    TestFluidComponentFactory,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { compatTest, ICompatTestArgs } from "./compatUtils";
 
@@ -28,17 +28,17 @@ const codeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
+async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidObject> {
     const response = await container.request({ url: componentId });
     if (response.status !== 200 || response.mimeType !== "fluid/object") {
         throw new Error(`Component with id: ${componentId} not found`);
     }
-    return response.value as ITestFluidComponent;
+    return response.value as ITestFluidObject;
 }
 
 const tests = (args: ICompatTestArgs) => {
     let opProcessingController: OpProcessingController;
-    let component1: ITestFluidComponent;
+    let component1: ITestFluidObject;
     let sharedMap1: ISharedMap;
     let sharedMap2: ISharedMap;
     let sharedMap3: ISharedMap;
@@ -319,7 +319,7 @@ const tests = (args: ICompatTestArgs) => {
 describe("Map", () => {
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     const makeTestContainer = async () => {
-        const factory = new TestFluidComponentFactory(registry);
+        const factory = new TestFluidObjectFactory(registry);
         const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     };
