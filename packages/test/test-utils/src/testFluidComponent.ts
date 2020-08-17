@@ -90,7 +90,6 @@ export class TestFluidComponent implements ITestFluidComponent {
     }
 
     private async initialize() {
-        // Don't initialize if existing on storage or loaded detached from snapshot(ex. draft mode).
         if (!this.runtime.existing) {
             this.root = SharedMap.create(this.runtime, "root");
 
