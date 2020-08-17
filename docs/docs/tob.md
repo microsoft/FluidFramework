@@ -2,7 +2,7 @@
 uid: total-order-broadcast
 ---
 
-# Total Order Broadcast & Eventual Consistency
+# Total Order Broadcast and Eventual Consistency
 
 ## Fluid Data: Operations all the way down
 

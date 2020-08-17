@@ -23,7 +23,7 @@ export function serializeBlob(
     return {
         mode: FileMode.File,
         path,
-        type: TreeEntry[TreeEntry.Blob],
+        type: TreeEntry.Blob,
         value: {
             contents: serializer !== undefined
                 ? serializer.stringify(snapshot, runtime.IFluidHandleContext, handle)

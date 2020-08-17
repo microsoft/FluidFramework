@@ -25,7 +25,7 @@ export function getQuorumTreeEntries(
         {
             mode: FileMode.File,
             path: "quorumMembers",
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: JSON.stringify(quorumSnapshot.members),
                 encoding: "utf-8",
@@ -34,7 +34,7 @@ export function getQuorumTreeEntries(
         {
             mode: FileMode.File,
             path: "quorumProposals",
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: JSON.stringify(quorumSnapshot.proposals),
                 encoding: "utf-8",
@@ -43,7 +43,7 @@ export function getQuorumTreeEntries(
         {
             mode: FileMode.File,
             path: "quorumValues",
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: JSON.stringify(quorumSnapshot.values),
                 encoding: "utf-8",
@@ -52,7 +52,7 @@ export function getQuorumTreeEntries(
         {
             mode: FileMode.File,
             path: "attributes",
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: JSON.stringify(documentAttributes),
                 encoding: "utf-8",
@@ -86,7 +86,7 @@ export function generateServiceProtocolEntries(deli: string, scribe: string): IT
         {
             mode: FileMode.File,
             path: "deli",
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: deli,
                 encoding: "utf-8",
@@ -98,7 +98,7 @@ export function generateServiceProtocolEntries(deli: string, scribe: string): IT
         {
             mode: FileMode.File,
             path: "scribe",
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: scribe,
                 encoding: "utf-8",
