@@ -2,7 +2,7 @@
   "name": "@fluid-internal/version-test-2",
   "version": "0.25.1",
   "private": true,
-  "description": "Component to test version conversion.",
+  "description": "Fluid object to test version conversion.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
