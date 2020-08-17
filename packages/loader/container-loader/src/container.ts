@@ -385,7 +385,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._canReconnect = config.canReconnect;
         }
 
-        // Create logger for components to use
+        // Create logger for data stores to use
         const type = this.client.details.type;
         const interactive = this.client.details.capabilities.interactive;
         const clientType =
@@ -449,7 +449,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // Log current sequence number - useful if we have access to a file to understand better
             // what op caused trouble (if it's related to op processing).
             // Runtime may provide sequence number as part of error object - this may not match DeltaManager
-            // knowledge as old ops are processed when components / DDS are re-hydrated when delay-loaded
+            // knowledge as old ops are processed when data stores / DDS are re-hydrated when delay-loaded
             this.logger.sendErrorEvent(
                 {
                     eventName: "ContainerClose",
@@ -735,7 +735,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
              * flag is false which causes ContainerRuntime to create the internal compoents again.
              * 2. When the first client connects in "write" mode - This happens when a clent does not create the
              * Container in detached mode. In this case, when the code proposal is accepted, we come here and we
-             * need to create the internal components in ContainerRuntime.
+             * need to create the internal data stores in ContainerRuntime.
              * Once we move to using detached container everywhere, this can move outside this block.
              */
             this._existing = true;
@@ -760,11 +760,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
         // Snapshots base document state and currently running context
         const root = this.snapshotBase();
-        const componentEntries = await this.context!.snapshot(tagMessage, fullTree);
+        const dataStoreEntries = await this.context!.snapshot(tagMessage, fullTree);
 
         // And then combine
-        if (componentEntries !== null) {
-            root.entries.push(...componentEntries.entries);
+        if (dataStoreEntries !== null) {
+            root.entries.push(...dataStoreEntries.entries);
         }
 
         // Generate base snapshot message
@@ -1189,11 +1189,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Loads the runtime factory for the provided package
      */
     private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        const component = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
+        const fluidModule = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
             async () => this.codeLoader.load(pkg),
         );
 
-        const factory = component.fluidExport.IRuntimeFactory;
+        const factory = fluidModule.fluidExport.IRuntimeFactory;
         if (factory === undefined) {
             throw new Error(PackageNotFactoryError);
         }

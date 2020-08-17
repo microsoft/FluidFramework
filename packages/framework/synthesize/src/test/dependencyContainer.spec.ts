@@ -10,7 +10,7 @@ import {
     IFluidLoadable,
     IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
-import { FluidOjectHandle } from "@fluidframework/datastore";
+import { FluidObjectHandle } from "@fluidframework/datastore";
 
 import { DependencyContainer } from "..";
 
@@ -30,10 +30,10 @@ const mockHandleContext: IFluidHandleContext = {
 class MockLoadable implements IFluidLoadable {
     public get IFluidLoadable() { return this; }
     public get url() { return "url123"; }
-    public get handle() { return new FluidOjectHandle(this, "", mockHandleContext); }
+    public get handle() { return new FluidObjectHandle(this, "", mockHandleContext); }
 }
 
-class MockComponentConfiguration implements IFluidConfiguration {
+class MockFluidConfiguration implements IFluidConfiguration {
     public get IFluidConfiguration() { return this; }
     public get canReconnect() { return false; }
     public get scopes() { return ["scope"]; }
@@ -146,7 +146,7 @@ describe("Routerlicious", () => {
                 const dc = new DependencyContainer();
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
-                const configMock = new MockComponentConfiguration();
+                const configMock = new MockFluidConfiguration();
                 dc.register(IFluidConfiguration, configMock);
 
                 const s = dc.synthesize<IFluidLoadable & IFluidConfiguration>(
@@ -190,7 +190,7 @@ describe("Routerlicious", () => {
                 const dc = new DependencyContainer();
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
-                const configMock = new MockComponentConfiguration();
+                const configMock = new MockFluidConfiguration();
                 dc.register(IFluidConfiguration, configMock);
 
                 const s = dc.synthesize<{}, IFluidLoadable & IFluidConfiguration>(
@@ -231,7 +231,7 @@ describe("Routerlicious", () => {
                 const loadableMock = new MockLoadable();
                 parentDc.register(IFluidLoadable, loadableMock);
                 const dc = new DependencyContainer(parentDc);
-                const configMock = new MockComponentConfiguration();
+                const configMock = new MockFluidConfiguration();
                 dc.register(IFluidConfiguration, configMock);
 
                 const s = dc.synthesize<IFluidLoadable & IFluidConfiguration>(
@@ -276,7 +276,7 @@ describe("Routerlicious", () => {
                 const loadableMock = new MockLoadable();
                 parentDc.register(IFluidLoadable, loadableMock);
                 const dc = new DependencyContainer(parentDc);
-                const configMock = new MockComponentConfiguration();
+                const configMock = new MockFluidConfiguration();
                 dc.register(IFluidConfiguration, configMock);
 
                 const s = dc.synthesize<{}, IFluidLoadable & IFluidConfiguration>(
@@ -335,7 +335,7 @@ describe("Routerlicious", () => {
             it(`has() resolves correctly in all variations`, async () => {
                 const dc = new DependencyContainer();
                 dc.register(IFluidLoadable, new MockLoadable());
-                dc.register(IFluidConfiguration, new MockComponentConfiguration());
+                dc.register(IFluidConfiguration, new MockFluidConfiguration());
                 assert(dc.has(IFluidLoadable), "Manager has IFluidLoadable");
                 assert(dc.has(IFluidConfiguration), "Manager has IFluidConfiguration");
                 assert(
@@ -347,7 +347,7 @@ describe("Routerlicious", () => {
             it(`registeredModules() resolves correctly`, async () => {
                 const dc = new DependencyContainer();
                 dc.register(IFluidLoadable, new MockLoadable());
-                dc.register(IFluidConfiguration, new MockComponentConfiguration());
+                dc.register(IFluidConfiguration, new MockFluidConfiguration());
                 const modules = Array.from(dc.registeredTypes);
                 assert(modules.length === 2, "Manager has two modules");
                 assert(modules.includes(IFluidLoadable), "Manager has IFluidLoadable");

@@ -1,6 +1,6 @@
 {
   "name": "tinylicious",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Tiny, test implementation of the routerlicious reference service",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

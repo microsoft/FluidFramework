@@ -8,11 +8,11 @@ import {
     IFluidHandleContext,
     IFluidSerializer,
 } from "@fluidframework/core-interfaces";
-import { RemoteFluidObjectHandle } from "./remoteComponentHandle";
+import { RemoteFluidObjectHandle } from "./remoteFluidObjectHandle";
 import { isSerializedHandle } from "./utils";
 
 /**
- * Component serializer implementation
+ * Data Store serializer implementation
  */
 export class FluidSerializer implements IFluidSerializer {
     public get IFluidSerializer() { return this; }

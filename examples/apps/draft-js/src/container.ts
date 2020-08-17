@@ -7,7 +7,7 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/aqueduct";
 
-import { DraftJsObject } from "./fluid-object";
+import { FluidDraftJsObject } from "./fluid-object";
 
 /**
  * This does setup for the Fluid Container.
@@ -19,7 +19,7 @@ import { DraftJsObject } from "./fluid-object";
  * In this example, we are only registering a single FluidObject, but more complex examples will register multiple
  * FluidObjects.
  */
-export const DraftJsContainer = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DraftJsObject.Name,
-    new Map([DraftJsObject.factory.registryEntry]),
+export const FluidDraftJsContainer = new ContainerRuntimeFactoryWithDefaultDataStore(
+    FluidDraftJsObject.Name,
+    new Map([FluidDraftJsObject.factory.registryEntry]),
 );

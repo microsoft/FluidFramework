@@ -239,7 +239,7 @@ export class Loader extends EventEmitter implements ILoader {
         const resolvedAsFluid = await this.resolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
 
-        // Parse URL into components
+        // Parse URL into data stores
         const parsed = parseUrl(resolvedAsFluid.url);
         if (parsed === undefined) {
             return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);

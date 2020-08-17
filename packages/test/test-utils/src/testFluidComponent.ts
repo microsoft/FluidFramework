@@ -4,7 +4,7 @@
  */
 
 import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
-import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { FluidObjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import {
     IFluidDataStoreContext,
@@ -59,7 +59,7 @@ export class TestFluidComponent implements ITestFluidComponent {
         private readonly factoryEntriesMap: Map<string, IChannelFactory>,
     ) {
         this.url = context.id;
-        this.innerHandle = new FluidOjectHandle(this, "", runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", runtime.IFluidHandleContext);
     }
 
     /**

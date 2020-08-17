@@ -16,7 +16,7 @@ import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import {
     deprecated_innerRequestHandler,
-    createComponentResponse,
+    createFluidObjectResponse,
 } from "../requestHandlers";
 
 class MockRuntime {
@@ -27,7 +27,7 @@ class MockRuntime {
             return {
                 request: async (r) => {
                     if (r.url === "" || r.url === "route") {
-                        return createComponentResponse({ route: r.url } as IFluidObject);
+                        return createFluidObjectResponse({ route: r.url } as IFluidObject);
                     }
                     return { status: 404, mimeType: "text/plain", value: "not found" };
                 },
