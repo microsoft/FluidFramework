@@ -31,7 +31,7 @@ export async function initializeChaincode(document: Container, pkg?: IFluidCodeD
 }
 
 /**
- * fetchCore is used to make a request against the loader to load a fluid component.
+ * fetchCore is used to make a request against the loader to load a Fluid object.
  */
 async function fetchCore(loader: Loader, url: string) {
     const response = await loader.request({ url });
@@ -40,14 +40,14 @@ async function fetchCore(loader: Loader, url: string) {
         return;
     }
 
-    const component = response.value as IFluidObject;
+    const fluidObject = response.value as IFluidObject;
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    launchCLI(component);
+    launchCLI(fluidObject);
 }
 
 /**
- * fetchComponent is used to allow a host to interact with a Fluid component. Given that we may be establishing a
+ * fetchComponent is used to allow a host to interact with a Fluid object. Given that we may be establishing a
  * new set of code on the document it listens for the "contextChanged" event which fires when a new code value is
  * quorumed on.
  */
