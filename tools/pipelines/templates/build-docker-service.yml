@@ -25,6 +25,14 @@ parameters:
   type: string
   default: /home/node/server
 
+- name: buildNumberInPatch
+  type: string
+  default: true
+
+- name: setVersion
+  type: boolean
+  default: true
+
 trigger: none
 
 variables:
@@ -76,6 +84,17 @@ jobs:
         inputs:
           workingFile: ${{ parameters.buildDirectory }}/.npmrc
           customEndpoint: Offnet Packages
+
+    # Set version
+    - ${{ if eq(parameters.setVersion, true) }}:
+      - task: UseNode@1
+        displayName: Use Node 12.x
+        inputs:
+          version: 12.x
+      - template: include-set-package-version.yml
+        parameters:
+          buildDirectory: ${{ parameters.buildDirectory }}
+          buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 
     # Build
     - task: Docker@2
