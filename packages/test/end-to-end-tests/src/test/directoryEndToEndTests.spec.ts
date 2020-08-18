@@ -659,5 +659,5 @@ describe("Directory", () => {
 
     describe("compatibility", () => {
         compatTest(tests, { testFluidComponent: true });
-    })
+    });
 });
