@@ -9,20 +9,21 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
     IFluidCodeDetails,
     IFluidModule,
-    ILoader,
+    IProxyLoaderFactory,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { Container, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { SharedMap } from "@fluidframework/map";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     ChannelFactoryRegistry,
-    createLocalLoader,
     initializeLocalContainer,
+    LocalCodeLoader,
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
@@ -45,6 +46,7 @@ export interface ICompatTestArgs {
      */
     makeTestContainer: (testFluidComponentFactoryRegistry?) => Promise<Container | old.Container>,
     deltaConnectionServer?: ILocalDeltaConnectionServer,
+    documentServiceFactory?: LocalDocumentServiceFactory | old.LocalDocumentServiceFactory,
 }
 
 export interface ICompatTestOptions {
@@ -64,6 +66,7 @@ function convertRegistry(registry: ChannelFactoryRegistry = []): OldChannelFacto
         switch (factory.type) {
             case SharedMap.getFactory().type: oldRegistry.push([key, old.SharedMap.getFactory()]); break;
             case SharedString.getFactory().type: oldRegistry.push([key, old.SharedString.getFactory()]); break;
+            case SharedDirectory.getFactory().type: oldRegistry.push([key, old.SharedDirectory.getFactory()]); break;
             default: throw Error("Invalid or unimplemented channel factory");
         }
     }
@@ -139,19 +142,35 @@ export const createOldRuntimeFactory = (
 
 export async function createContainer(
     fluidModule: IFluidModule | old.IFluidModule,
-    deltaConnectionServer: ILocalDeltaConnectionServer,
+    documentServiceFactory: LocalDocumentServiceFactory,
 ): Promise<Container> {
-    const loader: ILoader = createLocalLoader([[codeDetails, fluidModule as IFluidModule]], deltaConnectionServer);
+    const urlResolver = new LocalResolver();
+    const codeLoader = new LocalCodeLoader([[codeDetails, fluidModule as IFluidModule]]);
+
+    const loader = new Loader(
+        urlResolver,
+        documentServiceFactory,
+        codeLoader,
+        {},
+        {},
+        new Map<string, IProxyLoaderFactory>());
     return initializeLocalContainer(id, loader, codeDetails);
 }
 
 export async function createContainerWithOldLoader(
     fluidModule: IFluidModule | old.IFluidModule,
-    deltaConnectionServer: ILocalDeltaConnectionServer,
+    documentServiceFactory: old.LocalDocumentServiceFactory,
 ): Promise<old.Container> {
-    const loader = old.createLocalLoader(
-        [[codeDetails, fluidModule as old.IFluidModule]],
-        deltaConnectionServer as any);
+    const urlResolver = new old.LocalResolver();
+    const codeLoader = new old.LocalCodeLoader([[codeDetails, fluidModule as old.IFluidModule]]);
+
+    const loader = new old.Loader(
+        urlResolver,
+        documentServiceFactory,
+        codeLoader,
+        {},
+        {},
+        new Map<string, old.IProxyLoaderFactory>());
     return old.initializeLocalContainer(id, loader, codeDetails);
 }
 
@@ -161,6 +180,7 @@ export const compatTest = (
 ) => {
     describe("old loader, new runtime", function() {
         let deltaConnectionServer: ILocalDeltaConnectionServer;
+        let documentServiceFactory: old.LocalDocumentServiceFactory;
         const makeTestContainer = async (registry?: ChannelFactoryRegistry) => createContainerWithOldLoader(
             {
                 fluidExport: createRuntimeFactory(
@@ -170,7 +190,7 @@ export const compatTest = (
                         : createPrimedComponentFactory(),
                 ),
             },
-            deltaConnectionServer,
+            documentServiceFactory,
         );
 
         beforeEach(async function() {
@@ -179,13 +199,15 @@ export const compatTest = (
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 { summary: { maxOps: 1 } as ISummaryConfiguration },
             );
+            documentServiceFactory = new old.LocalDocumentServiceFactory(deltaConnectionServer);
         });
 
         tests({
             makeTestContainer,
-            // This is a getter because tests() is called before the beforeEach()
-            // callback, at which point deltaConnectionServer is undefined.
+            // These are getters because tests() is called before the beforeEach()
+            // callback, at which point these are undefined.
             get deltaConnectionServer() { return deltaConnectionServer; },
+            get documentServiceFactory() { return documentServiceFactory; },
         });
 
         afterEach(async function() {
@@ -195,6 +217,7 @@ export const compatTest = (
 
     describe("new loader, old runtime", function() {
         let deltaConnectionServer: ILocalDeltaConnectionServer;
+        let documentServiceFactory: LocalDocumentServiceFactory;
         const makeTestContainer = async (registry: ChannelFactoryRegistry) => createContainer(
             {
                 fluidExport: createOldRuntimeFactory(
@@ -204,7 +227,7 @@ export const compatTest = (
                         : createOldPrimedComponentFactory(),
                 ),
             },
-            deltaConnectionServer,
+            documentServiceFactory,
         );
 
         beforeEach(async function() {
@@ -213,11 +236,13 @@ export const compatTest = (
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 { summary: { maxOps: 1 } as ISummaryConfiguration },
             );
+            documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
         });
 
         tests({
             makeTestContainer,
             get deltaConnectionServer() { return deltaConnectionServer; },
+            get documentServiceFactory() { return documentServiceFactory; },
         });
 
         afterEach(async function() {
@@ -227,6 +252,7 @@ export const compatTest = (
 
     describe("new ContainerRuntime, old DataStoreRuntime", function() {
         let deltaConnectionServer: ILocalDeltaConnectionServer;
+        let documentServiceFactory: LocalDocumentServiceFactory;
         const makeTestContainer = async (registry: ChannelFactoryRegistry) => createContainer(
             {
                 fluidExport: createRuntimeFactory(
@@ -236,7 +262,7 @@ export const compatTest = (
                         : createOldPrimedComponentFactory(),
                 ),
             },
-            deltaConnectionServer,
+            documentServiceFactory,
         );
 
         beforeEach(async function() {
@@ -245,11 +271,13 @@ export const compatTest = (
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 { summary: { maxOps: 1 } as ISummaryConfiguration },
             );
+            documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
         });
 
         tests({
             makeTestContainer,
             get deltaConnectionServer() { return deltaConnectionServer; },
+            get documentServiceFactory() { return documentServiceFactory; },
         });
 
         afterEach(async function() {

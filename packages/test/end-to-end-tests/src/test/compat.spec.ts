@@ -6,6 +6,7 @@
 import assert from "assert";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
+import { LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { OpProcessingController } from "@fluidframework/test-utils";
 import {
@@ -74,19 +75,19 @@ describe("loader/runtime compatibility", () => {
             const containersP: Promise<Container | old.Container>[] = [
                 createContainer( // new everything
                     { fluidExport: createRuntimeFactory(TestComponent.type, createPrimedComponentFactory()) },
-                    args.deltaConnectionServer),
+                    args.documentServiceFactory as LocalDocumentServiceFactory),
                 createContainerWithOldLoader( // old loader, new container/component runtimes
                     { fluidExport: createRuntimeFactory(TestComponent.type, createPrimedComponentFactory()) },
-                    args.deltaConnectionServer),
+                    args.documentServiceFactory as old.LocalDocumentServiceFactory),
                 createContainerWithOldLoader( // old everything
                     { fluidExport: createOldRuntimeFactory(TestComponent.type, createOldPrimedComponentFactory()) },
-                    args.deltaConnectionServer),
+                    args.documentServiceFactory as old.LocalDocumentServiceFactory),
                 createContainer( // new loader, old container/component runtimes
                     { fluidExport: createOldRuntimeFactory(TestComponent.type, createOldPrimedComponentFactory()) },
-                    args.deltaConnectionServer),
+                    args.documentServiceFactory as LocalDocumentServiceFactory),
                 createContainer( // new loader/container runtime, old component runtime
                     { fluidExport: createRuntimeFactory(TestComponent.type, createOldPrimedComponentFactory()) },
-                    args.deltaConnectionServer),
+                    args.documentServiceFactory as LocalDocumentServiceFactory),
             ];
 
             const components = await Promise.all(containersP.map(async (containerP) => containerP.then(

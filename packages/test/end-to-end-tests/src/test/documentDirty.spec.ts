@@ -7,28 +7,32 @@ import * as assert from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
-    OpProcessingController,
-    LocalCodeLoader,
     initializeLocalContainer,
     ITestFluidObject,
+    LocalCodeLoader,
+    OpProcessingController,
     TestFluidObjectFactory,
+    ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { ICompatTestArgs, compatTest } from "./compatUtils";
 
-describe("Document Dirty", () => {
-    const id = `fluid-test://localhost/documentDirtyTest`;
-    const mapId = "mapKey";
-    const codeDetails: IFluidCodeDetails = {
-        package: "documentDirtyTestPackage",
-        config: {},
-    };
+const id = `fluid-test://localhost/documentDirtyTest`;
+const mapId = "mapKey";
+const registry: ChannelFactoryRegistry = [
+    [mapId, SharedMap.getFactory()],
+];
+const codeDetails: IFluidCodeDetails = {
+    package: "documentDirtyTestPackage",
+    config: {},
+};
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let documentServiceFactory: LocalDocumentServiceFactory;
+const tests = (args: ICompatTestArgs) => {
     let opProcessingController: OpProcessingController;
     let container: Container;
     let containerComp: ITestFluidObject;
@@ -65,54 +69,13 @@ describe("Document Dirty", () => {
         });
     }
 
-    async function createContainer(): Promise<Container> {
-        const factory: TestFluidObjectFactory = new TestFluidObjectFactory(
-            [
-                [mapId, SharedMap.getFactory()],
-            ],
-        );
-
-        const runtimeFactory =
-            new ContainerRuntimeFactoryWithDefaultDataStore(
-                "default",
-                [
-                    ["default", Promise.resolve(factory)],
-                ],
-            );
-
-        const urlResolver = new LocalResolver();
-        const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
-
-        const loader = new Loader(
-            urlResolver,
-            documentServiceFactory,
-            codeLoader,
-            {},
-            {},
-            new Map<string, IProxyLoaderFactory>());
-
-        return initializeLocalContainer(id, loader, codeDetails);
-    }
-
-    async function requestFluidObject(componentId: string, fromContainer: Container):
-        Promise<ITestFluidObject> {
-        const response = await fromContainer.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
-        }
-        return response.value as ITestFluidObject;
-    }
-
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
-        documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
-
         // Create the first container, component and DDSes.
-        container = await createContainer();
-        containerComp = await requestFluidObject("default", container);
+        container = await args.makeTestContainer(registry) as Container;
+        containerComp = await requestFluidObject(container, "default");
         containerCompContainerRuntime = containerComp.context.containerRuntime as IContainerRuntime;
         containerCompMap = await containerComp.getSharedObject<SharedMap>(mapId);
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
         opProcessingController.addDeltaManagers(containerComp.runtime.deltaManager);
 
         await opProcessingController.process();
@@ -166,7 +129,7 @@ describe("Document Dirty", () => {
 
         it(`doesn't affect document state while reconnecting`, async () => {
             // Disconnect the client.
-            documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
+            args.documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
 
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container);
@@ -180,7 +143,7 @@ describe("Document Dirty", () => {
     describe("Disconnected state", () => {
         it(`sets operations when disconnected and then reconnects to process them`, async () => {
             // Disconnect the client.
-            documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
+            args.documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
 
             // Set values in DDSes in disconnected state.
             containerCompMap.set("key", "value");
@@ -237,7 +200,7 @@ describe("Document Dirty", () => {
                 "Document is marked dirty on edit");
 
             // Disconnect the client.
-            documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
+            args.documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
 
             assert.equal(wasMarkedDirtyCount, 1,
                 `Document will not increment the dirty count as it was already dirty`);
@@ -277,7 +240,7 @@ describe("Document Dirty", () => {
     describe("Disconnected state with batch operations", () => {
         it(`sets operations when disconnected and then reconnects to process them`, async () => {
             // Disconnect the client.
-            documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
+            args.documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
 
             // Set batch values in DDSes in disconnected state.
             containerComp.context.containerRuntime.orderSequentially(() => {
@@ -340,7 +303,7 @@ describe("Document Dirty", () => {
                 "Document is marked dirty on edit");
 
             // Disconnect the client.
-            documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
+            args.documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
 
             assert.equal(wasMarkedDirtyCount, 1,
                 `Document will not increment the dirty count as it was already dirty`);
@@ -378,7 +341,55 @@ describe("Document Dirty", () => {
     });
 
     afterEach(async () => {
-        await deltaConnectionServer.webSocketServer.close();
         containerCompContainerRuntime.removeAllListeners();
+    });
+};
+
+describe("Document Dirty", () => {
+    let deltaConnectionServer: ILocalDeltaConnectionServer;
+    let documentServiceFactory: LocalDocumentServiceFactory;
+
+    async function createContainer(): Promise<Container> {
+        const factory: TestFluidObjectFactory = new TestFluidObjectFactory(registry);
+
+        const runtimeFactory =
+            new ContainerRuntimeFactoryWithDefaultDataStore(
+                "default",
+                [
+                    ["default", Promise.resolve(factory)],
+                ],
+            );
+
+        const urlResolver = new LocalResolver();
+        const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
+
+        const loader = new Loader(
+            urlResolver,
+            documentServiceFactory,
+            codeLoader,
+            {},
+            {},
+            new Map<string, IProxyLoaderFactory>());
+
+        return initializeLocalContainer(id, loader, codeDetails);
+    }
+
+    beforeEach(async () => {
+        deltaConnectionServer = LocalDeltaConnectionServer.create();
+        documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+    });
+
+    tests({
+        makeTestContainer: createContainer,
+        get deltaConnectionServer() { return deltaConnectionServer; },
+        get documentServiceFactory() { return documentServiceFactory; },
+    });
+
+    afterEach(async () => {
+        await deltaConnectionServer.webSocketServer.close();
+    });
+
+    describe("compatibility", () => {
+        compatTest(tests, { testFluidComponent: true });
     });
 });

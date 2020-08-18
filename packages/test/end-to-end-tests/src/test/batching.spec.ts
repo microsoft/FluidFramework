@@ -10,26 +10,32 @@ import { ContainerMessageType, schedulerId } from "@fluidframework/container-run
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IEnvelope, FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode, IEnvelope } from "@fluidframework/runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    ChannelFactoryRegistry,
     createLocalLoader,
-    OpProcessingController,
     initializeLocalContainer,
     ITestFluidObject,
+    OpProcessingController,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
+import { compatTest, ICompatTestArgs } from "./compatUtils";
 
-describe("Batching", () => {
-    const id = `fluid-test://localhost/batchingTest`;
-    const map1Id = "map1Key";
-    const map2Id = "map2Key";
-    const codeDetails: IFluidCodeDetails = {
-        package: "batchingTestPackage",
-        config: {},
-    };
+const id = `fluid-test://localhost/batchingTest`;
+const map1Id = "map1Key";
+const map2Id = "map2Key";
+const registry: ChannelFactoryRegistry = [
+    [map1Id, SharedMap.getFactory()],
+    [map2Id, SharedMap.getFactory()],
+];
+const codeDetails: IFluidCodeDetails = {
+    package: "batchingTestPackage",
+    config: {},
+};
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
+const tests = (args: ICompatTestArgs) => {
     let opProcessingController: OpProcessingController;
     let component1: ITestFluidObject;
     let component2: ITestFluidObject;
@@ -37,25 +43,6 @@ describe("Batching", () => {
     let component1map2: SharedMap;
     let component2map1: SharedMap;
     let component2map2: SharedMap;
-
-    async function createContainer(): Promise<Container> {
-        const factory = new TestFluidObjectFactory(
-            [
-                [map1Id, SharedMap.getFactory()],
-                [map2Id, SharedMap.getFactory()],
-            ],
-        );
-        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-        return initializeLocalContainer(id, loader, codeDetails);
-    }
-
-    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidObject> {
-        const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
-        }
-        return response.value as ITestFluidObject;
-    }
 
     function setupBacthMessageListener(component: ITestFluidObject, receivedMessages: ISequencedDocumentMessage[]) {
         component.context.containerRuntime.on("op", (message: ISequencedDocumentMessage) => {
@@ -84,19 +71,17 @@ describe("Batching", () => {
     }
 
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
-
-        const container1 = await createContainer();
-        component1 = await requestFluidObject("default", container1);
+        const container1 = await args.makeTestContainer(registry) as Container;
+        component1 = await requestFluidObject(container1, "default");
         component1map1 = await component1.getSharedObject<SharedMap>(map1Id);
         component1map2 = await component1.getSharedObject<SharedMap>(map2Id);
 
-        const container2 = await createContainer();
-        component2 = await requestFluidObject("default", container2);
+        const container2 = await args.makeTestContainer(registry) as Container;
+        component2 = await requestFluidObject(container2, "default");
         component2map1 = await component2.getSharedObject<SharedMap>(map1Id);
         component2map2 = await component2.getSharedObject<SharedMap>(map2Id);
 
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
         opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
 
         await opProcessingController.process();
@@ -517,8 +502,31 @@ describe("Batching", () => {
             });
         });
     });
+};
+
+describe("Batching", () => {
+    let deltaConnectionServer: ILocalDeltaConnectionServer;
+
+    async function createContainer(): Promise<Container> {
+        const factory = new TestFluidObjectFactory(registry);
+        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
+        return initializeLocalContainer(id, loader, codeDetails);
+    }
+
+    beforeEach(async () => {
+        deltaConnectionServer = LocalDeltaConnectionServer.create();
+    });
+
+    tests({
+        makeTestContainer: createContainer,
+        get deltaConnectionServer() { return deltaConnectionServer; },
+    });
 
     afterEach(async () => {
         await deltaConnectionServer.webSocketServer.close();
+    });
+
+    describe("compatibility", () => {
+        compatTest(tests, { testFluidComponent: true });
     });
 });

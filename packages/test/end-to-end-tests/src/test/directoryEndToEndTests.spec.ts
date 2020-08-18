@@ -4,65 +4,52 @@
  */
 
 import assert from "assert";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { MessageType } from "@fluidframework/protocol-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    ChannelFactoryRegistry,
     createLocalLoader,
-    OpProcessingController,
-    ITestFluidObject,
     initializeLocalContainer,
+    ITestFluidObject,
+    OpProcessingController,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
+import { compatTest, ICompatTestArgs } from "./compatUtils";
 
-describe("Directory", () => {
-    const id = "fluid-test://localhost/directoryTest";
-    const directoryId = "directoryKey";
-    const codeDetails: IFluidCodeDetails = {
-        package: "sharedDirectoryTestPackage",
-        config: {},
-    };
+const id = "fluid-test://localhost/directoryTest";
+const directoryId = "directoryKey";
+const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
+const codeDetails: IFluidCodeDetails = {
+    package: "sharedDirectoryTestPackage",
+    config: {},
+};
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
+const tests = (args: ICompatTestArgs) => {
     let opProcessingController: OpProcessingController;
     let component1: ITestFluidObject;
     let sharedDirectory1: ISharedDirectory;
     let sharedDirectory2: ISharedDirectory;
     let sharedDirectory3: ISharedDirectory;
 
-    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidObject> {
-        const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
-        }
-        return response.value as ITestFluidObject;
-    }
-
-    async function createContainer(): Promise<Container> {
-        const factory = new TestFluidObjectFactory([[directoryId, SharedDirectory.getFactory()]]);
-        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-        return initializeLocalContainer(id, loader, codeDetails);
-    }
-
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
-
-        const container1 = await createContainer();
-        component1 = await requestFluidObject("default", container1);
+        const container1 = await args.makeTestContainer(registry) as Container;
+        component1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         sharedDirectory1 = await component1.getSharedObject<SharedDirectory>(directoryId);
 
-        const container2 = await createContainer();
-        const component2 = await requestFluidObject("default", container2);
+        const container2 = await args.makeTestContainer(registry) as Container;
+        const component2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         sharedDirectory2 = await component2.getSharedObject<SharedDirectory>(directoryId);
 
-        const container3 = await createContainer();
-        const component3 = await requestFluidObject("default", container3);
+        const container3 = await args.makeTestContainer(registry) as Container;
+        const component3 = await requestFluidObject<ITestFluidObject>(container3, "default");
         sharedDirectory3 = await component3.getSharedObject<SharedDirectory>(directoryId);
 
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
         opProcessingController.addDeltaManagers(
             component1.runtime.deltaManager,
             component2.runtime.deltaManager,
@@ -646,8 +633,31 @@ describe("Directory", () => {
             });
         });
     });
+};
+
+describe("Directory", () => {
+    let deltaConnectionServer: ILocalDeltaConnectionServer;
+
+    async function createContainer(): Promise<Container> {
+        const factory = new TestFluidObjectFactory(registry);
+        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
+        return initializeLocalContainer(id, loader, codeDetails);
+    }
+
+    beforeEach(async () => {
+        deltaConnectionServer = LocalDeltaConnectionServer.create();
+    });
+
+    tests({
+        makeTestContainer: createContainer,
+        get deltaConnectionServer() { return deltaConnectionServer; },
+    });
 
     afterEach(async () => {
         await deltaConnectionServer.webSocketServer.close();
     });
+
+    describe("compatibility", () => {
+        compatTest(tests, { testFluidComponent: true });
+    })
 });
