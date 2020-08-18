@@ -6,7 +6,7 @@ The Aqueduct is a library for building Fluid objects and Fluid containers within
 
 ## Fluid Object Development
 
-Fluid object development consists of developing the data object and the corresponding `DataObjectFactory`. The data object defines the logic of your Fluid object, whereas the `DataObjectFactory` defines how to initialize your object.
+Fluid object development consists of developing the data object and the corresponding data object factory. The data object defines the logic of your Fluid object, whereas the data object factory defines how to initialize your object.
 
 ### Data Object Development
 
