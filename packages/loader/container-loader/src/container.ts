@@ -647,7 +647,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.connectToDeltaStream(args).catch(() => { });
     }
 
-    public get storage(): IDocumentStorageService | null | undefined {
+    public get storage(): IDocumentStorageService | undefined {
         return this.blobsCacheStorageService ?? this._storageService;
     }
 
