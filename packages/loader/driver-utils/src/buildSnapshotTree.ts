@@ -26,7 +26,7 @@ async function flattenCore(
     for (const treeEntry of treeEntries) {
         const subPath = `${path}${treeEntry.path}`;
 
-        if (treeEntry.type === TreeEntry[TreeEntry.Blob]) {
+        if (treeEntry.type === TreeEntry.Blob) {
             const blob = treeEntry.value as IBlob;
             const buffer = Buffer.from(blob.contents, blob.encoding);
             const sha = await gitHashFileAsync(buffer);
@@ -41,7 +41,7 @@ async function flattenCore(
                 url: "",
             };
             entries.push(entry);
-        } else if (treeEntry.type === TreeEntry[TreeEntry.Commit]) {
+        } else if (treeEntry.type === TreeEntry.Commit) {
             const entry: git.ITreeEntry = {
                 mode: FileMode[treeEntry.mode],
                 path: subPath,
@@ -52,7 +52,7 @@ async function flattenCore(
             };
             entries.push(entry);
         } else {
-            assert(treeEntry.type === TreeEntry[TreeEntry.Tree]);
+            assert(treeEntry.type === TreeEntry.Tree);
             const t = treeEntry.value as ITree;
             const entry: git.ITreeEntry = {
                 mode: FileMode[treeEntry.mode],

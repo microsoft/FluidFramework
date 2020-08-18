@@ -16,79 +16,10 @@ import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { IGitCache } from "@fluidframework/server-services-client";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
-import Axios from "axios";
 import { DocumentFactory } from "./documentFactory";
 import { IHostServices } from "./services";
 import { seedFromScriptIds } from "./helpers";
-
-class MailServices {
-    constructor(private readonly accessToken: string) {
-    }
-
-    // Create draft
-    // https://docs.microsoft.com/en-us/graph/api/message-createreply?view=graph-rest-1.0&tabs=http
-
-    public async mail(): Promise<any[]> {
-        const me = await Axios.get(
-            "https://graph.microsoft.com/v1.0/me/messages",
-            {
-                headers: {
-                    Authorization: `Bearer ${this.accessToken}`,
-                },
-            });
-
-        return me.data;
-    }
-
-    public async message(id: string): Promise<any> {
-        const me = await Axios.get(
-            `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(id)}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${this.accessToken}`,
-                },
-            });
-
-        return me.data;
-    }
-
-    public async save(id: string, value: any): Promise<any> {
-        const me = await Axios.patch(
-            `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(id)}`,
-            value,
-            {
-                headers: {
-                    Authorization: `Bearer ${this.accessToken}`,
-                },
-            });
-
-        return me.data;
-    }
-
-    public async drafts(): Promise<any[]> {
-        const me = await Axios.get(
-            "https://graph.microsoft.com/v1.0/me/mailFolders/Drafts/messages",
-            {
-                headers: {
-                    Authorization: `Bearer ${this.accessToken}`,
-                },
-            });
-
-        return me.data;
-    }
-
-    public async folders(): Promise<any[]> {
-        const me = await Axios.get(
-            "https://graph.microsoft.com/v1.0/me/mailFolders",
-            {
-                headers: {
-                    Authorization: `Bearer ${this.accessToken}`,
-                },
-            });
-
-        return me.data;
-    }
-}
+import { debug } from "./debug";
 
 async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
     const component = await baseHost.requestFluidObject(url);
@@ -117,16 +48,6 @@ export async function initialize(
     const services: IHostServices = {
         IDocumentFactory: documentFactory,
     };
-
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    if (user.accounts) {
-        for (const account of user.accounts) {
-            if (account.provider === "msa") {
-                const mailServices = new MailServices(account.accessToken);
-                (services as any).IMail = mailServices;
-            }
-        }
-    }
 
     const documentServiceFactories: IDocumentServiceFactory[] = [];
     // TODO: need to be support refresh token
@@ -163,7 +84,7 @@ export async function initialize(
     const loader = await baseHost.getLoader();
     documentFactory.resolveLoader(loader);
 
-    console.log(`Loading ${url}`);
+    debug(`Loading ${url}`);
 
     const div = document.getElementById("content") as HTMLDivElement;
 

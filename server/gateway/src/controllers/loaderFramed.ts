@@ -19,6 +19,7 @@ import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { DocumentFactory } from "./documentFactory";
 import { seedFromScriptIds } from "./helpers";
+import { debug } from "./debug";
 
 async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
     const component = await baseHost.requestFluidObject(url);
@@ -40,7 +41,7 @@ export async function initialize(
     clientId: string,
     scope: IFluidObject,
 ) {
-    console.log(`Loading ${url}`);
+    debug(`Loading ${url}`);
 
     const div = document.getElementById("content") as HTMLDivElement;
 

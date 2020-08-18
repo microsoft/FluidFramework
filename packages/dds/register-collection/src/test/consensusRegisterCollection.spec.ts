@@ -106,7 +106,7 @@ describe("ConsensusRegisterCollection", () => {
                     {
                         mode: FileMode.File,
                         path: snapshotFileName,
-                        type: TreeEntry[TreeEntry.Blob],
+                        type: TreeEntry.Blob,
                         value: {
                             contents: serialized,
                             encoding: "utf-8",

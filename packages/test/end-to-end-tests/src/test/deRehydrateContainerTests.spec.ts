@@ -11,9 +11,9 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
-    TestFluidComponentFactory,
-    ITestFluidComponent,
-    TestFluidComponent,
+    TestFluidObjectFactory,
+    ITestFluidObject,
+    TestFluidObject,
 } from "@fluidframework/test-utils";
 import { SharedMap } from "@fluidframework/map";
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
@@ -42,7 +42,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     }
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
-        const factory: TestFluidComponentFactory = new TestFluidComponentFactory([
+        const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
             [mapId1, SharedMap.getFactory()],
         ]);
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
@@ -62,7 +62,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const peerComponentRuntimeChannel = await (containerRuntime as IContainerRuntime)
             .createDataStoreWithRealizationFn(["default"]);
         const peerComponent =
-            (await peerComponentRuntimeChannel.request({ url: "/" })).value as ITestFluidComponent;
+            (await peerComponentRuntimeChannel.request({ url: "/" })).value as ITestFluidObject;
         return {
             peerComponent,
             peerComponentRuntimeChannel,
@@ -139,10 +139,10 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
 
         // Create another component
         const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
-        const component2 = peerComponent.peerComponent as TestFluidComponent;
+        const component2 = peerComponent.peerComponent as TestFluidObject;
 
         // Create a channel
-        const rootOfComponent1 = await (defaultComponent as TestFluidComponent).getSharedObject<SharedMap>(mapId1);
+        const rootOfComponent1 = await (defaultComponent as TestFluidObject).getSharedObject<SharedMap>(mapId1);
         rootOfComponent1.set("component2", component2.handle);
 
         const snapshotTree = JSON.parse(container.serialize());
