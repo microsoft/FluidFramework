@@ -133,8 +133,7 @@ stages:
         # Set version
         - template: include-set-package-version.yml
           parameters:
-            buildDirectory: ${{ parameters.buildDirectory }}
-
+            buildDirectory: server/routerlicious
         # Build
         - task: Docker@2
           displayName: Docker Build - Base
