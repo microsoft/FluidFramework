@@ -1,5 +1,5 @@
 ---
-title: Encapsulating data with `DataObject`
+title: Encapsulating data with DataObject
 menuPosition: 3
 ---
 
