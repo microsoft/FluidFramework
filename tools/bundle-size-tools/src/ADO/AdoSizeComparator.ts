@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { getBaselineCommit, getCiBuildWithCommit, getPriorCommit } from '../utilities';
 import { getAzureDevopsApi } from './getAzureDevopsApi';
 import { BuildStatus, BuildResult } from 'azure-devops-node-api/interfaces/BuildInterfaces';
