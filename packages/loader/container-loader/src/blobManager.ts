@@ -26,16 +26,16 @@ export class BlobManager implements IBlobManager {
     }
 
     public async getBlob(blobId: string): Promise<IGenericBlob | undefined> {
-        if (!this.blobs.has(blobId)) {
-            return Promise.reject("Blob does not exist");
+        const blob = this.blobs.get(blobId);
+        if (blob === undefined) {
+            throw new Error("Blob does not exist");
         }
 
-        const blob = this.blobs.get(blobId);
         const blobContent = await this.storage.read(blobId);
         if (blobContent === undefined) {
             return undefined;
         }
-        blob!.content = Buffer.from(blobContent, "base64");
+        blob.content = Buffer.from(blobContent, "base64");
         return blob;
     }
 
