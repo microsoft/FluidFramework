@@ -69,14 +69,7 @@ folder](#including-files-outside-the-docs-folder) for more information.
 
 ## Features
 
-VuePress has a number of [built-in features](https://vuepress.vuejs.org/guide/#features). Some of the most important are
-called out below, but consult the VuePress documentation for more details.
-
-Additional features have been added using VuePress and markdown-it plugins.
-
-### Including other files <Badge text="markdown-it plugin" vertical="middle"/>
-
-Plugin: <https://github.com/camelaissani/markdown-it-include>
+### Including other files
 
 #### Reusable snippets
 
@@ -88,7 +81,7 @@ it in a Markdown file like so:
 ```
 
 
-### Syntax formatting and line highlighting <Badge text="VuePress feature" vertical="middle"/>
+### Syntax formatting and line highlighting
 
 Code blocks can specify a language to enable syntax highlighting of the block. You can also highlight specific lines in
 the code block.
@@ -96,7 +89,7 @@ the code block.
 **Input**
 
 ````markdown
-{{</* highlight ts "linenos=inline,hl_lines=2-6 9" */>}}
+```ts {linenos=inline,hl_lines={2-6 9}}
 const numericInput = (keyString: string, coord: string) => {
   let valueToSet = Number(keyString);
   valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
@@ -117,12 +110,12 @@ const numericInput = (keyString: string, coord: string) => {
     props.puzzle.set(coord, toSet);
   }
 };
-{{</* /highlight */>}}
+```
 ````
 
 **Output**
 
-{{< highlight ts "linenos=inline,hl_lines=2-6 9" >}}
+```ts {linenos=inline,hl_lines={2-6 9}}
 const numericInput = (keyString: string, coord: string) => {
   let valueToSet = Number(keyString);
   valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
@@ -143,7 +136,7 @@ const numericInput = (keyString: string, coord: string) => {
     props.puzzle.set(coord, toSet);
   }
 };
-{{< /highlight >}}
+```
 
 ### Info/tip callouts
 
@@ -203,171 +196,21 @@ By default, each box's heading is the type. You can change this by providing a t
 **Input**
 
 ```markdown
-{{</* callout note "A note about syntax" */>}}
+{{%/* callout note "A note about syntax" */%}}
 
-Markdown goes here
+Markdown formatting _goes_ **here.**
 
-{{</* /callout */>}}
+{{%/* /callout */%}}
 ```
 
 **Output**
 
-{{< callout note "A note about syntax" >}}
+{{% callout note "A note about syntax" %}}
 
-Markdown goes here
+Markdown formatting _goes_ **here.**
 
-{{< /callout >}}
+{{% /callout %}}
 
-### Badges <Badge text="VuePress feature" vertical="middle"/>
-
-Badges can be used to flag content. It is implemented as a Vue component, and accepts the following props:
-
-- text - string
-- type - string, optional value: `"tip"|"warning"|"error"`, defaults to `"tip"`
-- vertical - string, optional value: `"top"|"middle"`, defaults to `"top"`
-
-The following markup renders the badge next to the section header above:
-
-```jsx
-<Badge text="VuePress feature" vertical="middle" />
-```
-
-### Tabbed UI <Badge text="VuePress feature" vertical="middle"/>
-
-Plugin: <https://github.com/pskordilakis/vuepress-plugin-tabs>
-
-**Input**
-
-````markdown
-:::: tabs
-::: tab React
-
-```jsx
-const rerender = () => {
-  // Get our dice value stored in the root.
-  const diceValue = this.root.get < number > "diceValue";
-
-  ReactDOM.render(
-    <div>
-      <span style={{ fontSize: 50 }}>{this.getDiceChar(diceValue)}</span>
-      <button onClick={this.rollDice.bind(this)}>Roll</button>
-    </div>,
-    div
-  );
-};
-
-rerender();
-```
-
-:::
-::: tab VanillaJS
-
-```typescript
-private createComponentDom(host: HTMLElement) {
-  const diceValue = this.root.get<number>("diceValue");
-
-  const diceSpan = document.createElement("span");
-  diceSpan.id = "diceSpan";
-  diceSpan.style.fontSize = "50px";
-  diceSpan.textContent = this.getDiceChar(diceValue);
-  host.appendChild(diceSpan);
-
-  const rollButton = document.createElement("button");
-  rollButton.id = "rollButton";
-  rollButton.textContent = "Roll";
-  rollButton.onclick = this.rollDice.bind(this);
-  host.appendChild(rollButton);
-}
-```
-
-:::
-::::
-````
-
-**Output**
-
-:::: tabs
-::: tab React
-
-```jsx
-const rerender = () => {
-  // Get our dice value stored in the root.
-  const diceValue = this.root.get < number > "diceValue";
-
-  ReactDOM.render(
-    <div>
-      <span style={{ fontSize: 50 }}>{this.getDiceChar(diceValue)}</span>
-      <button onClick={this.rollDice.bind(this)}>Roll</button>
-    </div>,
-    div
-  );
-};
-
-rerender();
-```
-
-:::
-::: tab VanillaJS
-
-```typescript
-private createComponentDom(host: HTMLElement) {
-  const diceValue = this.root.get<number>("diceValue");
-
-  const diceSpan = document.createElement("span");
-  diceSpan.id = "diceSpan";
-  diceSpan.style.fontSize = "50px";
-  diceSpan.textContent = this.getDiceChar(diceValue);
-  host.appendChild(diceSpan);
-
-  const rollButton = document.createElement("button");
-  rollButton.id = "rollButton";
-  rollButton.textContent = "Roll";
-  rollButton.onclick = this.rollDice.bind(this);
-  host.appendChild(rollButton);
-}
-```
-
-:::
-::::
-
-### Varying content by version and audience
-
-Content in the Fluid docs system can vary by _version_ or by _audience_. Several variables are available to use in
-Markdown files to enable this, exposed on the `$themeConfig` object:
-
-|   `$themeConfig` member | Description                                                               |
-| ----------------------: | ------------------------------------------------------------------------- |
-|         `DOCS_AUDIENCE` | Can be used to conditionally build docs for different audiences.          |
-|          `THIS_VERSION` | The version of the documentation **currently being built.** E.g. `0.14`   |
-| `MASTER_BRANCH_VERSION` | The version of the documentation **on the master branch.** E.g. `0.16`    |
-|       `RELEASE_VERSION` | The current release version of **the Fluid client packages.** E.g. `0.15` |
-|            `N1_VERSION` | The version immediately prior to the release version. E.g. `0.14`         |
-
-#### Conditional sections in Markdown
-
-In a Markdown file, you can make a section conditional like so:
-
-```jsx
-<vue-markdown v-if="$themeConfig.DOCS_AUDIENCE === 'internal'">
-### Some markdown content
-
-This will only render if the variable group is `internal`.
-<vue-markdown />
-```
-
-Else and else-if block are also supported using the following syntax:
-
-```jsx
-<vue-markdown v-if="$themeConfig.THIS_VERSION === '0.16'">
-This will only render for version 0.16.
-<vue-markdown />
-<vue-markdown v-else-if="$themeConfig.THIS_VERSION === '0.15'">
-This will only render for version 0.15.
-<vue-markdown />
-<vue-markdown v-else>
-This will render for all versions except 0.15 and 0.16.
-<vue-markdown />
-```
 
 ### Diagrams with Mermaid
 
@@ -376,7 +219,7 @@ This will render for all versions except 0.15 and 0.16.
 **Input**
 
 ```jsx
-<mermaid>
+{{</* mermaid */>}}
 classDiagram
 Class01 <|-- VeryLongClass : Cool
 Class03 *-- Class04
@@ -391,12 +234,12 @@ Class01 : size()
 Class01 : int chimp
 Class01 : int gorilla
 Class08 <--> C2: Cool label
-</mermaid>
+{{</* /mermaid */>}}
 ```
 
 **Output**
 
-<mermaid>
+{{< mermaid >}}
 classDiagram
 Class01 <|-- VeryLongClass : Cool
 Class03 *-- Class04
@@ -411,13 +254,11 @@ Class01 : size()
 Class01 : int chimp
 Class01 : int gorilla
 Class08 <--> C2: Cool label
-</mermaid>
+{{< /mermaid >}}
 
 ### Markdown enhancements
 
-#### Typography <Badge text="markdown-it plugin" vertical="middle"/>
-
-Plugin: <https://github.com/markdown-it/markdown-it-deflist>
+#### Typography
 
 Ellipsis: ... `...`
 
@@ -427,39 +268,7 @@ En dash: -- `--`
 
 Plus/minus: +- `+-`
 
-#### Arrows <Badge text="markdown-it plugin" vertical="middle"/>
-
-Plugin: <https://github.com/adam-p/markdown-it-smartarrows>
-
---> `-->`
-
-<-- `<--`
-
-<--> `<-->`
-
-==> `==>`
-
-<== `<==`
-
-<==> `<==>`
-
-#### Emoji <Badge text="VuePress feature" vertical="middle"/>
-
-Full list of supported emoji: <https://github.com/markdown-it/markdown-it-emoji/blob/master/lib/data/full.json>
-
-**Input**
-
-```markdown
-:tada: :100:
-```
-
-**Output**
-
-:tada: :100:
-
 #### Definition lists <Badge text="markdown-it plugin" vertical="middle"/>
-
-Plugin: <https://github.com/markdown-it/markdown-it-deflist>
 
 You can create definition lists using the syntax defined by [PHP Markdown
 Extra](https://michelf.ca/projects/php-markdown/extra/#def-list).
