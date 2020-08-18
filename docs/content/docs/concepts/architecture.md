@@ -20,8 +20,7 @@ Objects can have state, which is managed by Distributed Data Structures (DDSes).
 DDSes are used to distribute state to clients. Instead of centralizing merge logic in the
 server, the server passes changes (aka operations or ops) to clients and the clients perform the merge.
 
-![A diagram of the Fluid Framework architecture](./images/architecture.png)
-
+![A diagram of the Fluid Framework architecture](/docs/concepts/images/architecture.png)
 
 ## Design decisions
 
@@ -61,8 +60,8 @@ client, gives the op a sequential order number, and sends the ordered op back to
 structures use these ops to reconstruct state on each client. The Fluid service doesn't parse any of these ops; in fact,
 the service knows nothing about the contents of any Fluid container.
 
-![A diagram depicting operations being sent from a Fluid client to a Fluid service](./images/op-send.png)
-![A diagram depicting operations being broadcast to Fluid clients](./images/op-broadcast.png)
+![A diagram depicting operations being sent from a Fluid client to a Fluid service](/docs/concepts/images/op-send.png)
+![A diagram depicting operations being broadcast to Fluid clients](/docs/concepts/images/op-broadcast.png)
 
 From the client perspective, this op flow is accessed through a **DeltaConnection** object.
 
@@ -78,7 +77,7 @@ Fluid container code. In this way, the Fluid loader 'mimics the web.' The Fluid 
 resolver,** connects to the Fluid service using the **Fluid service driver**, and loads the correct app code using the
 **code loader.**
 
-![A diagram of the Fluid loading sequence](./images/load-flow.png)
+![A diagram of the Fluid loading sequence](/docs/concepts/images/load-flow.png)
 
 **Container lookup & resolver** identifies, by a URL, which service a container is bound to and where in that service it
 is located. The Fluid service driver consumes this information.
@@ -100,4 +99,4 @@ used to replicate data across connected clients, but can also include additional
 incapsulated in our lowest level objects, **distributed data structures (DDS)**. App logic operating over this data is
 stored in **Fluid objects**.
 
-![A diagram of the Fluid loading sequence](./images/fluid-objects.png)
+![A diagram of the Fluid loading sequence](/docs/concepts/images/fluid-objects.png)
