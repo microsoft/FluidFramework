@@ -146,7 +146,7 @@ The Aqueduct provides the [`ContainerRuntimeFactoryWithDataStore`](./src/contain
 - Define the registry of data objects that can be created
 - Declare the default data object
 - Declare [Container Services](###Container-Service-Development)
-- Declare Container Level [Request Handlers](###Container-Level-Request-Handlers)
+- Declare Container level [Request Handlers](###Container-Level-Request-Handlers)
 
 ### Container Object Example
 
