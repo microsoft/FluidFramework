@@ -305,7 +305,6 @@ if (!quorum.has("code")) {
 And that's all that's needed to create or load Fluid documents. It's intended to be light weight and simple to get
 setup as a host. And once done you gain full access to the power of the Fluid platform.
 
-Once you have a host setup the next best step to try is using our Fluid generator to create a new Fluid object.
 Instructions for that are at https://github.com/Microsoft/FluidFramework/blob/master/tools/generator-fluid/README.md.
 You can then publish this package to Verdaccio and load it inside of your new loader!
 
