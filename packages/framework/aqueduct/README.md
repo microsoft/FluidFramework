@@ -28,7 +28,7 @@ The [`DataObject`](./src/data-objects/dataObject.ts) class extends [`PureDataObj
 
 - Basic set of interface implementations to be loadable in a Fluid container.
 - Functions for managing the Fluid object lifecycle.
-  - `initializingFirstTime(props: S)` - called only the first time a Fluid object is initialized
+  - `initializingFirstTime(props: S)` - called only the first time a Fluid object is initialized and only on the first client on which it loads.
   - `initializingFromExisting()` - called every time except the first time a Fluid object is initialized
   - `hasInitialized()` - called every time after `initializingFirstTime` or `initializingFromExisting` executes
 - Helper functions for creating and getting other data objects in the same container.
