@@ -249,7 +249,7 @@ stages:
           condition: succeededOrFailed()
 
 # Publish stage
-- ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+- ${{ if eq(variables.publish, true) }}:
   - stage: publish
     dependsOn: build
     displayName: Publish Stage
