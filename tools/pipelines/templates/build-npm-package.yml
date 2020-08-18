@@ -66,7 +66,7 @@ parameters:
 trigger: none
 
 variables:
-  skipComponentGovernanceDetection: true
+  - template: include-vars.yml
 
 stages:
   - stage: build
@@ -250,7 +250,7 @@ stages:
               publishLocation: 'Container'
 
       # Job - Component detection
-      - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+      - ${{ if eq(variables.componentDetection, true) }}:
         - job: CG
           displayName: Component Detection
           pool: ${{ parameters.poolCG }}
@@ -271,7 +271,7 @@ stages:
               alertWarningLevel: High
 
   # Publish stage
-  - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+  - ${{ if eq(variables.publish, true) }}:
     - stage: publish
       dependsOn: build
       displayName: Publish Stage

@@ -86,18 +86,20 @@ export class ContentCache extends EventEmitter {
 
     public set(message: IContentMessage) {
         const clientId = message.clientId;
-        if (!this.cache.has(clientId)) {
-            this.cache.set(clientId, new RingBuffer(this.log2Capacity));
+        let clientCache = this.cache.get(clientId);
+        if (clientCache === undefined) {
+            clientCache = new RingBuffer(this.log2Capacity);
+            this.cache.set(clientId, clientCache);
         }
-        this.cache.get(clientId)!.enqueue(message);
+        clientCache.enqueue(message);
         this.emit("content", clientId);
     }
 
     public get(clientId: string): IContentMessage | undefined {
-        return this.cache.has(clientId) ? this.cache.get(clientId)!.dequeue() : undefined;
+        return this.cache.get(clientId)?.dequeue();
     }
 
     public peek(clientId: string): IContentMessage | undefined {
-        return this.cache.has(clientId) ? this.cache.get(clientId)!.peek() : undefined;
+        return this.cache.get(clientId)?.peek();
     }
 }

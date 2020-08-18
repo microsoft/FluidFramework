@@ -30,14 +30,14 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let loader: Loader;
 
-    async function createDetachedContainerAndGetRootComponent() {
+    async function createDetachedContainerAndGetRootDataStore() {
         const container = await loader.createDetachedContainer(codeDetails);
-        // Get the root component from the detached container.
+        // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
-        const defaultComponent = response.value;
+        const defaultDataStore = response.value;
         return {
             container,
-            defaultComponent,
+            defaultDataStore,
         };
     }
 
@@ -56,16 +56,16 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             new Map<string, IProxyLoaderFactory>());
     }
 
-    const createPeerComponent = async (
+    const createPeerDataStore = async (
         containerRuntime: IContainerRuntimeBase,
     ) => {
-        const peerComponentRuntimeChannel = await (containerRuntime as IContainerRuntime)
+        const peerDataStoreRuntimeChannel = await (containerRuntime as IContainerRuntime)
             .createDataStoreWithRealizationFn(["default"]);
-        const peerComponent =
-            (await peerComponentRuntimeChannel.request({ url: "/" })).value as ITestFluidObject;
+        const peerDataStore =
+            (await peerDataStoreRuntimeChannel.request({ url: "/" })).value as ITestFluidObject;
         return {
-            peerComponent,
-            peerComponentRuntimeChannel,
+            peerDataStore,
+            peerDataStoreRuntimeChannel,
         };
     };
 
@@ -77,11 +77,11 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
 
     it("Dehydrated container snapshot", async () => {
         const { container } =
-            await createDetachedContainerAndGetRootComponent();
+            await createDetachedContainerAndGetRootDataStore();
         const snapshotTree = JSON.parse(container.serialize());
 
         assert.strictEqual(Object.keys(snapshotTree.trees).length, 3,
-            "3 trees should be there(protocol, default component, scheduler");
+            "3 trees should be there(protocol, default dataStore, scheduler");
         assert.strictEqual(Object.keys(snapshotTree.trees[".protocol"].blobs).length, 8,
             "4 protocol blobs should be there(8 mappings)");
 
@@ -93,26 +93,26 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         assert.strictEqual(protocolAttributes.sequenceNumber, 0, "Seq number should be 0");
         assert.strictEqual(protocolAttributes.minimumSequenceNumber, 0, "Min Seq number should be 0");
 
-        // Check for default component
-        const defaultComponentBlobId = snapshotTree.trees.default.blobs[".component"];
-        const componentAttributes = JSON.parse(
-            Buffer.from(snapshotTree.trees.default.blobs[defaultComponentBlobId], "base64").toString());
-        assert.strictEqual(componentAttributes.pkg, JSON.stringify(["default"]), "Package name should be default");
+        // Check for default dataStore
+        const defaultDataStoreBlobId = snapshotTree.trees.default.blobs[".component"];
+        const dataStoreAttributes = JSON.parse(
+            Buffer.from(snapshotTree.trees.default.blobs[defaultDataStoreBlobId], "base64").toString());
+        assert.strictEqual(dataStoreAttributes.pkg, JSON.stringify(["default"]), "Package name should be default");
     });
 
     it("Dehydrated container snapshot 2 times with changes in between", async () => {
-        const { container, defaultComponent } =
-            await createDetachedContainerAndGetRootComponent();
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
         const snapshotTree1 = JSON.parse(container.serialize());
         // Create a channel
-        const channel = defaultComponent.runtime.createChannel("test1",
+        const channel = defaultDataStore.runtime.createChannel("test1",
             "https://graph.microsoft.com/types/map") as SharedMap;
         channel.bindToContext();
         const snapshotTree2 = JSON.parse(container.serialize());
 
         assert.strictEqual(JSON.stringify(Object.keys(snapshotTree1.trees)),
             JSON.stringify(Object.keys(snapshotTree2.trees)),
-            "3 trees should be there(protocol, default component, scheduler");
+            "3 trees should be there(protocol, default dataStore, scheduler");
 
         // Check for protocol attributes
         const protocolAttributesBlobId1 = snapshotTree1.trees[".protocol"].blobs.attributes;
@@ -133,21 +133,21 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             "Test channel 1 should be present in snapshot 2");
     });
 
-    it("Dehydrated container snapshot with component handle stored in map of other bound component", async () => {
-        const { container, defaultComponent } =
-            await createDetachedContainerAndGetRootComponent();
+    it("Dehydrated container snapshot with dataStore handle stored in map of other bound dataStore", async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
 
-        // Create another component
-        const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
-        const component2 = peerComponent.peerComponent as TestFluidObject;
+        // Create another dataStore
+        const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+        const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
 
         // Create a channel
-        const rootOfComponent1 = await (defaultComponent as TestFluidObject).getSharedObject<SharedMap>(mapId1);
-        rootOfComponent1.set("component2", component2.handle);
+        const rootOfDataStore1 = await (defaultDataStore as TestFluidObject).getSharedObject<SharedMap>(mapId1);
+        rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
         const snapshotTree = JSON.parse(container.serialize());
 
         assert.strictEqual(Object.keys(snapshotTree.trees).length, 4, "4 trees should be there");
-        assert(snapshotTree.trees[component2.runtime.id], "Handle Bounded component should be in summary");
+        assert(snapshotTree.trees[dataStore2.runtime.id], "Handle Bounded dataStore should be in summary");
     });
 });
