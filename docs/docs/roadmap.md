@@ -4,7 +4,7 @@ The Fluid Framework open source project is the first in a series of technologies
 
 ## The open source project
 
-With the help of the open source community, the data management capabilities of Fluid Framework will continue to evolve. Some areas that we’ll be investing in include more advanced distributed data structures, contracts, and interfaces to ensure code consistency across clients, and performance improvements.
+With the help of the open source community, the data management capabilities of Fluid Framework will continue to evolve. Some areas that we’ll be investing in include more advanced distributed data structures, contracts and interfaces to ensure code consistency across clients, and performance improvements.
 
 ## Fluid Server
 
