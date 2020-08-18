@@ -14,6 +14,14 @@ export declare class DocumenterConfig {
      */
     readonly newlineKind: NewlineKind;
     /**
+     * Specifies a custom URI root in case the documentation links should be customized.
+     */
+    uriRoot?: string;
+    /**
+     * Specifies how packages must start to be included, so non matching package names are excluded.
+     */
+    onlyPackagesStartingWith?: string;
+    /**
      * The JSON Schema for API Extractor config file (api-extractor.schema.json).
      */
     static readonly jsonSchema: JsonSchema;

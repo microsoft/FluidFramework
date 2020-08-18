@@ -24,6 +24,8 @@ class DocumenterConfig {
                 this.newlineKind = "\r\n" /* CrLf */;
                 break;
         }
+        this.uriRoot = configFile.uriRoot;
+        this.onlyPackagesStartingWith = configFile.onlyPackagesStartingWith;
     }
     /**
      * Load and validate an api-documenter.json file.

@@ -67,5 +67,6 @@ export declare class MarkdownDocumenter {
     private _getLinkFilenameForApiItem;
     private _deleteOldOutputFiles;
     private _shouldHaveStandalonePage;
+    private _isAllowedPackage;
 }
 //# sourceMappingURL=MarkdownDocumenter.d.ts.map

@@ -75,6 +75,14 @@ export interface IConfigFile {
      */
     newlineKind?: 'crlf' | 'lf' | 'os';
     /**
+     * Specifies a custom URI root in case the documentation links should be customized.
+     */
+    uriRoot?: string;
+    /**
+     * Specifies how packages must start to be included, so non matching package names are excluded.
+     */
+    onlyPackagesStartingWith?: string;
+    /**
      * This enables an experimental feature that will be officially released with the next major version
      * of API Documenter.  It requires DocFX 2.46 or newer.  It enables documentation for namespaces and
      * adds them to the table of contents.  This will also affect file layout as namespaced items will be nested
