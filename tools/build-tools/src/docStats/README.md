@@ -47,7 +47,7 @@ fluid-doc-stats _api-extractor-temp/doc-models
                         container-runtime.api.json:   53/ 230  23.04%
                             replay-driver.api.json:   23/ 109  21.10%
                                  sequence.api.json:   57/ 313  18.21%
-                           component-base.api.json:    5/  28  17.86%
+                         data-object-base.api.json:    5/  28  17.86%
                            aqueduct-react.api.json:    6/  39  15.38%
                         component-runtime.api.json:    7/  64  10.94%
                    framework-experimental.api.json:    4/  43   9.30%
