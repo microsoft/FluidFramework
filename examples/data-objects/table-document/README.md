@@ -2,7 +2,7 @@
 
 ## Table Slice With Interception
 
-It provides `createTableWithInterception` that accepts an ITable object, the data object context and a callback, and returns an ITable object:
+It provides `createTableWithInterception` that accepts an ITable object, the data store context and a callback, and returns an ITable object:
 
 ```typescript
 function createTableWithInterception<T extends ITable>(
