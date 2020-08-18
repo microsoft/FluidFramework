@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
-import { PureDataObject, PureDataObjectFactory } from "@fluidframework/component-base";
+import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     createInsertSegmentOp,
@@ -130,8 +130,8 @@ export interface IFlowDocumentEvents extends IEvent {
     (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString) => void);
 }
 
-export class FlowDocument extends PureDataObject<ISharedDirectory, IFlowDocumentEvents> {
-    private static readonly factory = new PureDataObjectFactory<FlowDocument>(
+export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDocumentEvents> {
+    private static readonly factory = new LazyLoadedDataObjectFactory<FlowDocument>(
         documentType,
         FlowDocument,
         /* root: */ SharedDirectory.getFactory(),

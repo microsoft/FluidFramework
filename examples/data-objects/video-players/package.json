@@ -28,8 +28,8 @@
   },
   "dependencies": {
     "@fluid-example/client-ui-lib": "^0.25.1",
-    "@fluidframework/component-base": "^0.25.1",
     "@fluidframework/core-interfaces": "^0.25.1",
+    "@fluidframework/data-object-base": "^0.25.1",
     "@fluidframework/datastore": "^0.25.1",
     "@fluidframework/framework-interfaces": "^0.25.1",
     "@fluidframework/map": "^0.25.1",

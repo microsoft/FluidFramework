@@ -88,13 +88,13 @@ it in a Markdown file like so:
 Note: `include` is deliberately misspelled in the examples on this page due to limitations with the documentation build
 system. In actual usage, `include` should be spelled correctly.
 
-::: important
+{{< callout important >}}
 
 Snippets are included _before_ links are processed. This means that relative links to other Markdown files in snippets
 will be resolved _relative to the file they are included in_. Thus you should ensure your snippets will only be used at
 a single level of the folder hierarchy, or simply avoid relative links in reusable snippets.
 
-:::
+{{< /callout >}}
 
 #### Including files outside the docs folder
 
@@ -176,55 +176,55 @@ It is often useful to draw special attention to some content in the docs, such a
 about possible security issues when using an API, etc. This can be done using the following syntax in Markdown files:
 
 ```markdown
-::: tip
+{{< callout tip >}}
 
 The VuePress documentation calls these "containers."
 
-:::
+{{< /callout >}}
 ```
 
 Which would render this:
 
-::: tip
+{{< callout tip >}}
 
 The VuePress documentation calls these "containers."
 
-:::
+{{< /callout >}}
 
 #### Types
 
 Several different "types" are defined, each with special formatting. `tip` is show above, but `note`, `important`,
 `warning`, `danger`, and `details` are also supported.
 
-::: note
+{{< callout note >}}
 
 This is a note.
 
-:::
+{{< /callout >}}
 
-::: important
+{{< callout important >}}
 
 This is important!
 
-:::
+{{< /callout >}}
 
-::: warning
+{{< callout warning >}}
 
 This is a warning
 
-:::
+{{< /callout >}}
 
-::: danger
+{{< callout danger >}}
 
 This is a _dangerous_ warning
 
-:::
+{{< /callout >}}
 
-::: details
+{{< callout details >}}
 
 This is a collapsable details block. It does not work in IE or Classic Edge.
 
-:::
+{{< /callout >}}
 
 #### Custom titles
 
@@ -233,20 +233,20 @@ By default, each box's heading is the type in all caps. You can change this by p
 **Input**
 
 ```markdown
-::: note A note about syntax
+{{< callout note "A note about syntax" >}}
 
 Markdown goes here
 
-:::
+{{< /callout >}}
 ```
 
 **Output**
 
-::: note A note about syntax
+{{< callout note "A note about syntax" >}}
 
 Markdown goes here
 
-:::
+{{< /callout >}}
 
 ### Badges <Badge text="VuePress feature" vertical="middle"/>
 

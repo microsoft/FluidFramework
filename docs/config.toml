@@ -1,7 +1,8 @@
-baseURL = "http://example.org/"
+baseURL = "http://ashy-mud-0acebac10.azurestaticapps.net/"
 languageCode = "en-us"
 theme = "thxvscode"
 title = "Fluid Framework"
+titleCaseStyle = "Chicago"
 
 [permalinks]
 page = "/:slug"
@@ -41,10 +42,15 @@ name = "FAQ"
 url = "/faq"
 weight = -50
 
+[[menu.main]]
+identifier = "roadmap"
+name = "Roadmap"
+weight = 0
+
 [[menu.docs]]
 identifier = "get-started"
 name = "Get Started"
-weight = -100
+weight = -50
 
 [[menu.docs]]
 identifier = "concepts"
@@ -66,5 +72,16 @@ weight = 0
 [markup]
 [markup.goldmark]
 [markup.goldmark.renderer]
-unsafe = true
 # mark unsafe html as true since api-documenter uses html snipets.
+unsafe = true
+[markup.highlight]
+codeFences = true
+guessSyntax = true
+hl_Lines = ""
+lineNoStart = 1
+# if you need to turn on line nos, use the highlight shortcode
+lineNos = false
+lineNumbersInTable = false
+noClasses = true
+style = "tango"
+tabWidth = 4

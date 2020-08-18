@@ -10,70 +10,76 @@ import { DocTableCell } from './DocTableCell';
  * Constructor parameters for {@link DocTable}.
  */
 export interface IDocTableParameters extends IDocNodeParameters {
-  headerCells?: ReadonlyArray<DocTableCell>;
-  headerTitles?: string[];
+    headerCells?: ReadonlyArray<DocTableCell>;
+    headerTitles?: string[];
+    cssClass?: string;
+    caption?: string;
 }
 
 /**
  * Represents table, similar to an HTML `<table>` element.
  */
 export class DocTable extends DocNode {
-  public readonly header: DocTableRow;
+    public readonly header: DocTableRow;
+    public cssClass?: string;
+    public caption?: string;
 
-  private _rows: DocTableRow[];
+    private _rows: DocTableRow[];
 
-  public constructor(parameters: IDocTableParameters, rows?: ReadonlyArray<DocTableRow>) {
-    super(parameters);
+    public constructor(parameters: IDocTableParameters, rows?: ReadonlyArray<DocTableRow>) {
+        super(parameters);
 
-    this.header = new DocTableRow({ configuration: this.configuration });
-    this._rows = [];
+        this.header = new DocTableRow({ configuration: this.configuration });
+        this._rows = [];
 
-    if (parameters) {
-      if (parameters.headerTitles) {
-        if (parameters.headerCells) {
-          throw new Error(
-            'IDocTableParameters.headerCells and IDocTableParameters.headerTitles' +
-              ' cannot both be specified'
-          );
+        if (parameters) {
+            this.cssClass = parameters.cssClass;
+            this.caption = parameters.caption;
+            if (parameters.headerTitles) {
+                if (parameters.headerCells) {
+                    throw new Error(
+                        'IDocTableParameters.headerCells and IDocTableParameters.headerTitles' +
+                        ' cannot both be specified'
+                    );
+                }
+                for (const cellText of parameters.headerTitles) {
+                    this.header.addPlainTextCell(cellText);
+                }
+            } else if (parameters.headerCells) {
+                for (const cell of parameters.headerCells) {
+                    this.header.addCell(cell);
+                }
+            }
         }
-        for (const cellText of parameters.headerTitles) {
-          this.header.addPlainTextCell(cellText);
+
+        if (rows) {
+            for (const row of rows) {
+                this.addRow(row);
+            }
         }
-      } else if (parameters.headerCells) {
-        for (const cell of parameters.headerCells) {
-          this.header.addCell(cell);
-        }
-      }
     }
 
-    if (rows) {
-      for (const row of rows) {
+    /** @override */
+    public get kind(): string {
+        return CustomDocNodeKind.Table;
+    }
+
+    public get rows(): ReadonlyArray<DocTableRow> {
+        return this._rows;
+    }
+
+    public addRow(row: DocTableRow): void {
+        this._rows.push(row);
+    }
+
+    public createAndAddRow(): DocTableRow {
+        const row: DocTableRow = new DocTableRow({ configuration: this.configuration });
         this.addRow(row);
-      }
+        return row;
     }
-  }
 
-  /** @override */
-  public get kind(): string {
-    return CustomDocNodeKind.Table;
-  }
-
-  public get rows(): ReadonlyArray<DocTableRow> {
-    return this._rows;
-  }
-
-  public addRow(row: DocTableRow): void {
-    this._rows.push(row);
-  }
-
-  public createAndAddRow(): DocTableRow {
-    const row: DocTableRow = new DocTableRow({ configuration: this.configuration });
-    this.addRow(row);
-    return row;
-  }
-
-  /** @override */
-  protected onGetChildNodes(): ReadonlyArray<DocNode | undefined> {
-    return [this.header, ...this._rows];
-  }
+    /** @override */
+    protected onGetChildNodes(): ReadonlyArray<DocNode | undefined> {
+        return [this.header, ...this._rows];
+    }
 }

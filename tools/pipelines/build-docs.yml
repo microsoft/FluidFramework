@@ -62,6 +62,7 @@ resources:
 
 stages:
 - stage: check
+  displayName: Checks
   pool: Lite
   jobs:
   - job:
@@ -117,7 +118,7 @@ stages:
           #azureServiceConnection: # Required when connectionType == ConnectedServiceNameARM
           method: 'POST' # Options: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, PATCH
           headers: '{"Accept": "application/vnd.github.v3+json"}'
-          body: '{"event_type": "Trigger docs"}' # Required when method != GET && Method != HEAD
+          body: '{"event_type": "$(Build.SourceVersionMessage) - $(Build.SourceVersion)"}' # Required when method != GET && Method != HEAD
           urlSuffix: 'repos/${{ variables.repoToTrigger }}/dispatches' # Optional
           waitForCompletion: 'false' # Options: true, false
           #successCriteria: # Optional

@@ -16,8 +16,9 @@ trigger:
     - server/routerlicious
     - tools/build-server-resources
     - tools/pipelines/server-routerlicious.yml
-    - tools/pipelines/templates/publish-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
+    - tools/pipelines/templates/publish-npm-package.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
   
@@ -31,6 +32,7 @@ pr:
     - server/routerlicious
     - tools/build-server-resources
     - tools/pipelines/server-routerlicious.yml
+    - tools/pipelines/templates/include-set-package-version.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
@@ -83,12 +85,14 @@ stages:
               perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
               git status
 
+        # for npm ci in component detection and set version
+        - task: UseNode@1
+          displayName: Use Node 12.x
+          inputs: 
+            version: 12.x
+
         # Component detection (not pull request)
         - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-          - task: UseNode@1
-            displayName: Use Node 12.x
-            inputs: 
-              version: 12.x
           - task: npmAuthenticate@0
             displayName: 'npm Authenticate root .npmrc'
             inputs:
@@ -128,6 +132,10 @@ stages:
             workingFile: server/routerlicious/.npmrc
             customEndpoint: Offnet Packages
 
+        # Set version
+        - template: templates/include-set-package-version.yml
+          parameters:
+            buildDirectory: server/routerlicious
         # Build
         - task: Docker@2
           displayName: Docker Build - Base
@@ -136,7 +144,7 @@ stages:
             command: build
             dockerFile: server/routerlicious/Dockerfile
             buildContext: server/routerlicious
-            arguments: --target base --build-arg VERSION_BUILDNUMBER=$(Build.BuildNumber) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)
+            arguments: --target base
             tags: |
               $(Build.BuildNumber)
 
@@ -208,7 +216,7 @@ stages:
               command: build
               dockerFile: server/routerlicious/Dockerfile
               buildContext: server/routerlicious
-              arguments: '--target runner --build-arg VERSION_BUILDNUMBER=$(Build.BuildNumber) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)'
+              arguments: --target runner
               tags: |
                 $(Build.BuildNumber)
           

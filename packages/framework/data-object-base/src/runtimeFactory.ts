@@ -18,20 +18,20 @@ import {
     FlushMode,
 } from "@fluidframework/runtime-definitions";
 
-const defaultComponentId = "" as const;
+const defaultStoreId = "" as const;
 
 export class RuntimeFactory implements IRuntimeFactory {
     private readonly registry: NamedFluidDataStoreRegistryEntries;
 
     constructor(
-        private readonly defaultComponent: IFluidDataStoreFactory,
-        components: IFluidDataStoreFactory[] = [defaultComponent],
+        private readonly defaultStoreFactory: IFluidDataStoreFactory,
+        storeFactories: IFluidDataStoreFactory[] = [defaultStoreFactory],
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
     ) {
         this.registry =
-            (components.includes(defaultComponent)
-                ? components
-                : components.concat(defaultComponent)
+            (storeFactories.includes(defaultStoreFactory)
+                ? storeFactories
+                : storeFactories.concat(defaultStoreFactory)
             ).map(
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 (factory) => [factory.type!, factory]) as NamedFluidDataStoreRegistryEntries;
@@ -51,9 +51,9 @@ export class RuntimeFactory implements IRuntimeFactory {
         // Flush mode to manual to batch operations within a turn
         runtime.setFlushMode(FlushMode.Manual);
 
-        // On first boot create the base component
-        if (!runtime.existing && this.defaultComponent.type) {
-            await runtime.createRootDataStore(this.defaultComponent.type, defaultComponentId);
+        // On first boot create the base data store
+        if (!runtime.existing && this.defaultStoreFactory.type) {
+            await runtime.createRootDataStore(this.defaultStoreFactory.type, defaultStoreId);
         }
 
         return runtime;

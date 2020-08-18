@@ -1,8 +1,12 @@
 name: polite-pebble
 
 on:
-  repository_dispatch:
+  # repository_dispatch:
     # all types
+  push:
+    branches:
+      - none
+
 
 jobs:
   build_and_deploy_job:
