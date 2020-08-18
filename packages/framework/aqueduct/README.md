@@ -6,7 +6,7 @@ The Aqueduct is a library for building Fluid objects and Fluid containers within
 
 ## Fluid Object Development
 
-Fluid object development consists of developing the data object and the corresponding DataObjectFactory. The data object defines the logic of your Fluid object, whereas the DataObjectFactory defines how to initialize your object.
+Fluid object development consists of developing the data object and the corresponding `DataObjectFactory`. The data object defines the logic of your Fluid object, whereas the `DataObjectFactory` defines how to initialize your object.
 
 ### Data Object Development
 
@@ -20,7 +20,7 @@ The [`DataObject`](./src/data-objects/dataObject.ts) class extends [`PureDataObj
 - Scheduled Task routing that makes it easier to use the Scheduler Fluid object
 - Blob Storage implementation that makes it easier to store and retrieve blobs.
 
-> Note: Most developers will want to use the DataObject as their base class to extend.
+> Note: Most developers will want to use the `DataObject` as their base class to extend.
 
 #### [`PureDataObject`](./src/data-object/PureDataObject.ts)
 
@@ -76,7 +76,7 @@ export class Clicker extends DataObject implements IFluidHTMLView {
 
 ### DataObjectFactory Development
 
-The DataObjectFactory is used to create a Fluid object and to initialize a data object within the context of a Container. The factory can live alongside a data object or within a different package. The DataObjectFactory defines the Distributed Data Structures used within the data object as well as any Fluid objects it depends on.
+The `DataObjectFactory` is used to create a Fluid object and to initialize a data object within the context of a Container. The factory can live alongside a data object or within a different package. The `DataObjectFactory` defines the Distributed Data Structures used within the data object as well as any Fluid objects it depends on.
 
 The Aqueduct offers a factory for each of the data objects provided.
 
@@ -86,7 +86,7 @@ The Aqueduct offers a factory for each of the data objects provided.
 
 #### DataObjectFactory Example
 
-In the below example we build a DataObjectFactory for the [`Clicker`](####Data-Object-Example) example above. In the above example we use `this.root` to store our `"clicks"`. The `DataObject` comes with the `SharedDirectory` already initialized so we do not need to add additional Distributed Data Structures.
+In the below example we build a `DataObjectFactory` for the [`Clicker`](####Data-Object-Example) example above. In the above example we use `this.root` to store our `"clicks"`. The `DataObject` comes with the `SharedDirectory` already initialized so we do not need to add additional Distributed Data Structures.
 
 ```typescript
 export const ClickerInstantiationFactory = new DataObjectFactory(
@@ -105,7 +105,7 @@ const myClicker = ClickerInstantiationFactory.createInstance(this.context) as Cl
 
 The `this.providers` object on `DataObject` is initialized in the constructor and is generated based on Providers provided by the Container. To access a specific provider you need to:
 
-1. Define the type in the generic on Pure/DataObject
+1. Define the type in the generic on `PureDataObject`/`DataObject`
 2. Add the symbol to your Factory (see [DataObjectFactory Example](####Data-Object-Factory-Example) below)
 
 In the below example we have an `IFluidUserInfo` interface that looks like this:
@@ -209,7 +209,7 @@ A factory that will return a Promise to the object.
 
 ### Container Level Request Handlers
 
-You can provide custom request handlers to the container. These request handlers are injected after system handlers but before the data object get. Request handlers allow you to intercept requests made to the container and return custom responses.
+You can provide custom request handlers to the container. These request handlers are injected after system handlers but before the `DataObject` get function. Request handlers allow you to intercept requests made to the container and return custom responses.
 
 Consider a scenario where you want to create a random color generator. I could create a RequestHandler that when someone makes a request to the Container for `{url:"color"}` will intercept and return a custom `IResponse` of `{ status:200, type:"text/plain", value:"blue"}`.
 
