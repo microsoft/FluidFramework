@@ -28,39 +28,39 @@ const codeDetails: IFluidCodeDetails = {
     config: {},
 };
 
-async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidObject> {
-    const response = await container.request({ url: componentId });
+async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidObject> {
+    const response = await container.request({ url: dataStoreId });
     if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        throw new Error(`Component with id: ${componentId} not found`);
+        throw new Error(`DataStore with id: ${dataStoreId} not found`);
     }
     return response.value as ITestFluidObject;
 }
 
 const tests = (args: ICompatTestArgs) => {
     let opProcessingController: OpProcessingController;
-    let component1: ITestFluidObject;
+    let dataStore1: ITestFluidObject;
     let sharedMap1: ISharedMap;
     let sharedMap2: ISharedMap;
     let sharedMap3: ISharedMap;
 
     beforeEach(async () => {
         const container1 = await args.makeTestContainer(registry) as Container;
-        component1 = await requestFluidObject("default", container1);
-        sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
+        dataStore1 = await requestFluidObject("default", container1);
+        sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
         const container2 = await args.makeTestContainer(registry) as Container;
-        const component2 = await requestFluidObject("default", container2);
-        sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
+        const dataStore2 = await requestFluidObject("default", container2);
+        sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
         const container3 = await args.makeTestContainer(registry) as Container;
-        const component3 = await requestFluidObject("default", container3);
-        sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
+        const dataStore3 = await requestFluidObject("default", container3);
+        sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 
         opProcessingController = new OpProcessingController(args.deltaConnectionServer);
         opProcessingController.addDeltaManagers(
-            component1.runtime.deltaManager,
-            component2.runtime.deltaManager,
-            component3.runtime.deltaManager,
+            dataStore1.runtime.deltaManager,
+            dataStore2.runtime.deltaManager,
+            dataStore3.runtime.deltaManager,
         );
 
         sharedMap1.set("testKey1", "testValue");
@@ -290,7 +290,7 @@ const tests = (args: ICompatTestArgs) => {
          */
 
         // Create a new map in local (detached) state.
-        const newSharedMap1 = SharedMap.create(component1.runtime);
+        const newSharedMap1 = SharedMap.create(dataStore1.runtime);
 
         // Set a value while in local state.
         newSharedMap1.set("newKey", "newValue");
@@ -338,6 +338,6 @@ describe("Map", () => {
     });
 
     describe("compatibility", () => {
-        compatTest(tests, { testFluidComponent: true });
+        compatTest(tests, { testFluidObject: true });
     });
 });

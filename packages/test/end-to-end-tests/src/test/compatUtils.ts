@@ -44,22 +44,22 @@ export interface ICompatTestArgs {
     /**
      * Used to create a test Container. In compatTest(), this Container and its runtime will be arbitrarily-versioned.
      */
-    makeTestContainer: (testFluidComponentFactoryRegistry?) => Promise<Container | old.Container>,
+    makeTestContainer: (testFluidDataStoreFactoryRegistry?) => Promise<Container | old.Container>,
     deltaConnectionServer?: ILocalDeltaConnectionServer,
     documentServiceFactory?: LocalDocumentServiceFactory | old.LocalDocumentServiceFactory,
 }
 
 export interface ICompatTestOptions {
     /**
-     * Use TestFluidComponent instead of PrimedComponent
+     * Use TestFluidObject instead of DataObject
      */
-    testFluidComponent?: boolean,
+    testFluidObject?: boolean,
 }
 
 // TODO: once 0.25 is released this can be replaced with the old imported type
 type OldChannelFactoryRegistry = Iterable<[string | undefined, old.IChannelFactory]>;
 
-// convert a channel factory registry for TestFluidComponentFactory to one with old channel factories
+// convert a channel factory registry for TestFluidObjectFactory to one with old channel factories
 function convertRegistry(registry: ChannelFactoryRegistry = []): OldChannelFactoryRegistry {
     const oldRegistry = [];
     for (const [key, factory] of registry) {
@@ -74,46 +74,46 @@ function convertRegistry(registry: ChannelFactoryRegistry = []): OldChannelFacto
     return oldRegistry;
 }
 
-export class TestComponent extends DataObject {
-    public static readonly type = "@fluid-example/test-component";
+export class TestDataStore extends DataObject {
+    public static readonly type = "@fluid-example/test-dataStore";
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
 }
 
-export class OldTestComponent extends old.DataObject {
-    public static readonly type = "@fluid-example/test-component";
+export class OldTestDataStore extends old.DataObject {
+    public static readonly type = "@fluid-example/test-dataStore";
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
 }
 
-export const createPrimedComponentFactory = (): IFluidDataStoreFactory => {
-    return new DataObjectFactory(TestComponent.type, TestComponent, [], {});
+export const createDataObjectFactory = (): IFluidDataStoreFactory => {
+    return new DataObjectFactory(TestDataStore.type, TestDataStore, [], {});
 };
 
-export const createOldPrimedComponentFactory = (): old.IFluidDataStoreFactory => {
-    return new old.DataObjectFactory(OldTestComponent.type, OldTestComponent, [], {});
+export const createOldDataObjectFactory = (): old.IFluidDataStoreFactory => {
+    return new old.DataObjectFactory(OldTestDataStore.type, OldTestDataStore, [], {});
 };
 
-export const createTestFluidComponentFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
+export const createTestFluidObjectFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
     return new TestFluidObjectFactory(registry);
 };
 
-export const createOldTestFluidComponentFactory = (registry?: ChannelFactoryRegistry): old.IFluidDataStoreFactory => {
+export const createOldTestFluidObjectFactory = (registry?: ChannelFactoryRegistry): old.IFluidDataStoreFactory => {
     return new old.TestFluidComponentFactory(convertRegistry(registry));
 };
 
 export const createRuntimeFactory = (
     type: string,
-    componentFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
+    DataStoreFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
     runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): IRuntimeFactory => {
-    return new TestContainerRuntimeFactory(type, componentFactory as IFluidDataStoreFactory, runtimeOptions);
+    return new TestContainerRuntimeFactory(type, DataStoreFactory as IFluidDataStoreFactory, runtimeOptions);
 };
 
 // TODO: once 0.25 is released this can import the old version of TestContainerRuntimeFactory used above
 export const createOldRuntimeFactory = (
     type: string,
-    componentFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
+    dataStoreFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
     runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): old.IRuntimeFactory => {
     const builder = new old.RuntimeRequestHandlerBuilder();
@@ -126,14 +126,14 @@ export const createOldRuntimeFactory = (
         instantiateRuntime: async (context: old.IContainerContext) => {
             const runtime = await old.ContainerRuntime.load(
                 context,
-                [[type, Promise.resolve(componentFactory as old.IFluidDataStoreFactory)]],
+                [[type, Promise.resolve(dataStoreFactory as old.IFluidDataStoreFactory)]],
                 async (req, rt) => builder.handleRequest(req, rt),
                 runtimeOptions,
             );
             if (!runtime.existing) {
-                const componentRuntime = await runtime._createDataStore("default", type);
-                await componentRuntime.request({ url: "/" });
-                componentRuntime.bindToContext();
+                const dataStoreRuntime = await runtime._createDataStore("default", type);
+                await dataStoreRuntime.request({ url: "/" });
+                dataStoreRuntime.bindToContext();
             }
             return runtime;
         },
@@ -184,10 +184,10 @@ export const compatTest = (
         const makeTestContainer = async (registry?: ChannelFactoryRegistry) => createContainerWithOldLoader(
             {
                 fluidExport: createRuntimeFactory(
-                    TestComponent.type,
-                    options.testFluidComponent
-                        ? createTestFluidComponentFactory(registry)
-                        : createPrimedComponentFactory(),
+                    TestDataStore.type,
+                    options.testFluidObject
+                        ? createTestFluidObjectFactory(registry)
+                        : createDataObjectFactory(),
                 ),
             },
             documentServiceFactory,
@@ -221,10 +221,10 @@ export const compatTest = (
         const makeTestContainer = async (registry: ChannelFactoryRegistry) => createContainer(
             {
                 fluidExport: createOldRuntimeFactory(
-                    OldTestComponent.type,
-                    options.testFluidComponent
-                        ? createOldTestFluidComponentFactory(registry)
-                        : createOldPrimedComponentFactory(),
+                    OldTestDataStore.type,
+                    options.testFluidObject
+                        ? createOldTestFluidObjectFactory(registry)
+                        : createOldDataObjectFactory(),
                 ),
             },
             documentServiceFactory,
@@ -256,10 +256,10 @@ export const compatTest = (
         const makeTestContainer = async (registry: ChannelFactoryRegistry) => createContainer(
             {
                 fluidExport: createRuntimeFactory(
-                    OldTestComponent.type,
-                    options.testFluidComponent
-                        ? createOldTestFluidComponentFactory(registry)
-                        : createOldPrimedComponentFactory(),
+                    OldTestDataStore.type,
+                    options.testFluidObject
+                        ? createOldTestFluidObjectFactory(registry)
+                        : createOldDataObjectFactory(),
                 ),
             },
             documentServiceFactory,

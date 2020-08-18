@@ -70,7 +70,7 @@ const tests = (args: ICompatTestArgs) => {
     }
 
     beforeEach(async () => {
-        // Create the first container, component and DDSes.
+        // Create the first container, dataStore and DDSes.
         container = await args.makeTestContainer(registry) as Container;
         containerComp = await requestFluidObject(container, "default");
         containerCompContainerRuntime = containerComp.context.containerRuntime as IContainerRuntime;
@@ -390,6 +390,6 @@ describe("Document Dirty", () => {
     });
 
     describe("compatibility", () => {
-        compatTest(tests, { testFluidComponent: true });
+        compatTest(tests, { testFluidObject: true });
     });
 });

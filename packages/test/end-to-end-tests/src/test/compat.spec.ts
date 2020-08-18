@@ -13,20 +13,20 @@ import {
     compatTest,
     createContainer,
     createContainerWithOldLoader,
-    createOldPrimedComponentFactory,
     createOldRuntimeFactory,
-    createPrimedComponentFactory,
     createRuntimeFactory,
     ICompatTestArgs,
-    OldTestComponent,
-    TestComponent,
+    OldTestDataStore,
+    TestDataStore,
+    createDataObjectFactory,
+    createOldDataObjectFactory,
 } from "./compatUtils";
 import * as old from "./oldVersion";
 
 describe("loader/runtime compatibility", () => {
     const tests = function(args: ICompatTestArgs) {
         let container: Container | old.Container;
-        let component: TestComponent | OldTestComponent;
+        let dataStore: TestDataStore | OldTestDataStore;
         let opProcessingController: OpProcessingController;
         let containerError: boolean = false;
 
@@ -36,10 +36,10 @@ describe("loader/runtime compatibility", () => {
             container.on("warning", () => containerError = true);
             container.on("closed", (error) => containerError = containerError || error !== undefined);
 
-            component = await requestFluidObject<TestComponent>(container as IFluidRouter, "default");
+            dataStore = await requestFluidObject<TestDataStore>(container as IFluidRouter, "default");
 
             opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-            opProcessingController.addDeltaManagers(component._runtime.deltaManager);
+            opProcessingController.addDeltaManagers(dataStore._runtime.deltaManager);
         });
 
         afterEach(async function() {
@@ -52,8 +52,8 @@ describe("loader/runtime compatibility", () => {
 
         it("can set/get on root directory", async function() {
             const test = ["fluid is", "pretty neat!"];
-            (component._root as any).set(test[0], test[1]);
-            assert.strictEqual(await component._root.wait(test[0]), test[1]);
+            (dataStore._root as any).set(test[0], test[1]);
+            assert.strictEqual(await dataStore._root.wait(test[0]), test[1]);
         });
 
         it("can summarize", async function() {
@@ -69,43 +69,43 @@ describe("loader/runtime compatibility", () => {
 
         it("can load existing", async function() {
             const test = ["prague is", "also neat"];
-            (component._root as any).set(test[0], test[1]);
-            assert.strictEqual(await component._root.wait(test[0]), test[1]);
+            (dataStore._root as any).set(test[0], test[1]);
+            assert.strictEqual(await dataStore._root.wait(test[0]), test[1]);
 
             const containersP: Promise<Container | old.Container>[] = [
                 createContainer( // new everything
-                    { fluidExport: createRuntimeFactory(TestComponent.type, createPrimedComponentFactory()) },
+                    { fluidExport: createRuntimeFactory(TestDataStore.type, createDataObjectFactory()) },
                     args.documentServiceFactory as LocalDocumentServiceFactory),
                 createContainerWithOldLoader( // old loader, new container/component runtimes
-                    { fluidExport: createRuntimeFactory(TestComponent.type, createPrimedComponentFactory()) },
+                    { fluidExport: createRuntimeFactory(TestDataStore.type, createDataObjectFactory()) },
                     args.documentServiceFactory as old.LocalDocumentServiceFactory),
                 createContainerWithOldLoader( // old everything
-                    { fluidExport: createOldRuntimeFactory(TestComponent.type, createOldPrimedComponentFactory()) },
+                    { fluidExport: createOldRuntimeFactory(TestDataStore.type, createOldDataObjectFactory()) },
                     args.documentServiceFactory as old.LocalDocumentServiceFactory),
                 createContainer( // new loader, old container/component runtimes
-                    { fluidExport: createOldRuntimeFactory(TestComponent.type, createOldPrimedComponentFactory()) },
+                    { fluidExport: createOldRuntimeFactory(TestDataStore.type, createOldDataObjectFactory()) },
                     args.documentServiceFactory as LocalDocumentServiceFactory),
                 createContainer( // new loader/container runtime, old component runtime
-                    { fluidExport: createRuntimeFactory(TestComponent.type, createOldPrimedComponentFactory()) },
+                    { fluidExport: createRuntimeFactory(TestDataStore.type, createOldDataObjectFactory()) },
                     args.documentServiceFactory as LocalDocumentServiceFactory),
             ];
 
-            const components = await Promise.all(containersP.map(async (containerP) => containerP.then(
-                async (c) => requestFluidObject<TestComponent | OldTestComponent>(c as IFluidRouter, "default"))));
+            const dataStores = await Promise.all(containersP.map(async (containerP) => containerP.then(
+                async (c) => requestFluidObject<TestDataStore | OldTestDataStore>(c as IFluidRouter, "default"))));
 
-            // get initial test value from each component
-            components.map(async (c) => assert.strictEqual(await c._root.wait(test[0]), test[1]));
+            // get initial test value from each data store
+            dataStores.map(async (c) => assert.strictEqual(await c._root.wait(test[0]), test[1]));
 
-            // set a test value from every component (besides initial)
-            const test2 = [...Array(components.length).keys()].map((x) => x.toString());
-            components.map(async (c, i) => (c._root as any).set(test2[i], test2[i]));
+            // set a test value from every data store (besides initial)
+            const test2 = [...Array(dataStores.length).keys()].map((x) => x.toString());
+            dataStores.map(async (c, i) => (c._root as any).set(test2[i], test2[i]));
 
-            // get every test value from every component (besides initial)
-            components.map(async (c) => test2.map(
+            // get every test value from every data store (besides initial)
+            dataStores.map(async (c) => test2.map(
                 async (testVal) => assert.strictEqual(await c._root.wait(testVal), testVal)));
 
-            // get every value from initial component
-            test2.map(async (testVal) => assert.strictEqual(await component._root.wait(testVal), testVal));
+            // get every value from initial data store
+            test2.map(async (testVal) => assert.strictEqual(await dataStore._root.wait(testVal), testVal));
         });
     };
 

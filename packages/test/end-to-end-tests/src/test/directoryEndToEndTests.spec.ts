@@ -31,29 +31,29 @@ const codeDetails: IFluidCodeDetails = {
 
 const tests = (args: ICompatTestArgs) => {
     let opProcessingController: OpProcessingController;
-    let component1: ITestFluidObject;
+    let dataStore1: ITestFluidObject;
     let sharedDirectory1: ISharedDirectory;
     let sharedDirectory2: ISharedDirectory;
     let sharedDirectory3: ISharedDirectory;
 
     beforeEach(async () => {
         const container1 = await args.makeTestContainer(registry) as Container;
-        component1 = await requestFluidObject<ITestFluidObject>(container1, "default");
-        sharedDirectory1 = await component1.getSharedObject<SharedDirectory>(directoryId);
+        dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        sharedDirectory1 = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
 
         const container2 = await args.makeTestContainer(registry) as Container;
-        const component2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        sharedDirectory2 = await component2.getSharedObject<SharedDirectory>(directoryId);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        sharedDirectory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
 
         const container3 = await args.makeTestContainer(registry) as Container;
-        const component3 = await requestFluidObject<ITestFluidObject>(container3, "default");
-        sharedDirectory3 = await component3.getSharedObject<SharedDirectory>(directoryId);
+        const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+        sharedDirectory3 = await dataStore3.getSharedObject<SharedDirectory>(directoryId);
 
         opProcessingController = new OpProcessingController(args.deltaConnectionServer);
         opProcessingController.addDeltaManagers(
-            component1.runtime.deltaManager,
-            component2.runtime.deltaManager,
-            component3.runtime.deltaManager);
+            dataStore1.runtime.deltaManager,
+            dataStore2.runtime.deltaManager,
+            dataStore3.runtime.deltaManager);
 
         await opProcessingController.process();
     });
@@ -297,7 +297,7 @@ const tests = (args: ICompatTestArgs) => {
 
         describe("Nested map support", () => {
             it("supports setting a map as a value", async () => {
-                const newMap = SharedMap.create(component1.runtime);
+                const newMap = SharedMap.create(dataStore1.runtime);
                 sharedDirectory1.set("mapKey", newMap.handle);
 
                 await opProcessingController.process();
@@ -560,7 +560,7 @@ const tests = (args: ICompatTestArgs) => {
 
             it("can process set in local state", async () => {
                 // Create a new directory in local (detached) state.
-                const newDirectory1 = SharedDirectory.create(component1.runtime);
+                const newDirectory1 = SharedDirectory.create(dataStore1.runtime);
 
                 // Set a value while in local state.
                 newDirectory1.set("newKey", "newValue");
@@ -597,7 +597,7 @@ const tests = (args: ICompatTestArgs) => {
 
             it("can process sub directory ops in local state", async () => {
                 // Create a new directory in local (detached) state.
-                const newDirectory1 = SharedDirectory.create(component1.runtime);
+                const newDirectory1 = SharedDirectory.create(dataStore1.runtime);
 
                 // Create a sub directory while in local state.
                 const subDirName = "testSubDir";
@@ -658,6 +658,6 @@ describe("Directory", () => {
     });
 
     describe("compatibility", () => {
-        compatTest(tests, { testFluidComponent: true });
+        compatTest(tests, { testFluidObject: true });
     });
 });
