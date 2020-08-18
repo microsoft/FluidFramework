@@ -103,7 +103,7 @@ const myClicker = ClickerInstantiationFactory.createInstance(this.context) as Cl
 
 #### Providers in data objects
 
-The `this.providers` object on `DataObject` is initialized in the constructor and is generated based on Providers provided by the Container. To access a specific provider you need to:
+The `this.providers` object on `PureDataObject` is initialized in the constructor and is generated based on Providers provided by the Container. To access a specific provider you need to:
 
 1. Define the type in the generic on `PureDataObject`/`DataObject`
 2. Add the symbol to your factory (see [DataObjectFactory Example](####Data-Object-Factory-Example) below)
