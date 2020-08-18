@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq, object-shorthand */
 /* eslint-disable no-bitwise, no-param-reassign */
 
+import { Trace } from "@fluidframework/common-utils";
 import * as Base from "./base";
 import * as MergeTree from "./mergeTree";
 
@@ -1027,7 +1028,7 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
     intervals = new RedBlackTree<T, AugmentedIntervalNode>(intervalComparer, this);
     diag = false;
     timePut = false;
-    putTime = 0;
+    putTime = 0; // ms
     putCount = 0;
 
     printTiming() {
@@ -1049,9 +1050,9 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
             };
         }
         if (this.timePut) {
-            const clockStart = MergeTree.clock();
+            const trace = Trace.start();
             this.intervals.put(x, { minmax: x.clone() }, rbConflict);
-            this.putTime += MergeTree.elapsedMicroseconds(clockStart);
+            this.putTime += trace.trace().duration;
             this.putCount++;
         } else {
             this.intervals.put(x, { minmax: x.clone() }, rbConflict);

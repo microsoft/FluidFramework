@@ -8,19 +8,12 @@
 import path from "path";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import random from "random-js";
+import { Trace } from "@fluidframework/common-utils";
 import { LocalReference } from "../localReference";
 import * as ops from "../ops";
 import * as Properties from "../properties";
 import { TestClient } from "./testClient";
 import { loadTextFromFileWithMarkers } from "./testUtils";
-
-const clock = () => process.hrtime();
-
-function elapsedMicroseconds(start: [number, number]) {
-    const end: number[] = process.hrtime(start);
-    const duration = Math.round((end[0] * 1000000) + (end[1] / 1000));
-    return duration;
-}
 
 export function propertyCopy() {
     const propCount = 2000;
@@ -33,7 +26,7 @@ export function propertyCopy() {
         v[i] = i;
         map.set(a[i], v[i]);
     }
-    let clockStart = clock();
+    let traceStart = Trace.start();
     let obj: Properties.MapLike<number>;
     for (let j = 0; j < iterCount; j++) {
         obj = Properties.createMap<number>();
@@ -41,11 +34,11 @@ export function propertyCopy() {
             obj[a[i]] = v[i];
         }
     }
-    let et = elapsedMicroseconds(clockStart);
+    let et = traceStart.trace().duration;
     let perIter = (et / iterCount).toFixed(3);
     let perProp = (et / (iterCount * propCount)).toFixed(3);
-    console.log(`arr prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
-    clockStart = clock();
+    console.log(`arr prop init time ${perIter} ms per ${propCount} properties; ${perProp} ms per property`);
+    traceStart = Trace.start();
     for (let j = 0; j < iterCount; j++) {
         const bObj = Properties.createMap<number>();
         // eslint-disable-next-line guard-for-in, no-restricted-syntax
@@ -53,40 +46,40 @@ export function propertyCopy() {
             bObj[key] = obj[key];
         }
     }
-    et = elapsedMicroseconds(clockStart);
+    et = traceStart.trace().duration;
     perIter = (et / iterCount).toFixed(3);
     perProp = (et / (iterCount * propCount)).toFixed(3);
-    console.log(`obj prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
-    clockStart = clock();
+    console.log(`obj prop init time ${perIter} ms per ${propCount} properties; ${perProp} ms per property`);
+    traceStart = Trace.start();
     for (let j = 0; j < iterCount; j++) {
         const bObj = Properties.createMap<number>();
         for (const [key, value] of map) {
             bObj[key] = value;
         }
     }
-    et = elapsedMicroseconds(clockStart);
+    et = traceStart.trace().duration;
     perIter = (et / iterCount).toFixed(3);
     perProp = (et / (iterCount * propCount)).toFixed(2);
-    console.log(`map prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
-    clockStart = clock();
+    console.log(`map prop init time ${perIter} ms per ${propCount} properties; ${perProp} ms per property`);
+    traceStart = Trace.start();
     for (let j = 0; j < iterCount; j++) {
         const bObj = Properties.createMap<number>();
         map.forEach((value, key) => { bObj[key] = value; });
     }
-    et = elapsedMicroseconds(clockStart);
+    et = traceStart.trace().duration;
     perIter = (et / iterCount).toFixed(3);
     perProp = (et / (iterCount * propCount)).toFixed(2);
-    console.log(`map foreach prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
-    clockStart = clock();
+    console.log(`map foreach prop init time ${perIter} ms per ${propCount} properties; ${perProp} ms per property`);
+    traceStart = Trace.start();
     for (let j = 0; j < iterCount; j++) {
         const bmap = new Map<string, number>();
         map.forEach((value, key) => { bmap.set(key, value); });
     }
-    et = elapsedMicroseconds(clockStart);
+    et = traceStart.trace().duration;
     perIter = (et / iterCount).toFixed(3);
     perProp = (et / (iterCount * propCount)).toFixed(2);
     console.log(
-        `map to map foreach prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
+        `map to map foreach prop init time ${perIter} ms per ${propCount} properties; ${perProp} ms per property`);
     const diffMap = new Map<string, number>();
     map.forEach((value, key) => {
         if (Math.random() < 0.5) {
@@ -95,7 +88,7 @@ export function propertyCopy() {
             diffMap.set(key, value * 3);
         }
     });
-    clockStart = clock();
+    traceStart = Trace.start();
     const grayMap = new Map<string, number>();
     for (let j = 0; j < iterCount; j++) {
         map.forEach((value, key) => {
@@ -105,9 +98,10 @@ export function propertyCopy() {
             }
         });
     }
+    et = traceStart.trace().duration;
     perIter = (et / iterCount).toFixed(3);
     perProp = (et / (iterCount * propCount)).toFixed(2);
-    console.log(`diff time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
+    console.log(`diff time ${perIter} ms per ${propCount} properties; ${perProp} ms per property`);
 }
 
 function makeBookmarks(client: TestClient, bookmarkCount: number) {
@@ -138,7 +132,7 @@ function measureFetch(startFile: string, withBookmarks = false) {
         console.log(`inserting ${bookmarkCount} refs into text`);
     }
     const reps = 20;
-    let clockStart = clock();
+    let traceStart = Trace.start();
     let count = 0;
     for (let i = 0; i < reps; i++) {
         for (let pos = 0; pos < client.getLength();) {
@@ -160,16 +154,16 @@ function measureFetch(startFile: string, withBookmarks = false) {
             count++;
         }
     }
-    let et = elapsedMicroseconds(clockStart);
+    let et = traceStart.trace().duration;
     // eslint-disable-next-line max-len
-    console.log(`fetch of ${count / reps} runs over ${client.getLength()} total chars took ${(et / count).toFixed(1)} microseconds per run`);
+    console.log(`fetch of ${count / reps} runs over ${client.getLength()} total chars took ${(et / count).toFixed(1)} milliseconds per run`);
     // Bonus: measure clone
-    clockStart = clock();
+    traceStart = Trace.start();
     for (let i = 0; i < reps; i++) {
         client.mergeTree.clone();
     }
-    et = elapsedMicroseconds(clockStart);
-    console.log(`naive clone took ${(et / (1000 * reps)).toFixed(1)} milliseconds`);
+    et = traceStart.trace().duration;
+    console.log(`naive clone took ${(et / reps).toFixed(1)} milliseconds`);
 }
 
 const baseDir = "../../src/test/literature";
