@@ -2,19 +2,19 @@
 
 ![Aqueduct](https://publicdomainvectors.org/photos/johnny-automatic-Roman-aqueducts.png)
 
-The Aqueduct is a library for building FluidObjects and Containers within the Fluid Framework. Its goal is to provide a thin base layer over the existing Fluid Framework interfaces that allows developers to get started quickly.
+The Aqueduct is a library for building Fluid objects and Fluid containers within the Fluid Framework. Its goal is to provide a thin base layer over the existing Fluid Framework interfaces that allows developers to get started quickly.
 
 ## Fluid Object Development
 
 Fluid object development consists of developing the data object and the corresponding DataObjectFactory. The data object defines the logic of your Fluid object, whereas the DataObjectFactory defines how to initialize your object.
 
-### DataObject Development
+### Data Object Development
 
-The `DataObject` and the `PureDataObject` are the two base data objects provided by the library.
+`DataObject` and `PureDataObject` are the two base classes provided by the library.
 
 #### [`DataObject`](./src/data-objects/dataObject.ts)
 
-The [`DataObject`](./src/data-objects/dataObject.ts) extends the [`PureDataObject`](####PureDataObject) and provides all of its functionality as well as the following additional functionality:
+The [`DataObject`](./src/data-objects/dataObject.ts) class extends [`PureDataObject`](####PureDataObject) and provides the following additional functionality:
 
 - A `root` SharedDirectory that makes creating and storing Distributed Data Structures and Objects easy.
 - Scheduled Task routing that makes it easier to use the Scheduler Fluid object
@@ -144,7 +144,7 @@ A Container is a collection of data objects and functionality that produce an ex
 The Aqueduct provides the [`ContainerRuntimeFactoryWithDataStore`](./src/containerRuntimeFactories/containerRuntimeFactoryWithDataStore.ts) that allows you as a Container developer to:
 
 - Define the registry of data objects that can be created
-- Declare the Default data object
+- Declare the default data object
 - Declare [Container Services](###Container-Service-Development)
 - Declare Container Level [Request Handlers](###Container-Level-Request-Handlers)
 
@@ -173,7 +173,7 @@ interface ProviderEntry<T extends keyof IFluidObject> {
 ```
 
 The `type` must be a keyof `IFluidObject`. This basically means that it needs to be the name of an interfaces that extends off of `IFluidObject`. The `provider` must be something that provides the interface defined in `type`. The `DependencyContainer` we use in the `@fluidframework/synthesize`
-package defines the follow `FluidObjectProvider` types:
+package defines the following `FluidObjectProvider` types:
 
 ```typescript
 type FluidObjectProvider<T extends keyof IFluidObject> =
@@ -209,7 +209,7 @@ A factory that will return a Promise to the object.
 
 ### Container Level Request Handlers
 
-You can provide custom Request Handlers to the Container. These request handlers are injected after system handlers but before the data object get. Request Handlers allow you to intercept request made to the container and return custom responses.
+You can provide custom request handlers to the container. These request handlers are injected after system handlers but before the data object get. Request handlers allow you to intercept requests made to the container and return custom responses.
 
 Consider a scenario where you want to create a random color generator. I could create a RequestHandler that when someone makes a request to the Container for `{url:"color"}` will intercept and return a custom `IResponse` of `{ status:200, type:"text/plain", value:"blue"}`.
 
