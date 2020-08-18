@@ -5,7 +5,6 @@
     ],
     "compilerOptions": {
         "composite": true,
-        "rootDir": ".",
         "outDir": "../built/dist",
     },
 }
