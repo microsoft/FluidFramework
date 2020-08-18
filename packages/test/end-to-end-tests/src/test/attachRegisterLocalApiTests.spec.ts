@@ -12,9 +12,9 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
-    ITestFluidComponent,
-    TestFluidComponentFactory,
-    TestFluidComponent,
+    ITestFluidObject,
+    TestFluidObjectFactory,
+    TestFluidObject,
 } from "@fluidframework/test-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -52,7 +52,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         containerRuntime: IContainerRuntimeBase,
     ) => {
         const router = await containerRuntime.createDataStore(["default"]);
-        const peerDataStore = await requestFluidObject<ITestFluidComponent>(router, "/");
+        const peerDataStore = await requestFluidObject<ITestFluidObject>(router, "/");
         return {
             peerDataStore,
             peerDataStoreRuntimeChannel: peerDataStore.channel,
@@ -60,7 +60,7 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
     };
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
-        const factory: TestFluidComponentFactory = new TestFluidComponentFactory([
+        const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
             [mapId1, SharedMap.getFactory()],
             [mapId2, SharedMap.getFactory()],
         ]);
@@ -375,17 +375,17 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
                 await createDetachedContainerAndGetRootDataStore();
             await container.attach(request);
 
-            // Create another dataStore which returns the runtime channel.
+            // Create another component which returns the runtime channel.
             const peerDataStore1 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
-            const dataStore2 = peerDataStore1.peerDataStore as TestFluidComponent;
+            const dataStore2 = peerDataStore1.peerDataStore as TestFluidObject;
             assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
-                "DataStore2 should be unattached");
+                "Component2 should be unattached");
 
-            // Create another dataStore which returns the runtime channel.
+            // Create another component which returns the runtime channel.
             const peerDataStore2 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
-            const dataStore3 = peerDataStore2.peerDataStore as TestFluidComponent;
+            const dataStore3 = peerDataStore2.peerDataStore as TestFluidObject;
             assert.strictEqual(dataStore3.runtime.IFluidHandleContext.isAttached, false,
-                "DataStore3 should be unattached");
+                "Component3 should be unattached");
 
             // Create first channel from dataStore2
             const channel2 = await dataStore2.getSharedObject<SharedMap>(mapId1);
@@ -426,20 +426,20 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
 
             // Create another dataStore which returns the runtime channel.
             const peerDataStore1 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
-            const dataStore2 = peerDataStore1.peerDataStore as TestFluidComponent;
+            const dataStore2 = peerDataStore1.peerDataStore as TestFluidObject;
             assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
                 "DataStore2 should be unattached");
 
             // Create another dataStore which returns the runtime channel.
             // Create another dataStore which returns the runtime channel.
             const peerDataStore2 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
-            const dataStore3 = peerDataStore2.peerDataStore as TestFluidComponent;
+            const dataStore3 = peerDataStore2.peerDataStore as TestFluidObject;
             assert.strictEqual(dataStore3.runtime.IFluidHandleContext.isAttached, false,
                 "DataStore3 should be unattached");
 
             // Create another dataStore which returns the runtime channel.
             const peerDataStore3 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
-            const dataStore4 = peerDataStore3.peerDataStore as TestFluidComponent;
+            const dataStore4 = peerDataStore3.peerDataStore as TestFluidObject;
             assert.strictEqual(dataStore4.runtime.IFluidHandleContext.isAttached, false,
                 "DataStore4 should be unattached");
 
@@ -554,11 +554,11 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         const { container, defaultDataStore } =
             await createDetachedContainerAndGetRootDataStore();
         const peerDataStore1 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
-        const dataStore1 = peerDataStore1.peerDataStore as TestFluidComponent;
+        const dataStore1 = peerDataStore1.peerDataStore as TestFluidObject;
         peerDataStore1.peerDataStoreRuntimeChannel.bindToContext();
 
         const peerDataStore2 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
-        const dataStore2 = peerDataStore2.peerDataStore as TestFluidComponent;
+        const dataStore2 = peerDataStore2.peerDataStore as TestFluidObject;
 
         let dataStore1AttachState = AttachState.Detached;
         dataStore1.context.once("attaching", () => {
@@ -595,11 +595,11 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         const { container, defaultDataStore } =
             await createDetachedContainerAndGetRootDataStore();
         const peerDataStore1 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
-        const dataStore1 = peerDataStore1.peerDataStore as TestFluidComponent;
+        const dataStore1 = peerDataStore1.peerDataStore as TestFluidObject;
         peerDataStore1.peerDataStoreRuntimeChannel.bindToContext();
 
         const peerDataStore2 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
-        const dataStore2 = peerDataStore2.peerDataStore as TestFluidComponent;
+        const dataStore2 = peerDataStore2.peerDataStore as TestFluidObject;
 
         const rootMapOfDataStore1 = await dataStore1.getSharedObject<SharedMap>(mapId1);
         rootMapOfDataStore1.set("comp2", dataStore2.handle);

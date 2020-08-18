@@ -5,22 +5,29 @@
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 import assert from "assert";
-import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
+import {
+    IRequest,
+    IResponse,
+    IFluidObject,
+    IFluidRouter,
+} from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import {
     deprecated_innerRequestHandler,
-    createComponentResponse,
+    createFluidObjectResponse,
 } from "../requestHandlers";
 
 class MockRuntime {
-    public async getDataStore(id, wait): Promise<IFluidDataStoreChannel> {
+    public get IFluidHandleContext() { return this; }
+
+    public async getRootDataStore(id, wait): Promise<IFluidRouter> {
         if (id === "componentId") {
             return {
                 request: async (r) => {
                     if (r.url === "" || r.url === "route") {
-                        return createComponentResponse({ route: r.url } as IFluidObject);
+                        return createFluidObjectResponse({ route: r.url } as IFluidObject);
                     }
                     return { status: 404, mimeType: "text/plain", value: "not found" };
                 },
@@ -38,7 +45,7 @@ class MockRuntime {
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const component = await this.getDataStore(requestParser.pathParts[0], wait);
+            const component = await this.getRootDataStore(requestParser.pathParts[0], wait);
             const subRequest = requestParser.createSubRequest(1);
             if (subRequest !== undefined) {
                 return component.request(subRequest);
@@ -63,7 +70,7 @@ async function assertRejected(p: Promise<IResponse | undefined>) {
 
 describe("RequestParser", () => {
     describe("deprecated_innerRequestHandler", () => {
-        const runtime = new MockRuntime() as IContainerRuntime;
+        const runtime = new MockRuntime() as any as IContainerRuntime;
 
         it("Empty request", async () => {
             const requestParser = new RequestParser({ url: "/" });

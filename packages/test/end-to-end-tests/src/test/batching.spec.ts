@@ -6,18 +6,18 @@
 import assert from "assert";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { ContainerMessageType, schedulerId } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IEnvelope, SchedulerType, FlushMode } from "@fluidframework/runtime-definitions";
+import { IEnvelope, FlushMode } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
     OpProcessingController,
     initializeLocalContainer,
-    ITestFluidComponent,
-    TestFluidComponentFactory,
+    ITestFluidObject,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
 describe("Batching", () => {
@@ -31,15 +31,15 @@ describe("Batching", () => {
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
-    let dataStore1: ITestFluidComponent;
-    let dataStore2: ITestFluidComponent;
+    let dataStore1: ITestFluidObject;
+    let dataStore2: ITestFluidObject;
     let dataStore1map1: SharedMap;
     let dataStore1map2: SharedMap;
     let dataStore2map1: SharedMap;
     let dataStore2map2: SharedMap;
 
     async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory(
+        const factory = new TestFluidObjectFactory(
             [
                 [map1Id, SharedMap.getFactory()],
                 [map2Id, SharedMap.getFactory()],
@@ -49,19 +49,19 @@ describe("Batching", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidComponent> {
+    async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidObject> {
         const response = await container.request({ url: dataStoreId });
         if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`DataStore with id: ${dataStoreId} not found`);
         }
-        return response.value as ITestFluidComponent;
+        return response.value as ITestFluidObject;
     }
 
-    function setupBacthMessageListener(dataStore: ITestFluidComponent, receivedMessages: ISequencedDocumentMessage[]) {
+    function setupBacthMessageListener(dataStore: ITestFluidObject, receivedMessages: ISequencedDocumentMessage[]) {
         dataStore.context.containerRuntime.on("op", (message: ISequencedDocumentMessage) => {
             if (message.type === ContainerMessageType.FluidDataStoreOp) {
                 const envelope = message.contents as IEnvelope;
-                if (envelope.address !== `${SchedulerType}`) {
+                if (envelope.address !== schedulerId) {
                     receivedMessages.push(message);
                 }
             }
@@ -336,7 +336,7 @@ describe("Batching", () => {
 
     describe("Document Dirty State", () => {
         // Verifies that the document dirty state for the given document is as expected.
-        function verifyDocumentDirtyState(dataStore: ITestFluidComponent, expectedState: boolean) {
+        function verifyDocumentDirtyState(dataStore: ITestFluidObject, expectedState: boolean) {
             const dirty = (dataStore.context.containerRuntime as IContainerRuntime).isDocumentDirty();
             assert.equal(dirty, expectedState, "The document dirty state is not as expected");
         }

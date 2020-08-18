@@ -17,9 +17,9 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
-    ITestFluidComponent,
+    ITestFluidObject,
     initializeLocalContainer,
-    TestFluidComponentFactory,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
 interface ISharedObjectConstructor<T> {
@@ -36,21 +36,21 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         };
 
         let deltaConnectionServer: ILocalDeltaConnectionServer;
-        let dataStore1: ITestFluidComponent;
+        let dataStore1: ITestFluidObject;
         let sharedMap1: ISharedMap;
         let sharedMap2: ISharedMap;
         let sharedMap3: ISharedMap;
 
-        async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidComponent> {
+        async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidObject> {
             const response = await container.request({ url: dataStoreId });
             if (response.status !== 200 || response.mimeType !== "fluid/object") {
                 throw new Error(`DataStore with id: ${dataStoreId} not found`);
             }
-            return response.value as ITestFluidComponent;
+            return response.value as ITestFluidObject;
         }
 
         async function createContainer(): Promise<Container> {
-            const factory = new TestFluidComponentFactory([
+            const factory = new TestFluidObjectFactory([
                 [mapId, SharedMap.getFactory()],
                 [undefined, ConsensusRegisterCollection.getFactory()],
             ]);

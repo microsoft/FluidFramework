@@ -25,29 +25,37 @@ parameters:
   type: string
   default: /home/node/server
 
+- name: buildNumberInPatch
+  type: string
+  default: true
+
+- name: setVersion
+  type: boolean
+  default: true
+
 trigger: none
 
 variables:
-  skipComponentGovernanceDetection: true
-  pushImage: ${{
-    and(
-      ne(variables['Build.Reason'], 'PullRequest'),
-      eq(variables['Build.SourceBranch'], 'refs/heads/master')
-    )}}
-  generateNotice: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
-  registry: prague.azurecr.io
-  baseContainerTag: ${{ parameters.containerName }}:$(Build.BuildId)
-  ${{ if eq(variables.pushImage, false) }}:
-    containerRegistry:
-    containerTag: $(baseContainerTag)
-  ${{ if eq(variables.pushImage, true) }}:
-    containerRegistry: Fluid Azure Container Registry
-    containerTag: $(registry)/$(baseContainerTag)
+- name: skipComponentGovernanceDetection
+  value: true
+- name: pushImage
+  value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
+- name: generateNotice
+  value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
+- group: container-registry-info
+- name: baseContainerTag
+  value: ${{ parameters.containerName }}:$(Build.BuildNumber)
+- ${{ if eq(variables.pushImage, false) }}:
+  - name: containerTag
+    value: $(baseContainerTag)
+- ${{ if eq(variables.pushImage, true) }}:
+  - name: containerTag
+    value: $(containerRegistryUrl)/$(baseContainerTag)
 
 jobs:
   - job: build
     displayName: Build Container - ${{ parameters.containerName }}
-    pool: Shared
+    pool: Lite
     steps:
     # Setup
     - checkout: self
@@ -75,18 +83,30 @@ jobs:
         displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/.npmrc'
         inputs:
           workingFile: ${{ parameters.buildDirectory }}/.npmrc
+          customEndpoint: Offnet Packages
+
+    # Set version
+    - ${{ if eq(parameters.setVersion, true) }}:
+      - task: UseNode@1
+        displayName: Use Node 12.x
+        inputs:
+          version: 12.x
+      - template: include-set-package-version.yml
+        parameters:
+          buildDirectory: ${{ parameters.buildDirectory }}
+          buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 
     # Build
     - task: Docker@2
       displayName: Docker Build
       inputs:
-        containerRegistry: $(containerRegistry)
+        containerRegistry: $(containerRegistryConnection)
         repository: ${{ parameters.containerName }}
         command: build
         dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
         buildContext: ${{ parameters.buildDirectory }}
         tags: |
-          $(Build.BuildId)
+          $(Build.BuildNumber)
 
     # Lint
     - ${{ if eq(parameters.lint, true) }}:
@@ -125,11 +145,11 @@ jobs:
       - task: Docker@2
         displayName: Docker Push
         inputs:
-          containerRegistry: $(containerRegistry)
+          containerRegistry: $(containerRegistryConnection)
           repository: ${{ parameters.containerName }}
           command: push
           tags: |
-            $(Build.BuildId)
+            $(Build.BuildNumber)
 
     # Cleanup
     - task: Docker@0

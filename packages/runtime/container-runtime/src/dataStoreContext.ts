@@ -32,6 +32,7 @@ import {
     ISnapshotTree,
     ITree,
     ConnectionState,
+    ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
@@ -54,6 +55,20 @@ import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in store attributes.
 const currentSnapshotFormatVersion = "0.1";
+
+const attributesBlobKey = ".component";
+
+function createAttributes(pkg: readonly string[]): IFluidDataStoreAttributes {
+    const stringifiedPkg = JSON.stringify(pkg);
+    return {
+        pkg: stringifiedPkg,
+        snapshotFormatVersion: currentSnapshotFormatVersion,
+    };
+}
+export function createAttributesBlob(pkg: readonly string[]): ITreeEntry {
+    const attributes = createAttributes(pkg);
+    return new BlobTreeEntry(attributesBlobKey, JSON.stringify(attributes));
+}
 
 /**
  * Added IFluidDataStoreAttributes similar to IChannelAttributes which will tell
@@ -174,7 +189,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
-        public readonly scope: IFluidObject & IFluidObject,
+        public readonly scope: IFluidObject,
         public readonly summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         private bindState: BindState,
@@ -361,17 +376,13 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
 
         const { pkg } = await this.getInitialSnapshotDetails();
 
-        const attributes: IFluidDataStoreAttributes = {
-            pkg: JSON.stringify(pkg),
-            snapshotFormatVersion: currentSnapshotFormatVersion,
-        };
-
         await this.realize();
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const entries = await this.channel!.snapshotInternal(fullTree);
 
-        entries.push(new BlobTreeEntry(".component", JSON.stringify(attributes)));
+        const attributesBlob = createAttributesBlob(pkg);
+        entries.push(attributesBlob);
 
         return { entries, id: null };
     }
@@ -383,23 +394,20 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
     private async summarizeInternal(fullTree: boolean): Promise<ISummarizeInternalResult> {
         const { pkg } = await this.getInitialSnapshotDetails();
 
-        const attributes: IFluidDataStoreAttributes = {
-            pkg: JSON.stringify(pkg),
-            snapshotFormatVersion: currentSnapshotFormatVersion,
-        };
-
         await this.realize();
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const channel = this.channel!;
         if (channel.summarize !== undefined) {
             const summary = await channel.summarize(fullTree);
-            addBlobToSummary(summary, ".component", JSON.stringify(attributes));
+            const attributes: IFluidDataStoreAttributes = createAttributes(pkg);
+            addBlobToSummary(summary, attributesBlobKey, JSON.stringify(attributes));
             return { ...summary, id: this.id };
         } else {
             // back-compat summarizerNode - remove this case
             const entries = await channel.snapshotInternal(fullTree);
-            entries.push(new BlobTreeEntry(".component", JSON.stringify(attributes)));
+            const attributesBlob = createAttributesBlob(pkg);
+            entries.push(attributesBlob);
             const summary = convertToSummaryTree({ entries, id: null });
             return { ...summary, id: this.id };
         }
@@ -517,7 +525,7 @@ export abstract class FluidDataStoreContext extends EventEmitter implements
         this.channelDeferred.resolve(this.channel);
 
         // notify the runtime if they want to propagate up. Used for logging.
-        this.containerRuntime.notifyDataStoreInstantiated(this);
+        this._containerRuntime.notifyDataStoreInstantiated(this);
     }
 
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
@@ -595,7 +603,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IFluidObject & IFluidObject,
+        scope: IFluidObject,
         summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         pkg?: string[],
@@ -642,10 +650,10 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
                 this.pending = loadedSummary.outstandingOps.concat(this.pending!);
             }
 
-            if (tree !== null && tree.blobs[".component"] !== undefined) {
+            if (tree !== null && tree.blobs[attributesBlobKey] !== undefined) {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion } =
-                    await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[".component"]);
+                    await localReadAndParse<IFluidDataStoreAttributes>(tree.blobs[attributesBlobKey]);
 
                 let pkgFromSnapshot: string[];
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
@@ -676,12 +684,15 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 }
 
 export class LocalFluidDataStoreContext extends FluidDataStoreContext {
+    // Package is required at time of creation for local data stores
+    protected pkg: readonly string[];
+
     constructor(
         id: string,
         pkg: string[],
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IFluidObject & IFluidObject,
+        scope: IFluidObject,
         summaryTracker: SummaryTracker,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
@@ -697,6 +708,7 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
             BindState.NotBound,
             bindChannel,
             pkg);
+        this.pkg = pkg; // TODO: avoid setting twice
         this.attachListeners();
     }
 
@@ -712,23 +724,18 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
     }
 
     public generateAttachMessage(): IAttachMessage {
-        const attributes: IFluidDataStoreAttributes = {
-            pkg: JSON.stringify(this.pkg),
-            snapshotFormatVersion: currentSnapshotFormatVersion,
-        };
-
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const entries = this.channel!.getAttachSnapshot();
 
         const snapshot: ITree = { entries, id: null };
 
-        snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(attributes)));
+        const attributesBlob = createAttributesBlob(this.pkg);
+        snapshot.entries.push(attributesBlob);
 
         const message: IAttachMessage = {
             id: this.id,
             snapshot,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            type: this.pkg![this.pkg!.length - 1],
+            type: this.pkg[this.pkg.length - 1],
         };
 
         return message;
@@ -736,8 +743,7 @@ export class LocalFluidDataStoreContext extends FluidDataStoreContext {
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         return {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            pkg: this.pkg!,
+            pkg: this.pkg,
             snapshot: undefined,
         };
     }

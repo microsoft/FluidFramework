@@ -494,6 +494,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return;
     }
 
+    public async resolveHandle(request: IRequest): Promise<IResponse> {
+        return this.request(request);
+    }
+
     public async request(request: IRequest): Promise<IResponse> {
         return null;
     }
@@ -526,7 +530,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return;
     }
 
-    public async requestComponent(request: IRequest): Promise<IResponse> {
+    public async requestDataStore(request: IRequest): Promise<IResponse> {
         return null;
     }
 
@@ -586,7 +590,7 @@ export class MockSharedObjectServices implements IChannelServices {
     public static createFromTree(tree: ITree) {
         const contents: { [key: string]: string } = {};
         for (const entry of tree.entries) {
-            assert(entry.type === TreeEntry[TreeEntry.Blob]);
+            assert(entry.type === TreeEntry.Blob);
             contents[entry.path] = (entry.value as IBlob).contents;
         }
         return new MockSharedObjectServices(contents);

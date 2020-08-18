@@ -14,8 +14,8 @@ import {
     OpProcessingController,
     LocalCodeLoader,
     initializeLocalContainer,
-    ITestFluidComponent,
-    TestFluidComponentFactory,
+    ITestFluidObject,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
@@ -31,7 +31,7 @@ describe("Document Dirty", () => {
     let documentServiceFactory: LocalDocumentServiceFactory;
     let opProcessingController: OpProcessingController;
     let container: Container;
-    let containerComp: ITestFluidComponent;
+    let containerComp: ITestFluidObject;
     let containerCompContainerRuntime: IContainerRuntime;
     let containerCompMap: SharedMap;
     let wasMarkedDirtyCount: number;
@@ -66,7 +66,7 @@ describe("Document Dirty", () => {
     }
 
     async function createContainer(): Promise<Container> {
-        const factory: TestFluidComponentFactory = new TestFluidComponentFactory(
+        const factory: TestFluidObjectFactory = new TestFluidObjectFactory(
             [
                 [mapId, SharedMap.getFactory()],
             ],
@@ -95,12 +95,12 @@ describe("Document Dirty", () => {
     }
 
     async function requestFluidObject(dataStoreId: string, fromContainer: Container):
-        Promise<ITestFluidComponent> {
+        Promise<ITestFluidObject> {
         const response = await fromContainer.request({ url: dataStoreId });
         if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`DataStore with id: ${dataStoreId} not found`);
         }
-        return response.value as ITestFluidComponent;
+        return response.value as ITestFluidObject;
     }
 
     beforeEach(async () => {

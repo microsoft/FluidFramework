@@ -5,27 +5,27 @@
 
 import { SharedCounter } from "@fluidframework/counter";
 import {
-    IFluidFunctionalComponentViewState,
-    IFluidFunctionalComponentFluidState,
-    SyncedComponent,
+    IViewState,
+    IFluidState,
     ICombinedState,
     IFluidDataProps,
     useReducerFluid,
+    SyncedDataObject,
 } from "../..";
 import { IFluidSyncedCounterReducer } from "./interface";
 
 export function setFluidSyncedCounterConfig<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
-    syncedComponent: SyncedComponent,
+    syncedDataObject: SyncedDataObject,
     syncedStateId: string,
     viewKey: keyof SV,
     fluidKey: keyof SF,
     defaultViewState: SV,
     sharedObjectCreate = SharedCounter.create,
 ) {
-    syncedComponent.setFluidConfig<SV, SF>(syncedStateId, {
+    syncedDataObject.setFluidConfig<SV, SF>(syncedStateId, {
         syncedStateId,
         fluidToView: new Map([
             [
@@ -70,8 +70,8 @@ export function setFluidSyncedCounterConfig<
 }
 
 export function generateSyncedCounterReducer<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(viewKey: keyof SV, fluidKey: keyof SF): IFluidSyncedCounterReducer<SV, SF> {
     const syncedCounterReducer = {
         increment: {
@@ -92,10 +92,10 @@ export function generateSyncedCounterReducer<
 }
 
 export function useSyncedCounterReducerFluid<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
-    syncedComponent: SyncedComponent,
+    syncedDataObject: SyncedDataObject,
     syncedStateId: string,
     viewKey: keyof SV,
     fluidKey: keyof SF,
@@ -110,7 +110,7 @@ export function useSyncedCounterReducerFluid<
         IFluidDataProps
     >(
         {
-            syncedComponent,
+            syncedDataObject,
             syncedStateId,
             reducer: syncedCounterReducer,
             selector: {},

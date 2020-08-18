@@ -12,9 +12,9 @@ import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidf
 import {
     createLocalLoader,
     initializeLocalContainer,
-    ITestFluidComponent,
+    ITestFluidObject,
     OpProcessingController,
-    TestFluidComponentFactory,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { compatTest, ICompatTestArgs } from "./compatUtils";
 
@@ -25,16 +25,16 @@ const codeDetails: IFluidCodeDetails = {
 };
 
 const tests = (args: ICompatTestArgs) => {
-    let dataStore1: ITestFluidComponent;
-    let dataStore2: ITestFluidComponent;
+    let dataStore1: ITestFluidObject;
+    let dataStore2: ITestFluidObject;
     let opProcessingController: OpProcessingController;
 
     beforeEach(async () => {
         const container1 = await args.makeTestContainer() as Container;
-        dataStore1 = await requestFluidObject<ITestFluidComponent>(container1, "default");
+        dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 
         const container2 = await args.makeTestContainer() as Container;
-        dataStore2 = await requestFluidObject<ITestFluidComponent>(container2, "default");
+        dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
         opProcessingController = new OpProcessingController(args.deltaConnectionServer);
         opProcessingController.addDeltaManagers(dataStore1.runtime.deltaManager, dataStore2.runtime.deltaManager);
@@ -151,7 +151,7 @@ const tests = (args: ICompatTestArgs) => {
 describe("TestSignals", () => {
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     const makeTestContainer = async () => {
-        const factory = new TestFluidComponentFactory([]);
+        const factory = new TestFluidObjectFactory([]);
         const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     };

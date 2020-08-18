@@ -12,9 +12,9 @@ import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidf
 import {
     createLocalLoader,
     OpProcessingController,
-    ITestFluidComponent,
+    ITestFluidObject,
     initializeLocalContainer,
-    TestFluidComponentFactory,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
 describe("Cell", () => {
@@ -29,23 +29,23 @@ describe("Cell", () => {
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
-    let dataStore1: ITestFluidComponent;
+    let dataStore1: ITestFluidObject;
     let sharedCell1: ISharedCell;
     let sharedCell2: ISharedCell;
     let sharedCell3: ISharedCell;
 
     async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([[cellId, SharedCell.getFactory()]]);
+        const factory = new TestFluidObjectFactory([[cellId, SharedCell.getFactory()]]);
         const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidComponent> {
+    async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidObject> {
         const response = await container.request({ url: dataStoreId });
         if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Data Store with id: ${dataStoreId} not found`);
         }
-        return response.value as ITestFluidComponent;
+        return response.value as ITestFluidObject;
     }
 
     beforeEach(async () => {

@@ -14,8 +14,9 @@ trigger:
     - server/gateway
     - tools/pipelines/server-gateway.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
-  
+
 pr:
   branches:
     include:
@@ -25,6 +26,7 @@ pr:
     - server/gateway
     - tools/pipelines/server-gateway.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-set-package-version.yml
   
 extends:
   template: templates/build-docker-service.yml

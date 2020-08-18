@@ -26,14 +26,17 @@ import {
     IMatrixIterator,
     MatrixIteratorSpec,
 } from "@tiny-calc/nano";
-import { MergeTreeDeltaType, IMergeTreeOp, SegmentGroup } from "@fluidframework/merge-tree";
+import { MergeTreeDeltaType, IMergeTreeOp, SegmentGroup, ISegment } from "@fluidframework/merge-tree";
 import { debug } from "./debug";
 import { MatrixOp } from "./ops";
-import { PermutationVector } from "./permutationvector";
+import { PermutationVector, PermutationSegment } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from "./runtime";
-import { Handle } from "./handletable";
+import { Handle, isHandleValid } from "./handletable";
 import { deserializeBlob, serializeBlob } from "./serialization";
+import { ensureRange } from "./range";
+import { IUndoConsumer } from "./types";
+import { MatrixUndoProvider } from "./undoprovider";
 
 const enum SnapshotPath {
     rows = "rows",
@@ -68,9 +71,9 @@ export class SharedMatrix<T extends Serializable = Serializable>
     private readonly rows: PermutationVector;   // Map logical row to storage handle (if any)
     private readonly cols: PermutationVector;   // Map logical col to storage handle (if any)
 
-    private cells = new SparseArray2D<T>();             // Stores cell values.
-    private annotations = new SparseArray2D<T>();      // Tracks cell annotations.
-    private pending = new SparseArray2D<number>();      // Tracks pending writes.
+    private cells = new SparseArray2D<T>();         // Stores cell values.
+    private annotations = new SparseArray2D<T>();   // Tracks cell annotations.
+    private pending = new SparseArray2D<number>();  // Tracks pending writes.
 
     constructor(runtime: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
@@ -89,6 +92,18 @@ export class SharedMatrix<T extends Serializable = Serializable>
             this.onColDelta,
             this.onColHandlesRecycled);
     }
+
+    private undo?: MatrixUndoProvider;
+
+    public openUndo(consumer: IUndoConsumer) {
+        assert.equal(this.undo, undefined);
+        this.undo = new MatrixUndoProvider(consumer, this, this.rows, this.cols);
+    }
+
+    // TODO: closeUndo()?
+
+    private get rowHandles() { return this.rows.handleCache; }
+    private get colHandles() { return this.cols.handleCache; }
 
     public static create<T extends Serializable = Serializable>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedMatrixFactory.Type) as SharedMatrix<T>;
@@ -113,29 +128,24 @@ export class SharedMatrix<T extends Serializable = Serializable>
     public get colCount() { return this.cols.getLength(); }
 
     public getCell(row: number, col: number): T | undefined | null {
+        // Perf: When possible, bounds checking is performed inside the implementation for
+        //       'getHandle()' so that it can be elided in the case of a cache hit.  This
+        //       yields an ~40% improvement in the case of a cache hit (node v12 x64)
+
         // Map the logical (row, col) to associated storage handles.
-        const rowHandle = this.rows.handles[row];
-
-        // Perf: Leverage the JavaScript behavior of returning `undefined` for out of bounds
-        //       array access to detect bad coordinates. (~4% faster vs. an unconditional
-        //       assert with range check on node v12 x64)
-        if (!(rowHandle >= Handle.valid)) {
-            assert(rowHandle === Handle.unallocated, "'row' out of range.");
-            assert(0 <= col && col < this.colCount, "'col' out of range.");
-            return undefined;
+        const rowHandle = this.rowHandles.getHandle(row);
+        if (isHandleValid(rowHandle)) {
+            const colHandle = this.colHandles.getHandle(col);
+            if (isHandleValid(colHandle)) {
+                return this.cells.getCell(rowHandle, colHandle);
+            }
+        } else {
+            // If we early exit because the given rowHandle is unallocated, we still need to
+            // bounds-check the 'col' parameter.
+            ensureRange(col, this.cols.getLength());
         }
 
-        const colHandle = this.cols.handles[col];
-
-        // Perf: Leverage the JavaScript behavior of returning `undefined` for out of bounds
-        //       array access to detect bad coordinates. (~4% faster vs. an unconditional
-        //       assert with range check on node v12 x64)
-        if (!(colHandle >= Handle.valid)) {
-            assert(colHandle === Handle.unallocated, "'col' out of range.");
-            return undefined;
-        }
-
-        return this.cells.getCell(rowHandle, colHandle);
+        return undefined;
     }
 
     public get matrixProducer(): IMatrixProducer<T | undefined | null> { return this; }
@@ -155,8 +165,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
         const colCount = spec?.colCount ?? this.colCount;
         for (let i = 0; i < rowCount; i++) {
             const row = rowStart + i;
-            const rowHandle = this.rows.handles[row];
-            if (rowHandle === Handle.unallocated) {
+            const rowHandle = this.rows.getMaybeHandle(row);
+            if (!isHandleValid(rowHandle)) {
                 if (includeEmpty) {
                     for (let j = 0; j < colCount; j++) {
                         callback(undefined, row, colStart + j);
@@ -166,8 +176,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
             }
             for (let j = 0; j < colCount; j++) {
                 const col = colStart + j;
-                const colHandle = this.cols.handles[col];
-                if (colHandle === Handle.unallocated) {
+                const colHandle = this.cols.getMaybeHandle(col);
+                if (!isHandleValid(colHandle)) {
                     if (includeEmpty) {
                         callback(undefined, row, col);
                     }
@@ -230,6 +240,13 @@ export class SharedMatrix<T extends Serializable = Serializable>
         rowHandle = this.rows.getAllocatedHandle(row),
         colHandle = this.cols.getAllocatedHandle(col),
     ) {
+        if (this.undo !== undefined) {
+            this.undo.cellSet(
+                rowHandle,
+                colHandle,
+                /* oldvalue: */ this.cells.getCell(rowHandle, colHandle));
+        }
+
         this.cells.setCell(rowHandle, colHandle, value);
         this.annotations.setCell(rowHandle, colHandle, undefined);
 
@@ -258,18 +275,14 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     public getAnnotation(row: number, col: number): T | undefined | null {
-        const rowHandle = this.rows.handles[row];
-        if (!(rowHandle >= Handle.valid)) {
-            assert(rowHandle === Handle.unallocated, "'row' out of range.");
-            assert(0 <= col && col < this.colCount, "'col' out of range.");
-            return undefined;
+        const rowHandle = this.rows.getMaybeHandle(row);
+        if (isHandleValid(rowHandle)) {
+            const colHandle = this.cols.getMaybeHandle(col);
+            if (isHandleValid(colHandle)) {
+                return this.annotations.getCell(rowHandle, colHandle);
+            }
         }
-        const colHandle = this.cols.handles[col];
-        if (!(colHandle >= Handle.valid)) {
-            assert(colHandle === Handle.unallocated, "'col' out of range.");
-            return undefined;
-        }
-        return this.annotations.getCell(rowHandle, colHandle);
+        return undefined;
     }
 
     public setAnnotation(row: number, col: number, value: T) {
@@ -341,19 +354,93 @@ export class SharedMatrix<T extends Serializable = Serializable>
         this.submitRowMessage(this.rows.remove(rowStart, count));
     }
 
+    /** @internal */ public _undoRemoveRows(segment: ISegment) {
+        const original = segment as PermutationSegment;
+
+        // (Re)insert the removed number of columns at the original position.
+        const rowStart = this.rows.getPosition(original);
+        this.insertRows(rowStart, original.cachedLength);
+
+        // Transfer handles from the original segment to the newly inserted segment.
+        // (This allows us to use getCell(..) below to read the previous cell values)
+        const inserted = this.rows.getContainingSegment(rowStart).segment as PermutationSegment;
+        original.transferHandlesTo(inserted);
+
+        // Generate setCell ops for each populated cell in the reinserted cols.
+        let rowHandle = inserted.start;
+        const rowCount = inserted.cachedLength;
+        for (let row = rowStart; row < rowStart + rowCount; row++, rowHandle++) {
+            for (let col = 0; col < this.colCount; col++) {
+                const colHandle = this.colHandles.getHandle(col);
+                const value = this.cells.getCell(rowHandle, colHandle);
+                // eslint-disable-next-line no-null/no-null
+                if (value !== undefined && value !== null) {
+                    this.setCellCore(
+                        row,
+                        col,
+                        value,
+                        rowHandle,
+                        colHandle);
+                }
+            }
+        }
+
+        // Avoid reentrancy by raising change notifications after the op is queued.
+        for (const consumer of this.consumers.values()) {
+            consumer.cellsChanged(rowStart, /* colStart: */ 0, rowCount, this.colCount, this);
+        }
+    }
+
+    /** @internal */ public _undoRemoveCols(segment: ISegment) {
+        const original = segment as PermutationSegment;
+
+        // (Re)insert the removed number of columns at the original position.
+        const colStart = this.cols.getPosition(original);
+        this.insertCols(colStart, original.cachedLength);
+
+        // Transfer handles from the original segment to the newly inserted segment.
+        // (This allows us to use getCell(..) below to read the previous cell values)
+        const inserted = this.cols.getContainingSegment(colStart).segment as PermutationSegment;
+        original.transferHandlesTo(inserted);
+
+        // Generate setCell ops for each populated cell in the reinserted cols.
+        let colHandle = inserted.start;
+        const colCount = inserted.cachedLength;
+        for (let col = colStart; col < colStart + colCount; col++, colHandle++) {
+            for (let row = 0; row < this.rowCount; row++) {
+                const rowHandle = this.rowHandles.getHandle(row);
+                const value = this.cells.getCell(colHandle, rowHandle);
+                // eslint-disable-next-line no-null/no-null
+                if (value !== undefined && value !== null) {
+                    this.setCellCore(
+                        row,
+                        col,
+                        value,
+                        rowHandle,
+                        colHandle);
+                }
+            }
+        }
+
+        // Avoid reentrancy by raising change notifications after the op is queued.
+        for (const consumer of this.consumers.values()) {
+            consumer.cellsChanged(/* rowStart: */ 0, colStart, this.rowCount, colCount, this);
+        }
+    }
+
     public snapshot(): ITree {
         return {
             entries: [
                 {
                     mode: FileMode.Directory,
                     path: SnapshotPath.rows,
-                    type: TreeEntry[TreeEntry.Tree],
+                    type: TreeEntry.Tree,
                     value: this.rows.snapshot(this.runtime, this.handle),
                 },
                 {
                     mode: FileMode.Directory,
                     path: SnapshotPath.cols,
-                    type: TreeEntry[TreeEntry.Tree],
+                    type: TreeEntry.Tree,
                     value: this.cols.snapshot(this.runtime, this.handle),
                 },
                 serializeBlob(this.runtime, this.handle, SnapshotPath.cells, [
@@ -442,16 +529,18 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 // to skip resubmitting this op since it is possible the row/col handle has been recycled
                 // and now refers to a different position than when this op was originally submitted.
                 if (this.isLatestPendingWrite(rowHandle, colHandle, localSeq)) {
-                    const row = this.rows.getPositionForResubmit(rowHandle, localSeq);
-                    const col = this.cols.getPositionForResubmit(colHandle, localSeq);
+                    const row = this.rows.handleToPosition(rowHandle, localSeq);
+                    const col = this.cols.handleToPosition(colHandle, localSeq);
 
-                    this.setCellCore(
-                        row,
-                        col,
-                        setOp.value,
-                        rowHandle,
-                        colHandle,
-                    );
+                    if (row >= 0 && col >= 0) {
+                        this.setCellCore(
+                            row,
+                            col,
+                            setOp.value,
+                            rowHandle,
+                            colHandle,
+                        );
+                    }
                 }
                 break;
             }
@@ -515,8 +604,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                             const rowHandle = this.rows.getAllocatedHandle(adjustedRow);
                             const colHandle = this.cols.getAllocatedHandle(adjustedCol);
 
-                            assert(rowHandle >= Handle.valid
-                                && colHandle >= Handle.valid);
+                            assert(isHandleValid(rowHandle) && isHandleValid(colHandle));
 
                             // If there is a pending (unACKed) local write to the same cell, skip the current op
                             // since it "happened before" the pending write.

@@ -24,7 +24,7 @@ import {
     createLocalLoader,
     initializeLocalContainer,
     TestContainerRuntimeFactory,
-    TestFluidComponentFactory,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
 
@@ -92,7 +92,7 @@ export const createOldPrimedDataStoreFactory = (): old.IFluidDataStoreFactory =>
 };
 
 export const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry = []): IFluidDataStoreFactory => {
-    return new TestFluidComponentFactory(registry);
+    return new TestFluidObjectFactory(registry);
 };
 
 export const createOldTestFluidDataStoreFactory = (registry?: ChannelFactoryRegistry): old.IFluidDataStoreFactory => {

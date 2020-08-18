@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/routerlicious-urlresolver",
-  "version": "0.25.0",
+  "version": "0.25.1",
   "description": "Url Resolver for routerlicious urls.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -29,16 +29,16 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.25.0",
-    "@fluidframework/driver-definitions": "^0.25.0",
-    "@fluidframework/protocol-definitions": "^0.1010.0",
-    "@fluidframework/server-services-client": "^0.1010.0",
+    "@fluidframework/core-interfaces": "^0.25.1",
+    "@fluidframework/driver-definitions": "^0.25.1",
+    "@fluidframework/protocol-definitions": "^0.1011.1-0",
+    "@fluidframework/server-services-client": "^0.1011.1-0",
     "nconf": "^0.10.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/mocha-test-setup": "^0.25.0",
+    "@fluidframework/mocha-test-setup": "^0.25.1",
     "@types/mocha": "^5.2.5",
     "@types/nconf": "^0.0.37",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

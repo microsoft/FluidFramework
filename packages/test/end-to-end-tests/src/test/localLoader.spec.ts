@@ -16,9 +16,9 @@ import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidf
 import {
     createLocalLoader,
     OpProcessingController,
-    ITestFluidComponent,
+    ITestFluidObject,
     initializeLocalContainer,
-    TestFluidComponentFactory,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
@@ -199,9 +199,9 @@ describe("LocalLoader", () => {
             beforeEach(async () => {
                 deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-                const factory = new TestFluidComponentFactory([["text", SharedString.getFactory()]]);
+                const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
                 const container = await createContainer(factory);
-                const dataStore = await requestFluidObject<ITestFluidComponent>(container, "default");
+                const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
                 text = await dataStore.getSharedObject("text");
             });
 
@@ -215,8 +215,8 @@ describe("LocalLoader", () => {
         });
 
         describe("2 data types", () => {
-            let dataStore1: ITestFluidComponent;
-            let dataStore2: ITestFluidComponent;
+            let dataStore1: ITestFluidObject;
+            let dataStore2: ITestFluidObject;
             let text1: SharedString;
             let text2: SharedString;
 
@@ -224,14 +224,14 @@ describe("LocalLoader", () => {
                 deltaConnectionServer = LocalDeltaConnectionServer.create();
                 opProcessingController = new OpProcessingController(deltaConnectionServer);
 
-                const factory = new TestFluidComponentFactory([["text", SharedString.getFactory()]]);
+                const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 
                 const container1 = await createContainer(factory);
-                dataStore1 = await requestFluidObject<ITestFluidComponent>(container1, "default");
+                dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
                 text1 = await dataStore1.getSharedObject<SharedString>("text");
 
                 const container2 = await createContainer(factory);
-                dataStore2 = await requestFluidObject<ITestFluidComponent>(container2, "default");
+                dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
                 text2 = await dataStore2.getSharedObject<SharedString>("text");
 
                 opProcessingController.addDeltaManagers(

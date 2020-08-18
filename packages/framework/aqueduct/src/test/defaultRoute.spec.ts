@@ -8,17 +8,24 @@ import assert from "assert";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
-import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
-import { createComponentResponse } from "@fluidframework/request-handler";
-import { defaultRouteRequestHandler } from "../requestHandlers";
+import {
+    IRequest,
+    IResponse,
+    IFluidObject,
+    IFluidRouter,
+} from "@fluidframework/core-interfaces";
+import { createFluidObjectResponse } from "@fluidframework/request-handler";
+import { defaultRouteRequestHandler } from "../request-handlers";
 
 class MockRuntime {
-    public async getDataStore(id, wait): Promise<IFluidDataStoreChannel> {
+    public get IFluidHandleContext() { return this; }
+
+    public async getRootDataStore(id, wait): Promise<IFluidRouter> {
         if (id === "componentId") {
             return {
                 request: async (r) => {
                     if (r.url === "" || r.url === "route") {
-                        return createComponentResponse({ route: r.url } as IFluidObject);
+                        return createFluidObjectResponse({ route: r.url } as IFluidObject);
                     }
                     return { status: 404, mimeType: "text/plain", value: "not found" };
                 },
@@ -29,14 +36,14 @@ class MockRuntime {
         throw new Error("No component");
     }
 
-    public async resolveHandle(request: IRequest) {
+    protected async resolveHandle(request: IRequest) {
         const requestParser = new RequestParser(request);
 
         if (requestParser.pathParts.length > 0) {
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const component = await this.getDataStore(requestParser.pathParts[0], wait);
+            const component = await this.getRootDataStore(requestParser.pathParts[0], wait);
             const subRequest = requestParser.createSubRequest(1);
             if (subRequest !== undefined) {
                 return component.request(subRequest);
@@ -60,7 +67,7 @@ async function assertRejected(p: Promise<IResponse | undefined>) {
 }
 
 describe("defaultRouteRequestHandler", () => {
-    const runtime = new MockRuntime() as IContainerRuntime;
+    const runtime = new MockRuntime() as any as IContainerRuntime;
 
     it("Component request with default ID", async () => {
         const handler = defaultRouteRequestHandler("componentId");
