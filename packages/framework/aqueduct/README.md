@@ -173,7 +173,7 @@ interface ProviderEntry<T extends keyof IFluidObject> {
 ```
 
 The `type` must be a keyof `IFluidObject`. This basically means that it needs to be the name of an interfaces that extends off of `IFluidObject`. The `provider` must be something that provides the interface defined in `type`. The `DependencyContainer` we use in the `@fluidframework/synthesize`
-package defines the follow `FluidObjectProvider` types:
+package defines the following `FluidObjectProvider` types:
 
 ```typescript
 type FluidObjectProvider<T extends keyof IFluidObject> =
