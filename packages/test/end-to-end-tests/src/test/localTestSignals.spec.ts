@@ -25,19 +25,19 @@ const codeDetails: IFluidCodeDetails = {
 };
 
 const tests = (args: ICompatTestArgs) => {
-    let component1: ITestFluidObject;
-    let component2: ITestFluidObject;
+    let dataStore1: ITestFluidObject;
+    let dataStore2: ITestFluidObject;
     let opProcessingController: OpProcessingController;
 
     beforeEach(async () => {
         const container1 = await args.makeTestContainer() as Container;
-        component1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 
         const container2 = await args.makeTestContainer() as Container;
-        component2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
         opProcessingController = new OpProcessingController(args.deltaConnectionServer);
-        opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
+        opProcessingController.addDeltaManagers(dataStore1.runtime.deltaManager, dataStore2.runtime.deltaManager);
     });
 
     describe("Attach signal Handlers on Both Clients", () => {
@@ -45,24 +45,24 @@ const tests = (args: ICompatTestArgs) => {
             let user1SignalReceivedCount = 0;
             let user2SignalReceivedCount = 0;
 
-            component1.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+            dataStore1.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
                 if (message.type === "TestSignal") {
                     user1SignalReceivedCount += 1;
                 }
             });
 
-            component2.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+            dataStore2.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
                 if (message.type === "TestSignal") {
                     user2SignalReceivedCount += 1;
                 }
             });
 
-            component1.runtime.submitSignal("TestSignal", true);
+            dataStore1.runtime.submitSignal("TestSignal", true);
             await opProcessingController.process();
             assert.equal(user1SignalReceivedCount, 1, "client 1 did not received signal");
             assert.equal(user2SignalReceivedCount, 1, "client 2 did not received signal");
 
-            component2.runtime.submitSignal("TestSignal", true);
+            dataStore2.runtime.submitSignal("TestSignal", true);
             await opProcessingController.process();
             assert.equal(user1SignalReceivedCount, 2, "client 1 did not received signal");
             assert.equal(user2SignalReceivedCount, 2, "client 2 did not received signal");
@@ -71,8 +71,8 @@ const tests = (args: ICompatTestArgs) => {
         it("Validate host runtime signals", async () => {
             let user1SignalReceivedCount = 0;
             let user2SignalReceivedCount = 0;
-            const user1ContainerRuntime = component1.context.containerRuntime;
-            const user2ContainerRuntime = component2.context.containerRuntime;
+            const user1ContainerRuntime = dataStore1.context.containerRuntime;
+            const user2ContainerRuntime = dataStore2.context.containerRuntime;
 
             user1ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
                 if (message.type === "TestSignal") {
@@ -103,18 +103,18 @@ const tests = (args: ICompatTestArgs) => {
         let user2HostSignalReceivedCount = 0;
         let user1CompSignalReceivedCount = 0;
         let user2CompSignalReceivedCount = 0;
-        const user1ContainerRuntime = component1.context.containerRuntime;
-        const user2ContainerRuntime = component2.context.containerRuntime;
-        const user1ComponentRuntime = component1.runtime;
-        const user2ComponentRuntime = component2.runtime;
+        const user1ContainerRuntime = dataStore1.context.containerRuntime;
+        const user2ContainerRuntime = dataStore2.context.containerRuntime;
+        const user1DtaStoreRuntime = dataStore1.runtime;
+        const user2DataStoreRuntime = dataStore2.runtime;
 
-        user1ComponentRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+        user1DtaStoreRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             if (message.type === "TestSignal") {
                 user1CompSignalReceivedCount += 1;
             }
         });
 
-        user2ComponentRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+        user2DataStoreRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             if (message.type === "TestSignal") {
                 user2CompSignalReceivedCount += 1;
             }
@@ -139,7 +139,7 @@ const tests = (args: ICompatTestArgs) => {
         assert.equal(user1CompSignalReceivedCount, 0, "client 1 should not receive signal on data store runtime");
         assert.equal(user2CompSignalReceivedCount, 0, "client 2 should not receive signal on data store runtime");
 
-        user2ComponentRuntime.submitSignal("TestSignal", true);
+        user2DataStoreRuntime.submitSignal("TestSignal", true);
         await opProcessingController.process();
         assert.equal(user1HostSignalReceivedCount, 1, "client 1 should not receive signal on host runtime");
         assert.equal(user2HostSignalReceivedCount, 1, "client 2 should not receive signal on host runtime");
@@ -170,6 +170,6 @@ describe("TestSignals", () => {
     });
 
     describe("compatibility", () => {
-        compatTest(tests, { testFluidComponent: true });
+        compatTest(tests, { testFluidDataStore: true });
     });
 });
