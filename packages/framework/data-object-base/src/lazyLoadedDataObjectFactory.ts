@@ -19,9 +19,9 @@ import {
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { LazyPromise } from "@fluidframework/common-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { PureDataObject } from "./sharedcomponent";
+import { LazyLoadedDataObject } from "./lazyLoadedDataObject";
 
-export class PureDataObjectFactory<T extends PureDataObject> implements IFluidDataStoreFactory {
+export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> implements IFluidDataStoreFactory {
     public readonly ISharedObjectRegistry: ISharedObjectRegistry;
     public readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry | undefined;
 
@@ -31,11 +31,11 @@ export class PureDataObjectFactory<T extends PureDataObject> implements IFluidDa
             new (context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, root: ISharedObject) => T,
         public readonly root: IChannelFactory,
         sharedObjects: readonly IChannelFactory[] = [],
-        components?: readonly IFluidDataStoreFactory[],
+        storeFactories?: readonly IFluidDataStoreFactory[],
     ) {
-        if (components !== undefined) {
+        if (storeFactories !== undefined) {
             this.IFluidDataStoreRegistry = new FluidDataStoreRegistry(
-                components.map(
+                storeFactories.map(
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     (factory) => [factory.type!, factory]) as NamedFluidDataStoreRegistryEntries);
         }
@@ -52,13 +52,13 @@ export class PureDataObjectFactory<T extends PureDataObject> implements IFluidDa
         const runtime = this.createRuntime(context);
 
         // Note this may synchronously return an instance or a deferred LazyPromise,
-        // depending of if a new component is being created or an existing component
+        // depending of if a new store is being created or an existing store
         // is being loaded.
         let instance = this.instantiate(context, runtime);
 
         runtime.registerRequestHandler(async (request: IRequest) => {
             // If the instance has not yet been resolved, await it now.  Once the instance is
-            // resolved, we replace the value of `instance` with the resolved component, at which
+            // resolved, we replace the value of `instance` with the resolved store, at which
             // point we begin processing requests synchronously.
             if ("then" in instance) {
                 instance = await instance;
@@ -76,8 +76,8 @@ export class PureDataObjectFactory<T extends PureDataObject> implements IFluidDa
     }
 
     private instantiate(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime) {
-        // New component instances are synchronously created.  Loading a previously created
-        // component is deferred (via a LazyPromise) until requested by invoking `.then()`.
+        // New data store instances are synchronously created.  Loading a previously created
+        // store is deferred (via a LazyPromise) until requested by invoking `.then()`.
         return runtime.existing
             ? new LazyPromise(async () => this.load(context, runtime))
             : this.createCore(context, runtime);
