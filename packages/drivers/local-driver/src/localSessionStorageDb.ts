@@ -20,11 +20,11 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
     /**
      *
      * @param query - data we want to find
-     * @param sort -
+     * @param sort - the value used to sort data. e.g. operation.sequenceNumber
      *
      */
     public async find(query: any, sort: any): Promise<any[]> {
-        // helper function: get value from db with the key
+        // split the keys and get the corresponding value
         function getValueByKey(propertyBag, key: string) {
             const keys = key.split(".");
             let value = propertyBag;
@@ -33,6 +33,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
             });
             return value;
         }
+
         // getting keys of the query we are trying to find
         const queryKeys = Object.keys(query);
         let filteredCollection = this.getAllInternal();
@@ -67,6 +68,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 
             filteredCollection = filteredCollection.sort(compare);
         }
+
         return filteredCollection;
     }
 
