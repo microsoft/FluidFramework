@@ -6,6 +6,7 @@
     "compilerOptions": {
         "composite": true,
         "outDir": "../built/test",
+        "rootDir": "."
     },
     "references": [{
         "path": "../src"
