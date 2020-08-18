@@ -6,5 +6,5 @@
     "compilerOptions": {
         "composite": true,
         "outDir": "../built/dist",
-    },
+    }
 }
