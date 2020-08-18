@@ -15,7 +15,7 @@ export interface IProvideFluidUserInformation {
 }
 
 /**
- * A Fluid Object that implements a collection of Fluid Objects.  Typically, the
+ * A Fluid object that implements a collection of Fluid objects.  Typically, the
  * Fluid Objects in the collection would be like-typed.
  */
 export interface IFluidUserInformation extends IProvideFluidUserInformation {
