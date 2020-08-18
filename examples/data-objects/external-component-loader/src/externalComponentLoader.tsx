@@ -68,7 +68,7 @@ export class ExternalComponentLoader extends DataObject {
         if (loadable === undefined) {
             throw new Error(`${componentUrl} must implement the IFluidLoadable interface to be loaded here`);
         }
-        const collection = (queryObject(obj) as IFluidObject).IFluidObjectCollection;
+        const collection = queryObject(obj).IFluidObjectCollection;
         if (collection !== undefined) {
             obj = collection.createCollectionItem();
             loadable = queryObject(obj).IFluidLoadable;
