@@ -15,12 +15,12 @@ However, a DDS is not _just_ a local object. Fluid's purpose is to make it easie
 data, where multiple users are editing the same data source. A DDS can be changed not only by your code running locally
 on the client, but also by the Fluid runtime on behalf of other users that are editing.
 
-::: tip
+{{< callout tip >}}
 
 The names of distributed data structures are prefixed with `Shared` by convention. SharedMap, SharedInk, SharedString,
 etc. This prefix indicates that the object is shared between multiple clients.
 
-:::
+{{< /callout >}}
 
 When a DDS is changed by the Fluid runtime, it raises an [event](#events). Your code can listen to these events so that you
 know when data is changed by remote clients and can react appropriately. For example, you may need to recalculate a

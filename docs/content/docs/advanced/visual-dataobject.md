@@ -526,11 +526,11 @@ be hooked up to different React views, and UI callbacks on these views can then 
 
 ### OPTION B: React views
 
-::: warning
+{{< callout warning >}}
 
 The following code uses dependencies that are very experimental and may be unstable.
 
-:::
+{{< /callout >}}
 
 Now we are going to take the scaffolding that we set up earlier and add in our React libraries to tie our synced state
 update to our local React state update. If you read through Option A, you will see that the Fluid React libraries will

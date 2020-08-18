@@ -47,6 +47,8 @@
 }
 
 .callout.danger,
+.callout.important,
+.callout.note,
 .callout.tip,
 .callout.warning {
     padding: 0.1rem 1.5rem;
@@ -68,6 +70,20 @@
 .callout.tip {
     background-color: #f3f5f7;
     border-color: #42b983;
+}
+
+.callout.important {
+    background-color: #f3f5f7;
+    border-color: #00bcf2;
+}
+
+.callout.tip {
+    background-color: #f3f5f7;
+    border-color: #42b983;
+}
+
+.callout.note {
+    border-color: #2c3e50;
 }
 
 .callout.warning {
