@@ -16,7 +16,7 @@ import * as ClientUI from "@fluid-example/client-ui-lib";
 import { IFluidObjectCollection } from "@fluidframework/framework-interfaces";
 import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/component-base";
+import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 declare global {

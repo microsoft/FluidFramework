@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
-import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/component-base";
+import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     createInsertSegmentOp,

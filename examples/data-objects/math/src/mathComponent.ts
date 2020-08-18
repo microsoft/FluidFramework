@@ -24,7 +24,7 @@ import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
-import { LazyLoadedDataObjectFactory, LazyLoadedDataObject } from "@fluidframework/component-base";
+import { LazyLoadedDataObjectFactory, LazyLoadedDataObject } from "@fluidframework/data-object-base";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import * as Katex from "katex";
 import * as MathExpr from "./mathExpr";
