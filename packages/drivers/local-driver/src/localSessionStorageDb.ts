@@ -115,7 +115,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
     }
 
     /**
-     * Inserting a set to the value that satisfies given query
+     * Insert a set to the value that satisfies given query
      *
      * First find the value that satisfies query. If it doesn't exist, insert the set.
      * Otherwise update the value to be the given set.Then insert updated value to the database.
@@ -138,7 +138,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
     }
 
     /**
-     * Inset one value into the database
+     * Insert one value into the database
      *
      * First find if value already exist. If so, check if the values are equal.
      * Otherwise insert into the database.
