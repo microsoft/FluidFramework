@@ -141,7 +141,7 @@ export const ClickerInstantiationFactory = new DataObjectFactory(
 
 A Container is a collection of data objects and functionality that produce an experience. Containers hold the instances of data objects as well as defining the data objects that can be created within the Container. Because of this data objects cannot be consumed except for when they are within a Container.
 
-The Aqueduct provides the [`ContainerRuntimeFactoryWithDataStore`](./src/containerRuntimeFactories/containerRuntimeFactoryWithDataStore.ts) that allows you as a Container developer to:
+The Aqueduct library provides the [`ContainerRuntimeFactoryWithDataStore`](./src/containerRuntimeFactories/containerRuntimeFactoryWithDataStore.ts) that enables you as a container developer to:
 
 - Define the registry of data objects that can be created
 - Declare the default data object
