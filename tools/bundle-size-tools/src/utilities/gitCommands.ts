@@ -11,3 +11,7 @@ import { execSync } from 'child_process';
 export function getBaselineCommit(): string {
   return execSync('git merge-base origin/master HEAD').toString().trim();
 }
+
+export function getPriorCommit(baseCommit: string): string {
+  return execSync(`git log --pretty=format:"%H" -1 ${baseCommit}~1`).toString().trim();
+}

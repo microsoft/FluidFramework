@@ -1,4 +1,4 @@
-import { getBaselineCommit, getCiBuildWithCommit } from '../utilities';
+import { getBaselineCommit, getCiBuildWithCommit, getPriorCommit } from '../utilities';
 import { getAzureDevopsApi } from './getAzureDevopsApi';
 import { BuildStatus, BuildResult } from 'azure-devops-node-api/interfaces/BuildInterfaces';
 import { IADOConstants } from './Constants';
@@ -46,15 +46,27 @@ export class ADOSizeComparator {
    * @returns The size comparison message
    */
   public async createSizeComparisonMessage(tagWaiting: boolean): Promise<string> {
-    const baselineCommit = getBaselineCommit();
+    let baselineCommit = getBaselineCommit();
     console.log(`The baseline commit for this PR is ${baselineCommit}`);
 
-    const baselineBuild = await getCiBuildWithCommit({
-      adoConnection: this.adoConnection,
-      commitHash: baselineCommit,
-      adoProjectName: this.adoConstants.projectName,
-      buildDefinitionId: this.adoConstants.ciBuildDefinitionId
-    });
+    // Sometimes a commit will not have a build, such as when it did not trigger
+    // any CI loops.  Try looking back a few commits in this case.
+    let baselineBuild;
+    for (let i = 0; i < 5; i++) {
+      baselineBuild = await getCiBuildWithCommit({
+        adoConnection: this.adoConnection,
+        commitHash: baselineCommit,
+        adoProjectName: this.adoConstants.projectName,
+        buildDefinitionId: this.adoConstants.ciBuildDefinitionId
+      });
+
+      if (baselineBuild !== undefined) {
+        break;
+      }
+
+      baselineCommit = getPriorCommit(baselineCommit);
+      console.log(`Trying backup baseline commit ${baselineCommit}`);
+  }
 
     // No baseline build
     if (!baselineBuild) {
