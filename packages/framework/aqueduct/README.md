@@ -14,7 +14,7 @@ Fluid object development consists of developing the data object and the correspo
 
 #### [`DataObject`](./src/data-objects/dataObject.ts)
 
-The [`DataObject`](./src/data-objects/dataObject.ts) extends the [`PureDataObject`](####PureDataObject) and provides all of its functionality as well as the following additional functionality:
+The [`DataObject`](./src/data-objects/dataObject.ts) class extends [`PureDataObject`](####PureDataObject) and provides the following additional functionality:
 
 - A `root` SharedDirectory that makes creating and storing Distributed Data Structures and Objects easy.
 - Scheduled Task routing that makes it easier to use the Scheduler Fluid object
