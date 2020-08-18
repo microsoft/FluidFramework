@@ -34,4 +34,5 @@ extends:
     containerName: gitssh
     test: false
     authnpmrc: false
+    setVersion: false
 
