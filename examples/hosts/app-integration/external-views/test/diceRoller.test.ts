@@ -15,6 +15,7 @@ describe("diceRoller", () => {
 
     beforeEach(async () => {
         await page.goto(globals.PATH, { waitUntil: "load" });
+        // eslint-disable-next-line dot-notation
         await page.waitFor(() => window["fluidStarted"]);
     });
 

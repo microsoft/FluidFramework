@@ -26,7 +26,7 @@ module.exports = env => {
         },
         output: {
             filename: "[name].bundle.js",
-            path: path.resolve(__dirname, "dist"),
+            path: path.resolve(__dirname, "built/webpack"),
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939

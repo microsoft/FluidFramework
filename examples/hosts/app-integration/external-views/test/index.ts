@@ -6,9 +6,11 @@
 import { getSessionStorageContainer } from "@fluidframework/get-session-storage-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
+/* eslint-disable import/no-internal-modules */
 import { renderDiceRoller } from "../src/view";
 import { DiceRollerContainerRuntimeFactory } from "../src/containerCode";
 import { DiceRoller } from "../src/dataObject";
+/* eslint-enable import/no-internal-modules */
 
 // Since this is a single page fluid application we are generating a new document id
 // if one was not provided
@@ -44,11 +46,13 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
  */
 async function setup() {
     const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
+    // eslint-disable-next-line no-null/no-null
     if (leftElement === null) {
         throw new Error("sbs-left does not exist");
     }
     await createContainerAndRenderInElement(leftElement, createNew);
     const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
+    // eslint-disable-next-line no-null/no-null
     if (rightElement === null) {
         throw new Error("sbs-right does not exist");
     }
