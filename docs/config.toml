@@ -2,6 +2,7 @@ baseURL = "http://ashy-mud-0acebac10.azurestaticapps.net/"
 languageCode = "en-us"
 theme = "thxvscode"
 title = "Fluid Framework"
+titleCaseStyle = "Chicago"
 
 [permalinks]
 page = "/:slug"

@@ -2,4 +2,4 @@
 title: Breaking changes
 ---
 
-!!!include(../../../BREAKING.md)!!!
+<!-- {{< include file="../../BREAKING.md >}} -->

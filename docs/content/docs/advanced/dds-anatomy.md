@@ -61,11 +61,11 @@ a SharedMap needs to effectively accept calls from other clients. To make the lo
 must expose a means for the local client to observe and respond to these changes. This probably takes the form of
 eventing, but could reasonably also take the form of callback functions that integrate into the processing step, etc.
 
-::: danger TODO
+{{< callout danger TODO >}}
 
 Add link to event documentation
 
-:::
+{{< /callout >}}
 
 ## Conflict resolution strategies
 

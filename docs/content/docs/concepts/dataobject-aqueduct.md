@@ -93,11 +93,11 @@ protected async initializingFirstTime() {
 Notice that three distributed data structures are created and populated with initial data, then stored within the `root`
 SharedDirectory.
 
-::: tip See also
+{{< callout tip "See also" >}}
 
 - [Creating and storing distributed data structures](./dds.md#creating-and-storing-distributed-data-structures)
 
-:::
+{{< /callout >}}
 
 #### initializingFromExisting
 

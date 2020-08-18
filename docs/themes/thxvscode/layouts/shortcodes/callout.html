@@ -1,0 +1,9 @@
+{{ $title := .Get 0 }}
+{{ if .Get 1 }}
+    {{ $title = .Get 1 }}
+{{ end }}
+
+<div class="{{ lower (.Get 0) }} callout">
+    <p class="callout-title">{{ title $title }} </p>
+    <p>{{ .Inner | markdownify }}</p>
+</div>

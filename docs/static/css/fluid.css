@@ -5,11 +5,11 @@
 }
 
 .home .cta {
-  padding: 2rem 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  color: #444;
+    padding: 2rem 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    color: #444;
 }
 
 .cta:hover {
@@ -28,23 +28,64 @@
 }
 
 .cta-icon.get-started {
-    background-image: url('/images/start.svg');
+    background-image: url("/images/start.svg");
 }
 
 .cta-icon.learn {
-    background-image: url('/images/bulb.svg');
+    background-image: url("/images/bulb.svg");
 }
 
 .cta-icon.play {
-    background-image: url('/images/experiment.svg');
+    background-image: url("/images/experiment.svg");
 }
 
-
-#github.swimlane .screenshot  {
+#github.swimlane .screenshot {
     max-height: 150px;
 }
-#stackoverflow.swimlane .screenshot  {
+#stackoverflow.swimlane .screenshot {
     max-height: 150px;
 }
 
+.callout.danger,
+.callout.tip,
+.callout.warning {
+    padding: 0.1rem 1.5rem;
+    border-left-width: 1rem;
+    border-left-style: solid;
+    margin: 2rem 0;
+}
 
+.callout {
+    font-size: 1.6rem;
+}
+
+.callout .callout-title {
+    line-height: 1.7;
+    font-weight: 600;
+    margin: 1rem 0;
+}
+
+.callout.tip {
+    background-color: #f3f5f7;
+    border-color: #42b983;
+}
+
+.callout.warning {
+    background-color: rgba(255, 229, 100, 0.3);
+    border-color: #e7c000;
+    color: #6b5900;
+}
+
+.callout.warning .callout-title {
+    color: #b29400;
+}
+
+.callout.danger {
+    background-color: #ffe6e6;
+    border-color: #c00;
+    color: #4d0000;
+}
+
+.callout.danger .callout-title {
+    color: #900;
+}

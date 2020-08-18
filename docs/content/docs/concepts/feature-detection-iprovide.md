@@ -1,5 +1,6 @@
 ---
 title: Feature detection via IFluidObject
+menuPosition: 3
 ---
 
 In the previous section we introduced the DataObject, a convenient way to combine distributed data structures and our own
