@@ -163,7 +163,7 @@ export fluidExport = new ContainerRuntimeFactoryWithDataStore(
 
 ### Provider Entries Development
 
-The Container developer can optionally provide a Registry of ProviderEntry objects into the Container. A ProviderEntry is defined as follows:
+The container developer can optionally provide a registry of ProviderEntry objects into the container. A ProviderEntry is defined as follows:
 
 ```typescript
 interface ProviderEntry<T extends keyof IFluidObject> {
