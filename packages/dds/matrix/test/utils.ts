@@ -151,8 +151,8 @@ export function expectSize<T extends Serializable>(
     colCount: number,
 ) {
     withReader(matrix, (reader) => {
-        assert.equal(reader.rowCount, rowCount, "'reader' must have expected number of rows.");
-        assert.equal(reader.colCount, colCount, "'reader' must have expected number of columns.");
+        assert.equal(reader.rowCount, rowCount, "'matrix' must have expected number of rows.");
+        assert.equal(reader.colCount, colCount, "'matrix' must have expected number of columns.");
     });
 }
 

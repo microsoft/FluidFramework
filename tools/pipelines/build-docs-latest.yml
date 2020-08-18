@@ -54,7 +54,7 @@ resources:
 stages:
 - stage: build
   displayName: 'Build docs'
-  pool: Default
+  pool: Main
   jobs:
   - job:
     displayName: Component Detection

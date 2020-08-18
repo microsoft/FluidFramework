@@ -21,9 +21,9 @@ import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
     createLocalLoader,
     OpProcessingController,
-    ITestFluidComponent,
+    ITestFluidObject,
     initializeLocalContainer,
-    TestFluidComponentFactory,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
 const assertIntervalsHelper = (
@@ -63,16 +63,16 @@ describe("SharedInterval", () => {
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
 
-    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
+    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidObject> {
         const response = await container.request({ url: componentId });
         if (response.status !== 200 || response.mimeType !== "fluid/object") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
-        return response.value as ITestFluidComponent;
+        return response.value as ITestFluidObject;
     }
 
     async function createContainer(factoryEntries: Iterable<[string, IChannelFactory]>): Promise<Container> {
-        const factory = new TestFluidComponentFactory(factoryEntries);
+        const factory = new TestFluidObjectFactory(factoryEntries);
         const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
@@ -245,7 +245,7 @@ describe("SharedInterval", () => {
         const mapId = "mapKey";
         const stringId = "stringKey";
 
-        let component1: ITestFluidComponent;
+        let component1: ITestFluidObject;
         let sharedMap1: ISharedMap;
         let sharedMap2: ISharedMap;
         let sharedMap3: ISharedMap;
