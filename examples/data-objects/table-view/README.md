@@ -18,6 +18,6 @@ Table View uses the following distributed data structures:
 
 - SharedDirectory - root
 
-Table View creates the following data objects:
+Table View creates the following Fluid objects:
 
 - `@fluid-example/table-document`
