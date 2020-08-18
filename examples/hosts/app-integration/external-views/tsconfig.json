@@ -5,6 +5,7 @@
     "compilerOptions": {
         "module": "ESNext",
         "jsx": "react",
+        "rootDir": ".",
         "types": ["react", "react-dom", "jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"]
     },
     "references": [
