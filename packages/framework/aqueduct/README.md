@@ -24,7 +24,7 @@ The [`DataObject`](./src/data-objects/dataObject.ts) class extends [`PureDataObj
 
 #### [`PureDataObject`](./src/data-object/PureDataObject.ts)
 
-The [`PureDataObject`](./src/data-object/PureDataObject.ts) provides the following functionality:
+[`PureDataObject`](./src/data-object/PureDataObject.ts) provides the following functionality:
 
 - Basic set of interface implementations to be loadable in a Fluid Container.
 - Functions for managing Fluid object lifecycle.
