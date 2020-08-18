@@ -21,13 +21,27 @@
 
 
                 <h2>{{ $grouping | humanize | title }} packages</h2>
-                <ul>
-                    {{ range $names }}
-                    {{ range where $packagePages "Params.package" .  }}
-                    <li><a href="{{ .Permalink | safeURL }}" title="{{ .Title }}">{{ .Title }}</a></li>
-                    {{ end }}
-                    {{ end }}
-                </ul>
+
+                <table class="table table-hover table-striped {{ $grouping }}">
+                    <caption>List of {{ $grouping }} related packages</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Package Name</th>
+                            <th scope="col">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{ range $names }}
+
+                        {{ range where $packagePages "Params.package" .  }}
+                        <tr>
+                            <td><a href="{{ .Permalink | safeURL }}" title="{{ .Title }}">{{ .Title }}</a></td>
+                            <td>{{ .Params.metadata }}</td>
+                        </tr>
+                        {{ end }}
+                        {{ end }}
+                    </tbody>
+                </table>
                 {{ end }}
 
             </div>
