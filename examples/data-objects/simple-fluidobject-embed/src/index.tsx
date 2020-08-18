@@ -24,7 +24,7 @@ export class SimpleFluidObjectEmbed extends DataObject implements IFluidHTMLView
    * but in this scenario we only want it to be created once.
    */
     protected async initializingFirstTime() {
-        const fluidObject = await this.createFluidObject(ClickerInstantiationFactory.type);
+        const fluidObject = await ClickerInstantiationFactory.createInstance(this.context);
         this.root.set("myEmbeddedCounter", fluidObject.handle);
     }
 
@@ -44,8 +44,9 @@ export class SimpleFluidObjectEmbed extends DataObject implements IFluidHTMLView
         div.appendChild(fluidObjectDiv);
 
         // Then render the clicker in our div
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.clicker!.render(fluidObjectDiv);
+        if (this.clicker !== undefined) {
+            this.clicker.render(fluidObjectDiv);
+        }
     }
 }
 
