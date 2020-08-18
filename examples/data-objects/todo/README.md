@@ -14,11 +14,11 @@ If you want to run this example follow the following steps:
 
 ## Todo Fluid Objects
 
-There are two data objects that make up the Todo application:
+There are two Fluid objects that make up the Todo application:
 
 ### [Todo](./src/Todo/index.tsx)
 
-A Todo is the top level data objects and contains three core concepts:
+A Todo is the top level Fluid object and contains three core concepts:
 
 1. Title
 2. Ability to create new Todo Items
@@ -26,17 +26,17 @@ A Todo is the top level data objects and contains three core concepts:
 
 ### [TodoItem](./src/TodoItem/index.tsx)
 
-A Todo Item is a singular todo entry. Because each Todo Item is its own data object each Todo Item can be independently opened.
+A Todo Item is a singular todo entry. Because each Todo Item is its own Fluid object each Todo Item can be independently opened.
 
-Todo Items can contain one inner data object. These can currently be another Todo Item or a Clicker.
+Todo Items can contain one inner Fluid object. These can currently be another Todo Item or a Clicker.
 
-## Other Data Objects
+## Other Fluid Objects
 
-There are two other data objects that live in the todo repo but are there to extend functionality of `TodoItem`
+There are two other Fluid objects that live in the todo repo but are there to extend functionality of `TodoItem`
 
 ### [TextBox](./src/TextBox/index.tsx)
 
-A Collaborative TextArea based off the React CollaborativeTextArea. This should be replaced by just pulling in the `@fluid-example/collaborative-textarea` data objects.
+A Collaborative TextArea based off the React CollaborativeTextArea. This should be replaced by just pulling in the `@fluid-example/collaborative-textarea` Fluid objects.
 
 ### [TextList](./src/TextList/index.tsx)
 
