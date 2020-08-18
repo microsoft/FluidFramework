@@ -37,14 +37,7 @@ pr:
     - server/routerlicious/kubernetes/routerlicious
 
 variables:
-- name: skipComponentGovernanceDetection
-  value: true
-- name: pushImage
-  value: ${{
-    and(
-      ne(variables['Build.Reason'], 'PullRequest'),
-      eq(variables['Build.SourceBranch'], 'refs/heads/master')
-    )}}
+- template: templates/include-vars.yml
 - group: container-registry-info
 - name: containerName
   value: fluid-server
@@ -92,7 +85,7 @@ stages:
             version: 12.x
 
         # Component detection (not pull request)
-        - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+        - ${{ if eq(variables.componentDetection, true) }}:
           - task: npmAuthenticate@0
             displayName: 'npm Authenticate root .npmrc'
             inputs:
