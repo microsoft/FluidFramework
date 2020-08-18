@@ -29,6 +29,10 @@ parameters:
   type: string
   default:
 
+- name: setVersion
+  type: boolean
+  default: true
+
 trigger: none
 
 variables:
@@ -82,14 +86,15 @@ jobs:
           customEndpoint: Offnet Packages
 
     # Set version
-    - task: UseNode@1
-      displayName: Use Node 12.x
-      inputs:
-        version: 12.x
-    - template: include-set-package-version.yml
-      parameters:
-        buildDirectory: ${{ parameters.buildDirectory }}
-        buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+    - ${{ if eq(parameters.setVersion, true) }}:
+      - task: UseNode@1
+        displayName: Use Node 12.x
+        inputs:
+          version: 12.x
+      - template: include-set-package-version.yml
+        parameters:
+          buildDirectory: ${{ parameters.buildDirectory }}
+          buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 
     # Build
     - task: Docker@2
