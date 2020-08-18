@@ -10,7 +10,7 @@ Fluid object development consists of developing the data object and the correspo
 
 ### Data Object Development
 
-The `DataObject` and the `PureDataObject` are the two base data objects provided by the library.
+`DataObject` and `PureDataObject` are the two base classes provided by the library.
 
 #### [`DataObject`](./src/data-objects/dataObject.ts)
 
