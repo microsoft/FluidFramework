@@ -133,37 +133,10 @@ stages:
             customRegistry: 'useNpmrc'
 
         # Set version
-        - task: Bash@3
-          displayName: Set Package Version
-          env:
-            VERSION_BUILDBRANCH: $(Build.SourceBranch)
-            VERSION_BUILDNUMBER: $(Build.BuildNumber)
-            VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
-            script: |
-              # expect lerna.json and package.json be in the current working directory
-              if [ "$VERSION_BUILD_ID" == "$VERSION_BUILDNUMBER" ]; then
-                VERSION_IS_ID=true
-              fi
-
-              echo VERSION_BUILDBRANCH=$VERSION_BUILDBRANCH
-              echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
-              echo VERSION_PATCH=$VERSION_PATCH
-
-              version=`node $(Build.SourcesDirectory)/tools/build-server-resources/build-version.js`
-              echo COMPUTED_VERSION=$version
-
-              if [ "$version" == '' ]; then
-                exit -1
-              fi
-
-              if [ -f "lerna.json" ]; then
-                npx lerna version $version --no-git-tag-version --no-push --yes
-              else
-                npm version --no-git-tag-version $version -f --allow-same-version
-              fi
+        - template: include-set-package-version.yml
+          parameters:
+            buildDirectory: ${{ parameters.buildDirectory }}
+            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
