@@ -27,7 +27,7 @@ parameters:
 
 - name: buildNumberInPatch
   type: string
-  default:
+  default: true
 
 - name: setVersion
   type: boolean
