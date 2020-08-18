@@ -1,24 +1,14 @@
 <!-- Links -->
 
-[IComponentHTMLView]: ../api/component-core-interfaces.icomponenthtmlview.md
-[icomponenthtmlview]: ../api/component-core-interfaces.icomponenthtmlview.md
+[DataObject]: /apis/aqueduct/dataobject.md
 
-[IComponentReactViewable]: ../api/aqueduct-react.icomponentreactviewable.md
-[icomponentreactviewable]: ../api/aqueduct-react.icomponentreactviewable.md
+[SharedDirectory]: /apis/map/shareddirectory.md
+[shareddirectory]: /apis/map/shareddirectory.md
 
-[IProvideComponentHTMLView]: ../api/component-core-interfaces.iprovidecomponenthtmlview.md
-[iprovidecomponenthtmlview]: ../api/component-core-interfaces.iprovidecomponenthtmlview.md
+[SharedObjectSequence]: /apis/sequence/sharedobjectsequence.md
+[sharedobjectsequence]: /apis/sequence/sharedobjectsequence.md
 
-[PrimedComponent]: ../api/aqueduct.primedcomponent.md
-[primedcomponent]: ../api/aqueduct.primedcomponent.md
+[SharedMap]: ../apis/map/sharedmap.md
+[sharedmap]: ../apis/map/sharedmap.md
 
-[SharedDirectory]: ../api/map.shareddirectory.md
-[shareddirectory]: ../api/map.shareddirectory.md
-
-[SharedObjectSequence]: ../api/map.sharedobjectsequence.md
-[sharedobjectsequence]: ../api/map.sharedobjectsequence.md
-
-[SharedMap]: ../api/map.sharedmap.md
-[sharedmap]: ../api/map.sharedmap.md
-
-[undo-redo]: ../api/undo-redo.md
+[undo-redo]: ../apis/undo-redo.md

@@ -43,17 +43,22 @@ structures:
 
 ```ts
 /**
- * Called the first time, and *only* the first time, that the DataObject is opened on a client. It is _not_ called on any subsequent clients that open it.
+ * Called the first time, and *only* the first time, that the DataObject
+ * is opened on a client. It is _not_ called on any subsequent clients that
+ * open it.
  */
 protected async initializingFirstTime(): Promise<void> { }
 
 /**
-  * Called every time the DataObject is initialized _from an existing instance_. Not called the first time the DataObject is initialized.
+  * Called every time the DataObject is initialized _from an existing
+  * instance_. * Not called the first time the DataObject is initialized.
   */
 protected async initializingFromExisting(): Promise<void> { }
 
 /**
-  * Called after the DataObject is initialized, regardless of whether it was a first time initialization or an initialization from loading an existing object.
+  * Called after the DataObject is initialized, regardless of whether
+  * it was a first time initialization or an initialization from loading
+  * an existing object.
   */
 protected async hasInitialized(): Promise<void> { }
 ```
@@ -61,13 +66,13 @@ protected async hasInitialized(): Promise<void> { }
 #### initializingFirstTime
 
 `initializingFirstTime` is called only once. It is executed only by the _first_ client to open the DataObject and all
-work will complete before the DataObject is loaded. You should implement this method to perform setup, which can include creating
-distributed data structures and populating them with initial data. The `root` SharedDirectory can be used in this
-method.
+work will complete before the DataObject is loaded. You should implement this method to perform setup, which can include
+creating distributed data structures and populating them with initial data. The `root` SharedDirectory can be used in
+this method.
 
 The following is an example from the Badge DataObject:
 
-{{< highlight ts "linenos=inline,hl_lines=5 10 19" >}}
+```ts {hl_lines=[5,10,19]}
 protected async initializingFirstTime() {
     // Create a cell to represent the Badge's current state
     const current = SharedCell.create(this.runtime);
@@ -88,16 +93,16 @@ protected async initializingFirstTime() {
     }]);
     this.root.set(this.historyId, badgeHistory.handle);
 }
-{{< /highlight >}}
+```
 
 Notice that three distributed data structures are created and populated with initial data, then stored within the `root`
 SharedDirectory.
 
-{{< callout important "See also" >}}
+{{% callout important "See also" %}}
 
 - [Creating and storing distributed data structures](./dds.md#creating-and-storing-distributed-data-structures)
 
-{{< /callout >}}
+{{% /callout %}}
 
 #### initializingFromExisting
 
@@ -157,3 +162,6 @@ export const BadgeInstantiationFactory = new DataObjectFactory(
 
 The Aqueduct library contains more than just DataObject and DataObjectFactory. To dive deeper into the details, see the
 [Aqueduct package README](https://github.com/microsoft/FluidFramework/blob/master/packages/framework/aqueduct/README.md)
+
+
+{{% include file="_includes/links.md" %}}

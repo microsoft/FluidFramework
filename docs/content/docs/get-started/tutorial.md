@@ -28,12 +28,12 @@ There are a handful of key concepts to understand.
 
 - **Fluid service** -- The container will connect to a service to send and receive changes to collaborative data.
 
-![](images/full-structure.png)
+![](/docs/get-started/images/full-structure.png)
 
 
 ## The DiceRoller app
 
-![](images/dice-roller.gif)
+![](/docs/get-started/images/dice-roller.gif)
 
 To explore these concepts, we'll be looking at a simple app that enables all connected clients to roll a dice and view
 the result. We'll do this by writing a data object to represent the dice, configuring container code to use that Data
@@ -42,7 +42,7 @@ Object, and finally loading that container code into a container to integrate in
 
 ### The data object
 
-![](images/data-object.png)
+![](/docs/get-started/images/data-object.png)
 
 First, we'll define our data object's public interface. We'll expose the dice's value as a number, a method to roll it,
 and an event to fire (using [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)) when the value
@@ -131,7 +131,7 @@ DiceRoller. We can accomplish this using a containerRuntimeFactoryWithDefaultDat
 single DiceRoller and make it available to be retrieved from the container. We'll provide it with the name of the
 default data object and a mapping of the name to factory.
 
-![](images/container-code.png)
+![](/docs/get-started/images/container-code.png)
 
 *containerCode.ts*
 
@@ -149,7 +149,7 @@ it's not necessary for this app.
 
 ### Integrating into our app
 
-![](images/app-integration.png)
+![](/docs/get-started/images/app-integration.png)
 
 Now that we've created our data object and configured container code to use it, we're ready to load that container code
 into a container and access it in our app. We'll also connect the container to the service that orchestrates the
@@ -230,6 +230,6 @@ renderDiceRoller(diceRoller, div);
 
 Once the application loads the container will communicate with the server to exchange DDS data:
 
-![](images/full-structure.png)
+![](/docs/get-started/images/full-structure.png)
 
 The [full code for this application is available]() for you to try out.

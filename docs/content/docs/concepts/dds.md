@@ -107,7 +107,7 @@ Refer to the sections below for more details about the events raised by each DDS
 
 ## Picking the right data structure
 
-Because distributed data structures can be stored within each other, you can combine DDSs to create collaborative data
+Because distributed data structures can be stored within each other, you can combine DDSes to create collaborative data
 models. The following two questions can help determine the best data structures to use for a collaborative data model.
 First, what is the _granularity of collaboration_ that my scenario needs? And how does the merge behavior of a
 distributed data structure affect this?

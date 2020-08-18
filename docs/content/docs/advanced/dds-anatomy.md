@@ -4,9 +4,9 @@ Title: Anatomy of a distributed data structure
 
 ## Intent
 
-Although all Distributed Data Structures (DDSs) will have unique characteristics, they will all necessarily share some
+Although all Distributed Data Structures (DDSes) will have unique characteristics, they will all necessarily share some
 broad commonalities in their overall structure and function. This document intends to outline those areas to describe
-DDSs at one level of depth below the surface. This description may be useful in introducing the concept of DDSs to
+DDSes at one level of depth below the surface. This description may be useful in introducing the concept of DDSes to
 developers for the first time.
 
 ## Overview
@@ -25,7 +25,7 @@ qualities would generally be the same even if the underlying implementation is c
 
 ## Local representation
 
-Just like any non-distributed data structure, all DDSs must also be accessible on the client with an in-memory
+Just like any non-distributed data structure, all DDSes must also be accessible on the client with an in-memory
 representation via a public API surface. The developer operates on and reads from this in-memory structure similarly to
 any other non-distributed data structure. The particular format of the data and functionality of the API will vary
 between data structures. For example, a SharedMap holds key:value data and provides interfaces like get and set for
@@ -33,7 +33,7 @@ reading and updating values in the map. This is very similar to the native (non-
 
 ## Op vocabulary
 
-As the in-memory representation is modified on one client, we need to notify other clients of the updates. Most DDSs
+As the in-memory representation is modified on one client, we need to notify other clients of the updates. Most DDSes
 will have multiple operations that can be performed, so we'll need to differentiate the types of notifications (ops)
 we're sending. For example, a SharedMap might be modified through "set", "delete", or "clear".
 
@@ -44,20 +44,20 @@ corresponding API being called on client B. However, this correspondence is not 
 ## Data serialization format (op)
 
 Frequently, ops will need to carry a data payload. For example, when performing a "set" on a SharedMap, the new
-key:value pair needs to be communicated to other clients. As a result, DDSs will have some serialization format for op
+key:value pair needs to be communicated to other clients. As a result, DDSes will have some serialization format for op
 data payloads that can be reconstituted on the receiving end.
 
 ## Data serialization format (summary operations)
 
-In addition to serializing for ops, DDSs should be able to serialize their entire contents into a format that can be
+In addition to serializing for ops, DDSes should be able to serialize their entire contents into a format that can be
 used to reconstruct the DDS. This format is used for summary operations. There may be some overlap with the
 serialization format used in ops, but it isn't strictly necessary.
 
 ## Reaction to remote changes
 
-As compared to their non-shared counterparts, DDSs can change state without the developer's awareness as remote ops are
+As compared to their non-shared counterparts, DDSes can change state without the developer's awareness as remote ops are
 received. For instance, a standard JS Map will never change values without the local client calling a method on it, but
-a SharedMap needs to effectively accept calls from other clients. To make the local client aware of the update, DDSs
+a SharedMap needs to effectively accept calls from other clients. To make the local client aware of the update, DDSes
 must expose a means for the local client to observe and respond to these changes. This probably takes the form of
 eventing, but could reasonably also take the form of callback functions that integrate into the processing step, etc.
 
@@ -97,7 +97,7 @@ operation.
 
 ### Operational Transform and Intention Preservation
 
-More-advanced DDSs require a more-sophisticated conflict resolution strategy to meet user expectations. The general
+More-advanced DDSes require a more-sophisticated conflict resolution strategy to meet user expectations. The general
 principle is referred to as [Intention
 Preservation](https://en.wikipedia.org/wiki/Operational_transformation#The_CCI_model). For example, the text I insert at
 position 23 of a SharedString while a friend deletes at position 12 needs to be transformed to insert at the location
@@ -111,7 +111,7 @@ index).
    summarization functionality for performance reasons, and server implementations can benefit from reduced storage
    needs.
 2. This document doesn't currently cover the transmission of ops or stamping them with a sequence number, but that
-   probably belongs here since it's something a developer working on DDSs must be aware of (e.g. in conflict
+   probably belongs here since it's something a developer working on DDSes must be aware of (e.g. in conflict
    resolution). It is external to the DDS itself though.
 3. A section on allowances on "benign/allowable/by-design inconsistency" might be interesting. For example:
    - SharedString can be represented differently across clients in internal in-memory representation depending on op

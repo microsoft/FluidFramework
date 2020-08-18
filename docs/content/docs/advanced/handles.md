@@ -7,8 +7,8 @@ system and anyone who has the handle can easily get the underlying object by sim
 
 ### Why use Fluid Handles?
 
-- You should **always** use handles to represent Fluid objects and you should store the handles in a Distributed Data
-  Structure (DDS). This tells the runtime and the storage service that the object is referenced. The runtime / storage
+- You should **always** use handles to represent Fluid objects and you should store the handles in a distributed data
+  structure (DDS). This tells the runtime and the storage service that the object is referenced. The runtime / storage
   can then manage the lifetime of the object and perform important operations such as garbage collection. Objects that
   are not referenced by a handle are subject to garbage collection.
 
