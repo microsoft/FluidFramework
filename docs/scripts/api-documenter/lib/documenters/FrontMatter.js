@@ -4,14 +4,12 @@ const tsdoc_1 = require("@microsoft/tsdoc");
 class FrontMatter {
     toString() {
         const str = new tsdoc_1.StringBuilder();
-        str.append("---\n");
         str.append(`title: "${this.title}"\n`);
         str.append(`kind: "${this.kind}"\n`);
         str.append(`package: "${this.package}"\n`);
-        if (this.metadata) {
-            str.append(`metadata: "${this.metadata}"\n`);
+        if (this.summary) {
+            str.append(`summary: "${this.summary}"\n`);
         }
-        str.append("---\n");
         return str.toString();
     }
 }

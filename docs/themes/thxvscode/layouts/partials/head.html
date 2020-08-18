@@ -11,7 +11,7 @@
     <meta itemprop="datePublished" content="{{ now.Format "2006-01-02" }}">
 
     <!-- sections.meta -->
-
+    {{ $summary := .Params.summary | plainify | truncate 140 }}
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -40,8 +40,8 @@
     {{ partial "extra-head.html" . }}
     {{- end }}
 
-    <meta name="description" content="{{.Params.meta}}" />
+    <meta name="description" content="{{ $summary }}" />
     <meta property="og:title" content="{{.Title}}" />
-    <meta property="og:description" content="{{.Params.meta}}" />
+    <meta property="og:description" content="{{ $summary }}" />
 
 </head>

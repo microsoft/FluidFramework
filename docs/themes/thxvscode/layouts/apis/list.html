@@ -36,7 +36,7 @@
                         {{ range where $packagePages "Params.package" .  }}
                         <tr>
                             <td><a href="{{ .Permalink | safeURL }}" title="{{ .Title }}">{{ .Title }}</a></td>
-                            <td>{{ .Params.metadata }}</td>
+                            <td>{{ .Params.summary | plainify }}</td>
                         </tr>
                         {{ end }}
                         {{ end }}
