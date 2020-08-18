@@ -70,18 +70,34 @@ weight = 0
 # url = "/docs/testing"
 
 [markup]
-[markup.goldmark]
-[markup.goldmark.renderer]
-# mark unsafe html as true since api-documenter uses html snipets.
-unsafe = true
-[markup.highlight]
-codeFences = true
-guessSyntax = true
-hl_Lines = ""
-lineNoStart = 1
-# if you need to turn on line nos, use the highlight shortcode
-lineNos = false
-lineNumbersInTable = false
-noClasses = true
-style = "tango"
-tabWidth = 4
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+    autoHeadingIDType = "github"
+    # mark unsafe html as true since api-documenter uses html snipets.
+    unsafe = true
+
+    [markup.goldmark.extensions]
+      definitionList = true
+      footnote = true
+      linkify = true
+      strikethrough = true
+      table = true
+      taskList = true
+      typographer = true
+
+  [markup.highlight]
+    codeFences = true
+    guessSyntax = true
+    hl_Lines = ""
+    lineNoStart = 1
+    # if you need to turn on line nos, use the highlight shortcode
+    lineNos = false
+    lineNumbersInTable = false
+    noClasses = true
+    style = "tango"
+    tabWidth = 2
+
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 4
+    ordered = false

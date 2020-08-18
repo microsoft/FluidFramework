@@ -16,7 +16,7 @@ should be feel comfortable extending the docs system if needed.
 
 **Contents:**
 
-[[toc]]
+{{< table_of_contents >}}
 
 ---
 
@@ -83,35 +83,10 @@ Plugin: <https://github.com/camelaissani/markdown-it-include>
 If you want to re-use a snippet in multiple places, place the snippet file in `docs/.vuepress/includes/`. You can then reference
 it in a Markdown file like so:
 
-`!!!innclude(my-file.md)!!!`
-
-Note: `include` is deliberately misspelled in the examples on this page due to limitations with the documentation build
-system. In actual usage, `include` should be spelled correctly.
-
-{{< callout important >}}
-
-Snippets are included _before_ links are processed. This means that relative links to other Markdown files in snippets
-will be resolved _relative to the file they are included in_. Thus you should ensure your snippets will only be used at
-a single level of the folder hierarchy, or simply avoid relative links in reusable snippets.
-
-{{< /callout >}}
-
-#### Including files outside the docs folder
-
-You can include files located anywhere in the repo using the same `!!!include()` syntax. The path to the file in the
-repo must be specified relative to `docs/.vuepress/includes`. For example, if you want to include the readme file at
-`packages/dds/sequence/README.md`, for example, you would specify the include path like so:
-
-```markdown
-!!!innclude(../../../packages/dds/sequence/README.md)!!!
+```golang
+{{</* include file="_includes/node-versions.md" */>}}
 ```
 
-You can create a simple wrapper page within the docs folder, then include a file from the repo within it. See
-[docs/contributing/breaking-changes.md](https://github.com/microsoft/FluidFramework/blob/master/docs/contributing/breaking-changes.md)
-for an example.
-
-Links are resolved as described above for reusable snippets, so you must be careful when using links in files you also
-intend to include within the documentation.
 
 ### Syntax formatting and line highlighting <Badge text="VuePress feature" vertical="middle"/>
 
@@ -121,7 +96,7 @@ the code block.
 **Input**
 
 ````markdown
-```typescript{2-6,9}
+{{</* highlight ts "linenos=inline,hl_lines=2-6 9" */>}}
 const numericInput = (keyString: string, coord: string) => {
   let valueToSet = Number(keyString);
   valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
@@ -142,12 +117,12 @@ const numericInput = (keyString: string, coord: string) => {
     props.puzzle.set(coord, toSet);
   }
 };
-```
+{{</* /highlight */>}}
 ````
 
 **Output**
 
-```typescript{2-6,9}
+{{< highlight ts "linenos=inline,hl_lines=2-6 9" >}}
 const numericInput = (keyString: string, coord: string) => {
   let valueToSet = Number(keyString);
   valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
@@ -168,33 +143,33 @@ const numericInput = (keyString: string, coord: string) => {
     props.puzzle.set(coord, toSet);
   }
 };
-```
+{{< /highlight >}}
 
-### Info/tip boxes <Badge text="VuePress feature" vertical="middle"/>
+### Info/tip callouts
 
 It is often useful to draw special attention to some content in the docs, such as a tip about proper usage, a warning
 about possible security issues when using an API, etc. This can be done using the following syntax in Markdown files:
 
 ```markdown
-{{< callout tip >}}
+{{</* callout tip */>}}
 
-The VuePress documentation calls these "containers."
+This is a tip.
 
-{{< /callout >}}
+{{</* /callout */>}}
 ```
 
 Which would render this:
 
 {{< callout tip >}}
 
-The VuePress documentation calls these "containers."
+This is a tip.
 
 {{< /callout >}}
 
 #### Types
 
 Several different "types" are defined, each with special formatting. `tip` is show above, but `note`, `important`,
-`warning`, `danger`, and `details` are also supported.
+`warning`, and `danger` are also supported.
 
 {{< callout note >}}
 
@@ -220,24 +195,19 @@ This is a _dangerous_ warning
 
 {{< /callout >}}
 
-{{< callout details >}}
-
-This is a collapsable details block. It does not work in IE or Classic Edge.
-
-{{< /callout >}}
 
 #### Custom titles
 
-By default, each box's heading is the type in all caps. You can change this by providing a title after the type.
+By default, each box's heading is the type. You can change this by providing a title after the type.
 
 **Input**
 
 ```markdown
-{{< callout note "A note about syntax" >}}
+{{</* callout note "A note about syntax" */>}}
 
 Markdown goes here
 
-{{< /callout >}}
+{{</* /callout */>}}
 ```
 
 **Output**

@@ -28,6 +28,11 @@ editor and a modern web browser.
 See [Architecture]({{< relref "docs/concepts/architecture.md" >}}).
 
 
-### License
+## Browser support
+
+{{% include file="_includes/browsers.md" %}}
+
+
+## License
 
 MIT-licensed.

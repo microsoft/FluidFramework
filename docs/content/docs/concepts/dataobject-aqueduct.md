@@ -67,7 +67,7 @@ method.
 
 The following is an example from the Badge DataObject:
 
-```ts{5,10,19}
+{{< highlight ts "linenos=inline,hl_lines=5 10 19" >}}
 protected async initializingFirstTime() {
     // Create a cell to represent the Badge's current state
     const current = SharedCell.create(this.runtime);
@@ -88,7 +88,7 @@ protected async initializingFirstTime() {
     }]);
     this.root.set(this.historyId, badgeHistory.handle);
 }
-```
+{{< /highlight >}}
 
 Notice that three distributed data structures are created and populated with initial data, then stored within the `root`
 SharedDirectory.

@@ -1,7 +1,6 @@
-{{< callout important Browser support >}}
-
-There is a lot of nuance in browser support, but in general, Fluid supports modern browsers, and we recommend that you
-use the most up-to-date browser that's compatible with your operating system. The following browsers are supported:
+There is a lot of nuance in browser support, but in general, Fluid Framework supports modern browsers, and we recommend
+that you use the most up-to-date browser that's compatible with your operating system. The following browsers are
+supported:
 
 * The new [Microsoft Edge](https://www.microsoft.com/edge)
 * Safari (latest version, Mac only)
@@ -10,5 +9,3 @@ use the most up-to-date browser that's compatible with your operating system. Th
 
 However, using transpilers and other tools in the JavaScript ecosystem, it is possible to create Fluid Framework-based
 apps that support additional browsers.
-
-{{< /callout >}
