@@ -3,8 +3,6 @@ title: Introducing distributed data structures
 MenuPosition: 2
 ---
 
-# Introducing distributed data structures
-
 The primary way that developers interact with the Fluid Framework is through a collection of objects called _distributed
 data structures_ (DDSes). We call them this because they are similar to data structures used commonly when programming, like
 strings, maps/dictionaries, and sequences/lists. The APIs provided by distributed data structures are designed to be
