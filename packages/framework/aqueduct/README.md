@@ -16,9 +16,9 @@ Fluid object development consists of developing the data object and the correspo
 
 The [`DataObject`](./src/data-objects/dataObject.ts) class extends [`PureDataObject`](####PureDataObject) and provides the following additional functionality:
 
-- A `root` SharedDirectory that makes creating and storing Distributed Data Structures and Objects easy.
-- Scheduled Task routing that makes it easier to use the Scheduler Fluid object
-- Blob Storage implementation that makes it easier to store and retrieve blobs.
+- A `root` SharedDirectory that makes creating and storing distributed data structures and objects easy.
+- Scheduled task routing that makes it easier to use the Scheduler Fluid object
+- Blob storage implementation that makes it easier to store and retrieve blobs.
 
 > Note: Most developers will want to use the `DataObject` as their base class to extend.
 
@@ -31,9 +31,9 @@ The [`PureDataObject`](./src/data-object/PureDataObject.ts) provides the followi
   - `initializingFirstTime(props: S)` - called only the first time a Fluid object is initialized
   - `initializingFromExisting()` - called every time except the first time a Fluid object is initialized
   - `hasInitialized()` - called every time after `initializingFirstTime` or `initializingFromExisting` executes
-- Helper functions for creating and getting other data objects in the same Container.
+- Helper functions for creating and getting other data objects in the same container.
 
-> Note: You probably don't want to inherit from this data object directly unless you are creating another base data object class. If you have a data object that doesn't use Distributed Data Structures you should use Container Services to manage your object.
+> Note: You probably don't want to inherit from this data object directly unless you are creating another base data object class. If you have a data object that doesn't use dDistributed data structures you should use Container Services to manage your object.
 
 #### DataObject Example
 
@@ -76,7 +76,7 @@ export class Clicker extends DataObject implements IFluidHTMLView {
 
 ### DataObjectFactory Development
 
-The `DataObjectFactory` is used to create a Fluid object and to initialize a data object within the context of a Container. The factory can live alongside a data object or within a different package. The `DataObjectFactory` defines the Distributed Data Structures used within the data object as well as any Fluid objects it depends on.
+The `DataObjectFactory` is used to create a Fluid object and to initialize a data object within the context of a Container. The factory can live alongside a data object or within a different package. The `DataObjectFactory` defines the distributed data structures used within the data object as well as any Fluid objects it depends on.
 
 The Aqueduct offers a factory for each of the data objects provided.
 
@@ -86,13 +86,13 @@ The Aqueduct offers a factory for each of the data objects provided.
 
 #### DataObjectFactory Example
 
-In the below example we build a `DataObjectFactory` for the [`Clicker`](####Data-Object-Example) example above. In the above example we use `this.root` to store our `"clicks"`. The `DataObject` comes with the `SharedDirectory` already initialized so we do not need to add additional Distributed Data Structures.
+In the below example we build a `DataObjectFactory` for the [`Clicker`](####Data-Object-Example) example above. In the above example we use `this.root` to store our `"clicks"`. The `DataObject` comes with the `SharedDirectory` already initialized so we do not need to add additional distributed data structures.
 
 ```typescript
 export const ClickerInstantiationFactory = new DataObjectFactory(
     Clicker.Name,
     Clicker,
-    [SharedCounter.getFactory()], // Distributed Data Structures
+    [SharedCounter.getFactory()], // distributed data structures
     {}, // Provider Symbols see below
 );
 ```
@@ -132,7 +132,7 @@ export class MyExample extends DataObject<IFluidUserInfo> {
 export const ClickerInstantiationFactory = new DataObjectFactory(
     Clicker.Name
     Clicker,
-    [], // Distributed Data Structures
+    [], // distributed data structures
     {IFluidUserInfo}, // Provider Symbols see below
 );
 ```
@@ -154,8 +154,8 @@ In the below example we will write a Container that exposes the above [`Clicker`
 
 ```typescript
 export fluidExport = new ContainerRuntimeFactoryWithDataStore(
-  ClickerInstantiationFactory.type, // Default data object Type
-  ClickerInstantiationFactory.registryEntry, // Fluid object Registry
+  ClickerInstantiationFactory.type, // Default data object type
+  ClickerInstantiationFactory.registryEntry, // Fluid object registry
   [], // Provider Entries
   [], // Request Handler Routes
 );
