@@ -69,7 +69,7 @@ export class DiceRoller extends DataObject implements IDiceRoller {
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
 export const DiceRollerInstantiationFactory = new DataObjectFactory(
-    "@fluid-example/dice-roller",
+    "dice-roller",
     DiceRoller,
     [],
     {},
