@@ -1,13 +1,14 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google-site-verification" content="" />
+    {{ if isset .Site.Params "google_site_verification" }}
+    <meta name="google-site-verification" content="{{ .Site.Params.google_site_verification }}" />
+    {{ end }}
 
     <!-- Twitter and Facebook OpenGraph Metadata-->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@fluidframework" />
 
-    <meta itemprop="applicationCategory" content="Text Editor">
     <meta itemprop="datePublished" content="{{ now.Format "2006-01-02" }}">
 
     <!-- sections.meta -->
@@ -31,7 +32,8 @@
         {{ printf "integrity=%q" $style.Data.Integrity | safeHTMLAttr }}>
 
     {{- range .Site.Params.customCSS }}
-    <link rel="stylesheet" href="{{ . | relURL }}">
+    {{ $customStyle := resources.Get . | minify | fingerprint }}
+    <link rel="stylesheet" href="{{ $customStyle.Permalink | relURL }}" integrity="{{ $customStyle.Data.Integrity }}">
     {{- end }}
     {{- block "head" . -}}{{- end }}
 
@@ -40,7 +42,7 @@
     {{ partial "extra-head.html" . }}
     {{- end }}
 
-    <meta name="description" content="{{ $summary }}" />
+    <meta name=" description" content="{{ $summary }}" />
     <meta property="og:title" content="{{.Title}}" />
     <meta property="og:description" content="{{ $summary }}" />
 

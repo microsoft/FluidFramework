@@ -9,7 +9,7 @@ page = "/:slug"
 post = "/:year/:month/:day/:title"
 
 [params]
-customCSS = ["/css/fluid.css"]
+customCSS = ["css/fluid.css"]
 dateform = "Jan 2, 2006"
 dateformNum = "2006-01-02"
 dateformNumTime = "2006-01-02 15:04 -0700"
