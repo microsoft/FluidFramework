@@ -16,6 +16,7 @@ trigger:
     - common/lib/common-definitions
     - tools/pipelines/build-common-definitions.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/publish-npm-package.yml
 
 pr:
@@ -28,6 +29,7 @@ pr:
     - common/lib/common-definitions
     - tools/pipelines/build-common-definitions.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
 
 extends:
   template: templates/build-npm-package.yml
