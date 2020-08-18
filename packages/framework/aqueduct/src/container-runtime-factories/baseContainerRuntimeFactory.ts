@@ -24,7 +24,7 @@ import {
 import { DependencyContainer, DependencyContainerRegistry } from "@fluidframework/synthesize";
 
 /**
- * BaseContainerRuntimeFactory produces container runtimes with a given component and service registry, as well as
+ * BaseContainerRuntimeFactory produces container runtimes with a given data store and service registry, as well as
  * given request handlers.  It can be subclassed to implement a first-time initialization procedure for the containers
  * it creates.
  */
@@ -36,7 +36,7 @@ export class BaseContainerRuntimeFactory implements
     private readonly registry: IFluidDataStoreRegistry;
 
     /**
-     * @param registryEntries - The component registry for containers produced
+     * @param registryEntries - The data store registry for containers produced
      * @param serviceRegistry - The service registry for containers produced
      * @param requestHandlers - Request handlers for containers produced
      */
@@ -90,14 +90,14 @@ export class BaseContainerRuntimeFactory implements
 
     /**
      * Subclasses may override containerInitializingFirstTime to perform any setup steps at the time the container
-     * is created. This likely includes creating any initial components that are expected to be there at the outset.
+     * is created. This likely includes creating any initial data stores that are expected to be there at the outset.
      * @param runtime - The container runtime for the container being initialized
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) { }
 
     /**
      * Subclasses may override containerHasInitialized to perform any steps after the container has initialized.
-     * This likely includes loading any components that are expected to be there at the outset.
+     * This likely includes loading any data stores that are expected to be there at the outset.
      * @param runtime - The container runtime for the container being initialized
      */
     protected async containerHasInitialized(runtime: IContainerRuntime) { }

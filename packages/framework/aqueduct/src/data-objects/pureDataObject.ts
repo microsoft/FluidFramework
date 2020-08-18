@@ -23,7 +23,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { serviceRoutePathRoot } from "../container-services";
 
-export interface ISharedComponentProps<P extends IFluidObject = object> {
+export interface IDataObjectProps<P extends IFluidObject = object> {
     readonly runtime: IFluidDataStoreRuntime,
     readonly context: IFluidDataStoreContext,
     readonly providers: AsyncFluidObjectProvider<FluidObjectKey<P>, FluidObjectKey<object>>,
@@ -31,11 +31,12 @@ export interface ISharedComponentProps<P extends IFluidObject = object> {
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
- * You probably don't want to inherit from this component directly unless you are creating another base component class
+ * You probably don't want to inherit from this data store directly unless
+ * you are creating another base data store class
  *
  * Generics:
  * P - represents a type that will define optional providers that will be injected
- * S - the initial state type that the produced component may take during creation
+ * S - the initial state type that the produced data store may take during creation
  * E - represents events that will be available in the EventForwarder
  */
 export abstract class PureDataObject<P extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
@@ -60,7 +61,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * a promise to the corresponding IFluidObject or undefined.
      * Providers injected/provided by the Container and/or HostingApplication
      *
-     * To define providers set IFluidObject interfaces in the generic O type for your Component
+     * To define providers set IFluidObject interfaces in the generic O type for your data store
      */
     protected readonly providers: AsyncFluidObjectProvider<FluidObjectKey<P>, FluidObjectKey<object>>;
 
@@ -72,11 +73,11 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
     public get IFluidHandle() { return this.innerHandle; }
 
     /**
-     * Handle to a shared component
+     * Handle to a data store
      */
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
-    public constructor(props: ISharedComponentProps<P>) {
+    public constructor(props: IDataObjectProps<P>) {
         super();
         this.runtime = props.runtime;
         this.context = props.context;
@@ -133,7 +134,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
     // #region IFluidLoadable
 
     /**
-     * Absolute URL to the component within the document
+     * Absolute URL to the data store within the document
      */
     public get url() { return this.context.id; }
 
@@ -160,9 +161,9 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
     }
 
     /**
-     * Calls create, initialize, and attach on a new component with random generated ID
+     * Calls create, initialize, and attach on a new data store with random generated ID
      *
-     * @param pkg - package name for the new component
+     * @param pkg - package name for the new data store
      * @param props - optional props to be passed in
      */
     protected async createFluidObject<T extends IFluidObject & IFluidLoadable>(
@@ -174,7 +175,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
     }
 
     /**
-     * Retreive component using the handle get or the older requestFluidObject_UNSAFE call to fetch by ID
+     * Retreive data store using the handle get or the older requestFluidObject_UNSAFE call to fetch by ID
      *
      * @param key - key that object (handle/id) is stored with in the directory
      * @param directory - directory containing the object
@@ -190,11 +191,11 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
         if (typeof handleOrId === "string") {
             // For backwards compatibility with older stored IDs
             // We update the storage with the handle so that this code path is less and less trafficked
-            const component = await this.requestFluidObject_UNSAFE<T>(handleOrId);
-            if (component.IFluidLoadable && component.handle) {
-                directory.set(key, component.handle);
+            const fluidObject = await this.requestFluidObject_UNSAFE<T>(handleOrId);
+            if (fluidObject.IFluidLoadable && fluidObject.handle) {
+                directory.set(key, fluidObject.handle);
             }
-            return component;
+            return fluidObject;
         } else {
             const handle = handleOrId?.IFluidHandle;
             return await (handle ? handle.get() : this.requestFluidObject_UNSAFE(key)) as T;
@@ -203,8 +204,8 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
 
     /**
      * @deprecated
-     * Gets the component of a given id. Will follow the pattern of the container for waiting.
-     * @param id - component id
+     * Gets the data store of a given id. Will follow the pattern of the container for waiting.
+     * @param id - data store id
      */
     protected async requestFluidObject_UNSAFE<T extends IFluidObject>(id: string): Promise<T> {
         return handleFromLegacyUri<T>(`/${id}`, this.context.containerRuntime).get();
@@ -219,7 +220,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
     }
 
     /**
-     * Called the first time the component is initialized (new creations with a new
+     * Called the first time the data store is initialized (new creations with a new
      * data store runtime)
      *
      * @param props - Optional props to be passed in on create
@@ -228,13 +229,13 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
     protected async initializingFirstTime(props?: S): Promise<void> { }
 
     /**
-     * Called every time but the first time the component is initialized (creations
+     * Called every time but the first time the data store is initialized (creations
      * with an existing data store runtime)
      */
     protected async initializingFromExisting(): Promise<void> { }
 
     /**
-     * Called every time the component is initialized after create or existing.
+     * Called every time the data store is initialized after create or existing.
      */
     protected async hasInitialized(): Promise<void> { }
 
