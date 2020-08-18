@@ -26,7 +26,7 @@ The [`DataObject`](./src/data-objects/dataObject.ts) class extends [`PureDataObj
 
 [`PureDataObject`](./src/data-object/PureDataObject.ts) provides the following functionality:
 
-- Basic set of interface implementations to be loadable in a Fluid Container.
+- Basic set of interface implementations to be loadable in a Fluid container.
 - Functions for managing Fluid object lifecycle.
   - `initializingFirstTime(props: S)` - called only the first time a Fluid object is initialized
   - `initializingFromExisting()` - called every time except the first time a Fluid object is initialized
