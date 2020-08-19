@@ -45,9 +45,9 @@ import * as SharedString from "../intervalCollection";
 
 const clock = () => Trace.start();
 
-const elapsedMicroseconds = (start: Trace) => {
-    return start.trace().duration * 1000;
-};
+function elapsedMicroseconds(trace: Trace) {
+    return trace.trace().duration * 1000;
+}
 
 // Enum AsyncRoundState {
 //     Insert,
@@ -80,10 +80,9 @@ export function propertyCopy() {
             obj[a[i]] = v[i];
         }
     }
-    let et = traceStart.trace().duration;
+    let et = elapsedMicroseconds(clockStart);
     let perIter = (et / iterCount).toFixed(3);
     let perProp = (et / (iterCount * propCount)).toFixed(3);
-    console.log(`arr prop init time ${perIter} ms per init; ${perProp} per property`);
     console.log(`arr prop init time ${perIter} per init; ${perProp} per property`);
     clockStart = clock();
     for (let j = 0; j < iterCount; j++) {
@@ -194,22 +193,24 @@ export function TestPack(verbose = true) {
         if (!verbose) {
             return;
         }
-        // client times are in floating point ms, but everything in this test is done in us
-        const aveTime = (1000 * client.accumTime / client.accumOps).toFixed(1);
-        const aveLocalTime = (1000 * client.localTime / client.localOps).toFixed(1);
+        const aveTime = (client.accumTime / client.accumOps).toFixed(1);
+        const aveLocalTime = (client.localTime / client.localOps).toFixed(1);
         const stats = client.mergeTree.getStats();
-        const aveWindowTime = (1000 * (stats.windowTime || 0) / (client.accumOps)).toFixed(1);
-        const aveOrdTime = (1000 * (stats.ordTime || 0) / (client.accumOps)).toFixed(1);
-        const avePackTime = (1000 * (stats.packTime || 0) / (client.accumOps)).toFixed(1);
-        const aveExtraWindowTime = (1000 * client.accumWindowTime / client.accumOps).toFixed(1);
+        const windowTime = stats.windowTime;
+        const packTime = stats.packTime;
+        const ordTime = stats.ordTime;
+        const aveWindowTime = ((windowTime || 0) / (client.accumOps)).toFixed(1);
+        const aveOrdTime = ((ordTime || 0) / (client.accumOps)).toFixed(1);
+        const avePackTime = ((packTime || 0) / (client.accumOps)).toFixed(1);
+        const aveExtraWindowTime = (client.accumWindowTime / client.accumOps).toFixed(1);
         const aveWindow = (client.accumWindow / client.accumOps).toFixed(1);
-        const adjTime = (1000 * (client.accumTime - (stats.windowTime - client.accumWindowTime)) / client.accumOps).toFixed(1);
+        const adjTime = ((client.accumTime - (windowTime - client.accumWindowTime)) / client.accumOps).toFixed(1);
         if (client.localOps > 0) {
-            console.log(`local time ${client.localTime * 1000} us ops: ${client.localOps} ave time ${aveLocalTime}`);
+            console.log(`local time ${client.localTime} us ops: ${client.localOps} ave time ${aveLocalTime}`);
         }
-        console.log(`ord time average: ${aveOrdTime}us max ${stats.maxOrdTime * 1000}us`);
-        console.log(`${client.longClientId} accum time ${client.accumTime * 1000} us ops: ${client.accumOps} ave time ${aveTime} - wtime ${adjTime} pack ${avePackTime} ave window ${aveWindow}`);
-        console.log(`${client.longClientId} accum window time ${client.accumWindowTime * 1000} us ave window time total ${aveWindowTime} not in ops ${aveExtraWindowTime}; max ${client.maxWindowTime * 1000}`);
+        console.log(`ord time average: ${aveOrdTime}us max ${stats.maxOrdTime}us`);
+        console.log(`${client.longClientId} accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime} - wtime ${adjTime} pack ${avePackTime} ave window ${aveWindow}`);
+        console.log(`${client.longClientId} accum window time ${client.accumWindowTime} us ave window time total ${aveWindowTime} not in ops ${aveExtraWindowTime}; max ${client.maxWindowTime}`);
     }
 
     function manyMergeTrees() {
