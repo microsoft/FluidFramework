@@ -66,26 +66,26 @@ Within the Fluid Framework, the runtime consists of a few parts:
    The container-level runtime code is dictated by the "code" value in the quorum.  Typically developers building on
    Fluid will create an instance of the Fluid `ContainerRuntime` by passing it a registry- which instructs how to
    instantiate data stores; this may be dynamic, or all data store code could bundled with the container runtime.
-2. The data store-level runtime code: this corresponds to each loaded data store within a container.  The data store-level
-   runtime code is dictated by the ".component" package information in its attach op.  The data store-level runtime code
+2. The data-store-level runtime code: this corresponds to each loaded data store within a container.  The data-store-level
+   runtime code is dictated by the ".component" package information in its attach op.  The data-store-level runtime code
    and container-level runtime code depend on each other through the APIs defined in runtime-definitions.  For reference,
    this boundary occurs between the `IFluidDataStoreContext`
-   (container-level) and the `IFluidDataStoreRuntime` (data store-level).  Fluid tries to keep the container runtime backwards
+   (container-level) and the `IFluidDataStoreRuntime` (data-store-level).  Fluid tries to keep the container runtime backwards
    compatible with the data store runtime by at least 1 version.
 3. The distributed data structures code: typically developers can build data stores consisting of the Fluid Framework
    provided set of distributed data structures.  There is a registry of DDS factories within each data store that
-   instruct how to load the DDS code, but this code is meant to be statically loaded with the component.  Developers can
+   instruct how to load the DDS code, but this code is meant to be statically loaded with the data store.  Developers can
    build their own distributed data structures, but it may be more complicated, being that they are lower-level to the
    ops and summaries.
 
 When making changes to the Fluid Framework repository, it is important to note when breaking changes are made to
-runtime-definitions which affect either dynamically loaded components or external code.  At least we should ensure that
-our own container-level runtime code can load our own component-level runtime code at least 1 version back.
+runtime-definitions which affect compatibilities between different version of data stores.  At least we should ensure that
+our own container-level runtime code can load our own data-store-level runtime code at least 1 version back.
 
 Specific interfaces to monitor:
 
 - `IContainerRuntime` - interfaces container runtime to loaded data store runtime
-- `IFluidDataStoreContext` - interfaces component context to loaded data store runtime
+- `IFluidDataStoreContext` - interfaces data store context to loaded data store runtime
 - `IFluidDataStoreRuntime` - interfaces loaded data store runtime to its context
 
 ## Guidelines for compatible contributions

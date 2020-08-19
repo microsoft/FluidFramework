@@ -49,7 +49,7 @@ export interface ICompatTestArgs {
 
 export interface ICompatTestOptions {
     /**
-     * Use TestFluidDataStore instead of PrimedComponent
+     * Use TestFluidDataStore instead of PrimedDataStore
      */
     testFluidDataStore?: boolean,
 }
@@ -57,7 +57,7 @@ export interface ICompatTestOptions {
 // TODO: once 0.25 is released this can be replaced with the old imported type
 type OldChannelFactoryRegistry = Iterable<[string | undefined, old.IChannelFactory]>;
 
-// convert a channel factory registry for TestFluidComponentFactory to one with old channel factories
+// convert a channel factory registry for TestFluidDataStoreFactory to one with old channel factories
 function convertRegistry(registry: ChannelFactoryRegistry = []): OldChannelFactoryRegistry {
     const oldRegistry = [];
     for (const [key, factory] of registry) {
