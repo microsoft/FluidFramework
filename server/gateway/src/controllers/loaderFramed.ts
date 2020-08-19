@@ -21,7 +21,7 @@ import { DocumentFactory } from "./documentFactory";
 import { seedFromScriptIds } from "./helpers";
 import { debug } from "./debug";
 
-async function getDataStoreAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
+async function getFluidObjectAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
     const fluidObject = await baseHost.requestFluidObject(url);
     if (fluidObject === undefined) {
         return;
