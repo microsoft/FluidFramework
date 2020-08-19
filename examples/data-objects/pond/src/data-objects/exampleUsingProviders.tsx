@@ -10,7 +10,7 @@ import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { IComponentUserInformation } from "../interfaces";
+import { IFluidUserInformation } from "../interfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
@@ -19,16 +19,16 @@ const pkg = require("../../package.json");
  * Basic example that takes a container provider
  */
 export class ExampleUsingProviders
-    extends DataObject<IComponentUserInformation>
+    extends DataObject<IFluidUserInformation>
     implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
-    private userInformation: IComponentUserInformation | undefined;
+    private userInformation: IFluidUserInformation | undefined;
 
     public static readonly ComponentName = `${pkg.name as string}-example-using-provider`;
 
     protected async hasInitialized() {
-        this.userInformation = await this.providers.IComponentUserInformation;
+        this.userInformation = await this.providers.IFluidUserInformation;
     }
 
     // start IFluidHTMLView
@@ -38,7 +38,7 @@ export class ExampleUsingProviders
         if (this.userInformation !== undefined) {
             element = <ExampleUsingProvidersView userInfo={this.userInformation} />;
         } else {
-            console.log("No IComponentUserInformation Provided");
+            console.log("No IFluidUserInformation Provided");
         }
 
         ReactDOM.render(
@@ -56,11 +56,11 @@ export class ExampleUsingProviders
         ExampleUsingProviders.ComponentName,
         ExampleUsingProviders,
         [SharedMap.getFactory()],
-        { IComponentUserInformation });
+        { IFluidUserInformation });
 }
 
 interface ExampleUsingProvidersViewProps {
-    readonly userInfo: IComponentUserInformation;
+    readonly userInfo: IFluidUserInformation;
 }
 
 interface ExampleUsingProvidersViewState {

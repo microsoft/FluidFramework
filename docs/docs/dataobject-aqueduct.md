@@ -153,4 +153,4 @@ export const BadgeInstantiationFactory = new DataObjectFactory(
 ## Learn more
 
 The Aqueduct library contains more than just DataObject and DataObjectFactory. To dive deeper into the details, see the
-[Aqueduct package README](https://github.com/microsoft/FluidFramework/blob/master/packages/framework/aqueduct/README.md)
+[Aqueduct package README](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/README.md)

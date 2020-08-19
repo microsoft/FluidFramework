@@ -14,9 +14,9 @@ import {
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { DocumentManager } from "./documentManager";
-import { RouteMasterLambda } from "./lambda";
+import { RouteManagerLambda } from "./lambda";
 
-export class RouteMasterLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
+export class RouteManagerLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
         private readonly mongoManager: MongoManager,
         private readonly collection: ICollection<any>,
@@ -31,7 +31,7 @@ export class RouteMasterLambdaFactory extends EventEmitter implements IPartition
 
         const documentDetails = await DocumentManager.create(tenantId, documentId, this.collection, this.deltas);
 
-        return new RouteMasterLambda(documentDetails, this.producer, context, tenantId, documentId);
+        return new RouteManagerLambda(documentDetails, this.producer, context, tenantId, documentId);
     }
 
     public async dispose(): Promise<void> {

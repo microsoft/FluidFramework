@@ -10,7 +10,7 @@ export const Constants = {
   // The ADO project that contains the repo
   projectName: '',
 
-  // The ID for the build that runs against master when PRs are merged
+  // The ID for the build that runs against main when PRs are merged
   ciBuildDefinitionId: 0,
 
   // The ID for the build that runs to validate PRs

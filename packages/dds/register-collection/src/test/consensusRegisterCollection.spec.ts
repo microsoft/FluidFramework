@@ -133,7 +133,7 @@ describe("ConsensusRegisterCollection", () => {
                     dataStoreRuntime,
                     dataStoreId,
                     services,
-                    "master",
+                    "main",
                     ConsensusRegisterCollectionFactory.Attributes,
                 );
                 assert.strictEqual(loadedCrc.read("key1"), "val1.1");
@@ -146,7 +146,7 @@ describe("ConsensusRegisterCollection", () => {
                     dataStoreRuntime,
                     dataStoreId,
                     services,
-                    "master",
+                    "main",
                     ConsensusRegisterCollectionFactory.Attributes,
                 ), "SharedObjects contained in ConsensusRegisterCollection can no longer be deserialized");
             });
