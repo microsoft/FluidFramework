@@ -1,7 +1,8 @@
 <article class="thin">
     <header class="post-header">
         <div class="post-meta"><span>{{ .Date.Format .Site.Params.dateform }}</span></div>
-        <h1>{{title .Title}}</h1>
+        <h1><a href="{{.RelPermalink}}">{{title .Title}}</a></h1>
+
     </header>
     <div class="content">
         {{ .Content  }}
