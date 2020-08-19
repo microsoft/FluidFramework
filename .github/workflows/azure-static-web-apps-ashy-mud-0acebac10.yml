@@ -43,10 +43,10 @@ jobs:
       - name: Generate Markdown from TSDoc
         id: mdapidocs
         run: |
-          mv .npmrc .npmrc.bak
-          npm install -g @mattetti/custom-api-documenter
-          api-documenter generate --config docs/api-documenter.json --input-folder _api-extractor-temp/doc-models/ --output-folder docs/content/apis/
-          mv .npmrc.bak .npmrc
+          cd docs
+          npm ci
+          npm run build
+          cd ..
       - name: Hugo Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v0.0.1-preview

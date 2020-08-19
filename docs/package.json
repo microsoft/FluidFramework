@@ -1,0 +1,15 @@
+{
+  "name": "fluidframework-docs",
+  "version": "0.25.0",
+  "description": "Fluid Framework documentation",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm run build:api-documenter",
+    "build:api-documenter": "api-documenter generate --config api-documenter.json --input-folder ../_api-extractor-temp/doc-models/ --output-folder content/apis/"
+  },
+  "author": "Microsoft",
+  "license": "MIT",
+  "dependencies": {
+    "@mattetti/custom-api-documenter": "^0.2.2"
+  }
+}
