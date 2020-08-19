@@ -6,8 +6,6 @@
 import {
     IFluidObject,
     IFluidRouter,
-    IRequest,
-    IResponse,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -28,8 +26,6 @@ import {
 import {
     FlushMode,
     IContainerRuntimeBase,
-    IFluidDataStoreChannel,
-    IFluidDataStoreContext,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
 import { IProvideContainerRuntimeDirtyable } from "./containerRuntimeDirtyable";
@@ -67,7 +63,7 @@ export interface IContainerRuntime extends
     readonly loader: ILoader;
     readonly flushMode: FlushMode;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly scope: IFluidObject & IFluidObject;
+    readonly scope: IFluidObject;
     /**
      * Indicates the attachment state of the container to a host service.
      */
@@ -83,15 +79,15 @@ export interface IContainerRuntime extends
     on(event: "connected", listener: (clientId: string) => void): this;
     on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
     on(
-        event: "componentInstantiated",
-        listener: (componentPkgName: string, registryPath: string, createNew: boolean) => void,
+        event: "fluidDataStoreInstantiated",
+        listener: (dataStorePkgName: string, registryPath: string, createNew: boolean) => void,
     ): this;
     /**
-     * Returns the runtime of the component.
-     * @param id - Id supplied during creating the component.
+     * Returns the runtime of the data store.
+     * @param id - Id supplied during creating the data store.
      * @param wait - True if you want to wait for it.
      */
-    getDataStore(id: string, wait?: boolean): Promise<IFluidDataStoreChannel>;
+    getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
 
     /**
      * Creates root data store in container. Such store is automatically bound to container, and thus is
@@ -132,20 +128,9 @@ export interface IContainerRuntime extends
     flush(): void;
 
     /**
-     * Used to notify the HostingRuntime that the FluidDataStoreRuntime has be instantiated.
-     */
-    notifyDataStoreInstantiated(componentContext: IFluidDataStoreContext): void;
-
-    /**
      * Get an absolute url for a provided container-relative request.
      * Returns undefined if the container isn't attached to storage.
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-
-    /**
-     * Resolves handle URI
-     * @param request - request to resolve
-     */
-    resolveHandle(request: IRequest): Promise<IResponse>;
 }

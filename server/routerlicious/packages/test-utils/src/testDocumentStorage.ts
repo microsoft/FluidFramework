@@ -31,7 +31,7 @@ import { gitHashFile, IsoBuffer } from "@fluidframework/common-utils";
 
 const StartingSequenceNumber = 0;
 
-// Forked from DocumentStorage to remove to server dependencies and enable testing of other components.
+// Forked from DocumentStorage to remove to server dependencies and enable testing of other data stores.
 export class TestDocumentStorage implements IDocumentStorage {
     constructor(
         private readonly databaseManager: IDatabaseManager,

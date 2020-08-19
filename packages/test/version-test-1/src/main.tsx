@@ -65,13 +65,13 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
                     <div>
                         package:
             <input type="text" value={this.upgradeToPkg}
-                onChange={(e) => { this.upgradeToPkg = e.currentTarget.value; rerender(); }} />@
+                            onChange={(e) => { this.upgradeToPkg = e.currentTarget.value; rerender(); }} />@
             <input type="text" value={this.upgradeToVersion}
-                onChange={(e) => { this.upgradeToVersion = e.currentTarget.value; rerender(); }} />
+                            onChange={(e) => { this.upgradeToVersion = e.currentTarget.value; rerender(); }} />
                         <br />
                         cdn:
             <input className="cdn" type="text" value={this.cdn}
-                onChange={(e) => { this.cdn = e.currentTarget.value; rerender(); }} />
+                            onChange={(e) => { this.cdn = e.currentTarget.value; rerender(); }} />
                     </div>
                     <button className="upgrade" onClick={() => this.quorumProposeCode()}>Upgrade Version</button>
                     <br />
@@ -102,7 +102,7 @@ export class VersionTest extends DataObject implements IFluidHTMLView {
 
     private async upgradeManagerProposeCode(highPriority: boolean) {
         if (this.upgradeManager === undefined) {
-            throw Error("component not initialized; no upgrade manager");
+            throw Error("fluid object not initialized; no upgrade manager");
         }
         await this.upgradeManager.upgrade({
             config: { cdn: `${this.cdn}/@fluid-internal/version-test-2` },

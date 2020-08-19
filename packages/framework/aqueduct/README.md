@@ -2,58 +2,58 @@
 
 ![Aqueduct](https://publicdomainvectors.org/photos/johnny-automatic-Roman-aqueducts.png)
 
-The Aqueduct is a library for building Components and Containers within the Fluid Framework. Its goal is to provide a thin base layer over the existing Fluid Framework interfaces that allows developers to get started quickly.
+The Aqueduct is a library for building Fluid objects and Fluid containers within the Fluid Framework. Its goal is to provide a thin base layer over the existing Fluid Framework interfaces that allows developers to get started quickly.
 
-## Component Development
+## Fluid Object Development
 
-Fluid component development consists of developing the Component Object and the corresponding Factory Object. The Component Object defines the logic of your component, whereas the Factory Object defines how to initialize your object.
+Fluid object development consists of developing the data object and the corresponding data object factory. The data object defines the logic of your Fluid object, whereas the data object factory defines how to initialize your object.
 
-### Component Object Development
+### Data Object Development
 
-The `PrimedComponent` and the `SharedComponent` are the two base component objects provided by the library.
+`DataObject` and `PureDataObject` are the two base classes provided by the library.
 
-#### [`PrimedComponent`](./src/components/primedComponent.ts)
+#### [`DataObject`](./src/data-objects/dataObject.ts)
 
-The [`PrimedComponent`](./src/components/primedComponent.ts) extends the [`SharedComponent`](####SharedComponent) and provides all of its functionality as well as the following additional functionality:
+The [`DataObject`](./src/data-objects/dataObject.ts) class extends [`PureDataObject`](####PureDataObject) and provides the following additional functionality:
 
-- A `root` SharedDirectory that makes creating and storing Distributed Data Structures and Components easy.
-- Scheduled Task routing that makes it easier to use the Scheduler Component
-- Blob Storage implementation that makes it easier to store and retrieve blobs.
+- A `root` SharedDirectory that makes creating and storing distributed data structures and objects easy.
+- Scheduled task routing that makes it easier to use the Scheduler Fluid object
+- Blob storage implementation that makes it easier to store and retrieve blobs.
 
-> Note: Most developers will want to use the PrimedComponent as their base class to extend.
+> Note: Most developers will want to use the `DataObject` as their base class to extend.
 
-#### [`SharedComponent`](./src/components/sharedComponent.ts)
+#### [`PureDataObject`](./src/data-object/PureDataObject.ts)
 
-The [`SharedComponent`](./src/components/sharedComponent.ts) provides the following functionality:
+[`PureDataObject`](./src/data-object/PureDataObject.ts) provides the following functionality:
 
-- Basic set of interface implementations to be loadable in a Fluid Container.
-- Functions for managing component lifecycle.
-  - `componentInitializingFirstTime(props: S)` - called only the first time a component is initialized
-  - `componentInitializingFromExisting()` - called every time except the first time a component is initialized
-  - `componentHasInitialized()` - called every time after `componentInitializingFirstTime` or `componentInitializingFromExisting` executes
-- Helper functions for creating and getting other Component Objects in the same Container.
+- Basic set of interface implementations to be loadable in a Fluid container.
+- Functions for managing the Fluid object lifecycle.
+  - `initializingFirstTime(props: S)` - called only the first time a Fluid object is initialized and only on the first client on which it loads.
+  - `initializingFromExisting()` - called every time except the first time a Fluid object is initialized; that is, every time an instance is loaded from a previously created instance.
+  - `hasInitialized()` - called every time after `initializingFirstTime` or `initializingFromExisting` executes
+- Helper functions for creating and getting other data objects in the same container.
 
-> Note: You probably don't want to inherit from this component directly unless you are creating another base component class. If you have a component that doesn't use Distributed Data Structures you should use Container Services to manage your object.
+> Note: You probably don't want to inherit from this data object directly unless you are creating another base data object class. If you have a data object that doesn't use dDistributed data structures you should use Container Services to manage your object.
 
-#### Component Object Example
+#### DataObject Example
 
-In the below example we have a simple Component Object that will render a value alongside a button the the page. Every time the button is pressed the value will increment. Because this Component Object renders to the DOM it also extends `IComponentHTMLView`.
+In the below example we have a simple data object, Clicker, that will render a value alongside a button the the page. Every time the button is pressed the value will increment. Because this data object renders to the DOM it also extends `IFluidHTMLView`.
 
 ```jsx
-export class Clicker extends PrimedComponent implements IComponentHTMLView {
-    public static get ComponentName() { return "clicker"; }
+export class Clicker extends DataObject implements IFluidHTMLView {
+    public static get Name() { return "clicker"; }
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     private _counter: SharedCounter | undefined;
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const counter = SharedCounter.create(this.runtime);
         this.root.set("clicks", counter.handle);
     }
 
-    protected async componentHasInitialized() {
-        const counterHandle = this.root.get<IComponentHandle<SharedCounter>>("clicks");
+    protected async hasInitialized() {
+        const counterHandle = this.root.get<IFluidHandle<SharedCounter>>("clicks");
         this._counter = await counterHandle.get();
     }
 
@@ -74,88 +74,88 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 }
 ```
 
-### Component Factory Object Development
+### DataObjectFactory Development
 
-The Component Factory Object is used to create a component and to initialize a Component Object within the context of a Container. The Factory can live alongside a Component Object or within a different package. The Component Factory Object defines the Distributed Data Structures used within the Component Object as well as the Sub-Components of the object. Sub-Components are other Component Objects required by the Component Object. Think of this as a list of dependencies.
+The `DataObjectFactory` is used to create a Fluid object and to initialize a data object within the context of a Container. The factory can live alongside a data object or within a different package. The `DataObjectFactory` defines the distributed data structures used within the data object as well as any Fluid objects it depends on.
 
-The Aqueduct offers a factory for each of the Component Objects provided.
+The Aqueduct offers a factory for each of the data objects provided.
 
-> [`SharedComponentFactory`](./src/componentFactories/sharedComponentFactory.ts) for the `SharedComponent`
+> [`DataObjectFactory`](./src/data-object-factories/dataObjectFactory.ts)
 
->[`PrimedComponentFactory`](./src/componentFactories/primedComponentFactory.ts) for the `PrimedComponent`
+>[`PureDataObjectFactory`](./src/data-object-factories/pureDataObjectFactory.ts)
 
-#### Component Factory Object Example
+#### DataObjectFactory Example
 
-In the below example we build a Component Factory for the [`Clicker`](####Component-Object-Example) example above. In the above example we use `this.root` to store our `"clicks"`. The `PrimedComponent` comes with the `SharedDirectory` already initialized so we do not need to add additional Distributed Data Structures.
+In the below example we build a `DataObjectFactory` for the [`Clicker`](####Data-Object-Example) example above. In the above example we use `this.root` to store our `"clicks"`. The `DataObject` comes with the `SharedDirectory` already initialized so we do not need to add additional distributed data structures.
 
 ```typescript
-export const ClickerInstantiationFactory = new PrimedComponentFactory(
-    Clicker.ComponentName,
+export const ClickerInstantiationFactory = new DataObjectFactory(
+    Clicker.Name,
     Clicker,
-    [SharedCounter.getFactory()], // Distributed Data Structures
+    [SharedCounter.getFactory()], // distributed data structures
     {}, // Provider Symbols see below
 );
 ```
-This factory can then create Clickers when provided a creating component context.
+This factory can then create Clickers when provided a creating instance context.
 ```typescript
-const myClicker = ClickerInstantiationFactory.createComponent(this.context) as Clicker;
+const myClicker = ClickerInstantiationFactory.createInstance(this.context) as Clicker;
 ```
 
-#### Providers in Components
+#### Providers in data objects
 
-The `this.providers` object on `SharedComponent` is initialized in the constructor and is generated based on Providers provided by the Container. To access a specific provider you need to:
+The `this.providers` object on `PureDataObject` is initialized in the constructor and is generated based on Providers provided by the Container. To access a specific provider you need to:
 
-1. Define the type in the generic on Primed/SharedComponent
-2. Add the symbol to your Factory (see [Component Factory Object Example](####Component-Factory-Object-Example) below)
+1. Define the type in the generic on `PureDataObject`/`DataObject`
+2. Add the symbol to your factory (see [DataObjectFactory Example](####Data-Object-Factory-Example) below)
 
-In the below example we have an `IComponentUserInfo` interface that looks like this:
+In the below example we have an `IFluidUserInfo` interface that looks like this:
 
 ```typescript
-interface IComponentUserInfo {
+interface IFluidUserInfo {
     readonly userCount: number;
 }
 ```
 
-On our example we want to declare that we want the `IComponentUserInfo` Provider and get the `userCount` if the Container provides the `IComponentUserInfo` provider.
+On our example we want to declare that we want the `IFluidUserInfo` Provider and get the `userCount` if the Container provides the `IFluidUserInfo` provider.
 
 ```typescript
-export class MyExample extends PrimedComponent<IComponentUserInfo> {
-    protected async componentInitializingFirstTime() {
-        const userInfo = await this.providers.IComponentUserInfo;
+export class MyExample extends DataObject<IFluidUserInfo> {
+    protected async initializingFirstTime() {
+        const userInfo = await this.providers.IFluidUserInfo;
         if(userInfo) {
             console.log(userInfo.userCount);
         }
     }
 }
 
-// Note: we have to define the symbol to the IComponentUserInfo that we declared above. This is compile time checked.
-export const ClickerInstantiationFactory = new PrimedComponentFactory(
-    Clicker.ComponentName
+// Note: we have to define the symbol to the IFluidUserInfo that we declared above. This is compile time checked.
+export const ClickerInstantiationFactory = new DataObjectFactory(
+    Clicker.Name
     Clicker,
-    [], // Distributed Data Structures
-    {IComponentUserInfo}, // Provider Symbols see below
+    [], // distributed data structures
+    {IFluidUserInfo}, // Provider Symbols see below
 );
 ```
 
 ## Container Development
 
-A Container is a collection of Components and functionality that produce an experience. Containers hold the instances of Component Objects as well as defining the Component Objects that can be created within the Container. Because of this Component Objects cannot be consumed except for when they are within a Container.
+A Container is a collection of data objects and functionality that produce an experience. Containers hold the instances of data objects as well as defining the data objects that can be created within the Container. Because of this data objects cannot be consumed except for when they are within a Container.
 
-The Aqueduct provides the [`ContainerRuntimeFactoryWithDefaultComponent`](./src/containerRuntimeFactories/containerRuntimeFactoryWithDefaultComponent.ts) that allows you as a Container developer to:
+The Aqueduct library provides the [`ContainerRuntimeFactoryWithDataStore`](./src/containerRuntimeFactories/containerRuntimeFactoryWithDataStore.ts) that enables you as a container developer to:
 
-- Define the registry of Component Objects that can be created
-- Declare the Default Component
+- Define the registry of data objects that can be created
+- Declare the default data object
 - Declare [Container Services](###Container-Service-Development)
-- Declare Container Level [Request Handlers](###Container-Level-Request-Handlers)
+- Declare Container level [Request Handlers](###Container-Level-Request-Handlers)
 
 ### Container Object Example
 
-In the below example we will write a Container that exposes the above [`Clicker`](####Component-Object-Example) using the [`Clicker Factory`](####Component-Factory-Object-Example). You will notice below that the Container developer defines the registry name (component type) of the component. We also pass in the type of component we want to be the default. The default component is created the first time the Container is created.
+In the below example we will write a Container that exposes the above [`Clicker`](####Data-Object-Example) using the [`Clicker Factory`](####Data-Object-Factory-Example). You will notice below that the Container developer defines the registry name (data object type) of the Fluid object. We also pass in the type of data object we want to be the default. The default data object is created the first time the Container is created.
 
 ```typescript
-export fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
-  ClickerInstantiationFactory.type, // Default Component Type
-  ClickerInstantiationFactory.registryEntry, // Component Registry
+export fluidExport = new ContainerRuntimeFactoryWithDataStore(
+  ClickerInstantiationFactory.type, // Default data object type
+  ClickerInstantiationFactory.registryEntry, // Fluid object registry
   [], // Provider Entries
   [], // Request Handler Routes
 );
@@ -163,53 +163,53 @@ export fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
 
 ### Provider Entries Development
 
-The Container developer can optionally provide a Registry of ProviderEntry objects into the Container. A ProviderEntry is defined as follows:
+The container developer can optionally provide a registry of ProviderEntry objects into the container. A ProviderEntry is defined as follows:
 
 ```typescript
-interface ProviderEntry<T extends keyof IComponent> {
+interface ProviderEntry<T extends keyof IFluidObject> {
     type: T;
-    provider: ComponentProvider<T>
+    provider: FluidProvider<T>
 }
 ```
 
-The `type` must be a keyof `IComponent`. This basically means that it needs to be the name of an interfaces that extends off of `IComponent`. The `provider` must be something that provides the interface defined in `type`. The `DependencyContainer` we use in the `@fluidframework/synthesize`
-package defines the follow `ComponentProvider` types:
+The `type` must be a keyof `IFluidObject`. This basically means that it needs to be the name of an interfaces that extends off of `IFluidObject`. The `provider` must be something that provides the interface defined in `type`. The `DependencyContainer` we use in the `@fluidframework/synthesize`
+package defines the following `FluidObjectProvider` types:
 
 ```typescript
-type ComponentProvider<T extends keyof IComponent> =
-    IComponent[T]
-    | Promise<IComponent[T]>
-    | ((dependencyContainer: DependencyContainer) => IComponent[T])
-    | ((dependencyContainer: DependencyContainer) => Promise<IComponent[T]>);
+type FluidObjectProvider<T extends keyof IFluidObject> =
+    IFluidObject[T]
+    | Promise<IFluidObject[T]>
+    | ((dependencyContainer: DependencyContainer) => IFluidObject[T])
+    | ((dependencyContainer: DependencyContainer) => Promise<IFluidObject[T]>);
 ```
 
 ```typescript
-IComponent[T]
+IFluidObject[T]
 ```
 
 An object that implements the interface.
 
 ```typescript
-Promise<IComponent[T]>
+Promise<IFluidObject[T]>
 ```
 
 A Promise to an object that implements the interface
 
 ```typescript
-(dependencyContainer: DependencyContainer) => IComponent[T]
+(dependencyContainer: DependencyContainer) => IFluidObject[T]
 ```
 
 A factory that will return the object.
 
 ```typescript
-(dependencyContainer: DependencyContainer) => Promise<IComponent[T]>
+(dependencyContainer: DependencyContainer) => Promise<IFluidObject[T]>
 ```
 
 A factory that will return a Promise to the object.
 
 ### Container Level Request Handlers
 
-You can provide custom Request Handlers to the Container. These request handlers are injected after system handlers but before the component get. Request Handlers allow you to intercept request made to the container and return custom responses.
+You can provide custom request handlers to the container. These request handlers are injected after system handlers but before the `DataObject` get function. Request handlers allow you to intercept requests made to the container and return custom responses.
 
 Consider a scenario where you want to create a random color generator. I could create a RequestHandler that when someone makes a request to the Container for `{url:"color"}` will intercept and return a custom `IResponse` of `{ status:200, type:"text/plain", value:"blue"}`.
 

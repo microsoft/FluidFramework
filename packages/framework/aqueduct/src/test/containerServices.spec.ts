@@ -12,7 +12,7 @@ import {
     BaseContainerService,
     generateContainerServicesRequestHandler,
     serviceRoutePathRoot,
-} from "../containerServices";
+} from "../container-services";
 
 class ContainerServiceMock extends BaseContainerService {
     public route: string = "";

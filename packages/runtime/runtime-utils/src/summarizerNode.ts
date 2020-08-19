@@ -40,14 +40,14 @@ async function seqFromTree(
     tree: ISnapshotTree,
     readAndParseBlob: ReadAndParseBlob,
 ): Promise<number> {
-    const attributesHash =  tree.trees[".protocol"].blobs.attributes;
+    const attributesHash = tree.trees[".protocol"].blobs.attributes;
     const attrib = await readAndParseBlob<IDocumentAttributes>(attributesHash);
     return attrib.sequenceNumber;
 }
 
 /** Path for nodes in a tree with escaped special characters */
 class EscapedPath {
-    private constructor(public readonly path: string) {}
+    private constructor(public readonly path: string) { }
     public static create(path: string): EscapedPath {
         return new EscapedPath(encodeURIComponent(path));
     }
@@ -88,7 +88,7 @@ class SummaryNode {
         readonly basePath: EscapedPath | undefined,
         readonly localPath: EscapedPath,
         additionalPath?: EscapedPath,
-    }) {}
+    }) { }
 
     public get fullPath(): EscapedPath {
         return this.basePath?.concat(this.localPath) ?? this.localPath;

@@ -16,8 +16,9 @@ trigger:
     - server/routerlicious
     - tools/build-server-resources
     - tools/pipelines/server-routerlicious.yml
-    - tools/pipelines/templates/publish-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
+    - tools/pipelines/templates/publish-npm-package.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
   
@@ -31,25 +32,27 @@ pr:
     - server/routerlicious
     - tools/build-server-resources
     - tools/pipelines/server-routerlicious.yml
+    - tools/pipelines/templates/include-set-package-version.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
 variables:
-  skipComponentGovernanceDetection: true
-  pushImage: ${{
-    and(
-        ne(variables['Build.Reason'], 'PullRequest'),
-        eq(variables['Build.SourceBranch'], 'refs/heads/master')
-    )}}
-  registry: prague.azurecr.io
-  containerName: prague-server
-  baseContainerName: $(containerName)-base
-  baseContainerTag: $(baseContainerName):$(Build.BuildId)
-  fullRunnerContainerTag: $(registry)/$(containerName):$(Build.BuildId)
-  ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-    testConfig: :full
-  ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-    testConfig: :ci
+- template: templates/include-vars.yml
+- group: container-registry-info
+- name: containerName
+  value: fluid-server
+- name: baseContainerName
+  value: $(containerName)-base
+- name: baseContainerTag
+  value: $(baseContainerName):$(Build.BuildNumber)
+- name: fullRunnerContainerTag
+  value: $(containerRegistryUrl)/$(containerName):$(Build.BuildNumber)
+- ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+  - name: testConfig
+    value: :full
+- ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+  - name: testConfig
+    value: :ci
 
 stages:
 - stage: build
@@ -57,7 +60,7 @@ stages:
   jobs:
     - job: build
       displayName: Build - Server
-      pool: Default
+      pool: Main
       steps:
         # Checkout
         - checkout: self
@@ -65,19 +68,35 @@ stages:
           lfs: false
           submodules: false
 
+        - task: Bash@3
+          displayName: Strip MIT License
+          inputs:
+            targetType: 'inline'
+            workingDirectory: server/routerlicious
+            script: |
+              sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
+              perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
+              git status
+
+        # for npm ci in component detection and set version
+        - task: UseNode@1
+          displayName: Use Node 12.x
+          inputs: 
+            version: 12.x
+
         # Component detection (not pull request)
-        - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+        - ${{ if eq(variables.componentDetection, true) }}:
           - task: npmAuthenticate@0
             displayName: 'npm Authenticate root .npmrc'
             inputs:
               workingFile: .npmrc
+              customEndpoint: Offnet Packages
           - task: Npm@1
             displayName: npm ci
             inputs:
               command: 'custom'
               customCommand: 'ci --ignore-scripts'
-              customRegistry: 'useFeed'
-              customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+              customRegistry: 'useNpmrc'
           - bash: |
               # Generate the package/package lock for the lerna project so we would scan it.
               node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
@@ -104,7 +123,12 @@ stages:
           displayName: npm Authenticate
           inputs:
             workingFile: server/routerlicious/.npmrc
+            customEndpoint: Offnet Packages
 
+        # Set version
+        - template: templates/include-set-package-version.yml
+          parameters:
+            buildDirectory: server/routerlicious
         # Build
         - task: Docker@2
           displayName: Docker Build - Base
@@ -113,9 +137,9 @@ stages:
             command: build
             dockerFile: server/routerlicious/Dockerfile
             buildContext: server/routerlicious
-            arguments: --target base --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)
+            arguments: --target base
             tags: |
-              $(Build.BuildId)
+              $(Build.BuildNumber)
 
         # Pack
         - task: Docker@0
@@ -180,23 +204,23 @@ stages:
           - task: Docker@2
             displayName: 'Docker Build - Runner'
             inputs:
-              containerRegistry: Fluid Azure Container Registry
+              containerRegistry: $(containerRegistryConnection)
               repository: $(containerName)
               command: build
               dockerFile: server/routerlicious/Dockerfile
               buildContext: server/routerlicious
-              arguments: '--target runner --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)'
+              arguments: --target runner
               tags: |
-                $(Build.BuildId)
+                $(Build.BuildNumber)
           
           - task: Docker@2
             displayName: 'Docker Push - Runner'
             inputs:
-              containerRegistry: Fluid Azure Container Registry
+              containerRegistry: $(containerRegistryConnection)
               repository: $(containerName)
               command: push
               tags: |
-                $(Build.BuildId)
+                $(Build.BuildNumber)
 
         # Cleanup
         - task: Docker@0
@@ -225,7 +249,7 @@ stages:
           condition: succeededOrFailed()
 
 # Publish stage
-- ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+- ${{ if eq(variables.publish, true) }}:
   - stage: publish
     dependsOn: build
     displayName: Publish Stage
@@ -235,6 +259,7 @@ stages:
         feeds:
         - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
           environment: fluid-feed
+          customEndPoint: Offnet Packages
           internal: false
         # only publish release bits
         - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:

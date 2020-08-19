@@ -26,7 +26,7 @@ const apiMapping = new Map([
     ["client-api", "Excluded"],
     ["common-definitions", "Internal"],
     ["common-utils", "Miscellaneous"],
-    ["component-base", "Runtime"],
+    ["data-object-base", "Runtime"],
     ["container-definitions", "Loader"],
     ["container-loader", "Loader"],
     ["container-runtime-definitions", "Loader"],
@@ -235,7 +235,8 @@ const getDocsSidebar = () => {
             children: [
                 "architecture.md",
                 "dds.md",
-                "interfaces-aqueduct.md",
+                "dataobject-aqueduct.md",
+                "feature-detection-iprovide.md",
                 "hosts.md",
                 "containers-runtime.md",
                 "server.md",

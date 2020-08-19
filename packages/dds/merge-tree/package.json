@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/merge-tree",
-  "version": "0.25.0",
+  "version": "0.25.1",
   "description": "Merge tree",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,7 +24,7 @@
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
-    "test:mocha": "mocha --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+    "test:mocha": "mocha --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup -r source-map-support/register --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
@@ -53,16 +53,16 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.21.0",
-    "@fluidframework/core-interfaces": "^0.25.0",
-    "@fluidframework/datastore-definitions": "^0.25.0",
-    "@fluidframework/protocol-definitions": "^0.1010.0",
-    "@fluidframework/telemetry-utils": "^0.25.0"
+    "@fluidframework/core-interfaces": "^0.25.1",
+    "@fluidframework/datastore-definitions": "^0.25.1",
+    "@fluidframework/protocol-definitions": "^0.1011.1-0",
+    "@fluidframework/telemetry-utils": "^0.25.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/mocha-test-setup": "^0.25.0",
-    "@fluidframework/test-runtime-utils": "^0.25.0",
+    "@fluidframework/mocha-test-setup": "^0.25.1",
+    "@fluidframework/test-runtime-utils": "^0.25.1",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
@@ -86,6 +86,7 @@
     "nyc": "^15.0.0",
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
+    "source-map-support": "^0.5.16",
     "typescript": "~3.7.4",
     "typescript-formatter": "7.1.0"
   }

@@ -91,8 +91,9 @@ export class DocumentStorage implements IDocumentStorage {
             gitManager.getTree(handle, false),
         ]);
 
-        winston.info(JSON.stringify(protocolTree));
-        winston.info(JSON.stringify(appSummaryTree));
+        const messageMetaData = { documentId, tenantId };
+        winston.info(`protocolTree ${JSON.stringify(protocolTree)}`, { messageMetaData });
+        winston.info(`appSummaryTree ${JSON.stringify(appSummaryTree)}`, { messageMetaData });
 
         // Combine the app summary with .protocol
         const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
@@ -112,8 +113,7 @@ export class DocumentStorage implements IDocumentStorage {
         const commit = await gitManager.createCommit(commitParams);
         await gitManager.createRef(documentId, commit.sha);
 
-        winston.info(JSON.stringify(documentId));
-        winston.info(JSON.stringify(commit.sha));
+        winston.info(`commit sha: ${JSON.stringify(commit.sha)}`, { messageMetaData });
 
         const scribe: IScribe = {
             logOffset: -1,
