@@ -1,6 +1,6 @@
 themes/thxvscode/assets/js/node_modules/
 public/
-content/apis/
+content/docs/api/
 assets/doc-models/*.json
 node_modules/
 scripts/api-documenter/temp

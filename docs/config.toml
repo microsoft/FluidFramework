@@ -45,7 +45,7 @@ weight = -300
 [[menu.docs]]
 identifier = "api"
 name = "API"
-url = '/apis/'
+url = '/docs/api/'
 weight = 0
 
 # [[menu.docs]]

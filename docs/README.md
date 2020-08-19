@@ -161,7 +161,6 @@ insert specific content.
 ## Working on the template
 
 If you need to work on the scss you need to install [hugo extended](https://gohugo.io/getting-started/installing/).
-
 The template lives in `themes/thxvscode`.
 
 
@@ -174,13 +173,12 @@ repo into markdown via a fork of the api-documenter tool.
 From this folder and if we have extracted the TS doc as JSON and put the files in `../_api-extractor-temp/doc-models`:
 
 ```
-npm install -g @mattetti/custom-api-documenter
-api-documenter generate --input-folder ../_api-extractor-temp/doc-models/ --output-folder content/apis/
+npm run build
 ```
 
-This will regenerate the `content/api/*.md` files from the provided json files.
-
+This will regenerate the `content/docs/api/*.md` files from the provided json files.
 Note that the `api-documenter.json` file is used to configure the output.
+The index page for the API landing page is manually copied from `assets/api_index.md` once the markdown files are generated.
 
 ### Updating the API generator code
 
