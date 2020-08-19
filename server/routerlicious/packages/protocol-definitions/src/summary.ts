@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from "@fluidframework/common-utils";
-
 export type SummaryObject = ISummaryCommit | ISummaryTree | ISummaryBlob | ISummaryHandle;
 
 export type SummaryTree = ISummaryTree | ISummaryHandle;
@@ -41,7 +39,7 @@ export interface ISummaryHandle {
 
 export interface ISummaryBlob {
     type: SummaryType.Blob;
-    content: string | IsoBuffer;
+    content: string | Uint8Array;
 }
 
 export interface ISummaryTree {
