@@ -32,6 +32,10 @@ class MarkdownDocumenter {
         this._markdownEmitter = new CustomMarkdownEmitter_1.CustomMarkdownEmitter(this._apiModel);
         this._frontMatter = new FrontMatter_1.FrontMatter();
         this._pluginLoader = new PluginLoader_1.PluginLoader();
+        this._uriRoot = '/';
+        if (this._documenterConfig && this._documenterConfig.uriRoot !== undefined) {
+            this._uriRoot = this._documenterConfig.uriRoot + '/';
+        }
     }
     generateFiles(outputFolder) {
         this._outputFolder = outputFolder;
@@ -63,6 +67,9 @@ class MarkdownDocumenter {
         }
         if (output instanceof tsdoc_1.DocSection) {
             this._writeBreadcrumb(output, apiItem);
+        }
+        if (this._shouldHaveStandalonePage(apiItem)) {
+            this._currentApiItemPage = apiItem;
         }
         const scopedName = apiItem.getScopedNameWithinPackage();
         switch (apiItem.kind) {
@@ -1071,18 +1078,21 @@ class MarkdownDocumenter {
         return baseName + '-' + apiItem.kind;
     }
     _getHrefForApiItem(apiItem) {
+        // TODO: check if available in page or parent page.
+        // if item is a class or an interface, let check if the item is available here or on the parent.
+        if (this._currentApiItemPage !== apiItem.parent) {
+            // we are rendering a page but this item is on the parent's page.
+            console.log("current page", this._currentApiItemPage.displayName, "( " + this._currentApiItemPage.kind + " )", " | parent:", apiItem.parent.displayName, "( " + apiItem.parent.kind + " )", "- self:", apiItem.displayName, "( " + apiItem.kind + " )");
+            return this._uriRoot + this._getFilenameForApiItem(apiItem.parent).replace(/\.md/g, "/") + '#' + this._htmlIDForItem(apiItem);
+        }
         return '#' + this._htmlIDForItem(apiItem);
     }
     _getLinkFilenameForApiItem(apiItem) {
-        let uriRoot = '/';
-        if (this._documenterConfig && this._documenterConfig.uriRoot !== undefined) {
-            uriRoot = this._documenterConfig.uriRoot + '/';
-        }
         if (apiItem.kind === "Model" /* Model */) {
-            return uriRoot;
+            return this._uriRoot;
         }
         if (this._shouldHaveStandalonePage(apiItem)) {
-            return uriRoot + this._getFilenameForApiItem(apiItem);
+            return this._uriRoot + this._getFilenameForApiItem(apiItem);
         }
         else {
             return this._getHrefForApiItem(apiItem);

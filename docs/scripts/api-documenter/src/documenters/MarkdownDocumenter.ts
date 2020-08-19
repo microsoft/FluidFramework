@@ -74,6 +74,8 @@ export class MarkdownDocumenter {
     private _outputFolder: string;
     private readonly _pluginLoader: PluginLoader;
     private _frontMatter: FrontMatter;
+    private _currentApiItemPage: ApiItem;
+    private readonly _uriRoot: string;
 
     public constructor(apiModel: ApiModel, documenterConfig: DocumenterConfig | undefined) {
         this._apiModel = apiModel;
@@ -83,6 +85,11 @@ export class MarkdownDocumenter {
         this._frontMatter = new FrontMatter();
 
         this._pluginLoader = new PluginLoader();
+
+        this._uriRoot = '/';
+        if (this._documenterConfig && this._documenterConfig.uriRoot !== undefined) {
+            this._uriRoot = this._documenterConfig.uriRoot! + '/';
+        }
     }
 
     public generateFiles(outputFolder: string): void {
@@ -122,6 +129,10 @@ export class MarkdownDocumenter {
         if (output instanceof DocSection) {
             this._writeBreadcrumb(output, apiItem);
         }
+        if (this._shouldHaveStandalonePage(apiItem)) {
+            this._currentApiItemPage = apiItem;
+        }
+
         const scopedName: string = apiItem.getScopedNameWithinPackage();
 
         switch (apiItem.kind) {
@@ -1339,20 +1350,19 @@ export class MarkdownDocumenter {
     }
 
     private _getHrefForApiItem(apiItem: ApiItem): string {
+        if (this._currentApiItemPage !== apiItem.parent) {
+            // we need to build the href linking to the parent's page, not the current's page.
+            return this._uriRoot + this._getFilenameForApiItem(apiItem.parent!).replace(/\.md/g, "/") + '#' + this._htmlIDForItem(apiItem);
+        }
         return '#' + this._htmlIDForItem(apiItem);
     }
 
     private _getLinkFilenameForApiItem(apiItem: ApiItem): string {
-        let uriRoot: string = '/';
-        if (this._documenterConfig && this._documenterConfig.uriRoot !== undefined) {
-            uriRoot = this._documenterConfig.uriRoot! + '/';
-        }
-
         if (apiItem.kind === ApiItemKind.Model) {
-            return uriRoot;
+            return this._uriRoot;
         }
         if (this._shouldHaveStandalonePage(apiItem)) {
-            return uriRoot + this._getFilenameForApiItem(apiItem);
+            return this._uriRoot + this._getFilenameForApiItem(apiItem);
         } else {
             return this._getHrefForApiItem(apiItem);
         }

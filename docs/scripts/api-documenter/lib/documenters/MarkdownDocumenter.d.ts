@@ -12,6 +12,8 @@ export declare class MarkdownDocumenter {
     private _outputFolder;
     private readonly _pluginLoader;
     private _frontMatter;
+    private _currentApiItemPage;
+    private readonly _uriRoot;
     constructor(apiModel: ApiModel, documenterConfig: DocumenterConfig | undefined);
     generateFiles(outputFolder: string): void;
     private _writeApiItemPage;
