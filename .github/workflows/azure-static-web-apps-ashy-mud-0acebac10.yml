@@ -40,7 +40,7 @@ jobs:
           tar -C $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/ -zxvf api-extractor.tar.gz
           pwd
           ls -al
-      - name: Generate TSDoc Markdown
+      - name: Generate Markdown from TSDoc
         id: mdapidocs
         run: |
           mv .npmrc .npmrc.bak
