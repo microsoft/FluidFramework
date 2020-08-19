@@ -1,7 +1,7 @@
 {{/* vim: set filetype=mustache: */}}
 
 {{/*
-Create a default fully qualified master name.
+Create a default fully qualified primary name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
 {{- define "kafka.fullname" -}}
@@ -9,7 +9,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 
 {{/*
-Create a default fully qualified master name.
+Create a default fully qualified primary name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
 {{- define "zookeeper.fullname" -}}
