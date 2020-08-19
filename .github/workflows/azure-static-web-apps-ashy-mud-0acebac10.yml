@@ -44,8 +44,8 @@ jobs:
         id: mdapidocs
         run: |
           mv .npmrc .npmrc.bak
-          npm install @mattetti/custom-api-documenter
-          ./node_modules/@mattetti/custom-api-documenter/bin/api-documenter generate --config docs/api-documenter.json --input-folder _api-extractor-temp/doc-models/ --output-folder docs/content/apis/
+          npm install -g @mattetti/custom-api-documenter
+          api-documenter generate --config docs/api-documenter.json --input-folder _api-extractor-temp/doc-models/ --output-folder docs/content/apis/
           mv .npmrc.bak .npmrc
       - name: Hugo Build And Deploy
         id: builddeploy
