@@ -113,24 +113,23 @@ As mentioned above annotate operations behave like operations on Shared Maps. Th
 
 The Shared String is a specialized data structure for handling collaborative text. It is based on a more general Sequence data structure but has additional features that make working with text easier.
 
-In addition to text, a Shared String can also contain markers. Markers can be used to store metadata at positions within the text, like the details of an image or component that should be rendered with the text.
+In addition to text, a Shared String can also contain markers. Markers can be used to store metadata at positions within the text, like the details of an image or fluid object that should be rendered with the text.
 
 Both markers and text are stored as segments in the Shared String. Text segments will be split and merged when modifications are made to the Shared String and will therefore have variable length matching the length of the text content they contain. Marker segments are never split or merged, and always have a length of 1.
 
 ### Examples
 - Rich Text Editor Implementations
-  - packages\components\webflow\
-  - packages\components\markflow\
-  - packages\components\client-ui-lib\src\controls\flowView.ts
+  - [webflow](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/webflow)
+  - [flowView](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/client-ui-lib/src/controls/flowView.ts)
 
 - Integrations with Open Source Rich Text Editors
-  - examples\components\prosemirror\
-  - examples\components\smde\src\
-  - examples\components\draft-js\
+  - [prosemirror](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/prosemirror)
+  - [smde](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/smde)
+  - [draft-js](https://github.com/microsoft/FluidExamples/tree/main/draft-js)
 
 - Plain Text Editor Implementations
-  - packages\framework\aqueduct-react\src\react\collaborativeTextArea.tsx
-  - packages\framework\aqueduct-react\src\react\collaborativeInput.tsx
+  - [collaborativeTextArea](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/react-inputs/src/CollaborativeTextArea.tsx)
+  - [collaborativeInput](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/react-inputs/src/collaborativeInput.tsx)
 
 # Sparse Matrix
 
