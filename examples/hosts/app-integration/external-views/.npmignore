@@ -1,3 +1,26 @@
-nyc
+# Don't export the source and test source
+src/
+test/
+
+# Don't export test results
+nyc/
+
+# From the build output, only export our intended library and packed files
+built/**/*
+!built/dist/**/*
+!built/webpack/**/*
+
+# Don't export config files
+.editorconfig
+.eslintrc.js
+jest-puppeteer.config.js
+jest.config.js
+tsconfig.json
+webpack.config.js
+webpack.dev.js
+webpack.prod.js
+webpack.test.js
+
+# Don't export logs
 *.log
 **/*.tsbuildinfo
