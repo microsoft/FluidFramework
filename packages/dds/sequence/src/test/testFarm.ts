@@ -45,9 +45,9 @@ import * as SharedString from "../intervalCollection";
 
 const clock = () => Trace.start();
 
-function elapsedMicroseconds(trace: Trace) {
+const elapsedMicroseconds = (trace: Trace) => {
     return trace.trace().duration * 1000;
-}
+};
 
 // Enum AsyncRoundState {
 //     Insert,
