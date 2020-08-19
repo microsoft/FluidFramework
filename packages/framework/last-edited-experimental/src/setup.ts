@@ -37,8 +37,7 @@ function getLastEditDetailsFromMessage(
 
 /**
  * Helper function to set up a data object that provides IFluidLastEditedTracker to track last edited in a Container.
- * The data object with id "dataStoreId" must implement an IFluidLastEditedTracker and this setup should be called
- * during container instantiatiion so that it does not miss ops. It does the following:
+ * It does the following:
  * - Registers an "op" listener on the runtime. On each message, it calls the shouldDiscardMessageFn to check
  *   if the message should be discarded. It also discards all scheduler message. If a message is not discarded,
  *   it passes the last edited information from the message to the last edited tracker.
