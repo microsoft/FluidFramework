@@ -23,7 +23,7 @@ class MockRuntime {
     public get IFluidHandleContext() { return this; }
 
     public async getRootDataStore(id, wait): Promise<IFluidRouter> {
-        if (id === "componentId") {
+        if (id === "objectId") {
             return {
                 request: async (r) => {
                     if (r.url === "" || r.url === "route") {
@@ -35,7 +35,7 @@ class MockRuntime {
         }
 
         assert(wait !== true);
-        throw new Error("No component");
+        throw new Error("No object");
     }
 
     public async resolveHandle(request: IRequest) {
@@ -45,15 +45,15 @@ class MockRuntime {
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const component = await this.getRootDataStore(requestParser.pathParts[0], wait);
+            const fluidObject = await this.getRootDataStore(requestParser.pathParts[0], wait);
             const subRequest = requestParser.createSubRequest(1);
             if (subRequest !== undefined) {
-                return component.request(subRequest);
+                return fluidObject.request(subRequest);
             } else {
                 return {
                     status: 200,
                     mimeType: "fluid/object",
-                    value: component,
+                    value: fluidObject,
                 };
             }
         }
@@ -80,7 +80,7 @@ describe("RequestParser", () => {
             assert.equal(response.status, 404);
         });
 
-        it("Component request without wait", async () => {
+        it("Data store request without wait", async () => {
             const requestParser = new RequestParser({ url: "/nonExistingUri" });
             const responseP = deprecated_innerRequestHandler(
                 requestParser,
@@ -88,7 +88,7 @@ describe("RequestParser", () => {
             await assertRejected(responseP);
         });
 
-        it("Component request with wait", async () => {
+        it("Data store  request with wait", async () => {
             const requestParser = new RequestParser({ url: "/nonExistingUri", headers: { wait: true } });
             const responseP = deprecated_innerRequestHandler(
                 requestParser,
@@ -96,15 +96,15 @@ describe("RequestParser", () => {
             await assertRejected(responseP);
         });
 
-        it("Component request with sub route", async () => {
-            const requestParser = new RequestParser({ url: "/componentId/route", headers: { wait: true } });
+        it("Data store  request with sub route", async () => {
+            const requestParser = new RequestParser({ url: "/objectId/route", headers: { wait: true } });
             const response = await deprecated_innerRequestHandler(requestParser, runtime);
             assert.equal(response.status, 200);
             assert.equal(response.value.route, "route");
         });
 
-        it("Component request with non-existing sub route", async () => {
-            const requestParser = new RequestParser({ url: "/componentId/doesNotExist", headers: { wait: true } });
+        it("Data store  request with non-existing sub route", async () => {
+            const requestParser = new RequestParser({ url: "/objectId/doesNotExist", headers: { wait: true } });
             const responseP = deprecated_innerRequestHandler(requestParser, runtime);
             await assertRejected(responseP);
         });
