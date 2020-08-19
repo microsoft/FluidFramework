@@ -369,7 +369,7 @@ Markdown files to enable this, exposed on the `$themeConfig` object:
 | ----------------------: | ------------------------------------------------------------------------- |
 |         `DOCS_AUDIENCE` | Can be used to conditionally build docs for different audiences.          |
 |          `THIS_VERSION` | The version of the documentation **currently being built.** E.g. `0.14`   |
-| `MAIN_BRANCH_VERSION` | The version of the documentation **on the master branch.** E.g. `0.16`    |
+|   `MAIN_BRANCH_VERSION` | The version of the documentation **on the main branch.** E.g. `0.16`      |
 |       `RELEASE_VERSION` | The current release version of **the Fluid client packages.** E.g. `0.15` |
 |            `N1_VERSION` | The version immediately prior to the release version. E.g. `0.14`         |
 

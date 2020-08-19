@@ -11,7 +11,7 @@ Alternatively run bump-version at the root of the repo by substituting `bump-ver
 
 ### Create and pushing a release
 
-- minor version on `master`
+- minor version on `main`
 - patch version on `release/*` branches
 
 ```sh
@@ -30,11 +30,11 @@ For each package/monorepo that needs to be release, from the bottom of the depen
 
 ### Update dependencies across monorepo or independent packages
 
-Note that the dependencies update is all done in the context of the current branch, regardless of what version it is in master or release/* branches
+Note that the dependencies update is all done in the context of the current branch, regardless of what version it is in main or release/* branches
 
 **Example 1**: bumping dependencies `@fluidframework/common-utils`
 
-The version in the current branch off `master` for `@fluidframework/common-utils` is `0.17.0`, and client and server repo is still depending on previous released version 0.15.0. New functionality is added to `@fluidframework/common-utils` that client will need.  To update the version to the latest:
+The version in the current branch off `main` for `@fluidframework/common-utils` is `0.17.0`, and client and server repo is still depending on previous released version 0.15.0. New functionality is added to `@fluidframework/common-utils` that client will need.  To update the version to the latest:
 
 ```sh
 bump-version -d @fluidframework/common-utils
