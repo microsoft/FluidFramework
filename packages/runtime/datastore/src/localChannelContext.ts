@@ -45,7 +45,7 @@ export class LocalChannelContext implements IChannelContext {
         registry: ISharedObjectRegistry,
         type: string,
         private readonly runtime: IFluidDataStoreRuntime,
-        private readonly componentContext: IFluidDataStoreContext,
+        private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly storageService: IDocumentStorageService,
         private readonly submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
@@ -74,7 +74,7 @@ export class LocalChannelContext implements IChannelContext {
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
-        // Connection events are ignored if the component is not yet attached
+        // Connection events are ignored if the data store is not yet attached
         if (!this.attached) {
             return;
         }
@@ -172,7 +172,7 @@ export class LocalChannelContext implements IChannelContext {
             }
             this._services = createServiceEndpoints(
                 this.id,
-                this.componentContext.connected,
+                this.dataStoreContext.connected,
                 this.submitFn,
                 this.dirtyFn,
                 this.storageService,

@@ -5,11 +5,7 @@
 
 import assert from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
-import {
-    IFluidCodeDetails,
-    IProxyLoaderFactory,
-    AttachState,
-} from "@fluidframework/container-definitions";
+import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
@@ -31,7 +27,6 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         package: "detachedContainerTestPackage1",
         config: {},
     };
-
     const mapId1 = "mapId1";
     const mapId2 = "mapId2";
 

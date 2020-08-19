@@ -55,12 +55,12 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
 
     async function createDetachedContainerAndGetRootComponent() {
         const container = await loader.createDetachedContainer(codeDetails);
-        // Get the root component from the detached container.
+        // Get the root data store from the detached container.
         const response = await container.request({ url: "/" });
-        const defaultComponent = response.value;
+        const defaultDataStore = response.value;
         return {
             container,
-            defaultComponent,
+            defaultDataStore,
         };
     }
 
@@ -115,7 +115,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const snapshotTree = JSON.parse(container.serialize());
 
         assert.strictEqual(Object.keys(snapshotTree.trees).length, 3,
-            "3 trees should be there(protocol, default component, scheduler");
+            "3 trees should be there(protocol, default data store, scheduler");
         assert.strictEqual(Object.keys(snapshotTree.trees[".protocol"].blobs).length, 8,
             "4 protocol blobs should be there(8 mappings)");
 
@@ -127,7 +127,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         assert.strictEqual(protocolAttributes.sequenceNumber, 0, "Seq number should be 0");
         assert.strictEqual(protocolAttributes.minimumSequenceNumber, 0, "Min Seq number should be 0");
 
-        // Check for default component
+        // Check for default data store
         const defaultComponentBlobId = snapshotTree.trees.default.blobs[".component"];
         const componentAttributes = JSON.parse(
             Buffer.from(snapshotTree.trees.default.blobs[defaultComponentBlobId], "base64").toString());
@@ -135,18 +135,18 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
     });
 
     it("Dehydrated container snapshot 2 times with changes in between", async () => {
-        const { container, defaultComponent } =
+        const { container, defaultDataStore } =
             await createDetachedContainerAndGetRootComponent();
         const snapshotTree1 = JSON.parse(container.serialize());
         // Create a channel
-        const channel = defaultComponent.runtime.createChannel("test1",
+        const channel = defaultDataStore.runtime.createChannel("test1",
             "https://graph.microsoft.com/types/map") as SharedMap;
         channel.bindToContext();
         const snapshotTree2 = JSON.parse(container.serialize());
 
         assert.strictEqual(JSON.stringify(Object.keys(snapshotTree1.trees)),
             JSON.stringify(Object.keys(snapshotTree2.trees)),
-            "3 trees should be there(protocol, default component, scheduler");
+            "3 trees should be there(protocol, default data store, scheduler");
 
         // Check for protocol attributes
         const protocolAttributesBlobId1 = snapshotTree1.trees[".protocol"].blobs.attributes;
@@ -167,23 +167,23 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             "Test channel 1 should be present in snapshot 2");
     });
 
-    it("Dehydrated container snapshot with component handle stored in map of other bound component", async () => {
-        const { container, defaultComponent } =
+    it("Dehydrated container snapshot with data store handle stored in map of other bound data store", async () => {
+        const { container, defaultDataStore } =
             await createDetachedContainerAndGetRootComponent();
 
-        // Create another component
-        const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
+        // Create another data store
+        const peerComponent = await createPeerComponent(defaultDataStore.context.containerRuntime);
         const component2 = peerComponent.peerComponent as TestFluidComponent;
 
         // Create a channel
         const rootOfComponent1 =
-            await (defaultComponent as TestFluidComponent).getSharedObject<SharedMap>(sharedMapId);
+            await (defaultDataStore as TestFluidComponent).getSharedObject<SharedMap>(sharedMapId);
         rootOfComponent1.set("component2", component2.handle);
 
         const snapshotTree = JSON.parse(container.serialize());
 
         assert.strictEqual(Object.keys(snapshotTree.trees).length, 4, "4 trees should be there");
-        assert(snapshotTree.trees[component2.runtime.id], "Handle Bounded component should be in summary");
+        assert(snapshotTree.trees[component2.runtime.id], "Handle Bounded data store should be in summary");
     });
 
     it("Rehydrate container from snapshot and check contents before attach", async () => {
@@ -197,26 +197,26 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         // Check for scheduler
         const schedulerResponse = await container2.request({ url: "_scheduler" });
         assert.strictEqual(schedulerResponse.status, 200, "Scheduler Component should exist!!");
-        const schedulerComponent = schedulerResponse.value as ITestFluidComponent;
-        assert.strictEqual(schedulerComponent.runtime.id, "_scheduler", "Id should be of scheduler");
+        const schedulerDataStore = schedulerResponse.value as ITestFluidComponent;
+        assert.strictEqual(schedulerDataStore.runtime.id, "_scheduler", "Id should be of scheduler");
 
-        // Check for default component
+        // Check for default data store
         const response = await container2.request({ url: "/" });
         assert.strictEqual(response.status, 200, "Component should exist!!");
-        const defaultComponent = response.value as ITestFluidComponent;
-        assert.strictEqual(defaultComponent.runtime.id, "default", "Id should be default");
+        const defaultDataStore = response.value as ITestFluidComponent;
+        assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
         // Check for dds
-        const sharedMap = await defaultComponent.getSharedObject<SharedMap>(sharedMapId);
-        const sharedDir = await defaultComponent.getSharedObject<SharedDirectory>(sharedDirectoryId);
-        const sharedString = await defaultComponent.getSharedObject<SharedString>(sharedStringId);
-        const sharedCell = await defaultComponent.getSharedObject<SharedCell>(sharedCellId);
-        const sharedCounter = await defaultComponent.getSharedObject<SharedCounter>(sharedCounterId);
-        const crc = await defaultComponent.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
-        const coc = await defaultComponent.getSharedObject<ConsensusOrderedCollection>(cocId);
-        const ink = await defaultComponent.getSharedObject<Ink>(sharedInkId);
-        const sharedMatrix = await defaultComponent.getSharedObject<SharedMatrix>(sharedMatrixId);
-        const sparseMatrix = await defaultComponent.getSharedObject<SparseMatrix>(sparseMatrixId);
+        const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+        const sharedDir = await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
+        const sharedString = await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
+        const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
+        const sharedCounter = await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
+        const crc = await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
+        const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
+        const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
+        const sharedMatrix = await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
+        const sparseMatrix = await defaultDataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
         assert.strictEqual(sharedMap.id, sharedMapId, "Shared map should exist!!");
         assert.strictEqual(sharedDir.id, sharedDirectoryId, "Shared directory should exist!!");
         assert.strictEqual(sharedString.id, sharedStringId, "Shared string should exist!!");
@@ -241,26 +241,26 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         // Check for scheduler
         const schedulerResponse = await container2.request({ url: "_scheduler" });
         assert.strictEqual(schedulerResponse.status, 200, "Scheduler Component should exist!!");
-        const schedulerComponent = schedulerResponse.value as ITestFluidComponent;
-        assert.strictEqual(schedulerComponent.runtime.id, "_scheduler", "Id should be of scheduler");
+        const schedulerDataStore = schedulerResponse.value as ITestFluidComponent;
+        assert.strictEqual(schedulerDataStore.runtime.id, "_scheduler", "Id should be of scheduler");
 
-        // Check for default component
+        // Check for default data store
         const response = await container2.request({ url: "/" });
         assert.strictEqual(response.status, 200, "Component should exist!!");
-        const defaultComponent = response.value as ITestFluidComponent;
-        assert.strictEqual(defaultComponent.runtime.id, "default", "Id should be default");
+        const defaultDataStore = response.value as ITestFluidComponent;
+        assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
         // Check for dds
-        const sharedMap = await defaultComponent.getSharedObject<SharedMap>(sharedMapId);
-        const sharedDir = await defaultComponent.getSharedObject<SharedDirectory>(sharedDirectoryId);
-        const sharedString = await defaultComponent.getSharedObject<SharedString>(sharedStringId);
-        const sharedCell = await defaultComponent.getSharedObject<SharedCell>(sharedCellId);
-        const sharedCounter = await defaultComponent.getSharedObject<SharedCounter>(sharedCounterId);
-        const crc = await defaultComponent.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
-        const coc = await defaultComponent.getSharedObject<ConsensusOrderedCollection>(cocId);
-        const ink = await defaultComponent.getSharedObject<Ink>(sharedInkId);
-        const sharedMatrix = await defaultComponent.getSharedObject<SharedMatrix>(sharedMatrixId);
-        const sparseMatrix = await defaultComponent.getSharedObject<SparseMatrix>(sparseMatrixId);
+        const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+        const sharedDir = await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
+        const sharedString = await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
+        const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
+        const sharedCounter = await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
+        const crc = await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
+        const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
+        const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
+        const sharedMatrix = await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
+        const sparseMatrix = await defaultDataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
         assert.strictEqual(sharedMap.id, sharedMapId, "Shared map should exist!!");
         assert.strictEqual(sharedDir.id, sharedDirectoryId, "Shared directory should exist!!");
         assert.strictEqual(sharedString.id, sharedStringId, "Shared string should exist!!");
@@ -278,8 +278,8 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
             await createDetachedContainerAndGetRootComponent();
 
         const responseBefore = await container.request({ url: "/" });
-        const defaultComponentBefore = responseBefore.value as ITestFluidComponent;
-        const sharedStringBefore = await defaultComponentBefore.getSharedObject<SharedString>(sharedStringId);
+        const defaultDataStoreBefore = responseBefore.value as ITestFluidComponent;
+        const sharedStringBefore = await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
         sharedStringBefore.insertText(0, "Hello");
 
         const snapshotTree = JSON.parse(container.serialize());
@@ -287,8 +287,8 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const container2 = await loader.createDetachedContainerFromSnapshot(snapshotTree);
 
         const responseAfter = await container2.request({ url: "/" });
-        const defaultComponentAfter = responseAfter.value as ITestFluidComponent;
-        const sharedStringAfter = await defaultComponentAfter.getSharedObject<SharedString>(sharedStringId);
+        const defaultDataStoreAfter = responseAfter.value as ITestFluidComponent;
+        const sharedStringAfter = await defaultDataStoreAfter.getSharedObject<SharedString>(sharedStringId);
         assert.strictEqual(JSON.stringify(sharedStringAfter.snapshot()), JSON.stringify(sharedStringBefore.snapshot()),
             "Snapshot of shared string should match and contents should be same!!");
     });
@@ -305,18 +305,18 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
 
         const container2 = await loader.createDetachedContainerFromSnapshot(snapshotTree);
         const responseBefore = await container2.request({ url: "/" });
-        const defaultComponentBefore = responseBefore.value as ITestFluidComponent;
-        const sharedStringBefore = await defaultComponentBefore.getSharedObject<SharedString>(sharedStringId);
-        const sharedMapBefore = await defaultComponentBefore.getSharedObject<SharedMap>(sharedMapId);
+        const defaultDataStoreBefore = responseBefore.value as ITestFluidComponent;
+        const sharedStringBefore = await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
+        const sharedMapBefore = await defaultDataStoreBefore.getSharedObject<SharedMap>(sharedMapId);
         str += "BB";
         sharedStringBefore.insertText(0, str);
         sharedMapBefore.set("0", str);
 
         await container2.attach(request);
         const responseAfter = await container2.request({ url: "/" });
-        const defaultComponentAfter = responseAfter.value as ITestFluidComponent;
-        const sharedStringAfter = await defaultComponentAfter.getSharedObject<SharedString>(sharedStringId);
-        const sharedMapAfter = await defaultComponentAfter.getSharedObject<SharedMap>(sharedMapId);
+        const defaultDataStoreAfter = responseAfter.value as ITestFluidComponent;
+        const sharedStringAfter = await defaultDataStoreAfter.getSharedObject<SharedString>(sharedStringId);
+        const sharedMapAfter = await defaultDataStoreAfter.getSharedObject<SharedMap>(sharedMapId);
         assert.strictEqual(JSON.stringify(sharedStringAfter.snapshot()), JSON.stringify(sharedStringBefore.snapshot()),
             "Snapshot of shared string should match and contents should be same!!");
         assert.strictEqual(JSON.stringify(sharedMapAfter.snapshot()), JSON.stringify(sharedMapBefore.snapshot()),

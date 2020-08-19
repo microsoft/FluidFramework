@@ -496,7 +496,7 @@ export class ContainerRuntime extends EventEmitter
             containerScope,
             requestHandler);
 
-        // Create all internal stores if not already existing on storage or loaded a detached
+        // Create all internal data stores if not already existing on storage or loaded a detached
         // container from snapshot(ex. draft mode).
         if (!context.existing) {
             await runtime.createRootDataStore(schedulerId, schedulerId);
@@ -1598,7 +1598,7 @@ export class ContainerRuntime extends EventEmitter
                         const treeWithStats = convertToSummaryTree(snapshot, true);
                         builder.addWithStats(key, treeWithStats);
                     } else {
-                        // If this component is not yet loaded, then there should be no changes in the snapshot from
+                        // If this data store is not yet loaded, then there should be no changes in the snapshot from
                         // which it was created as it is detached container. So just use the previous snapshot.
                         assert(this.context.baseSnapshot,
                             "BaseSnapshot should be there as detached container loaded from snapshot");
