@@ -1,1 +1,0 @@
-{"version":3,"file":"MarkdownAction.d.ts","sourceRoot":"","sources":["../../src/cli/MarkdownAction.ts"],"names":[],"mappings":"AAGA,OAAO,EAAE,wBAAwB,EAAE,MAAM,4BAA4B,CAAC;AACtE,OAAO,EAAE,UAAU,EAAE,MAAM,cAAc,CAAC;AAI1C,qBAAa,cAAe,SAAQ,UAAU;gBACzB,MAAM,EAAE,wBAAwB;IAUnD,SAAS,CAAC,SAAS,IAAI,OAAO,CAAC,IAAI,CAAC;CAQrC"}

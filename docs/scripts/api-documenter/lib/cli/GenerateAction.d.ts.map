@@ -1,1 +1,0 @@
-{"version":3,"file":"GenerateAction.d.ts","sourceRoot":"","sources":["../../src/cli/GenerateAction.ts"],"names":[],"mappings":"AAKA,OAAO,EAAE,wBAAwB,EAAE,MAAM,4BAA4B,CAAC;AACtE,OAAO,EAAE,UAAU,EAAE,MAAM,cAAc,CAAC;AAQ1C,qBAAa,cAAe,SAAQ,UAAU;gBACzB,MAAM,EAAE,wBAAwB;IAUnD,SAAS,CAAC,SAAS,IAAI,OAAO,CAAC,IAAI,CAAC;CAkCrC"}

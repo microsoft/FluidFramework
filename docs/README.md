@@ -168,27 +168,21 @@ The template lives in `themes/thxvscode`.
 ## Generating API docs
 
 The API docs comes from the main code repo where the code is compiled and the
-API is extracted using api-extractor. The json output is then converted in this
+API is extracted using a fork of api-extractor. The json output is then converted in this
 repo into markdown via a fork of the api-documenter tool.
 
-The code lives in `scripts/`
+From this folder and if we have extracted the TS doc as JSON and put the files in `../_api-extractor-temp/doc-models`:
 
-```bash
-cd scripts/api-documenter
-npm install
-bin/api-documenter generate --input-folder ../../assets/doc-models --output-folder ../../content/apis/
+```
+npm install -g @mattetti/custom-api-documenter
+api-documenter generate --input-folder ../_api-extractor-temp/doc-models/ --output-folder content/apis/
 ```
 
-This will regenerate the `content/api/*.md` files from the provided json files (which are expected to be in `assets/doc-models`).
+This will regenerate the `content/api/*.md` files from the provided json files.
+
+Note that the `api-documenter.json` file is used to configure the output.
 
 ### Updating the API generator code
 
 
-Modify the code (the bulk of it lives in `scripts/api-documenter/src/documenters/MarkdownDocumenter.ts`)
-Compile from TS to js, run the test suite and regenerate the doc:
-
-```
-cd scripts/api-documenter/
-npm run build
-bin/api-documenter generate --input-folder ../../assets/doc-models --output-folder ../../content/apis/
-```
+Feel free to send a PR to [this repo](https://github.com/mattetti/custom-api-documenter)
