@@ -45,7 +45,7 @@ to retrieve and load it. It can store the handle to the object in a DDS and the 
 and `get` the object.
 
 The following code snippet from the
-[Pond](https://github.com/microsoft/FluidFramework/tree/master/examples/data-objects/pond) DataObject demonstrates this.
+[Pond](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/pond) DataObject demonstrates this.
 It creates a Clicker object which is a DataObject during first time initialization and stores its handle in the root
 SharedDirectory. Any remote client can retrieve the handle from the root and get the Clicker by calling `get()` on the
 handle:
@@ -80,4 +80,4 @@ the DataObject across Containers and to load it from anywhere, you just have to 
 
 
 [remote handle]:
-https://github.com/microsoft/FluidFramework/blob/master/packages/runtime/runtime-utils/src/remoteComponentHandle.ts
+https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/runtime-utils/src/remoteComponentHandle.ts

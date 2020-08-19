@@ -24,7 +24,7 @@ const bearerSecret = "";
 
 // Code package details.
 const defaultPackage = "@fluid-example/key-value-cache@0.19.0-28557";
-const installPath = "/tmp/components";
+const installPath = "/tmp/fluid-objects";
 const timeoutMS = 60000;
 
 // Document id (randomly chosen if not specified)

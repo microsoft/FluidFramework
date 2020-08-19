@@ -105,7 +105,7 @@ npm run test:copyresults
 
 ### Run tests from within VS Code
 
-We've checked in [VS Code configuration](https://github.com/microsoft/FluidFramework/blob/master/.vscode/launch.json) enabling F5 from a `spec.ts` file to run those tests, if you set the debug configuration to "Debug Current Test".
+We've checked in [VS Code configuration](https://github.com/microsoft/FluidFramework/blob/main/.vscode/launch.json) enabling F5 from a `spec.ts` file to run those tests, if you set the debug configuration to "Debug Current Test".
 
 ## Run it locally
 
@@ -138,12 +138,12 @@ Then:
 
 ## Contributing
 
-There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/master/CONTRIBUTING.md) to Fluid.
+There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
 
 * Participate in Q&A on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
 * [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
 * Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
-* [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/master/CONTRIBUTING.md).
+* [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
 Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
 

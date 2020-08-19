@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { DataObject, DataObjectFactory, ISharedComponentProps } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
@@ -47,7 +47,7 @@ export class TestDataStore extends DataObject {
 
     public runtime: IFluidDataStoreRuntime;
 
-    public constructor(props: ISharedComponentProps) {
+    public constructor(props: IDataObjectProps) {
         super(props);
         this.runtime = props.runtime;
     }

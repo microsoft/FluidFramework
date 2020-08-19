@@ -75,7 +75,7 @@ jobs:
                     workingDirectory: $(Pipeline.Workspace)/pack
                     script: |
                       tag="--tag canary"
-                      if [[ "$(Build.SourceBranch)" = refs/heads/master ]]; then
+                      if [[ "$(Build.SourceBranch)" = refs/heads/main ]]; then
                         tag="--tag next"
                       elif [[ "$(Build.SourceBranch)" == refs/tags/* ]]; then
                         tag="--tag latest"

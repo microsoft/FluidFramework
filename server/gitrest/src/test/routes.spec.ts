@@ -133,7 +133,7 @@ describe("GitRest", () => {
             tree: "bf4db183cbd07f48546a5dde098b4510745d79a1",
         };
         const testRef: ICreateRefParams = {
-            ref: "refs/heads/master",
+            ref: "refs/heads/main",
             sha: "cf0b592907d683143b28edd64d274ca70f68998e",
         };
 
@@ -474,7 +474,7 @@ describe("GitRest", () => {
                 it("Can list recent commits", async () => {
                     await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
                     return supertest
-                        .get(`/repos/${testOwnerName}/${testRepoName}/commits?sha=master`)
+                        .get(`/repos/${testOwnerName}/${testRepoName}/commits?sha=main`)
                         .expect(200)
                         .expect((result) => {
                             assert.equal(result.body.length, 1);
