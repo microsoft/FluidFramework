@@ -93,11 +93,11 @@ class CustomMarkdownEmitter extends MarkdownEmitter_1.MarkdownEmitter {
                     linkText = result.resolvedApiItem.getScopedNameWithinPackage();
                 }
                 if (linkText.length > 0) {
-                    const encodedLinkText = this.getEscapedText(linkText.replace(/\s+/g, ' '));
                     if (context.insideHTML) {
-                        context.writer.write(`<a href='${filename.replace(/\.md$/, '/')}'>${encodedLinkText}</a>`);
+                        context.writer.write(`<a href='${filename.replace(/\.md$/, '/')}'>${linkText.replace(/\s+/g, ' ')}</a>`);
                     }
                     else {
+                        const encodedLinkText = this.getEscapedText(linkText.replace(/\s+/g, ' '));
                         context.writer.write('[');
                         context.writer.write(encodedLinkText);
                         context.writer.write(`](${filename})`);

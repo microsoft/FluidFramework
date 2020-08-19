@@ -213,11 +213,11 @@ export class MarkdownEmitter {
         const linkText: string =
             docLinkTag.linkText !== undefined ? docLinkTag.linkText : docLinkTag.urlDestination!;
 
-        const encodedLinkText: string = this.getEscapedText(linkText.replace(/\s+/g, ' '));
 
         if (context.insideHTML) {
-            context.writer.write(`<a href='${docLinkTag.urlDestination!.replace(/\.md$/, '/')}'>${encodedLinkText}</a>`);
+            context.writer.write(`<a href='${docLinkTag.urlDestination!.replace(/\.md$/, '/')}'>${linkText.replace(/\s+/g, ' ')}</a>`);
         } else {
+            const encodedLinkText: string = this.getEscapedText(linkText.replace(/\s+/g, ' '));
             context.writer.write('[');
             context.writer.write(encodedLinkText);
             context.writer.write(`](${docLinkTag.urlDestination!})`);
@@ -258,7 +258,11 @@ export class MarkdownEmitter {
                 writer.write('<i>');
             }
 
-            writer.write(this.getEscapedText(middle));
+            if (context.insideHTML) {
+                writer.write(middle);
+            } else {
+                writer.write(this.getEscapedText(middle));
+            }
 
             if (context.italicRequested) {
                 writer.write('</i>');
