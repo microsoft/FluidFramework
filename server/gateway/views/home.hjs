@@ -24,7 +24,7 @@
         For instance, you can add the below to your bootstrapped package.json.
     <div style="color:#005cc5;font-family:monospace;padding-left:50px">
         <p>
-            "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
+        "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
 
         </p>
     </div>
@@ -33,8 +33,7 @@
     <h3>Component Waterpark</h3>
     <p>
         The Component Waterpark is a place to explore, test, and share components.
-        It can load any component made with "yo fluid" and published to a local instance of <a
-            href="https://verdaccio.org/">Verdaccio</a>.
+        It can load any component made with "yo fluid" and published to a local instance of <a href="https://verdaccio.org/">Verdaccio</a>.
 
         We document our usage of Verdaccio in the <a
             href="https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious">Routerlicious README</a>.
