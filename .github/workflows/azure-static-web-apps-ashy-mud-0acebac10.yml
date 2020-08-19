@@ -43,6 +43,7 @@ jobs:
       - name: Generate TSDoc Markdown
         id: mdapidocs
         run: |
+          npm install @mattetti/custom-api-documenter
           npm run build:mdapidocs
       - name: Hugo Build And Deploy
         id: builddeploy
