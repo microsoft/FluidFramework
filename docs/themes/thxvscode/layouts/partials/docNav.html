@@ -13,6 +13,10 @@
         {{ $menuArea := .Identifier}}
         {{ $isCurrentArea := (eq $menuArea $area) }}
 
+        {{- if ne .URL "" -}}
+        <li class="panel">
+            <a class="area" aria-label="{{ .Name }}" href="{{.URL}}" data-parent="#main-nav">{{ .Name }}</a>
+            {{- else -}}
         <li class="panel {{if $isCurrentArea}}active expanded{{else}}collapsed{{end}}">
             <a class="area" aria-label="{{ .Name }} drop down" href="#{{ $menuArea }}-articles" data-parent="#main-nav"
                 data-toggle="collapse">{{ .Name }}</a>
@@ -29,6 +33,7 @@
                 {{- end }}
             </ul>
         </li>
+        {{- end -}}
         {{- end }}
     </ul>
 </nav>

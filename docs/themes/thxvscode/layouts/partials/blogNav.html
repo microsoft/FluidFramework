@@ -4,9 +4,15 @@
 
 <nav id="docs-navbar" aria-label="Topics" class="docs-nav visible-md visible-lg">
     <ul class="nav" id="main-nav">
+        <li>
+            <a class="docs-home" href="/community/">Community</a>
+        </li>
+        <li>
+            <a class="docs-home" href="/roadmap/">Roadmap</a>
+        </li>
         <li {{ if eq .Kind "section" }} class="active" {{ end }}>
             <a class="docs-home" href="/posts/" {{ if eq .Kind "section" }} aria-label="Current Page: Blog"
-                {{ end }}>Blog Posts</a>
+                {{ end }}>Updates</a>
         </li>
 
         {{- range .CurrentSection.RegularPages.GroupByDate "2006" }}

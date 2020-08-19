@@ -23,38 +23,29 @@ url = "/docs/"
 weight = -90
 
 [[menu.main]]
-name = "Blog"
-url = "/posts/"
+name = "FAQ"
+url = "/faq"
 weight = -80
 
 [[menu.main]]
-name = "API"
-url = "/apis/"
-weight = -70
-
-[[menu.main]]
-name = "Community"
-url = "/community/"
-weight = -60
-
-[[menu.main]]
-name = "FAQ"
-url = "/faq"
+name = "Blog"
+url = "/posts/"
 weight = -50
-
-[[menu.main]]
-identifier = "roadmap"
-name = "Roadmap"
-weight = 0
 
 [[menu.docs]]
 identifier = "get-started"
 name = "Get Started"
-weight = -50
+weight = -500
 
 [[menu.docs]]
 identifier = "concepts"
 name = "Main concepts"
+weight = -300
+
+[[menu.docs]]
+identifier = "api"
+name = "API"
+url = '/apis/'
 weight = 0
 
 # [[menu.docs]]
@@ -70,34 +61,34 @@ weight = 0
 # url = "/docs/testing"
 
 [markup]
-  [markup.goldmark]
-    [markup.goldmark.renderer]
-    autoHeadingIDType = "github"
-    # mark unsafe html as true since api-documenter uses html snipets.
-    unsafe = true
+[markup.goldmark]
+[markup.goldmark.renderer]
+autoHeadingIDType = "github"
+# mark unsafe html as true since api-documenter uses html snipets.
+unsafe = true
 
-    [markup.goldmark.extensions]
-      definitionList = true
-      footnote = true
-      linkify = true
-      strikethrough = true
-      table = true
-      taskList = true
-      typographer = true
+[markup.goldmark.extensions]
+definitionList = true
+footnote = true
+linkify = true
+strikethrough = true
+table = true
+taskList = true
+typographer = true
 
-  [markup.highlight]
-    codeFences = true
-    guessSyntax = true
-    hl_Lines = ""
-    lineNoStart = 1
-    # if you need to turn on line nos, use the highlight shortcode
-    lineNos = false
-    lineNumbersInTable = false
-    noClasses = true
-    style = "tango"
-    tabWidth = 2
+[markup.highlight]
+codeFences = true
+guessSyntax = true
+hl_Lines = ""
+lineNoStart = 1
+# if you need to turn on line nos, use the highlight shortcode
+lineNos = false
+lineNumbersInTable = false
+noClasses = true
+style = "tango"
+tabWidth = 2
 
-  [markup.tableOfContents]
-    startLevel = 2
-    endLevel = 4
-    ordered = false
+[markup.tableOfContents]
+endLevel = 4
+ordered = false
+startLevel = 2
