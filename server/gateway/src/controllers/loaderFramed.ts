@@ -68,7 +68,7 @@ export async function initialize(
     // Currently this contextChanged handler covers both the initial load (from NullRuntime) as well as the upgrade
     // scenario.  In the next version of base-host it will only be for the upgrade scenario.
     container.on("contextChanged", (value) => {
-        getDataStoreAndRender(baseHost, url, div).catch(() => { });
+        getFluidObjectAndRender(baseHost, url, div).catch(() => { });
     });
-    await getDataStoreAndRender(baseHost, url, div);
+    await getFluidObjectAndRender(baseHost, url, div);
 }
