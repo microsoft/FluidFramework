@@ -5,9 +5,9 @@
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
-  "main": "built/dist/index.js",
-  "module": "built/dist/index.js",
-  "types": "built/dist/index.d.ts",
+  "main": "built/esnext/index.js",
+  "module": "built/esnext/index.js",
+  "types": "built/esnext/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "npm run tsc",

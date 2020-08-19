@@ -7,7 +7,7 @@ nyc/
 
 # From the build output, only export our intended library and packed files
 built/**/*
-!built/dist/**/*
+!built/esnext/**/*
 !built/webpack/**/*
 
 # Don't export config files

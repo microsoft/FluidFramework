@@ -5,6 +5,6 @@
     ],
     "compilerOptions": {
         "composite": true,
-        "outDir": "../built/dist",
+        "outDir": "../built/esnext",
     }
 }
