@@ -195,7 +195,7 @@ export class ConsensusRegisterCollection<T>
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: this.stringify(dataObj),
                         encoding: "utf-8",

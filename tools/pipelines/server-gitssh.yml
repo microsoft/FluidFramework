@@ -8,21 +8,23 @@ name: $(Build.BuildId)
 trigger:
   branches:
     include:
-    - master
+    - main
   paths:
     include:
     - server/gitssh
     - tools/pipelines/server-gitssh.yml
+    - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/build-docker-service.yml
 
 pr:
   branches:
     include:
-    - master
+    - main
   paths:
     include:
     - server/gitssh
     - tools/pipelines/server-gitssh.yml
+    - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/build-docker-service.yml
 
 extends:
@@ -32,4 +34,5 @@ extends:
     containerName: gitssh
     test: false
     authnpmrc: false
+    setVersion: false
 

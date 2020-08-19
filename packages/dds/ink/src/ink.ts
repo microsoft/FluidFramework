@@ -136,7 +136,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: JSON.stringify(this.inkData.getSerializable()),
                         encoding: "utf-8",

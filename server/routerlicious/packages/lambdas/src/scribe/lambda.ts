@@ -407,7 +407,7 @@ export class ScribeLambda extends SequencedLambda {
         await this.messageCollection
             .deleteMany({
                 "documentId": this.documentId,
-                "operation.sequenceNumber": { $lte: checkpoint.protocolState.sequenceNumber },
+                "operation.sequenceNumber": { $lte: this.protocolHead },
                 "tenantId": this.tenantId,
             });
     }
@@ -651,7 +651,7 @@ export class ScribeLambda extends SequencedLambda {
             {
                 mode: FileMode.File,
                 path: "logTail",
-                type: TreeEntry[TreeEntry.Blob],
+                type: TreeEntry.Blob,
                 value: {
                     contents: JSON.stringify(logTail),
                     encoding: "utf-8",

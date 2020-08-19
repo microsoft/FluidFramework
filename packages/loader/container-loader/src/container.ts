@@ -230,7 +230,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private blobManager: BlobManager | undefined;
 
     // Active chaincode and associated runtime
-    private storageService: IDocumentStorageService | undefined | null;
+    private _storageService: IDocumentStorageService | undefined;
+    private get storageService() {
+        if (this._storageService === undefined) {
+            throw new Error("Attempted to access storageService before it was defined");
+        }
+        return this._storageService;
+    }
     private blobsCacheStorageService: IDocumentStorageService | undefined;
 
     private _clientId: string | undefined;
@@ -243,9 +249,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _connectionState = ConnectionState.Disconnected;
     private readonly _audience: Audience;
 
-    private context: ContainerContext | undefined;
+    private _context: ContainerContext | undefined;
+    private get context() {
+        if (this._context === undefined) {
+            throw new Error("Attempted to access context before it was defined");
+        }
+        return this._context;
+    }
     private pkg: IFluidCodeDetails | undefined;
-    private protocolHandler: ProtocolOpHandler | undefined;
+    private _protocolHandler: ProtocolOpHandler | undefined;
+    private get protocolHandler() {
+        if (this._protocolHandler === undefined) {
+            throw new Error("Attempted to access protocolHandler before it was defined");
+        }
+        return this._protocolHandler;
+    }
 
     private resumedOpProcessingAfterLoad = false;
     private firstConnection = true;
@@ -428,7 +446,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Retrieves the quorum associated with the document
      */
     public getQuorum(): IQuorum {
-        return this.protocolHandler!.quorum;
+        return this.protocolHandler.quorum;
     }
 
     public close(error?: ICriticalContainerError) {
@@ -439,11 +457,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._deltaManager.close(error);
 
-        this.protocolHandler?.close();
+        this._protocolHandler?.close();
 
-        this.context?.dispose(error !== undefined ? new Error(error.message) : undefined);
+        this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
-        assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
+        assert.strictEqual(this.connectionState, ConnectionState.Disconnected, "disconnect event was not raised!");
 
         if (error !== undefined) {
             // Log current sequence number - useful if we have access to a file to understand better
@@ -471,35 +489,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public serialize(): string {
-        if (this.context === undefined) {
-            throw new Error("Context is undefined");
-        }
-
-        assert(this.attachState === AttachState.Detached, "Should only be called in detached container");
+        assert.strictEqual(this.attachState, AttachState.Detached, "Should only be called in detached container");
 
         const appSummary: ISummaryTree = this.context.createSummary();
-        if (this.protocolHandler === undefined) {
-            throw new Error("Protocol Handler is undefined");
-        }
         const protocolSummary = this.protocolHandler.captureSummary();
         const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(protocolSummary, appSummary);
         return JSON.stringify(snapshotTree);
     }
 
     public async attach(request: IRequest): Promise<void> {
-        if (this.context === undefined) {
-            throw new Error("Context is undefined");
-        }
-
-        // Inbound queue for ops should be empty
-        assert(this.deltaManager.inbound.length === 0);
+        assert.strictEqual(this.deltaManager.inbound.length, 0, "Inbound queue should be empty when attaching");
 
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
         const appSummary: ISummaryTree = this.context.createSummary();
-        if (this.protocolHandler === undefined) {
-            throw new Error("Protocol Handler is undefined");
-        }
         const protocolSummary = this.protocolHandler.captureSummary();
 
         if (request.headers?.[CreateNewHeader.createNew] === undefined) {
@@ -537,7 +540,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             const [, docId] = parsedUrl.id.split("/");
             this._id = decodeURI(docId);
 
-            this.storageService = await this.getDocumentStorageService();
+            this._storageService = await this.getDocumentStorageService();
 
             // This we can probably just pass the storage service to the blob manager - although ideally
             // there just isn't a blob manager
@@ -548,7 +551,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             // Propagate current connection state through the system.
             const connected = this.connectionState === ConnectionState.Connected;
-            assert(!connected || this._deltaManager.connectionMode === "read");
+            assert(!connected || this._deltaManager.connectionMode === "read", "Unexpected connection state");
             this.propagateConnectionState();
             this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
         } catch (error) {
@@ -559,7 +562,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public async request(path: IRequest): Promise<IResponse> {
         return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
-            return this.context!.request(path);
+            return this.context.request(path);
         });
     }
 
@@ -573,7 +576,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         // Only snapshot once a code quorum has been established
-        if (!this.protocolHandler!.quorum.has("code") && !this.protocolHandler!.quorum.has("code2")) {
+        if (!this.protocolHandler.quorum.has("code") && !this.protocolHandler.quorum.has("code2")) {
             this.logger.sendTelemetryEvent({ eventName: "SkipSnapshot" });
             return;
         }
@@ -650,8 +653,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.connectToDeltaStream(args).catch(() => { });
     }
 
-    public get storage(): IDocumentStorageService | null | undefined {
-        return this.blobsCacheStorageService ?? this.storageService;
+    public get storage(): IDocumentStorageService | undefined {
+        return this.blobsCacheStorageService ?? this._storageService;
     }
 
     /**
@@ -676,7 +679,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public hasNullRuntime() {
-        return this.context!.hasNullRuntime();
+        return this.context.hasNullRuntime();
     }
 
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
@@ -719,8 +722,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.deltaManager.inbound.systemPause(),
             this.deltaManager.inboundSignal.systemPause()]);
 
-        const previousContextState = await this.context!.snapshotRuntimeState();
-        this.context!.dispose();
+        const previousContextState = await this.context.snapshotRuntimeState();
+        this.context.dispose();
 
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();
@@ -742,7 +745,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         if (blobs.size > 0) {
-            this.blobsCacheStorageService = new BlobCacheStorageService(this.storageService!, Promise.resolve(blobs));
+            this.blobsCacheStorageService = new BlobCacheStorageService(this.storageService, Promise.resolve(blobs));
         }
         const attributes: IDocumentAttributes = {
             branch: this.id,
@@ -760,7 +763,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
         // Snapshots base document state and currently running context
         const root = this.snapshotBase();
-        const dataStoreEntries = await this.context!.snapshot(tagMessage, fullTree);
+        const dataStoreEntries = await this.context.snapshot(tagMessage, fullTree);
 
         // And then combine
         if (dataStoreEntries !== null) {
@@ -778,28 +781,32 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const parents = lastVersion !== undefined ? [lastVersion.id] : [];
 
         // Write the full snapshot
-        return this.storageService!.write(root, parents, message, "");
+        return this.storageService.write(root, parents, message, "");
     }
 
     private snapshotBase(): ITree {
         const entries: ITreeEntry[] = [];
 
-        const blobMetaData = this.blobManager!.getBlobMetadata();
+        if (this.blobManager === undefined) {
+            throw new Error("Attempted to snapshot without a blobManager");
+        }
+
+        const blobMetaData = this.blobManager.getBlobMetadata();
         entries.push({
             mode: FileMode.File,
             path: ".blobs",
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: JSON.stringify(blobMetaData),
                 encoding: "utf-8",
             },
         });
 
-        const quorumSnapshot = this.protocolHandler!.quorum.snapshot();
+        const quorumSnapshot = this.protocolHandler.quorum.snapshot();
         entries.push({
             mode: FileMode.File,
             path: "quorumMembers",
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: JSON.stringify(quorumSnapshot.members),
                 encoding: "utf-8",
@@ -808,7 +815,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         entries.push({
             mode: FileMode.File,
             path: "quorumProposals",
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: JSON.stringify(quorumSnapshot.proposals),
                 encoding: "utf-8",
@@ -817,7 +824,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         entries.push({
             mode: FileMode.File,
             path: "quorumValues",
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: JSON.stringify(quorumSnapshot.values),
                 encoding: "utf-8",
@@ -834,7 +841,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         entries.push({
             mode: FileMode.File,
             path: ".attributes",
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: JSON.stringify(documentAttributes),
                 encoding: "utf-8",
@@ -851,7 +858,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async getVersion(version: string): Promise<IVersion | undefined> {
-        const versions = await this.storageService!.getVersions(version, 1);
+        const versions = await this.storageService.getVersions(version, 1);
         return versions[0];
     }
 
@@ -882,7 +889,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @param pause - start the container in a paused state
      */
     private async load(specifiedVersion: string | null | undefined, pause: boolean) {
-        this.service = await this.serviceFactory.createDocumentService(this._resolvedUrl!, this.subLogger);
+        if (this._resolvedUrl === undefined) {
+            throw new Error("Attempting to load without a resolved url");
+        }
+        this.service = await this.serviceFactory.createDocumentService(this._resolvedUrl, this.subLogger);
 
         let startConnectionP: Promise<IConnectionDetails> | undefined;
 
@@ -904,7 +914,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             startConnectionP.catch((error) => { });
         }
 
-        this.storageService = await this.getDocumentStorageService();
+        this._storageService = await this.getDocumentStorageService();
         this._attachState = AttachState.Attached;
 
         // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
@@ -944,7 +954,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // LoadContext directly requires blobManager and protocolHandler to be ready, and eventually calls
         // instantiateRuntime which will want to know existing state.  Wait for these promises to finish.
-        [this.blobManager, this.protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP, loadDetailsP]);
+        [this.blobManager, this._protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP, loadDetailsP]);
 
         await this.loadContext(attributes, maybeSnapshotTree);
 
@@ -992,7 +1002,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._existing = false;
 
         // Need to just seed the source data in the code quorum. Quorum itself is empty
-        this.protocolHandler = this.initializeProtocolState(
+        this._protocolHandler = this.initializeProtocolState(
             attributes,
             members,
             proposals,
@@ -1173,7 +1183,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private getCodeDetailsFromQuorum(): IFluidCodeDetails | undefined {
-        const quorum = this.protocolHandler!.quorum;
+        const quorum = this.protocolHandler.quorum;
 
         let pkg = quorum.get("code");
 
@@ -1405,8 +1415,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         const state = this._connectionState === ConnectionState.Connected;
-        this.context!.setConnectionState(state, this.clientId);
-        this.protocolHandler!.quorum.setConnectionState(state, this.clientId);
+        this.context.setConnectionState(state, this.clientId);
+        this.protocolHandler.quorum.setConnectionState(state, this.clientId);
         raiseConnectedEvent(this.logger, this, state, this.clientId);
 
         if (logOpsOnReconnect) {
@@ -1444,11 +1454,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Forward non system messages to the loaded runtime for processing
         if (!isSystemMessage(message)) {
-            this.context!.process(message, local, undefined);
+            this.context.process(message, local, undefined);
         }
 
         // Allow the protocol handler to process the message
-        const result = this.protocolHandler!.processMessage(message, local);
+        const result = this.protocolHandler.processMessage(message, local);
 
         this.emit("op", message);
 
@@ -1472,7 +1482,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         } else {
             const local = this._clientId === message.clientId;
-            this.context!.processSignal(message, local);
+            this.context.processSignal(message, local);
         }
     }
 
@@ -1486,7 +1496,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         if (version !== undefined) {
             this._loadedFromVersion = version;
-            return await this.storageService!.getSnapshotTree(version) ?? undefined;
+            return await this.storageService.getSnapshotTree(version) ?? undefined;
         } else if (specifiedVersion !== undefined) {
             // We should have a defined version to load from if specified version requested
             this.logger.sendErrorEvent({ eventName: "NoVersionFoundWhenSpecified", specifiedVersion });
@@ -1507,7 +1517,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // are set. Global requests will still go to this loader
         const loader = new RelativeLoader(this.loader, () => this.originalRequest);
 
-        this.context = await ContainerContext.createOrLoad(
+        this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
             this.codeLoader,
@@ -1516,7 +1526,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             attributes,
             this.blobManager,
             new DeltaManagerProxy(this._deltaManager),
-            new QuorumProxy(this.protocolHandler!.quorum),
+            new QuorumProxy(this.protocolHandler.quorum),
             loader,
             (warning: ContainerWarning) => this.raiseContainerWarning(warning),
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
@@ -1545,7 +1555,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // are set. Global requests will still go to this loader
         const loader = new RelativeLoader(this.loader, () => this.originalRequest);
 
-        this.context = await ContainerContext.createOrLoad(
+        this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
             this.codeLoader,
@@ -1554,7 +1564,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             attributes,
             this.blobManager,
             new DeltaManagerProxy(this._deltaManager),
-            new QuorumProxy(this.protocolHandler!.quorum),
+            new QuorumProxy(this.protocolHandler.quorum),
             loader,
             (warning: ContainerWarning) => this.raiseContainerWarning(warning),
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),

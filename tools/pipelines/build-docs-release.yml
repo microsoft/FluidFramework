@@ -13,7 +13,7 @@ variables:
   - group: storage-vars
   - name: latestPipeline
     value: ${{ or(
-      eq(variables['Build.SourceBranchName'], 'master'),
+      eq(variables['Build.SourceBranchName'], 'main'),
       eq(variables['Build.SourceBranchName'], 'pl-test')
       )}}
   - name: n1Branch
@@ -63,7 +63,7 @@ stages:
         echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
         echo BASE_URL: $(BASE_URL)
         echo RELEASE_VERSION: $(RELEASE_VERSION)
-        echo MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+        echo MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
         echo N1_VERSION: $(N1_VERSION)
         echo releasePipeline ${{ variables.releasePipeline }}
         echo latestPipeline ${{ variables.latestPipeline }}
@@ -84,7 +84,7 @@ stages:
       parameters:
         BASE_URL: $(BASE_URL)
         THIS_VERSION: $(RELEASE_VERSION)
-        MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+        MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
         RELEASE_VERSION: $(RELEASE_VERSION)
         N1_VERSION: $(N1_VERSION)
         VUEPRESS_BASE: '/'
@@ -95,7 +95,7 @@ stages:
       parameters:
         BASE_URL: $(BASE_URL)
         THIS_VERSION: $(RELEASE_VERSION)
-        MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+        MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
         RELEASE_VERSION: $(RELEASE_VERSION)
         N1_VERSION: $(N1_VERSION)
         VUEPRESS_BASE: '/versions/$(RELEASE_VERSION)/'

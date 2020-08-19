@@ -575,7 +575,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
     public async summarize(fullTree = false): Promise<ISummaryTreeWithStats> {
         const builder = new SummaryTreeBuilder();
 
-        // Iterate over each component and ask it to snapshot
+        // Iterate over each data store and ask it to snapshot
         await Promise.all(Array.from(this.contexts)
             .filter(([key, _]) => {
                 const isAttached = this.isChannelAttached(key);

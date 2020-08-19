@@ -194,7 +194,7 @@ export class ConsensusOrderedCollection<T = any>
                 {
                     mode: FileMode.File,
                     path: snapshotFileNameData,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: this.serializeValue(this.data.asArray()),
                         encoding: "utf-8",
@@ -208,7 +208,7 @@ export class ConsensusOrderedCollection<T = any>
         tree.entries.push({
             mode: FileMode.File,
             path: snapshotFileNameTracking,
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: this.serializeValue(Array.from(this.jobTracking.entries())),
                 encoding: "utf-8",

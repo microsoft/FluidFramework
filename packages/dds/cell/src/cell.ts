@@ -180,7 +180,7 @@ export class SharedCell<T extends Serializable = any> extends SharedObject<IShar
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: JSON.stringify(content),
                         encoding: "utf-8",

@@ -8,7 +8,7 @@ import 'mocha';
 import { strict as assert } from "assert";
 import { SparseArray2D } from '../src/sparsearray2d';
 import { fill, check, extract } from './utils';
-import { Serializable } from '@fluidframework/component-runtime-definitions';
+import { Serializable } from '@fluidframework/datastore-definitions';
 
 function expectEqual<T extends Serializable>(
     actual: SparseArray2D<T>,

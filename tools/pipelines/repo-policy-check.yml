@@ -4,11 +4,11 @@
 # repo-policy-check pipeline to ensure repo conventions
 
 trigger:
-- master
+- main
 - release/*
 
 pr:
-- master
+- main
 - release/*
 
 pool:

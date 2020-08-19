@@ -113,7 +113,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: JSON.stringify(content),
                         encoding: "utf-8",

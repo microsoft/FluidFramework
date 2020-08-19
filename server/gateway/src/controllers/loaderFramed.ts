@@ -19,15 +19,16 @@ import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { DocumentFactory } from "./documentFactory";
 import { seedFromScriptIds } from "./helpers";
+import { debug } from "./debug";
 
-async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
-    const component = await baseHost.requestFluidObject(url);
-    if (component === undefined) {
+async function getFluidObjectAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
+    const fluidObject = await baseHost.requestFluidObject(url);
+    if (fluidObject === undefined) {
         return;
     }
 
-    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
-    const view = new HTMLViewAdapter(component);
+    // Render the fluid object with an HTMLViewAdapter to abstract the UI framework used by the fluid object
+    const view = new HTMLViewAdapter(fluidObject);
     view.render(div, { display: "block" });
 }
 
@@ -40,7 +41,7 @@ export async function initialize(
     clientId: string,
     scope: IFluidObject,
 ) {
-    console.log(`Loading ${url}`);
+    debug(`Loading ${url}`);
 
     const div = document.getElementById("content") as HTMLDivElement;
 
@@ -67,7 +68,7 @@ export async function initialize(
     // Currently this contextChanged handler covers both the initial load (from NullRuntime) as well as the upgrade
     // scenario.  In the next version of base-host it will only be for the upgrade scenario.
     container.on("contextChanged", (value) => {
-        getComponentAndRender(baseHost, url, div).catch(() => { });
+        getFluidObjectAndRender(baseHost, url, div).catch(() => { });
     });
-    await getComponentAndRender(baseHost, url, div);
+    await getFluidObjectAndRender(baseHost, url, div);
 }

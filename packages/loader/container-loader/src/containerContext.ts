@@ -122,7 +122,7 @@ export class ContainerContext implements IContainerContext {
     }
 
     public get canSummarize(): boolean {
-        return "summarize" in this.runtime!;
+        return "summarize" in this.runtime;
     }
 
     public get serviceConfiguration(): IServiceConfiguration | undefined {
@@ -157,7 +157,13 @@ export class ContainerContext implements IContainerContext {
         return this.container.storage;
     }
 
-    private runtime: IRuntime | undefined;
+    private _runtime: IRuntime | undefined;
+    private get runtime() {
+        if (this._runtime === undefined) {
+            throw new Error("Attempted to access runtime before it was defined");
+        }
+        return this._runtime;
+    }
 
     private _disposed = false;
 
@@ -190,14 +196,10 @@ export class ContainerContext implements IContainerContext {
 
     private attachListener() {
         this.container.once("attaching", () => {
-            if (this.runtime?.setAttachState !== undefined) {
-                this.runtime.setAttachState(AttachState.Attaching);
-            }
+            this._runtime?.setAttachState?.(AttachState.Attaching);
         });
         this.container.once("attached", () => {
-            if (this.runtime?.setAttachState !== undefined) {
-                this.runtime.setAttachState(AttachState.Attached);
-            }
+            this._runtime?.setAttachState?.(AttachState.Attached);
         });
     }
 
@@ -207,13 +209,13 @@ export class ContainerContext implements IContainerContext {
         }
         this._disposed = true;
 
-        this.runtime!.dispose(error);
+        this.runtime.dispose(error);
         this.quorum.dispose();
         this.deltaManager.dispose();
     }
 
     public async snapshot(tagMessage: string = "", fullTree: boolean = false): Promise<ITree | null> {
-        return this.runtime!.snapshot(tagMessage, fullTree);
+        return this.runtime.snapshot(tagMessage, fullTree);
     }
 
     public getLoadedFromVersion(): IVersion | undefined {
@@ -224,7 +226,7 @@ export class ContainerContext implements IContainerContext {
      * Snapshot and close the runtime, and return its state if available
      */
     public async snapshotRuntimeState(): Promise<IRuntimeState> {
-        return this.runtime!.stop();
+        return this.runtime.stop();
     }
 
     public get attachState(): AttachState {
@@ -232,16 +234,13 @@ export class ContainerContext implements IContainerContext {
     }
 
     public createSummary(): ISummaryTree {
-        if (this.runtime === undefined) {
-            throw new Error("Runtime should be there to take summary");
-        }
         return this.runtime.createSummary();
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
-        const runtime = this.runtime!;
+        const runtime = this.runtime;
 
-        assert(this.connected === connected);
+        assert.strictEqual(connected, this.connected, "Mismatch in connection state while setting");
 
         // Back-compat: supporting <= 0.16 data stores
         if (runtime.setConnectionState !== undefined) {
@@ -249,20 +248,20 @@ export class ContainerContext implements IContainerContext {
         } else if (runtime.changeConnectionState !== undefined) {
             runtime.changeConnectionState(this.connectionState, clientId);
         } else {
-            assert(false);
+            assert.fail("Runtime missing both setConnectionState and changeConnectionState");
         }
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        this.runtime!.process(message, local, context);
+        this.runtime.process(message, local, context);
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {
-        this.runtime!.processSignal(message, local);
+        this.runtime.processSignal(message, local);
     }
 
     public async request(path: IRequest): Promise<IResponse> {
-        return this.runtime!.request(path);
+        return this.runtime.request(path);
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {
@@ -278,14 +277,14 @@ export class ContainerContext implements IContainerContext {
     }
 
     public hasNullRuntime() {
-        return this.runtime! instanceof NullRuntime;
+        return this.runtime instanceof NullRuntime;
     }
 
-    public async getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined> {
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
         return this.container.getAbsoluteUrl(relativeUrl);
     }
 
     private async load() {
-        this.runtime = await this.runtimeFactory.instantiateRuntime(this);
+        this._runtime = await this.runtimeFactory.instantiateRuntime(this);
     }
 }

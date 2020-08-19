@@ -11,7 +11,7 @@ import * as utils from "../../utils";
 /**
  * Validates that the input encoding is valid
  */
-function validateEncoding(encoding: string) {
+function validateEncoding(encoding: string): encoding is BufferEncoding {
     return encoding === "utf-8" || encoding === "base64";
 }
 
@@ -42,7 +42,6 @@ export async function createBlob(
     }
 
     const repository = await repoManager.open(owner, repo);
-    // eslint-disable-next-line @typescript-eslint/await-thenable
     const id = await repository.createBlobFromBuffer(Buffer.from(blob.content, blob.encoding));
     const sha = id.tostrS();
 
