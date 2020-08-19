@@ -23,9 +23,14 @@ url = "/docs/"
 weight = -90
 
 [[menu.main]]
+name = "API"
+url = "/apis/"
+weight = -80
+
+[[menu.main]]
 name = "FAQ"
 url = "/faq/"
-weight = -80
+weight = -70
 
 [[menu.main]]
 name = "Blog"
@@ -45,7 +50,7 @@ weight = -300
 [[menu.docs]]
 identifier = "api"
 name = "API"
-url = '/docs/api/'
+url = '/apis/'
 weight = 0
 
 # [[menu.docs]]
