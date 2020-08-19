@@ -43,6 +43,12 @@ import random from "random-js";
 import * as Xmldoc from "xmldoc";
 import * as SharedString from "../intervalCollection";
 
+const clock = () => Trace.start();
+
+const elapsedMicroseconds = (start: Trace) => {
+    return start.trace().duration * 1000;
+};
+
 // Enum AsyncRoundState {
 //     Insert,
 //     Remove,
@@ -66,7 +72,7 @@ export function propertyCopy() {
         a[i] = `prop${i}`;
         v[i] = i;
     }
-    let traceStart = Trace.start();
+    let clockStart = clock();
     let obj: MergeTree.MapLike<number>;
     for (let j = 0; j < iterCount; j++) {
         obj = MergeTree.createMap<number>();
@@ -78,17 +84,18 @@ export function propertyCopy() {
     let perIter = (et / iterCount).toFixed(3);
     let perProp = (et / (iterCount * propCount)).toFixed(3);
     console.log(`arr prop init time ${perIter} ms per init; ${perProp} per property`);
-    traceStart = Trace.start();
+    console.log(`arr prop init time ${perIter} per init; ${perProp} per property`);
+    clockStart = clock();
     for (let j = 0; j < iterCount; j++) {
         const bObj = MergeTree.createMap<number>();
         for (const key in obj) {
             bObj[key] = obj[key];
         }
     }
-    et = traceStart.trace().duration;
+    et = elapsedMicroseconds(clockStart);
     perIter = (et / iterCount).toFixed(3);
     perProp = (et / (iterCount * propCount)).toFixed(3);
-    console.log(`obj prop init time ${perIter} ms per init; ${perProp} per property`);
+    console.log(`obj prop init time ${perIter} per init; ${perProp} per property`);
 }
 
 function makeBookmarks(client: TestClient, bookmarkCount: number) {
@@ -174,9 +181,9 @@ export function TestPack(verbose = true) {
 
     const checkIncr = false;
 
-    let getTextTime = 0; // ms
+    let getTextTime = 0;
     let getTextCalls = 0;
-    let crossGetTextTime = 0; // ms
+    let crossGetTextTime = 0;
     let crossGetTextCalls = 0;
     // Let incrGetTextTime = 0;
     // let incrGetTextCalls = 0;
@@ -187,24 +194,22 @@ export function TestPack(verbose = true) {
         if (!verbose) {
             return;
         }
-        const aveTime = (client.accumTime / client.accumOps).toFixed(1);
-        const aveLocalTime = (client.localTime / client.localOps).toFixed(1);
+        // client times are in floating point ms, but everything in this test is done in us
+        const aveTime = (1000 * client.accumTime / client.accumOps).toFixed(1);
+        const aveLocalTime = (1000 * client.localTime / client.localOps).toFixed(1);
         const stats = client.mergeTree.getStats();
-        const windowTime = stats.windowTime;
-        const packTime = stats.packTime;
-        const ordTime = stats.ordTime;
-        const aveWindowTime = ((windowTime || 0) / (client.accumOps)).toFixed(1);
-        const aveOrdTime = ((ordTime || 0) / (client.accumOps)).toFixed(1);
-        const avePackTime = ((packTime || 0) / (client.accumOps)).toFixed(1);
-        const aveExtraWindowTime = (client.accumWindowTime / client.accumOps).toFixed(1);
+        const aveWindowTime = (1000 * (stats.windowTime || 0) / (client.accumOps)).toFixed(1);
+        const aveOrdTime = (1000 * (stats.ordTime || 0) / (client.accumOps)).toFixed(1);
+        const avePackTime = (1000 * (stats.packTime || 0) / (client.accumOps)).toFixed(1);
+        const aveExtraWindowTime = (1000 * client.accumWindowTime / client.accumOps).toFixed(1);
         const aveWindow = (client.accumWindow / client.accumOps).toFixed(1);
-        const adjTime = ((client.accumTime - (windowTime - client.accumWindowTime)) / client.accumOps).toFixed(1);
+        const adjTime = (1000 * (client.accumTime - (stats.windowTime - client.accumWindowTime)) / client.accumOps).toFixed(1);
         if (client.localOps > 0) {
-            console.log(`local time ${client.localTime} ms ops: ${client.localOps} ave time ${aveLocalTime}`);
+            console.log(`local time ${client.localTime * 1000} us ops: ${client.localOps} ave time ${aveLocalTime}`);
         }
-        console.log(`ord time average: ${aveOrdTime}ms max ${stats.maxOrdTime}ms`);
-        console.log(`${client.longClientId} accum time ${client.accumTime} ms ops: ${client.accumOps} ave time ${aveTime} - wtime ${adjTime} pack ${avePackTime} ave window ${aveWindow}`);
-        console.log(`${client.longClientId} accum window time ${client.accumWindowTime} ms ave window time total ${aveWindowTime} not in ops ${aveExtraWindowTime}; max ${client.maxWindowTime}`);
+        console.log(`ord time average: ${aveOrdTime}us max ${stats.maxOrdTime * 1000}us`);
+        console.log(`${client.longClientId} accum time ${client.accumTime * 1000} us ops: ${client.accumOps} ave time ${aveTime} - wtime ${adjTime} pack ${avePackTime} ave window ${aveWindow}`);
+        console.log(`${client.longClientId} accum window time ${client.accumWindowTime * 1000} us ave window time total ${aveWindowTime} not in ops ${aveExtraWindowTime}; max ${client.maxWindowTime * 1000}`);
     }
 
     function manyMergeTrees() {
@@ -236,11 +241,11 @@ export function TestPack(verbose = true) {
         const bookmarkCount = 5000;
         let references: MergeTree.LocalReference[];
         let refReads = 0;
-        let refReadTime = 0; // ms
+        let refReadTime = 0;
         let posContextChecks = 0;
-        let posContextTime = 0; // ms
+        let posContextTime = 0;
         let posContextResults = 0;
-        let rangeOverlapTime = 0; // ms
+        let rangeOverlapTime = 0;
         let rangeOverlapChecks = 0;
         let overlapIntervalResults = 0;
         const testSyncload = false;
@@ -287,9 +292,9 @@ export function TestPack(verbose = true) {
             }
         }
         if (testSyncload) {
-            const traceStart = Trace.start();
+            const clockStart = clock();
             // Let segs = Paparazzo.Snapshot.loadSync("snap-initial");
-            console.log(`sync load time ${traceStart.trace().duration} ms`);
+            console.log(`sync load time ${elapsedMicroseconds(clockStart)}`);
             const fromLoad = new MergeTree.MergeTree();
             // FromLoad.reloadFromSegments(segs);
             const fromLoadText = new MergeTreeTextHelper(fromLoad).getText(UniversalSequenceNumber, NonCollabClient);
@@ -311,14 +316,14 @@ export function TestPack(verbose = true) {
 
         function checkTextMatch() {
             // Console.log(`checking text match @${server.getCurrentSeq()}`);
-            let traceStart = Trace.start();
+            let clockStart = clock();
             const serverText = testServer.getText();
-            getTextTime += traceStart.trace().duration;
+            getTextTime += elapsedMicroseconds(clockStart);
             getTextCalls++;
             if (checkIncr) {
-                traceStart = Trace.start();
+                clockStart = clock();
                 const serverIncrText = testServer.incrementalGetText();
-                // IncrGetTextTime += traceStart.trace().duration;
+                // IncrGetTextTime += elapsedMicroseconds(clockStart);
                 // incrGetTextCalls++;
                 if (serverIncrText !== serverText) {
                     console.log("incr get text mismatch");
@@ -551,12 +556,12 @@ export function TestPack(verbose = true) {
                 const refReadsPerRound = 200;
                 const posChecksPerRound = 200;
                 const rangeChecksPerRound = 200;
-                let traceStart = Trace.start();
+                let clockStart = clock();
                 for (let i = 0; i < refReadsPerRound; i++) {
                     references[i].toPosition();
                     refReads++;
                 }
-                refReadTime += traceStart.trace().duration;
+                refReadTime += elapsedMicroseconds(clockStart);
                 if (testOrdinals) {
                     const mt2 = random.engines.mt19937();
                     mt2.seedWithArray([0xdeadbeef, 0xfeedbed]);
@@ -630,7 +635,7 @@ export function TestPack(verbose = true) {
                         }
                     }
                     const showResults = false;
-                    traceStart = Trace.start();
+                    clockStart = clock();
 
                     for (let i = 0; i < posChecksPerRound; i++) {
                         const ivals = bookmarkRangeTree.match(checkPosRanges[i]);
@@ -644,10 +649,10 @@ export function TestPack(verbose = true) {
                         }
                         posContextResults += ivals.length;
                     }
-                    posContextTime += traceStart.trace().duration;
+                    posContextTime += elapsedMicroseconds(clockStart);
                     posContextChecks += posChecksPerRound;
 
-                    traceStart = Trace.start();
+                    clockStart = clock();
                     for (let i = 0; i < rangeChecksPerRound; i++) {
                         const ivals = bookmarkRangeTree.match(checkRangeRanges[i]);
                         if (showResults) {
@@ -660,16 +665,16 @@ export function TestPack(verbose = true) {
                         }
                         overlapIntervalResults += ivals.length;
                     }
-                    rangeOverlapTime += traceStart.trace().duration;
+                    rangeOverlapTime += elapsedMicroseconds(clockStart);
                     rangeOverlapChecks += rangeChecksPerRound;
                 }
             }
 
             if (extractSnap) {
-                const traceStart = Trace.start();
+                const clockStart = clock();
                 // Let snapshot = new Paparazzo.Snapshot(snapClient.mergeTree);
                 // snapshot.extractSync();
-                extractSnapTime += traceStart.trace().duration;
+                extractSnapTime += elapsedMicroseconds(clockStart);
                 extractSnapOps++;
             }
             /*
@@ -682,15 +687,15 @@ export function TestPack(verbose = true) {
             // console.log(server.mergeTree.toString());
             // console.log(server.mergeTree.getStats());
             if (0 === (roundCount % 100)) {
-                const traceStart = Trace.start();
+                const clockStart = clock();
                 if (checkTextMatch()) {
                     console.log(`round: ${roundCount} BREAK`);
                     errorCount++;
                     return errorCount;
                 }
-                checkTime += traceStart.trace().duration;
+                checkTime += elapsedMicroseconds(clockStart);
                 if (verbose) {
-                    console.log(`wall clock is ${(startTime.trace().duration).toFixed(1)}`);
+                    console.log(`wall clock is ${((Date.now() - startTime) / 1000.0).toFixed(1)}`);
                 }
                 const stats = testServer.mergeTree.getStats();
                 const liveAve = (stats.liveCount / stats.nodeCount).toFixed(1);
@@ -779,8 +784,8 @@ export function TestPack(verbose = true) {
             finishRound(roundCount);
         }
 
-        const startTime = Trace.start();
-        let checkTime = 0; // ms
+        const startTime = Date.now();
+        let checkTime = 0;
         let asyncRoundCount = 0;
         let lastSnap = 0;
         // Let checkSnapText = true;
@@ -789,10 +794,10 @@ export function TestPack(verbose = true) {
         //     snapInProgress = false;
         //     let curmin = snapClient.mergeTree.getCollabWindow().minSeq;
         //     console.log(`snap finished round ${asyncRoundCount} server seq ${server.getCurrentSeq()} seq ${snapClient.getCurrentSeq()} minseq ${curmin}`);
-        //     let traceStart = Trace.start();
+        //     let clockStart = clock();
         //     //snapClient.verboseOps = true;
         //     clientProcessSome(snapClient, true);
-        //     catchUpTime += traceStart.trace().duration;
+        //     catchUpTime += elapsedMicroseconds(clockStart);
         //     catchUps++;
         //     if (checkSnapText) {
         //         let serverText = server.getText();
@@ -906,14 +911,14 @@ export function TestPack(verbose = true) {
         testServerB.addUpstreamClients(clientsA);
 
         function crossBranchTextMatch(serverA: TestServer, serverB: TestServer, aClientId: string) {
-            let traceStart = Trace.start();
+            let clockStart = clock();
             const serverAText = serverA.getText();
-            getTextTime += traceStart.trace().duration;
+            getTextTime += elapsedMicroseconds(clockStart);
             getTextCalls++;
-            traceStart = Trace.start();
+            clockStart = clock();
             // eslint-disable-next-line no-null/no-null
             const serverBAText = new MergeTreeTextHelper(serverB.mergeTree).getText(serverB.getCurrentSeq(), serverB.getOrAddShortClientId(aClientId, null));
-            crossGetTextTime += traceStart.trace().duration;
+            crossGetTextTime += elapsedMicroseconds(clockStart);
             crossGetTextCalls++;
             if (serverAText !== serverBAText) {
                 console.log(`cross mismatch @${serverA.getCurrentSeq()} serverB @${serverB.getCurrentSeq()}`);
@@ -923,9 +928,9 @@ export function TestPack(verbose = true) {
 
         function checkTextMatch(clients: TestClient[], server: TestServer) {
             // Console.log(`checking text match @${server.getCurrentSeq()}`);
-            const traceStart = Trace.start();
+            const clockStart = clock();
             const serverText = server.getText();
-            getTextTime += traceStart.trace().duration;
+            getTextTime += elapsedMicroseconds(clockStart);
             getTextCalls++;
             for (const client of clients) {
                 const showDiff = true;
@@ -1050,7 +1055,7 @@ export function TestPack(verbose = true) {
             }
             const allRounds = false;
             if (allRounds || (0 === (roundCount % 100))) {
-                const traceStart = Trace.start();
+                const clockStart = clock();
                 if (crossBranchTextMatch(testServerA, testServerB, clientsA[0].longClientId)) {
                     errorCount++;
                 }
@@ -1064,9 +1069,9 @@ export function TestPack(verbose = true) {
                     errorCount++;
                     return errorCount;
                 }
-                checkTime += traceStart.trace().duration;
+                checkTime += elapsedMicroseconds(clockStart);
                 if (verbose) {
-                    console.log(`wall clock is ${(startTime.trace().duration).toFixed(1)}`);
+                    console.log(`wall clock is ${((Date.now() - startTime) / 1000.0).toFixed(1)}`);
                 }
                 const statsA = testServerA.mergeTree.getStats();
                 const statsB = testServerB.mergeTree.getStats();
@@ -1153,7 +1158,7 @@ export function TestPack(verbose = true) {
             }
         }
 
-        const startTime = Trace.start();
+        const startTime = Date.now();
         let checkTime = 0;
 
         for (let i = 0; i < rounds; i++) {
@@ -1418,7 +1423,7 @@ function checkInsertMergeTree(
     const helper = new MergeTreeTextHelper(mergeTree);
     let checkText = helper.getText(UniversalSequenceNumber, LocalClientId);
     checkText = editFlat(checkText, pos, 0, textSegment.text);
-    const traceStart = Trace.start();
+    const clockStart = clock();
     mergeTree.insertSegments(
         pos,
         [new TextSegment(textSegment.text)],
@@ -1426,7 +1431,7 @@ function checkInsertMergeTree(
         LocalClientId,
         UniversalSequenceNumber,
         undefined);
-    accumTime += traceStart.trace().duration;
+    accumTime += elapsedMicroseconds(clockStart);
     const updatedText = helper.getText(UniversalSequenceNumber, LocalClientId);
     const result = (checkText === updatedText);
     if ((!result) && verbose) {
@@ -1440,9 +1445,9 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number,
     const helper = new MergeTreeTextHelper(mergeTree);
     const origText = helper.getText(UniversalSequenceNumber, LocalClientId);
     const checkText = editFlat(origText, start, end - start);
-    const traceStart = Trace.start();
+    const clockStart = clock();
     mergeTree.markRangeRemoved(start, end, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, false, undefined);
-    accumTime += traceStart.trace().duration;
+    accumTime += elapsedMicroseconds(clockStart);
     const updatedText = helper.getText(UniversalSequenceNumber, LocalClientId);
     const result = (checkText === updatedText);
     if ((!result) && verbose) {
@@ -1496,7 +1501,7 @@ export function mergeTreeCheckedTest() {
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
             const averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
-            console.log(`i: ${i} time: ${accumTime}ms which is average ${perIter} per insert with average tree size ${averageTreeSize}`);
+            console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per insert with average tree size ${averageTreeSize}`);
         }
     }
     accumTime = 0;
@@ -1517,7 +1522,7 @@ export function mergeTreeCheckedTest() {
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
             const averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
-            console.log(`i: ${i} time: ${accumTime}ms which is average ${perIter} per large del with average tree size ${averageTreeSize}`);
+            console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per large del with average tree size ${averageTreeSize}`);
         }
     }
     accumTime = 0;
@@ -1549,7 +1554,7 @@ export function mergeTreeCheckedTest() {
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
             const averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
-            console.log(`i: ${i} time: ${accumTime}ms which is average ${perIter} per del with average tree size ${averageTreeSize}`);
+            console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per del with average tree size ${averageTreeSize}`);
         }
     }
     accumTime = 0;
@@ -1571,7 +1576,7 @@ export function mergeTreeCheckedTest() {
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
             const averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
-            console.log(`i: ${i} time: ${accumTime}ms which is average ${perIter} per insert with average tree size ${averageTreeSize}`);
+            console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per insert with average tree size ${averageTreeSize}`);
         }
     }
     accumTime = 0;
@@ -1603,7 +1608,7 @@ export function mergeTreeCheckedTest() {
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
             const averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
-            console.log(`i: ${i} time: ${accumTime}ms which is average ${perIter} per del with average tree size ${averageTreeSize}`);
+            console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per del with average tree size ${averageTreeSize}`);
         }
     }
     return errorCount;

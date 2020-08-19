@@ -16,6 +16,7 @@ import { LocalReference } from "./localReference";
 import {
     ClientIds,
     compareStrings,
+    elapsedMicroseconds,
     IConsensusInfo,
     ISegment,
     ISegmentAction,
@@ -44,13 +45,13 @@ export class Client {
     public noVerboseRemoteAnnote = false;
     public measureOps = false;
     public registerCollection = new RegisterCollection();
-    public accumTime = 0; // milliseconds
-    public localTime = 0; // ms
+    public accumTime = 0;
+    public localTime = 0;
     public localOps = 0;
-    public accumWindowTime = 0; // ms
+    public accumWindowTime = 0;
     public accumWindow = 0;
     public accumOps = 0;
-    public maxWindowTime = 0; // ms
+    public maxWindowTime = 0;
     public longClientId: string;
 
     get mergeTreeDeltaCallback(): MergeTreeDeltaCallback { return this.mergeTree.mergeTreeDeltaCallback; }
@@ -454,7 +455,7 @@ export class Client {
         traceStart?: Trace) {
         if (!opArgs.sequencedMessage) {
             if (traceStart) {
-                this.localTime += traceStart.trace().duration;
+                this.localTime += elapsedMicroseconds(traceStart);
                 this.localOps++;
             }
         } else {
@@ -463,7 +464,7 @@ export class Client {
             assert(this.mergeTree.getCollabWindow().minSeq <= opArgs.sequencedMessage.minimumSequenceNumber,
                 "Incoming remote op minSequence# < local collabWindow's minSequence#");
             if (traceStart) {
-                this.accumTime += traceStart.trace().duration;
+                this.accumTime += elapsedMicroseconds(traceStart);
                 this.accumOps++;
                 this.accumWindow += (this.getCurrentSeq() - this.getCollabWindow().minSeq);
             }
@@ -600,7 +601,7 @@ export class Client {
             }
 
             if (this.measureOps) {
-                this.accumTime += trace.trace().duration;
+                this.accumTime += elapsedMicroseconds(trace);
                 this.accumOps++;
                 this.accumWindow += (this.getCurrentSeq() - this.getCollabWindow().minSeq);
             }
@@ -886,7 +887,7 @@ export class Client {
             this.logger.sendPerformanceEvent({
                 eventName: "MergeTree:RegeneratePendingOp",
                 category: "performance",
-                duration: trace.trace().duration,
+                duration: elapsedMicroseconds(trace),
             });
         }
     }
@@ -994,7 +995,7 @@ export class Client {
         }
         this.mergeTree.setMinSeq(minSeq);
         if (this.measureOps) {
-            const elapsed = trace.trace().duration;
+            const elapsed = elapsedMicroseconds(trace);
             this.accumWindowTime += elapsed;
             if (elapsed > this.maxWindowTime) {
                 this.maxWindowTime = elapsed;

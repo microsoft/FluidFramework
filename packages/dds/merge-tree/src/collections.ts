@@ -1028,7 +1028,7 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
     intervals = new RedBlackTree<T, AugmentedIntervalNode>(intervalComparer, this);
     diag = false;
     timePut = false;
-    putTime = 0; // ms
+    putTime = 0;
     putCount = 0;
 
     printTiming() {
@@ -1052,7 +1052,7 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
         if (this.timePut) {
             const trace = Trace.start();
             this.intervals.put(x, { minmax: x.clone() }, rbConflict);
-            this.putTime += trace.trace().duration;
+            this.putTime += trace.trace().duration * 1000;
             this.putCount++;
         } else {
             this.intervals.put(x, { minmax: x.clone() }, rbConflict);

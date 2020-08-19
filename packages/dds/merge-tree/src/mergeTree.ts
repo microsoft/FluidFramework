@@ -190,10 +190,10 @@ export interface MergeTreeStats {
     removedLeafCount: number;
     liveCount: number;
     histo: number[];
-    windowTime?: number; // milliseconds
-    packTime?: number; // ms
-    ordTime?: number; // ms
-    maxOrdTime?: number; // ms
+    windowTime?: number;
+    packTime?: number;
+    ordTime?: number;
+    maxOrdTime?: number;
 }
 
 export interface SegmentGroup {
@@ -876,6 +876,14 @@ export const compareNumbers = (a: number, b: number) => a - b;
 
 export const compareStrings = (a: string, b: string) => a.localeCompare(b);
 
+export function clock() {
+    return Trace.start();
+}
+
+export function elapsedMicroseconds(trace: Trace) {
+    return trace.trace().duration * 1000;
+}
+
 const indentStrings = ["", " ", "  "];
 export function internedSpaces(n: number) {
     if (indentStrings[n] === undefined) {
@@ -1108,10 +1116,10 @@ export class MergeTree {
     // for property updates on markers when loading from snapshots
     static readonly blockUpdateMarkers = true;
 
-    windowTime = 0; // milliseconds
-    packTime = 0; // ms
-    ordTime = 0; // ms
-    maxOrdTime = 0; // ms
+    windowTime = 0;
+    packTime = 0;
+    ordTime = 0;
+    maxOrdTime = 0;
 
     root: IMergeBlock;
     blockUpdateActions: BlockUpdateActions;
@@ -1258,9 +1266,9 @@ export class MergeTree {
                 : buildMergeBlock(blocks);      // ...otherwise recursively build the next layer above blocks.
         };
 
-        let trace: Trace;
+        let clockStart: Trace;
         if (measureReloadTime) {
-            trace = Trace.start();
+            clockStart = clock();
         }
         if (segments.length > 0) {
             this.root = buildMergeBlock(segments);
@@ -1271,7 +1279,7 @@ export class MergeTree {
         }
         this.root.index = 0;
         if (measureReloadTime) {
-            console.log(`reload time ${trace.trace().duration}`);
+            console.log(`reload time ${elapsedMicroseconds(clockStart)}`);
         }
     }
 
@@ -1285,13 +1293,13 @@ export class MergeTree {
         this.segmentsToScour = new Collections.Heap<LRUSegment>([], LRUSegmentComparer);
         this.pendingSegments = Collections.ListMakeHead<SegmentGroup>();
         const measureFullCollab = false;
-        let trace: Trace;
+        let clockStart: Trace;
         if (measureFullCollab) {
-            trace = Trace.start();
+            clockStart = clock();
         }
         this.nodeUpdateLengthNewStructure(this.root, true);
         if (measureFullCollab) {
-            console.log(`update partial lengths at start ${trace.trace().duration}`);
+            console.log(`update partial lengths at start ${elapsedMicroseconds(clockStart)}`);
         }
     }
 
@@ -1448,9 +1456,9 @@ export class MergeTree {
         if (!this.collabWindow.collaborating) {
             return;
         }
-        let trace;
+        let clockStart;
         if (MergeTree.options.measureWindowTime) {
-            trace = Trace.start();
+            clockStart = clock();
         }
 
         for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
@@ -1480,14 +1488,14 @@ export class MergeTree {
 
                     if (this.underflow(block) && block.parent) {
                         // nodeUpdatePathLengths(node, UnassignedSequenceNumber, -1, true);
-                        let packTraceStart;
+                        let packClockStart;
                         if (MergeTree.options.measureWindowTime) {
-                            packTraceStart = Trace.start();
+                            packClockStart = clock();
                         }
                         this.pack(block);
 
                         if (MergeTree.options.measureWindowTime) {
-                            this.packTime += packTraceStart.trace().duration;
+                            this.packTime += elapsedMicroseconds(packClockStart);
                         }
                     } else {
                         this.nodeUpdateOrdinals(block);
@@ -1498,7 +1506,7 @@ export class MergeTree {
         }
 
         if (MergeTree.options.measureWindowTime) {
-            this.windowTime += trace.trace().duration;
+            this.windowTime += elapsedMicroseconds(clockStart);
         }
     }
 
@@ -2546,9 +2554,9 @@ export class MergeTree {
         if (MergeTree.traceOrdinals) {
             console.log(`update ordinals for children of node with ordinal ${ordinalToArray(block.ordinal)}`);
         }
-        let trace: Trace;
+        let clockStart: Trace;
         if (MergeTree.options.measureOrdinalTime) {
-            trace = Trace.start();
+            clockStart = clock();
         }
         for (let i = 0; i < block.childCount; i++) {
             const child = block.children[i];
@@ -2558,7 +2566,7 @@ export class MergeTree {
             }
         }
         if (MergeTree.options.measureOrdinalTime) {
-            const elapsed = trace.trace().duration;
+            const elapsed = elapsedMicroseconds(clockStart);
             if (elapsed > this.maxOrdTime) {
                 this.maxOrdTime = elapsed;
             }
