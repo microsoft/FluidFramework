@@ -103,7 +103,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
                 } else {
                     // Since the document was originated elsewhere or cache was cleared, logOffset info is irrelavant.
-                    // Currently the lambda checkpoits only after updating the logOffset so setting this to lower
+                    // Currently the lambda checkpoints only after updating the logOffset so setting this to lower
                     // is okay. Conceptually this is similar to default checkpoint where logOffset is -1. In this case,
                     // the sequence number is 'n' rather than '0'.
                     lastCheckpoint.logOffset = -1;
