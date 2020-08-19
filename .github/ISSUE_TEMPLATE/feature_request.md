@@ -26,6 +26,6 @@ assignees: ''
 <!--Add any other context about the feature request here. -->
 
 
-<!-- By filing an Issue, you are expected to comply with the Code of Conduct: https://github.com/microsoft/FluidFramework/blob/master/CODE_OF_CONDUCT.md -->
+<!-- By filing an Issue, you are expected to comply with the Code of Conduct: https://github.com/microsoft/FluidFramework/blob/main/CODE_OF_CONDUCT.md -->
 
 <!-- Lastly, be sure to preview your issue before saving. Thanks! -->

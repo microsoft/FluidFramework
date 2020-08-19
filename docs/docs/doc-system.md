@@ -107,7 +107,7 @@ repo must be specified relative to `docs/.vuepress/includes`. For example, if yo
 ```
 
 You can create a simple wrapper page within the docs folder, then include a file from the repo within it. See
-[docs/contributing/breaking-changes.md](https://github.com/microsoft/FluidFramework/blob/master/docs/contributing/breaking-changes.md)
+[docs/contributing/breaking-changes.md](https://github.com/microsoft/FluidFramework/blob/main/docs/contributing/breaking-changes.md)
 for an example.
 
 Links are resolved as described above for reusable snippets, so you must be careful when using links in files you also

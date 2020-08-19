@@ -18,5 +18,5 @@ variables:
   value: ${{
     and(
       variables.publish,
-      eq(variables['Build.SourceBranch'], 'refs/heads/master')
+      eq(variables['Build.SourceBranch'], 'refs/heads/main')
     )}}

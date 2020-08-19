@@ -8,7 +8,7 @@ name: $(Build.BuildId)
 trigger:
   branches:
     include:
-    - master
+    - main
   paths:
     include:
     - tools/test-tools
@@ -20,7 +20,7 @@ trigger:
 pr:
   branches:
     include:
-    - master
+    - main
   paths:
     include:
     - tools/test-tools
