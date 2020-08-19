@@ -12,7 +12,7 @@ import { SequencedLambda } from "@fluidframework/server-lambdas";
 import * as core from "@fluidframework/server-services-core";
 import { DocumentManager } from "./documentManager";
 
-export class RouteMasterLambda extends SequencedLambda {
+export class RouteManagerLambda extends SequencedLambda {
     constructor(
         private readonly document: DocumentManager,
         private readonly producer: core.IProducer,

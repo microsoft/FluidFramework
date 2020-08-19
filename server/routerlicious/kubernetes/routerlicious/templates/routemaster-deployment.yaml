@@ -1,35 +1,35 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "routemaster.fullname" . }}
+  name: {{ template "routemanager.fullname" . }}
   labels:
     app: {{ template "routerlicious.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    component: "{{ .Values.routemaster.name }}"
+    component: "{{ .Values.routemanager.name }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
   selector:
     matchLabels:
       app: {{ template "routerlicious.name" . }}
-  replicas: {{ .Values.routemaster.replicas }}
+  replicas: {{ .Values.routemanager.replicas }}
   template:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/fluid-configmap.yaml") . | sha256sum }}
       labels:
         app: {{ template "routerlicious.name" . }}
-        component: "{{ .Values.routemaster.name }}"
+        component: "{{ .Values.routemanager.name }}"
         release: {{ .Release.Name }}
     spec:
       containers:
-      - name: {{ template "routemaster.fullname" . }}
+      - name: {{ template "routemanager.fullname" . }}
         image: "{{ .Values.image }}"
         imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
         command:
           - 'node'
           - 'packages/routerlicious/dist/kafka-service/index.js'
-          - 'routemaster'
+          - 'routemanager'
           - '/usr/src/server/packages/lambdas-driver/dist/document-router/index.js'
         env:
         - name: DEBUG
@@ -37,7 +37,7 @@ spec:
         - name: NODE_ENV
           value: production
         - name: documentLambda
-          value: "/usr/src/server/packages/routerlicious/dist/routemaster/index.js"
+          value: "/usr/src/server/packages/routerlicious/dist/routemanager/index.js"
         volumeMounts:
         - name: config
           mountPath: /usr/src/server/packages/routerlicious/config/config.json
