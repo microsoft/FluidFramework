@@ -8,7 +8,7 @@ name: $(Build.BuildId)
 trigger:
   branches:
     include:
-    - master
+    - main
     - release/*
     - refs/tags/tinylicious_v*
   paths:
@@ -22,7 +22,7 @@ trigger:
 pr:
   branches:
     include:
-    - master
+    - main
     - release/*
   paths:
     include:

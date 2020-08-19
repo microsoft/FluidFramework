@@ -17,6 +17,6 @@ export interface IForeman {
 
 ## Agent loader
 
-Foreman also supports runtime module uploading and distribution. We are using minio portal temporarily as our upload portal. Navigate to http://pragueminio.westus2.cloudapp.azure.com:9000/ (or http://localhost:9000 when running locally) and upload a zipped module inside the agents bucket. Instruction to build and prepare a module can be found [here](https://github.com/Microsoft/FluidFramework/tree/master/doc/modules/resume-analytics#module-agent).
+Foreman also supports runtime module uploading and distribution. We are using minio portal temporarily as our upload portal. Navigate to http://pragueminio.westus2.cloudapp.azure.com:9000/ (or http://localhost:9000 when running locally) and upload a zipped module inside the agents bucket. Instruction to build and prepare a module can be found [here](https://github.com/Microsoft/FluidFramework/tree/main/doc/modules/resume-analytics#module-agent).
 
 Foreman passes the module to all connected server (Paparazzi) and client workers. Server worker downloads the module from minio and loads it as a regular npm module. Client worker uses a webpacked version of the same module (also uploaded in minio in <module-name>/index.js format).
