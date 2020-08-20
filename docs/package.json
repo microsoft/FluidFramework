@@ -10,6 +10,6 @@
   "author": "Microsoft",
   "license": "MIT",
   "dependencies": {
-    "@mattetti/custom-api-documenter": "^0.3.1"
+    "@mattetti/custom-api-documenter": "^0.3.2"
   }
 }
