@@ -23,14 +23,14 @@ jobs:
         id: download-sha
         uses: carlosperate/download-file-action@v1.0.3
         with:
-          file-url: https://fluidframework.z19.web.core.windows.net/${{ github.sha }}.tar.gz
+          file-url: https://fluidframework.z19.web.core.windows.net/api-extractor-json/${{ github.sha }}.tar.gz
           file-name: api-extractor.tar.gz
       - name: Download latest JSON
         id: download-latest
         if: ${{ failure() }}
         uses: carlosperate/download-file-action@v1.0.3
         with:
-          file-url: https://fluidframework.z19.web.core.windows.net/latest.tar.gz
+          file-url: https://fluidframework.z19.web.core.windows.net/api-extractor-json/latest.tar.gz
           file-name: api-extractor.tar.gz
       - name: Extract api-extractor JSON
         id: extract-json
