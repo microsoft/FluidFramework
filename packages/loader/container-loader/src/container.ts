@@ -491,6 +491,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
+        assert.strictEqual(this.deltaManager.inbound.length, 0, "Inbound queue should be empty when attaching");
         // If container is already attached, return.
         if (this._attachState === AttachState.Attached) {
             return;
@@ -499,12 +500,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Context is undefined");
         }
 
-        // Inbound queue for ops should be empty
-        assert(this.deltaManager.inbound.length === 0);
-
         // Only take a summary if the container is in detached state, otherwise we could have local changes.
         // In failed attach call, we would already have a summary cached.
         if (this._attachState === AttachState.Detached) {
+            // Get the document state post attach - possibly can just call attach but we need to change the semantics
+            // around what the attach means as far as async code goes.
             const appSummary: ISummaryTree = this.context.createSummary();
             if (this.protocolHandler === undefined) {
                 throw new Error("Protocol Handler is undefined");
