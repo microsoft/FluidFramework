@@ -216,9 +216,9 @@ export async function start(
 
             documentId = moniker.choose();
             url = url.replace(id, documentId);
-            const urlResolver2 = new MultiUrlResolver(documentId, window.location.origin, options);
-            const newLoader = await createWebLoader(documentId, fluidModule, options, urlResolver2, codeDetails);
-            container1 = await newLoader.createDetachedContainer(codeDetails);
+            const urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
+            const loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
+            container1 = await loader1.createDetachedContainer(codeDetails);
         }
     }
 
