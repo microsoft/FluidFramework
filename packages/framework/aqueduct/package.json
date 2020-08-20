@@ -63,7 +63,6 @@
     "@fluidframework/core-interfaces": "^0.25.0",
     "@fluidframework/datastore": "^0.25.0",
     "@fluidframework/datastore-definitions": "^0.25.0",
-    "@fluidframework/framework-interfaces": "^0.25.0",
     "@fluidframework/map": "^0.25.0",
     "@fluidframework/request-handler": "^0.25.0",
     "@fluidframework/runtime-definitions": "^0.25.0",

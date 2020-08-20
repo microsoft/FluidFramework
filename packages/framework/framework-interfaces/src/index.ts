@@ -5,5 +5,3 @@
 
 export * from "./discover";
 export * from "./collection";
-
-export * from "./fluidDefaultFactoryName";

@@ -70,7 +70,7 @@ To support additional authentication scenarios, the signature and/or name of a f
 ### LastEditedTrackerComponent renamed
 It is renamed to LastEditedTrackerDataObject
 
-### ComponentProvider renamed to FluidObjectProvider 
+### ComponentProvider renamed to FluidObjectProvider
 
 In the package @fluidframework/synthesize, these types are renamed:
 
@@ -120,10 +120,6 @@ All renames are 1-1, and global case senstive and whole word find replace for al
     },
 
     "aquaduct":{
-        "icomponentInterfaces":{
-            "IProvideComponentDefaultFactoryName": "IProvideFluidExportDefaultFactoryName",
-            "IComponentDefaultFactoryName": "IFluidExportDefaultFactoryName"
-        },
         "types":{
             "SharedComponentFactory": "PureDataObjectFactory",
             "SharedComponent": "PureDataObject",
@@ -148,7 +144,7 @@ All renames are 1-1, and global case senstive and whole word find replace for al
     },
 
     "fluidObject":{
-        "icomponentInterfaces":{
+        "IComponentInterfaces":{
 
             "IProvideComponentRouter": "IProvideFluidRouter",
             "IComponentRouter": "IFluidRouter",

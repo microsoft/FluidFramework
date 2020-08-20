@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidExportDefaultFactoryName } from "@fluidframework/framework-interfaces";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { DependencyContainerRegistry } from "@fluidframework/synthesize";
@@ -23,8 +22,7 @@ const defaultComponentId = "default";
  *
  * This factory should be exposed as fluidExport off the entry point to your module.
  */
-export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory implements
-    IFluidExportDefaultFactoryName {
+export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
     public static readonly defaultComponentId = defaultComponentId;
 
     constructor(
@@ -49,9 +47,6 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
             ],
         );
     }
-
-    public get IFluidExportDefaultFactoryName() { return this; }
-    public getDefaultFactoryName() { return this.defaultComponentName; }
 
     /**
      * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
