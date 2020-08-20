@@ -133,9 +133,9 @@ class KeyValueLoader {
             (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             return;
         }
-        const component = response.value as IFluidObject;
-        const keyValue = (component.IFluidRouter as unknown) as IKeyValue;
-        winston.info(`Resolved key-value component`);
+        const fluidObject = response.value as IFluidObject;
+        const keyValue = (fluidObject.IFluidRouter as unknown) as IKeyValue;
+        winston.info(`Resolved key-value fluid object`);
         this.kvDeferred.resolve(keyValue);
     }
 }

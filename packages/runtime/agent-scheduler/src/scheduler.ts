@@ -425,19 +425,25 @@ export class TaskManager implements ITaskManager {
         }
     }
 
+    /**
+     * {@inheritDoc ITaskManager.register}
+     */
     public register(...tasks: ITask[]): void {
         for (const task of tasks) {
             this.taskMap.set(task.id, task.instance);
         }
     }
 
-    public async pick(componentUrl: string, taskId: string, worker?: boolean): Promise<void> {
+    /**
+     * {@inheritDoc ITaskManager.pick}
+     */
+    public async pick(dataStoreUrl: string, taskId: string, worker?: boolean): Promise<void> {
         if (!this.context.deltaManager.clientDetails.capabilities.interactive) {
             return Promise.reject("Picking not allowed on secondary copy");
         } else if (this.runtime.attachState !== AttachState.Attached) {
             return Promise.reject("Picking not allowed in detached container in task manager");
         } else {
-            const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
+            const urlWithSlash = dataStoreUrl.startsWith("/") ? dataStoreUrl : `/${dataStoreUrl}`;
             const fullUrl = `${urlWithSlash}/${this.url}/${taskId}`;
             return this.scheduler.pick(
                 fullUrl,

@@ -7,7 +7,7 @@ import * as services from "@fluidframework/server-services";
 import { IPartitionLambdaFactory, MongoManager } from "@fluidframework/server-services-core";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
-import { RouteMasterLambdaFactory } from "./lambdaFactory";
+import { RouteManagerLambdaFactory } from "./lambdaFactory";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;
@@ -19,8 +19,8 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const maxMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
     const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
 
-    const kafkaClientId = config.get("routemaster:clientId");
-    const sendTopic = config.get("routemaster:topics:send");
+    const kafkaClientId = config.get("routemanager:clientId");
+    const sendTopic = config.get("routemanager:topics:send");
 
     // Connection to stored document details
     const mongoFactory = new services.MongoDbFactory(mongoUrl);
@@ -39,7 +39,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
         false,
         kafkaProducerPollIntervalMs);
 
-    return new RouteMasterLambdaFactory(mongoManager, collection, deltas, producer);
+    return new RouteManagerLambdaFactory(mongoManager, collection, deltas, producer);
 }
 
-export const id = "routemaster";
+export const id = "routemanager";

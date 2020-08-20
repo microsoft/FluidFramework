@@ -38,12 +38,12 @@ export class NodeCodeLoader {
 
     private async installOrWaitForPackages(pkg: string): Promise<string> {
         // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
-        const components = pkg.match(/(.*)\/(.*)@(.*)/);
+        const fluidObjects = pkg.match(/(.*)\/(.*)@(.*)/);
         // eslint-disable-next-line no-null/no-null
-        if (components === null) {
+        if (fluidObjects === null) {
             return Promise.reject("Invalid package");
         }
-        const [, scope, name] = components;
+        const [, scope, name] = fluidObjects;
 
         const packageDirectory = `${this.packageDirectory}/${pkg}`;
         const signalPath = `${packageDirectory}/${signalFileName}`;

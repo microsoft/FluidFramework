@@ -120,7 +120,7 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
 
     private async setupLastEditedTracker() {
         const handle = handleFromLegacyUri(
-            ContainerRuntimeFactoryWithDefaultDataStore.defaultComponentId,
+            ContainerRuntimeFactoryWithDefaultDataStore.defaultDataStoreId,
             this.context.containerRuntime);
         this.lastEditedTracker = (await handle.get()).IFluidLastEditedTracker;
     }

@@ -31,7 +31,7 @@ export class DocumentManager {
 
     /**
      * Returns the IDs for active forks. Which are those whose create fork message has been processed by the
-     * route master.
+     * route manager.
      */
     public getActiveForks(): Set<string> {
         return this.activeForks;
