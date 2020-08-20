@@ -7,7 +7,7 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/aqueduct";
 
-import { DiceRoller, DiceRollerInstantiationFactory } from "../component";
+import { DiceRoller, DiceRollerInstantiationFactory } from "./model";
 
 /**
  * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultDataStore also enables dynamic loading in
