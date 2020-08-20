@@ -1,5 +1,6 @@
 baseURL = "http://ashy-mud-0acebac10.azurestaticapps.net/"
 languageCode = "en-us"
+refLinksErrorLevel = "WARNING"
 theme = "thxvscode"
 title = "Fluid Framework"
 titleCaseStyle = "Chicago"
@@ -106,3 +107,4 @@ tabWidth = 2
 endLevel = 4
 ordered = false
 startLevel = 2
+
