@@ -496,9 +496,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this._attachState === AttachState.Attached) {
             return;
         }
-        if (this.context === undefined) {
-            throw new Error("Context is undefined");
-        }
 
         // Only take a summary if the container is in detached state, otherwise we could have local changes.
         // In failed attach call, we would already have a summary cached.
