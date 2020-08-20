@@ -25,7 +25,7 @@ export interface IButtonExampleProps {
     disabled?: boolean;
     checked?: boolean;
     createTab: (type: string) => void;
-    components: ITabsTypes[];
+    fluidObjects: ITabsTypes[];
 }
 
 const customSplitButtonStyles: IButtonStyles = {
@@ -41,18 +41,18 @@ const customSplitButtonStyles: IButtonStyles = {
 
 const addIcon: IIconProps = { iconName: "Add" };
 
-export const NewTabButton: React.FunctionComponent<IButtonExampleProps> =
+export const NewTabButton: React.FC<IButtonExampleProps> =
     (props: IButtonExampleProps) => {
         const { disabled, checked } = props;
         const items: IContextualMenuItem[] = [];
-        props.components.forEach((component) => {
+        props.fluidObjects.forEach((fluidObject) => {
             items.push(
                 {
-                    key: component.type,
-                    text: component.friendlyName,
-                    iconProps: { iconName: component.fabricIconName },
+                    key: fluidObject.type,
+                    text: fluidObject.friendlyName,
+                    iconProps: { iconName: fluidObject.fabricIconName },
                     onClick: () => {
-                        props.createTab(component.type);
+                        props.createTab(fluidObject.type);
                     },
                 },
             );

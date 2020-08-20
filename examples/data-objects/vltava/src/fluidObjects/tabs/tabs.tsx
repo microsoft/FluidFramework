@@ -15,13 +15,13 @@ import { TabsView } from "./view";
 
 export const TabsName = "tabs";
 
-export class TabsComponent extends DataObject implements IFluidHTMLView {
+export class TabsFluidObject extends DataObject implements IFluidHTMLView {
     private dataModelInternal: ITabsDataModel | undefined;
 
-    private static readonly factory = new DataObjectFactory(TabsName, TabsComponent, [], {});
+    private static readonly factory = new DataObjectFactory(TabsName, TabsFluidObject, [], {});
 
     public static getFactory() {
-        return TabsComponent.factory;
+        return TabsFluidObject.factory;
     }
 
     private get dataModel(): ITabsDataModel {
@@ -42,7 +42,7 @@ export class TabsComponent extends DataObject implements IFluidHTMLView {
     protected async hasInitialized() {
         const registry = await this.context.containerRuntime.IFluidDataStoreRegistry.get("");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const registryDetails = (registry as IFluidObject).IComponentInternalRegistry!;
+        const registryDetails = (registry as IFluidObject).IFluidObjectInternalRegistry!;
         this.dataModelInternal =
             new TabsDataModel(
                 this.root,
