@@ -82,7 +82,7 @@ You may notice we are mimicking the DNS and protocol lookup a browser performs w
 loader may access containers stored on multiple Fluid services. Furthermore, each Fluid service could be operating with
 a different API and protocol.
 
-### Fluid service driver (DocumentServiceFactory)
+### Fluid Service Driver Factory (DocumentServiceFactory)
 
 The loader uses a Fluid service driver to connect to a Fluid service.
 
