@@ -5,16 +5,15 @@
 {{ define "main" }}
 {{ partial "navbarSticky.html" . }}
 
-<div class="body-content community">
+<div class="container body-content docs">
     <div class="row">
-        <div class="col-sm-12 col-md-12 body">
-
+        <div class="col-md-2 docs-navbar-container"> {{ partial "blogNav.html" .}} </div>
+        <div class="col-sm-9 col-md-10 body">
             <div>
                 <h1 class="text-center">{{ .Title }}</h1>
                 <div class="row"></div>
                 <div> {{ .Content }}</div>
             </div>
-
         </div>
     </div>
 </div>
