@@ -47,11 +47,11 @@ async function fetchCore(loader: Loader, url: string) {
 }
 
 /**
- * fetchComponent is used to allow a host to interact with a Fluid object. Given that we may be establishing a
+ * fetchFluidObject is used to allow a host to interact with a Fluid object. Given that we may be establishing a
  * new set of code on the document it listens for the "contextChanged" event which fires when a new code value is
  * quorumed on.
  */
-export async function fetchComponent(loader: Loader, container: Container, url: string) {
+export async function fetchFluidObject(loader: Loader, container: Container, url: string) {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     fetchCore(loader, url);
     container.on("contextChanged", () => {

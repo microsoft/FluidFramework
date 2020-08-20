@@ -2,7 +2,7 @@
 
 {{/* TODO: there must be a better way to unify these names? */}}
 {{/*
-Create a default fully qualified master name for all services.
+Create a default fully qualified primary name for all services.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
 

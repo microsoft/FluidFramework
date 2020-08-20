@@ -288,7 +288,7 @@
         {
             "type": "node",
             "request": "attach",
-            "name": "Attach to routemaster",
+            "name": "Attach to routemanager",
             "address": "localhost",
             "port": 5863,
             "restart": true,

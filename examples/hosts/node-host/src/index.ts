@@ -13,7 +13,7 @@ import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import * as jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 import { NodeCodeLoader } from "./nodeCodeloader";
-import { fetchComponent, initializeChaincode } from "./utils";
+import { fetchFluidObject, initializeChaincode } from "./utils";
 
 // Base service configuration.
 const ordererEndpoint = "";
@@ -98,7 +98,7 @@ export async function start(): Promise<void> {
 
     // Fetches the underlying Fluid object.
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    fetchComponent(loader, fluidDocument, documentUrl);
+    fetchFluidObject(loader, fluidDocument, documentUrl);
 
     // Proposes the code package for a new document.
     if (!fluidDocument.existing) {
