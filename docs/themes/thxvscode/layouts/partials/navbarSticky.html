@@ -46,6 +46,9 @@
                         {{end}}{{ if ne $current "search"}}class='search visible-xs' {{end}}><a
                             href="/Search">Search</a></li> */}}
                     </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="https://github.com/{{.Site.Params.githubRepo}}" target="_blank">GitHub</a></li>
+                    </ul>
 
                     {{/*  <ul class="nav navbar-nav navbar-right">
                         {{if ne $current "search"}}
