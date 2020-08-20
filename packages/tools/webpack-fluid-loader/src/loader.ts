@@ -191,10 +191,10 @@ export async function start(
         config: {},
     };
 
-    const urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
+    let urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
 
     // Create the loader that is used to load the Container.
-    const loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
+    let loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
 
     let container1: Container;
     if (autoAttach || manualAttach) {
@@ -216,8 +216,8 @@ export async function start(
 
             documentId = moniker.choose();
             url = url.replace(id, documentId);
-            const urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
-            const loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
+            urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
+            loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
             container1 = await loader1.createDetachedContainer(codeDetails);
         }
     }
