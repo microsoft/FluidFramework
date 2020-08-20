@@ -64,7 +64,7 @@ export class LikesAndComments extends SyncedDataObject {
 
 ## syncedObject Hooks
 
-The ['synced Objects folder'](./src/syncedObjects) contains a collection of setSyncedXConfig helper function and useSyncedX hook pairings. These functions allow you to easily start using the DDS' that were prepared in the `syncedDataObject`. Since these are all wrappers around the `React.useState` hook, with added syncing functionality, simply calling these functions using regular React hook rules will automatically convert the function into a React functional view.
+The [synced Objects folder](./src/syncedObjects) contains a collection of setSyncedXConfig helper function and useSyncedX hook pairings. These functions allow you to easily start using the DDS' that were prepared in the `syncedDataObject`. Since these are all wrappers around the `React.useState` hook, with added syncing functionality, simply calling these functions using regular React hook rules will automatically convert the function into a React functional view.
 
 Each of these helper & hook pairings take a Fluid DDS and binds them to the `syncedDataObject` under the unique `syncedStateId`. This ensures that any changes that happen on these DDS' see synced updates show up live on all connected React views.
 
