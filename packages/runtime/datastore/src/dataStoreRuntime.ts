@@ -49,6 +49,7 @@ import {
     IInboundSignalMessage,
     ISummaryTreeWithStats,
     CreateSummarizerNodeSource,
+    IFluidDataStoreContextType,
 } from "@fluidframework/runtime-definitions";
 import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
@@ -204,7 +205,7 @@ export class FluidDataStoreRuntime extends EventEmitter implements IFluidDataSto
             Object.keys(tree.trees).forEach((path) => {
                 let channelContext: IChannelContext;
                 // If already exists on storage, then create a remote channel.
-                if (dataStoreContext.isLocalDataStore) {
+                if ((dataStoreContext as IFluidDataStoreContextType).isLocalDataStore) {
                     const channelAttributes = readAndParseFromBlobs<IChannelAttributes>(
                         tree.trees[path].blobs, tree.trees[path].blobs[".attributes"]);
                     channelContext = new LocalChannelContext(

@@ -254,8 +254,7 @@ export interface IFluidDataStoreContext extends EventEmitter {
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
-    // True if the data store is LocalDataStoreContext.
-    readonly isLocalDataStore: boolean;
+
     /**
      * Indicates the attachment state of the data store to a host service.
      */
@@ -354,4 +353,9 @@ export interface IFluidDataStoreContext extends EventEmitter {
      * otherwise the original subpackage
      */
     composeSubpackagePath(subpackage: string): Promise<string[]>;
+}
+
+export interface IFluidDataStoreContextType extends IFluidDataStoreContext {
+    // True if the data store is LocalDataStoreContext.
+    readonly isLocalDataStore: boolean;
 }
