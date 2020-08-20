@@ -254,7 +254,6 @@ export interface IFluidDataStoreContext extends EventEmitter {
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
-
     /**
      * Indicates the attachment state of the data store to a host service.
      */
