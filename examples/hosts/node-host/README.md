@@ -39,10 +39,6 @@ npm start
 
 ## Interacting with the Fluid Objects
 
-<<<<<<< HEAD
-To demonstrate host interaction inside Node.js environment, this example uses [key-value-cache](https://github.com/microsoft/FluidFramework/tree/master/examples/data-objects/key-value-cache/README.md) Fluid object. Using Fluid map, the object builds a highly available eventually consistent key-value cache. In terms of usage, this can be thought as a limited functionality Redis HSET. Services written in Node.js can host this object and use as a cache.
-=======
 To demonstrate host interaction inside Node.js environment, this example uses [key-value-cache](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/key-value-cache/README.md) Fluid object. Using Fluid map, the object builds a highly available eventually consistent key-value cache. In terms of usage, this can be thought as a limited functionality Redis HSET. Services written in Node.js can host this object and use as a cache.
->>>>>>> @{-1}
 
 [cli.ts](./src/cli.ts) provides a basic example of interacting with this object using command line inputs.
