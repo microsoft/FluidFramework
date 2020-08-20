@@ -14,6 +14,8 @@ dateform = "Jan 2, 2006"
 dateformNum = "2006-01-02"
 dateformNumTime = "2006-01-02 15:04 -0700"
 dateformShort = "Jan 2"
+githubRepo = "microsoft/FluidFramework"
+twitterHandle = "fluidframework"
 
 [menu]
 
