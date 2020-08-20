@@ -20,8 +20,8 @@ import { DiceRoller, DiceRollerInstantiationFactory } from "./model";
  * Fluid objects.
  */
 export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DiceRoller.ComponentName,
+    DiceRoller.Name,
     new Map([
-        [DiceRoller.ComponentName, Promise.resolve(DiceRollerInstantiationFactory)],
+        [DiceRoller.Name, Promise.resolve(DiceRollerInstantiationFactory)],
     ]),
 );
