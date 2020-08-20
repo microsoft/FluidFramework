@@ -7,7 +7,7 @@ import assert from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { IUrlResolver, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -25,7 +25,7 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import { SharedCell } from "@fluidframework/cell";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
-import { MessageType } from "@fluidframework/protocol-definitions";
+import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -49,6 +49,7 @@ describe("Detached Container", () => {
 
     let request: IRequest;
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
+    let documentServiceFactory: IDocumentServiceFactory;
     let loader: Loader;
 
     const createFluidObject = (async (
@@ -73,7 +74,7 @@ describe("Detached Container", () => {
             [sparseMatrixId, SparseMatrix.getFactory()],
         ]);
         const codeLoader = new LocalCodeLoader([[pkg, factory]]);
-        const documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+        documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
         return new Loader(
             urlResolver,
             documentServiceFactory,
@@ -191,6 +192,56 @@ describe("Detached Container", () => {
             "Value for snapshot should be same!!");
         assert.strictEqual(testChannel2.isAttached(), testChannel1.isAttached(),
             "Value for isAttached should persist!!");
+    });
+
+    it("ReAttach detached container on failed attach", async () => {
+        const container = await loader.createDetachedContainer(pkg);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        const oldFunc = documentServiceFactory.createContainer;
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        documentServiceFactory.createContainer = (a, b, c) => { throw new Error("Test Error"); };
+        let failedOnce = false;
+        try {
+            await container.attach(request);
+        } catch (e) {
+            failedOnce = true;
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            documentServiceFactory.createContainer = oldFunc;
+        }
+        assert.strictEqual(failedOnce, true, "Attach call should fail");
+        assert.strictEqual(container.attachState, AttachState.Attaching, "Container should be in attaching state");
+        const response = await container.request({ url: "/" });
+        const dataStore = response.value as ITestFluidObject;
+
+        // Create a sub data store of type TestFluidObject.
+        const dataStore1 = await createFluidObject(dataStore.context, "default");
+        const defP = new Deferred();
+        container.on("op", (op: ISequencedDocumentMessage) => {
+            if (op.contents?.type === DataStoreMessageType.Attach) {
+                assert.strictEqual(op.contents.contents.id, dataStore1.context.id,
+                    "There should be an attach op for created component");
+                defP.resolve();
+            }
+        });
+        dataStore1.channel.bindToContext();
+
+        await container.attach(request);
+        assert.strictEqual(container.attachState, AttachState.Attached, "Container should now be attached");
+        await defP.promise;
+
+        // Now load the container from another loader.
+        const urlResolver2 = new LocalResolver();
+        const loader2 = createTestLoader(urlResolver2);
+        // Create a new request url from the resolvedUrl of the first container.
+        const requestUrl2 = await urlResolver2.getAbsoluteUrl(container.resolvedUrl, "");
+        const container2 = await loader2.resolve({ url: requestUrl2 });
+
+        // Get the sub data store and assert that it is attached.
+        const response2 = await container2.request({ url: `/${dataStore1.context.id}` });
+        const dataStore2 = response2.value as ITestFluidObject;
+        assert(dataStore2, "Data store created in failed attach mode should exist");
+        assert.strictEqual(dataStore1.runtime.attachState, AttachState.Attached, "Data store 1 should be attached");
+        assert.strictEqual(dataStore2.runtime.attachState, AttachState.Attached, "Data store 2 should be attached");
     });
 
     it("Fire ops during container attach for shared string", async () => {
