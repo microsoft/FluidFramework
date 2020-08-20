@@ -261,7 +261,7 @@ export abstract class SyncedDataObject<
                 fluidObject: storedFluidState,
                 isRuntimeMap: true,
             });
-            // If the view is using any Fluid Components or SharedObjects, asynchronously fetch them
+            // If the view is using any Fluid data stores or SharedObjects, asynchronously fetch them
             // from their stored handles
             for (const [key, value] of fluidToView.entries()) {
                 const fluidKey = key as string;

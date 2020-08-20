@@ -46,4 +46,4 @@ fluid.api.load(id, { encrypted: false, token: signed_token }).then((document) =>
 });
 ```
 
-Checkout [this](https://github.com/Microsoft/FluidFramework/blob/master/doc/api/examples/sequence/src/index.ts) for a complete example.
+Checkout [this](https://github.com/Microsoft/FluidFramework/blob/main/doc/api/examples/sequence/src/index.ts) for a complete example.

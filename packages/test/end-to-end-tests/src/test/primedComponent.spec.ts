@@ -14,12 +14,12 @@ import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidf
 import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 import { compatTest, ICompatTestArgs } from "./compatUtils";
 
-const PrimedType = "@fluidframework/primedComponent";
+const PrimedType = "@fluidframework/primedDataStore";
 
 /**
- * My sample component
+ * My sample dataStore
  */
-class Component extends DataObject {
+class DataStore extends DataObject {
     public get root(): ISharedDirectory {
         return super.root;
     }
@@ -29,40 +29,40 @@ class Component extends DataObject {
 }
 
 const tests = (args: ICompatTestArgs) => {
-    let component: Component;
+    let dataStore: DataStore;
 
     beforeEach(async () => {
         const container = await args.makeTestContainer() as Container;
-        component = await requestFluidObject<Component>(container, "default");
+        dataStore = await requestFluidObject<DataStore>(container, "default");
     });
 
     it("Blob support", async () => {
-        const handle = await component.writeBlob("aaaa");
-        assert(await handle.get() === "aaaa", "Could not write blob to component");
-        component.root.set("key", handle);
+        const handle = await dataStore.writeBlob("aaaa");
+        assert(await handle.get() === "aaaa", "Could not write blob to dataStore");
+        dataStore.root.set("key", handle);
 
-        const handle2 = component.root.get<IFluidHandle<string>>("key");
+        const handle2 = dataStore.root.get<IFluidHandle<string>>("key");
         const value2 = await handle2.get();
-        assert(value2 === "aaaa", "Could not get blob from shared object in the component");
+        assert(value2 === "aaaa", "Could not get blob from shared object in the dataStore");
 
         const container2 = await args.makeTestContainer() as Container;
-        const component2 = await requestFluidObject<Component>(container2, "default");
-        const value = await component2.root.get<IFluidHandle<string>>("key").get();
+        const dataStore2 = await requestFluidObject<DataStore>(container2, "default");
+        const value = await dataStore2.root.get<IFluidHandle<string>>("key").get();
         assert(value === "aaaa", "Blob value not synced across containers");
     });
 };
 
 describe("DataObject", () => {
     describe("Blob support", () => {
-        const id = "fluid-test://localhost/primedComponentTest";
+        const id = "fluid-test://localhost/primedDataStoreTest";
         const codeDetails: IFluidCodeDetails = {
-            package: "primedComponentTestPackage",
+            package: "primedDataStoreTestPackage",
             config: {},
         };
         let deltaConnectionServer: ILocalDeltaConnectionServer;
 
         async function makeTestContainer(): Promise<Container> {
-            const factory = new DataObjectFactory(PrimedType, Component, [], {});
+            const factory = new DataObjectFactory(PrimedType, DataStore, [], {});
             const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
             return initializeLocalContainer(id, loader, codeDetails);
         }

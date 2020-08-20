@@ -141,7 +141,7 @@ export class DeltaManager
 
     private inQuorum = false;
 
-    private updateSequenceNumberTimer: number | undefined;
+    private updateSequenceNumberTimer: ReturnType<typeof setTimeout> | undefined;
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
@@ -219,13 +219,16 @@ export class DeltaManager
     }
 
     public get maxMessageSize(): number {
-        return this.connection!.details.serviceConfiguration?.maxMessageSize
-            ?? this.connection!.details.maxMessageSize
+        return this.connection?.details.serviceConfiguration?.maxMessageSize
+            ?? this.connection?.details.maxMessageSize
             ?? DefaultChunkSize;
     }
 
     public get version(): string {
-        return this.connection!.details.version;
+        if (this.connection === undefined) {
+            throw new Error("Cannot check version without a connection");
+        }
+        return this.connection.details.version;
     }
 
     public get serviceConfiguration(): IServiceConfiguration | undefined {
@@ -354,7 +357,10 @@ export class DeltaManager
         // within an array *must* fit within the maxMessageSize and are guaranteed to be ordered sequentially.
         this._outbound = new DeltaQueue<IDocumentMessage[]>(
             (messages) => {
-                this.connection!.submit(messages);
+                if (this.connection === undefined) {
+                    throw new Error("Attempted to submit an outbound message without connection");
+                }
+                this.connection.submit(messages);
             });
 
         this._outbound.on("error", (error) => {
@@ -363,7 +369,10 @@ export class DeltaManager
 
         // Inbound signal queue
         this._inboundSignal = new DeltaQueue<ISignalMessage>((message) => {
-            this.handler!.processSignal({
+            if (this.handler === undefined) {
+                throw new Error("Attempted to process an inbound signal without a handler attached");
+            }
+            this.handler.processSignal({
                 clientId: message.clientId,
                 content: JSON.parse(message.content as string),
             });
@@ -1243,7 +1252,10 @@ export class DeltaManager
 
         this.emit("beforeOpProcessing", message);
 
-        const result = this.handler!.process(message);
+        if (this.handler === undefined) {
+            throw new Error("Attempted to process an inbound message without a handler attached");
+        }
+        const result = this.handler.process(message);
         this.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
 
         const endTime = Date.now();

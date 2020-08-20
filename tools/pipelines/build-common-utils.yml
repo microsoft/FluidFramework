@@ -8,7 +8,7 @@ name: $(Build.BuildId)
 trigger:
   branches:
     include:
-    - master
+    - main
     - release/*
     - refs/tags/common-utils_v*
   paths:
@@ -16,18 +16,20 @@ trigger:
     - common/lib/common-utils
     - tools/pipelines/build-common-utils.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/publish-npm-package.yml
 
 pr:
   branches:
     include:
-    - master
+    - main
     - release/*
   paths:
     include:
     - common/lib/common-utils
     - tools/pipelines/build-common-utils.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
 
 extends:
   template: templates/build-npm-package.yml

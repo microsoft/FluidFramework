@@ -15,7 +15,7 @@ import { FluidObjectHandle } from "@fluidframework/datastore";
 import { IFluidObjectCollection } from "@fluidframework/framework-interfaces";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { PureDataObject, PureDataObjectFactory } from "@fluidframework/component-base";
+import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import * as ClientUI from "@fluid-example/client-ui-lib";
 
@@ -53,9 +53,9 @@ export class ImageComponent implements
     }
 }
 
-export class ImageCollection extends PureDataObject<ISharedDirectory> implements
+export class ImageCollection extends LazyLoadedDataObject<ISharedDirectory> implements
     IFluidLoadable, IFluidRouter, IFluidObjectCollection {
-    private static readonly factory = new PureDataObjectFactory(
+    private static readonly factory = new LazyLoadedDataObjectFactory(
         "@fluid-example/image-collection",
         ImageCollection,
         SharedDirectory.getFactory(),

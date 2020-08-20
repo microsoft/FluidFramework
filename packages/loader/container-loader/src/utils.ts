@@ -21,9 +21,12 @@ export interface IParsedUrl {
 
 export function parseUrl(url: string): IParsedUrl | undefined {
     const parsed = parse(url, true);
+    if (typeof parsed.pathname !== "string") {
+        throw new Error("Failed to parse pathname");
+    }
 
     const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
-    const match = regex.exec(parsed.pathname!);
+    const match = regex.exec(parsed.pathname);
 
     return (match?.length === 3)
         ? { id: match[1], path: match[2], version: parsed.query.version as string }

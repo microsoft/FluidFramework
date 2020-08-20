@@ -17,8 +17,8 @@ export interface IProvideFluidObjectCollection {
 }
 
 /**
- * A component that implements a collection of components.  Typically, the
- * components in the collection would be like-typed.
+ * A data store that implements a collection of fluid objects.  Typically, the
+ * fluid objects in the collection would be like-typed.
  */
 export interface IFluidObjectCollection extends IProvideFluidObjectCollection {
     createCollectionItem<TOpt = object>(options?: TOpt): IFluidObject;
