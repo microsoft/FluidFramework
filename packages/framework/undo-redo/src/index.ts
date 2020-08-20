@@ -87,6 +87,7 @@
 * not affect other users or sessions. If custom IRevertible objects use
 * TrackingGroups this overhead should be kept in mind to avoid possible
 * performance issues.
+*
 * @packageDocumentation
 */
 
