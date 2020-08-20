@@ -8,7 +8,7 @@ import child_process from "child_process";
 import fs from "fs";
 import * as API from "@fluid-internal/client-api";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
@@ -52,10 +52,10 @@ function expandTreeForReadability(tree: ITree): ITree {
     const newTree: ITree = { entries: [], id: undefined };
     for (const node of tree.entries) {
         const newNode = { ...node };
-        if (node.type === TreeEntry[TreeEntry.Tree]) {
+        if (node.type === TreeEntry.Tree) {
             newNode.value = expandTreeForReadability(node.value as ITree);
         }
-        if (node.type === TreeEntry[TreeEntry.Blob]) {
+        if (node.type === TreeEntry.Blob) {
             const blob = node.value as IBlob;
             try {
                 newNode.value = {
@@ -311,7 +311,7 @@ class Document {
                 ["@ms/tablero/TableroDocument", Promise.resolve(chaincode)],
                 ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
             ]);
-        const options = { };
+        const options = {};
 
         // Load the Fluid document
         this.docLogger = ChildLogger.create(new Logger(containerDescription, errorHandler));

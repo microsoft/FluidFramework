@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions, max-len, no-bitwise, no-param-reassign, no-shadow */
 
 import assert from "assert";
+import { Trace } from "@fluidframework/common-utils";
 import * as Base from "./base";
 import * as Collections from "./collections";
 import {
@@ -29,9 +30,6 @@ import { PartialSequenceLengths } from "./partialLengths";
 import * as Properties from "./properties";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { SegmentPropertiesManager } from "./segmentPropertiesManager";
-
-// tslint:disable:interface-name
-// tslint:disable:no-suspicious-comment
 
 export interface ReferencePosition {
     properties: Properties.PropertySet;
@@ -813,7 +811,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
             pbuf += JSON.stringify(this.properties, (key, value) => {
                 // Avoid circular reference when stringifying makers containing handles.
                 // (Substitute a debug string instead.)
-                const handle = !!value && value.IComponentHandle;
+                const handle = !!value && value.IFluidHandle;
                 return handle
                     ? `#Handle(${handle.routeContext.path}/${handle.path})`
                     : value;
@@ -879,21 +877,11 @@ export const compareNumbers = (a: number, b: number) => a - b;
 export const compareStrings = (a: string, b: string) => a.localeCompare(b);
 
 export function clock() {
-    if (process.hrtime) {
-        return process.hrtime();
-    } else {
-        return Date.now();
-    }
+    return Trace.start();
 }
 
-export function elapsedMicroseconds(start: [number, number] | number) {
-    if (process.hrtime) {
-        const end: number[] = process.hrtime(start as [number, number]);
-        const duration = Math.round((end[0] * 1000000) + (end[1] / 1000));
-        return duration;
-    } else {
-        return 1000 * (Date.now() - (start as number));
-    }
+export function elapsedMicroseconds(trace: Trace) {
+    return trace.trace().duration * 1000;
 }
 
 const indentStrings = ["", " ", "  "];
@@ -1278,7 +1266,7 @@ export class MergeTree {
                 : buildMergeBlock(blocks);      // ...otherwise recursively build the next layer above blocks.
         };
 
-        let clockStart: number | [number, number];
+        let clockStart: Trace;
         if (measureReloadTime) {
             clockStart = clock();
         }
@@ -1305,7 +1293,7 @@ export class MergeTree {
         this.segmentsToScour = new Collections.Heap<LRUSegment>([], LRUSegmentComparer);
         this.pendingSegments = Collections.ListMakeHead<SegmentGroup>();
         const measureFullCollab = false;
-        let clockStart: number | [number, number];
+        let clockStart: Trace;
         if (measureFullCollab) {
             clockStart = clock();
         }
@@ -1350,6 +1338,15 @@ export class MergeTree {
                                 // eslint-disable-next-line dot-notation
                                 console.log(`${this.getLongClientId(this.collabWindow.clientId)}: Zremove ${segment["text"]}; cli ${this.getLongClientId(segment.clientId)}`);
                             }
+
+                            // Notify maintenance event observers that the segment is being unlinked from the MergeTree.
+                            if (this.mergeTreeMaintenanceCallback) {
+                                this.mergeTreeMaintenanceCallback({
+                                    operation: MergeTreeMaintenanceType.UNLINK,
+                                    deltaSegments: [{ segment }],
+                                });
+                            }
+
                             segment.parent = undefined;
                         }
                         prevSegment = undefined;
@@ -2207,7 +2204,6 @@ export class MergeTree {
                 // LocSegment.seq === 0 when coming from SharedSegmentSequence.loadBody()
                 // In all other cases this has to be true (checked by addToLRUSet):
                 // locSegment.seq > this.collabWindow.currentSeq
-                // tslint:disable-next-line: one-line
                 else if ((locSegment.seq > this.collabWindow.minSeq) &&
                     MergeTree.options.zamboniSegments) {
                     this.addToLRUSet(locSegment, locSegment.seq);
@@ -2558,7 +2554,7 @@ export class MergeTree {
         if (MergeTree.traceOrdinals) {
             console.log(`update ordinals for children of node with ordinal ${ordinalToArray(block.ordinal)}`);
         }
-        let clockStart: number | [number, number];
+        let clockStart: Trace;
         if (MergeTree.options.measureOrdinalTime) {
             clockStart = clock();
         }

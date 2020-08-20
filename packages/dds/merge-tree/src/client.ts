@@ -4,18 +4,17 @@
  */
 
 import { strict as assert } from "assert";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performanceNow } from "@fluidframework/common-utils";
+import { Trace } from "@fluidframework/common-utils";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReference } from "./localReference";
 import {
     ClientIds,
-    clock,
     compareStrings,
     elapsedMicroseconds,
     IConsensusInfo,
@@ -229,9 +228,9 @@ export class Client {
             segment);
 
         const opArgs = { op };
-        let clockStart: number | [number, number];
+        let traceStart: Trace;
         if (this.measureOps) {
-            clockStart = clock();
+            traceStart = Trace.start();
         }
 
         this.mergeTree.insertAtReferencePosition(
@@ -243,7 +242,7 @@ export class Client {
             opArgs,
             this.getClientSequenceArgs(opArgs),
             { start: op.pos1, end: undefined },
-            clockStart);
+            traceStart);
 
         return op;
     }
@@ -333,9 +332,9 @@ export class Client {
             this.copy(range, op.register, clientArgs);
         }
 
-        let clockStart: number | [number, number];
+        let traceStart: Trace;
         if (this.measureOps) {
-            clockStart = clock();
+            traceStart = Trace.start();
         }
 
         this.mergeTree.markRangeRemoved(
@@ -347,7 +346,7 @@ export class Client {
             false,
             opArgs);
 
-        this.completeAndLogOp(opArgs, clientArgs, range, clockStart);
+        this.completeAndLogOp(opArgs, clientArgs, range, traceStart);
 
         return true;
     }
@@ -367,9 +366,9 @@ export class Client {
             return false;
         }
 
-        let clockStart: number | [number, number];
+        let traceStart: Trace;
         if (this.measureOps) {
-            clockStart = clock();
+            traceStart = Trace.start();
         }
 
         this.mergeTree.annotateRange(
@@ -382,7 +381,7 @@ export class Client {
             clientArgs.sequenceNumber,
             opArgs);
 
-        this.completeAndLogOp(opArgs, clientArgs, range, clockStart);
+        this.completeAndLogOp(opArgs, clientArgs, range, traceStart);
 
         return true;
     }
@@ -424,9 +423,9 @@ export class Client {
             return false;
         }
 
-        let clockStart: number | [number, number];
+        let traceStart: Trace;
         if (this.measureOps) {
-            clockStart = clock();
+            traceStart = Trace.start();
         }
 
         this.mergeTree.insertSegments(
@@ -437,7 +436,7 @@ export class Client {
             clientArgs.sequenceNumber,
             opArgs);
 
-        this.completeAndLogOp(opArgs, clientArgs, range, clockStart);
+        this.completeAndLogOp(opArgs, clientArgs, range, traceStart);
 
         return true;
     }
@@ -453,10 +452,10 @@ export class Client {
         opArgs: IMergeTreeDeltaOpArgs,
         clientArgs: IMergeTreeClientSequenceArgs,
         range: IIntegerRange,
-        clockStart?: number | [number, number]) {
+        traceStart?: Trace) {
         if (!opArgs.sequencedMessage) {
-            if (clockStart) {
-                this.localTime += elapsedMicroseconds(clockStart);
+            if (traceStart) {
+                this.localTime += elapsedMicroseconds(traceStart);
                 this.localOps++;
             }
         } else {
@@ -464,8 +463,8 @@ export class Client {
                 "Incoming remote op sequence# <= local collabWindow's currentSequence#");
             assert(this.mergeTree.getCollabWindow().minSeq <= opArgs.sequencedMessage.minimumSequenceNumber,
                 "Incoming remote op minSequence# < local collabWindow's minSequence#");
-            if (clockStart) {
-                this.accumTime += elapsedMicroseconds(clockStart);
+            if (traceStart) {
+                this.accumTime += elapsedMicroseconds(traceStart);
                 this.accumOps++;
                 this.accumWindow += (this.getCurrentSeq() - this.getCollabWindow().minSeq);
             }
@@ -589,9 +588,9 @@ export class Client {
 
     private ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs) {
         const ackOp = (deltaOpArgs: IMergeTreeDeltaOpArgs) => {
-            let clockStart: number | [number, number];
+            let trace: Trace;
             if (this.measureOps) {
-                clockStart = clock();
+                trace = Trace.start();
             }
 
             this.mergeTree.ackPendingSegment(deltaOpArgs, this.verboseOps);
@@ -602,7 +601,7 @@ export class Client {
             }
 
             if (this.measureOps) {
-                this.accumTime += elapsedMicroseconds(clockStart);
+                this.accumTime += elapsedMicroseconds(trace);
                 this.accumOps++;
                 this.accumWindow += (this.getCurrentSeq() - this.getCollabWindow().minSeq);
             }
@@ -857,16 +856,25 @@ export class Client {
         resetOp: ops.IMergeTreeOp,
         segmentGroup: SegmentGroup | SegmentGroup[],
     ): ops.IMergeTreeOp {
-        const start = performanceNow();
+        const trace = Trace.start();
         try {
             const opList: ops.IMergeTreeDeltaOp[] = [];
 
             if (resetOp.type === ops.MergeTreeDeltaType.GROUP) {
-                assert(Array.isArray(segmentGroup));
-                assert.equal(resetOp.ops.length, segmentGroup.length);
-                for (let i = 0; i < resetOp.ops.length; i++) {
-                    opList.push(
-                        ...this.resetPendingDeltaToOps(resetOp.ops[i], segmentGroup[i]));
+                if (Array.isArray(segmentGroup)) {
+                    assert.equal(resetOp.ops.length, segmentGroup.length,
+                        "Number of ops in 'resetOp' must match the number of segment groups provided.");
+
+                    for (let i = 0; i < resetOp.ops.length; i++) {
+                        opList.push(
+                            ...this.resetPendingDeltaToOps(resetOp.ops[i], segmentGroup[i]));
+                    }
+                } else {
+                    // A group op containing a single op will pass a direct reference to 'segmentGroup'
+                    // rather than an array of segment groups.  (See 'peekPendingSegmentGroups()')
+                    assert.equal(resetOp.ops.length, 1,
+                        "Number of ops in 'resetOp' must match the number of segment groups provided.");
+                    opList.push(...this.resetPendingDeltaToOps(resetOp.ops[0], segmentGroup));
                 }
             } else {
                 assert.notEqual(resetOp.type, ops.MergeTreeDeltaType.GROUP);
@@ -879,7 +887,7 @@ export class Client {
             this.logger.sendPerformanceEvent({
                 eventName: "MergeTree:RegeneratePendingOp",
                 category: "performance",
-                duration: performanceNow() - start,
+                duration: elapsedMicroseconds(trace),
             });
         }
     }
@@ -890,12 +898,13 @@ export class Client {
 
     // TODO: Remove `catchUpMsgs` once new snapshot format is adopted as default.
     //       (See https://github.com/microsoft/FluidFramework/issues/84)
-    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
+    public snapshot(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
         const deltaManager = runtime.deltaManager;
         const minSeq = deltaManager.minimumSequenceNumber;
 
         // Catch up to latest MSN, if we have not had a chance to do it.
-        // Required for case where ComponentRuntime.attachChannel() generates snapshot right after loading component.
+        // Required for case where FluidDataStoreRuntime.attachChannel()
+        // generates snapshot right after loading data store.
 
         this.updateSeqNumbers(minSeq, deltaManager.lastSequenceNumber);
 
@@ -905,30 +914,30 @@ export class Client {
 
         // TODO: Remove options flag once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
-        if(this.mergeTree.options?.newMergeTreeSnapshotFormat === true) {
+        if (this.mergeTree.options?.newMergeTreeSnapshotFormat === true) {
             assert(
                 catchUpMsgs === undefined || catchUpMsgs.length === 0,
                 "New format should not emit catchup ops");
             const snap = new SnapshotV1(this.mergeTree, this.logger);
             snap.extractSync();
             return snap.emit(
-                runtime.IComponentSerializer,
-                runtime.IComponentHandleContext,
+                runtime.IFluidSerializer,
+                runtime.IFluidHandleContext,
                 handle);
-        }else{
+        } else {
             const snap = new SnapshotLegacy(this.mergeTree, this.logger);
             snap.extractSync();
             return snap.emit(
                 catchUpMsgs,
-                runtime.IComponentSerializer,
-                runtime.IComponentHandleContext,
+                runtime.IFluidSerializer,
+                runtime.IFluidHandleContext,
                 handle);
         }
     }
 
     public async load(
-        runtime: IComponentRuntime,
-        storage: IObjectStorageService,
+        runtime: IFluidDataStoreRuntime,
+        storage: IChannelStorageService,
         branchId?: string,
     ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
         const loader = new SnapshotLoader(runtime, this, this.mergeTree, this.logger);
@@ -980,13 +989,13 @@ export class Client {
     }
 
     updateMinSeq(minSeq: number) {
-        let clockStart: number | [number, number];
+        let trace: Trace;
         if (this.measureOps) {
-            clockStart = clock();
+            trace = Trace.start();
         }
         this.mergeTree.setMinSeq(minSeq);
         if (this.measureOps) {
-            const elapsed = elapsedMicroseconds(clockStart);
+            const elapsed = elapsedMicroseconds(trace);
             this.accumWindowTime += elapsed;
             if (elapsed > this.maxWindowTime) {
                 this.maxWindowTime = elapsed;

@@ -13,7 +13,7 @@ import {
     IPromiseTimerResult,
 } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IComponent, IRequest, DriverHeader } from "@fluidframework/component-core-interfaces";
+import { IFluidObject, IRequest, DriverHeader } from "@fluidframework/core-interfaces";
 import {
     IContainerContext,
     LoaderHeader,
@@ -21,7 +21,7 @@ import {
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { ISummarizer, Summarizer, createSummarizingWarning, ISummarizingWarning } from "./summarizer";
 
-const summarizerClientType = "summarizer";
+export const summarizerClientType = "summarizer";
 
 interface ITrackedClient {
     clientId: string;
@@ -309,13 +309,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     }
 
     private raiseContainerWarning(warning: ISummarizingWarning) {
-        // back-compat: <= 0.18 loader:
-        const errorFn = (this.context as any).error;
-        if (errorFn !== undefined) {
-            errorFn(warning);
-        } else {
-            this.context.raiseContainerWarning(warning);
-        }
+        this.context.raiseContainerWarning(warning);
     }
 
     private start() {
@@ -358,17 +352,16 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private run(summarizer: ISummarizer) {
         this.state = SummaryManagerState.Running;
 
-        const runningSummarizerEvent = PerformanceEvent.start(this.logger,
-            { eventName: "RunningSummarizer", attempt: this.startThrottler.attempts });
-        this.runningSummarizer = summarizer;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const clientId = this.latestClientId!;
+        this.runningSummarizer = summarizer;
+
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.runningSummarizer.run(clientId).then(() => {
-            runningSummarizerEvent.end();
-        }, (error) => {
-            runningSummarizerEvent.cancel({}, error);
-        }).finally(() => {
+        PerformanceEvent.timedExecAsync(
+            this.logger,
+            { eventName: "RunningSummarizer", attempt: this.startThrottler.attempts },
+            async () => summarizer.run(clientId),
+        ).finally(() => {
             this.runningSummarizer = undefined;
             this.nextSummarizerP = undefined;
             this.tryRestart();
@@ -445,15 +438,16 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
         const response = await loader.request(request);
 
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200
+            || (response.mimeType !== "fluid/object" && response.mimeType !== "fluid/component")) {
             return Promise.reject<ISummarizer>("Invalid summarizer route");
         }
 
-        const rawComponent = response.value as IComponent;
-        const summarizer = rawComponent.ISummarizer;
+        const rawFluidObject = response.value as IFluidObject;
+        const summarizer = rawFluidObject.ISummarizer;
 
         if (!summarizer) {
-            return Promise.reject<ISummarizer>("Component does not implement ISummarizer");
+            return Promise.reject<ISummarizer>("Fluid object does not implement ISummarizer");
         }
 
         return summarizer;

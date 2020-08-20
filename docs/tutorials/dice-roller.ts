@@ -2,19 +2,19 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 const diceValueKey = "diceValue";
 
 /**
  * Fluid component
  */
-export class HelloWorld extends PrimedComponent implements IComponentHTMLView {
+export class HelloWorld extends PrimedComponent implements IFluidHTMLView {
     public static get ComponentName() {
         return "helloworld";
     }
 
-    public get IComponentHTMLView() { return this; }
+    public get IFluidHTMLView() { return this; }
 
     /**
      * The factory defines how to create an instance of the component as well as the
@@ -28,12 +28,12 @@ export class HelloWorld extends PrimedComponent implements IComponentHTMLView {
     );
 
     /**
-     * componentInitializingFirstTime is called only once, it is executed only by the first client to open the
+     * initializingFirstTime is called only once, it is executed only by the first client to open the
      * component and all work will resolve before the view is presented to any user.
      *
      * This method is used to perform component setup, which can include setting an initial schema or initial values.
      */
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         this.root.set(diceValueKey, 1);
     }
 

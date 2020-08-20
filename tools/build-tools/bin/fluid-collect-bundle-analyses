@@ -1,0 +1,2 @@
+#!/usr/bin/env node
+require("../dist/bundleSizeAnalysis/collectBundleAnalyses.js");

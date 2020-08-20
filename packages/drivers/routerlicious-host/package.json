@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/routerlicious-host",
-  "version": "0.22.0",
+  "version": "0.25.1",
   "description": "Routerlicious host interfaces",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,9 +26,9 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.20.0",
-    "@fluidframework/component-core-interfaces": "^0.22.0",
-    "@fluidframework/driver-definitions": "^0.22.0",
+    "@fluidframework/common-utils": "^0.21.0",
+    "@fluidframework/core-interfaces": "^0.25.1",
+    "@fluidframework/driver-definitions": "^0.25.1",
     "@types/debug": "^4.1.5",
     "axios": "^0.18.0",
     "debug": "^4.1.1"
@@ -48,7 +48,7 @@
     "eslint-plugin-prefer-arrow": "~1.1.7",
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
-    "mocha": "^5.2.0",
+    "mocha": "^8.1.1",
     "rimraf": "^2.6.2",
     "typescript": "~3.7.4",
     "typescript-formatter": "7.1.0"

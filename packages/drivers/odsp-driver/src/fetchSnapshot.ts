@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { PerformanceEvent } from "@fluidframework/common-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IOdspSnapshot } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -41,7 +41,10 @@ export async function fetchSnapshot(
     const { url, headers } = getUrlAndHeadersWithAuth(`${snapshotUrl}${path}${queryString}`, token);
     return PerformanceEvent.timedExecAsync(
         logger,
-        { eventName: "fetchSnapshot" },
+        {
+            eventName: "fetchSnapshot",
+            headers: Object.keys(headers).length !== 0 ? true : undefined,
+        },
         async () => fetchHelper<IOdspSnapshot>(url, headers),
     );
 }

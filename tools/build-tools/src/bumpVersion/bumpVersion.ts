@@ -511,7 +511,7 @@ class BumpVersion {
     }
 
     /**
-     * Determine either we want to bump minor on master or patch version on release/* based on branch name
+     * Determine either we want to bump minor on main or patch version on release/* based on branch name
      */
     private async getVersionBumpKind(): Promise<VersionBumpType> {
         if (paramReleaseVersion !== undefined) {
@@ -520,10 +520,10 @@ class BumpVersion {
 
         // Determine the kind of bump
         const branchName = this.originalBranchName;
-        if (branchName !== "master" && !branchName!.startsWith("release/")) {
+        if (branchName !== "main" && !branchName!.startsWith("release/")) {
             fatal(`Unrecognized branch '${branchName}'`);
         }
-        return branchName === "master" ? "minor" : "patch";
+        return branchName === "main" ? "minor" : "patch";
     }
 
     private async collectVersionInfo(releaseName: string) {
@@ -1009,7 +1009,7 @@ class BumpVersion {
         }
         let releaseBranch: string;
         if (versionBump !== "patch") {
-            // This is master, we need to creating the release branch and bump the version
+            // This is main, we need to creating the release branch and bump the version
             const releaseBranchVersion = `${semver.major(releaseVersion)}.${semver.minor(releaseVersion)}`;
             releaseBranch = `release/${releaseBranchVersion}.x`;
             console.log(`Creating release development branch ${releaseBranch}`);
@@ -1215,10 +1215,10 @@ async function main() {
     console.log(`Repo: ${resolvedRoot}`);
     const gitRepo = new GitRepo(resolvedRoot);
     const remotes = await gitRepo.getRemotes();
-    const url = "https://github.com/microsoft/fluidframework";
+    const url = "github.com/microsoft/fluidframework";
     let remote: string | undefined;
     for (const r of remotes) {
-        if (r[1] && r[1].toLowerCase().startsWith(url)) {
+        if (r[1] && r[1].toLowerCase().includes(url)) {
             remote = r[0];
             break;
         }

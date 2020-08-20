@@ -4,10 +4,10 @@
  */
 
 import {
-    IComponentLoadable,
-    IComponentRouter,
-    IComponentRunnable,
-} from "@fluidframework/component-core-interfaces";
+    IFluidLoadable,
+    IFluidRouter,
+    IFluidRunnable,
+} from "@fluidframework/core-interfaces";
 
 /**
  * Definition of a Task.
@@ -19,9 +19,9 @@ export interface ITask {
     id: string;
 
     /**
-     * Instance of the task that implements IComponentRunnable
+     * Instance of the task that implements IFluidRunnable
      */
-    instance: IComponentRunnable;
+    instance: IFluidRunnable;
 }
 
 export const ITaskManager: keyof IProvideTaskManager = "ITaskManager";
@@ -33,7 +33,12 @@ export interface IProvideTaskManager {
 /**
  * Task manager enables app to register and pick tasks.
  */
-export interface ITaskManager extends IProvideTaskManager, IComponentLoadable, IComponentRouter {
+export interface ITaskManager extends IProvideTaskManager, IFluidLoadable, IFluidRouter {
+    /**
+     * access to IAgentScheduler
+     */
+    readonly IAgentScheduler: IAgentScheduler;
+
     /**
      * Registers tasks task so that the client can run the task later.
      */
@@ -44,7 +49,7 @@ export interface ITaskManager extends IProvideTaskManager, IComponentLoadable, I
      *
      * @param worker - Flag that will execute tasks in web worker if connected to a service that supports them.
      */
-    pick(componentUrl: string, taskId: string, worker?: boolean): Promise<void>;
+    pick(dataStoreUrl: string, taskId: string, worker?: boolean): Promise<void>;
 }
 
 export const IAgentScheduler: keyof IProvideAgentScheduler = "IAgentScheduler";
@@ -57,7 +62,7 @@ export interface IProvideAgentScheduler {
 /**
  * Agent scheduler distributes a set of tasks/variables across connected clients.
  */
-export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRouter, IComponentLoadable {
+export interface IAgentScheduler extends IProvideAgentScheduler, IFluidRouter, IFluidLoadable {
     /**
      * Registers a set of new tasks to distribute amongst connected clients. Only use this if a client wants
      * a new agent to run but does not have the capability to run the agent inside the host.
@@ -101,7 +106,7 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRoute
      *      automatically, unless release() is called
      * "released" - the task was successfully released back to the pool. Client will not attempt to
      *      re-acquire the task, unless pick() is called.
-     * "lost" - task is lost due to disconnect or component / container being attached.
+     * "lost" - task is lost due to disconnect or data store / container being attached.
      *      Task will be picked up again by some connected client (this client will try as well,
      *      unless release() is called)
      * @param listener - callback notified when change happened for particular key
@@ -109,8 +114,8 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRoute
     on(event: "picked" | "released" | "lost", listener: (taskId: string) => void): this;
 }
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends
+    export interface IFluidObject extends
         Readonly<Partial<IProvideTaskManager & IProvideAgentScheduler>> { }
 }

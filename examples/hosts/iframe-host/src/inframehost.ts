@@ -14,9 +14,10 @@ import {
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
+    AttachState,
 } from "@fluidframework/container-definitions";
 import { MultiUrlResolver, MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
-import { IRequest, IResponse, IComponent } from "@fluidframework/component-core-interfaces";
+import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ITree, ISummaryTree } from "@fluidframework/protocol-definitions";
 
@@ -47,6 +48,8 @@ class ProxyRuntime implements IRuntime {
     createSummary(): ISummaryTree {
         throw new Error("Method not implemented.");
     }
+    setAttachState(state: AttachState.Attaching | AttachState.Attached) {
+    }
 }
 
 class ProxyChaincode implements IRuntimeFactory {
@@ -74,7 +77,7 @@ export interface IFrameOuterHostConfig {
 
     // A component that gives host provided capabilities/configurations
     // to the component in the container(such as auth).
-    scope?: IComponent;
+    scope?: IFluidObject;
 
     proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
 }

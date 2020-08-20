@@ -4,7 +4,7 @@
  */
 
 export * from "./dbFactory";
-export * from "./ordererManager";
+export * from "./pubSubPublisher";
 export * from "./taskMessageSender";
 export * from "./tenantManager";
 export * from "./webServerFactory";

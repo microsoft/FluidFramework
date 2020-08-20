@@ -4,10 +4,9 @@
  */
 
 import assert from "assert";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IntervalType, LocalReference } from "@fluidframework/merge-tree";
 import { IBlob } from "@fluidframework/protocol-definitions";
@@ -18,12 +17,13 @@ import {
     SharedString,
 } from "@fluidframework/sequence";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
     createLocalLoader,
-    ITestFluidComponent,
+    OpProcessingController,
+    ITestFluidObject,
     initializeLocalContainer,
-    TestFluidComponentFactory,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
 const assertIntervalsHelper = (
@@ -61,18 +61,18 @@ describe("SharedInterval", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let opProcessingController: OpProcessingController;
 
-    async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
-        const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            throw new Error(`Component with id: ${componentId} not found`);
+    async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidObject> {
+        const response = await container.request({ url: dataStoreId });
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
+            throw new Error(`DataStore with id: ${dataStoreId} not found`);
         }
-        return response.value as ITestFluidComponent;
+        return response.value as ITestFluidObject;
     }
 
-    async function createContainer(factoryEntries: Iterable<[string, ISharedObjectFactory]>): Promise<Container> {
-        const factory = new TestFluidComponentFactory(factoryEntries);
+    async function createContainer(factoryEntries: Iterable<[string, IChannelFactory]>): Promise<Container> {
+        const factory = new TestFluidObjectFactory(factoryEntries);
         const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
@@ -91,13 +91,13 @@ describe("SharedInterval", () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
 
             const container = await createContainer([[stringId, SharedString.getFactory()]]);
-            const component = await getComponent("default", container);
-            sharedString = await component.getSharedObject<SharedString>(stringId);
+            const dataStore = await requestFluidObject("default", container);
+            sharedString = await dataStore.getSharedObject<SharedString>(stringId);
             sharedString.insertText(0, "012");
             intervals = await sharedString.getIntervalCollection("intervals").getView();
 
-            containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-            containerDeltaEventManager.registerDocuments(component.runtime);
+            opProcessingController = new OpProcessingController(deltaConnectionServer);
+            opProcessingController.addDeltaManagers(dataStore.runtime.deltaManager);
         });
 
         it("replace all is included", async () => {
@@ -193,7 +193,7 @@ describe("SharedInterval", () => {
                     assertIntervals([{ start: 0, end: 2 }]);
                 }
 
-                await containerDeltaEventManager.process();
+                await opProcessingController.process();
             }
         });
 
@@ -207,11 +207,11 @@ describe("SharedInterval", () => {
             const stringId = "stringKey";
 
             deltaConnectionServer = LocalDeltaConnectionServer.create();
-            containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+            opProcessingController = new OpProcessingController(deltaConnectionServer);
 
             const container1 = await createContainer([[stringId, SharedString.getFactory()]]);
-            const component1 = await getComponent("default", container1);
-            const sharedString1 = await component1.getSharedObject<SharedString>(stringId);
+            const dataStore1 = await requestFluidObject("default", container1);
+            const sharedString1 = await dataStore1.getSharedObject<SharedString>(stringId);
 
             sharedString1.insertText(0, "0123456789");
             const intervals1 = await sharedString1.getIntervalCollection("intervals").getView();
@@ -219,10 +219,12 @@ describe("SharedInterval", () => {
             assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
 
             const container2 = await createContainer([[stringId, SharedString.getFactory()]]);
-            const component2 = await getComponent("default", container2);
-            containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime);
+            const dataStore2 = await requestFluidObject("default", container2);
+            opProcessingController.addDeltaManagers(
+                dataStore1.runtime.deltaManager,
+                dataStore2.runtime.deltaManager);
 
-            const sharedString2 = await component2.getSharedObject<SharedString>(stringId);
+            const sharedString2 = await dataStore2.getSharedObject<SharedString>(stringId);
             const intervals2 = await sharedString2.getIntervalCollection("intervals").getView();
             assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
 
@@ -232,7 +234,7 @@ describe("SharedInterval", () => {
             sharedString2.insertText(4, "x");
             assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
 
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
             assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
 
             await deltaConnectionServer.webSocketServer.close();
@@ -243,7 +245,7 @@ describe("SharedInterval", () => {
         const mapId = "mapKey";
         const stringId = "stringKey";
 
-        let component1: ITestFluidComponent;
+        let dataStore1: ITestFluidObject;
         let sharedMap1: ISharedMap;
         let sharedMap2: ISharedMap;
         let sharedMap3: ISharedMap;
@@ -255,35 +257,38 @@ describe("SharedInterval", () => {
                 [mapId, SharedMap.getFactory()],
                 [stringId, SharedString.getFactory()],
             ]);
-            component1 = await getComponent("default", container1);
-            sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
+            dataStore1 = await requestFluidObject("default", container1);
+            sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
             const container2 = await createContainer([
                 [mapId, SharedMap.getFactory()],
                 [stringId, SharedString.getFactory()],
             ]);
-            const component2 = await getComponent("default", container2);
-            sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
+            const dataStore2 = await requestFluidObject("default", container2);
+            sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
             const container3 = await createContainer([
                 [mapId, SharedMap.getFactory()],
                 [stringId, SharedString.getFactory()],
             ]);
-            const component3 = await getComponent("default", container3);
-            sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
+            const dataStore3 = await requestFluidObject("default", container3);
+            sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 
-            containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-            containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime, component3.runtime);
+            opProcessingController = new OpProcessingController(deltaConnectionServer);
+            opProcessingController.addDeltaManagers(
+                dataStore1.runtime.deltaManager,
+                dataStore2.runtime.deltaManager,
+                dataStore3.runtime.deltaManager);
         });
 
         // This functionality is used in Word and FlowView's "add comment" functionality.
         it("Can store shared objects in a shared string's interval collection via properties", async () => {
-            sharedMap1.set("outerString", SharedString.create(component1.runtime).handle);
-            await containerDeltaEventManager.process();
+            sharedMap1.set("outerString", SharedString.create(dataStore1.runtime).handle);
+            await opProcessingController.process();
 
-            const outerString1 = await sharedMap1.get<IComponentHandle<SharedString>>("outerString").get();
-            const outerString2 = await sharedMap2.get<IComponentHandle<SharedString>>("outerString").get();
-            const outerString3 = await sharedMap3.get<IComponentHandle<SharedString>>("outerString").get();
+            const outerString1 = await sharedMap1.get<IFluidHandle<SharedString>>("outerString").get();
+            const outerString2 = await sharedMap2.get<IFluidHandle<SharedString>>("outerString").get();
+            const outerString3 = await sharedMap3.get<IFluidHandle<SharedString>>("outerString").get();
             assert.ok(outerString1, "String did not correctly set as value in container 1's map");
             assert.ok(outerString2, "String did not correctly set as value in container 2's map");
             assert.ok(outerString3, "String did not correctly set as value in container 3's map");
@@ -291,7 +296,7 @@ describe("SharedInterval", () => {
             outerString1.insertText(0, "outer string");
 
             const intervalCollection1 = outerString1.getIntervalCollection("comments");
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             const intervalCollection2 = outerString2.getIntervalCollection("comments");
             const intervalCollection3 = outerString3.getIntervalCollection("comments");
@@ -299,16 +304,16 @@ describe("SharedInterval", () => {
             assert.ok(intervalCollection2, "Could not get the comments interval collection in container 2");
             assert.ok(intervalCollection3, "Could not get the comments interval collection in container 3");
 
-            const comment1Text = SharedString.create(component1.runtime);
+            const comment1Text = SharedString.create(dataStore1.runtime);
             comment1Text.insertText(0, "a comment...");
             intervalCollection1.add(0, 3, IntervalType.SlideOnRemove, { story: comment1Text.handle });
-            const comment2Text = SharedString.create(component1.runtime);
+            const comment2Text = SharedString.create(dataStore1.runtime);
             comment2Text.insertText(0, "another comment...");
             intervalCollection1.add(5, 7, IntervalType.SlideOnRemove, { story: comment2Text.handle });
-            const nestedMap = SharedMap.create(component1.runtime);
+            const nestedMap = SharedMap.create(dataStore1.runtime);
             nestedMap.set("nestedKey", "nestedValue");
             intervalCollection1.add(8, 9, IntervalType.SlideOnRemove, { story: nestedMap.handle });
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             const serialized1 = intervalCollection1.serializeInternal();
             const serialized2 = intervalCollection2.serializeInternal();
@@ -318,11 +323,11 @@ describe("SharedInterval", () => {
             assert.equal(serialized3.length, 3, "Incorrect interval collection size in container 3");
 
             const interval1From3 = serialized3[0] as ISerializedInterval;
-            const comment1From3 = await (interval1From3.properties.story as IComponentHandle<SharedString>).get();
+            const comment1From3 = await (interval1From3.properties.story as IFluidHandle<SharedString>).get();
             assert.equal(
                 comment1From3.getText(0, 12), "a comment...", "Incorrect text in interval collection's shared string");
             const interval3From3 = serialized3[2] as ISerializedInterval;
-            const mapFrom3 = await (interval3From3.properties.story as IComponentHandle<SharedMap>).get();
+            const mapFrom3 = await (interval3From3.properties.story as IFluidHandle<SharedMap>).get();
             assert.equal(
                 mapFrom3.get("nestedKey"), "nestedValue", "Incorrect value in interval collection's shared map");
 

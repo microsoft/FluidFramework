@@ -4,28 +4,28 @@
  */
 
 import * as assert from "assert";
-import { initializeLocalContainer, LocalCodeLoader } from "@fluidframework/test-utils";
-import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { OpProcessingController, initializeLocalContainer, LocalCodeLoader } from "@fluidframework/test-utils";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { UpgradeManager } from "@fluidframework/base-host";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ICodeLoader, IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager, TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
-import { IComponentFactory } from "@fluidframework/runtime-definitions";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
-class TestComponent extends PrimedComponent {
-    public static readonly type = "@fluid-example/test-component";
+class TestDataStore extends DataObject {
+    public static readonly type = "@fluid-example/test-dataStore";
 
-    public static getFactory() { return TestComponent.factory; }
-    private static readonly factory = new PrimedComponentFactory(
-        TestComponent.type,
-        TestComponent,
+    public static getFactory() { return TestDataStore.factory; }
+    private static readonly factory = new DataObjectFactory(
+        TestDataStore.type,
+        TestDataStore,
         [],
         {},
     );
 
-    public get _runtime(): IComponentRuntime { return this.runtime; }
+    public get _runtime(): IFluidDataStoreRuntime { return this.runtime; }
     public get _root() { return this.root; }
 }
 
@@ -37,11 +37,11 @@ describe("UpgradeManager", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let documentServiceFactory: TestDocumentServiceFactory;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let documentServiceFactory: LocalDocumentServiceFactory;
+    let opProcessingController: OpProcessingController;
 
-    async function createContainer(factory: IComponentFactory): Promise<Container> {
-        const urlResolver = new TestResolver();
+    async function createContainer(factory: IFluidDataStoreFactory): Promise<Container> {
+        const urlResolver = new LocalResolver();
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const loader = new Loader(
             urlResolver,
@@ -54,18 +54,18 @@ describe("UpgradeManager", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function getComponent<T>(componentId: string, container: Container): Promise<T> {
-        const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            throw new Error(`Component with id: ${componentId} not found`);
+    async function requestFluidObject<T>(dataStoreId: string, container: Container): Promise<T> {
+        const response = await container.request({ url: dataStoreId });
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
+            throw new Error(`DataStore with id: ${dataStoreId} not found`);
         }
         return response.value as T;
     }
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-        documentServiceFactory = new TestDocumentServiceFactory(deltaConnectionServer);
-        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+        documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
     });
 
     afterEach(async () => {
@@ -77,15 +77,15 @@ describe("UpgradeManager", () => {
 
         const addCounts = Array(clients).fill(0);
         const approveCounts = Array(clients).fill(0);
-        const containersP = Array(clients).fill(undefined).map(async () => createContainer(TestComponent.getFactory()));
-        const components = await Promise.all(containersP.map(
+        const containersP = Array(clients).fill(undefined).map(async () => createContainer(TestDataStore.getFactory()));
+        const dataStores = await Promise.all(containersP.map(
             async (containerP) => (containerP).then(
-                async (container) => getComponent<TestComponent>("default", container))));
+                async (container) => requestFluidObject<TestDataStore>("default", container))));
 
         const containers = await Promise.all(containersP);
-        containerDeltaEventManager.registerDocuments(...components.map((c) => c._runtime));
+        opProcessingController.addDeltaManagers(...dataStores.map((c) => c._runtime.deltaManager));
 
-        components.map((c, i) => {
+        dataStores.map((c, i) => {
             c._runtime.getQuorum().on("addProposal", () => { ++addCounts[i]; });
             c._runtime.getQuorum().on("approveProposal", () => { ++approveCounts[i]; });
         });
@@ -109,10 +109,10 @@ describe("UpgradeManager", () => {
     });
 
     it("1 client low priority is immediate", async () => {
-        const container = await createContainer(TestComponent.getFactory());
-        const component = await getComponent<TestComponent>("default", container);
+        const container = await createContainer(TestDataStore.getFactory());
+        const dataStore = await requestFluidObject<TestDataStore>("default", container);
 
-        containerDeltaEventManager.registerDocuments(component._runtime);
+        opProcessingController.addDeltaManagers(dataStore._runtime.deltaManager);
         const upgradeManager = new UpgradeManager((container as any).context.runtime);
 
         const upgradeP = new Promise<void>((resolve) => {
@@ -121,17 +121,17 @@ describe("UpgradeManager", () => {
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         upgradeManager.upgrade(codeDetails);
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
         await upgradeP;
     });
 
     it("2 clients low priority is delayed", async () => {
         const clients = 2;
-        const containersP = Array(clients).fill(undefined).map(async () => createContainer(TestComponent.getFactory()));
+        const containersP = Array(clients).fill(undefined).map(async () => createContainer(TestDataStore.getFactory()));
 
         await Promise.all(containersP.map(
             async (containerP) => (containerP).then(
-                async (container) => getComponent<TestComponent>("default", container))));
+                async (container) => requestFluidObject<TestDataStore>("default", container))));
 
         const containers = await Promise.all(containersP);
 

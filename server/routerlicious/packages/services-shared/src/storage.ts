@@ -11,6 +11,7 @@ import {
     MessageType,
     ITreeEntry,
     ICommittedProposal,
+    ISequencedDocumentMessage,
     ISummaryTree,
     SummaryType,
     SummaryObject,
@@ -28,6 +29,9 @@ import {
     IScribe,
     ITenantManager,
     RawOperationType,
+    SequencedOperationType,
+    ISequencedOperationMessage,
+    IDocument,
 } from "@fluidframework/server-services-core";
 import {
     getQuorumTreeEntries,
@@ -91,8 +95,9 @@ export class DocumentStorage implements IDocumentStorage {
             gitManager.getTree(handle, false),
         ]);
 
-        winston.info(JSON.stringify(protocolTree));
-        winston.info(JSON.stringify(appSummaryTree));
+        const messageMetaData = { documentId, tenantId };
+        winston.info(`protocolTree ${JSON.stringify(protocolTree)}`, { messageMetaData });
+        winston.info(`appSummaryTree ${JSON.stringify(appSummaryTree)}`, { messageMetaData });
 
         // Combine the app summary with .protocol
         const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
@@ -112,8 +117,7 @@ export class DocumentStorage implements IDocumentStorage {
         const commit = await gitManager.createCommit(commitParams);
         await gitManager.createRef(documentId, commit.sha);
 
-        winston.info(JSON.stringify(documentId));
-        winston.info(JSON.stringify(commit.sha));
+        winston.info(`commit sha: ${JSON.stringify(commit.sha)}`, { messageMetaData });
 
         const scribe: IScribe = {
             logOffset: -1,
@@ -251,7 +255,7 @@ export class DocumentStorage implements IDocumentStorage {
             sequenceNumber = StartingSequenceNumber;
         } else {
             // Create a new commit, referecing the ref head, but swap out the metadata to indicate the branch details
-            const attributesContentP = gitManager.getContent(head.object.sha, ".attributes");
+            const attributesContentP = gitManager.getContent(head.object.sha, "attributes");
             const branchP = gitManager.upsertRef(name, head.object.sha);
             const [attributesContent] = await Promise.all([attributesContentP, branchP]);
 
@@ -308,29 +312,97 @@ export class DocumentStorage implements IDocumentStorage {
         return name;
     }
 
+    private async createObject(
+        collection: ICollection<IDocument>,
+        tenantId: string,
+        documentId: string,
+        deli?: string,
+        scribe?: string): Promise<IDocument> {
+        const value: IDocument = {
+            branchMap: undefined,
+            clients: undefined,
+            createTime: Date.now(),
+            deli,
+            documentId,
+            forks: [],
+            logOffset: 0,
+            parent: null,
+            scribe,
+            sequenceNumber: StartingSequenceNumber,
+            tenantId,
+            version: "0.1",
+        };
+        await collection.insertOne(value);
+        return value;
+    }
+
+    // Looks up the DB and summary for the document.
     private async getOrCreateObject(tenantId: string, documentId: string): Promise<IDocumentDetails> {
         const collection = await this.databaseManager.getDocumentCollection();
-        const result = await collection.findOrCreate(
-            {
-                documentId,
-                tenantId,
-            },
-            {
-                branchMap: undefined,
-                clients: undefined,
-                createTime: Date.now(),
-                deli: undefined,
-                documentId,
-                forks: [],
-                logOffset: 0,
-                parent: null,
-                scribe: undefined,
-                sequenceNumber: StartingSequenceNumber,
-                tenantId,
-                version: "0.1",
+        const document = await collection.findOne({ documentId, tenantId });
+        if (document === null) {
+            // Guard against storage failure. Returns false if storage is unresponsive.
+            const foundInSummaryP = this.readFromSummary(tenantId, documentId).then((result) => {
+                return result;
+            }, (err) => {
+                winston.error(`Error while fetching summary for ${tenantId}/${documentId}`);
+                winston.error(err);
+                return false;
             });
 
-        return result;
+            const inSummary = await foundInSummaryP;
+
+            // Setting an empty string to deli and scribe denotes that the checkpoints should be loaded from summary.
+            const value = inSummary ?
+                await this.createObject(collection, tenantId, documentId, "", "") :
+                await this.createObject(collection, tenantId, documentId);
+
+            return {
+                value,
+                existing: inSummary,
+            };
+        } else {
+            return {
+                value: document,
+                existing: true,
+            };
+        }
+    }
+
+    private async readFromSummary(tenantId: string, documentId: string): Promise<boolean> {
+        const tenant = await this.tenantManager.getTenant(tenantId);
+        const gitManager = tenant.gitManager;
+        const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
+        if (existingRef) {
+            // Fetch ops from logTail and insert into deltas collection.
+            // TODO: Make the rest endpoint handle this case.
+            const opsContent = await gitManager.getContent(existingRef.object.sha, ".logTail/logTail");
+            const ops = JSON.parse(
+                Buffer.from(opsContent.content, opsContent.encoding).toString()) as ISequencedDocumentMessage[];
+            const dbOps: ISequencedOperationMessage[] = ops.map((op: ISequencedDocumentMessage) => {
+                return {
+                    documentId,
+                    operation: op,
+                    tenantId,
+                    type: SequencedOperationType,
+                };
+            });
+            const opsCollection = await this.databaseManager.getDeltaCollection(tenantId, documentId);
+            await opsCollection
+                .insertMany(dbOps, false)
+                // eslint-disable-next-line @typescript-eslint/promise-function-async
+                .catch((error) => {
+                    // Duplicate key errors are ignored
+                    if (error.code !== 11000) {
+                        // Needs to be a full rejection here
+                        return Promise.reject(error);
+                    }
+                });
+            winston.info(`Inserted ${dbOps.length} ops into deltas DB`);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**

@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export * from "./reactComponent";
+export * from "./reactView";
 export * from "./useStateFluid";
 export * from "./useReducerFluid";
 export * from "./createContextFluid";
 export * from "./interface";
-export * from "./fluidComponent";
+export * from "./syncedDataObject";
+export * from "./syncedObjects";

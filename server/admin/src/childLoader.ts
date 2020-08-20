@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { parse } from "url";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/component-core-interfaces";
 import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { Deferred } from "@fluidframework/common-utils";
@@ -15,14 +15,13 @@ import {
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
-import { NodeCodeLoader, NodeWhiteList } from "@fluidframework/server-services";
+import { NodeCodeLoader, NodeAllowList } from "@fluidframework/server-services";
 import { promiseTimeout } from "@fluidframework/server-services-client";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
 import { IKeyValue as IKV } from "./definitions";
 
-const packageUrl = "https://packages.wu2.prague.office-int.com";
 const installLocation = "/tmp/chaincode";
 const waitTimeoutMS = 60000;
 
@@ -93,7 +92,7 @@ class KeyValueLoader {
         const loader = new Loader(
             resolver,
             documentServiceFactories,
-            new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS, new NodeWhiteList()),
+            new NodeCodeLoader(installLocation, waitTimeoutMS, new NodeAllowList()),
             config,
             {},
             new Map<string, IProxyLoaderFactory>(),
@@ -125,12 +124,13 @@ class KeyValueLoader {
 
     private async attach(loader: Loader, docUrl: string) {
         const response = await loader.request({ url: docUrl });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 ||
+            (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             return;
         }
-        const component = response.value as IComponent;
-        const keyValue = (component.IComponentRouter as unknown) as IKeyValue;
-        winston.info(`Resolved key-value component`);
+        const fluidObject = response.value as IFluidObject;
+        const keyValue = (fluidObject.IFluidRouter as unknown) as IKeyValue;
+        winston.info(`Resolved key-value fluid object`);
         this.kvDeferred.resolve(keyValue);
     }
 }

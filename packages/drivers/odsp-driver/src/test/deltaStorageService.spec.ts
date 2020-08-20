@@ -14,7 +14,6 @@ describe("DeltaStorageService", () => {
      */
     const deltaStorageBasePath = "https://fake.microsoft.com";
     const deltaStorageRelativePath = "/drives/testdrive/items/testitem/opStream";
-    // tslint:disable-next-line:mocha-no-side-effect-code
     const testDeltaStorageUrl = `${deltaStorageBasePath}${deltaStorageRelativePath}`;
 
     it("Should build the correct sharepoint delta url with auth", async () => {
@@ -73,12 +72,12 @@ describe("DeltaStorageService", () => {
                 return deltaStorageService.get(2, 8);
             });
             assert.equal(actualDeltaFeedResponse.length, 2, "Deserialized feed response is not of expected length");
-                assert.equal(actualDeltaFeedResponse[0].sequenceNumber, 1,
-                    "First element of feed response has invalid sequence number");
-                assert.equal(actualDeltaFeedResponse[1].sequenceNumber, 2,
-                    "Second element of feed response has invalid sequence number");
-                assert.equal(actualDeltaFeedResponse[1].type, "noop",
-                    "Second element of feed response has invalid op type");
+            assert.equal(actualDeltaFeedResponse[0].sequenceNumber, 1,
+                "First element of feed response has invalid sequence number");
+            assert.equal(actualDeltaFeedResponse[1].sequenceNumber, 2,
+                "Second element of feed response has invalid sequence number");
+            assert.equal(actualDeltaFeedResponse[1].type, "noop",
+                "Second element of feed response has invalid op type");
         });
     });
 

@@ -106,7 +106,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
 }
 
 export interface ISnapshotWriterStorage extends IDocumentStorageService {
-    onCommitHandler(componentName: string, tree: api.ITree): void;
+    onCommitHandler(dataStoreName: string, tree: api.ITree): void;
     onSnapshotHandler(snapshot: IFileSnapshot): void;
     reset(): void;
 }
@@ -127,7 +127,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             this.docId = undefined;
         }
 
-        public onCommitHandler(componentName: string, tree: api.ITree): void {
+        public onCommitHandler(dataStoreName: string, tree: api.ITree): void {
         }
 
         public onSnapshotHandler(snapshot: IFileSnapshot): void {
@@ -145,7 +145,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
         public async getVersions(versionId: string, count: number): Promise<api.IVersion[]> {
             // If we already saved document, that means we are getting here because of snapshot generation.
             // Not returning tree ensures that ContainerRuntime.snapshot() would regenerate subtrees for
-            // each unchanged component.
+            // each unchanged data store.
             // If we want to change that, we would need to capture docId on first call and return this.latestWriterTree
             // when latest is requested.
             if (this.docId === undefined && versionId !== undefined) {
@@ -179,20 +179,20 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             parents: string[],
             message: string,
             ref: string): Promise<api.IVersion> {
-            let componentName = ref ? ref : "container";
+            let dataStoreName = ref ? ref : "container";
             if (tree && tree.entries) {
                 tree.entries.forEach((entry) => {
-                    if (entry.path === ".component" && entry.type === api.TreeEntry[api.TreeEntry.Blob]) {
+                    if (entry.path === ".component" && entry.type === api.TreeEntry.Blob) {
                         const blob: api.IBlob = entry.value as api.IBlob;
                         const content = blob.contents.split(":");
                         if (content[0] === `{"pkg"`) {
-                            componentName = content[1].substring(1, content[1].lastIndexOf(`"`));
+                            dataStoreName = content[1].substring(1, content[1].lastIndexOf(`"`));
                         }
                     }
                 });
             }
 
-            const commitName = `commit_${componentName}`;
+            const commitName = `commit_${dataStoreName}`;
 
             // Sort entries for easier diffing
             this.sortTree(tree);
@@ -206,7 +206,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
                 this.commitsWriter[commitName] = tree;
             } else {
                 // Rebuild latest tree - runtime will ask for it when generating next snapshot to write out
-                // non-changed commits for components
+                // non-changed commits for data stores
                 await this.writeOutFullSnapshot(tree);
 
                 // Prep for the future - refresh latest tree, as it's requests on next snapshot generation.
@@ -214,11 +214,11 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
                 this.latestWriterTree = await buildSnapshotTree(tree.entries, this.blobsWriter);
 
                 // Do not reset this.commitsWriter - runtime will reference same commits in future snapshots
-                // if component did not change in between two snapshots.
+                // if data store did not change in between two snapshots.
                 // We can optimize here by filtering commits based on contents of this.docTree.commits
             }
 
-            this.onCommitHandler(componentName, tree);
+            this.onCommitHandler(dataStoreName, tree);
             return {
                 id: commitName,
                 date: new Date().toUTCString(),
@@ -229,7 +229,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
         public async writeOutFullSnapshot(tree: api.ITree) {
             const commits: { [key: string]: api.ITree } = {};
             for (const entry of tree.entries) {
-                if (entry.type === api.TreeEntry[api.TreeEntry.Commit]) {
+                if (entry.type === api.TreeEntry.Commit) {
                     const commitId = entry.value as string;
                     let commit = this.commitsWriter[commitId];
                     if (commit === undefined) {
@@ -265,7 +265,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
         public sortTree(tree: api.ITree) {
             tree.entries.sort((a, b) => a.path.localeCompare(b.path));
             tree.entries.map((entry) => {
-                if (entry.type === api.TreeEntry[api.TreeEntry.Tree]) {
+                if (entry.type === api.TreeEntry.Tree) {
                     this.sortTree(entry.value as api.ITree);
                 }
             });
@@ -279,7 +279,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
                 tree.entries.push({
                     mode: api.FileMode.Directory,
                     path: subTreeId,
-                    type: api.TreeEntry[api.TreeEntry.Tree],
+                    type: api.TreeEntry.Tree,
                     value: subTree,
                 });
             }
@@ -293,7 +293,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
                 tree.entries.push({
                     mode: api.FileMode.File,
                     path: blobName,
-                    type: api.TreeEntry[api.TreeEntry.Blob],
+                    type: api.TreeEntry.Blob,
                     value: blob,
                 });
             }
@@ -306,7 +306,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
 
 function removeNullTreIds(tree: api.ITree) {
     for (const node of tree.entries) {
-        if (node.type === api.TreeEntry[api.TreeEntry.Tree]) {
+        if (node.type === api.TreeEntry.Tree) {
             removeNullTreIds(node.value as api.ITree);
         }
     }

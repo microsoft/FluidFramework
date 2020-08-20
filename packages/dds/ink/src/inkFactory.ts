@@ -5,10 +5,11 @@
 
 import {
     IChannelAttributes,
-    IComponentRuntime,
-    ISharedObjectServices,
-} from "@fluidframework/component-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@fluidframework/shared-object-base";
+    IFluidDataStoreRuntime,
+    IChannelServices,
+    IChannelFactory,
+} from "@fluidframework/datastore-definitions";
+import { ISharedObject } from "@fluidframework/shared-object-base";
 import { Ink } from "./ink";
 import { pkgVersion } from "./packageVersion";
 
@@ -16,14 +17,14 @@ import { pkgVersion } from "./packageVersion";
  * Factory for Ink.
  * @sealed
  */
-export class InkFactory implements ISharedObjectFactory {
+export class InkFactory implements IChannelFactory {
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
      */
     public static Type = "https://graph.microsoft.com/types/ink";
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
      */
     public static readonly Attributes: IChannelAttributes = {
         type: InkFactory.Type,
@@ -32,26 +33,26 @@ export class InkFactory implements ISharedObjectFactory {
     };
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
      */
     public get type() {
         return InkFactory.Type;
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
      */
     public get attributes() {
         return InkFactory.Attributes;
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.load}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
      */
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedObject> {
         const ink = new Ink(runtime, id, attributes);
@@ -61,9 +62,9 @@ export class InkFactory implements ISharedObjectFactory {
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.create}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
      */
-    public create(runtime: IComponentRuntime, id: string): ISharedObject {
+    public create(runtime: IFluidDataStoreRuntime, id: string): ISharedObject {
         const ink = new Ink(runtime, id, InkFactory.Attributes);
         ink.initializeLocal();
 

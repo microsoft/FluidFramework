@@ -12,12 +12,13 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
-    IObjectStorageService,
-    ISharedObjectServices,
-} from "@fluidframework/component-runtime-definitions";
+    IFluidDataStoreRuntime,
+    IChannelStorageService,
+    IChannelServices,
+    IChannelFactory,
+} from "@fluidframework/datastore-definitions";
 import {
-    ISharedObjectFactory, SharedObject,
+    SharedObject,
 } from "@fluidframework/shared-object-base";
 import { debug } from "./debug";
 import {
@@ -33,7 +34,7 @@ const snapshotFileName = "header";
 /**
  * The factory that defines the SharedIntervalCollection
  */
-export class SharedIntervalCollectionFactory implements ISharedObjectFactory {
+export class SharedIntervalCollectionFactory implements IChannelFactory {
     public static readonly Type = "https://graph.microsoft.com/types/sharedIntervalCollection";
 
     public static readonly Attributes: IChannelAttributes = {
@@ -51,9 +52,9 @@ export class SharedIntervalCollectionFactory implements ISharedObjectFactory {
     }
 
     public async load(
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         id: string,
-        services: ISharedObjectServices,
+        services: IChannelServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<SharedIntervalCollection> {
         const map = new SharedIntervalCollection(id, runtime, attributes);
@@ -62,7 +63,7 @@ export class SharedIntervalCollectionFactory implements ISharedObjectFactory {
         return map;
     }
 
-    public create(runtime: IComponentRuntime, id: string): SharedIntervalCollection {
+    public create(runtime: IFluidDataStoreRuntime, id: string): SharedIntervalCollection {
         const map = new SharedIntervalCollection(
             id,
             runtime,
@@ -83,20 +84,20 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     /**
      * Create a SharedIntervalCollection
      *
-     * @param runtime - component runtime the new shared map belongs to
+     * @param runtime - data store runtime the new shared map belongs to
      * @param id - optional name of the shared map
      * @returns newly create shared map (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedIntervalCollectionFactory.Type) as SharedIntervalCollection;
     }
 
     /**
-     * Get a factory for SharedIntervalCollection to register with the component.
+     * Get a factory for SharedIntervalCollection to register with the data store.
      *
      * @returns a factory that creates and load SharedIntervalCollection
      */
-    public static getFactory(): ISharedObjectFactory {
+    public static getFactory(): IChannelFactory {
         return new SharedIntervalCollectionFactory();
     }
 
@@ -109,7 +110,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
      */
     constructor(
         id: string,
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);
@@ -150,7 +151,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: this.intervalMapKernel.serialize(),
                         encoding: "utf-8",
@@ -174,7 +175,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
 
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService) {
+        storage: IChannelStorageService) {
         const header = await storage.read(snapshotFileName);
 
         const data: string = header ? fromBase64ToUtf8(header) : undefined;

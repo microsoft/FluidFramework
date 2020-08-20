@@ -4,70 +4,68 @@
  */
 
 import assert from "assert";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    ChannelFactoryRegistry,
     createLocalLoader,
-    ITestFluidComponent,
     initializeLocalContainer,
-    TestFluidComponentFactory,
+    ITestFluidObject,
+    OpProcessingController,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
+import { compatTest, ICompatTestArgs } from "./compatUtils";
 
-describe("Map", () => {
-    const id = "fluid-test://localhost/mapTest";
-    const mapId = "mapKey";
-    const codeDetails: IFluidCodeDetails = {
-        package: "sharedMapTestPackage",
-        config: {},
-    };
+const id = "fluid-test://localhost/mapTest";
+const mapId = "mapKey";
+const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
+const codeDetails: IFluidCodeDetails = {
+    package: "sharedMapTestPackage",
+    config: {},
+};
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
-    let component1: ITestFluidComponent;
+async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidObject> {
+    const response = await container.request({ url: dataStoreId });
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        throw new Error(`DataStore with id: ${dataStoreId} not found`);
+    }
+    return response.value as ITestFluidObject;
+}
+
+const tests = (args: ICompatTestArgs) => {
+    let opProcessingController: OpProcessingController;
+    let dataStore1: ITestFluidObject;
     let sharedMap1: ISharedMap;
     let sharedMap2: ISharedMap;
     let sharedMap3: ISharedMap;
 
-    async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
-        const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            throw new Error(`Component with id: ${componentId} not found`);
-        }
-        return response.value as ITestFluidComponent;
-    }
-
-    async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([[mapId, SharedMap.getFactory()]]);
-        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-        return initializeLocalContainer(id, loader, codeDetails);
-    }
-
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
+        const container1 = await args.makeTestContainer(registry) as Container;
+        dataStore1 = await requestFluidObject("default", container1);
+        sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
-        const container1 = await createContainer();
-        component1 = await getComponent("default", container1);
-        sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
+        const container2 = await args.makeTestContainer(registry) as Container;
+        const dataStore2 = await requestFluidObject("default", container2);
+        sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
-        const container2 = await createContainer();
-        const component2 = await getComponent("default", container2);
-        sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
+        const container3 = await args.makeTestContainer(registry) as Container;
+        const dataStore3 = await requestFluidObject("default", container3);
+        sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 
-        const container3 = await createContainer();
-        const component3 = await getComponent("default", container3);
-        sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
-
-        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-        containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime, component3.runtime);
+        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
+        opProcessingController.addDeltaManagers(
+            dataStore1.runtime.deltaManager,
+            dataStore2.runtime.deltaManager,
+            dataStore3.runtime.deltaManager,
+        );
 
         sharedMap1.set("testKey1", "testValue");
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
     });
 
     function expectAllValues(msg, key, value1, value2, value3) {
@@ -108,7 +106,7 @@ describe("Map", () => {
         sharedMap2.set("testKey1", undefined);
         sharedMap2.set("testKey2", undefined);
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         expectAllAfterValues("testKey1", undefined);
         expectAllAfterValues("testKey2", undefined);
@@ -117,7 +115,7 @@ describe("Map", () => {
     it("Should delete values in 3 containers correctly", async () => {
         sharedMap2.delete("testKey1");
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         const hasKey1 = sharedMap1.has("testKey1");
         assert.equal(hasKey1, false, "testKey1 not deleted in container 1");
@@ -132,7 +130,7 @@ describe("Map", () => {
     it("Should check if three containers has same number of keys", async () => {
         sharedMap3.set("testKey3", true);
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         expectAllSize(2);
     });
@@ -168,7 +166,7 @@ describe("Map", () => {
 
         sharedMap1.set("testKey1", "updatedValue");
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         assert.equal(user1ValueChangedCount, 0, "Incorrect number of valueChanged op received in container 1");
         assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 2");
@@ -185,7 +183,7 @@ describe("Map", () => {
 
         expectAllBeforeValues("testKey1", "value1", "value2", "value3");
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         expectAllAfterValues("testKey1", "value3");
     });
@@ -198,7 +196,7 @@ describe("Map", () => {
 
         expectAllBeforeValues("testKey1", "value1.1", undefined, "value1.3");
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         expectAllAfterValues("testKey1", "value1.3");
     });
@@ -210,12 +208,12 @@ describe("Map", () => {
         sharedMap3.set("testKey2", "value2.3");
 
         // drain the outgoing so that the next set will come after
-        await containerDeltaEventManager.processOutgoing();
+        await opProcessingController.processOutgoing();
 
         sharedMap2.set("testKey2", "value2.2");
         expectAllBeforeValues("testKey2", "value2.1", "value2.2", "value2.3");
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         expectAllAfterValues("testKey2", "value2.2");
     });
@@ -228,7 +226,7 @@ describe("Map", () => {
 
         expectAllBeforeValues("testKey3", "value3.1", "value3.2", undefined);
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         expectAllAfterValues("testKey3", undefined);
     });
@@ -241,7 +239,7 @@ describe("Map", () => {
         expectAllBeforeValues("testKey1", "value1.1", "value1.2", undefined);
         assert.equal(sharedMap3.size, 0, "Incorrect map size after clear");
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         expectAllAfterValues("testKey1", undefined);
         expectAllSize(0);
@@ -254,12 +252,12 @@ describe("Map", () => {
         sharedMap3.set("testKey2", "value2.3");
 
         // drain the outgoing so that the next set will come after
-        await containerDeltaEventManager.processOutgoing();
+        await opProcessingController.processOutgoing();
 
         sharedMap2.set("testKey2", "value2.2");
         expectAllBeforeValues("testKey2", "value2.1", "value2.2", "value2.3");
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         expectAllAfterValues("testKey2", "value2.2");
         expectAllSize(1);
@@ -272,7 +270,7 @@ describe("Map", () => {
         sharedMap3.set("testKey3", "value3.3");
         expectAllBeforeValues("testKey3", "value3.1", undefined, "value3.3");
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         expectAllAfterValues("testKey3", "value3.3");
         expectAllSize(1);
@@ -292,7 +290,7 @@ describe("Map", () => {
          */
 
         // Create a new map in local (detached) state.
-        const newSharedMap1 = SharedMap.create(component1.runtime);
+        const newSharedMap1 = SharedMap.create(dataStore1.runtime);
 
         // Set a value while in local state.
         newSharedMap1.set("newKey", "newValue");
@@ -300,24 +298,46 @@ describe("Map", () => {
         // Now add the handle to an attached map so the new map gets attached too.
         sharedMap1.set("newSharedMap", newSharedMap1.handle);
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         // The new map should be availble in the remote client and it should contain that key that was
         // set in local state.
-        const newSharedMap2 = await sharedMap2.get<IComponentHandle<SharedMap>>("newSharedMap").get();
+        const newSharedMap2 = await sharedMap2.get<IFluidHandle<SharedMap>>("newSharedMap").get();
         assert.equal(newSharedMap2.get("newKey"), "newValue", "The data set in local state is not available in map 2");
 
         // Set a new value for the same key in the remote map.
         newSharedMap2.set("newKey", "anotherNewValue");
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         // Verify that the new value is updated in both the maps.
         assert.equal(newSharedMap2.get("newKey"), "anotherNewValue", "The new value is not updated in map 2");
         assert.equal(newSharedMap1.get("newKey"), "anotherNewValue", "The new value is not updated in map 1");
     });
+};
+
+describe("Map", () => {
+    let deltaConnectionServer: ILocalDeltaConnectionServer;
+    const makeTestContainer = async () => {
+        const factory = new TestFluidObjectFactory(registry);
+        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
+        return initializeLocalContainer(id, loader, codeDetails);
+    };
+
+    beforeEach(async () => {
+        deltaConnectionServer = LocalDeltaConnectionServer.create();
+    });
+
+    tests({
+        makeTestContainer,
+        get deltaConnectionServer() { return deltaConnectionServer; },
+    });
 
     afterEach(async () => {
         await deltaConnectionServer.webSocketServer.close();
+    });
+
+    describe("compatibility", () => {
+        compatTest(tests, { testFluidDataStore: true });
     });
 });

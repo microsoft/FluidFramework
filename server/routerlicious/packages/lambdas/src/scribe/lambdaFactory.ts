@@ -56,13 +56,17 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         const gitManager = tenant.gitManager;
 
         const [latestSummary, document] = await Promise.all([
-            fetchLatestSummaryState(gitManager, documentId),
+            fetchLatestSummaryState(gitManager, documentId, context.log),
             this.documentCollection.findOne({ documentId, tenantId }),
         ]);
 
+        const messageMetaData = {
+            documentId,
+            tenantId,
+        };
         // If the document doesn't exist then we trivially accept every message
         if (!document) {
-            context.log.info(`Creating NoOpLambda due to missing ${tenantId}/${documentId}`);
+            context.log.info(`Creating NoOpLambda due to missing`, { messageMetaData });
             return new NoOpLambda(context);
         }
 
@@ -70,25 +74,36 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             await this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 });
         let opMessages = dbMessages.map((message) => message.operation);
 
+        let lastCheckpoint: IScribe;
+
         // Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary
         if (document.scribe === undefined || document.scribe === null) {
-            context.log.info(`New document. Setting empty scribe checkpoint for ${tenantId}/${documentId}`);
-            document.scribe = JSON.stringify(DefaultScribe);
+            context.log.info(`New document. Setting empty scribe checkpoint`, { messageMetaData });
+            lastCheckpoint = DefaultScribe;
+            opMessages = [];
         } else if (document.scribe === "") {
+            context.log.info(`Existing document. Fetching checkpoint from summary`, { messageMetaData });
             if (!latestSummary.fromSummary) {
-                throw Error(`Required summary can't be fetched for ${tenantId}/${documentId}`);
+                context.log.error(`Summary can't be fetched`, { messageMetaData });
+                lastCheckpoint = DefaultScribe;
+                opMessages = [];
+            } else {
+                lastCheckpoint = JSON.parse(latestSummary.scribe);
+                opMessages = latestSummary.messages;
+                // Since the document was originated elsewhere or cache was cleared, logOffset info is irrelavant.
+                // Currently the lambda checkpoints only after updating the logOffset so setting this to lower
+                // is okay. Conceptually this is similar to default checkpoint where logOffset is -1. In this case,
+                // the sequence number is 'n' rather than '0'.
+                lastCheckpoint.logOffset = -1;
+                context.log.info(JSON.stringify(lastCheckpoint));
             }
-            context.log.info(`Loading scribe state from service summary for ${tenantId}/${documentId}`);
-            document.scribe = latestSummary.scribe;
-            opMessages = latestSummary.messages;
         } else {
-            context.log.info(`Loading scribe state from cache for ${tenantId}/${documentId}`);
+            lastCheckpoint = JSON.parse(document.scribe);
         }
 
         const term = latestSummary.fromSummary ? latestSummary.term : 1;
-        const scribe: IScribe = JSON.parse(document.scribe);
-        const protocolHandler = initializeProtocol(document.documentId, scribe.protocolState, term);
+        const protocolHandler = initializeProtocol(document.documentId, lastCheckpoint.protocolState, term);
 
         return new ScribeLambda(
             context,
@@ -96,14 +111,15 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             this.messageCollection,
             document.tenantId,
             document.documentId,
-            scribe,
+            lastCheckpoint,
             gitManager,
             this.producer,
             protocolHandler,
             latestSummary.term,
             latestSummary.protocolHead,
             opMessages,
-            true);
+            true,
+            false);
     }
 
     public async dispose(): Promise<void> {

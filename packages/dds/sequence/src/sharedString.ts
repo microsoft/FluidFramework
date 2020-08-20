@@ -4,15 +4,15 @@
  */
 
 // eslint-disable-next-line import/no-unassigned-import
-import { } from "@fluidframework/component-core-interfaces";
+import { } from "@fluidframework/core-interfaces";
 import * as MergeTree from "@fluidframework/merge-tree";
-import { IComponentRuntime, IChannelAttributes } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
 import { SharedSegmentSequence } from "./sequence";
 import { SharedStringFactory } from "./sequenceFactory";
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideSharedString>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideSharedString>> { }
 }
 
 export const ISharedString: keyof IProvideSharedString = "ISharedString";
@@ -22,7 +22,7 @@ export interface IProvideSharedString {
 }
 
 /**
- * Component interface describing access methods on a SharedString
+ * Fluid object interface describing access methods on a SharedString
  */
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment>, IProvideSharedString {
     insertText(pos: number, text: string, props?: MergeTree.PropertySet);
@@ -38,16 +38,16 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     /**
      * Create a new shared string
      *
-     * @param runtime - component runtime the new shared string belongs to
+     * @param runtime - data store runtime the new shared string belongs to
      * @param id - optional name of the shared string
      * @returns newly create shared string (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedStringFactory.Type) as SharedString;
     }
 
     /**
-     * Get a factory for SharedString to register with the component.
+     * Get a factory for SharedString to register with the data store.
      *
      * @returns a factory that creates and load SharedString
      */
@@ -61,7 +61,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
 
     private readonly mergeTreeTextHelper: MergeTree.MergeTreeTextHelper;
 
-    constructor(document: IComponentRuntime, public id: string, attributes: IChannelAttributes) {
+    constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(document, id, attributes, SharedStringFactory.segmentFromSpec);
         this.mergeTreeTextHelper = this.client.createTextHelper();
     }
@@ -214,7 +214,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "", start, end);
     }
     /**
-     * Adds spaces for markers and components, so that position calculations account for them
+     * Adds spaces for markers and handles, so that position calculations account for them
      */
     public getTextWithPlaceholders() {
         const segmentWindow = this.client.getCollabWindow();

@@ -13,8 +13,8 @@ import sortPackageJson from "sort-package-json";
 
 export class FluidPackageCheck {
     private static fixPackageVersions: { [key: string]: string } = {
+        "cross-env": "^7.0.2",
         "jest-junit": "^10.0.0",
-        "make-promises-safe": "^5.1.0",
         "nyc": "^15.0.0",
         "rimraf": "^2.6.2",
     };
@@ -45,7 +45,7 @@ export class FluidPackageCheck {
             FluidPackageCheck.checkBuildScripts(pkg, fix),
             FluidPackageCheck.checkCleanScript(pkg, fix),
             FluidPackageCheck.checkTestCoverageScripts(pkg, fix),
-            FluidPackageCheck.checkTestSafePromiseRequire(pkg, fix),
+            FluidPackageCheck.checkTestScripts(pkg, fix),
             FluidPackageCheck.checkClientTestScripts(pkg, fix),
             FluidPackageCheck.checkJestJunitTestEntry(pkg, fix),
         ];
@@ -57,26 +57,54 @@ export class FluidPackageCheck {
     }
 
     /**
-     * Verify that all packages with 'test' scripts require the 'make-promises-safe' package, which will cause unhandled
-     * promise rejections to throw errors
+     * Verify that all packages with 'test' scripts require the 'mocha-test-setup' package 
+     * and have --unhandled-rejections=strict flag so to failed test with unhandled rejection
      */
-    private static checkTestSafePromiseRequire(pkg: Package, fix: boolean) {
+    private static checkTestScripts(pkg: Package, fix: boolean) {
         let fixed = false;
-        const pkgstring = "make-promises-safe";
+
         const testMochaScript = pkg.getScript("test:mocha");
         const testScriptName = testMochaScript ? "test:mocha" : "test";
-        const testScript = testMochaScript?? pkg.getScript(testScriptName);
+        const testScript = testMochaScript ?? pkg.getScript(testScriptName);
         if (testScript && /(ts-)?mocha/.test(testScript)) {
-            if (this.ensureDevDependency(pkg, fix, pkgstring)) {
-                fixed = true;
-            }
-            if (!testScript.includes(pkgstring)) {
-                if (/(ts-)?mocha/.test(testScript)) {
-                    this.logWarn(pkg, `no ${pkgstring} require in test script`, fix);
+            const isClient = pkg.monoRepo?.kind === MonoRepoKind.Client;
+            if (isClient) {
+                const pkgstring = "@fluidframework/mocha-test-setup"
+                const requireString = `node_modules/${pkgstring}`;
+                if (this.ensureDevDependency(pkg, fix, pkgstring)) {
+                    fixed = true;
+                }
+                if (!testScript.includes(requireString)) {
+                    this.logWarn(pkg, `no ${requireString} require in test script`, fix);
                     if (fix) {
-                        pkg.packageJson.scripts[testScriptName] += " -r " + pkgstring;
+                        pkg.packageJson.scripts[testScriptName] += " -r " + requireString;
                         fixed = true;
                     }
+                }
+
+                const verboseTestScriptName = `${testScriptName}:verbose`;
+                const verboseTestMochaScript = pkg.getScript(verboseTestScriptName);
+                const expectedVerboseTestMochaScript = `cross-env FLUID_TEST_VERBOSE=1 npm run ${testScriptName}`;
+                if (verboseTestMochaScript !== expectedVerboseTestMochaScript) {
+                    this.logWarn(pkg, `${verboseTestScriptName} script not match "${expectedVerboseTestMochaScript}"`, fix);
+                    if (fix) {
+                        pkg.packageJson.scripts[verboseTestScriptName] = expectedVerboseTestMochaScript;
+                        fixed = true;
+                    }
+                }
+
+                if (this.ensureDevDependency(pkg, fix, "cross-env")) {
+                    fixed = true;
+                }
+            }
+
+            // Make sure --unhandled-rejections=strict switch used
+            const unhandledRejectionsSwitch = "--unhandled-rejections=strict";
+            if (!testScript.includes(unhandledRejectionsSwitch)) {
+                this.logWarn(pkg, `missing --unhandled-rejection switch in test script`, fix);
+                if (fix) {
+                    pkg.packageJson.scripts[testScriptName] += ` ${unhandledRejectionsSwitch}`;
+                    fixed = true;
                 }
             }
         }
@@ -186,10 +214,10 @@ export class FluidPackageCheck {
             const hasFull = pkg.getScript("build:full") !== undefined;
 
             // all build and lint steps (build + webpack) (if it is private, webpack would just be included in the main build:compile)
-            const buildFull: string[] = pkg.packageJson.private && !hasFull? [] : ["build"];
+            const buildFull: string[] = pkg.packageJson.private && !hasFull ? [] : ["build"];
 
             // all build steps (build:compile + webpack) (if it is private, webpack would just be included in the main build:compile)
-            const buildFullCompile: string[] = pkg.packageJson.private && !hasFull? [] : ["build:compile"];
+            const buildFullCompile: string[] = pkg.packageJson.private && !hasFull ? [] : ["build:compile"];
 
             // prepack scripts
             const prepack: string[] = [];

@@ -6,6 +6,7 @@
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IDocumentAttributes, ISequencedDocumentMessage, IProtocolState } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
+import { ILogger } from "@fluidframework/server-services-core";
 import { IDeliCheckpoint } from "../deli";
 
 export interface ILatestSummaryState {
@@ -18,7 +19,8 @@ export interface ILatestSummaryState {
 
 export async function fetchLatestSummaryState(
     gitManager: IGitManager,
-    documentId: string): Promise<ILatestSummaryState> {
+    documentId: string,
+    logger: ILogger): Promise<ILatestSummaryState> {
     const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
     if (!existingRef) {
         return {
@@ -55,7 +57,14 @@ export async function fetchLatestSummaryState(
             fromSummary: true,
         };
     } catch (exception) {
-        throw Error("Summary cannot be fetched");
+        logger.error("Summary cannot be fetched");
+        return {
+            term: 1,
+            protocolHead: 0,
+            scribe: "",
+            messages: [],
+            fromSummary: false,
+        };
     }
 }
 

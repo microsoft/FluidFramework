@@ -65,25 +65,10 @@ export class DocumentStorageService implements IDocumentStorageService {
         return value.content;
     }
 
-    public async getContent(version: IVersion, path: string): Promise<string> {
-        const value = await this.manager.getContent(version.id, path);
-        return value.content;
-    }
-
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        const branch = ref ? `components/${this.id}/${ref}` : this.id;
+        const branch = ref ? `datastores/${this.id}/${ref}` : this.id;
         const commit = await this.manager.write(branch, tree, parents, message);
         return { date: commit.committer.date, id: commit.sha, treeId: commit.tree.sha };
-    }
-
-    // back-compat: 0.14 uploadSummary
-    public async uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
-        const handle = await this.writeSummaryObject(commit, [], "");
-        return {
-            handle,
-            handleType: SummaryType.Tree,
-            type: SummaryType.Handle,
-        };
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
@@ -111,66 +96,14 @@ export class DocumentStorageService implements IDocumentStorageService {
         return this.manager.getRawUrl(blobId);
     }
 
-    // back-compat: 0.14 uploadSummary
-    private async writeSummaryObject(
-        value: SummaryObject,
-        submodule: { path: string; sha: string }[],
-        path: string,
-    ): Promise<string> {
-        switch (value.type) {
-            case SummaryType.Blob:
-                return this.writeSummaryBlob(value.content);
-            case SummaryType.Commit:
-                const commitTreeHandle = await this.writeSummaryObject(
-                    value.tree,
-                    submodule,
-                    path);
-                const newCommit = await this.manager.createCommit({
-                    author: value.author,
-                    message: value.message,
-                    parents: value.parents,
-                    tree: commitTreeHandle,
-                });
-
-                submodule.push({ path, sha: newCommit.sha });
-
-                return newCommit.sha;
-
-            case SummaryType.Handle:
-                return value.handle;
-
-            case SummaryType.Tree:
-                const fullTree = value.tree;
-                const entries = await Promise.all(Object.keys(fullTree).map(async (key) => {
-                    const entry = fullTree[key];
-                    const pathHandle = await this.writeSummaryObject(
-                        entry,
-                        submodule,
-                        `${path}/${encodeURIComponent(key)}`);
-                    const treeEntry: resources.ICreateTreeEntry = {
-                        mode: this.getGitMode(entry),
-                        path: encodeURIComponent(key),
-                        sha: pathHandle,
-                        type: this.getGitType(entry),
-                    };
-                    return treeEntry;
-                }));
-
-                const treeHandle = await this.manager.createGitTree({ tree: entries });
-                return treeHandle.sha;
-
-            default:
-                return Promise.reject();
-        }
-    }
-
     private async writeSummaryTree(
         summaryTree: ISummaryTree,
-        snapshot: ISnapshotTree | undefined,
+        /** Entire previous snapshot, not subtree */
+        previousFullSnapshot: ISnapshotTree | undefined,
     ): Promise<string> {
         const entries = await Promise.all(Object.keys(summaryTree.tree).map(async (key) => {
             const entry = summaryTree.tree[key];
-            const pathHandle = await this.writeSummaryTreeObject(key, entry, snapshot);
+            const pathHandle = await this.writeSummaryTreeObject(key, entry, previousFullSnapshot);
             const treeEntry: resources.ICreateTreeEntry = {
                 mode: this.getGitMode(entry),
                 path: encodeURIComponent(key),
@@ -187,7 +120,7 @@ export class DocumentStorageService implements IDocumentStorageService {
     private async writeSummaryTreeObject(
         key: string,
         object: SummaryObject,
-        snapshot: ISnapshotTree | undefined,
+        previousFullSnapshot: ISnapshotTree | undefined,
         currentPath = "",
     ): Promise<string> {
         switch (object.type) {
@@ -195,13 +128,13 @@ export class DocumentStorageService implements IDocumentStorageService {
                 return this.writeSummaryBlob(object.content);
             }
             case SummaryType.Handle: {
-                if (snapshot === undefined) {
+                if (previousFullSnapshot === undefined) {
                     throw Error("Parent summary does not exist to reference by handle.");
                 }
-                return this.getIdFromPath(object.handleType, object.handle, snapshot);
+                return this.getIdFromPath(object.handleType, object.handle, previousFullSnapshot);
             }
             case SummaryType.Tree: {
-                return this.writeSummaryTree(object, snapshot?.trees[key]);
+                return this.writeSummaryTree(object, previousFullSnapshot);
             }
 
             default:
@@ -212,7 +145,7 @@ export class DocumentStorageService implements IDocumentStorageService {
     private getIdFromPath(
         handleType: SummaryType,
         handlePath: string,
-        fullSnapshot: ISnapshotTree,
+        previousFullSnapshot: ISnapshotTree,
     ): string {
         const path = handlePath.split("/").map((part) => decodeURIComponent(part));
         if (path[0] === "") {
@@ -220,26 +153,27 @@ export class DocumentStorageService implements IDocumentStorageService {
             path.shift();
         }
 
-        return this.getIdFromPathCore(handleType, path, fullSnapshot);
+        return this.getIdFromPathCore(handleType, path, previousFullSnapshot);
     }
 
     private getIdFromPathCore(
         handleType: SummaryType,
         path: string[],
-        snapshot: ISnapshotTree,
+        /** Previous snapshot, subtree relative to this path part */
+        previousSnapshot: ISnapshotTree,
     ): string {
         const key = path[0];
         if (path.length === 1) {
             switch (handleType) {
                 case SummaryType.Blob: {
-                    const tryId = snapshot.blobs[key];
+                    const tryId = previousSnapshot.blobs[key];
                     if (!tryId) {
                         throw Error("Parent summary does not have blob handle for specified path.");
                     }
                     return tryId;
                 }
                 case SummaryType.Tree: {
-                    const tryId = snapshot.trees[key]?.id;
+                    const tryId = previousSnapshot.trees[key]?.id;
                     if (!tryId) {
                         throw Error("Parent summary does not have tree handle for specified path.");
                     }
@@ -249,7 +183,7 @@ export class DocumentStorageService implements IDocumentStorageService {
                     throw Error(`Unexpected handle summary object type: "${handleType}".`);
             }
         }
-        return this.getIdFromPathCore(handleType, path.slice(1), snapshot);
+        return this.getIdFromPathCore(handleType, path.slice(1), previousSnapshot.trees[key]);
     }
 
     private async writeSummaryBlob(content: string | Buffer): Promise<string> {

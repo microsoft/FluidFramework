@@ -5,14 +5,21 @@
 
 /* eslint-disable import/no-extraneous-dependencies */
 export {
-    ContainerRuntimeFactoryWithDefaultComponent,
-    defaultComponentRuntimeRequestHandler,
-    PrimedComponent,
-    PrimedComponentFactory,
+    ContainerRuntimeFactoryWithDefaultDataStore,
+    defaultDataStoreRuntimeRequestHandler,
+    DataObject,
+    DataObjectFactory,
 } from "old-aqueduct";
+export { IChannelFactory } from "old-component-runtime-definitions";
 export { IContainerContext, IFluidModule, IRuntimeFactory } from "old-container-definitions";
 export { Container } from "old-container-loader";
-export { componentRuntimeRequestHandler, ContainerRuntime, IContainerRuntimeOptions } from "old-container-runtime";
-export { IComponentFactory } from "old-runtime-definitions";
-export { createLocalLoader, initializeLocalContainer } from "old-test-utils";
+export { ContainerRuntime, IContainerRuntimeOptions } from "old-container-runtime";
+export {
+    componentRuntimeRequestHandler as dataStoreRuntimeRequestHandler,
+    RuntimeRequestHandlerBuilder,
+} from "old-request-handler";
+export { IFluidDataStoreFactory } from "old-runtime-definitions";
+export { createLocalLoader, initializeLocalContainer, TestFluidComponentFactory } from "old-test-utils";
+export { SharedMap } from "old-map";
+export { SharedString } from "old-sequence";
 /* eslint-enable import/no-extraneous-dependencies */

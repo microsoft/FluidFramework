@@ -71,9 +71,9 @@ export interface ITreeEntry {
  * Type of entries that can be stored in a tree
  */
 export enum TreeEntry {
-    Blob,
-    Commit,
-    Tree,
+    Blob = "Blob",
+    Commit = "Commit",
+    Tree = "Tree",
 }
 
 export interface ITree {
@@ -92,7 +92,7 @@ export interface ISnapshotTree {
 }
 
 /**
- * Represents a version of the snapshot of a component
+ * Represents a version of the snapshot of a data store
  */
 export interface IVersion {
     // Version ID

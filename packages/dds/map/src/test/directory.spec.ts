@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-console
-
 import assert from "assert";
 import {
     IBlob,
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
     MockSharedObjectServices,
     MockStorage,
@@ -31,7 +29,7 @@ function serialize(directory: SharedDirectory): string {
     const tree = directory.snapshot();
     assert(tree.entries.length === 1);
     assert(tree.entries[0].path === "header");
-    assert(tree.entries[0].type === TreeEntry[TreeEntry.Blob]);
+    assert(tree.entries[0].type === TreeEntry.Blob);
     const contents = (tree.entries[0].value as IBlob).contents;
     return JSON.stringify((JSON.parse(contents) as IDirectoryNewStorageFormat).content);
 }
@@ -39,17 +37,17 @@ function serialize(directory: SharedDirectory): string {
 describe("Directory", () => {
     let directory: SharedDirectory;
     let mapFactory: MapFactory;
-    let componentRuntime: MockComponentRuntime;
+    let dataStoreRuntime: MockFluidDataStoreRuntime;
 
     beforeEach(async () => {
-        componentRuntime = new MockComponentRuntime();
+        dataStoreRuntime = new MockFluidDataStoreRuntime();
         mapFactory = new MapFactory();
-        directory = new SharedDirectory("directory", componentRuntime, DirectoryFactory.Attributes);
+        directory = new SharedDirectory("directory", dataStoreRuntime, DirectoryFactory.Attributes);
     });
 
     describe("SharedDirectory in local state", () => {
         beforeEach(() => {
-            componentRuntime.local = true;
+            dataStoreRuntime.local = true;
         });
 
         it("Can create a new directory", () => {
@@ -106,12 +104,14 @@ describe("Directory", () => {
                 directory.set("first", "second");
                 directory.set("third", "fourth");
                 directory.set("fifth", "sixth");
-                const subMap = mapFactory.create(componentRuntime, "subMap");
+                const subMap = mapFactory.create(dataStoreRuntime, "subMap");
                 directory.set("object", subMap.handle);
+
+                const subMapHandleUrl = subMap.handle.absolutePath;
 
                 const serialized = serialize(directory);
                 // eslint-disable-next-line max-len
-                const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"subMap"}}}}`;
+                const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`;
                 assert.equal(serialized, expected);
             });
 
@@ -119,7 +119,7 @@ describe("Directory", () => {
                 directory.set("first", "second");
                 directory.set("third", "fourth");
                 directory.set("fifth", "sixth");
-                const subMap = mapFactory.create(componentRuntime, "subMap");
+                const subMap = mapFactory.create(dataStoreRuntime, "subMap");
                 directory.set("object", subMap.handle);
                 const nestedDirectory = directory.createSubDirectory("nested");
                 nestedDirectory.set("deepKey1", "deepValue1");
@@ -127,9 +127,10 @@ describe("Directory", () => {
                     .createSubDirectory("nested3")
                     .set("deepKey2", "deepValue2");
 
+                const subMapHandleUrl = subMap.handle.absolutePath;
                 const serialized = serialize(directory);
                 // eslint-disable-next-line max-len
-                const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"subMap"}}},"subdirectories":{"nested":{"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"}},"subdirectories":{"nested2":{"subdirectories":{"nested3":{"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
+                const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}},"subdirectories":{"nested":{"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"}},"subdirectories":{"nested2":{"subdirectories":{"nested3":{"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
                 assert.equal(serialized, expected);
             });
 
@@ -138,7 +139,7 @@ describe("Directory", () => {
                 directory.set("third", "fourth");
                 directory.set("fifth", undefined);
                 assert.ok(directory.has("fifth"));
-                const subMap = mapFactory.create(componentRuntime, "subMap");
+                const subMap = mapFactory.create(dataStoreRuntime, "subMap");
                 directory.set("object", subMap.handle);
                 const nestedDirectory = directory.createSubDirectory("nested");
                 nestedDirectory.set("deepKey1", "deepValue1");
@@ -148,9 +149,10 @@ describe("Directory", () => {
                     .createSubDirectory("nested3")
                     .set("deepKey2", "deepValue2");
 
+                const subMapHandleUrl = subMap.handle.absolutePath;
                 const serialized = serialize(directory);
                 // eslint-disable-next-line max-len
-                const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"subMap"}}},"subdirectories":{"nested":{"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"},"deepKeyUndefined":{"type":"Plain"}},"subdirectories":{"nested2":{"subdirectories":{"nested3":{"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
+                const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}},"subdirectories":{"nested":{"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"},"deepKeyUndefined":{"type":"Plain"}},"subdirectories":{"nested2":{"subdirectories":{"nested3":{"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
                 assert.equal(serialized, expected);
             });
         });
@@ -294,7 +296,7 @@ describe("Directory", () => {
                 assert((tree.entries[1].value as IBlob).contents.length >= 1024);
                 assert((tree.entries[2].value as IBlob).contents.length <= 200);
 
-                const directory2 = new SharedDirectory("test", componentRuntime, DirectoryFactory.Attributes);
+                const directory2 = new SharedDirectory("test", dataStoreRuntime, DirectoryFactory.Attributes);
                 const storage = MockSharedObjectServices.createFromTree(tree);
                 await directory2.load("branchId", storage);
 
@@ -320,8 +322,8 @@ describe("Directory", () => {
          *   same key.
          */
         it("should correctly process a set operation sent in local state", async () => {
-            // Set the component runtime to local.
-            componentRuntime.local = true;
+            // Set the data store runtime to local.
+            dataStoreRuntime.local = true;
 
             // Set a key in local state.
             const key = "testKey";
@@ -330,17 +332,17 @@ describe("Directory", () => {
 
             // Load a new SharedDirectory in connected state from the snapshot of the first one.
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const componentRuntime2 = new MockComponentRuntime();
-            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = MockSharedObjectServices.createFromTree(directory.snapshot());
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
-            const directory2 = new SharedDirectory("directory2", componentRuntime2, DirectoryFactory.Attributes);
+            const directory2 = new SharedDirectory("directory2", dataStoreRuntime2, DirectoryFactory.Attributes);
             await directory2.load("branchId", services2);
 
             // Now connect the first SharedDirectory
-            componentRuntime.local = false;
-            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+            dataStoreRuntime.local = false;
+            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
             const services1 = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(undefined),
@@ -364,8 +366,8 @@ describe("Directory", () => {
         });
 
         it("should correctly process a sub directory operation sent in local state", async () => {
-            // Set the component runtime to local.
-            componentRuntime.local = true;
+            // Set the data store runtime to local.
+            dataStoreRuntime.local = true;
 
             // Create a sub directory in local state.
             const subDirName = "testSubDir";
@@ -373,17 +375,17 @@ describe("Directory", () => {
 
             // Load a new SharedDirectory in connected state from the snapshot of the first one.
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const componentRuntime2 = new MockComponentRuntime();
-            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = MockSharedObjectServices.createFromTree(directory.snapshot());
             services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
-            const directory2 = new SharedDirectory("directory2", componentRuntime2, DirectoryFactory.Attributes);
+            const directory2 = new SharedDirectory("directory2", dataStoreRuntime2, DirectoryFactory.Attributes);
             await directory2.load("branchId", services2);
 
             // Now connect the first SharedDirectory
-            componentRuntime.local = false;
-            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+            dataStoreRuntime.local = false;
+            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
             const services1 = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(undefined),
@@ -415,7 +417,7 @@ describe("Directory", () => {
         beforeEach(async () => {
             // Connect the first directory
             containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+            const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
             const services = {
                 deltaConnection: containerRuntime.createDeltaConnection(),
                 objectStorage: new MockStorage(undefined),
@@ -423,9 +425,9 @@ describe("Directory", () => {
             directory.connect(services);
 
             // Create and connect a second directory
-            const componentRuntime2 = new MockComponentRuntime();
-            directory2 = new SharedDirectory("directory2", componentRuntime2, DirectoryFactory.Attributes);
-            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            directory2 = new SharedDirectory("directory2", dataStoreRuntime2, DirectoryFactory.Attributes);
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(undefined),

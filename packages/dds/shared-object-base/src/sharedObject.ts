@@ -5,18 +5,18 @@
 
 import assert from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
-    IObjectStorageService,
-    ISharedObjectServices,
-} from "@fluidframework/component-runtime-definitions";
+    IFluidDataStoreRuntime,
+    IChannelStorageService,
+    IChannelServices,
+} from "@fluidframework/datastore-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { v4 as uuid } from "uuid";
-import { SharedObjectComponentHandle } from "./handle";
+import { SharedObjectHandle } from "./handle";
 import { ISharedObject, ISharedObjectEvents } from "./types";
 
 /**
@@ -34,12 +34,12 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     public get ISharedObject() { return this; }
     public get IChannel() { return this; }
-    public get IComponentLoadable() { return this; }
+    public get IFluidLoadable() { return this; }
 
     /**
      * The handle referring to this SharedObject
      */
-    public readonly handle: IComponentHandle;
+    public readonly handle: IFluidHandle;
 
     /**
      * Telemetry logger for the shared object
@@ -54,7 +54,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * Services used by the shared object
      */
-    private services: ISharedObjectServices | undefined;
+    private services: IChannelServices | undefined;
 
     /**
      * True if the dds is bound to its parent.
@@ -73,24 +73,24 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * The loadable URL for this SharedObject
      */
     public get url(): string {
-        return this.handle.path;
+        return this.id;
     }
 
     /**
      * @param id - The id of the shared object
-     * @param runtime - The IComponentRuntime which contains the shared object
+     * @param runtime - The IFluidDataStoreRuntime which contains the shared object
      * @param attributes - Attributes of the shared object
      */
     constructor(
         public id: string,
-        protected runtime: IComponentRuntime,
+        protected runtime: IFluidDataStoreRuntime,
         public readonly attributes: IChannelAttributes) {
         super();
 
-        this.handle = new SharedObjectComponentHandle(
+        this.handle = new SharedObjectHandle(
             this,
             id,
-            runtime.IComponentHandleContext);
+            runtime.IFluidHandleContext);
 
         // Runtime could be null since some package hasn't turn on strictNullChecks yet
         // We should remove the null check once that is done
@@ -108,7 +108,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         // Only listen to these events if not attached.
         if (!this.isAttached()) {
-            this.runtime.on("collaborating", () => {
+            this.runtime.once("attaching", () => {
                 // Calling this will let the dds to do any custom processing based on attached
                 // like starting generating ops.
                 this.didAttach();
@@ -131,7 +131,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     public async load(
         branchId: string,
-        services: ISharedObjectServices): Promise<void> {
+        services: IChannelServices): Promise<void> {
         this.services = services;
 
         await this.loadCore(
@@ -169,7 +169,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * {@inheritDoc (ISharedObject:interface).connect}
      */
-    public connect(services: ISharedObjectServices) {
+    public connect(services: IChannelServices) {
         this.services = services;
         this.attachDeltaHandler();
     }
@@ -201,7 +201,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     protected abstract loadCore(
         branchId: string,
-        services: IObjectStorageService): Promise<void>;
+        services: IChannelStorageService): Promise<void>;
 
     /**
      * Allows the distributed data type to perform custom local loading.
@@ -243,15 +243,12 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param localOpMetadata - The local metadata associated with the message. This is kept locally by the runtime
      * and not sent to the server. This will be sent back when this message is received back from the server. This is
      * also sent if we are asked to resubmit the message.
-     * @returns Client sequence number
      */
-    protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): number {
-        if (!this.isAttached()) {
-            return -1;
+    protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
+        if (this.isAttached()) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.services!.deltaConnection.submit(content, localOpMetadata);
         }
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.services!.deltaConnection.submit(content, localOpMetadata);
     }
 
     /**
@@ -287,8 +284,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     /**
      * Promises that are waiting for an ack from the server before resolving should use this instead of new Promise.
-     * It ensures that if something changes that will interrupt that ack (e.g. the ComponentRuntime disposes),
+     * It ensures that if something changes that will interrupt that ack (e.g. the FluidDataStoreRuntime disposes),
      * the Promise will reject.
+     * If runtime is disposed when this call is made, executor is not run and promise is rejected right away.
      */
     protected async newAckBasedPromise<T>(
         executor: (resolve: (value?: T | PromiseLike<T> | undefined) => void, reject: (reason?: any) => void) => void,
@@ -296,14 +294,14 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         let rejectBecauseDispose: () => void;
         return new Promise<T>((resolve, reject) => {
             rejectBecauseDispose =
-                () => reject(new Error("ComponentRuntime disposed while this ack-based Promise was pending"));
-            this.runtime.on("dispose", rejectBecauseDispose);
+                () => reject(new Error("FluidDataStoreRuntime disposed while this ack-based Promise was pending"));
 
-            // Even in this case don't return, so the caller's executor can run
             if (this.runtime.disposed) {
-                reject("Preparing to wait for an op to be acked but ComponentRuntime has been disposed");
+                rejectBecauseDispose();
+                return;
             }
 
+            this.runtime.on("dispose", rejectBecauseDispose);
             executor(resolve, reject);
         }).finally(() => {
             // Note: rejectBecauseDispose will never be undefined here
@@ -330,7 +328,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this.didAttach();
 
         // attachDeltaHandler is only called after services is assigned
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.services.deltaConnection.attach({
             process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
                 this.process(message, local, localOpMetadata);
@@ -345,7 +342,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         // Trigger initial state
         // attachDeltaHandler is only called after services is assigned
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.setConnectionState(this.services.deltaConnection.connected);
     }
 

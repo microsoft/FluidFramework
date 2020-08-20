@@ -173,7 +173,6 @@ const treeFactories: ITestTreeFactory[] = [
 ];
 
 describe("MergeTree.insertingWalk", () => {
-    // tslint:disable-next-line:mocha-no-side-effect-code
     treeFactories.forEach((tf) => {
         describe(tf.name, () => {
             const treeFactory = tf;

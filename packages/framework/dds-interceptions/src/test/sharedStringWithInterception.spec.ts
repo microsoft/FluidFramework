@@ -5,9 +5,9 @@
 
 import assert from "assert";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { createSharedStringWithInterception } from "../sequence";
 
 describe("Shared String with Interception", () => {
@@ -20,7 +20,7 @@ describe("Shared String with Interception", () => {
         const userAttributes = { userId: "Fake User" };
         const documentId = "fakeId";
         let sharedString: SharedString;
-        let componentContext: IComponentContext;
+        let dataStoreContext: IFluidDataStoreContext;
 
         function orderSequentially(callback: () => void): void {
             callback();
@@ -43,17 +43,17 @@ describe("Shared String with Interception", () => {
         }
 
         beforeEach(() => {
-            const componentRuntime = new MockComponentRuntime();
-            sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
-            componentRuntime.bindToContext();
+            const dataStoreRuntime = new MockFluidDataStoreRuntime();
+            sharedString = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
+            dataStoreRuntime.bindToContext();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;
+            dataStoreContext = { containerRuntime: { orderSequentially } } as IFluidDataStoreContext;
         });
 
         it("should be able to intercept SharedString methods by the wrapper", async () => {
             const sharedStringWithInterception =
-                createSharedStringWithInterception(sharedString, componentContext, propertyInterceptionCb);
+                createSharedStringWithInterception(sharedString, dataStoreContext, propertyInterceptionCb);
 
             // Insert text into shared string.
             let text: string = "123";
@@ -75,7 +75,7 @@ describe("Shared String with Interception", () => {
 
         it("should be able to see changes made by the wrapper from the underlying shared string", async () => {
             const sharedStringWithInterception =
-                createSharedStringWithInterception(sharedString, componentContext, propertyInterceptionCb);
+                createSharedStringWithInterception(sharedString, dataStoreContext, propertyInterceptionCb);
 
             // Insert text via the shared string with interception wrapper.
             let text: string = "123";
@@ -100,7 +100,7 @@ describe("Shared String with Interception", () => {
 
         it("should be able to see changes made by the underlying shared string from the wrapper", async () => {
             const sharedStringWithInterception =
-                createSharedStringWithInterception(sharedString, componentContext, propertyInterceptionCb);
+                createSharedStringWithInterception(sharedString, dataStoreContext, propertyInterceptionCb);
 
             // Insert text via the underlying shared string.
             let text: string = "123";
@@ -146,7 +146,7 @@ describe("Shared String with Interception", () => {
             // Create the interception wrapper with the above callback. The set method should throw an assertion as this
             // will cause infinite recursion.
             sharedStringWithInterception =
-                createSharedStringWithInterception(sharedString, componentContext, recursiveInterceptionCb);
+                createSharedStringWithInterception(sharedString, dataStoreContext, recursiveInterceptionCb);
 
             let text: string = "123";
             const props: PropertySet = { style: "bold" };

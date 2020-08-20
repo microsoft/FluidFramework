@@ -100,6 +100,15 @@ export class DocumentDeltaConnection
         return deltaConnection;
     }
 
+    /**
+     * Last known sequence number to ordering service at the time of connection
+     * It may lap actual last sequence number (quite a bit, if container  is very active).
+     * But it's best information for client to figure out how far it is behind, at least
+     * for "read" connections. "write" connections may use own "join" op to similar information,
+     * that is likely to be more up-to-date.
+     */
+    public checkpointSequenceNumber: number | undefined;
+
     // Listen for ops sent before we receive a response to connect_document
     protected readonly queuedMessages: ISequencedDocumentMessage[] = [];
     private readonly queuedContents: IContentMessage[] = [];
@@ -255,7 +264,6 @@ export class DocumentDeltaConnection
             this.details.initialContents.push(...this.queuedContents);
 
             this.details.initialContents.sort((a, b) =>
-                // tslint:disable-next-line:strict-boolean-expressions
                 (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) ||
                     a.clientSequenceNumber - b.clientSequenceNumber);
             this.queuedContents.length = 0;
@@ -378,19 +386,8 @@ export class DocumentDeltaConnection
                     return;
                 }
 
-                /* Issue #1566: Backward compat */
-                if (response.initialMessages === undefined) {
-                    response.initialMessages = [];
-                }
-                if (response.initialClients === undefined) {
-                    response.initialClients = [];
-                }
-                if (response.initialContents === undefined) {
-                    response.initialContents = [];
-                }
-                if (response.initialSignals === undefined) {
-                    response.initialSignals = [];
-                }
+                // TODO: Get latest server bits
+                this.checkpointSequenceNumber = (response as any).checkpointSequenceNumber;
 
                 this.removeTrackedListeners(true);
                 resolve(response);

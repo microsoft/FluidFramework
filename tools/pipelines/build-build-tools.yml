@@ -8,24 +8,26 @@ name: $(Build.BuildId)
 trigger:
   branches:
     include:
-    - master
+    - main
   paths:
     include:
     - tools/build-tools
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/publish-npm-package.yml
 
 pr:
   branches:
     include:
-    - master
+    - main
     - release/*
   paths:
     include:
     - tools/build-tools
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
 
 extends:
   template: templates/build-npm-package.yml
@@ -35,3 +37,5 @@ extends:
     taskBuildDocs: false
     taskLint: false
     taskTest: false
+    taskAuth: false
+    buildNumberInPatch: true

@@ -19,9 +19,8 @@ fluid-doc-stats _api-extractor-temp/doc-models
                               driver-base.api.json:   19/  31  61.29%
                        ordered-collection.api.json:   27/  45  60.00%
                        driver-definitions.api.json:   44/  76  57.89%
-            component-runtime-definitions.api.json:   41/  71  57.75%
+            datastore-definitions.api.json:   41/  71  57.75%
                                  aqueduct.api.json:   45/  80  56.25%
-             experimental-creation-driver.api.json:   32/  58  55.17%
                       runtime-definitions.api.json:   65/ 119  54.62%
                                client-api.api.json:   32/  69  46.38%
                             iframe-driver.api.json:   30/  65  46.15%
@@ -43,12 +42,12 @@ fluid-doc-stats _api-extractor-temp/doc-models
                     container-definitions.api.json:   73/ 282  25.89%
                  execution-context-loader.api.json:    1/   4  25.00%
                           web-code-loader.api.json:    5/  21  23.81%
-                component-core-interfaces.api.json:   14/  59  23.73%
+                core-interfaces.api.json:   14/  59  23.73%
                                  debugger.api.json:   16/  69  23.19%
                         container-runtime.api.json:   53/ 230  23.04%
                             replay-driver.api.json:   23/ 109  21.10%
                                  sequence.api.json:   57/ 313  18.21%
-                           component-base.api.json:    5/  28  17.86%
+                         data-object-base.api.json:    5/  28  17.86%
                            aqueduct-react.api.json:    6/  39  15.38%
                         component-runtime.api.json:    7/  64  10.94%
                    framework-experimental.api.json:    4/  43   9.30%

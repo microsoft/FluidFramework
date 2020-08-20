@@ -17,7 +17,7 @@ export enum DriverErrorType {
      * Some non-categorized (below) networking error
      * Include errors like  fatal server error (usually 500).
      */
-    genericNetworkError  = "genericNetworkError",
+    genericNetworkError = "genericNetworkError",
 
     /**
      * Access denied - user does not have enough privileges to open a file, or continue to operate on a file
@@ -46,9 +46,22 @@ export enum DriverErrorType {
 
     /**
      * User does not have write permissions to a file, but is changing content of a file.
-     * That might be indication of some component error - components should not generate ops in readonly mode.
+     * That might be indication of some data store error - data stores should not generate ops in readonly mode.
      */
     writeError = "writeError",
+
+    /**
+     * Generic fetch failure.
+     * Most of such failures are due to client being offline, or DNS is not reachable, such errors map to
+     * DriverErrorType.offlineError. Anything else that can't be diagnose as likely offline maps to this error.
+     * This can also indicate no response from server.
+     */
+    fetchFailure = "fetchFailure",
+
+    /**
+     * Unexpected response from server. Either JSON is malformed, or some required properties are missing
+     */
+    incorrectServerResponse = "incorrectServerResponse",
 }
 
 /**
@@ -77,12 +90,14 @@ export interface IGenericNetworkError extends IDriverErrorBase {
  */
 export interface IDriverBasicError extends IDriverErrorBase {
     readonly errorType:
-        DriverErrorType.genericError
-        | DriverErrorType.authorizationError
-        | DriverErrorType.fileNotFoundOrAccessDeniedError
-        | DriverErrorType.offlineError
-        | DriverErrorType.unsupportedClientProtocolVersion
-        | DriverErrorType.writeError;
+    DriverErrorType.genericError
+    | DriverErrorType.authorizationError
+    | DriverErrorType.fileNotFoundOrAccessDeniedError
+    | DriverErrorType.offlineError
+    | DriverErrorType.unsupportedClientProtocolVersion
+    | DriverErrorType.writeError
+    | DriverErrorType.fetchFailure
+    | DriverErrorType.incorrectServerResponse;
     readonly statusCode?: number;
 }
 

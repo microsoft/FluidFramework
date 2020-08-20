@@ -13,6 +13,24 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "Matrix Bench",
+            "cwd": "${workspaceFolder}/packages/dds/matrix/bench",
+            "args": [
+                "-r",
+                "ts-node/register",
+                "-r",
+                "source-map-support/register",
+                "src/index.ts",
+                "--runInBand"
+            ],
+            "env": { "TS_NODE_PROJECT": "tsconfig.json", },
+            // "skipFiles": ["<node_internals>/**"],
+            "console": "integratedTerminal",
+            "smartStep": true,
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "Matrix Tests",
             "cwd": "${workspaceFolder}/packages/dds/matrix",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
@@ -23,9 +41,11 @@
                 "source-map-support/register",
                 "--no-timeouts",
                 // "test/**/matrix.spec.ts",
-                "test/**/matrix.stress.spec.ts",
+                "test/**/matrix.undo.spec.ts",
+                // "test/**/matrix.stress.spec.ts",
+                // "test/**/sparsearray2d.spec.ts",
                 // "-f",
-                // "stress failure",
+                // "fail",
                 "--exit"
             ],
             "env": { "TS_NODE_PROJECT": "tsconfig.json", },
@@ -268,7 +288,7 @@
         {
             "type": "node",
             "request": "attach",
-            "name": "Attach to routemaster",
+            "name": "Attach to routemanager",
             "address": "localhost",
             "port": 5863,
             "restart": true,

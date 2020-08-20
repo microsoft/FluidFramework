@@ -7,10 +7,10 @@ import assert from "assert";
 import { AgentSchedulerFactory, TaskManager } from "@fluidframework/agent-scheduler";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
-import { IAgentScheduler, SchedulerType } from "@fluidframework/runtime-definitions";
+import { IAgentScheduler } from "@fluidframework/runtime-definitions";
+import { schedulerId } from "@fluidframework/container-runtime";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
+import { createLocalLoader, OpProcessingController, initializeLocalContainer } from "@fluidframework/test-utils";
 
 describe("AgentScheduler", () => {
     const leader = "leader";
@@ -21,7 +21,7 @@ describe("AgentScheduler", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let opProcessingController: OpProcessingController;
 
     async function createContainer(): Promise<Container> {
         const loader: ILoader = createLocalLoader([
@@ -31,10 +31,10 @@ describe("AgentScheduler", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function getComponent(componentId: string, container: Container): Promise<TaskManager> {
-        const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            throw new Error(`Component with id: ${componentId} not found`);
+    async function requestFluidObject(dataStoreId: string, container: Container): Promise<TaskManager> {
+        const response = await container.request({ url: dataStoreId });
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
+            throw new Error(`Data Store with id: ${dataStoreId} not found`);
         }
         return response.value as TaskManager;
     }
@@ -46,16 +46,16 @@ describe("AgentScheduler", () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
 
             const container = await createContainer();
-            scheduler = await getComponent(`${SchedulerType}`, container)
+            scheduler = await requestFluidObject(schedulerId, container)
                 .then((taskManager) => taskManager.IAgentScheduler);
 
             // Make sure all initial ops (around leadership) are processed.
             // It takes a while because we start in unattached mode, and attach scheduler,
             // which causes loss of all tasks and reassignment.
-            containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-            containerDeltaEventManager.registerDocuments(container);
-            await containerDeltaEventManager.process();
-            containerDeltaEventManager.resumeProcessing(container);
+            opProcessingController = new OpProcessingController(deltaConnectionServer);
+            opProcessingController.addDeltaManagers(container.deltaManager);
+            await opProcessingController.process();
+            opProcessingController.resumeProcessing(container.deltaManager);
         });
 
         it("No tasks initially", async () => {
@@ -124,27 +124,27 @@ describe("AgentScheduler", () => {
         async function syncContainers() {
             // Pauses the deltaQueues of the containers. Waits until all pending ops in the container
             // and the server are processed.
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
             // Resume the containes because they would have been paused by the above process call.
-            containerDeltaEventManager.resumeProcessing(container1, container2);
+            opProcessingController.resumeProcessing(container1.deltaManager, container2.deltaManager);
         }
 
         beforeEach(async () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
 
             container1 = await createContainer();
-            scheduler1 = await getComponent(`${SchedulerType}`, container1)
+            scheduler1 = await requestFluidObject(schedulerId, container1)
                 .then((taskManager) => taskManager.IAgentScheduler);
 
             container2 = await createContainer();
-            scheduler2 = await getComponent(`${SchedulerType}`, container2)
+            scheduler2 = await requestFluidObject(schedulerId, container2)
                 .then((taskManager) => taskManager.IAgentScheduler);
 
             // Make sure all initial ops (around leadership) are processed.
             // It takes a while because we start in unattached mode, and attach scheduler,
             // which causes loss of all tasks and reassignment.
-            containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-            containerDeltaEventManager.registerDocuments(container1, container2);
+            opProcessingController = new OpProcessingController(deltaConnectionServer);
+            opProcessingController.addDeltaManagers(container1.deltaManager, container2.deltaManager);
             await syncContainers();
         });
 

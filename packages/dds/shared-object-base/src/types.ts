@@ -4,12 +4,12 @@
  */
 
 import { ITree, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IChannel, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { IChannel, IChannelServices } from "@fluidframework/datastore-definitions";
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
-declare module "@fluidframework/container-definitions" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    interface IComponent extends Readonly<Partial<IProvideSharedObject>> { }
+    interface IFluidObject extends Readonly<Partial<IProvideSharedObject>> { }
 }
 
 export const ISharedObject: keyof IProvideSharedObject = "ISharedObject";
@@ -29,7 +29,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
     extends IProvideSharedObject, IChannel, IEventProvider<TEvent> {
     /**
-     * Binds the given shared object to its containing component runtime, causing it to attach once
+     * Binds the given shared object to its containing data store runtime, causing it to attach once
      * the runtime attaches.
      */
     bindToContext(): void;
@@ -50,5 +50,5 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
      * Enables the channel to send and receive ops.
      * @param services - Services to connect to
      */
-    connect(services: ISharedObjectServices): void;
+    connect(services: IChannelServices): void;
 }

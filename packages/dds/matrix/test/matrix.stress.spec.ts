@@ -7,9 +7,9 @@ import "mocha";
 
 import { strict as assert } from "assert";
 import { Random } from "best-random";
-import { ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockStorage,
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
@@ -76,14 +76,14 @@ describe("Matrix", () => {
 
                 // Create matrices for this stress run.
                 for (let i = 0; i < numClients; i++) {
-                    const componentRuntimeN = new MockComponentRuntime();
-                    const containerRuntimeN = containerRuntimeFactory.createContainerRuntime(componentRuntimeN);
-                    const servicesN: ISharedObjectServices = {
+                    const dataStoreRuntimeN = new MockFluidDataStoreRuntime();
+                    const containerRuntimeN = containerRuntimeFactory.createContainerRuntime(dataStoreRuntimeN);
+                    const servicesN: IChannelServices = {
                         deltaConnection: containerRuntimeN.createDeltaConnection(),
                         objectStorage: new MockStorage(),
                     };
 
-                    const matrixN = new SharedMatrix(componentRuntimeN, `matrix-${i}`, SharedMatrixFactory.Attributes);
+                    const matrixN = new SharedMatrix(dataStoreRuntimeN, `matrix-${i}`, SharedMatrixFactory.Attributes);
                     matrixN.connect(servicesN);
 
                     matrices.push(matrixN);
@@ -264,30 +264,36 @@ describe("Matrix", () => {
             { numClients: 2, numOps: 200, syncProbability: 0.3, disconnectProbability: 1, seed: 0x84d43a0a },
         ]) {
             it(`Stress (numClients=${numClients} numOps=${numOps} syncProbability=${syncProbability} disconnectProbability=${disconnectProbability} seed=0x${seed.toString(16).padStart(8, "0")})`,
+                // Note: Must use 'function' rather than arrow '() => { .. }' in order to set 'this.timeout(..)'
                 async function () {
                     this.timeout(10000);
 
                     await stress(numClients, numOps, syncProbability, disconnectProbability, seed);
-                });
+                }
+            );
         }
 
-        it.skip("stress-loop", async function() {
-            console.log("\n*** Begin Stress-Loop ***");
-            this.timeout(0);    // Disable timeouts for stress loop
+        it("stress-loop",
+            // Note: Must use 'function' rather than arrow '() => { .. }' in order to set 'this.timeout(..)'
+            async function() {
+                this.timeout(0);    // Disable timeouts for stress loop
 
-            const start = Date.now();
-            while (true) {
-                await stress(
-                    /* numClients: */ 2,
-                    /* numOps: */ 50,
-                    /* syncProbability: */ 0.3,
-                    /* disconnectProbability: */ 1,
-                    /* seed: */ (Math.random() * 0x100000000) >>> 0
-                );
+                let iterations = 0;
+                const start = Date.now();
 
-                console.log(matrices[0].toString());
-                console.log(`Total Elapsed: ${((Date.now() - start) / 1000).toFixed(2)}s\n`)
+                while (true) {
+                    await stress(
+                        /* numClients: */ 3,
+                        /* numOps: */ 10000,
+                        /* syncProbability: */ 0.1,
+                        /* disconnectProbability: */ 0.01,
+                        /* seed: */ (Math.random() * 0x100000000) >>> 0
+                    );
+
+                    // console.log(matrices[0].toString());
+                    console.log(`Stress loop: ${iterations} iterations completed - Total Elapsed: ${((Date.now() - start) / 1000).toFixed(2)}s`)
+                }
             }
-        });
+        );
     });
 });

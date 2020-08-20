@@ -7,13 +7,13 @@ import assert from "assert";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
-    ITestFluidComponent,
+    OpProcessingController,
+    ITestFluidObject,
     initializeLocalContainer,
-    TestFluidComponentFactory,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
 describe("SharedCounter", () => {
@@ -25,45 +25,48 @@ describe("SharedCounter", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
-    let component1: ITestFluidComponent;
+    let opProcessingController: OpProcessingController;
+    let dataStore1: ITestFluidObject;
     let sharedCounter1: ISharedCounter;
     let sharedCounter2: ISharedCounter;
     let sharedCounter3: ISharedCounter;
 
     async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([[counterId, SharedCounter.getFactory()]]);
+        const factory = new TestFluidObjectFactory([[counterId, SharedCounter.getFactory()]]);
         const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
-        const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            throw new Error(`Component with id: ${componentId} not found`);
+    async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidObject> {
+        const response = await container.request({ url: dataStoreId });
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
+            throw new Error(`DataStore with id: ${dataStoreId} not found`);
         }
-        return response.value as ITestFluidComponent;
+        return response.value as ITestFluidObject;
     }
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
         const container1 = await createContainer();
-        component1 = await getComponent("default", container1);
-        sharedCounter1 = await component1.getSharedObject<SharedCounter>(counterId);
+        dataStore1 = await requestFluidObject("default", container1);
+        sharedCounter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
 
         const container2 = await createContainer();
-        const component2 = await getComponent("default", container2);
-        sharedCounter2 = await component2.getSharedObject<SharedCounter>(counterId);
+        const dataStore2 = await requestFluidObject("default", container2);
+        sharedCounter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 
         const container3 = await createContainer();
-        const component3 = await getComponent("default", container3);
-        sharedCounter3 = await component3.getSharedObject<SharedCounter>(counterId);
+        const dataStore3 = await requestFluidObject("default", container3);
+        sharedCounter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
-        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-        containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime, component3.runtime);
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController.addDeltaManagers(
+            dataStore1.runtime.deltaManager,
+            dataStore2.runtime.deltaManager,
+            dataStore3.runtime.deltaManager);
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
     });
 
     function verifyCounterValue(counter: ISharedCounter, expectedValue, index: number) {
@@ -95,12 +98,12 @@ describe("SharedCounter", () => {
 
         it("can increment and decrement the value in 3 containers correctly", async () => {
             sharedCounter2.increment(7);
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
             assert.equal(sharedCounter1.value, 7);
             assert.equal(sharedCounter2.value, 7);
             assert.equal(sharedCounter3.value, 7);
             sharedCounter3.increment(-20);
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
             assert.equal(sharedCounter1.value, -13);
             assert.equal(sharedCounter2.value, -13);
             assert.equal(sharedCounter3.value, -13);
@@ -146,7 +149,7 @@ describe("SharedCounter", () => {
 
                 // do the increment
                 incrementer.increment(incrementAmount);
-                await containerDeltaEventManager.process();
+                await opProcessingController.process();
 
                 // event count is correct
                 assert.equal(eventCount1, expectedEventCount);

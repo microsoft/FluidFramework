@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ICreateCommitParams, ICreateTreeEntry, IRef } from "@fluidframework/gitresources";
+import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
     ICollection,
     IContext,
@@ -60,10 +60,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         super();
     }
 
-    // Cache for ref and last summary checkpoint.
-    private existingRef: IRef;
-    private summaryCheckpoint: IDeliCheckpoint;
-
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
         const documentId = config.get("documentId");
         const tenantId = config.get("tenantId");
@@ -85,17 +81,34 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
         let lastCheckpoint: IDeliCheckpoint;
 
+        const messageMetaData = {
+            documentId,
+            tenantId,
+        };
+
         // Restore deli state if not present in the cache. Mongodb casts undefined as null so we are checking
-        // both to be safe. Empty sring denotes a cache that was cleared due to a service summary
+        // both to be safe. Empty sring denotes a cache that was cleared due to a service summary or the document
+        // was created within a different tenant.
         // eslint-disable-next-line no-null/no-null
         if (dbObject.deli === undefined || dbObject.deli === null) {
-            context.log.info(`New document. Setting empty deli checkpoint for ${tenantId}/${documentId}`);
+            context.log.info(`New document. Setting empty deli checkpoint`, { messageMetaData });
             lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
         } else {
             if (dbObject.deli === "") {
+                context.log.info(`Existing document. Fetching checkpoint from summary`, { messageMetaData });
+
                 lastCheckpoint = await this.loadStateFromSummary(tenantId, documentId, gitManager, context.log);
                 if (lastCheckpoint === undefined) {
-                    throw Error("Summary cannot be fetched");
+                    context.log.error(`Summary cannot be fetched`, { messageMetaData });
+                    lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
+                } else {
+                    // Since the document was originated elsewhere or cache was cleared, logOffset info is irrelavant.
+                    // Currently the lambda checkpoints only after updating the logOffset so setting this to lower
+                    // is okay. Conceptually this is similar to default checkpoint where logOffset is -1. In this case,
+                    // the sequence number is 'n' rather than '0'.
+                    lastCheckpoint.logOffset = -1;
+                    lastCheckpoint.epoch = leaderEpoch;
+                    context.log.info(JSON.stringify(lastCheckpoint));
                 }
             } else {
                 lastCheckpoint = JSON.parse(dbObject.deli);
@@ -150,21 +163,23 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         documentId: string,
         gitManager: IGitManager,
         logger: ILogger): Promise<IDeliCheckpoint> {
-        if (this.summaryCheckpoint === undefined) {
-            this.existingRef = await gitManager.getRef(encodeURIComponent(documentId));
-            if (this.existingRef) {
-                try {
-                    const content = await gitManager.getContent(this.existingRef.object.sha, ".serviceProtocol/deli");
-                    this.summaryCheckpoint = JSON.parse(
-                        Buffer.from(content.content, content.encoding).toString()) as IDeliCheckpoint;
-                } catch (exception) {
-                    logger.error(`Error fetching deli state from summary: ${tenantId}/${documentId}`);
-                    logger.error(JSON.stringify(exception));
-                    return undefined;
-                }
+        const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
+        if (existingRef) {
+            try {
+                const content = await gitManager.getContent(existingRef.object.sha, ".serviceProtocol/deli");
+                const summaryCheckpoint = JSON.parse(
+                    Buffer.from(content.content, content.encoding).toString()) as IDeliCheckpoint;
+                return summaryCheckpoint;
+            } catch (exception) {
+                const messageMetaData = {
+                    documentId,
+                    tenantId,
+                };
+                logger.error(`Error fetching deli state from summary`, { messageMetaData });
+                logger.error(JSON.stringify(exception), { messageMetaData });
+                return undefined;
             }
         }
-        return this.summaryCheckpoint;
     }
 
     // Check the current epoch with last epoch. If not matched, we need to flip the term.
@@ -197,7 +212,11 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 newCheckpoint.logOffset = logOffset;
                 // Now create the summary.
                 await this.createSummaryWithLatestTerm(gitManager, newCheckpoint, documentId);
-                logger.info(`Created a summary on epoch tick`);
+                const messageMetaData = {
+                    documentId,
+                    tenantId,
+                };
+                logger.info(`Created a summary on epoch tick`, { messageMetaData });
             }
         }
         return newCheckpoint;
@@ -207,9 +226,10 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         gitManager: IGitManager,
         checkpoint: IDeliCheckpoint,
         documentId: string) {
+        const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         const [lastCommit, scribeContent] = await Promise.all([
-            gitManager.getCommit(this.existingRef.object.sha),
-            gitManager.getContent(this.existingRef.object.sha, ".serviceProtocol/scribe")]);
+            gitManager.getCommit(existingRef.object.sha),
+            gitManager.getContent(existingRef.object.sha, ".serviceProtocol/scribe")]);
 
         const scribe = Buffer.from(scribeContent.content, scribeContent.encoding).toString();
         const serviceProtocolEntries = generateServiceProtocolEntries(JSON.stringify(checkpoint), scribe);

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
@@ -161,9 +161,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             getVersions: async (versionId: string | null, count: number) => {
                 return storage.getVersions(versionId, count);
             },
-            getContent: async (version, path) => {
-                return storage.getContent(version, path);
-            },
             read: async (id) => {
                 return storage.read(id);
             },
@@ -175,10 +172,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             },
             getRawUrl: (blobId) => {
                 return storage.getRawUrl(blobId);
-            },
-            // back-compat: 0.14 uploadSummary
-            uploadSummary: async (commit) => {
-                return storage.uploadSummary(commit);
             },
             uploadSummaryWithContext: async (summary, context) => {
                 return storage.uploadSummaryWithContext(summary, context);

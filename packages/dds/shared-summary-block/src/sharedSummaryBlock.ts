@@ -12,13 +12,13 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
-    IObjectStorageService,
+    IFluidDataStoreRuntime,
+    IChannelStorageService,
     Jsonable,
     AsJsonable,
-} from "@fluidframework/component-runtime-definitions";
+    IChannelFactory,
+} from "@fluidframework/datastore-definitions";
 import {
-    ISharedObjectFactory,
     SharedObject,
 } from "@fluidframework/shared-object-base";
 import { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory";
@@ -42,20 +42,20 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     /**
      * Create a new shared summary block
      *
-     * @param runtime - component runtime the new shared summary block belongs to.
+     * @param runtime - data store runtime the new shared summary block belongs to.
      * @param id - optional name of the shared summary block.
      * @returns newly created shared summary block (but not attached yet).
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedSummaryBlockFactory.Type) as SharedSummaryBlock;
     }
 
     /**
-     * Get a factory for SharedSummaryBlock to register with the component.
+     * Get a factory for SharedSummaryBlock to register with the data store.
      *
      * @returns a factory that creates and loads SharedSummaryBlock.
      */
-    public static getFactory(): ISharedObjectFactory {
+    public static getFactory(): IChannelFactory {
         return new SharedSummaryBlockFactory();
     }
 
@@ -69,10 +69,10 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      * be provided.
      *
      * @param id - optional name of the shared summary block.
-     * @param runtime - component runtime thee object belongs to.
+     * @param runtime - data store runtime thee object belongs to.
      * @param attributes - The attributes for the object.
      */
-    constructor(id: string, runtime: IComponentRuntime, attributes: IChannelAttributes) {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
     }
 
@@ -109,7 +109,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: JSON.stringify(contentsBlob),
                         encoding: "utf-8",
@@ -128,7 +128,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      */
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService): Promise<void> {
+        storage: IChannelStorageService): Promise<void> {
         const rawContent = await storage.read(snapshotFileName);
         const contents = JSON.parse(fromBase64ToUtf8(rawContent)) as ISharedSummaryBlockDataSerializable;
 

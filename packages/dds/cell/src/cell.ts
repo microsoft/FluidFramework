@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { ISerializedHandle } from "@fluidframework/component-core-interfaces";
+import { ISerializedHandle } from "@fluidframework/core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
@@ -15,10 +15,12 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
-    IObjectStorageService,
-} from "@fluidframework/component-runtime-definitions";
-import { ISharedObjectFactory, SharedObject, ValueType } from "@fluidframework/shared-object-base";
+    IFluidDataStoreRuntime,
+    IChannelStorageService,
+    IChannelFactory,
+    Serializable,
+} from "@fluidframework/datastore-definitions";
+import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";
 import { ISharedCell, ISharedCellEvents } from "./interfaces";
@@ -50,30 +52,31 @@ const snapshotFileName = "header";
 /**
  * Implementation of a cell shared object
  */
-export class SharedCell extends SharedObject<ISharedCellEvents> implements ISharedCell {
+export class SharedCell<T extends Serializable = any> extends SharedObject<ISharedCellEvents<T>>
+    implements ISharedCell<T> {
     /**
      * Create a new shared cell
      *
-     * @param runtime - component runtime the new shared map belongs to
+     * @param runtime - data store runtime the new shared map belongs to
      * @param id - optional name of the shared map
      * @returns newly create shared map (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, CellFactory.Type) as SharedCell;
     }
 
     /**
-     * Get a factory for SharedCell to register with the component.
+     * Get a factory for SharedCell to register with the data store.
      *
      * @returns a factory that creates and load SharedCell
      */
-    public static getFactory(): ISharedObjectFactory {
+    public static getFactory(): IChannelFactory {
         return new CellFactory();
     }
     /**
      * The data held by this cell.
      */
-    private data: any;
+    private data: T | undefined;
 
     /**
      * This is used to assign a unique id to outgoing messages. It is used to track messages until
@@ -91,10 +94,10 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      * Constructs a new shared cell. If the object is non-local an id and service interfaces will
      * be provided
      *
-     * @param runtime - component runtime the shared map belongs to
+     * @param runtime - data store runtime the shared map belongs to
      * @param id - optional name of the shared map
      */
-    constructor(id: string, runtime: IComponentRuntime, attributes: IChannelAttributes) {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
     }
 
@@ -108,7 +111,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
     /**
      * {@inheritDoc ISharedCell.set}
      */
-    public set(value: any) {
+    public set(value: T) {
         if (SharedObject.is(value)) {
             throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
         }
@@ -177,7 +180,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: JSON.stringify(content),
                         encoding: "utf-8",
@@ -200,7 +203,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      */
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService): Promise<void> {
+        storage: IChannelStorageService): Promise<void> {
         const rawContent = await storage.read(snapshotFileName);
 
         const content = rawContent !== undefined
@@ -273,7 +276,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
         }
     }
 
-    private setCore(value: any) {
+    private setCore(value: T) {
         this.data = value;
         this.emit("valueChanged", value);
     }
@@ -283,16 +286,16 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
         this.emit("delete");
     }
 
-    private toSerializable(value: any) {
+    private toSerializable(value: T | undefined) {
         if (value === undefined) {
             return value;
         }
 
         // Stringify to convert to the serialized handle values - and then parse in order to create
         // a POJO for the op
-        const stringified = this.runtime.IComponentSerializer.stringify(
+        const stringified = this.runtime.IFluidSerializer.stringify(
             value,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidHandleContext,
             this.handle);
         return JSON.parse(stringified);
     }
@@ -310,7 +313,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
         }
 
         return value !== undefined
-            ? this.runtime.IComponentSerializer.parse(JSON.stringify(value), this.runtime.IComponentHandleContext)
+            ? this.runtime.IFluidSerializer.parse(JSON.stringify(value), this.runtime.IFluidHandleContext)
             : value;
     }
 }

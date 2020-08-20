@@ -6,4 +6,6 @@
 export * from "./interfaces";
 export * from "./localLoader";
 export * from "./localCodeLoader";
-export * from "./testFluidComponent";
+export * from "./opProcessingController";
+export * from "./testContainerRuntimeFactory";
+export * from "./testFluidObject";

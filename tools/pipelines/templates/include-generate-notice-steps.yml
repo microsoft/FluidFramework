@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
 parameters:
 - name: buildDirectory
   type: string
@@ -10,13 +13,16 @@ steps:
     verbosity: Verbose
     scanType: Register
     alertWarningLevel: High
-
+# NOTICE File Generator requires node
+- task: UseNode@1
+  displayName: Use Node 12.x
+  inputs: 
+    version: 12.x
 - task: msospo.ospo-extension.8d7f9abb-6896-461d-9e25-4f74ed65ddb2.notice@0
   displayName: 'NOTICE File Generator'
 
-- task: CopyFiles@2
-  displayName: 'Copy NOTICE'
+- task: DownloadPipelineArtifact@2
+  displayName: 'Download NOTICE'
   inputs:
-    SourceFolder: '$(System.DefaultWorkingDirectory)'
-    Contents: NOTICE.txt
-    TargetFolder: ${{ parameters.buildDirectory }}
+    artifact: NOTICE.txt
+    path: ${{ parameters.buildDirectory }}

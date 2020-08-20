@@ -4,17 +4,18 @@
  */
 
 import * as assert from "assert";
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager, TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    OpProcessingController,
     LocalCodeLoader,
     initializeLocalContainer,
-    ITestFluidComponent,
-    TestFluidComponentFactory,
+    ITestFluidObject,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
@@ -27,10 +28,10 @@ describe("Document Dirty", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let documentServiceFactory: TestDocumentServiceFactory;
-    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let documentServiceFactory: LocalDocumentServiceFactory;
+    let opProcessingController: OpProcessingController;
     let container: Container;
-    let containerComp: ITestFluidComponent;
+    let containerComp: ITestFluidObject;
     let containerCompContainerRuntime: IContainerRuntime;
     let containerCompMap: SharedMap;
     let wasMarkedDirtyCount: number;
@@ -65,21 +66,21 @@ describe("Document Dirty", () => {
     }
 
     async function createContainer(): Promise<Container> {
-        const factory: TestFluidComponentFactory = new TestFluidComponentFactory(
+        const factory: TestFluidObjectFactory = new TestFluidObjectFactory(
             [
                 [mapId, SharedMap.getFactory()],
             ],
         );
 
         const runtimeFactory =
-            new ContainerRuntimeFactoryWithDefaultComponent(
+            new ContainerRuntimeFactoryWithDefaultDataStore(
                 "default",
                 [
                     ["default", Promise.resolve(factory)],
                 ],
             );
 
-        const urlResolver = new TestResolver();
+        const urlResolver = new LocalResolver();
         const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
         const loader = new Loader(
@@ -93,28 +94,28 @@ describe("Document Dirty", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function getComponent(componentId: string, fromContainer: Container):
-        Promise<ITestFluidComponent> {
-        const response = await fromContainer.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            throw new Error(`Component with id: ${componentId} not found`);
+    async function requestFluidObject(dataStoreId: string, fromContainer: Container):
+        Promise<ITestFluidObject> {
+        const response = await fromContainer.request({ url: dataStoreId });
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
+            throw new Error(`DataStore with id: ${dataStoreId} not found`);
         }
-        return response.value as ITestFluidComponent;
+        return response.value as ITestFluidObject;
     }
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-        documentServiceFactory = new TestDocumentServiceFactory(deltaConnectionServer);
+        documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 
-        // Create the first container, component and DDSes.
+        // Create the first container, dataStore and DDSes.
         container = await createContainer();
-        containerComp = await getComponent("default", container);
+        containerComp = await requestFluidObject("default", container);
         containerCompContainerRuntime = containerComp.context.containerRuntime as IContainerRuntime;
         containerCompMap = await containerComp.getSharedObject<SharedMap>(mapId);
-        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-        containerDeltaEventManager.registerDocuments(containerComp.runtime);
+        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController.addDeltaManagers(containerComp.runtime.deltaManager);
 
-        await containerDeltaEventManager.process();
+        await opProcessingController.process();
 
         wasMarkedDirtyCount = 0;
         wasMarkedCleanCount = 0;
@@ -134,7 +135,7 @@ describe("Document Dirty", () => {
                 "Document is dirty after value set");
 
             // Wait for the ops to get processed which should mark the document clean after processing
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             // Document will have been marked clean on reconnection
             assert.equal(wasMarkedCleanCount, 1,
@@ -144,8 +145,7 @@ describe("Document Dirty", () => {
                 "Document is cleaned after all ops have been acked");
         });
 
-        // TODO: Enable this test once #2653 is fixed
-        it.skip("marks state as dirty when batch ops are sent and clean when acks are received", async () => {
+        it("marks state as dirty when batch ops are sent and clean when acks are received", async () => {
             containerComp.context.containerRuntime.orderSequentially(() => {
                 containerCompMap.set("key1", "value1");
                 containerCompMap.set("key2", "value2");
@@ -158,7 +158,7 @@ describe("Document Dirty", () => {
                 "Document is dirty after value set");
 
             // Wait for the ops to get processed which should mark the document clean after processing
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), false,
                 "Document is cleaned after all ops have been acked");
@@ -210,7 +210,7 @@ describe("Document Dirty", () => {
                 "Document should have been marked dirty to overwrite the clean value,"
                 + "so that the final state is dirty");
 
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), false,
                 "Document is cleaned after all ops have been acked");
@@ -259,7 +259,7 @@ describe("Document Dirty", () => {
                 + "state is dirty");
 
             // Wait for the ops to get processed.
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             assert.equal(wasMarkedDirtyCount, 2,
                 `Document will have incremented the dirty count`);
@@ -310,7 +310,7 @@ describe("Document Dirty", () => {
                 "Document should have been marked dirty after to overwrite the clean value,"
                 + "so that the final state is dirty");
 
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), false,
                 "Document is cleaned after all ops have been acked");
@@ -362,7 +362,7 @@ describe("Document Dirty", () => {
                 + "state is dirty");
 
             // Wait for the ops to get processed.
-            await containerDeltaEventManager.process();
+            await opProcessingController.process();
 
             assert.equal(wasMarkedDirtyCount, 2,
                 `Document will have incremented the dirty count`);

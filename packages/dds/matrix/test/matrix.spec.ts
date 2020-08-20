@@ -6,9 +6,9 @@
 import "mocha";
 
 import { strict as assert } from "assert";
-import { Serializable, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { Serializable, IChannelServices } from "@fluidframework/datastore-definitions";
 import {
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
@@ -16,12 +16,12 @@ import {
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "../src";
-import { fill, check, insertFragmented, extract, expectSize } from "./utils";
+import { fill, check, insertFragmented, extract, expectSize, checkValue } from "./utils";
 import { TestConsumer } from "./testconsumer";
 
 describe("Matrix", () => {
     describe("local client", () => {
-        let componentRuntime: MockComponentRuntime;
+        let dataStoreRuntime: MockFluidDataStoreRuntime;
         let matrix: SharedMatrix<number>;
         let consumer: TestConsumer<undefined | null | number>;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
 
@@ -31,12 +31,12 @@ describe("Matrix", () => {
             // Create a snapshot
             const objectStorage = new MockStorage(matrix.snapshot());
 
-            // Create a local ComponentRuntime since we only want to load the snapshot for a local client.
-            const componentRuntime = new MockComponentRuntime();
-            componentRuntime.local = true;
+            // Create a local DataStoreRuntime since we only want to load the snapshot for a local client.
+            const dataStoreRuntime = new MockFluidDataStoreRuntime();
+            dataStoreRuntime.local = true;
 
             // Load the snapshot into a newly created 2nd SharedMatrix.
-            const matrix2 = new SharedMatrix<T>(componentRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
+            const matrix2 = new SharedMatrix<T>(dataStoreRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
             await matrix2.load(/*branchId: */ null as any, {
                 deltaConnection: new MockEmptyDeltaConnection(),
                 objectStorage
@@ -59,8 +59,8 @@ describe("Matrix", () => {
         }
 
         beforeEach(async () => {
-            componentRuntime = new MockComponentRuntime();
-            matrix = new SharedMatrix(componentRuntime, "matrix1", SharedMatrixFactory.Attributes);
+            dataStoreRuntime = new MockFluidDataStoreRuntime();
+            matrix = new SharedMatrix(dataStoreRuntime, "matrix1", SharedMatrixFactory.Attributes);
 
             // Attach a new IMatrixConsumer
             consumer = new TestConsumer(matrix);
@@ -153,7 +153,7 @@ describe("Matrix", () => {
             assert.throws(() => { matrix.getCell(0, -1); });
 
             // Reading past end of matrix must throw.
-            assert.throws(() => { matrix.getCell(1, 0);  });
+            assert.throws(() => { matrix.getCell(1, 0); });
             assert.throws(() => { matrix.getCell(0, 2); });
         });
 
@@ -217,6 +217,58 @@ describe("Matrix", () => {
                 fill(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 16, /* colCount: */ 16);
                 check(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 16, /* colCount: */ 16);
             });
+
+            it("forEach 16x16", () => {
+                matrix.insertRows(0, 16);
+                matrix.insertCols(0, 16);
+                fill(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 16, /* colCount: */ 16);
+                matrix.forEachCell((v, row, col) => {
+                    checkValue(matrix, v, row, col, /* row: */ 0, /* rowCount: */ 16);
+                })
+            });
+
+            it("forEachCell 16x16 empty with blanks skipped", () => {
+                matrix.insertRows(0, 16);
+                matrix.insertCols(0, 16);
+                matrix.forEachCell(() => {
+                    assert.fail();
+                });
+            });
+
+            it("forEachCell 16x16 empty with blanks", () => {
+                matrix.insertRows(0, 16);
+                matrix.insertCols(0, 16);
+                let count = 0;
+                matrix.forEachCell((v) => {
+                    assert.equal(v, undefined);
+                    count++;
+                }, { includeEmpty: true });
+                assert.equal(count, 16 * 16);
+            });
+
+            it("forEachCell 16x16 empty with 1 cell", () => {
+                matrix.insertRows(0, 16);
+                matrix.insertCols(0, 16);
+                matrix.setCell(0, 0, -42);
+                let count = 0;
+                matrix.forEachCell((v) => {
+                    assert.equal(v, -42);
+                    count++;
+                });
+                assert.equal(count, 1);
+            });
+
+            it("forEachCell 16x16 empty with 1 cell and blanks", () => {
+                matrix.insertRows(0, 16);
+                matrix.insertCols(0, 16);
+                matrix.setCell(0, 0, -42);
+                let count = 0;
+                matrix.forEachCell((v, r, c) => {
+                    assert.equal(v, r === 0 && c === 0 ? -42 : undefined);
+                    count++;
+                }, { includeEmpty: true });
+                assert.equal(count, 16 * 16);
+            });
         });
 
         describe("fragmented", () => {
@@ -224,6 +276,18 @@ describe("Matrix", () => {
                 insertFragmented(matrix, 16, 16);
                 fill(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 16, /* colCount: */ 16);
                 check(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 16, /* colCount: */ 16);
+            });
+        });
+
+        describe("annotations", () => {
+            it("read/write 16x16", () => {
+                matrix.insertRows(0, 256);
+                matrix.insertCols(0, 256);
+                matrix.setAnnotation(0, 0, -42);
+                assert.equal(matrix.getAnnotation(0, 0), -42);
+                matrix.setCell(0, 0, 1);
+                // Setting a cell should clear existing annotation.
+                assert.equal(matrix.getAnnotation(0, 0), undefined);
             });
         });
 
@@ -294,24 +358,24 @@ describe("Matrix", () => {
             containterRuntimeFactory = new MockContainerRuntimeFactory();
 
             // Create and connect the first SharedMatrix.
-            const componentRuntime1 = new MockComponentRuntime();
-            const containerRuntime1 = containterRuntimeFactory.createContainerRuntime(componentRuntime1);
-            const services1: ISharedObjectServices = {
+            const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+            const containerRuntime1 = containterRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+            const services1: IChannelServices = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            matrix1 = new SharedMatrix(componentRuntime1, "matrix1", SharedMatrixFactory.Attributes);
+            matrix1 = new SharedMatrix(dataStoreRuntime1, "matrix1", SharedMatrixFactory.Attributes);
             matrix1.connect(services1);
             consumer1 = new TestConsumer(matrix1);
 
             // Create and connect the second SharedMatrix.
-            const componentRuntime2 = new MockComponentRuntime();
-            const containerRuntime2 = containterRuntimeFactory.createContainerRuntime(componentRuntime2);
-            const services2: ISharedObjectServices = {
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const containerRuntime2 = containterRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+            const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            matrix2 = new SharedMatrix(componentRuntime2, "matrix2", SharedMatrixFactory.Attributes);
+            matrix2 = new SharedMatrix(dataStoreRuntime2, "matrix2", SharedMatrixFactory.Attributes);
             matrix2.connect(services2);
             consumer2 = new TestConsumer(matrix2);
         });
@@ -594,6 +658,7 @@ describe("Matrix", () => {
                 await expect([
                     [0, 1, 2, 3]
                 ]);
+
                 matrix2.insertCols(1,1);    // rowCount: 1, colCount: 5
                 matrix2.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, ["A"]);
                 matrix1.removeCols(0,2);    // rowCount: 1, colCount: 2
@@ -603,6 +668,39 @@ describe("Matrix", () => {
                     ["B", "A", 2, 3]
                 ]);
             });
+
+            // it("fail", async () => {
+            //     matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 4);
+            //     matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+            //     matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [0,1,2,3]);
+            //     matrix1.removeCols(/* colStart: */ 0, /* colCount: */ 1);
+            //     matrix1.removeRows(/* rowStart: */ 1, /* rowCount: */ 1);
+            //     await expect([
+            //         [],
+            //         [],
+            //         [],
+            //     ]);
+
+            //     matrix1.removeRows(/* rowStart: */ 0, /* rowCount: */ 1);
+            //     matrix2.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+            //     matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [74,37,0]);
+            //     matrix2.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+            //     matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [34,92,97]);
+            //     matrix1.insertRows(/* rowStart: */ 1, /* rowCount: */ 1);
+            //     await expect([
+            //         [92, 37],
+            //         [undefined, undefined],
+            //         [97, 0]
+            //     ]);
+
+            //     matrix2.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+            //     matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [59,89,55]);
+            //     await expect([
+            //         [59, 92, 37],
+            //         [89, undefined, undefined],
+            //         [55, 97, 0]
+            //     ]);
+            // });
         });
     });
 
@@ -636,24 +734,24 @@ describe("Matrix", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Create and connect the first SharedMatrix.
-            const componentRuntime1 = new MockComponentRuntime();
-            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
-            const services1: ISharedObjectServices = {
+            const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+            const services1: IChannelServices = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            matrix1 = new SharedMatrix(componentRuntime1, "matrix1", SharedMatrixFactory.Attributes);
+            matrix1 = new SharedMatrix(dataStoreRuntime1, "matrix1", SharedMatrixFactory.Attributes);
             matrix1.connect(services1);
             consumer1 = new TestConsumer(matrix1);
 
             // Create and connect the second SharedMatrix.
-            const componentRuntime2 = new MockComponentRuntime();
-            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
-            const services2: ISharedObjectServices = {
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+            const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            matrix2 = new SharedMatrix(componentRuntime2, "matrix2", SharedMatrixFactory.Attributes);
+            matrix2 = new SharedMatrix(dataStoreRuntime2, "matrix2", SharedMatrixFactory.Attributes);
             matrix2.connect(services2);
             consumer2 = new TestConsumer(matrix2);
         });
@@ -663,6 +761,37 @@ describe("Matrix", () => {
 
             matrix1.closeMatrix(consumer1);
             matrix2.closeMatrix(consumer2);
+        });
+
+        it("can resend 'setCell()' at correct position when later ops shift the original position", async () => {
+            // Insert a row and a column in the first shared matrix.
+            matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
+            matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+
+            await expect([[undefined]]);
+
+            matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A"]);
+
+            // Note: Inserting '3' helps expose incorrect range check logic that fails to
+            //       consider unallocated handles.  Consider the empty leading segment:
+            //
+            //           start  = -1  (unallocated)
+            //           length = 3
+            //           end    = -1 + 3 = 2
+            //
+            //       In which case, pass the empty segment into 'findReconnectionPostition()'.
+
+            matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 3);
+
+            // Disconnect and reconnect the client.
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
+
+            // Verify that the 'setCells()' op targetted the original position of (0,0),
+            // not the current local position of (0,3).
+            await expect([
+                [undefined, undefined, undefined, "A"],
+            ]);
         });
 
         it("can resend unacked ops on reconnection", async () => {
@@ -755,28 +884,49 @@ describe("Matrix", () => {
                 4, 5, 6, 7
             ]);
 
-            matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);    // rowCount: 3, colCount: 4
+            matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
             matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [
                 61, 57, 7, 62
             ]);
 
             containerRuntime1.connected = false;
             containerRuntime1.connected = true;
+
             await expect([
                 [61, 57,  7, 62],
                 [ 0,  1,  2,  3],
                 [ 4,  5,  6,  7],
             ]);
 
-            matrix1.setCells(/* row: */ 2, /* col: */ 3, /* colCount: */ 1, [65]);    // rowCount: 3 colCount: 4 stride: 4 length: 1
+            matrix1.setCells(/* row: */ 2, /* col: */ 3, /* colCount: */ 1, [65]);
             containerRuntime1.connected = false;
 
-            matrix1.removeRows(/* rowStart: */ 0, /* rowCount: */ 1);    // rowCount: 2, colCount: 4
+            matrix1.removeRows(/* rowStart: */ 0, /* rowCount: */ 1);
             containerRuntime1.connected = true;
 
             await expect([
                 [ 0,  1,  2,  3],
                 [ 4,  5,  6, 65],
+            ]);
+        });
+
+        it("resets row/col handles for resubmitted ops", async () => {
+            matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
+            matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+            matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [0]);
+
+            matrix2.insertCols(/* colStart: */ 0, /* colCount: */ 1);
+            matrix2.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
+            matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [90]);
+
+            // When resubmitting insert ops, ensure that the receiving clients allocate
+            // new row/col handles for their local storage.
+            containerRuntime2.connected = false;
+            containerRuntime2.connected = true;
+
+            await expect([
+                [90, undefined],
+                [undefined, 0],
             ]);
         });
     });

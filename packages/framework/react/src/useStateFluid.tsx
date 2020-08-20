@@ -5,9 +5,9 @@
 
 import * as React from "react";
 import {
-    IFluidFunctionalComponentViewState,
+    IViewState,
     IFluidProps,
-    IFluidFunctionalComponentFluidState,
+    IFluidState,
     ISyncedStateConfig,
 } from "./interface";
 import { initializeState, syncState } from "./helpers";
@@ -16,21 +16,21 @@ import { initializeState, syncState } from "./helpers";
  * A wrapper around the useState React hook that combines local and Fluid state updates
  */
 export function useStateFluid<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
+    SV extends IViewState,
+    SF extends IFluidState
 >(
     props: IFluidProps<SV, SF>, initialViewState: SV,
 ): [SV, (newState: SV, isSyncedStateUpdate?: boolean) => void] {
     const {
         syncedStateId,
-        syncedComponent,
+        syncedDataObject,
     } = props;
-    const config = syncedComponent.getConfig(syncedStateId);
+    const config = syncedDataObject.getConfig(syncedStateId);
     if (config === undefined) {
         throw Error(`Failed to find configuration for synced state ID: ${syncedStateId}`);
     }
-    const syncedState = syncedComponent.syncedState;
-    const dataProps = props.dataProps || syncedComponent.dataProps;
+    const syncedState = syncedDataObject.syncedState;
+    const dataProps = props.dataProps ?? syncedDataObject.dataProps;
     const { fluidToView, viewToFluid } = config as ISyncedStateConfig<SV, SF>;
     // Establish the react state and setState functions using the initialViewState passed in
     const [reactState, reactSetState] = React.useState<SV>(initialViewState);
@@ -55,7 +55,7 @@ export function useStateFluid<
     // update to both the local and Fluid state or just the local state respectively based off of
     // if the state update is coming locally, i.e. not from the root
     const fluidSetState = React.useCallback(
-        (newState: Partial<SV>, fromRootUpdate = false, isLocal = false) => {
+        (newState: Partial<SV>, fromRootUpdate = false, isLocal: boolean = false) => {
             const newCombinedState = {
                 ...reactState,
                 ...newState,
@@ -71,7 +71,7 @@ export function useStateFluid<
                     dataProps.runtime,
                     newCombinedState,
                     reactSetState,
-                    dataProps.fluidComponentMap,
+                    dataProps.fluidObjectMap,
                     fluidToView,
                     viewToFluid,
                 );

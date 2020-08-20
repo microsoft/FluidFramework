@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IFluidRouter, IFluidRunnable, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { ISharedMap } from "@fluidframework/map";
 import * as Sequence from "@fluidframework/sequence";
 import { IntelRunner, ITokenConfig } from "./intelRunner";
 
-export class TextAnalyzer implements IComponentRouter, IComponentRunnable {
-    public get IComponentRouter() { return this; }
-    public get IComponentRunnable() { return this; }
+export class TextAnalyzer implements IFluidRouter, IFluidRunnable {
+    public get IFluidRouter() { return this; }
+    public get IFluidRunnable() { return this; }
 
     private intelRunner: IntelRunner | undefined;
 
@@ -35,7 +35,7 @@ export class TextAnalyzer implements IComponentRouter, IComponentRunnable {
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "fluid/component",
+            mimeType: "fluid/object",
             status: 200,
             value: this,
         };

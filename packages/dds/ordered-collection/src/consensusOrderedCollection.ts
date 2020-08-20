@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8, unreachableCase } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -14,10 +14,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
-    IComponentRuntime,
-    IObjectStorageService,
-} from "@fluidframework/component-runtime-definitions";
-import { unreachableCase } from "@fluidframework/runtime-utils";
+    IFluidDataStoreRuntime,
+    IChannelStorageService,
+} from "@fluidframework/datastore-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import {
@@ -109,7 +108,7 @@ export class ConsensusOrderedCollection<T = any>
      */
     protected constructor(
         id: string,
-        runtime: IComponentRuntime,
+        runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
         private readonly data: IOrderedCollection<T>,
     ) {
@@ -195,7 +194,7 @@ export class ConsensusOrderedCollection<T = any>
                 {
                     mode: FileMode.File,
                     path: snapshotFileNameData,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: this.serializeValue(this.data.asArray()),
                         encoding: "utf-8",
@@ -209,7 +208,7 @@ export class ConsensusOrderedCollection<T = any>
         tree.entries.push({
             mode: FileMode.File,
             path: snapshotFileNameTracking,
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: this.serializeValue(Array.from(this.jobTracking.entries())),
                 encoding: "utf-8",
@@ -275,7 +274,7 @@ export class ConsensusOrderedCollection<T = any>
 
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService): Promise<void> {
+        storage: IChannelStorageService): Promise<void> {
         assert(this.jobTracking.size === 0);
         const rawContentTracking = await storage.read(snapshotFileNameTracking);
         if (rawContentTracking !== undefined) {
@@ -341,11 +340,12 @@ export class ConsensusOrderedCollection<T = any>
     ): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
         assert(this.isAttached());
 
-        return this.newAckBasedPromise((resolve) => {
+        return this.newAckBasedPromise<IConsensusOrderedCollectionValue<T>>((resolve) => {
             // Send the resolve function as the localOpMetadata. This will be provided back to us when the
             // op is ack'd.
             this.submitLocalMessage(message, resolve);
-        });
+            // If we fail due to runtime being disposed, it's better to return undefined then unhandled exception.
+        }).catch((error) => undefined);
     }
 
     private addCore(value: T) {
@@ -397,15 +397,15 @@ export class ConsensusOrderedCollection<T = any>
     }
 
     private serializeValue(value) {
-        return this.runtime.IComponentSerializer.stringify(
+        return this.runtime.IFluidSerializer.stringify(
             value,
-            this.runtime.IComponentHandleContext,
+            this.runtime.IFluidHandleContext,
             this.handle);
     }
 
     private deserializeValue(content: string) {
-        return this.runtime.IComponentSerializer.parse(
+        return this.runtime.IFluidSerializer.parse(
             content,
-            this.runtime.IComponentHandleContext);
+            this.runtime.IFluidHandleContext);
     }
 }

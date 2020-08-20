@@ -31,10 +31,10 @@
             "scribeDeltas": "scribeDeltas"
         }
     },
-    "storage": "/var/lib/tinylicious",
+    "storage": "/var/tmp/tinylicious",
     "db": {
         "inMemory": true,
-        "path": "/var/lib/db"
+        "path": "/var/tmp/db"
     },
     "error": {
         "track": false,

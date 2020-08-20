@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import {
     ContainerErrorType,
     IProxyLoaderFactory,
@@ -24,7 +24,7 @@ import {
     invalidFileNameStatusCode,
     OdspErrorType,
 } from "@fluidframework/odsp-driver";
-import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 
@@ -33,7 +33,7 @@ describe("Errors Types", () => {
     const testRequest: IRequest = { url: id };
 
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
-    let testResolver: TestResolver;
+    let localResolver: LocalResolver;
     let testResolved: IFluidResolvedUrl;
     let serviceFactory: IDocumentServiceFactory;
     let codeLoader: LocalCodeLoader;
@@ -42,15 +42,15 @@ describe("Errors Types", () => {
     it("GeneralError Test", async () => {
         // Setup
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        testResolver = new TestResolver();
-        testResolved = await testResolver.resolve(testRequest) as IFluidResolvedUrl;
-        serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
+        localResolver = new LocalResolver();
+        testResolved = await localResolver.resolve(testRequest) as IFluidResolvedUrl;
+        serviceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
 
         codeLoader = new LocalCodeLoader([]);
         const options = {};
 
         loader = new Loader(
-            testResolver,
+            localResolver,
             serviceFactory,
             codeLoader,
             options,
@@ -78,7 +78,7 @@ describe("Errors Types", () => {
                 loader,
                 testRequest,
                 testResolved,
-                testResolver);
+                localResolver);
 
             assert.fail("Error expected");
         } catch (error) {

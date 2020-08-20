@@ -4,5 +4,5 @@
  */
 
 export * from "./dependencyContainer";
-export * from "./IComponentDependencySynthesizer";
+export * from "./IFluidDependencySynthesizer";
 export * from "./types";

@@ -11,7 +11,8 @@
  * Input:
  *      ./lerna.json or ./package.json - base version number to use
  *      env:VERSION_BUILDNUMBER        - monotonically increasing build number from the CI
- *      env:VERSION_BUILDBRANCH        - the build branch/tags that triggered the build 
+ *      env:VERSION_BUILDBRANCH        - the build branch/tags that triggered the build
+ *      env:VERSION_PATCH              - Put the build number in the patch
  * Output:
  *      The computed version output to the console.
  */
@@ -30,32 +31,27 @@ function getFileVersion() {
     process.exit(5);
 }
 
-function parseFileVersion(file_version: string, build_num: number) {
+function parseFileVersion(file_version: string, build_id?: number) {
     let split = file_version.split("-");
     let release_version = split[0];
     split.shift();
     let prerelease_version = split.join("-");
-    let isBackCompat = false;
 
     /**
-     * Back compat. Version <= 0.15 (or server 0.1003) we use the build number as the patch number.
+     * Use the build id for patch number if given
      */
-
-    // split the prerelease out
-    const r = release_version.split('.');
-    if (r.length !== 3) {
-        console.error(`ERROR: Invalid format for release version ${release_version}`);
-        process.exit(6);
-    }
-
-    const minor = parseInt(r[1]);
-    if (r[0] === "0" && (minor <= 15 || minor === 1003)) {
-        isBackCompat = true;
-        r[2] = (parseInt(r[2]) + build_num).toString();
+    if (build_id) {
+        // split the prerelease out
+        const r = release_version.split('.');
+        if (r.length !== 3) {
+            console.error(`ERROR: Invalid format for release version ${release_version}`);
+            process.exit(6);
+        }
+        r[2] = (parseInt(r[2]) + build_id).toString();
         release_version = r.join('.');
     }
 
-    return { release_version, prerelease_version, isBackCompat };
+    return { release_version, prerelease_version };
 }
 
 /**
@@ -66,10 +62,10 @@ function parseFileVersion(file_version: string, build_num: number) {
  * If the build is trigger by tags, no suffix is needed (those are released bits).
  * Otherwise it is a CI only build, and we add the following suffix depending on the branch
  *     PRs:               refs/pull/*                             | ci.<build_number>.dev
- *     Official branches: refs/heads/master, refs/heads/release/* | ci.<build_number>.official
+ *     Official branches: refs/heads/main, refs/heads/release/* | ci.<build_number>.official
  *     Manual builds:     <all others>                            | ci.<build_number>.manual
  */
-function getBuildSuffix(env_build_branch: string, build_num: number, isFull: boolean) {
+function getBuildSuffix(env_build_branch: string, build_num: string, isFull: boolean) {
     // Split the branch
     const build_branch = env_build_branch.split('/');
     if (build_branch[0] !== 'refs') {
@@ -93,8 +89,8 @@ function getBuildSuffix(env_build_branch: string, build_num: number, isFull: boo
         return `ci.${build_num}.dev`;
     }
 
-    // master or release branches
-    if (build_branch[1] === 'heads' && (build_branch[2] === 'master' || build_branch[2] === "release")) {
+    // main or release branches
+    if (build_branch[1] === 'heads' && (build_branch[2] === 'main' || build_branch[2] === "release")) {
         return `ci.${build_num}.official`;
     }
 
@@ -126,13 +122,13 @@ function generateFullVersion(release_version: string, prerelease_version: string
     return release_version;
 }
 
-export function getFullVersion(file_version: string, arg_build_num: string, arg_build_branch: string) {
+export function getFullVersion(file_version: string, arg_build_num: string, arg_build_branch: string, patch: boolean) {
     // Azure DevOp pass in the build number as $(buildNum).$(buildAttempt).
     // Get the Build number and ignore the attempt number.
-    const build_num = parseInt(arg_build_num.split('.')[0]);
+    const build_id = patch? parseInt(arg_build_num.split('.')[0]) : undefined;
 
-    const { release_version, prerelease_version, isBackCompat } = parseFileVersion(file_version, build_num);
-    const build_suffix = isBackCompat ? "" : getBuildSuffix(arg_build_branch, build_num, true);
+    const { release_version, prerelease_version } = parseFileVersion(file_version, build_id);
+    const build_suffix = build_id ? "" : getBuildSuffix(arg_build_branch, arg_build_num, true);
     const fullVersion = generateFullVersion(release_version, prerelease_version, build_suffix);
     return fullVersion;
 }
@@ -154,22 +150,23 @@ function generateSimpleVersion(release_version: string, prerelease_version: stri
     return release_version;
 }
 
-export function getSimpleVersion(file_version: string, arg_build_num: string, arg_build_branch: string) {
+export function getSimpleVersion(file_version: string, arg_build_num: string, arg_build_branch: string, patch: boolean) {
     // Azure DevOp pass in the build number as $(buildNum).$(buildAttempt).
     // Get the Build number and ignore the attempt number.
-    const build_num = parseInt(arg_build_num.split('.')[0]);
+    const build_id = patch? parseInt(arg_build_num.split('.')[0]) : undefined;
 
-    const { release_version, prerelease_version, isBackCompat } = parseFileVersion(file_version, build_num);
-    const build_suffix = isBackCompat ? "" : getBuildSuffix(arg_build_branch, build_num, false);
+    const { release_version, prerelease_version } = parseFileVersion(file_version, build_id);
+    const build_suffix = build_id ? "" : getBuildSuffix(arg_build_branch, arg_build_num, false);
     const fullVersion = generateSimpleVersion(release_version, prerelease_version, build_suffix);
     return fullVersion;
 }
 
 function main() {
     let isFull = false;
-    let arg_build_num;
-    let arg_build_branch;
-    let file_version;
+    let arg_build_num: string | undefined;
+    let arg_patch = false;
+    let arg_build_branch : string | undefined;
+    let file_version : string | undefined;
     let arg_test = false;
     for (let i = 2; i < process.argv.length; i++) {
         if (process.argv[i] === "--full") {
@@ -184,6 +181,11 @@ function main() {
 
         if (process.argv[i] === "--branch") {
             arg_build_branch = process.argv[++i];
+            continue;
+        }
+
+        if (process.argv[i] === "--patch") {
+            arg_patch = true;
             continue;
         }
 
@@ -214,11 +216,15 @@ function main() {
         }
     }
 
+    if (!arg_patch) {
+        arg_patch = !!process.env["VERSION_PATCH"];
+    }
+
     if (!arg_build_branch) {
         arg_build_branch = process.env["VERSION_BUILDBRANCH"];
         if (!arg_build_branch) {
             console.error("ERROR: Missing VERSION_BUILDBRANCH environment variable");
-            process.exit(4);
+            process.exit(5);
         }
     }
 
@@ -226,14 +232,14 @@ function main() {
         file_version = getFileVersion();
         if (!file_version) {
             console.error("ERROR: Missing version in lerna.json/package.json");
-            process.exit(2);
+            process.exit(6);
         }
     }
 
     if (isFull) {
-        console.log(getFullVersion(file_version, arg_build_num, arg_build_branch));
+        console.log(getFullVersion(file_version, arg_build_num, arg_build_branch, arg_patch));
     } else {
-        console.log(getSimpleVersion(file_version, arg_build_num, arg_build_branch));
+        console.log(getSimpleVersion(file_version, arg_build_num, arg_build_branch, arg_patch));
     }
 }
 

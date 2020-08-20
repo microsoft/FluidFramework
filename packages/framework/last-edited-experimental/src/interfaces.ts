@@ -5,18 +5,18 @@
 
 import { IUser } from "@fluidframework/protocol-definitions";
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentLastEditedTracker>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideFluidLastEditedTracker>> { }
 }
 
-export const IComponentLastEditedTracker: keyof IProvideComponentLastEditedTracker = "IComponentLastEditedTracker";
+export const IFluidLastEditedTracker: keyof IProvideFluidLastEditedTracker = "IFluidLastEditedTracker";
 
-export interface IProvideComponentLastEditedTracker {
-    readonly IComponentLastEditedTracker: IComponentLastEditedTracker;
+export interface IProvideFluidLastEditedTracker {
+    readonly IFluidLastEditedTracker: IFluidLastEditedTracker;
 }
 
-export interface IComponentLastEditedTracker extends IProvideComponentLastEditedTracker {
+export interface IFluidLastEditedTracker extends IProvideFluidLastEditedTracker {
     /**
      * Returns the details of the last edit to the container.
      */

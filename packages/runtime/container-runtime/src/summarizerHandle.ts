@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ComponentHandle } from "@fluidframework/component-runtime";
-import { IComponentHandle, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { FluidObjectHandle } from "@fluidframework/datastore";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 
-// TODO #2425 Expose Summarizer handle as ComponentHandle w/ tests
-export class SummarizerHandle extends ComponentHandle {
+// TODO #2425 Expose Summarizer handle as FluidObjectHandle w/ tests
+export class SummarizerHandle extends FluidObjectHandle {
     public async get(): Promise<any> {
         throw Error("Do not try to get a summarizer object from the handle. Reference it directly.");
     }
@@ -15,11 +15,7 @@ export class SummarizerHandle extends ComponentHandle {
         return;
     }
 
-    public bind(handle: IComponentHandle) {
+    public bind(handle: IFluidHandle) {
         return;
-    }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        throw Error("Do not try to request on a summarizer handle object.");
     }
 }

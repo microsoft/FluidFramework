@@ -5,13 +5,13 @@
 
 import assert from "assert";
 import { IBlob, ITree } from "@fluidframework/protocol-definitions";
-import { IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 
 /**
- * Mock implementation of IObjectStorageService based on ITree input.
+ * Mock implementation of IChannelStorageService based on ITree input.
  */
-export class MockStorage implements IObjectStorageService {
+export class MockStorage implements IChannelStorageService {
     private static readCore(tree: ITree, paths: string[]): string {
         if (tree) {
             for (const entry of tree.entries) {

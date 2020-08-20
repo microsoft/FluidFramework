@@ -14,32 +14,32 @@ import {
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IDeltaConnection, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { IDeltaConnection, IChannelServices } from "@fluidframework/datastore-definitions";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection } from "../interfaces";
 
 describe("ConsensusRegisterCollection", () => {
     const crcFactory = new ConsensusRegisterCollectionFactory();
     describe("Api", () => {
-        const componentId = "consensus-register-collection";
+        const dataStoreId = "consensus-register-collection";
         let crc: IConsensusRegisterCollection;
-        let componentRuntime: MockComponentRuntime;
-        let services: ISharedObjectServices;
+        let dataStoreRuntime: MockFluidDataStoreRuntime;
+        let services: IChannelServices;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
 
         beforeEach(() => {
-            componentRuntime = new MockComponentRuntime();
+            dataStoreRuntime = new MockFluidDataStoreRuntime();
             containerRuntimeFactory = new MockContainerRuntimeFactory();
-            const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+            const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
             services = {
                 deltaConnection: containerRuntime.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
 
-            crc = crcFactory.create(componentRuntime, componentId);
+            crc = crcFactory.create(dataStoreRuntime, dataStoreId);
         });
 
         describe("Attached, connected", () => {
@@ -70,7 +70,7 @@ describe("ConsensusRegisterCollection", () => {
                 if (handle === undefined) { assert.fail("Need an actual handle to test this case"); }
                 const writeResult = await writeAndProcessMsg("key1", handle);
                 const readValue = crc.read("key1");
-                assert.strictEqual(readValue.path, handle.path);
+                assert.strictEqual(readValue.absolutePath, handle.absolutePath);
                 assert.strictEqual(writeResult, true, "No concurrency expected");
             });
 
@@ -106,7 +106,7 @@ describe("ConsensusRegisterCollection", () => {
                     {
                         mode: FileMode.File,
                         path: snapshotFileName,
-                        type: TreeEntry[TreeEntry.Blob],
+                        type: TreeEntry.Blob,
                         value: {
                             contents: serialized,
                             encoding: "utf-8",
@@ -130,10 +130,10 @@ describe("ConsensusRegisterCollection", () => {
                 const tree: ITree = buildTree(expectedSerialization);
                 services.objectStorage = new MockStorage(tree);
                 const loadedCrc = await crcFactory.load(
-                    componentRuntime,
-                    componentId,
+                    dataStoreRuntime,
+                    dataStoreId,
                     services,
-                    "master",
+                    "main",
                     ConsensusRegisterCollectionFactory.Attributes,
                 );
                 assert.strictEqual(loadedCrc.read("key1"), "val1.1");
@@ -143,10 +143,10 @@ describe("ConsensusRegisterCollection", () => {
                 const tree: ITree = buildTree(legacySharedObjectSerialization);
                 services.objectStorage = new MockStorage(tree);
                 await assert.rejects(crcFactory.load(
-                    componentRuntime,
-                    componentId,
+                    dataStoreRuntime,
+                    dataStoreId,
                     services,
-                    "master",
+                    "main",
                     ConsensusRegisterCollectionFactory.Attributes,
                 ), "SharedObjects contained in ConsensusRegisterCollection can no longer be deserialized");
             });
@@ -166,16 +166,16 @@ describe("ConsensusRegisterCollection", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Create first ConsensusOrderedCollection
-            const componentRuntime1 = new MockComponentRuntime();
-            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
+            const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
             deltaConnection1 = containerRuntime1.createDeltaConnection();
-            testCollection1 = crcFactory.create(componentRuntime1, "consenses-register-collection1");
+            testCollection1 = crcFactory.create(dataStoreRuntime1, "consenses-register-collection1");
 
             // Create second ConsensusOrderedCollection
-            const componentRuntime2 = new MockComponentRuntime();
-            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             deltaConnection2 = containerRuntime2.createDeltaConnection();
-            testCollection2 = crcFactory.create(componentRuntime2, "consenses-register-collection2");
+            testCollection2 = crcFactory.create(dataStoreRuntime2, "consenses-register-collection2");
         });
 
         describe("Object not connected", () => {
@@ -212,11 +212,11 @@ describe("ConsensusRegisterCollection", () => {
 
             beforeEach(() => {
                 // Connect the collections.
-                const services1: ISharedObjectServices = {
+                const services1: IChannelServices = {
                     deltaConnection: deltaConnection1,
                     objectStorage: new MockStorage(),
                 };
-                const services2: ISharedObjectServices = {
+                const services2: IChannelServices = {
                     deltaConnection: deltaConnection2,
                     objectStorage: new MockStorage(),
                 };
@@ -247,7 +247,7 @@ describe("ConsensusRegisterCollection", () => {
                 const winner = await writeP;
                 assert.equal(winner, true, "Write was not successful");
 
-                // Verify that the remote regsiter collection recieved the write.
+                // Verify that the remote register collection recieved the write.
                 assert.equal(receivedKey, testKey, "The remote client did not receive the key");
                 assert.equal(receivedValue, testValue, "The remote client did not receive the value");
                 assert.equal(receivedLocalStatus, false, "The remote client's value should not be local");
@@ -270,7 +270,7 @@ describe("ConsensusRegisterCollection", () => {
                 const winner = await writeP;
                 assert.equal(winner, true, "Write was not successful");
 
-                // Verify that the remote regsiter collection recieved the write.
+                // Verify that the remote register collection recieved the write.
                 assert.equal(receivedKey, testKey, "The remote client did not receive the key");
                 assert.equal(receivedValue, testValue, "The remote client did not receive the value");
                 assert.equal(receivedLocalStatus, false, "The remote client's value should not be local");

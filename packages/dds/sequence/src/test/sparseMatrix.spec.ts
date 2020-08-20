@@ -6,9 +6,9 @@
 /* eslint-disable no-null/no-null */
 
 import assert from "assert";
-import { ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
-    MockComponentRuntime,
+    MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
@@ -30,12 +30,12 @@ describe("SparseMatrix", () => {
     };
 
     describe("local state", () => {
-        let componentRuntime: MockComponentRuntime;
+        let dataStoreRuntime: MockFluidDataStoreRuntime;
         let matrix: SparseMatrix;
 
         before(async () => {
-            componentRuntime = new MockComponentRuntime();
-            matrix = new SparseMatrix(componentRuntime, "matrix", SparseMatrixFactory.Attributes);
+            dataStoreRuntime = new MockFluidDataStoreRuntime();
+            matrix = new SparseMatrix(dataStoreRuntime, "matrix", SparseMatrixFactory.Attributes);
         });
 
         const expect = async (expected: readonly (readonly any[])[]) => {
@@ -139,24 +139,24 @@ describe("SparseMatrix", () => {
                 containerRuntimeFactory = new MockContainerRuntimeFactory();
 
                 // Create and connect the first SparseMatrix.
-                const componentRuntime1 = new MockComponentRuntime();
-                const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
-                const services1: ISharedObjectServices = {
+                const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+                const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+                const services1: IChannelServices = {
                     deltaConnection: containerRuntime1.createDeltaConnection(),
                     objectStorage: new MockStorage(),
                 };
-                matrix1 = new SparseMatrix(componentRuntime1, "matrix1", SparseMatrixFactory.Attributes);
+                matrix1 = new SparseMatrix(dataStoreRuntime1, "matrix1", SparseMatrixFactory.Attributes);
                 matrix1.initializeLocal();
                 matrix1.connect(services1);
 
                 // Create and connect the second SparseMatrix.
-                const componentRuntime2 = new MockComponentRuntime();
-                const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
-                const services2: ISharedObjectServices = {
+                const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+                const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+                const services2: IChannelServices = {
                     deltaConnection: containerRuntime2.createDeltaConnection(),
                     objectStorage: new MockStorage(),
                 };
-                matrix2 = new SparseMatrix(componentRuntime2, "matrix2", SparseMatrixFactory.Attributes);
+                matrix2 = new SparseMatrix(dataStoreRuntime2, "matrix2", SparseMatrixFactory.Attributes);
                 matrix2.initializeLocal();
                 matrix2.connect(services2);
             });
@@ -265,26 +265,26 @@ describe("SparseMatrix", () => {
                 containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
                 // Create and connect the first SharedMatrix.
-                const componentRuntime1 = new MockComponentRuntime();
+                const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
                 containerRuntime1 = (containerRuntimeFactory as MockContainerRuntimeFactoryForReconnection).
-                    createContainerRuntime(componentRuntime1);
-                const services1: ISharedObjectServices = {
+                    createContainerRuntime(dataStoreRuntime1);
+                const services1: IChannelServices = {
                     deltaConnection: containerRuntime1.createDeltaConnection(),
                     objectStorage: new MockStorage(),
                 };
-                matrix1 = new SparseMatrix(componentRuntime1, "matrix", SparseMatrixFactory.Attributes);
+                matrix1 = new SparseMatrix(dataStoreRuntime1, "matrix", SparseMatrixFactory.Attributes);
                 matrix1.initializeLocal();
                 matrix1.connect(services1);
 
                 // Create and connect the second SharedMatrix.
-                const componentRuntime2 = new MockComponentRuntime();
+                const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
                 containerRuntime2 = (containerRuntimeFactory as MockContainerRuntimeFactoryForReconnection).
-                    createContainerRuntime(componentRuntime2);
-                const services2: ISharedObjectServices = {
+                    createContainerRuntime(dataStoreRuntime2);
+                const services2: IChannelServices = {
                     deltaConnection: containerRuntime2.createDeltaConnection(),
                     objectStorage: new MockStorage(),
                 };
-                matrix2 = new SparseMatrix(componentRuntime2, "matrix2", SparseMatrixFactory.Attributes);
+                matrix2 = new SparseMatrix(dataStoreRuntime2, "matrix2", SparseMatrixFactory.Attributes);
                 matrix2.initializeLocal();
                 matrix2.connect(services2);
             });

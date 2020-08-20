@@ -244,7 +244,7 @@ Now that we have all of our scaffolding ready, we can actually start adding in t
 
 ```typescript
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IComponentHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
@@ -258,12 +258,12 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
     private _counter: SharedCounter | undefined;
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const counter = SharedCounter.create(this.runtime);
         this.root.set(counterKey, counter.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(counterKey);
         this._counter = await counterHandle.get();
     }
@@ -297,9 +297,9 @@ A good way of understanding what is happening here is thinking about the two dif
 
 To cater to these two scenarios, the Fluid component lifecycle provides three different functions:
 
-- `componentInitializingFirstTime` - This code will be run by clients in the first, new session scenario
-- `componentInitializingFromExisting` - This code will be run by clients in the second, existing session scenario
-- `componentHasInitialized` - This code will be run by clients in both the new and existing session scenarios
+- `initializingFirstTime` - This code will be run by clients in the first, new session scenario
+- `initializingFromExisting` - This code will be run by clients in the second, existing session scenario
+- `hasInitialized` - This code will be run by clients in both the new and existing session scenarios
 
 These all run prior to the first time `render` is called and can be async. As such, this is the perfect place to do any
 setup work, such as assembling any DDSes you will need.
@@ -309,7 +309,7 @@ With this knowledge, let's examine what Clicker is doing with these functions.
 ```typescript
 private _counter: SharedCounter | undefined;
 
-protected async componentInitializingFirstTime() {
+protected async initializingFirstTime() {
     const counter = SharedCounter.create(this.runtime);
     this.root.set(counterKey, counter.handle);
 }
@@ -338,7 +338,7 @@ So, this will ensure that there is always a `Counter` handle available in the ro
 look at how to fetch it.
 
 ```typescript
-protected async componentHasInitialized() {
+protected async hasInitialized() {
     const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(counterKey);
     this._counter = await counterHandle.get();
 }
@@ -346,7 +346,7 @@ protected async componentHasInitialized() {
 
 As we can see here, every client, whether its the first one or one joining an existing session will try to fetch a
 handle from the `root` by looking under the `counterKey` key. Simply calling `await counterHandle.get()` now will give
-us an instance of the same `SharedCounter` we had set in `componentInitializingFirstTime`.
+us an instance of the same `SharedCounter` we had set in `initializingFirstTime`.
 
 In a nutshell, this means that `this._counter` is the same instance of `SharedCounter` for all of the clients that share
 the same `root`.
@@ -359,7 +359,7 @@ Alright, now for the moment you've been waiting for, connecting the counter to t
 
 ```typescript
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IComponentHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
@@ -373,12 +373,12 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
     private _counter: SharedCounter | undefined;
 
-    protected async componentInitializingFirstTime() {
+    protected async initializingFirstTime() {
         const counter = SharedCounter.create(this.runtime);
         this.root.set(counterKey, counter.handle);
     }
 
-    protected async componentHasInitialized() {
+    protected async hasInitialized() {
         const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(counterKey);
         this._counter = await counterHandle.get();
     }
@@ -544,9 +544,9 @@ import {
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import {
-    FluidReactComponent,
-    IFluidFunctionalComponentFluidState,
-    IFluidFunctionalComponentViewState,
+    FluidReactView,
+    IFluidState,
+    IViewState,
     FluidToViewMap,
 } from "@fluidframework/react";
 import { SharedCounter } from "@fluidframework/counter";
@@ -558,8 +558,8 @@ interface CounterState {
     counter?: SharedCounter;
 }
 
-type CounterViewState = IFluidFunctionalComponentViewState & CounterState;
-type CounterFluidState = IFluidFunctionalComponentFluidState & CounterState;
+type CounterViewState = IViewState & CounterState;
+type CounterFluidState = IFluidState & CounterState;
 
 
 export class Clicker extends PrimedComponent implements IComponentHTMLView {
@@ -577,7 +577,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
                 syncedStateId={"clicker"}
                 root={this.root}
                 dataProps={{
-                    fluidComponentMap: new Map(),
+                    fluidObjectMap: new Map(),
                     runtime: this.runtime,
                 }}
                 fluidToView={fluidToView}
@@ -588,7 +588,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     }
 }
 
-class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
+class CounterReactView extends FluidReactView<CounterViewState, CounterFluidState> {
     constructor(props) {
         super(props);
         this.state = {};
@@ -624,8 +624,8 @@ interface CounterState {
     counter?: SharedCounter;
 }
 
-type CounterViewState = IFluidFunctionalComponentViewState & CounterState;
-type CounterFluidState = IFluidFunctionalComponentFluidState & CounterState;
+type CounterViewState = IViewState & CounterState;
+type CounterFluidState = IFluidState & CounterState;
 ```
 
 The `CounterViewState` and `CounterFluidState` here both have the `counter` available. The former is what will be used
@@ -649,7 +649,7 @@ public render(element: HTMLElement) {
             syncedStateId={"clicker"}
             root={this.root}
             dataProps={{
-                fluidComponentMap: new Map(),
+                fluidObjectMap: new Map(),
                 runtime: this.runtime,
             }}
             fluidToView={fluidToView}
@@ -684,7 +684,7 @@ Okay, now we have everything necessary to pass in as props to our `CounterReactV
   clicker being render alongside this one in this component, it should receive its own ID to prevent one from
   interfering in the updates of the other
 - `root` - The same `SharedDirectory` provided by `this.root` from `PrimedComponent`
-- `dataProps.fluidComponentMap` - This can just take a new `Map` instance for now but will need to be filled when
+- `dataProps.fluidObjectMap` - This can just take a new `Map` instance for now but will need to be filled when
   establishing multi-component relationships in more complex cases. This map is where all the DDSes that we use are
   stored after being fetched from their handles, and it used to make the corresponding component synchronously available
   in the view.
@@ -694,7 +694,7 @@ Okay, now we have everything necessary to pass in as props to our `CounterReactV
 We're ready to go through our view, which is now super simple due to the setup we did in the Fluid component itself.
 
 ```typescript
-class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
+class CounterReactView extends FluidReactView<CounterViewState, CounterFluidState> {
     constructor(props) {
         super(props);
         this.state = {};
@@ -714,7 +714,7 @@ class CounterReactView extends FluidReactComponent<CounterViewState, CounterFlui
 ```
 
 We can see that the state is initially empty as it only consists of the `SharedCounter` DDS, and we know the
-`FluidReactComponent` will be handling the loading of that since we passed it as a key in the `fluidToView` map.
+`FluidReactView` will be handling the loading of that since we passed it as a key in the `fluidToView` map.
 
 The view itself can now directly use the `this.state.counter.value` and we can update it by simply using
 `this.state.counter.increment(1)`. This will directly update the `this.state.counter.value` without needing any event

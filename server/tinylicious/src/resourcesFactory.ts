@@ -4,6 +4,7 @@
  */
 
 import fs from "fs";
+import { LocalOrdererManager } from "@fluidframework/server-local-server";
 import { DocumentStorage } from "@fluidframework/server-services-shared";
 import { MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
@@ -12,10 +13,11 @@ import * as git from "isomorphic-git";
 import { Provider } from "nconf";
 import socketIo from "socket.io";
 import { Historian } from "@fluidframework/server-services-client";
+import winston from "winston";
 import { TinyliciousResources } from "./resources";
 import {
     DbFactory,
-    OrdererManager,
+    PubSubPublisher,
     TaskMessageSender,
     TenantManager,
     WebServerFactory,
@@ -28,7 +30,7 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
         const collectionNames = config.get("mongo:collectionNames");
 
-        const tenantManager = new TenantManager();
+        const tenantManager = new TenantManager(`http://localhost:${port}`);
         const dbFactory = new DbFactory(config);
         const taskMessageSender = new TaskMessageSender();
         const mongoManager = new MongoManager(dbFactory);
@@ -40,12 +42,13 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
             collectionNames.scribeDeltas);
         const storage = new DocumentStorage(databaseManager, tenantManager, null);
         const io = socketIo();
+        const pubsub = new PubSubPublisher(io);
         const webServerFactory = new WebServerFactory(io);
 
         // Initialize isomorphic-git
         git.plugins.set("fs", fs);
 
-        const orderManager = new OrdererManager(
+        const orderManager = new LocalOrdererManager(
             storage,
             databaseManager,
             tenantManager,
@@ -55,7 +58,10 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
             async (tenantId: string) => {
                 const url = `http://localhost:${port}/repos/${encodeURIComponent(tenantId)}`;
                 return new Historian(url, false, false);
-            });
+            },
+            winston,
+            undefined /* serviceConfiguration */,
+            pubsub);
 
         // TODO would be nicer to just pass the mongoManager down
         const db = await mongoManager.getDatabase();

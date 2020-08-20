@@ -16,7 +16,6 @@ import {
 import {
     FileSnapshotReader,
     IFileSnapshot,
-    OpStorage,
     ReadDocumentStorageServiceBase,
     ReplayController,
     SnapshotStorage,
@@ -52,9 +51,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
             return 0;
         }
 
-        const attributesHash = ".protocol" in tree.trees ?
-            tree.trees[".protocol"].blobs.attributes
-            : tree.blobs[".attributes"];
+        const attributesHash = tree.trees[".protocol"].blobs.attributes;
         const attrib = await readAndParse<IDocumentAttributes>(documentStorageService, attributesHash);
         return attrib.sequenceNumber;
     }
@@ -86,12 +83,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         this.startSeqDeferred.resolve(DebugReplayController.WindowClosedSeq);
     }
 
-    public async onVersionSelection(version?: IVersion) {
-        if (version === undefined) {
-            this.resolveStorage(0, new OpStorage());
-            return;
-        }
-
+    public async onVersionSelection(version: IVersion) {
         if (!this.documentStorageService) {
             throw new Error("onVersionSelection: no storage");
         }
@@ -191,7 +183,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         assert(!this.documentStorageService);
         this.documentStorageService = documentStorageService;
 
-        // User can chose "no snapshot" or "file" at any moment in time!
+        // User can chose "file" at any moment in time!
         if (!this.isSelectionMade()) {
             this.versions = await documentStorageService.getVersions("", 50);
             if (!this.isSelectionMade()) {
@@ -199,15 +191,6 @@ export class DebugReplayController extends ReplayController implements IDebugger
                 this.ui.updateVersionText(this.versionCount);
             }
         }
-
-        /* Short circuit for when we have no versions
-        we do not want to use it to leave ability for user to close window and use real storage.
-        if (!this.isSelectionMade() && this.versions.length === 0) {
-            this.text1.textContent = "";
-            this.resolveStorage(0, new OpStorage());
-            return true;
-        }
-        */
 
         this.versionCount = this.versions.length;
 
@@ -317,7 +300,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     protected resolveStorage(
         seq: number,
         storage: ReadDocumentStorageServiceBase,
-        version?: IVersion | string) {
+        version: IVersion | string) {
         assert(!this.isSelectionMade());
         assert(storage);
         this.storage = storage;
