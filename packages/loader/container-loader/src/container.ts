@@ -265,6 +265,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _loadedFromVersion: IVersion | undefined;
     private _resolvedUrl: IResolvedUrl | undefined;
     private createNewSummaryCache: ISummaryTree | undefined;
+    private attachInProgress = false;
 
     private lastVisible: number | undefined;
 
@@ -492,8 +493,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public async attach(request: IRequest): Promise<void> {
         assert.strictEqual(this.deltaManager.inbound.length, 0, "Inbound queue should be empty when attaching");
-        // If container is already attached, return.
-        if (this._attachState === AttachState.Attached) {
+        // If container is already attached or attach is in progress, return.
+        if (this._attachState === AttachState.Attached || this.attachInProgress) {
             return;
         }
 
@@ -525,44 +526,56 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 [CreateNewHeader.createNew]: {},
             };
         }
-        const createNewResolvedUrl = await this.urlResolver.resolve(request);
-        ensureFluidResolvedUrl(createNewResolvedUrl);
-        // Actually go and create the resolved document
-        this.service = await this.serviceFactory.createContainer(
-            this.createNewSummaryCache,
-            createNewResolvedUrl,
-            this.subLogger,
-        );
-        const resolvedUrl = this.service.resolvedUrl;
-        ensureFluidResolvedUrl(resolvedUrl);
-        this._resolvedUrl = resolvedUrl;
-        const url = await this.getAbsoluteUrl("");
-        assert(url !== undefined, "Container url undefined");
-        this.originalRequest = { url };
-        this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
-        const parsedUrl = parseUrl(resolvedUrl.url);
-        if (parsedUrl === undefined) {
-            throw new Error("Unable to parse Url");
+        try {
+            this.attachInProgress = true;
+            const createNewResolvedUrl = await this.urlResolver.resolve(request);
+            ensureFluidResolvedUrl(createNewResolvedUrl);
+            // Actually go and create the resolved document
+            if (this.service === undefined) {
+                this.service = await this.serviceFactory.createContainer(
+                    this.createNewSummaryCache,
+                    createNewResolvedUrl,
+                    this.subLogger,
+                );
+            }
+            const resolvedUrl = this.service.resolvedUrl;
+            ensureFluidResolvedUrl(resolvedUrl);
+            this._resolvedUrl = resolvedUrl;
+            const url = await this.getAbsoluteUrl("");
+            assert(url !== undefined, "Container url undefined");
+            this.originalRequest = { url };
+            this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
+            const parsedUrl = parseUrl(resolvedUrl.url);
+            if (parsedUrl === undefined) {
+                throw new Error("Unable to parse Url");
+            }
+            const [, docId] = parsedUrl.id.split("/");
+            this._id = decodeURI(docId);
+
+            if (this._storageService === undefined) {
+                this._storageService = await this.getDocumentStorageService();
+            }
+
+            // This we can probably just pass the storage service to the blob manager - although ideally
+            // there just isn't a blob manager
+            if (this.blobManager === undefined) {
+                this.blobManager = await this.loadBlobManager(this.storageService, undefined);
+            }
+            this._attachState = AttachState.Attached;
+            this.emit("attached");
+            this.createNewSummaryCache = undefined;
+            // We know this is create new flow.
+            this._existing = false;
+            this._parentBranch = this._id;
+
+            // Propagate current connection state through the system.
+            const connected = this.connectionState === ConnectionState.Connected;
+            assert(!connected || this._deltaManager.connectionMode === "read", "Unexpected connection state");
+            this.propagateConnectionState();
+            this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
+        } finally {
+            this.attachInProgress = false;
         }
-        const [, docId] = parsedUrl.id.split("/");
-        this._id = decodeURI(docId);
-
-        this._storageService = await this.getDocumentStorageService();
-
-        // This we can probably just pass the storage service to the blob manager - although ideally
-        // there just isn't a blob manager
-        this.blobManager = await this.loadBlobManager(this.storageService, undefined);
-        this._attachState = AttachState.Attached;
-        this.emit("attached");
-        // We know this is create new flow.
-        this._existing = false;
-        this._parentBranch = this._id;
-
-        // Propagate current connection state through the system.
-        const connected = this.connectionState === ConnectionState.Connected;
-        assert(!connected || this._deltaManager.connectionMode === "read", "Unexpected connection state");
-        this.propagateConnectionState();
-        this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
     }
 
     public async request(path: IRequest): Promise<IResponse> {
