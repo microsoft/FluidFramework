@@ -10,15 +10,14 @@ import {
 import { DiceRoller, DiceRollerInstantiationFactory } from "./model";
 
 /**
- * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultDataStore also enables dynamic loading in
- * the EmbeddedComponentLoader.
+ * This does setup for the Container.
  *
  * There are two important things here:
- * 1. Default Component name
- * 2. Map of string to factory for all components
+ * 1. Default name
+ * 2. Map of string to factory for all Fluid objects
  *
- * In this example, we are only registering a single component, but more complex examples will register multiple
- * components.
+ * In this example, we are only registering a single Fluid objects, but more complex examples will register multiple
+ * Fluid objects.
  */
 export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
     DiceRoller.ComponentName,
