@@ -11,4 +11,4 @@ We put together a group of Fluid components that explore a key group of concepts
 * [Dice Roller](./dice-roller) - A basic example that persists a value to the root SharedDirectory
 * [Pond](./pond) - A collection of fluid scenarios used primarily for testing
 * [Primitives](./primitives) - A container giving a UI to various DDS
-* [Simple Component Embed](./simple-component-embed) - A simple example of embedding one component within another
+* [Simple Fluid Object Embed](./simple-fluidobject-embed) - A simple example of embedding one Fluid object within another

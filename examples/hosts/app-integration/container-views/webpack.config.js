@@ -13,7 +13,7 @@ module.exports = env => {
 
     return merge({
         entry: {
-            app: "./src/app/app.ts"
+            app: "./src/app.ts"
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
@@ -35,7 +35,7 @@ module.exports = env => {
         },
         plugins: [
             new HtmlWebpackPlugin({
-                template: "./src/app/index.html",
+                template: "./src/index.html",
             }),
             // new CleanWebpackPlugin(),
         ],

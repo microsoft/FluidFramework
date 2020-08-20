@@ -75,9 +75,7 @@
       "**/*.d.ts",
       "packages/**/src/test/**/*.ts",
       "packages/**/dist/test/**/*.js",
-      "**/*.bundle.js",
-      "packages/components/**",
-      "packages/server/gateway/public/**"
+      "**/*.bundle.js"
     ],
     "exclude-after-remap": false,
     "extension": [

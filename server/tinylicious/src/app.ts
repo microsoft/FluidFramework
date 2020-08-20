@@ -62,7 +62,7 @@ export function create(
     // Basic Help Message
     app.use(Router().get("/", (req, res) => {
         // eslint-disable-next-line max-len
-        res.status(200).send("This is Tinylicious. Learn more at https://github.com/microsoft/FluidFramework/tree/master/server/tinylicious");
+        res.status(200).send("This is Tinylicious. Learn more at https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious");
     }));
 
     // Catch 404 and forward to error handler

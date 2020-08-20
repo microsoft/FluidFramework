@@ -57,9 +57,5 @@ kafka:
     rawdeltas: rawdeltas2
     deltas: deltas2
 
-minio:
-  externalUrl: https://minio.wu2-2.prague.office-int.com
-  endpoint: agents-storage-minio
-
 ingress:
   class: nginx-prod

@@ -419,7 +419,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: this.intervalMapKernel.serialize(),
                         encoding: "utf-8",
@@ -428,7 +428,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 {
                     mode: FileMode.Directory,
                     path: contentPath,
-                    type: TreeEntry[TreeEntry.Tree],
+                    type: TreeEntry.Tree,
                     value: this.snapshotMergeTree(),
                 },
 

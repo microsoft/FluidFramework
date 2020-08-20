@@ -1,21 +1,12 @@
 name: Azure Static Web Apps CI/CD
 
 on:
-  push:
-    branches:
-      - docs/hugo
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
-    branches:
-      - docs/hugo
   repository_dispatch:
-    # all types
-  workflow_dispatch:
     # all types
 
 jobs:
   build_and_deploy_job:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' # || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    if: github.event_name == 'repository_dispatch' # || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
@@ -25,9 +16,13 @@ jobs:
       - name: Download and extract api-extractor JSON
         id: docs-json
         run: |
-          wget https://fluidframework.z19.web.core.windows.net/${{ github.sha }}.tar.gz
+          wget -q https://fluidframework.z19.web.core.windows.net/${{ github.sha }}.tar.gz -O api-extractor.tar.gz
+          if [ $? -ne 0 ]; then
+            echo "${{ github.sha }}.tar.gz not found; downloading latest.tar.gz"
+            wget -q https://fluidframework.z19.web.core.windows.net/latest.tar.gz -O api-extractor.tar.gz
+          fi
           mkdir -p ./_api-extractor-temp/doc-models/
-          tar -C ./_api-extractor-temp/doc-models/ -zxvf ${{ github.sha }}.tar.gz
+          tar -C ./_api-extractor-temp/doc-models/ -zxvf api-extractor.tar.gz
       - name: npm run build:mdapidocs
         id: mdapidocs
         run: |

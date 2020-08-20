@@ -36,8 +36,8 @@ export async function startLoading(resolvedUrl: IResolvedUrl) {
     };
 
     const baseHost = new BaseHost(baseHostConfig);
-    const component =  await baseHost.getComponent((resolvedUrl as IFluidResolvedUrl).url);
-    const adapter = new HTMLViewAdapter(component);
+    const dataStore =  await baseHost.requestFluidObject((resolvedUrl as IFluidResolvedUrl).url);
+    const adapter = new HTMLViewAdapter(dataStore);
     adapter.render(document.getElementById("content") as HTMLDivElement);
 }
 

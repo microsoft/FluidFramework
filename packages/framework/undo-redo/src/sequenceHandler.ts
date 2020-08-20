@@ -14,7 +14,7 @@ import {
     TrackingGroup,
 } from "@fluidframework/merge-tree";
 import { SequenceDeltaEvent, SharedSegmentSequence } from "@fluidframework/sequence";
-import { IRevertable, UndoRedoStackManager } from "./undoRedoStackManager";
+import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager";
 
 /**
  * A shared segment sequence undo redo handler that will add all local sequences changes to the provided
@@ -22,7 +22,7 @@ import { IRevertable, UndoRedoStackManager } from "./undoRedoStackManager";
  */
 export class SharedSegmentSequenceUndoRedoHandler {
     // eslint-disable-next-line max-len
-    private readonly sequences = new Map<SharedSegmentSequence<ISegment>, SharedSegmentSequenceRevertable | undefined>();
+    private readonly sequences = new Map<SharedSegmentSequence<ISegment>, SharedSegmentSequenceRevertible | undefined>();
 
     constructor(private readonly stackManager: UndoRedoStackManager) {
         this.stackManager.on("changePushed", () => this.sequences.clear());
@@ -38,18 +38,18 @@ export class SharedSegmentSequenceUndoRedoHandler {
 
     private readonly sequenceDeltaHandler = (event: SequenceDeltaEvent, target: SharedSegmentSequence<ISegment>) => {
         if (event.isLocal) {
-            let revertable = this.sequences.get(target);
-            if (revertable === undefined) {
-                revertable = new SharedSegmentSequenceRevertable(target);
-                this.stackManager.pushToCurrentOperation(revertable);
-                this.sequences.set(target, revertable);
+            let revertible = this.sequences.get(target);
+            if (revertible === undefined) {
+                revertible = new SharedSegmentSequenceRevertible(target);
+                this.stackManager.pushToCurrentOperation(revertible);
+                this.sequences.set(target, revertible);
             }
-            revertable.add(event);
+            revertible.add(event);
         }
     };
 }
 
-interface ITrackedSharedSegmentSequenceRevertable {
+interface ITrackedSharedSegmentSequenceRevertible {
     trackingGroup: TrackingGroup;
     propertyDelta: PropertySet;
     operation: MergeTreeDeltaOperationType;
@@ -58,8 +58,8 @@ interface ITrackedSharedSegmentSequenceRevertable {
 /**
  * Tracks a change on a shared segment sequence and allows reverting it
  */
-export class SharedSegmentSequenceRevertable implements IRevertable {
-    private readonly tracking: ITrackedSharedSegmentSequenceRevertable[];
+export class SharedSegmentSequenceRevertible implements IRevertible {
+    private readonly tracking: ITrackedSharedSegmentSequenceRevertible[];
 
     constructor(
         public readonly sequence: SharedSegmentSequence<ISegment>,
@@ -125,14 +125,14 @@ export class SharedSegmentSequenceRevertable implements IRevertable {
                                     undefined);
                             }
                         default:
-                            throw new Error("operationt type not revertable");
+                            throw new Error("operationt type not revertible");
                     }
                 }
             }
         }
     }
 
-    public disgard() {
+    public discard() {
         while (this.tracking.length > 0) {
             const tracked = this.tracking.pop();
             if (tracked !== undefined) {

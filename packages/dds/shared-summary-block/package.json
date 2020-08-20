@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/shared-summary-block",
-  "version": "0.25.0",
+  "version": "0.25.1",
   "description": "A DDS that does not generate ops but is part of summary",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -54,15 +54,15 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.21.0",
-    "@fluidframework/datastore-definitions": "^0.25.0",
-    "@fluidframework/protocol-definitions": "^0.1011.0-0",
-    "@fluidframework/shared-object-base": "^0.25.0"
+    "@fluidframework/datastore-definitions": "^0.25.1",
+    "@fluidframework/protocol-definitions": "^0.1011.1-0",
+    "@fluidframework/shared-object-base": "^0.25.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/mocha-test-setup": "^0.25.0",
-    "@fluidframework/test-runtime-utils": "^0.25.0",
+    "@fluidframework/mocha-test-setup": "^0.25.1",
+    "@fluidframework/test-runtime-utils": "^0.25.1",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/benchmark": "^1.0.31",
     "@types/mocha": "^5.2.5",
@@ -81,7 +81,7 @@
     "eslint-plugin-prefer-arrow": "~1.1.7",
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
-    "mocha": "^8.0.1",
+    "mocha": "^8.1.1",
     "mocha-junit-reporter": "^1.18.0",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",

@@ -6,6 +6,30 @@
 import * as base64js from "base64-js";
 
 /**
+ * Converts a Uint8Array to a string of the provided encoding
+ * Useful when the array might be an IsoBuffer
+ * @param arr - The array to convert
+ * @param encoding - Optional target encoding; only "utf8" and "base64" are
+ * supported, with "utf8" being default
+ * @returns The converted string
+ */
+export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
+    switch (encoding) {
+        case "base64": {
+            return base64js.fromByteArray(arr);
+        }
+        case "utf8":
+        case "utf-8":
+        case undefined: {
+            return new TextDecoder().decode(arr);
+        }
+        default: {
+            throw new Error("invalid/unsupported encoding");
+        }
+    }
+}
+
+/**
  * Minimal implementation of Buffer for our usages in the browser environment.
  */
 export class IsoBuffer extends Uint8Array {
@@ -16,20 +40,7 @@ export class IsoBuffer extends Uint8Array {
      * @param encoding
      */
     public toString(encoding?: string): string {
-        switch (encoding) {
-            case "base64": {
-                // TODO: check any sanitization
-                return base64js.fromByteArray(this);
-            }
-            case "utf8":
-            case "utf-8":
-            case undefined: {
-                return new TextDecoder().decode(this);
-            }
-            default: {
-                throw new Error("invalid/unsupported encoding");
-            }
-        }
+        return Uint8ArrayToString(this, encoding);
     }
 
     /**
@@ -77,6 +88,10 @@ export class IsoBuffer extends Uint8Array {
                 throw new Error("invalid/unsupported encoding");
             }
         }
+    }
+
+    static isBuffer(obj: any): boolean {
+        throw new Error("unimplemented");
     }
 
     /**
