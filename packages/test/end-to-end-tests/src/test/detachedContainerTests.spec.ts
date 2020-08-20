@@ -219,7 +219,7 @@ describe("Detached Container", () => {
         container.on("op", (op: ISequencedDocumentMessage) => {
             if (op.contents?.type === DataStoreMessageType.Attach) {
                 assert.strictEqual(op.contents.contents.id, dataStore1.context.id,
-                    "There should be an attach op for created component");
+                    "There should be an attach op for created data store");
                 defP.resolve();
             }
         });
