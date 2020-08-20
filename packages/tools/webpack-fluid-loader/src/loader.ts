@@ -191,7 +191,7 @@ export async function start(
         config: {},
     };
 
-    const urlResolver = new MultiUrlResolver(window.location.origin, options);
+    const urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
 
     // Create the loader that is used to load the Container.
     const loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);

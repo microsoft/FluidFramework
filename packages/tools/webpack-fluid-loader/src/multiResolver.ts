@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
@@ -76,6 +75,7 @@ const getUser = (): IDevServerUser => ({
 export class MultiUrlResolver implements IUrlResolver {
     private readonly urlResolver: IUrlResolver;
     constructor(
+        private readonly documentId: string,
         private readonly rawUrl: string,
         private readonly options: RouteOptions) {
         this.urlResolver = getUrlResolver(options);
@@ -86,14 +86,7 @@ export class MultiUrlResolver implements IUrlResolver {
         if (url.startsWith("/")) {
             url = url.substr(1);
         }
-        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
-
-        const parsedUrl = parse(fluidResolvedUrl.url);
-        if (parsedUrl.pathname === undefined) {
-            throw new Error("Url should contain tenant and docId!!");
-        }
-        const [, , documentId] = parsedUrl.pathname.split("/");
-        return `${this.rawUrl}/${documentId}/${url}`;
+        return `${this.rawUrl}/${this.documentId}/${url}`;
     }
 
     async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
