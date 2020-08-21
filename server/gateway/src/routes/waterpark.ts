@@ -18,6 +18,8 @@ import { IAlfred } from "../interfaces";
 import { getConfig, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
+// TODO: Remove the ECL reference here as the package is now removed
+// Since it is in the @fluidframework feed, this will still function fine
 const defaultChaincode =
     `@fluidframework/external-component-loader@^0.25.0-0`;
 
