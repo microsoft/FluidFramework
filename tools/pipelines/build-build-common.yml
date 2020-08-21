@@ -40,3 +40,5 @@ extends:
     taskLint: false
     taskTest: false
     taskAuth: false
+    noPublish: ${{ variables['noPublish'] }}
+    releaseBuild: ${{ variables['releaseBuild'] }}

@@ -63,6 +63,14 @@ parameters:
   type: string
   default:
 
+- name: noPublish
+  type: string
+  default:
+
+- name: releaseBuild
+  type: string
+  default:
+  
 trigger: none
 
 variables:
@@ -92,11 +100,23 @@ stages:
             script: |
               # Show all task group conditions
 
-              echo Build=${{ parameters.taskBuild }}
-              echo Lint=${{ parameters.taskLint }}
-              echo Test=${{ parameters.taskTest }}
-              echo BuildDoc=${{ parameters.taskBuildDocs }}
-              echo TestCoverage=$(testCoverage)
+              echo Tasks Variables;
+              echo "  Build=${{ parameters.taskBuild }}"
+              echo "  Lint=${{ parameters.taskLint }}"
+              echo "  Test=${{ parameters.taskTest }}"
+              echo "  BuildDoc=${{ parameters.taskBuildDocs }}"
+              echo "  TestCoverage=$(testCoverage)"
+              echo
+              echo Override Variables:
+              echo "  noPublish=${{ parameters.noPublish }}"
+              echo "  releaseBuild=${{ parameters.releaseBuild }}"
+              echo
+              echo Computed variables:
+              echo "  componentDetection=$componentDetection"
+              echo "  pushImage=$pushImage"
+              echo "  publish=$publish"
+              echo "  release=$release"
+
         - task: Bash@3
           displayName: Strip MIT License
           inputs:
@@ -137,6 +157,7 @@ stages:
           parameters:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            release: ${{ variables.release }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:

@@ -6,11 +6,17 @@
 variables:
 - name: skipComponentGovernanceDetection
   value: true
-- name: publish
+- name: shouldPublish
   value: ${{
     and(
       ne(variables['Build.Reason'], 'PullRequest'),
       ne(variables['System.TeamProject'], 'public')
+    )}}
+- name: publish
+  value: ${{ 
+    and(
+      variables.shouldPublish,
+      ne(variables.noPublish, true)
     )}}
 - name: componentDetection
   value: ${{ variables.publish }}
@@ -20,3 +26,6 @@ variables:
       variables.publish,
       eq(variables['Build.SourceBranch'], 'refs/heads/main')
     )}}
+- ${{ if and(variables.shouldPublish, eq(variables.releaseBuild, true)) }}:
+  - name: release
+    value: true
