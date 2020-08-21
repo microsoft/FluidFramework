@@ -10,7 +10,9 @@ You may be here because you want to...
 - Learn more about the Fluid Framework
 - Build a Fluid object
 
-Relevant documentation and guides can be found at <https://aka.ms/fluid>.
+Documentation and guides can be found at <https://fluidframework.com/>  
+Hello World Repo can be found at <https://github.com/microsoft/FluidHelloWorld>  
+Core Examples Repo can be found at <https://github.com/microsoft/FluidExamples>  
 
 Got questions? Engage with other Fluid Framework users and developers on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
 
