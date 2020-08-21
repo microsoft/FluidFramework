@@ -5,12 +5,12 @@
 
 name: $(Build.BuildId)
 
-variables:
+# variables:
 #  - template: templates/include-vars.yml
-  - name: mainPool
-    value: Main
-  - name: runPostCheckinTests
-    value: true
+#  - name: mainPool
+#    value: Main
+#  - name: runPostCheckinTests
+#    value: true
 
 trigger:
   branches:
@@ -56,7 +56,7 @@ extends:
   template: templates/build-npm-package.yml
   parameters:
     buildDirectory: .
-    poolBuild: ${{ variables.mainPool }}
+    poolBuild: Main
     cgSubDirectory: packages
     checkoutSubmodules: true
     runBundleAnalysis: true
@@ -89,10 +89,10 @@ extends:
           cp repo-package-lock.json packages/package-lock.json
 
     postBuildJobs:
-    - ${{ if eq(variables.runPostCheckinTests, true) }}:
+#    - ${{ if eq(variables.runPostCheckinTests, true) }}:
       - job: PostCheckinTests
         displayName: Run Post-Checkin Tests
-        pool: ${{ variables.mainPool }}
+        pool: Main
         steps:
 
         - task: Npm@1
