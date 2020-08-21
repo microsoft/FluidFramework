@@ -6,7 +6,7 @@
 name: $(Build.BuildId)
 
 variables:
-  - template: include-vars.yml
+  - template: templates/include-vars.yml
   - name: mainPool
     value: Main
   - name: runPostCheckinTests
