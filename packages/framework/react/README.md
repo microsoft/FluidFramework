@@ -2,7 +2,7 @@
 
 The Fluid Framework's React package provides the `SyncedDataObject`, Fluid React hooks and base view class for building React views that use synced states provided by Fluid. Its goal is to allow a React developer to quickly start building large, scalable React apps with synced views powered by Fluid data.
 
-Examples on how to use all of the different tools in this package can be found in the ['clicker-react'](../../../examples/data-objects/clicker-react) and [`likes-and-comments`](../../../examples/data-objects/likes-and-comments) folders under `./examples/data-object/` from the Fluid Framework repo root.
+Examples on how to use all of the different tools in this package can be found in the [clicker-react](../../../examples/data-objects/clicker-react) and [`likes-and-comments`](../../../examples/data-objects/likes-and-comments) folders under `./examples/data-object/` from the Fluid Framework repo root.
 
 A good general order of operations to follow when writing a `SyncedDataObject` implementation is the following:
 1. Define the DDSes needed in the `SyncedDataObject`constructor. This can be done using the `setXConfig` functions.
