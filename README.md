@@ -24,8 +24,7 @@ Here's the breakdown of the repo:
 
 * Fluid Framework Client Minirepo ([lerna.json](./lerna.json))
   * [Packages](./packages)
-  * [Fluid Examples](./examples/examples)
-  * [Example Hosts](./examples/hosts)
+  * [Fluid Examples](./examples)
 * Reference Fluid Ordering Service ("Routerlicious") Minirepo ([dir](./server/routerlicious) | [lerna.json](server/routerlicious/lerna.json))
   * [Packages](./server/routerlicious/packages)
 * Common Packages
