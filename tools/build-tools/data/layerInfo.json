@@ -173,7 +173,6 @@
                 "dot": false,
                 "dev": true,
                 "dirs": [
-                    "components/",
                     "examples/",
                     "packages/agents/"
                 ],
