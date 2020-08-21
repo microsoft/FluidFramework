@@ -6,11 +6,11 @@
 name: $(Build.BuildId)
 
 variables:
-  - template: templates/include-vars.yml
+#  - template: templates/include-vars.yml
   - name: mainPool
     value: Main
   - name: runPostCheckinTests
-    value: ${{ variables.publish }}
+    value: true
 
 trigger:
   branches:
