@@ -4,7 +4,7 @@
  */
 
 /**
-* This package provides and implementation of an in-memory undo redo stack, as
+* This package provides an implementation of an in-memory undo redo stack, as
 * well as handlers for the SharedMap, and SharedSegmentSequence distributed
 * datastructures.
 *
