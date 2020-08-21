@@ -356,7 +356,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 const odspSnapshot: IOdspSnapshot = cachedSnapshot;
 
                 const { trees, blobs, ops } = odspSnapshot;
-                let { id } = odspSnapshot;
+                // id should be undefined in case of just ops in snapshot.
+                let id: string | undefined;
                 if (trees) {
                     this.initTreesCache(trees);
                     // versionId is the id of the first tree
