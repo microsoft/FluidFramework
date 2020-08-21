@@ -8,19 +8,19 @@ import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitio
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideComponentInternalRegistry>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideFluidObjectInternalRegistry>> { }
 }
 
-export const IComponentInternalRegistry: keyof IProvideComponentInternalRegistry = "IComponentInternalRegistry";
+export const IFluidObjectInternalRegistry: keyof IProvideFluidObjectInternalRegistry = "IFluidObjectInternalRegistry";
 
-export interface IProvideComponentInternalRegistry {
-    readonly IComponentInternalRegistry: IComponentInternalRegistry;
+export interface IProvideFluidObjectInternalRegistry {
+    readonly IFluidObjectInternalRegistry: IFluidObjectInternalRegistry;
 }
 
 /**
  * Provides functionality to retrieve subsets of an internal registry.
  */
-export interface IComponentInternalRegistry extends IProvideComponentInternalRegistry {
+export interface IFluidObjectInternalRegistry extends IProvideFluidObjectInternalRegistry {
     getFromCapability(type: keyof (IFluidObject)): IInternalRegistryEntry[];
     hasCapability(type: string, capability: keyof (IFluidObject)): boolean;
 }
