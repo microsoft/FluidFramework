@@ -8,7 +8,7 @@ name: $(Build.BuildId)
 trigger:
   branches:
     include:
-    - master
+    - main
     - release/*
     - refs/tags/client_v*
   paths:
@@ -23,12 +23,13 @@ trigger:
     - tools/build-server-resources
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/publish-npm-package.yml
 
 pr:
   branches:
     include:
-    - master
+    - main
     - release/*
   paths:
     include:
@@ -42,6 +43,7 @@ pr:
     - tools/build-server-resources
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
 
 extends:
   template: templates/build-npm-package.yml

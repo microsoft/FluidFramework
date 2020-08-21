@@ -11,13 +11,13 @@ const INCLUDE_PATH = ".vuepress/includes/";
 const BASE_URL = process.env.BASE_URL || "https://fluid-docs.azurewebsites.net";
 const DOCS_AUDIENCE = process.env.DOCS_AUDIENCE || "";
 const THIS_VERSION = process.env.THIS_VERSION || "0.25";
-const MASTER_BRANCH_VERSION = process.env.MASTER_BRANCH_VERSION || "0.25";
+const MAIN_BRANCH_VERSION = process.env.MAIN_BRANCH_VERSION || "0.25";
 const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.24";
 const N1_VERSION = process.env.N1_VERSION || "0.23";
 const VUEPRESS_BASE = process.env.VUEPRESS_BASE || `/versions/${THIS_VERSION}/`;
 const RELEASE_URL = BASE_URL;
 const N1_URL = `${BASE_URL}/versions/${N1_VERSION}/`;
-const MASTER_BRANCH_URL = `${BASE_URL}/versions/latest/`;
+const MAIN_BRANCH_URL = `${BASE_URL}/versions/latest/`;
 
 const apiMapping = new Map([
     ["aqueduct", "Framework"],
@@ -26,7 +26,7 @@ const apiMapping = new Map([
     ["client-api", "Excluded"],
     ["common-definitions", "Internal"],
     ["common-utils", "Miscellaneous"],
-    ["component-base", "Runtime"],
+    ["data-object-base", "Runtime"],
     ["container-definitions", "Loader"],
     ["container-loader", "Loader"],
     ["container-runtime-definitions", "Loader"],
@@ -128,14 +128,14 @@ const getNav = () => {
             text: "Versions",
             items: [
                 { text: `v${RELEASE_VERSION}`, link: BASE_URL },
-                { text: `Bleeding edge`, link: MASTER_BRANCH_URL }
+                { text: `Bleeding edge`, link: MAIN_BRANCH_URL }
             ]
         });
     } else if (THIS_VERSION === RELEASE_VERSION) {
         nav.push({
             text: "Versions",
             items: [
-                { text: `Bleeding edge`, link: MASTER_BRANCH_URL }
+                { text: `Bleeding edge`, link: MAIN_BRANCH_URL }
             ]
         });
     }
@@ -262,8 +262,8 @@ const getThemeConfig = () => {
     const config = {
         DOCS_AUDIENCE: DOCS_AUDIENCE,
         THIS_VERSION: THIS_VERSION,
-        MASTER_BRANCH_VERSION: MASTER_BRANCH_VERSION,
-        MASTER_BRANCH_URL: MASTER_BRANCH_URL,
+        MAIN_BRANCH_VERSION: MAIN_BRANCH_VERSION,
+        MAIN_BRANCH_URL: MAIN_BRANCH_URL,
         RELEASE_VERSION: RELEASE_VERSION,
         RELEASE_URL: RELEASE_URL,
         N1_VERSION: N1_VERSION,

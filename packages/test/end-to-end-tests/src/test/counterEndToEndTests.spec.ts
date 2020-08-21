@@ -26,7 +26,7 @@ describe("SharedCounter", () => {
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
-    let component1: ITestFluidObject;
+    let dataStore1: ITestFluidObject;
     let sharedCounter1: ISharedCounter;
     let sharedCounter2: ISharedCounter;
     let sharedCounter3: ISharedCounter;
@@ -37,10 +37,10 @@ describe("SharedCounter", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidObject> {
-        const response = await container.request({ url: componentId });
+    async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidObject> {
+        const response = await container.request({ url: dataStoreId });
         if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
+            throw new Error(`DataStore with id: ${dataStoreId} not found`);
         }
         return response.value as ITestFluidObject;
     }
@@ -49,22 +49,22 @@ describe("SharedCounter", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
         const container1 = await createContainer();
-        component1 = await requestFluidObject("default", container1);
-        sharedCounter1 = await component1.getSharedObject<SharedCounter>(counterId);
+        dataStore1 = await requestFluidObject("default", container1);
+        sharedCounter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
 
         const container2 = await createContainer();
-        const component2 = await requestFluidObject("default", container2);
-        sharedCounter2 = await component2.getSharedObject<SharedCounter>(counterId);
+        const dataStore2 = await requestFluidObject("default", container2);
+        sharedCounter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 
         const container3 = await createContainer();
-        const component3 = await requestFluidObject("default", container3);
-        sharedCounter3 = await component3.getSharedObject<SharedCounter>(counterId);
+        const dataStore3 = await requestFluidObject("default", container3);
+        sharedCounter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);
         opProcessingController.addDeltaManagers(
-            component1.runtime.deltaManager,
-            component2.runtime.deltaManager,
-            component3.runtime.deltaManager);
+            dataStore1.runtime.deltaManager,
+            dataStore2.runtime.deltaManager,
+            dataStore3.runtime.deltaManager);
 
         await opProcessingController.process();
     });

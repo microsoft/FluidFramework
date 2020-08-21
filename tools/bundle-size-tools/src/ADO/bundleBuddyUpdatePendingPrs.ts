@@ -64,7 +64,7 @@ export async function bundleBuddyUpdatePendingPrs(
     prArtifactZipFiles.map(async (prArtifactZip) => {
       const prArtifactFilePaths = getBundlePathsFromZipObject(prArtifactZip);
 
-      // Use the bundle buddy config files from the PR branch rather than master
+      // Use the bundle buddy config files from the PR branch rather than main
       const configMap = await getBundleBuddyConfigMap({
         bundleFileData: prArtifactFilePaths,
         getBundleBuddyConfig: (relativePath) => getBundleBuddyConfigFileFromZip(prArtifactZip, relativePath)

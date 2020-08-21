@@ -36,15 +36,15 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         };
 
         let deltaConnectionServer: ILocalDeltaConnectionServer;
-        let component1: ITestFluidObject;
+        let dataStore1: ITestFluidObject;
         let sharedMap1: ISharedMap;
         let sharedMap2: ISharedMap;
         let sharedMap3: ISharedMap;
 
-        async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidObject> {
-            const response = await container.request({ url: componentId });
+        async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidObject> {
+            const response = await container.request({ url: dataStoreId });
             if (response.status !== 200 || response.mimeType !== "fluid/object") {
-                throw new Error(`Component with id: ${componentId} not found`);
+                throw new Error(`DataStore with id: ${dataStoreId} not found`);
             }
             return response.value as ITestFluidObject;
         }
@@ -62,20 +62,20 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             deltaConnectionServer = LocalDeltaConnectionServer.create();
 
             const container1 = await createContainer();
-            component1 = await requestFluidObject("default", container1);
-            sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
+            dataStore1 = await requestFluidObject("default", container1);
+            sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
             const container2 = await createContainer();
-            const component2 = await requestFluidObject("default", container2);
-            sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
+            const dataStore2 = await requestFluidObject("default", container2);
+            sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
             const container3 = await createContainer();
-            const component3 = await requestFluidObject("default", container3);
-            sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
+            const dataStore3 = await requestFluidObject("default", container3);
+            sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
         });
 
         it("Basic functionality", async () => {
-            const collection1 = ctor.create(component1.runtime);
+            const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
             await collection1.write("key1", "value1");
             await collection1.write("key2", "value2");
@@ -100,7 +100,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         });
 
         it("Should store all concurrent writings on a key in sequenced order", async () => {
-            const collection1 = ctor.create(component1.runtime);
+            const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
@@ -126,7 +126,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         });
 
         it("Happened after updates should overwrite previous versions", async () => {
-            const collection1 = ctor.create(component1.runtime);
+            const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
@@ -176,7 +176,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 
         it("Can store handles", async () => {
             // Set up the collection with two handles and add it to the map so other containers can find it
-            const collection1 = ctor.create(component1.runtime);
+            const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("test", "sampleValue");
             sharedMap1.set("collection", collection1.handle);
             await collection1.write("handleA", sharedMap1.handle);

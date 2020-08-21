@@ -1,10 +1,10 @@
 # clicker-react
 
-**Clicker-React** contains two Fluid components that use the new experimental Fluid React component and hooks. These can be found in the @fluidframeworks/react package.
+**Clicker-React** contains two Fluid objects that use the new experimental Fluid React data object and hooks. These can be found in the @fluidframeworks/react package.
 
 **clicker-function** shows how to create a simple Clicker example using no DDS' by just calling the useSyncedObject hook.
 
-The **clicker-react** example uses the FluidReactView which is a wrapper around the traditional ReactComponent that allows you to use synced state updates the same way you would use local state updates in React.
+The **clicker-react** example uses the FluidReactView which is a wrapper around the traditional React component that allows you to use synced state updates the same way you would use local state updates in React.
 
 i.e. in React, reading the counter value would be done by state.value and incrementing it would be done by setState({value: state.value + 1}). Now, we can expect the same state.value to be incremented without any event listening for the change
 

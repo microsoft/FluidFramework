@@ -62,7 +62,7 @@ function parseFileVersion(file_version: string, build_id?: number) {
  * If the build is trigger by tags, no suffix is needed (those are released bits).
  * Otherwise it is a CI only build, and we add the following suffix depending on the branch
  *     PRs:               refs/pull/*                             | ci.<build_number>.dev
- *     Official branches: refs/heads/master, refs/heads/release/* | ci.<build_number>.official
+ *     Official branches: refs/heads/main, refs/heads/release/* | ci.<build_number>.official
  *     Manual builds:     <all others>                            | ci.<build_number>.manual
  */
 function getBuildSuffix(env_build_branch: string, build_num: string, isFull: boolean) {
@@ -89,8 +89,8 @@ function getBuildSuffix(env_build_branch: string, build_num: string, isFull: boo
         return `ci.${build_num}.dev`;
     }
 
-    // master or release branches
-    if (build_branch[1] === 'heads' && (build_branch[2] === 'master' || build_branch[2] === "release")) {
+    // main or release branches
+    if (build_branch[1] === 'heads' && (build_branch[2] === 'main' || build_branch[2] === "release")) {
         return `ci.${build_num}.official`;
     }
 

@@ -1,6 +1,5 @@
 {
   "packages": [
-    "components/**",
     "examples/**",
     "packages/**"
   ],

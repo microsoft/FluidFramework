@@ -4,5 +4,5 @@
  */
 export * from "./interfaces";
 export * from "./lastEditedTracker";
-export * from "./lastEditedTrackerComponent";
+export * from "./lastEditedTrackerDataObject";
 export * from "./setup";

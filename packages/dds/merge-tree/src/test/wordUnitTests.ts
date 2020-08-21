@@ -8,18 +8,17 @@
 import path from "path";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import random from "random-js";
+import { Trace } from "@fluidframework/common-utils";
 import { LocalReference } from "../localReference";
 import * as ops from "../ops";
 import * as Properties from "../properties";
 import { TestClient } from "./testClient";
 import { loadTextFromFileWithMarkers } from "./testUtils";
 
-const clock = () => process.hrtime();
+const clock = () => Trace.start();
 
-function elapsedMicroseconds(start: [number, number]) {
-    const end: number[] = process.hrtime(start);
-    const duration = Math.round((end[0] * 1000000) + (end[1] / 1000));
-    return duration;
+function elapsedMicroseconds(trace: Trace) {
+    return trace.trace().duration * 1000;
 }
 
 export function propertyCopy() {

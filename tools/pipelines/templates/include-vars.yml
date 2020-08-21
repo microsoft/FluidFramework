@@ -1,0 +1,22 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# common variables
+
+variables:
+- name: skipComponentGovernanceDetection
+  value: true
+- name: publish
+  value: ${{
+    and(
+      ne(variables['Build.Reason'], 'PullRequest'),
+      ne(variables['System.TeamProject'], 'public')
+    )}}
+- name: componentDetection
+  value: ${{ variables.publish }}
+- name: pushImage
+  value: ${{
+    and(
+      variables.publish,
+      eq(variables['Build.SourceBranch'], 'refs/heads/main')
+    )}}
