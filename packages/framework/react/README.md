@@ -1,11 +1,11 @@
 # @fluidframework/react
 
-The Fluid Frameworks React package provides the `SyncedDataObject`, Fluid React hooks and base view class for building React views that use synced states provided by Fluid. Its goal is to allow a React developer to quickly start building large, scalable React apps with synced views with the data powered by Fluid.
+The Fluid Framework's React package provides the `SyncedDataObject`, Fluid React hooks and base view class for building React views that use synced states provided by Fluid. Its goal is to allow a React developer to quickly start building large, scalable React apps with synced views powered by Fluid data.
 
-Examples on how to use all of the different tools in this package can be found in the `clicker-react` and `likes-and-comments` folders under `./examples/data-object/` from the Fluid Framework repo root.
+Examples on how to use all of the different tools in this package can be found in the ['clicker-react'](../../../examples/data-objects/clicker-react) and [`likes-and-comments`](../../../examples/data-objects/likes-and-comments) folders under `./examples/data-object/` from the Fluid Framework repo root.
 
-A good general order of operations to follow when writing or reading a `SyncedDataObject` implementation is the following:
-1. Define the DDS' needed in the `SyncedDataObject`constructor. This can be done using the `setXConfig` functions.
+A good general order of operations to follow when writing a `SyncedDataObject` implementation is the following:
+1. Define the DDSes needed in the `SyncedDataObject`constructor. This can be done using the `setXConfig` functions.
 2. Fill in the `render(element: HTMLElement)` function with a call to `ReactDOM.render` and pass in a React view.
 3. Build out the React view either using the `FluidReactView` class or as a functional view using the various hooks that are available.
 
@@ -15,13 +15,13 @@ The ['SyncedDataObject'](./src/syncedDataObject.ts) is an extension of the Fluid
 
 The `SyncedDataObject` essentially acts as the data store for the React app that is rendered within it. It provides a configuration where we can set up the schema for our data store, and also guarantees that all the values defined in the configuration will be automatically initialized prior to the view rendering. It also ensures that all updates that were made in the data store for that session will be automatically restored when the app is loaded fresh again by another client for that session. Finally, and most importantly, it guarantees that all updates that are made in the data store are synced live with all other clients that are currently viewing this React app in the current session, without requiring event listeners or component lifecycle methods.
 
-It uses the same factory as `DataObject`. However, in addition, it also provides the following functionality:
+`SyncedDataObject` uses the same factory as `DataObject`. However, in addition, it also provides the following functionality:
 
-- A `syncedStateConfig` where users can define the different types of values that they would like to see prepared for their view to consume. Values defined here are guaranteed to be initialized and available prior to `render` being called. Here, users can assign the DDS' that their React views will need by using the pre-built helper functions available to them from the `syncedObjects` folder, i.e. `setSyncedStringConfig`, `setSyncedArrayConfig`, etc. or they can manually define their own unique configuration with `this.setConfig`. Each value set on the config will have its own `syncedStateId` which we will use to refer to the prepared value from the view.
+- A `syncedStateConfig` where users can define the different types of values that they would like to see prepared for their view to consume. Values defined here are guaranteed to be initialized and available prior to `render` being called. Here, users can assign the DDSes that their React views will need by using the pre-built helper functions available to them from the `syncedObjects` folder, i.e. `setSyncedStringConfig`, `setSyncedArrayConfig`, etc. or they can manually define their own unique configuration with `this.setConfig`. Each value set on the config will have its own `syncedStateId` which we will use to refer to the prepared value from the view.
 
-- An implementation of `IFluidHTMLView` where users just need to fill in the `render` function and the `IFluidHTMLView` interface is already fulfilled without any further code. The React view used in the `render` function should pass in the synced data object for the view to use.
+- An implementation of `IFluidHTMLView` where users fill in the `render` function and the `IFluidHTMLView` interface is already fulfilled without any further code. The React view used in the `render` function should pass in the synced data object for the view to use.
 
-- A `fluidObjectMap` that guarantees that all Fluid DDS'/objects used by this `SyncedDataObject` will be automatically created and loaded without the need for component lifecycle methods such as `initializeStateFirstTime` and `initializeStateFromExisting`
+- A `fluidObjectMap` that guarantees that all Fluid DDSes/objects used by this `SyncedDataObject` will be automatically created and loaded without the need for component lifecycle methods such as `initializeStateFirstTime` and `initializeStateFromExisting`
 
 #### SyncedDataObject Example
 
@@ -64,13 +64,13 @@ export class LikesAndComments extends SyncedDataObject {
 
 ## syncedObject Hooks
 
-The [synced Objects folder](./src/syncedObjects) contains a collection of setSyncedXConfig helper function and useSyncedX hook pairings. These functions allow you to easily start using the DDS' that were prepared in the `syncedDataObject`. Since these are all wrappers around the `React.useState` hook, with added syncing functionality, simply calling these functions using regular React hook rules will automatically convert the function into a React functional view.
+The [synced Objects folder](./src/syncedObjects) contains a collection of setSyncedXConfig helper function and useSyncedX hook pairings. These functions allow you to easily start using the DDSes that were prepared in the `syncedDataObject`. Since these are all wrappers around the `React.useState` hook, with added syncing functionality, simply calling these functions using regular React hook rules will automatically convert the function into a React functional view.
 
-Each of these helper & hook pairings take a Fluid DDS and binds them to the `syncedDataObject` under the unique `syncedStateId`. This ensures that any changes that happen on these DDS' see synced updates show up live on all connected React views.
+Each of these helper & hook pairings take a Fluid DDS and binds them to the `syncedDataObject` under the unique `syncedStateId`. This ensures that any changes that happen on these DDSes see synced updates show up live on all connected React views.
 
-A single `syncedDataObject` can hold multiple different types of DDS' and other `DataObjects` under different `syncedStateIds`. However, each unique ID is exclusive to the type of value that is set there when using the helper & hook pairs.
+A single `syncedDataObject` can hold multiple different types of DDSes and other `DataObjects` under different `syncedStateIds`. However, each unique ID is exclusive to the type of value that is set there when using the helper & hook pairs.
 
-The current roster of available helper & hook pairs for different DDS' are:
+The current roster of available helper & hook pairs for different DDSes are:
 - For just setting type T objects on a `SharedMap` -> `useSyncedObject<T>` & `setSyncedObjectConfig<T>`
 - `SharedCounter` -> `useSyncedCounter` & `setSyncedCounterConfig`
 - `SharedObjectSequence` -> `useSyncedArray<T>` & `setSyncedArrayConfig`
@@ -167,7 +167,7 @@ export const LikesAndCommentsInstantiationFactory = new DataObjectFactory(
 export const fluidExport = LikesAndCommentsInstantiationFactory;
 ```
 
-These hooks should allow for general functionality to start users off building synced React views using Fluid DDS'. However, if users would like to set up their own custom relationships and configurations, we do also offer the `FluidReactView` base class that extends `React.Component` for classical views, and the `useStateFluid` and `useReducerFluid` hooks for functional views.
+These hooks should allow for general functionality to start users off building synced React views using Fluid DDSes. However, if users would like to set up their own custom relationships and configurations, we do also offer the `FluidReactView` base class that extends `React.Component` for classical views, and the `useStateFluid` and `useReducerFluid` hooks for functional views.
 
 ## FluidReactView
 
