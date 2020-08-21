@@ -577,6 +577,8 @@ export class ContainerRuntime extends EventEmitter
     private latestSummaryAck: ISummaryContext;
     private readonly summaryTracker: SummaryTracker;
     private readonly notBoundedComponentContexts = new Set<string>();
+    // 0.24 back-compat attachingBeforeSummary
+    private readonly attachOpFiredForDataStore = new Set<string>();
 
     private tasks: string[] = [];
 
@@ -1396,13 +1398,14 @@ export class ContainerRuntime extends EventEmitter
         const context = this.getContext(componentRuntime.id) as LocalFluidDataStoreContext;
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
-        // clients but we do need to submit op if container forced us to do so.
+        // clients.
         if (this.attachState !== AttachState.Detached) {
             context.emit("attaching");
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
             this.submit(ContainerMessageType.Attach, message);
+            this.attachOpFiredForDataStore.add(componentRuntime.id);
         }
 
         // Resolve the deferred so other local components can access it.
@@ -1464,21 +1467,33 @@ export class ContainerRuntime extends EventEmitter
             type: SummaryType.Tree,
         };
 
-        // Iterate over each component and ask it to snapshot
-        Array.from(this.contexts)
-            .filter(([key, value]) =>
-                // Take summary of bounded components.
-                !this.notBoundedComponentContexts.has(key),
-            )
-            .map(async ([key, value]) => {
-                const snapshot = value.generateAttachMessage().snapshot;
-                const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-                    snapshot,
-                    `/${encodeURIComponent(key)}`,
-                    true,
-                );
-                summaryTree.tree[key] = treeWithStats.summaryTree;
-            });
+        // Attaching graph of some stores can cause other stores to get bound too.
+        // So keep taking summary until no new stores get bound.
+        // The logic to keep taking summary if any new data store gets bounded should be added here
+        // for forward compat.
+        let notBoundContextsLength: number;
+        do {
+            notBoundContextsLength = this.notBoundedComponentContexts.size;
+            // Iterate over each data store and ask it to snapshot
+            Array.from(this.contexts)
+                .filter(([key, _]) =>
+                    // Take summary of bounded data stores only, make sure we haven't summarized them already
+                    // and no attach op has been fired for that data store because for loader versions <= 0.24
+                    // we set attach state as "attaching" before taking createNew summary.
+                    !(this.notBoundedComponentContexts.has(key)
+                        || summaryTree[key]
+                        || this.attachOpFiredForDataStore.has(key)),
+                )
+                .map(([key, value]) => {
+                    const snapshot = value.generateAttachMessage().snapshot;
+                    const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+                        snapshot,
+                        `/${encodeURIComponent(key)}`,
+                        true,
+                    );
+                    summaryTree.tree[key] = treeWithStats.summaryTree;
+                });
+        } while (notBoundContextsLength !== this.notBoundedComponentContexts.size);
 
         this.serializeContainerBlobs(summaryTree);
 
