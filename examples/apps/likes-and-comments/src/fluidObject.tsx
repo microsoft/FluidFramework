@@ -97,10 +97,20 @@ function LikesAndCommentsView(
     );
 }
 
-/**
- * LikesAndComments example using multiple DDS hooks
- */
 export class LikesAndComments extends SyncedDataObject {
+    public static get Name() { return "LikesAndComments"; }
+
+    public static readonly factory = new DataObjectFactory(
+        LikesAndComments.name,
+        LikesAndComments,
+        [
+            SharedCounter.getFactory(),
+            SharedObjectSequence.getFactory(),
+            SharedString.getFactory(),
+        ],
+        {},
+    );
+
     constructor(props) {
         super(props);
         // Declare configs for each synced state the view will need
@@ -131,16 +141,3 @@ export class LikesAndComments extends SyncedDataObject {
         return div;
     }
 }
-
-// ----- FACTORY SETUP -----
-export const LikesAndCommentsInstantiationFactory = new DataObjectFactory(
-    "likes-and-comments",
-    LikesAndComments,
-    [
-        SharedCounter.getFactory(),
-        SharedObjectSequence.getFactory(),
-        SharedString.getFactory(),
-    ],
-    {},
-);
-export const fluidExport = LikesAndCommentsInstantiationFactory;
