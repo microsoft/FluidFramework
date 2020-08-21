@@ -54,16 +54,16 @@ markup:
   goldmark:
     renderer:
       autoHeadingIDType: "github"
-    # mark unsafe html as true since api-documenter uses html snipets.
-    unsafe: true
-    extensions:
-      definitionList: true
-      footnote: true
-      linkify: true
-      strikethrough: true
-      table: true
-      taskList: true
-      typographer: true
+      # mark unsafe html as true since api-documenter uses html snipets.
+      unsafe: true
+      extensions:
+        definitionList: true
+        footnote: true
+        linkify: true
+        strikethrough: true
+        table: true
+        taskList: true
+        typographer: true
 
   highlight:
     codeFences: true
