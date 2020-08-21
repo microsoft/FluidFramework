@@ -264,7 +264,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private messageCountAfterDisconnection: number = 0;
     private _loadedFromVersion: IVersion | undefined;
     private _resolvedUrl: IResolvedUrl | undefined;
-    private createNewSummaryCache: ISummaryTree | undefined;
+    private cachedAttachSummary: ISummaryTree | undefined;
     private attachInProgress = false;
 
     private lastVisible: number | undefined;
@@ -492,48 +492,48 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
-        assert.strictEqual(this.deltaManager.inbound.length, 0, "Inbound queue should be empty when attaching");
         // If container is already attached or attach is in progress, return.
         if (this._attachState === AttachState.Attached || this.attachInProgress) {
             return;
         }
-
-        // Only take a summary if the container is in detached state, otherwise we could have local changes.
-        // In failed attach call, we would already have a summary cached.
-        if (this._attachState === AttachState.Detached) {
-            // Get the document state post attach - possibly can just call attach but we need to change the semantics
-            // around what the attach means as far as async code goes.
-            const appSummary: ISummaryTree = this.context.createSummary();
-            if (this.protocolHandler === undefined) {
-                throw new Error("Protocol Handler is undefined");
-            }
-            const protocolSummary = this.protocolHandler.captureSummary();
-            this.createNewSummaryCache = combineAppAndProtocolSummary(appSummary, protocolSummary);
-
-            // Set the state as attaching as we are starting the process of attaching container.
-            // This should be fired after taking the summary because it is the place where we are
-            // starting to attach the container to storage.
-            // Also, this should only be fired in detached container.
-            this._attachState = AttachState.Attaching;
-            this.emit("attaching");
-        }
-        assert(this.createNewSummaryCache,
-            "Summary should be there either by this attach call or previous attach call!!");
-
-        if (request.headers?.[CreateNewHeader.createNew] === undefined) {
-            request.headers = {
-                ...request.headers,
-                [CreateNewHeader.createNew]: {},
-            };
-        }
+        this.attachInProgress = true;
         try {
-            this.attachInProgress = true;
+            assert.strictEqual(this.deltaManager.inbound.length, 0, "Inbound queue should be empty when attaching");
+            // Only take a summary if the container is in detached state, otherwise we could have local changes.
+            // In failed attach call, we would already have a summary cached.
+            if (this._attachState === AttachState.Detached) {
+                // Get the document state post attach - possibly can just call attach but we need to change the semantics
+                // around what the attach means as far as async code goes.
+                const appSummary: ISummaryTree = this.context.createSummary();
+                if (this.protocolHandler === undefined) {
+                    throw new Error("Protocol Handler is undefined");
+                }
+                const protocolSummary = this.protocolHandler.captureSummary();
+                this.cachedAttachSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+
+                // Set the state as attaching as we are starting the process of attaching container.
+                // This should be fired after taking the summary because it is the place where we are
+                // starting to attach the container to storage.
+                // Also, this should only be fired in detached container.
+                this._attachState = AttachState.Attaching;
+                this.emit("attaching");
+            }
+            assert(this.cachedAttachSummary,
+                "Summary should be there either by this attach call or previous attach call!!");
+
+            if (request.headers?.[CreateNewHeader.createNew] === undefined) {
+                request.headers = {
+                    ...request.headers,
+                    [CreateNewHeader.createNew]: {},
+                };
+            }
+
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
             // Actually go and create the resolved document
             if (this.service === undefined) {
                 this.service = await this.serviceFactory.createContainer(
-                    this.createNewSummaryCache,
+                    this.cachedAttachSummary,
                     createNewResolvedUrl,
                     this.subLogger,
                 );
@@ -563,7 +563,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
             this._attachState = AttachState.Attached;
             this.emit("attached");
-            this.createNewSummaryCache = undefined;
+            this.cachedAttachSummary = undefined;
             // We know this is create new flow.
             this._existing = false;
             this._parentBranch = this._id;
