@@ -43,6 +43,10 @@ parameters:
   type: stepList
   default: []
 
+- name: postBuildJobs
+  type: jobList
+  default: []
+
 - name: cgSubDirectory
   type: string
   default:
@@ -69,6 +73,7 @@ variables:
   - template: include-vars.yml
 
 stages:
+  # Install / Build / Test Stage
   - stage: build
     displayName: Build Stage
     jobs:
@@ -269,6 +274,13 @@ stages:
               verbosity: Verbose
               scanType: Register
               alertWarningLevel: High
+
+  # Post-build stage, run in parallel to Publish below
+  - stage: postBuild
+    dependsOn: build
+    displayName: Post-Build Stage
+    jobs:
+    - ${{ parameters.postBuildJobs }}
 
   # Publish stage
   - ${{ if eq(variables.publish, true) }}:
