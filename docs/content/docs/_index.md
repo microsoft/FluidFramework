@@ -8,10 +8,14 @@ Fluid Framework is a TypeScript library for building collaborative web applicati
 
 ## Fluid in action
 
+<!--
 {{< carousel >}}
 {{< carousel_item title="First Title" subTitle="this is the subtitle" img="https://code.visualstudio.com/assets/docs_carousel/debug_b.png">}}
 {{< carousel_item title="Second Title" subTitle="The second subtitle" img="https://code.visualstudio.com/assets/docs_carousel/debug_b.png">}}
 {{< /carousel >}}
+ -->
+
+COMING SOON
 
 
 ## First steps
