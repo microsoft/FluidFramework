@@ -14,6 +14,7 @@
 
 import fs from "fs";
 import path from "path";
+import { Trace } from "@fluidframework/common-utils";
 // eslint-disable-next-line import/no-duplicates
 import * as MergeTree from "@fluidframework/merge-tree";
 // eslint-disable-next-line no-duplicate-imports
@@ -42,13 +43,11 @@ import random from "random-js";
 import * as Xmldoc from "xmldoc";
 import * as SharedString from "../intervalCollection";
 
-const clock = () => process.hrtime();
+const clock = () => Trace.start();
 
-function elapsedMicroseconds(start: [number, number]) {
-    const end: number[] = process.hrtime(start);
-    const duration = Math.round((end[0] * 1000000) + (end[1] / 1000));
-    return duration;
-}
+const elapsedMicroseconds = (trace: Trace) => {
+    return trace.trace().duration * 1000;
+};
 
 // Enum AsyncRoundState {
 //     Insert,

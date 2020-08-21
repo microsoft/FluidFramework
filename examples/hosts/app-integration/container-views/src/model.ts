@@ -22,15 +22,15 @@ const diceValueKey = "diceValue";
  * The DiceRoller is our implementation of the IDiceRoller interface.
  */
 export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLView {
-    public static get ComponentName() { return "@fluid-example/dice-roller"; }
+    public static get Name() { return "@fluid-example/dice-roller"; }
 
     public get IFluidHTMLView() { return this; }
 
     /**
      * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the
-     * component and all work will resolve before the view is presented to any user.
+     * Fluid object and all work will resolve before the view is presented to any user.
      *
-     * This method is used to perform component setup, which can include setting an initial schema or initial values.
+     * This method is used to perform Fluid object setup, which can include setting an initial schema or initial values.
      */
     protected async initializingFirstTime() {
         this.root.set(diceValueKey, 1);
@@ -65,11 +65,11 @@ export class DiceRoller extends DataObject implements IDiceRoller, IFluidHTMLVie
 }
 
 /**
- * The DataObjectFactory declares the component and defines any additional distributed data structures.
+ * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
 export const DiceRollerInstantiationFactory = new DataObjectFactory(
-    DiceRoller.ComponentName,
+    DiceRoller.Name,
     DiceRoller,
     [],
     {},
