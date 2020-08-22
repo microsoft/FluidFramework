@@ -63,13 +63,6 @@ parameters:
   type: string
   default:
 
-- name: noPublish
-  type: string
-  default:
-
-- name: releaseBuild
-  type: string
-  default:
   
 trigger: none
 
@@ -108,14 +101,14 @@ stages:
               echo "  TestCoverage=$(testCoverage)"
               echo
               echo Override Variables:
-              echo "  noPublish=${{ parameters.noPublish }}"
+              echo "  publishOverride=${{ parameters.publishOverride }}"
               echo "  releaseBuild=${{ parameters.releaseBuild }}"
               echo
               echo Computed variables:
-              echo "  componentDetection=$componentDetection"
-              echo "  pushImage=$pushImage"
-              echo "  publish=$publish"
-              echo "  release=$release"
+              echo "  componentDetection=${{ variables.componentDetection }}"
+              echo "  pushImage=${{ variables.pushImage }}"
+              echo "  publish=${{ variables.publish }}"
+              echo "  release=${{ variables.release }}"
 
         - task: Bash@3
           displayName: Strip MIT License

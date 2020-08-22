@@ -5,6 +5,22 @@
 
 name: $(Build.BuildId)
 
+parameters:
+- name: publishOverride
+  displayName: Publish Override
+  type: string
+  default: default
+  values:
+    - default
+    - force
+    - skip
+- name: releaseBuild
+  type: string
+  default:
+  values:
+    - false
+    - true
+
 trigger:
   branches:
     include:
@@ -40,5 +56,3 @@ extends:
     taskLint: false
     taskTest: false
     taskAuth: false
-    noPublish: ${{ variables['noPublish'] }}
-    releaseBuild: ${{ variables['releaseBuild'] }}

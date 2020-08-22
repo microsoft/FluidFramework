@@ -3,6 +3,10 @@
 
 # common variables
 
+parameters:
+- name: publishOverride
+  type: string
+
 variables:
 - name: skipComponentGovernanceDetection
   value: true
@@ -13,10 +17,10 @@ variables:
       ne(variables['System.TeamProject'], 'public')
     )}}
 - name: publish
-  value: ${{ 
+  value: ${{
     and(
       variables.shouldPublish,
-      ne(variables.noPublish, true)
+      ne(parameters.publishOverride, "skip)
     )}}
 - name: componentDetection
   value: ${{ variables.publish }}
