@@ -11,7 +11,7 @@
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import React from "react";
 
-import { EmbeddedComponentWrapper } from "../library";
+import { EmbeddedFluidObjectWrapper } from "../library";
 import { ITabsDataModel } from "./dataModel";
 import { NewTabButton } from "./newTabButton";
 
@@ -62,9 +62,9 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                 </Tab>);
             tabPanel.push(
                 <TabPanel key={id}  >
-                    <EmbeddedComponentWrapper
+                    <EmbeddedFluidObjectWrapper
                         id={id}
-                        requestFluidObject={async (compId: string) => this.props.dataModel.getComponentTab(compId)}
+                        requestFluidObject={async (compId: string) => this.props.dataModel.getFluidObjectTab(compId)}
                     />
                 </TabPanel>);
         });
@@ -79,7 +79,7 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                     <li className="react-tabs__tab">
                         <NewTabButton
                             createTab={this.createNewTab}
-                            components={this.props.dataModel.getNewTabTypes()} />
+                            fluidObjects={this.props.dataModel.getNewTabTypes()} />
                     </li>
                 </TabList>
                 <div style={{ position: "relative" }}>

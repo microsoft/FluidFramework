@@ -8,9 +8,11 @@ applications.
 You may be here because you want to...
 
 - Learn more about the Fluid Framework
-- Build a Fluid component
+- Build a Fluid object
 
-Relevant documentation and guides can be found at <https://aka.ms/fluid>.
+Documentation and guides can be found at <https://fluidframework.com/>  
+Hello World Repo can be found at <https://github.com/microsoft/FluidHelloWorld>  
+Core Examples Repo can be found at <https://github.com/microsoft/FluidExamples>  
 
 Got questions? Engage with other Fluid Framework users and developers on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
 
@@ -24,9 +26,7 @@ Here's the breakdown of the repo:
 
 * Fluid Framework Client Minirepo ([lerna.json](./lerna.json))
   * [Packages](./packages)
-  * [Example Components](./components/examples)
-  * [Experimental Components](./components/experimental)
-  * [Example Hosts](./examples/hosts)
+  * [Fluid Examples](./examples)
 * Reference Fluid Ordering Service ("Routerlicious") Minirepo ([dir](./server/routerlicious) | [lerna.json](server/routerlicious/lerna.json))
   * [Packages](./server/routerlicious/packages)
 * Common Packages
@@ -113,10 +113,10 @@ We've checked in [VS Code configuration](https://github.com/microsoft/FluidFrame
 
 _This will use an in-memory implementation of the Fluid server to sync between the two panes in the browser window._
 
-* Choose a component under `/components`
-* Navigate to the component's directory, e.g. `/components/experimental/clicker`
+* Choose an example under `/examples`
+* Navigate to the example's directory, e.g. `/examples/data-objects/clicker`
 * `npm run start`
-* Browse to <http://localhost:8080> to interact with two copies of the component side-by-side
+* Browse to <http://localhost:8080> to interact with two copies of the example side-by-side
 
 ### Multiple browser instances on the same device
 
@@ -132,7 +132,7 @@ npm run start
 
 Then:
 
-* Navigate to your component of choice (same as above)
+* Navigate to the example of your choice (same as above)
 * `npm run start:tinylicious`
 * Browse to <http://localhost:8080,> copy the full URL you're redirected to, and open in a second window to collaborate
 

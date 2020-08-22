@@ -17,7 +17,7 @@ import {
 
 import { v4 as uuid } from "uuid";
 
-import { IComponentInternalRegistry } from "../../interfaces";
+import { IFluidObjectInternalRegistry } from "../../interfaces";
 
 export interface ITabsTypes {
     type: string;
@@ -31,7 +31,7 @@ export interface ITabsModel {
 }
 
 export interface ITabsDataModel extends EventEmitter {
-    getComponentTab(id: string): Promise<IFluidObject | undefined>;
+    getFluidObjectTab(id: string): Promise<IFluidObject | undefined>;
     getTabIds(): string[];
     createTab(type: string): Promise<string>;
     getNewTabTypes(): ITabsTypes[];
@@ -42,7 +42,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     constructor(
         public root: ISharedDirectory,
-        private readonly internalRegistry: IComponentInternalRegistry,
+        private readonly internalRegistry: IFluidObjectInternalRegistry,
         private readonly createFluidObject: <T extends IFluidObject & IFluidLoadable>
             (pkg: string) => Promise<T>,
         private readonly getFluidObjectFromDirectory: <T extends IFluidObject & IFluidLoadable>(
@@ -75,10 +75,10 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     public async createTab(type: string): Promise<string> {
         const newKey = uuid();
-        const component = await this.createFluidObject<IFluidObject & IFluidLoadable>(type);
+        const fluidObject = await this.createFluidObject<IFluidObject & IFluidLoadable>(type);
         this.tabs.set(newKey, {
             type,
-            handleOrId: component.handle,
+            handleOrId: fluidObject.handle,
         });
 
         this.emit("newTab", true);
@@ -90,7 +90,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         return data?.handleOrId;
     }
 
-    public async getComponentTab(id: string): Promise<IFluidObject | undefined> {
+    public async getFluidObjectTab(id: string): Promise<IFluidObject | undefined> {
         this.tabs = this.root.getSubDirectory("tab-ids");
         return this.getFluidObjectFromDirectory(id, this.tabs, this.getObjectFromDirectory);
     }

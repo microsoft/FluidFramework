@@ -8,23 +8,23 @@ import { IFluidObject } from "@fluidframework/core-interfaces";
 
 import React from "react";
 
-interface IEmbeddedComponentWrapperProps {
+interface IEmbeddedFluidObjectWrapperProps {
     id: string;
     requestFluidObject(id: string): Promise<IFluidObject | undefined>;
 }
 
-interface IEmbeddedComponentWrapperState {
+interface IEmbeddedFluidObjectWrapperState {
     element: JSX.Element;
 }
 
 /**
- * This wrapper handles the async-ness of loading a component.
+ * This wrapper handles the async-ness of loading a Fluid object.
  * This ideally shouldn't be here but is here for now to unblock me not knowing how to use ReactViewAdapter.
  */
-export class EmbeddedComponentWrapper
-    extends React.Component<IEmbeddedComponentWrapperProps, IEmbeddedComponentWrapperState>
+export class EmbeddedFluidObjectWrapper
+    extends React.Component<IEmbeddedFluidObjectWrapperProps, IEmbeddedFluidObjectWrapperState>
 {
-    constructor(props: IEmbeddedComponentWrapperProps) {
+    constructor(props: IEmbeddedFluidObjectWrapperProps) {
         super(props);
         this.state = {
             element: <span></span>,
@@ -32,9 +32,9 @@ export class EmbeddedComponentWrapper
     }
 
     async componentDidMount() {
-        const component = await this.props.requestFluidObject(this.props.id);
-        if (component) {
-            const element = <ReactViewAdapter view={component} />;
+        const fluidObject = await this.props.requestFluidObject(this.props.id);
+        if (fluidObject) {
+            const element = <ReactViewAdapter view={fluidObject} />;
             this.setState({ element });
         }
     }
