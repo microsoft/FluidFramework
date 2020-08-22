@@ -139,11 +139,11 @@ function main() {
     }
 
     if (!arg_patch) {
-        arg_patch = !!process.env["VERSION_PATCH"];
+        arg_patch = (process.env["VERSION_PATCH"] === "true");
     }
 
     if (!arg_release) {
-        arg_release = !!process.env["VERSION_RELEASE"];
+        arg_release = (process.env["VERSION_RELEASE"] === "true");
     }
 
     if (!file_version) {

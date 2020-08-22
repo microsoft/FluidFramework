@@ -14,10 +14,12 @@ parameters:
     - default
     - force
     - skip
-- name: releaseBuild
+- name: releaseBuildOverride
+  displayName: Release Build Override
   type: string
-  default:
+  default: default
   values:
+    - default
     - false
     - true
 
@@ -56,3 +58,5 @@ extends:
     taskLint: false
     taskTest: false
     taskAuth: false
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}

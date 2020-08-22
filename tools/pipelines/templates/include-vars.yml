@@ -7,6 +7,9 @@ parameters:
 - name: publishOverride
   type: string
 
+- name: releaseBuildOverride
+  type: string
+
 variables:
 - name: skipComponentGovernanceDetection
   value: true
@@ -18,9 +21,12 @@ variables:
     )}}
 - name: publish
   value: ${{
-    and(
-      variables.shouldPublish,
-      ne(parameters.publishOverride, "skip)
+    or(
+      eq(parameters.publishOverride, 'force'),
+      and(
+        ne(parameters.publishOverride, 'skip'),
+        variables.shouldPublish
+      )
     )}}
 - name: componentDetection
   value: ${{ variables.publish }}
@@ -30,6 +36,14 @@ variables:
       variables.publish,
       eq(variables['Build.SourceBranch'], 'refs/heads/main')
     )}}
-- ${{ if and(variables.shouldPublish, eq(variables.releaseBuild, true)) }}:
+# compute the release variable
+- ${{ if eq(parameters.releaseBuildOverride, 'default') }}:
+  - ${{ if variables.shouldPublish }}:
+    - name: release
+      value: $[variables.releaseBuild]
+  - ${{ if not(variables.shouldPublish) }}:
+    - name: release
+      value: false
+- ${{ if ne(parameters.releaseBuildOverride, 'default') }}:
   - name: release
-    value: true
+    value: ${{ parameters.releaseBuildOverride }}
