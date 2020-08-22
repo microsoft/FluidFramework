@@ -7,7 +7,7 @@ title: "Fluid Framework"
   subText="Real time. Web first. Open source."
 >}}
 
-{{ partial "ctas.html" . }}
+{{< ctas >}}
 
 {{< swimlane_container >}}
     {{< swimlane title="Real Time"
@@ -22,4 +22,4 @@ title: "Fluid Framework"
     img="/images/github_logo.png" >}}
 {{< /swimlane_container >}}
 
-{{ partial "ctas.html" . }}
+{{< ctas >}}
