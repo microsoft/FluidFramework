@@ -6,22 +6,21 @@
 name: $(Build.BuildId)
 
 parameters:
-  - name: publishOverride
-    displayName: Publish Override
-    type: string
-    default: default
-    values:
-      - default
-      - force
-      - skip
-  - name: releaseBuildOverride
-    displayName: Release Build Override
-    type: string
-    default: default
-    values:
-      - default
-      - false
-      - true
+- name: publishOverride
+  displayName: Publish Override
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+- name: releaseBuildOverride
+  displayName: Release Build Override
+  type: string
+  default: default
+  values:
+    - default
+    - false
+    - true
 
 trigger:
   branches:
@@ -35,6 +34,7 @@ trigger:
     - tools/build-server-resources
     - tools/pipelines/server-routerlicious.yml
     - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
     - tools/pipelines/templates/publish-npm-package.yml
     exclude:
@@ -51,6 +51,7 @@ pr:
     - tools/build-server-resources
     - tools/pipelines/server-routerlicious.yml
     - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 

@@ -23,12 +23,9 @@ variables:
     )}}
 - name: publish
   value: ${{
-    or(
-      eq(parameters.publishOverride, 'force'),
-      and(
-        ne(parameters.publishOverride, 'skip'),
-        eq(variables.shouldPublish, true)
-      )
+    and(
+      ne(parameters.publishOverride, 'skip'),
+      eq(variables.shouldPublish, true)
     )}}
 - name: componentDetection
   value: ${{ variables.publish }}
@@ -40,7 +37,7 @@ variables:
     )}}
 # compute the release variable
 - ${{ if eq(parameters.releaseBuildOverride, 'default') }}:
-  - ${{ if variables.shouldPublish }}:
+  - ${{ if eq(variables.shouldPublish, true) }}:
     - name: release
       value: $[variables.releaseBuild]
   - ${{ if not(variables.shouldPublish) }}:
