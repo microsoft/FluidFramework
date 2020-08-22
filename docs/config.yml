@@ -27,9 +27,6 @@ menu:
   - name: "API"
     url: "/apis/"
     weight: -80
-  - name: "FAQ"
-    url: "/docs/faq/"
-    weight: -70
   - name: "Blog"
     url: "/posts/"
     weight: -50
@@ -45,10 +42,6 @@ menu:
     name: "FAQ"
     url: "/docs/faq/"
     weight: -100
-  - identifier: "api"
-    name: "API"
-    url: "/apis/"
-    weight: 0
 
 markup:
   goldmark:
