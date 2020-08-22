@@ -6,9 +6,11 @@
 parameters:
 - name: publishOverride
   type: string
+  default: default
 
 - name: releaseBuildOverride
   type: string
+  default: default
 
 variables:
 - name: skipComponentGovernanceDetection
@@ -25,7 +27,7 @@ variables:
       eq(parameters.publishOverride, 'force'),
       and(
         ne(parameters.publishOverride, 'skip'),
-        variables.shouldPublish
+        eq(variables.shouldPublish, true)
       )
     )}}
 - name: componentDetection

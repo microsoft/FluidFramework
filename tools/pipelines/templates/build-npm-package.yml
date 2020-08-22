@@ -65,11 +65,9 @@ parameters:
 
 - name: publishOverride
   type: string
-  default: default
 
 - name: releaseBuildOverride
   type: string
-  default: default
 
 trigger: none
 
@@ -119,6 +117,7 @@ stages:
                 TestCoverage=$(testCoverage)
 
               Computed variables:
+                shouldPublish=${{ variables.shouldPublish }}
                 componentDetection=${{ variables.componentDetection }}
                 pushImage=${{ variables.pushImage }}
                 publish=${{ variables.publish }}

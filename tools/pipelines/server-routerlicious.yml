@@ -5,6 +5,24 @@
 
 name: $(Build.BuildId)
 
+parameters:
+  - name: publishOverride
+    displayName: Publish Override
+    type: string
+    default: default
+    values:
+      - default
+      - force
+      - skip
+  - name: releaseBuildOverride
+    displayName: Release Build Override
+    type: string
+    default: default
+    values:
+      - default
+      - false
+      - true
+
 trigger:
   branches:
     include:
@@ -38,6 +56,9 @@ pr:
 
 variables:
 - template: templates/include-vars.yml
+  parameters:
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
 - group: container-registry-info
 - name: containerName
   value: fluid-server
@@ -129,6 +150,8 @@ stages:
         - template: templates/include-set-package-version.yml
           parameters:
             buildDirectory: server/routerlicious
+            release: $(release)
+
         # Build
         - task: Docker@2
           displayName: Docker Build - Base

@@ -52,11 +52,11 @@ pr:
 extends:
   template: templates/build-npm-package.yml
   parameters:
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: common/build/build-common
     taskBuild: false
     taskBuildDocs: false
     taskLint: false
     taskTest: false
     taskAuth: false
-    publishOverride: ${{ parameters.publishOverride }}
-    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
