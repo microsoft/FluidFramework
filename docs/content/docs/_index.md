@@ -1,42 +1,47 @@
 ---
-title: Fluid Documentation
-meta: "put the meta description of the page in here"
+title: Fluid Framework
+meta: "What is Fluid Framework"
 ---
 
+Fluid Framework is a collection of client libraries for building applications with distributed state. These libraries
+allow multiple clients to create and operate on shared, synchronized data structures using coding
+patterns similar to those used to work with local data.
 
-Fluid Framework is a TypeScript library for building collaborative web applications.
+## Focused on the client developer
 
-## Fluid in action
+Applications built with Fluid Framework require zero custom code on the server to enable sophisticated data sync
+scenarios such as real-time typing across text editors. Client developers can focus on customer experiences while
+letting Fluid do the work of keeping data in sync.
 
-<!--
-{{< carousel >}}
-{{< carousel_item title="First Title" subTitle="this is the subtitle" img="https://code.visualstudio.com/assets/docs_carousel/debug_b.png">}}
-{{< carousel_item title="Second Title" subTitle="The second subtitle" img="https://code.visualstudio.com/assets/docs_carousel/debug_b.png">}}
-{{< /carousel >}}
- -->
+Fluid Framework works with your application framework of choice. Whether you prefer straight JavaScript or
+a framework like React, Angular, or Vue; Fluid Framework makes building collaborative experiences simple and
+flexible.
 
-COMING SOON
+## How Fluid works
 
+From the start, Fluid was designed to deliver collaborative experiences with blazing performance. To achieve this goal,
+the team kept the server logic as simple and light-weight as possible. This approach helped ensure virtually instant
+syncing across clients. It also came with the added benefit of very low server costs.
 
-## First steps
+To keep the server simple, each Fluid client is responsible for its own state. In order to ensure
+that all clients arrive at the same state, the server sequences data operations and Fluid ensures that clients
+are running the same code. Each client is able to use that sequence to independently produce the current
+state regardless of the order it receives operations.
 
-If you are new to the Fluid Framework, we recommend reading [What is Fluid?]({{< relref "what-is-fluid.md" >}}) to
-orient yourself.
+Here is a typical flow...
 
-Fluid requires Node.js and npm. Fluid supports Node.js LTS versions 12.16 and greater. You’ll also need a text/code
-editor and a modern web browser.
+- Client code changes data locally
+- Fluid runtime sends that change to the Fluid server
+- Fluid server orders that operation and broadcasts it to all clients
+- Fluid runtime incorporates that operation into local data and raises a "valueChanged" event
+- Client code handles that event (updates view, runs business logic)
 
+## Next Steps
 
-## Architectual overview
+If you want to learn a lot more about how Fluid works, start with our
+[architecture](concepts/architecture.md) overview.
 
-See [Architecture]({{< relref "docs/concepts/architecture.md" >}}).
+If you prefer to get you hands dirty right away, head for our coding [tutorial](get-started/tutorial.md) and [examples](get-started/examples.md).
+But first, get your [dev environment](get-started/dev-env.md) set up.
 
-
-## Browser support
-
-{{% include file="_includes/browsers.md" %}}
-
-
-## License
-
-MIT-licensed.
+Still have questions? Maybe we've answered them in our [FAQ](faq.md). If not, check out our [Community page](/community/).
