@@ -2,6 +2,8 @@
 title: Frequently Asked Questions
 ---
 
+The following are short, sometimes superficial answers to some of the most common questions we hear about Fluid Framework.
+
 ## What is Fluid Framework?
 
 Fluid Framework is a collection of client libraries for building applications with distributed state. These libraries
@@ -215,29 +217,4 @@ Would we have direct access to the underlying operations?
 
 ### What browsers are supported?
 
-## Intelligent Agents, Security, and Compliance
-
-### Can you talk about role of Intelligent Agents? Any examples?
-
-We have PCI requirements to not allow a credit card number in a note. We would need to pre-filter the content before
-it is shared with others. Is that possible.
-
-How can we apply governance and policies to Fluid Framework implementations? For example, to keep track on abusive
-language or dangerous content like credit card numbers...
-
-What about server-side code, like a bot, interacting with users?
-
-### Can you put security around DDSes such that you only get updates if you're authorized?
-
-### How do you handle Data Loss/Leakage Prevention?
-
-I think they're worried about a bad actor taking data out of the environment. Can conditional access be applied
-for example?
-
-DLP = Data Loss prevention. Preventing data marked as sensitive from leaving environment boundaries.
-
-## Auth
-
-### How is authentication handled?
-
-### How is authorization handled?
+{{% include file="_includes/browsers.md" %}}
