@@ -9,6 +9,21 @@ Fluid Framework is a collection of client libraries for building applications wi
 allow multiple clients to create and operate on shared, synchronized data structures using coding
 patterns similar to those used to work with local data.
 
+## Why Fluid?
+
+Microsoft has invested heavily to build collaboration into the M365 ecosystem. A big part of that investment was completely
+rethinking the way collaborative experiences are built. The result of that effort is Fluid Framework.
+
+Within Microsoft, Fluid is powering a new generation of experiences that promise to be fast,
+simple to iterate over, and easy to deliver. As we've built these experiences, we've realized that there is unmet
+demand for a technology like Fluid Framework. Developers, and especially front-end web developers, have very limited
+options if they want to build modern, collaborative experiences. Inevitably they need to invest in backend
+infrastructure and some amount of custom server code.
+
+But what if you didn't have to invest in server code at all. Imagine if you could use a general purpose server
+which was designed to be light-weight and low cost. Imagine if all your development was focused on the client
+experience and data sync was handled for you. That is the promise of Fluid.
+
 ## Focused on the client developer
 
 Applications built with Fluid Framework require zero custom code on the server to enable sophisticated data sync
