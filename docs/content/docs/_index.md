@@ -25,7 +25,7 @@ syncing across clients. It also came with the added benefit of very low server c
 
 To keep the server simple, each Fluid client is responsible for its own state. In order to ensure
 that all clients arrive at the same state, the server sequences data operations and Fluid ensures that clients
-are running the same code. Each client is able to use that sequence to independently produce the current
+are running the same code. Each client is able to use that sequence to independently and accurately produce the current
 state regardless of the order it receives operations.
 
 Here is a typical flow...
