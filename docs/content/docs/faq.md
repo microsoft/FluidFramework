@@ -113,7 +113,7 @@ conflicts. This allows us to have non-commutative operations because their is an
 
 This is the scenario that Fluid was first designed to support. Consequently, Fluid Framework is an ideal foundation
 for rich text editors that support simultaneous editing by multiple clients. The SharedString DDS is
-taylor made for this scenario.
+tailor made for this scenario.
 
 ### Turn-based games?
 
@@ -130,88 +130,108 @@ task for Fluid Framework because it is designed to enable extraordinary performa
 
 ### What needs to be running on the server?
 
-Where is the shared data stored and can I create my own backend store?
+Fluid Framework requires a Fluid server to sync data between clients. The role of the server is very simple;
+it orders operations and broadcasts them to all clients. It's also responsible for saving operations to
+persistent data storage.
 
-Must a given document be handled by a single server (affinity)?
+The Fluid server is general purpose and, as a rule, Fluid solutions will work with any Fluid server. Developers of
+Fluid solutions can use a local server or a "test quality" server for development and trust that their solution
+will work against whatever production server their solution is pointed at.
+
+Fluid Framework include a reference implementation of the Fluid server called Routerlicious that you can use for
+development or as the basis for a production quality server.
+
+### Where is the shared data stored?
+
+The specifics of data storage (both session data and persistent data) will depend on the implementation of
+the Fluid server. There is a great deal of flexibility here and developers of Fluid servers may choose to offer
+options around where and how data is stored.
 
 ### Is there a dedicated cloud service for syncing the clients?
 
-is there any service cost for developers?
+Microsoft has developed an M365-specific Fluid service designed to enable solutions powered by Fluid within that
+ecosystem. There will be ways for Fluid Framework developers to operate in M365 but those integration points are
+not available yet.
 
-You said that in this demo the fluid framework server (backend for DDS management) runs on your local computer, can
-it run on an azure service as well?
+Microsoft is also looking at providing a more general Fluid service but no specifics are available at this time.
 
 ### Besides SharePoint, where else can we store .fluid files?
 
-### Can we use fluid framework standalone with no dependencies on other services?
+.fluid files are a specific file format understood by Fluid solutions integrated with M365. They are designed to operate
+exclusively in the cloud (never locally) and currently are only supported by OneDrive and SharePoint.
 
-### Can it be used in a situation without access to the internet?
+### Can we use Fluid Framework standalone with no dependencies on other services?
 
-Think "truck full of servers & clients" or "cargo ship".
+Yes. Fluid Framework is designed to stand alone. It has no dependencies on other services.
 
-Can it run on-perm? Without connecting to internet - for data security.
+### Can Fluid Framework be used in a situation without access to the internet?
 
-### Is the fluid reference server implementation production ready?
+There are two angles to this question. One is whether the client must be connected to the internet. The other is
+whether an organization could run the Fluid server on site to support an intranet.
 
-### How are Fluid Components/Solutions deployed?
+Clients do have to be connected to the Fluid server. Fluid can tolerate brief network outages and continue operating but
+eventually the promise of being able to merge local changes weakens. We are investigating ways to improve this using
+other merging techniques designed to reason over large deltas but no final solution is in place today.
 
-The main.tsx file where is it deployed? To the Fluid Server? The Fluid component structure are the definitions
-fetched from the Fluid server or are they stored in the Fluid document?
+### Is the Fluid reference server implementation production ready?
+
+No. Routerlicious on it's own is not production ready. Using it would require more thought about storage, scale, security,
+and other typical considerations when building out a service on the internet. It is our expectation that most Fluid developers
+will be able to leverage existing Fluid services that will emerge as we approach version 1.0.
+
+### How are Fluid solutions deployed?
+
+Fluid solutions are, at the end of the day, simple JavaScript. At Microsoft Fluid solutions are deployed to CDNs like any
+other static resource. Because Fluid is very client-centric, deployment is very simple.
 
 ## Conflicts and History
 
 ### How does Fluid Framework deal with conflict resolution?
 
+This depends a great deal on the specific DDS. But, regardless of the final state of the data, operations are stored
+in the Fluid ops stream. So, in cases where a client is unhappy with the final state, there are approaches for
+achieving consensus that can be built into the DDS or handled by the client.
+
 ### Can we create custom strategies to handle update collisions to the distributed data structure?
 
-What sort of event update of the DDS do you get, just a change notice, or something more complex like a delta?
+Yes. You can design your own DDSs with your own strategies for handling merge. You also have access to all
+operations and can write client code to handle reason over state in whatever way best suits your scenario.
 
 ### Can we have history of the changes?
 
-As people type, they may change their minds. Some may see one bit of information today but now the text is different.
-Is history of changes kept like one might see in Word versioning?
-
-Would we have direct access to the underlying operations?
+Yes. Fluid inherently keeps all changes and these are accessible through the framework. The only caveat is that for performance
+and storage efficiency, operations need to be summarized from time to time. This may cause a loss of granularity.
 
 ### Is there any way to know which user caused each change?
 
+Yes. Operations can be attributed to users. This is an implementation choice and not something built directly into
+Fluid Framework.
+
 ## UX Frameworks
 
-### Can I use...?
+### Can I use React, Angular, VUE, Svelte, or some other UX framework?
 
-- React
+Yes. You can use any UX framework designed for the web.
 
-- Angular
+### What is the relationship with Fluent UI?
 
-- VUE
-
-- Svelte
-
-- some other UX framework?
-
-### What is the relationship with...?
-
-- Can you speak to the relationship between Fluid components and Fluent UI?
+Both Fluent and Fluid Framework come from Microsoft. And inside Microsoft many Fluid projects also use Fluent.
+But there is no relationship other than the names are similar.
 
 ### Is Fluid trying to be a competitor to UX frameworks?
 
+Not at all. Fluid Framework is unopininated about UX.
+
 ## Coding Frameworks
 
-### Can I use...?
+### Can I use ASP.NET, ASP.NET Core, and C#
 
-- ASP.NET, ASP.NET Core, and C#
+Fluid Framework is written in TypeScript but we don't want it to be limited to the web. You can use
+Fluid Framework with non-web technologies by leveraging a JavaScript runtime to host the Fluid code.
+Ultimately it is critical that the same code be running in all clients to ensure eventual consistency of
+data so it is impractical to port Fluid to other coding frameworks.
 
-- Blazor WASM
-
-- Xamarin, MAUI, and other mobile frameworks
-
-- TypeScript
-
-- Other programming languages
-
-### What is the relationship with...?
-
-- PowerPlatform
+This also applies to Blazor, Xamarin, MAUI, and other mobile frameworks.
 
 ## Browsers
 
