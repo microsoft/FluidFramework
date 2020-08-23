@@ -38,7 +38,7 @@ Here is a typical flow...
 - Fluid runtime incorporates that operation into local data and raises a "valueChanged" event
 - Client code handles that event (updates view, runs business logic)
 
-## Next Steps
+## Next steps
 
 If you want to learn a lot more about how Fluid works, start with our
 [architecture](concepts/architecture.md) overview.
