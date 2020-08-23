@@ -3,6 +3,8 @@ title: Fluid Framework
 meta: "What is Fluid Framework"
 ---
 
+## What is Fluid Framework?
+
 Fluid Framework is a collection of client libraries for building applications with distributed state. These libraries
 allow multiple clients to create and operate on shared, synchronized data structures using coding
 patterns similar to those used to work with local data.
@@ -41,7 +43,7 @@ Here is a typical flow...
 If you want to learn a lot more about how Fluid works, start with our
 [architecture](concepts/architecture.md) overview.
 
-If you prefer to get you hands dirty right away, head for our coding [tutorial](get-started/tutorial.md) and [examples](get-started/examples.md).
+If you prefer to get your hands dirty right away, head for our coding [tutorial](get-started/tutorial.md) and [examples](get-started/examples.md).
 But first, get your [dev environment](get-started/dev-env.md) set up.
 
 Still have questions? Maybe we've answered them in our [FAQ](faq.md). If not, check out our [Community page](/community/).
