@@ -15,7 +15,7 @@ Microsoft has invested heavily to build collaboration into the M365 ecosystem. A
 rethinking the way collaborative experiences are built. The result of that effort is Fluid Framework.
 
 Within Microsoft, Fluid is powering a new generation of experiences that promise to be fast,
-simple to iterate over, and easy to deliver. As we've built these experiences, we've realized that there is unmet
+simple to iterate over, and easy to deliver. As we've built these experiences, we've realized there is unmet
 demand for a technology like Fluid Framework. Developers, and especially front-end web developers, have very limited
 options if they want to build modern, collaborative experiences. Inevitably they need to invest in backend
 infrastructure and some amount of custom server code.
