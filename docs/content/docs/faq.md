@@ -173,6 +173,9 @@ Clients do have to be connected to the Fluid server. Fluid can tolerate brief ne
 eventually the promise of being able to merge local changes weakens. We are investigating ways to improve this using
 other merging techniques designed to reason over large deltas but no final solution is in place today.
 
+In principle there is nothing preventing an organization from hosting a Fluid server on an intranet. However, Microsoft
+has no plans to support that scenario directly.
+
 ### Is the Fluid reference server implementation production ready?
 
 No. Routerlicious on it's own is not production ready. Using it would require more thought about storage, scale, security,
@@ -195,7 +198,7 @@ achieving consensus that can be built into the DDS or handled by the client.
 ### Can we create custom strategies to handle update collisions to the distributed data structure?
 
 Yes. You can design your own DDSs with your own strategies for handling merge. You also have access to all
-operations and can write client code to handle reason over state in whatever way best suits your scenario.
+operations and can write client code to reason over state in whatever way best suits your scenario.
 
 ### Can we have history of the changes?
 
