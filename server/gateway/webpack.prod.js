@@ -66,7 +66,13 @@ module.exports = {
                */
               instance.name === 'bn.js' ||
               instance.name === 'component-emitter' ||
-              instance.name === 'readable-stream'
+              instance.name === 'readable-stream' ||
+              /**
+               * These internal packages are a result of how package dependencies don't match their layerings in the repo.
+               * I.e. gateway depends on both common-utils and contianer-loader, but these two dependencies are not updated
+               * at the same time so there is an interim period where multiple versions may exist.
+               */
+              instance.name === '@fluidframework/common-utils'
           }),
           // We don't split debug/release builds, so always do bundle analysis
           new BundleAnalyzerPlugin({
