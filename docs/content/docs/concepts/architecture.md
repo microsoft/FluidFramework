@@ -4,7 +4,7 @@ menuPosition: 1
 ---
 
 Fluid Framework can be broken into three broad parts: The Fluid loader, Fluid containers, and the Fluid service. While
-each deserves a deep dive, we'll use this space to explain the areas at a high level, identify the important lower
+each of these is covered in more detail elsewhere, we'll use this space to explain the areas at a high level, identify the important lower
 level concepts, and discuss some of our key design decisions.
 
 
