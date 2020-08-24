@@ -2,7 +2,7 @@
 title: Frequently Asked Questions
 ---
 
-The following are short, sometimes superficial answers to some of the most common questions we hear about Fluid Framework.
+The following are short, sometimes superficial answers to some of the most commonly asked questions about Fluid Framework.
 
 ## What is Fluid Framework?
 
