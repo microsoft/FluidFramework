@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { IRequest } from "@fluidframework/core-interfaces";
 import { CreateNewHeader } from "@fluidframework/driver-definitions";
 
