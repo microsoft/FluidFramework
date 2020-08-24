@@ -23,7 +23,7 @@ title: "Fluid Framework"
     subTitle="Designed to deliver exceptional performance on an unprecedented scale, Fluid enables instant collaboration with a minimal server footprint."
     img="/images/placeholder.svg" >}}
     {{< swimlane title="Web First"
-    subTitle="Coded with TypeScript and designed to easily integrate with popular application frameworks such as React, Angular, and Vue. Fluid was born on the Web."
+    subTitle="Developed in TypeScript and designed to easily integrate with popular application frameworks such as React, Angular, and Vue. Fluid was born on the Web."
     img="/images/placeholder.svg"
     pos="right" >}}
     {{< swimlane title="Open Source"
