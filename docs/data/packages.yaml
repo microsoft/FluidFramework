@@ -1,14 +1,3 @@
-core:
-- "@fluidframework/aqueduct"
-- "@fluidframework/core-interfaces"
-- "@fluidframework/datastore-definitions"
-- "@fluidframework/datastore"
-- "@fluidframework/framework-interfaces"
-- "@fluidframework/undo-redo"
-- "@fluidframework/view-adapters"
-- "@fluidframework/view-interfaces"
-hosts:
-- "@fluidframework/base-host"
 distributed-data-structures:
 - "@fluidframework/cell"
 - "@fluidframework/counter"
@@ -19,34 +8,33 @@ distributed-data-structures:
 - "@fluidframework/register-collection"
 - "@fluidframework/sequence"
 - "@fluidframework/shared-object-base"
+- "@fluidframework/shared-summary-block"
+data-store:
+- "@fluidframework/core-interfaces"
+- "@fluidframework/datastore-definitions"
+- "@fluidframework/datastore"
+- "@fluidframework/aqueduct"
+- "@fluidframework/framework-interfaces"
+- "@fluidframework/undo-redo"
+- "@fluidframework/view-adapters"
+- "@fluidframework/view-interfaces"
 - "@fluidframework/synthesize"
-- "@fluidframework/telemetry-utils"
-- "@fluidframework/test-utils"
-internal:
-- "@fluidframework/common-definitions"
-- "@fluidframework/driver-utils"
-miscellaneous:
-- "@fluidframework/common-utils"
-- "@fluidframework/dds-interceptions"
-- "@fluidframework/react-inputs"
-- "@fluidframework/react"
-runtime:
-- "@fluidframework/component-base"
+container:
+- "@fluidframework/container-runtime"
 - "@fluidframework/runtime-definitions"
 - "@fluidframework/runtime-utils"
+- "@fluidframework/request-handler"
 loader:
 - "@fluidframework/container-definitions"
 - "@fluidframework/container-loader"
 - "@fluidframework/container-runtime-definitions"
-- "@fluidframework/container-runtime"
 - "@fluidframework/container-utils"
 - "@fluidframework/execution-context-loader"
 - "@fluidframework/web-code-loader"
-tools:
-- "@fluidframework/debugger"
-- "@fluidframework/merge-tree-client-replay"
-- "@fluidframework/replay-tool"
+hosts:
+- "@fluidframework/base-host"
 driver:
+- "@fluidframework/driver-utils"
 - "@fluidframework/driver-base"
 - "@fluidframework/driver-definitions"
 - "@fluidframework/file-driver"
@@ -54,11 +42,21 @@ driver:
 - "@fluidframework/odsp-driver"
 - "@fluidframework/replay-driver"
 - "@fluidframework/routerlicious-driver"
-experimental:
-- "@fluidframework/last-edited-experimental"
 protocol:
 - "@fluidframework/protocol-base"
 - "@fluidframework/protocol-definitions"
-unknown:
-- "@fluidframework/request-handler"
-- "@fluidframework/shared-summary-block"
+miscellaneous:
+- "@fluidframework/common-definitions"
+- "@fluidframework/common-utils"
+- "@fluidframework/dds-interceptions"
+- "@fluidframework/react-inputs"
+- "@fluidframework/react"
+- "@fluidframework/test-utils"
+- "@fluidframework/telemetry-utils"
+tools:
+- "@fluidframework/debugger"
+- "@fluidframework/merge-tree-client-replay"
+- "@fluidframework/replay-tool"
+experimental:
+- "@fluidframework/last-edited-experimental"
+- "@fluidframework/data-object-base"
