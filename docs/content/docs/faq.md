@@ -223,11 +223,11 @@ But there is no relationship other than the names are similar.
 
 ### Is Fluid trying to be a competitor to UX frameworks?
 
-Not at all. Fluid Framework is unopininated about UX.
+Not at all. Fluid Framework is unopinionated about UX.
 
 ## Coding Frameworks
 
-### Can I use ASP.NET, ASP.NET Core, and C#
+### Can I use ASP.NET, ASP.NET Core, and C\#
 
 Fluid Framework is written in TypeScript but we don't want it to be limited to the web. You can use
 Fluid Framework with non-web technologies by leveraging a JavaScript runtime to host the Fluid code.
