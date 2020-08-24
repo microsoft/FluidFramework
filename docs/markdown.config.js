@@ -10,11 +10,11 @@ module.exports = {
     transforms: {
         /* Match <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../file.js) --> */
         INCLUDE(content, options) {
-            const fileContents = fs.readFileSync(options.path, "utf8")
-            return fileContents
+            const fileContents = fs.readFileSync(options.path, "utf8");
+            return fileContents;
         },
     },
     callback: function () {
-        console.log("done")
+        console.log("done");
     }
 }

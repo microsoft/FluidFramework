@@ -1,4 +1,4 @@
-core:
+libraries:
 - "@fluidframework/aqueduct"
 - "@fluidframework/core-interfaces"
 - "@fluidframework/datastore-definitions"

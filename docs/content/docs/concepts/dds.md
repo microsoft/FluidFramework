@@ -119,7 +119,7 @@ length, width, etc.
 When users edit this data, what pieces of the data can be edited simultaneously? This is an important question to answer
 because it influences how you structure the data in Fluid.
 
-Let's assume for a moment that all of the data about a shape is stored as a JSON object in a `SharedMap`. Recall that
+Let's assume for a moment that all of the data about a shape is stored as a JSON object in a [SharedMap][]. Recall that
 the SharedMap uses a last writer wins merge strategy. This means that if two users are editing the data at the same
 time, then the one who made the most recent change will overwrite the changes made by the other user.
 
@@ -143,6 +143,8 @@ store that SharedMap in the root SharedDirectory.
 ### SharedCell
 
 ## Sequences
+
+{{% include file="_includes/sequences-usage.md" %}}
 
 ### SharedNumberSequence
 
@@ -174,5 +176,13 @@ store that SharedMap in the root SharedDirectory.
 [sharedmap]: {{< relref "/apis/map/sharedmap.md" >}}
 
 [undo-redo]: {{< relref "/apis/undo-redo.md" >}}
+
+
+<!-- Sequences -->
+
+[sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/apis/sequence/sequencedeltaevent.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->
