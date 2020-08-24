@@ -21,7 +21,7 @@ myCell.set(3);
 console.log(myCell.get()); // 3
 ```
 
-The value must only be plain JS objects or `SharedObject` handles (e.g. to another DDS or component). In collaborative
+The value must only be plain JS objects or `SharedObject` handles (e.g. to another DDS or Fluid object). In collaborative
 scenarios, the value is settled with a policy of _last write wins_.
 
 The `.delete()` method will delete the stored value from the cell:

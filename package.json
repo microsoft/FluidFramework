@@ -75,9 +75,7 @@
       "**/*.d.ts",
       "packages/**/src/test/**/*.ts",
       "packages/**/dist/test/**/*.js",
-      "**/*.bundle.js",
-      "packages/components/**",
-      "packages/server/gateway/public/**"
+      "**/*.bundle.js"
     ],
     "exclude-after-remap": false,
     "extension": [
@@ -100,7 +98,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.1.35529",
+    "@fluidframework/build-tools": "^0.2.1272",
     "@fluidframework/test-tools": "^0.1.0",
     "@microsoft/api-documenter": "^7.4.6",
     "@microsoft/api-extractor": "^7.7.2",
