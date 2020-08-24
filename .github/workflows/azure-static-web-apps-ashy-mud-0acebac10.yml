@@ -26,7 +26,7 @@ jobs:
           file-name: api-extractor.tar.gz
       - name: "Download latest JSON (only if previous step fails)"
         id: download-latest-json
-        if: ${{ steps.download-sha-json.outcome != "success" }}
+        if: steps.download-sha-json.outcome != 'success'
         uses: carlosperate/download-file-action@v1.0.3
         with:
           file-url: https://fluidframework.blob.core.windows.net/api-extractor-json/latest.tar.gz
@@ -51,7 +51,7 @@ jobs:
           file-name: storybook.tar.gz
       - name: "Download latest Storybook (only if previous step fails)"
         id: download-latest-storybook
-        if: ${{ steps.download-sha-storybook.outcome != "success" }}
+        if: steps.download-sha-storybook.outcome != 'success'
         uses: carlosperate/download-file-action@v1.0.3
         with:
           file-url: https://fluidframework.blob.core.windows.net/storybook/latest.tar.gz
