@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Download JSON by SHA
         id: download-sha-json
-        continue-on-error: true
+        # continue-on-error: true
         uses: carlosperate/download-file-action@v1.0.3
         with:
           file-url: https://fluidframework.blob.core.windows.net/api-extractor-json/${{ github.sha }}.tar.gz
@@ -27,7 +27,7 @@ jobs:
       - name: "Download latest JSON (only if previous step fails)"
         id: download-latest-json
         if: ${{ failure() }}
-        continue-on-error: true
+        # continue-on-error: true
         uses: carlosperate/download-file-action@v1.0.3
         with:
           file-url: https://fluidframework.blob.core.windows.net/api-extractor-json/latest.tar.gz
@@ -45,7 +45,7 @@ jobs:
     steps:
       - name: Download Storybook by SHA
         id: download-sha-storybook
-        continue-on-error: true
+        # continue-on-error: true
         uses: carlosperate/download-file-action@v1.0.3
         with:
           file-url: https://fluidframework.blob.core.windows.net/storybook/${{ github.sha }}.tar.gz
@@ -53,7 +53,7 @@ jobs:
       - name: "Download latest Storybook (only if previous step fails)"
         id: download-latest-storybook
         if: ${{ failure() }}
-        continue-on-error: true
+        # continue-on-error: true
         uses: carlosperate/download-file-action@v1.0.3
         with:
           file-url: https://fluidframework.blob.core.windows.net/storybook/latest.tar.gz
