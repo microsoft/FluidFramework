@@ -232,4 +232,4 @@ Once the application loads the container will communicate with the server to exc
 
 ![](/docs/get-started/images/full-structure.png)
 
-The [full code for this application is available]() for you to try out.
+The [full code for this application is available](https://github.com/microsoft/FluidHelloWorld) for you to try out.

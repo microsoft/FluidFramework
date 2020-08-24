@@ -91,8 +91,7 @@ to fetch container code. The Loader executes this code to create Fluid container
 
 ### Fluid containers
 
-The bulk of the code in the Fluid Framework repository is for Fluid containers. We use the term Fluid container for two
-connected concepts: the runtime object, and the creator of that runtime object (container code).
+The bulk of the code in the Fluid Framework repository is for building Fluid containers. 
 
 The Fluid container is the result of the principle "Move Logic to the Client." The container includes the merge logic
 used to replicate data across connected clients, but can also include additional app logic. The merge logic is
