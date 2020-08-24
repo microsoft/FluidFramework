@@ -2,16 +2,7 @@
 Title: Anatomy of a distributed data structure
 ---
 
-## Intent
-
-Although all Distributed Data Structures (DDSes) will have unique characteristics, they will all necessarily share some
-broad commonalities in their overall structure and function. This document intends to outline those areas to describe
-DDSes at one level of depth below the surface. This description may be useful in introducing the concept of DDSes to
-developers for the first time.
-
-## Overview
-
-The major qualities of a DDS are:
+Although each Distributed Data Structure (DDS) has its own unique functionality, they all share some broad traits.  Understanding these traits is the first step to understanding how DDSes work.  They are:
 
 1. Local representation
 1. Op vocabulary
@@ -20,16 +11,13 @@ The major qualities of a DDS are:
 1. Reaction to remote changes
 1. Conflict resolution strategies
 
-Although this document uses the current implementations in Fluid as examples and evidence of these qualities, these
-qualities would generally be the same even if the underlying implementation is changes.
-
 ## Local representation
 
-Just like any non-distributed data structure, all DDSes must also be accessible on the client with an in-memory
-representation via a public API surface. The developer operates on and reads from this in-memory structure similarly to
+Just like any non-distributed data structure such as JavaScript's Map object, all DDSes must also be accessible on the client with an in-memory
+representation via a public API surface. A developer using the DDS operates on and reads from this in-memory structure similarly to
 any other non-distributed data structure. The particular format of the data and functionality of the API will vary
 between data structures. For example, a SharedMap holds key:value data and provides interfaces like get and set for
-reading and updating values in the map. This is very similar to the native (non-distributed) Map in JS.
+reading and updating values in the map. This is very similar to the native (non-distributed) Map object in JS.
 
 ## Op vocabulary
 
@@ -39,27 +27,30 @@ we're sending. For example, a SharedMap might be modified through "set", "delete
 
 These ops will probably correspond loosely with specific APIs on the DDS that cause data modification with the
 expectation that there is a 1:1:1 correspondence between that API call on client A, the op that is sent, and the
-corresponding API being called on client B. However, this correspondence is not mandatory.
+corresponding update being applied on client B. However, this correspondence is not mandatory.
 
 ## Data serialization format (op)
 
 Frequently, ops will need to carry a data payload. For example, when performing a "set" on a SharedMap, the new
 key:value pair needs to be communicated to other clients. As a result, DDSes will have some serialization format for op
-data payloads that can be reconstituted on the receiving end.
+data payloads that can be reconstituted on the receiving end. This is why SharedMap requires its keys to be strings and values to be serializable - non-serializable keys or values can't be transmitted to other clients.
 
 ## Data serialization format (summary operations)
 
-In addition to serializing for ops, DDSes should be able to serialize their entire contents into a format that can be
-used to reconstruct the DDS. This format is used for summary operations. There may be some overlap with the
-serialization format used in ops, but it isn't strictly necessary.
+Although the state of a DDS can be reconstructed by playing back every op that has ever been applied to it, this becomes
+inefficient as the number of ops grows. Instead, DDSes should be able to serialize their entire contents into
+a format that clients can use to reconstruct the DDS without processing the entire op history. There may be some overlap
+with the serialization format used in ops, but it isn't strictly necessary. For instance, the SharedMap uses the same
+serialization format for key/value pairs in its summary as it does in its set ops, but the Ink DDS serializes individual
+coordinate updates in its ops while serializing entire ink strokes in its summary.
 
 ## Reaction to remote changes
 
-As compared to their non-shared counterparts, DDSes can change state without the developer's awareness as remote ops are
-received. For instance, a standard JS Map will never change values without the local client calling a method on it, but
-a SharedMap needs to effectively accept calls from other clients. To make the local client aware of the update, DDSes
-must expose a means for the local client to observe and respond to these changes. This probably takes the form of
-eventing, but could reasonably also take the form of callback functions that integrate into the processing step, etc.
+As compared to their non-distributed counterparts, DDSes can change state without the developer's awareness as remote ops are
+received. A standard JS Map will never change values without the local client calling a method on it, but
+a SharedMap will, as remote clients modify data. To make the local client aware of the update, DDSes
+must expose a means for the local client to observe and respond to these changes. This is typically done
+through eventing, like the "valueChanged" event on SharedMap.
 
 {{< callout danger TODO >}}
 
@@ -78,9 +69,9 @@ depending on the specific operation even within a single DDS. Some (non-exhausti
 
 ### Conflict avoidance
 
-Some data structures may not need to worry about conflict because their nature makes it impossible. For instance, an
-OwnedSharedMap only permits a single user (the owner) to make modifications to the data, and all other clients are
-read-only. Characteristics of data structures that can take this approach:
+Some data structures may not need to worry about conflict because their nature makes it impossible. For instance, the
+Counter DDS increment operations can be applied in any order, since end result of the addition will be the same.
+Characteristics of data structures that can take this approach:
 
 1. The data structure somehow ensures no data can be acted upon simultaneously by multiple users (purely additive,
    designated owner, etc.)
@@ -104,16 +95,22 @@ position 23 of a SharedString while a friend deletes at position 12 needs to be 
 that matches my intention (that is, remains in the same location relative to the surrounding text, not the numerical
 index).
 
+### Consensus and quorum
+
+Some resolution strategies may not be satisfied with eventual consistency, and instead require stronger guarantees
+about the global state of the data.  The consensus data structures achieve this by accepting a delay of a roundtrip
+to the server before applying any changes locally (thus allowing them to confirm their operation was applied on a
+known data state).  The quorum offers an even stronger guarantee (with a correspondingly greater delay), that the
+changes will not be applied until all connected clients have accepted the modification.  These delays generally aren't
+acceptable for real-time interactivity, but can be useful for scenarios with more lenient performance demands.
+
 ## Additional thoughts
 
-1. Strictly speaking, summarization doesn't have to be a requirement of a DDS. If the ops are retained, the DDS should
-   be able to be reconstructed from those. However, it seems likely that most DDS implementations would want
-   summarization functionality for performance reasons, and server implementations can benefit from reduced storage
-   needs.
-2. This document doesn't currently cover the transmission of ops or stamping them with a sequence number, but that
-   probably belongs here since it's something a developer working on DDSes must be aware of (e.g. in conflict
-   resolution). It is external to the DDS itself though.
-3. A section on allowances on "benign/allowable/by-design inconsistency" might be interesting. For example:
+1. Strictly speaking, summarization isn't a mandatory requirement of a DDS. If the ops are retained, the DDS can
+   be reconstructed from those. However, in practice it is not practical to load from ops alone, as this will
+   degrade load time over the lifetime of the DDS.
+1. The requirement of "eventual consistency" has some flexibility to it.  Discrepancies between clients are
+allowed as long as they don't result in disagreements between clients on the observable state of the data. For example:
    - SharedString can be represented differently across clients in internal in-memory representation depending on op
      order, but this discrepancy is invisible to the user of the SharedString DDS.
    - SharedMap will raise a different number of valueChanged events across clients when simultaneous sets occur. the
