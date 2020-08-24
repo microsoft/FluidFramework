@@ -456,7 +456,7 @@ export class ContainerRuntime extends EventEmitter
     public get IFluidRouter() { return this; }
 
     // 0.24 back-compat attachingBeforeSummary
-    public readonly runtimeVersion25AndAbove = true;
+    public readonly packageVersion = pkgVersion;
 
     /**
      * Load the stores from a snapshot and returns the runtime.
