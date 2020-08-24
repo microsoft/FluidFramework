@@ -46,11 +46,7 @@ and `get` the object.
 
 The following code snippet from the
 [Pond](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/pond) DataObject demonstrates this.
-<<<<<<< HEAD
-It creates a Clicker object which is a DataObject during first time initialization and stores its handle in the root
-=======
 It creates a Clicker object (which is a DataObject) during first time initialization and stores its handle in the root
->>>>>>> hugo-md-only
 SharedDirectory. Any remote client can retrieve the handle from the root and get the Clicker by calling `get()` on the
 handle:
 
