@@ -117,6 +117,11 @@ export class ContainerContext implements IContainerContext {
         return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
+    public get runtimeVersion25AndAbove(): boolean {
+        assert(this.runtime, "Runtime should be loaded");
+        return this.runtime.runtimeVersion25AndAbove ?? false;
+    }
+
     public get connected(): boolean {
         return this.container.connected;
     }

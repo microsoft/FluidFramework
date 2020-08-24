@@ -25,6 +25,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 export class NullRuntime extends EventEmitter implements IRuntime {
+    public readonly runtimeVersion25AndAbove = true;
     public get IFluidSerializer(): IFluidSerializer {
         throw new Error("Not implemented");
     }

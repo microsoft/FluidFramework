@@ -97,6 +97,9 @@ export interface IRuntime extends IDisposable {
      * @param attachState - State of the container.
      */
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+
+    // 0.24 back-compat attachingBeforeSummary
+    readonly runtimeVersion25AndAbove: boolean;
 }
 
 export interface IContainerContext extends IMessageScheduler, IDisposable {
