@@ -31,7 +31,7 @@ title: Welcome to the Fluid Community
 >}}
 
 {{< swimlane title="Follow us"
-  subTitle=`Follow us on <a href="https://twitter.com/fluidframework" target="_blank">Twitter</a> to get the latest news from the project and our community.`
+  subTitle=`Follow us on <a href="https://twitter.com/fluidframework" target="_blank">Twitter</a> to get the latest news about the project and our community.`
   img="https://media.giphy.com/media/tXzFpjeqVnE7m/giphy.gif"
   id="twitter"
 >}}
