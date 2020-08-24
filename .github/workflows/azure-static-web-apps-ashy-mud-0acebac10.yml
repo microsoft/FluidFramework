@@ -21,13 +21,13 @@ jobs:
         with:
           submodules: false
       - name: Download JSON by SHA
-        id: download-sha
+        id: download-sha-json
         uses: carlosperate/download-file-action@v1.0.3
         with:
           file-url: https://fluidframework.blob.core.windows.net/api-extractor-json/${{ github.sha }}.tar.gz
           file-name: api-extractor.tar.gz
-      - name: Download latest JSON
-        id: download-latest
+      - name: "Download latest JSON (only if previous step fails)"
+        id: download-latest-json
         if: ${{ failure() }}
         uses: carlosperate/download-file-action@v1.0.3
         with:
@@ -38,6 +38,26 @@ jobs:
         run: |
           mkdir -pv $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/
           tar -C $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/ -zxvf api-extractor.tar.gz
+
+      - name: Download Storybook by SHA
+        id: download-sha-storybook
+        uses: carlosperate/download-file-action@v1.0.3
+        with:
+          file-url: https://fluidframework.blob.core.windows.net/storybook/${{ github.sha }}.tar.gz
+          file-name: storybook.tar.gz
+      - name: "Download latest Storybook (only if previous step fails)"
+        id: download-latest-storybook
+        if: ${{ failure() }}
+        uses: carlosperate/download-file-action@v1.0.3
+        with:
+          file-url: https://fluidframework.blob.core.windows.net/storybook/latest.tar.gz
+          file-name: storybook.tar.gz
+      - name: Extract Storybook
+        id: extract-storybook
+        run: |
+          mkdir -pv $GITHUB_WORKSPACE/docs/static/storybook/
+          tar -C $GITHUB_WORKSPACE/docs/static/storybook/ -zxvf storybook.tar.gz
+
       - name: Hugo Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v0.0.1-preview

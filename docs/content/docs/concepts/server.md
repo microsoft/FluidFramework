@@ -27,7 +27,7 @@ We sometimes refer to this as "op routing;" this is the source of the name _Rout
 ## Summaries
 
 Summaries are a serialized form of a Fluid document, created by consolidating all operations and serializing the data
-model. Summaries are used to improve load performance. When a Fluid document is loaded, theice may send a summary to
+model. Summaries are used to improve load performance. When a Fluid document is loaded, the service may send a summary to
 the client so that the client does not need to replay all ops locally to get to the current state.
 
 Summaries are created on one of the clients, called the "leader", and sent to the service like any other operation. To learn more about summaries and

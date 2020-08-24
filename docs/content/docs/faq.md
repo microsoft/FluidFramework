@@ -197,7 +197,7 @@ achieving consensus that can be built into the DDS or handled by the client.
 
 ### Can we create custom strategies to handle update collisions to the distributed data structure?
 
-Yes. You can design your own DDSs with your own strategies for handling merge. You also have access to all
+Yes. You can design your own DDSes with your own strategies for handling merge. You also have access to all
 operations and can write client code to reason over state in whatever way best suits your scenario.
 
 ### Can we have history of the changes?

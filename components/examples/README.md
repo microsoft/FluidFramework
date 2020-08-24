@@ -3,7 +3,7 @@
 We put together a group of Fluid components that explore a key group of concepts.
 
 ### Components
-* [Badge](./badge) - A badge component demonstrating SharedDirectory, SharedMap, SharedCell, and SharedObjectSequence DDSs
+* [Badge](./badge) - A badge component demonstrating SharedDirectory, SharedMap, SharedCell, and SharedObjectSequence DDSes
 * [Clicker](./clicker) - A clicker component that uses an agent and the task manager to monitor the clicker component
 * [Collaborative Text Area](./collaborative-textarea) - A very minimal example of using a SharedString within a text area for collaboration
 
