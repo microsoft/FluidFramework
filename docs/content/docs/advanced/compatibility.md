@@ -79,7 +79,7 @@ Within the Fluid Framework, the runtime consists of a few parts:
    ops and summaries.
 
 When making changes to the Fluid Framework repository, it is important to note when breaking changes are made to
-runtime-definitions which affect compatibilities between different version of data stores.  At least we should ensure that
+runtime-definitions which affect compatibilities between different version of data stores.  We should ensure that
 our own container-level runtime code can load our own data-store-level runtime code at least 1 version back.
 
 Specific interfaces to monitor:
