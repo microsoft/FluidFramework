@@ -17,14 +17,14 @@ title: Welcome to the Fluid Community
 
 {{< swimlane
   title="Contribute code or documentation"
-  subTitle=`We welcome code and documentation contributions from the community?<br/> We aim at making the contribution process smooth and even enjoyable. Checkout out our process on <a href="https://github.com/microsoft/FluidFramework" target="_blank">GitHub</a>`
+  subTitle=`We welcome code and documentation contributions from the community and strive to make the contribution process smooth and enjoyable. Check out our process on <a href="https://github.com/microsoft/FluidFramework" target="_blank">GitHub</a>.`
   img="/images/github_logo.png"
   id="github"
 >}}
 
 {{< swimlane
   title="Ask Technical questions"
-  subTitle=`The team monitors questions tagged <strong>fluidframework</strong> on <a href="https://stackoverflow.com/questions/tagged/fluidframework" target="_blank">Stack Overflow</a> feel free to ask questions or if you have some experience with Fluid, give us a hand by answering questions asked by the community.`
+  subTitle=`The team monitors questions tagged <strong>fluidframework</strong> on <a href="https://stackoverflow.com/questions/tagged/fluidframework" target="_blank">Stack Overflow</a>. Feel free to ask questions or if you have some experience with Fluid, give us a hand by answering questions asked by the community.`
   pos="right"
   img="/images/so-logo.svg"
   id="stackoverflow"
