@@ -13,7 +13,7 @@ variables:
   - group: storage-vars
   - name: latestPipeline
     value: ${{ or(
-      eq(variables['Build.SourceBranchName'], 'master'),
+      eq(variables['Build.SourceBranchName'], 'main'),
       eq(variables['Build.SourceBranchName'], 'pl-test')
       )}}
   - name: n1Branch
@@ -31,12 +31,13 @@ pr: none
 
 resources:
   pipelines:
-  - pipeline: test
-    source: test - trigger
-    trigger:
-      branches:
-        include:
-        - pl-test
+  # - pipeline: test
+  #   source: test - trigger
+  #   trigger:
+  #     branches:
+  #       include:
+  #       - docs/hugo
+  #       - pl-test
   - pipeline: common_definitions
     source: Build - common-definitions
   - pipeline: common_utils
@@ -46,24 +47,24 @@ resources:
     trigger:
       branches:
         include:
-        - master
+        - main
   - pipeline: server
     source: server-routerlicious
 
 stages:
 - stage: build
   displayName: 'Build docs'
-  pool: Default
+  pool: Main
   jobs:
   - job:
     displayName: Component Detection
-    pool: Shared
+    pool: Lite
     steps:
     - script: |
         echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
         echo BASE_URL: $(BASE_URL)
         echo RELEASE_VERSION: $(RELEASE_VERSION)
-        echo MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+        echo MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
         echo N1_VERSION: $(N1_VERSION)
         echo releasePipeline ${{ variables.releasePipeline }}
         echo latestPipeline ${{ variables.latestPipeline }}
@@ -83,8 +84,8 @@ stages:
     - template: templates/build-docs-steps.yml
       parameters:
         BASE_URL: $(BASE_URL)
-        THIS_VERSION: $(MASTER_BRANCH_VERSION)
-        MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+        THIS_VERSION: $(MAIN_BRANCH_VERSION)
+        MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
         RELEASE_VERSION: $(RELEASE_VERSION)
         N1_VERSION: $(N1_VERSION)
         VUEPRESS_BASE: '/versions/latest/'
@@ -95,11 +96,11 @@ stages:
     - template: templates/build-docs-steps.yml
       parameters:
         BASE_URL: $(BASE_URL)
-        THIS_VERSION: $(MASTER_BRANCH_VERSION)
-        MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+        THIS_VERSION: $(MAIN_BRANCH_VERSION)
+        MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
         RELEASE_VERSION: $(RELEASE_VERSION)
         N1_VERSION: $(N1_VERSION)
-        VUEPRESS_BASE: '/versions/$(MASTER_BRANCH_VERSION)/'
+        VUEPRESS_BASE: '/versions/$(MAIN_BRANCH_VERSION)/'
         artifactName: fluid-docs-version-path
 
 - stage: deploy
@@ -142,5 +143,5 @@ stages:
               parameters:
                 STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                 STORAGE_KEY: $(STORAGE_KEY)
-                DEST_PATH: '/versions/$(MASTER_BRANCH_VERSION)/'
+                DEST_PATH: '/versions/$(MAIN_BRANCH_VERSION)/'
                 artifactName: fluid-docs-version-path

@@ -12,9 +12,9 @@ import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidf
 import {
     createLocalLoader,
     OpProcessingController,
-    ITestFluidComponent,
+    ITestFluidObject,
     initializeLocalContainer,
-    TestFluidComponentFactory,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
 describe("LocalTestServer", () => {
@@ -27,44 +27,44 @@ describe("LocalTestServer", () => {
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
-    let component1: ITestFluidComponent;
-    let component2: ITestFluidComponent;
+    let dataStore1: ITestFluidObject;
+    let dataStore2: ITestFluidObject;
     let sharedString1: SharedString;
     let sharedString2: SharedString;
 
     async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([[stringId, SharedString.getFactory()]]);
+        const factory = new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]);
         const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
-        const response = await container.request({ url: componentId });
+    async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidObject> {
+        const response = await container.request({ url: dataStoreId });
         if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
+            throw new Error(`DataStore with id: ${dataStoreId} not found`);
         }
-        return response.value as ITestFluidComponent;
+        return response.value as ITestFluidObject;
     }
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
         const container1 = await createContainer();
-        component1 = await requestFluidObject("default", container1);
-        sharedString1 = await component1.getSharedObject<SharedString>(stringId);
+        dataStore1 = await requestFluidObject("default", container1);
+        sharedString1 = await dataStore1.getSharedObject<SharedString>(stringId);
 
         const container2 = await createContainer();
-        component2 = await requestFluidObject("default", container2);
-        sharedString2 = await component2.getSharedObject<SharedString>(stringId);
+        dataStore2 = await requestFluidObject("default", container2);
+        sharedString2 = await dataStore2.getSharedObject<SharedString>(stringId);
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);
-        opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
+        opProcessingController.addDeltaManagers(dataStore1.runtime.deltaManager, dataStore2.runtime.deltaManager);
     });
 
     describe("Document.existing", () => {
         it("Validate document is new for user1 1 and exists for client 2", () => {
-            assert.equal(component1.runtime.existing, false, "Document already exists");
-            assert.equal(component2.runtime.existing, true, "Document does not exist on the server");
+            assert.equal(dataStore1.runtime.existing, false, "Document already exists");
+            assert.equal(dataStore2.runtime.existing, true, "Document does not exist on the server");
             assert.notEqual(sharedString2, undefined, "Document does not contain a SharedString");
         });
     });
@@ -97,15 +97,15 @@ describe("LocalTestServer", () => {
             assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
 
-            await opProcessingController.processOutgoing(component1.runtime.deltaManager);
+            await opProcessingController.processOutgoing(dataStore1.runtime.deltaManager);
             assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
 
-            await opProcessingController.process(component2.runtime.deltaManager);
+            await opProcessingController.process(dataStore2.runtime.deltaManager);
             assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
 
-            await opProcessingController.processIncoming(component1.runtime.deltaManager);
+            await opProcessingController.processIncoming(dataStore1.runtime.deltaManager);
             assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
 

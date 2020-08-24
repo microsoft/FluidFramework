@@ -213,7 +213,7 @@ export interface IContainerRuntimeOptions {
     initialSummarizerDelayMs?: number;
 
     // Flag to enable summarizing with new SummarizerNode strategy.
-    // Enabling this feature will allow components that fail to summarize to
+    // Enabling this feature will allow data stores that fail to summarize to
     // try to still summarize based on previous successful summary + ops since.
     // Enabled by default.
     enableSummarizerNode?: boolean;
@@ -722,7 +722,7 @@ export class ContainerRuntime extends EventEmitter
                 // Must set to false to prevent sending summary handle which would be pointing to
                 // a summary with an older protocol state.
                 canReuseHandle: false,
-                // Must set to true to throw on any component failure that was too severe to be handled.
+                // Must set to true to throw on any data stores failure that was too severe to be handled.
                 // We also are not decoding the base summaries at the root.
                 throwOnFailure: true,
             },
@@ -945,15 +945,15 @@ export class ContainerRuntime extends EventEmitter
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const component = await this.getDataStore(requestParser.pathParts[0], wait);
+            const dataStore = await this.getDataStore(requestParser.pathParts[0], wait);
             const subRequest = requestParser.createSubRequest(1);
             if (subRequest !== undefined) {
-                return component.IFluidRouter.request(subRequest);
+                return dataStore.IFluidRouter.request(subRequest);
             } else {
                 return {
                     status: 200,
                     mimeType: "fluid/object",
-                    value: component,
+                    value: dataStore,
                 };
             }
         }
@@ -1434,10 +1434,10 @@ export class ContainerRuntime extends EventEmitter
                 assert(value.attachState !== AttachState.Attaching);
                 return value.attachState === AttachState.Attached;
             }).map(async ([key, value]) => {
-                const componentSummary = this.summarizerNode.enabled
+                const contextSummary = this.summarizerNode.enabled
                     ? await value.summarize(fullTree)
                     : convertToSummaryTree(await value.snapshot(fullTree), fullTree);
-                builder.addWithStats(key, componentSummary);
+                builder.addWithStats(key, contextSummary);
             }));
 
         this.serializeContainerBlobs(builder);
@@ -1587,10 +1587,10 @@ export class ContainerRuntime extends EventEmitter
         do {
             const builderTree = builder.summary.tree;
             notBoundContextsLength = this.notBoundContexts.size;
-            // Iterate over each component and ask it to snapshot
+            // Iterate over each data store and ask it to snapshot
             Array.from(this.contexts)
                 .filter(([key, _]) =>
-                    // Take summary of bounded components only and make sure we haven't summarized them already.
+                    // Take summary of bounded data stores only and make sure we haven't summarized them already.
                     !(this.notBoundContexts.has(key) || builderTree[key]),
                 )
                 .map(([key, value]) => {

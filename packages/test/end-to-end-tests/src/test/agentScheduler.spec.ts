@@ -31,10 +31,10 @@ describe("AgentScheduler", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function requestFluidObject(componentId: string, container: Container): Promise<TaskManager> {
-        const response = await container.request({ url: componentId });
+    async function requestFluidObject(dataStoreId: string, container: Container): Promise<TaskManager> {
+        const response = await container.request({ url: dataStoreId });
         if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
+            throw new Error(`Data Store with id: ${dataStoreId} not found`);
         }
         return response.value as TaskManager;
     }

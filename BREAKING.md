@@ -1,6 +1,7 @@
 # Breaking changes
 
 ## 0.25 Breaking Changes
+- [External Component Loader and IComponentDefaultFactoryName removed](#External-Component-Loader-and-IComponentDefaultFactoryName-removed)
 - [MockFluidDataStoreRuntime api rename](#MockFluidDataStoreRuntime-api-rename)
 - [Local Web Host API change](#Local-Web-Host-API-change)
 - [Container runtime event changes](#Container-runtime-event-changes)
@@ -15,6 +16,10 @@
 - [@fluidframework/odsp-utils - Minor renames and signature changes](#odsp-utils-Changes)
 - [LastEditedTrackerComponent renamed to LastEditedTrackerDataObject](#lasteditedtrackercomponent-renamed)
 - [ComponentProvider renamed to FluidObjectProvider in @fluidframework/synthesize](#componentProvider-renamed-to-fluidobjectPpovider)
+
+
+### External Component Loader and IComponentDefaultFactoryName removed
+The @fluidframework/external-component-loader package has been removed from the repo. In addition to this, the IFluidExportDefaultFactoryName and the corresponding IProvideFluidExportDefaultFactoryName interfaces have also been dropped.
 
 ### MockFluidDataStoreRuntime api rename
 Runtime Test Utils's MockFluidDataStoreRuntime now has "requestDataStore" instead of "requestComponent"
@@ -70,7 +75,7 @@ To support additional authentication scenarios, the signature and/or name of a f
 ### LastEditedTrackerComponent renamed
 It is renamed to LastEditedTrackerDataObject
 
-### ComponentProvider renamed to FluidObjectProvider 
+### ComponentProvider renamed to FluidObjectProvider
 
 In the package @fluidframework/synthesize, these types are renamed:
 
@@ -120,7 +125,7 @@ All renames are 1-1, and global case senstive and whole word find replace for al
     },
 
     "aquaduct":{
-        "icomponentInterfaces":{
+        "IComponentInterfaces":{
             "IProvideComponentDefaultFactoryName": "IProvideFluidExportDefaultFactoryName",
             "IComponentDefaultFactoryName": "IFluidExportDefaultFactoryName"
         },
@@ -148,7 +153,7 @@ All renames are 1-1, and global case senstive and whole word find replace for al
     },
 
     "fluidObject":{
-        "icomponentInterfaces":{
+        "IComponentInterfaces":{
 
             "IProvideComponentRouter": "IProvideFluidRouter",
             "IComponentRouter": "IFluidRouter",
@@ -203,7 +208,7 @@ All renames are 1-1, and global case senstive and whole word find replace for al
 
             "SharedObjectComponentHandle": "SharedObjectHandle",
             "RemoteComponentHandle": "RemoteFluidObjectHandle",
-            "ComponentHandle": "FluidOjectHandle",
+            "ComponentHandle": "FluidObjectHandle",
             "ComponentSerializer": "FluidSerializer",
 
             "ComponentHandleContext": "FluidHandleContext",

@@ -52,10 +52,10 @@ function expandTreeForReadability(tree: ITree): ITree {
     const newTree: ITree = { entries: [], id: undefined };
     for (const node of tree.entries) {
         const newNode = { ...node };
-        if (node.type === TreeEntry[TreeEntry.Tree]) {
+        if (node.type === TreeEntry.Tree) {
             newNode.value = expandTreeForReadability(node.value as ITree);
         }
-        if (node.type === TreeEntry[TreeEntry.Blob]) {
+        if (node.type === TreeEntry.Blob) {
             const blob = node.value as IBlob;
             try {
                 newNode.value = {

@@ -14,13 +14,13 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
-class TestComponent extends DataObject {
-    public static readonly type = "@fluid-example/test-component";
+class TestDataStore extends DataObject {
+    public static readonly type = "@fluid-example/test-dataStore";
 
-    public static getFactory() { return TestComponent.factory; }
+    public static getFactory() { return TestDataStore.factory; }
     private static readonly factory = new DataObjectFactory(
-        TestComponent.type,
-        TestComponent,
+        TestDataStore.type,
+        TestDataStore,
         [],
         {},
     );
@@ -54,10 +54,10 @@ describe("UpgradeManager", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function requestFluidObject<T>(componentId: string, container: Container): Promise<T> {
-        const response = await container.request({ url: componentId });
+    async function requestFluidObject<T>(dataStoreId: string, container: Container): Promise<T> {
+        const response = await container.request({ url: dataStoreId });
         if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
+            throw new Error(`DataStore with id: ${dataStoreId} not found`);
         }
         return response.value as T;
     }
@@ -77,15 +77,15 @@ describe("UpgradeManager", () => {
 
         const addCounts = Array(clients).fill(0);
         const approveCounts = Array(clients).fill(0);
-        const containersP = Array(clients).fill(undefined).map(async () => createContainer(TestComponent.getFactory()));
-        const components = await Promise.all(containersP.map(
+        const containersP = Array(clients).fill(undefined).map(async () => createContainer(TestDataStore.getFactory()));
+        const dataStores = await Promise.all(containersP.map(
             async (containerP) => (containerP).then(
-                async (container) => requestFluidObject<TestComponent>("default", container))));
+                async (container) => requestFluidObject<TestDataStore>("default", container))));
 
         const containers = await Promise.all(containersP);
-        opProcessingController.addDeltaManagers(...components.map((c) => c._runtime.deltaManager));
+        opProcessingController.addDeltaManagers(...dataStores.map((c) => c._runtime.deltaManager));
 
-        components.map((c, i) => {
+        dataStores.map((c, i) => {
             c._runtime.getQuorum().on("addProposal", () => { ++addCounts[i]; });
             c._runtime.getQuorum().on("approveProposal", () => { ++approveCounts[i]; });
         });
@@ -109,10 +109,10 @@ describe("UpgradeManager", () => {
     });
 
     it("1 client low priority is immediate", async () => {
-        const container = await createContainer(TestComponent.getFactory());
-        const component = await requestFluidObject<TestComponent>("default", container);
+        const container = await createContainer(TestDataStore.getFactory());
+        const dataStore = await requestFluidObject<TestDataStore>("default", container);
 
-        opProcessingController.addDeltaManagers(component._runtime.deltaManager);
+        opProcessingController.addDeltaManagers(dataStore._runtime.deltaManager);
         const upgradeManager = new UpgradeManager((container as any).context.runtime);
 
         const upgradeP = new Promise<void>((resolve) => {
@@ -127,11 +127,11 @@ describe("UpgradeManager", () => {
 
     it("2 clients low priority is delayed", async () => {
         const clients = 2;
-        const containersP = Array(clients).fill(undefined).map(async () => createContainer(TestComponent.getFactory()));
+        const containersP = Array(clients).fill(undefined).map(async () => createContainer(TestDataStore.getFactory()));
 
         await Promise.all(containersP.map(
             async (containerP) => (containerP).then(
-                async (container) => requestFluidObject<TestComponent>("default", container))));
+                async (container) => requestFluidObject<TestDataStore>("default", container))));
 
         const containers = await Promise.all(containersP);
 

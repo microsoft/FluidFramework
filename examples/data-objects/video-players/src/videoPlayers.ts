@@ -11,12 +11,12 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
-import { FluidOjectHandle } from "@fluidframework/datastore";
+import { FluidObjectHandle } from "@fluidframework/datastore";
 import * as ClientUI from "@fluid-example/client-ui-lib";
 import { IFluidObjectCollection } from "@fluidframework/framework-interfaces";
 import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { PureDataObject, PureDataObjectFactory } from "@fluidframework/component-base";
+import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 declare global {
@@ -90,7 +90,7 @@ export class VideoPlayer implements
     public readonly canInline = true;
     public readonly preferInline = false;
     public readonly preferPersistentElement = true;
-    public handle: FluidOjectHandle;
+    public handle: FluidObjectHandle;
 
     constructor(
         public videoId: string,
@@ -100,7 +100,7 @@ export class VideoPlayer implements
         private readonly youTubeApi: YouTubeAPI,
         private readonly collection: VideoPlayerCollection,
     ) {
-        this.handle = new FluidOjectHandle(this, keyId, context);
+        this.handle = new FluidObjectHandle(this, keyId, context);
     }
 
     public heightInLines() {
@@ -147,9 +147,9 @@ export class VideoPlayer implements
     }
 }
 
-export class VideoPlayerCollection extends PureDataObject<ISharedDirectory> implements
+export class VideoPlayerCollection extends LazyLoadedDataObject<ISharedDirectory> implements
     IFluidObjectCollection {
-    private static readonly factory = new PureDataObjectFactory<VideoPlayerCollection>(
+    private static readonly factory = new LazyLoadedDataObjectFactory<VideoPlayerCollection>(
         "@fluid-example/video-players",
         VideoPlayerCollection,
         SharedDirectory.getFactory(),
