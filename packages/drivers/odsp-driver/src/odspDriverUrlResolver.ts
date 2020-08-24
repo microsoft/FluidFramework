@@ -16,7 +16,7 @@ import {
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
-import { createCreateNewRequest } from "./createCreateNewRequest";
+import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 
 function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
     const siteOrigin = new URL(siteUrl).origin;
@@ -110,7 +110,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
     }
 
     public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest {
-        return createCreateNewRequest(siteUrl, driveId, filePath, fileName);
+        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     }
 
     private decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId: string; path: string } {
