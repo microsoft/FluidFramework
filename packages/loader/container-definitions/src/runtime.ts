@@ -99,7 +99,7 @@ export interface IRuntime extends IDisposable {
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 
     // 0.24 back-compat attachingBeforeSummary
-    readonly packageVersion?: string;
+    readonly runtimeVersion?: string;
 }
 
 export interface IContainerContext extends IMessageScheduler, IDisposable {

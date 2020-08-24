@@ -503,7 +503,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // In failed attach call, we would already have a summary cached.
             if (this._attachState === AttachState.Detached) {
                 // 0.24 back-compat attachingBeforeSummary
-                if (this.context.packageVersion === undefined || this.context.packageVersion < "0.25") {
+                if (this.context.runtimeVersion === undefined || this.context.runtimeVersion < "0.25") {
                     this._attachState = AttachState.Attaching;
                     this.emit("attaching");
                 }
@@ -520,7 +520,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // This should be fired after taking the summary because it is the place where we are
                 // starting to attach the container to storage.
                 // Also, this should only be fired in detached container.
-                if (this.context.packageVersion !== undefined && this.context.packageVersion >= "0.25") {
+                if (this.context.runtimeVersion !== undefined && this.context.runtimeVersion >= "0.25") {
                     this._attachState = AttachState.Attaching;
                     this.emit("attaching");
                 }
