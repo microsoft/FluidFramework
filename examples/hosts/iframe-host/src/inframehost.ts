@@ -23,7 +23,6 @@ import { ISequencedDocumentMessage, ITree, ISummaryTree } from "@fluidframework/
 
 class ProxyRuntime implements IRuntime {
     private _disposed = false;
-
     public get disposed() { return this._disposed; }
 
     public dispose(): void {
