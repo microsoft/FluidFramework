@@ -1,6 +1,7 @@
 name: ashy-mud
 
 on:
+  # REMINDER: remove the PR trigger in polite pebble
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
@@ -23,28 +24,20 @@ jobs:
         id: download-sha
         uses: carlosperate/download-file-action@v1.0.3
         with:
-          file-url: https://fluidframework.z19.web.core.windows.net/${{ github.sha }}.tar.gz
+          file-url: https://fluidframework.blob.core.windows.net/api-extractor-json/${{ github.sha }}.tar.gz
           file-name: api-extractor.tar.gz
       - name: Download latest JSON
         id: download-latest
         if: ${{ failure() }}
         uses: carlosperate/download-file-action@v1.0.3
         with:
-          file-url: https://fluidframework.z19.web.core.windows.net/latest.tar.gz
+          file-url: https://fluidframework.blob.core.windows.net/api-extractor-json/latest.tar.gz
           file-name: api-extractor.tar.gz
       - name: Extract api-extractor JSON
         id: extract-json
         run: |
-          pwd
           mkdir -pv $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/
           tar -C $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/ -zxvf api-extractor.tar.gz
-          pwd
-          ls -al
-      - name: Generate TSDoc Markdown
-        id: mdapidocs
-        run: |
-          npm install @mattetti/custom-api-documenter
-          npm run build:mdapidocs
       - name: Hugo Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v0.0.1-preview
@@ -54,6 +47,10 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ASHY_MUD_0ACEBAC10 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
           action: "upload"
+          app_build_command: |
+            # npm install is run automatically
+            npm run build # converts JSON to Markdown
+            hugo
           ###### Repository/Build Configurations - These values can be configured to match you app requirements. ######
           # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
           app_location: "/docs" # App source code path

@@ -25,6 +25,10 @@
     height: 5rem;
     margin: auto;
     margin-bottom: 1rem;
+    font-family: FabricMDL2Icons;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 2em;
 }
 
 .cta-icon.get-started {

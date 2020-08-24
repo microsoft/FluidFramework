@@ -4,16 +4,16 @@
             <div class="left col-md-7">
                 <ul class="links">
                     <li>
-                        <a href="https://twitter.com/fluidframework" onclick="followOnTwitter()" role="button"
-                            tabindex="0">Follow
-                            @fluidFramework</a>
+                        <a href="https://twitter.com/{{.Site.Params.twitterHandle}}" onclick="followOnTwitter()"
+                            role="button" tabindex="0">Follow
+                            @{{.Site.Params.twitterHandle}}</a>
                     </li>
 
                     <script>
                         function followOnTwitter() {
                             var windowFeatures = "location=yes,height=600,width=550,scrollbars=yes,status=yes";
                             var originalReferer = "&original_referer=" + document.URL;
-                            var screenName = "&screen_name=fluidframework";
+                            var screenName = "&screen_name={{.Site.Params.twitterHandle}}";
                             var URL = "https://twitter.com/intent/follow?" + originalReferer + screenName;
                             window.open(URL, "_blank", windowFeatures);
                         }
@@ -28,13 +28,14 @@
                             href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx"
                             target="_blank">Terms of Use</a></li>
                     <li><a id="footer-license-link"
-                            href="https://github.com/microsoft/FluidFramework/blob/master/LICENSE.txt">License</a></li>
+                            href="https://github.com/{{.Site.Params.githubRepo}}/blob/master/LICENSE.txt">License</a>
+                    </li>
                 </ul>
                 <div class="copyright">
                     <a id="footer-microsoft-link" class="logo" href="https://www.microsoft.com">
-                        <img class="microsoft-logo" src="/images/microsoft-logo.png" height="20"
+                        <img class="microsoft-logo" src="https://fluidframework-docs-cdn.azureedge.net/static/images/microsoft-logo.png" height="20"
                             alt="Microsoft homepage" />
-                        <img class="microsoft-logo-inverted" src="/images/microsoft-logo-inverted.png" height="20"
+                        <img class="microsoft-logo-inverted" src="https://fluidframework-docs-cdn.azureedge.net/static/images/microsoft-logo-inverted.png" height="20"
                             alt="Microsoft homepage" />
                     </a>
                     <span>&copy; {{ now.Format "2006" }} <span itemprop="publisher" itemscope

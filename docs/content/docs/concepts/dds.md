@@ -15,12 +15,12 @@ However, a DDS is not _just_ a local object. Fluid's purpose is to make it easie
 data, where multiple users are editing the same data source. A DDS can be changed not only by your code running locally
 on the client, but also by the Fluid runtime on behalf of other users that are editing.
 
-{{< callout tip >}}
+{{% callout tip %}}
 
 The names of distributed data structures are prefixed with `Shared` by convention. SharedMap, SharedInk, SharedString,
 etc. This prefix indicates that the object is shared between multiple clients.
 
-{{< /callout >}}
+{{% /callout %}}
 
 When a DDS is changed by the Fluid runtime, it raises an [event](#events). Your code can listen to these events so that you
 know when data is changed by remote clients and can react appropriately. For example, you may need to recalculate a
@@ -35,9 +35,9 @@ made by the Fluid runtime.
 
 Clients must always assume their local view of data is stale since there are potentially changes from remote clients
 that they have not yet received. For scenarios where modification of the data can only be done safely with an up-to-date
-view of the data, Fluid provides consensus-based data structures. These data structures build in protections to prevent modification
-of the data if the unsafe conditions are met, and clients wait to get confirmation from the server before assuming their
-modifications were accepted.
+view of the data, Fluid provides consensus-based data structures. These data structures build in protections to prevent
+modification of the data if the unsafe conditions are met, and clients wait to get confirmation from the server before
+assuming their modifications were accepted.
 
 For example, to pop a distributed stack clients need an up-to-date view of the state of the stack. Otherwise, two
 clients may believe they've popped the same item.
@@ -63,7 +63,7 @@ const myMap = SharedMap.create(this.runtime);
 ```
 
 You must pass in an `IFluidDataStoreRuntime` that the DDS will be managed by. We'll cover the runtime in more detail in
-[a later section](./interfaces-aqueduct.md).
+the [Encapsulating data with DataObject](./dataobject-aqueduct.md) section.
 
 
 ### Storing a DDS within another DDS
@@ -119,7 +119,7 @@ length, width, etc.
 When users edit this data, what pieces of the data can be edited simultaneously? This is an important question to answer
 because it influences how you structure the data in Fluid.
 
-Let's assume for a moment that all of the data about a shape is stored as a JSON object in a `SharedMap`. Recall that
+Let's assume for a moment that all of the data about a shape is stored as a JSON object in a [SharedMap][]. Recall that
 the SharedMap uses a last writer wins merge strategy. This means that if two users are editing the data at the same
 time, then the one who made the most recent change will overwrite the changes made by the other user.
 
@@ -144,6 +144,8 @@ store that SharedMap in the root SharedDirectory.
 
 ## Sequences
 
+{{% include file="_includes/sequences-usage.md" %}}
+
 ### SharedNumberSequence
 
 ### SharedObjectSequence
@@ -159,4 +161,28 @@ store that SharedMap in the root SharedDirectory.
 ## Consensus-based data structures
 
 
-!!!include(links.md)!!!
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
+<!-- Links -->
+
+[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
+
+[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
+[shareddirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
+
+[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+[sharedobjectsequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+
+[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
+[sharedmap]: {{< relref "/apis/map/sharedmap.md" >}}
+
+[undo-redo]: {{< relref "/apis/undo-redo.md" >}}
+
+
+<!-- Sequences -->
+
+[sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/apis/sequence/sequencedeltaevent.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->

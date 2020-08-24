@@ -13,7 +13,7 @@ title: Welcome to the Fluid Community
 </div>
 
 
-{{< swimlane_container fullPage="true" >}}
+{{< swimlane_container twoThird="true" >}}
 
 {{< swimlane
   title="Contribute code or documentation"

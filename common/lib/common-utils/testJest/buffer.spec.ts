@@ -7,7 +7,7 @@ import * as BufferNode from "../src/bufferNode";
 import * as BufferBrowser from "../src/bufferBrowser";
 
 describe("Buffer isomorphism", () => {
-    test("from string utf-8/16 is compatible", async () => {
+    test("from string utf-8/16 is compatible", () => {
         const testArray = [
             "",
             "asdfasdf", // ascii range
@@ -31,7 +31,7 @@ describe("Buffer isomorphism", () => {
         expect(nodeBuffer.toString("utf-8")).toEqual(browserBuffer.toString("utf-8"));
     });
 
-    test("from string base64 is compatible", async () => {
+    test("from string base64 is compatible", () => {
         const testArray = [
             "",
             "aa_/-",
@@ -52,7 +52,7 @@ describe("Buffer isomorphism", () => {
         }
     });
 
-    test("from arraybuffer is compatible", async () => {
+    test("from arraybuffer is compatible", () => {
         const testArray = [
             "",
             "asdfasdf", // ascii range
@@ -69,7 +69,7 @@ describe("Buffer isomorphism", () => {
         }
     });
 
-    test("utf8 base64 conversion is compatible", async () => {
+    test("utf8 base64 conversion is compatible", () => {
         const testArrayUtf8 = [
             "",
             "asdfasdf", // ascii range
@@ -99,7 +99,7 @@ describe("Buffer isomorphism", () => {
         }
     });
 
-    test("bytelength is compatible", async () => {
+    test("bytelength is compatible", () => {
         const testString = "8J+YgvCfkoHwn4+84oCN4pmC77iP8J+SgfCfj7zigI3wn5KB4oCN4pmC";
 
         const nodeBufferUtf8 = BufferNode.IsoBuffer.from(testString);
@@ -109,5 +109,17 @@ describe("Buffer isomorphism", () => {
         const nodeBufferBase64 = BufferNode.IsoBuffer.from(testString, "base64");
         const browserBufferBase64 = BufferBrowser.IsoBuffer.from(testString, "base64");
         expect(nodeBufferBase64.byteLength).toEqual(browserBufferBase64.byteLength);
-    })
+    });
+
+    test("Uint8ArrayToString is compatible", () => {
+        const testArray = new Uint8Array([1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377]);
+
+        const nodeStringUtf8 = BufferNode.Uint8ArrayToString(testArray, "utf8");
+        const browserStringUtf8 = BufferBrowser.Uint8ArrayToString(testArray, "utf8");
+        expect(nodeStringUtf8).toEqual(browserStringUtf8);
+
+        const nodeStringBase64 = BufferNode.Uint8ArrayToString(testArray, "base64");
+        const browserStringBase64 = BufferBrowser.Uint8ArrayToString(testArray, "base64");
+        expect(nodeStringBase64).toEqual(browserStringBase64);
+    });
 });

@@ -1,4 +1,5 @@
-{{$current := .}}
+{{ $current := .}}
+{{ $topSection := .CurrentSection.FirstSection }}
 <a role="button" id="skip-to-content" class="link-button" href="#main-content">Skip to content<i>&nbsp;</i><span
         class="glyphicon glyphicon-menu-down"></span></a>
 <div class="navbar-fixed-container">
@@ -7,7 +8,7 @@
         <nav role="navigation" aria-label="Top Level">
             <div class="container">
                 <div class="nav navbar-header">
-                    <a class="navbar-brand" href="/"><span itemprop="name">Fluid Framework</span></a>
+                    <a class="navbar-brand" href="/"><span itemprop="name">{{.Site.Title}}</span></a>
                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse"
                         aria-label="Expand and Collapse Menu">
                         <span class="icon-bar"></span>
@@ -19,8 +20,15 @@
                     <ul class="nav navbar-nav navbar-left">
 
                         {{- range .Site.Menus.main }}
+                        {{ $isActive := eq $topSection.RelPermalink .URL }}
+                        {{- if eq $isActive false}}
+                        {{- if eq $current.RelPermalink .URL}}
+                        {{ $isActive = true }}
+                        {{- end}}
+                        {{- end }}
+
                         {{- if .HasChildren }}
-                        <li {{ if eq $current.Permalink .URL}}class="active" {{end}}>
+                        <li {{ if $isActive }}class="active" {{end}}>
                             <a id="nav-{{ .Name }}" href="{{ .URL | absLangURL }}" class="has-children">{{ .Name }}</a>
                             <span class="sub-menu">
                                 {{- range .Children }}
@@ -29,7 +37,7 @@
                             </span>
                         </li>
                         {{- else }}
-                        <li {{ if eq $current.RelPermalink .URL}}class="active" {{end}}>
+                        <li {{ if $isActive}}class="active" {{end}}>
                             <a id="nav-{{ .Name }}" href="{{ .URL | absLangURL }}">{{ .Name }}</a>
                         </li>
                         {{- end }}
@@ -37,6 +45,9 @@
                         {{/*  <li {{ if eq $current "search"}}class='search active visible-xs'
                         {{end}}{{ if ne $current "search"}}class='search visible-xs' {{end}}><a
                             href="/Search">Search</a></li> */}}
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="https://github.com/{{.Site.Params.githubRepo}}" target="_blank">GitHub</a></li>
                     </ul>
 
                     {{/*  <ul class="nav navbar-nav navbar-right">

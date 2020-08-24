@@ -44,4 +44,4 @@ implement the Fluid service.
 ## More information
 
 You can learn more about Routerlicious, including how to run it using Docker, at
-<https://github.com/microsoft/FluidFramework/blob/master/server/routerlicious/README.md>.
+<https://github.com/microsoft/FluidFramework/blob/main/server/routerlicious/README.md>.

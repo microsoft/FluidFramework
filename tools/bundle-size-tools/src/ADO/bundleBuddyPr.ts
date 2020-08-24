@@ -57,7 +57,7 @@ export async function bundleBuddyPr(adoToken: string, bundleReportPath: string, 
       return;
     }
 
-    // Tag the current build as waiting for the results of the master CI
+    // Tag the current build as waiting for the results of the main CI
     const buildApi = await adoConnection.getBuildApi();
     await buildApi.addBuildTag(Constants.projectName, adoBuildId, getBuildTagForCommit(baselineCommit));
     return;

@@ -13,8 +13,7 @@
     "build:fast": "fluid-build --root .",
     "build:full": "npm run build:genver && npm run build:full:compile && npm run lint && npm run build:docs",
     "build:full:compile": "lerna run build:full:compile --stream",
-    "build:gendocs": "copyfiles server/routerlicious/_api-extractor-temp/** ./_api-extractor-temp/doc-models/ -f -V && npm run build:mdapidocs",
-    "build:mdapidocs": "./node_modules/@mattetti/custom-api-documenter/bin/api-documenter generate --config docs/api-documenter.json --input-folder _api-extractor-temp/doc-models/ --output-folder docs/content/apis/",
+    "build:gendocs": "copyfiles server/routerlicious/_api-extractor-temp/** ./_api-extractor-temp/doc-models/ -f -V && cd docs && npm run build",
     "build:genver": "lerna run build:genver --stream --parallel",
     "bump-version": "fluid-bump-version --root .",
     "bundle-analysis": "npm run webpack:profile && fluid-collect-bundle-analyses",
@@ -76,9 +75,7 @@
       "**/*.d.ts",
       "packages/**/src/test/**/*.ts",
       "packages/**/dist/test/**/*.js",
-      "**/*.bundle.js",
-      "packages/components/**",
-      "packages/server/gateway/public/**"
+      "**/*.bundle.js"
     ],
     "exclude-after-remap": false,
     "extension": [

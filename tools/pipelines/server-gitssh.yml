@@ -8,24 +8,24 @@ name: $(Build.BuildId)
 trigger:
   branches:
     include:
-    - master
+    - main
   paths:
     include:
     - server/gitssh
     - tools/pipelines/server-gitssh.yml
-    - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-vars.yml
 
 pr:
   branches:
     include:
-    - master
+    - main
   paths:
     include:
     - server/gitssh
     - tools/pipelines/server-gitssh.yml
-    - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-vars.yml
 
 extends:
   template: templates/build-docker-service.yml

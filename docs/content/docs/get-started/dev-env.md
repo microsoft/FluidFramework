@@ -1,5 +1,5 @@
 ---
-title: Development environment
+title: Setup
 menuPosition: 2
 ---
 

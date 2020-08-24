@@ -5,10 +5,27 @@
 
 name: $(Build.BuildId)
 
+parameters:
+- name: publishOverride
+  displayName: Publish Override
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+- name: releaseBuildOverride
+  displayName: Release Build Override
+  type: string
+  default: default
+  values:
+    - default
+    - false
+    - true
+
 trigger:
   branches:
     include:
-    - master
+    - main
     - release/*
     - refs/tags/client_v*
   paths:
@@ -24,12 +41,13 @@ trigger:
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/publish-npm-package.yml
 
 pr:
   branches:
     include:
-    - master
+    - main
     - release/*
   paths:
     include:
@@ -44,10 +62,13 @@ pr:
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
 
 extends:
   template: templates/build-npm-package.yml
   parameters:
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: .
     poolBuild: Main
     cgSubDirectory: packages

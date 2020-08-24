@@ -26,6 +26,16 @@
 {{ else }}
 {{ $textClasses = printf  "%s col-sm-push-1" $textClasses}}
 {{ end }}
+{{ end }}
+
+{{ $twoThirdContainer := .Parent.Get "twoThird"}}
+{{ if ne $twoThirdContainer ""}}
+{{ $imgClasses = "col-sm-3"}}
+{{ $textClasses = "col-sm-5"}}
+{{ if eq $imgPos "right"}}
+{{ $imgClasses = printf "%s col-sm-push-6" $imgClasses}}
+{{ $textClasses = printf  "%s col-sm-pull-3" $textClasses}}
+{{ end }}
 
 {{ end }}
 

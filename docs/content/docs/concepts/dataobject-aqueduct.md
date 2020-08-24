@@ -161,7 +161,31 @@ export const BadgeInstantiationFactory = new DataObjectFactory(
 ## Learn more
 
 The Aqueduct library contains more than just DataObject and DataObjectFactory. To dive deeper into the details, see the
-[Aqueduct package README](https://github.com/microsoft/FluidFramework/blob/master/packages/framework/aqueduct/README.md)
+[Aqueduct package README](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/README.md)
 
 
-{{% include file="_includes/links.md" %}}
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
+<!-- Links -->
+
+[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
+
+[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
+[shareddirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
+
+[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+[sharedobjectsequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+
+[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
+[sharedmap]: {{< relref "/apis/map/sharedmap.md" >}}
+
+[undo-redo]: {{< relref "/apis/undo-redo.md" >}}
+
+
+<!-- Sequences -->
+
+[sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/apis/sequence/sequencedeltaevent.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->

@@ -13,7 +13,7 @@ variables:
   - group: storage-vars
   - name: latestPipeline
     value: ${{ or(
-      eq(variables['Build.SourceBranchName'], 'master'),
+      eq(variables['Build.SourceBranchName'], 'main'),
       eq(variables['Build.SourceBranchName'], 'pl-test')
       )}}
   - name: n1Branch
@@ -54,7 +54,7 @@ resources:
     trigger:
       branches:
         include:
-        - master
+        - main
         - docs/hugo
         - pl-test
   - pipeline: server
@@ -72,7 +72,7 @@ stages:
         echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
         echo BASE_URL: $(BASE_URL)
         echo RELEASE_VERSION: $(RELEASE_VERSION)
-        echo MASTER_BRANCH_VERSION: $(MASTER_BRANCH_VERSION)
+        echo MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
         echo N1_VERSION: $(N1_VERSION)
         echo releasePipeline ${{ variables.releasePipeline }}
         echo latestPipeline ${{ variables.latestPipeline }}
@@ -118,7 +118,7 @@ stages:
           #azureServiceConnection: # Required when connectionType == ConnectedServiceNameARM
           method: 'POST' # Options: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, PATCH
           headers: '{"Accept": "application/vnd.github.v3+json"}'
-          body: '{"event_type": "$(Build.SourceVersionMessage) - $(Build.SourceVersion)"}' # Required when method != GET && Method != HEAD
+          body: '{"event_type": "Docs build for SHA $(Build.SourceVersion)"}' # Required when method != GET && Method != HEAD
           urlSuffix: 'repos/${{ variables.repoToTrigger }}/dispatches' # Optional
           waitForCompletion: 'false' # Options: true, false
           #successCriteria: # Optional

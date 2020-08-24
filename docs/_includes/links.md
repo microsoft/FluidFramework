@@ -1,14 +1,22 @@
 <!-- Links -->
 
-[DataObject]: /apis/aqueduct/dataobject.md
+[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
 
-[SharedDirectory]: /apis/map/shareddirectory.md
-[shareddirectory]: /apis/map/shareddirectory.md
+[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
+[shareddirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
 
-[SharedObjectSequence]: /apis/sequence/sharedobjectsequence.md
-[sharedobjectsequence]: /apis/sequence/sharedobjectsequence.md
+[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+[sharedobjectsequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
 
-[SharedMap]: ../apis/map/sharedmap.md
-[sharedmap]: ../apis/map/sharedmap.md
+[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
+[sharedmap]: {{< relref "/apis/map/sharedmap.md" >}}
 
-[undo-redo]: ../apis/undo-redo.md
+[undo-redo]: {{< relref "/apis/undo-redo.md" >}}
+
+
+<!-- Sequences -->
+
+[sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/apis/sequence/sequencedeltaevent.md" >}}

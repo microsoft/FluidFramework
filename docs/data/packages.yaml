@@ -8,31 +8,36 @@ distributed-data-structures:
 - "@fluidframework/register-collection"
 - "@fluidframework/sequence"
 - "@fluidframework/shared-object-base"
+- "@fluidframework/synthesize"
 - "@fluidframework/shared-summary-block"
-data-store:
+data-stores:
 - "@fluidframework/core-interfaces"
 - "@fluidframework/datastore-definitions"
 - "@fluidframework/datastore"
+container-runtime:
+- "@fluidframework/container-runtime-definitions"
+- "@fluidframework/container-runtime"
+- "@fluidframework/runtime-utils"
+- "@fluidframework/runtime-definitions"
+libraries:
 - "@fluidframework/aqueduct"
 - "@fluidframework/framework-interfaces"
 - "@fluidframework/undo-redo"
 - "@fluidframework/view-adapters"
 - "@fluidframework/view-interfaces"
-- "@fluidframework/synthesize"
-container:
-- "@fluidframework/container-runtime"
-- "@fluidframework/runtime-definitions"
-- "@fluidframework/runtime-utils"
 - "@fluidframework/request-handler"
+hosts:
+- "@fluidframework/base-host"
 loader:
 - "@fluidframework/container-definitions"
 - "@fluidframework/container-loader"
-- "@fluidframework/container-runtime-definitions"
 - "@fluidframework/container-utils"
 - "@fluidframework/execution-context-loader"
 - "@fluidframework/web-code-loader"
-hosts:
-- "@fluidframework/base-host"
+tools:
+- "@fluidframework/debugger"
+- "@fluidframework/merge-tree-client-replay"
+- "@fluidframework/replay-tool"
 driver:
 - "@fluidframework/driver-utils"
 - "@fluidframework/driver-base"
@@ -42,21 +47,17 @@ driver:
 - "@fluidframework/odsp-driver"
 - "@fluidframework/replay-driver"
 - "@fluidframework/routerlicious-driver"
-protocol:
-- "@fluidframework/protocol-base"
-- "@fluidframework/protocol-definitions"
 miscellaneous:
-- "@fluidframework/common-definitions"
 - "@fluidframework/common-utils"
+- "@fluidframework/common-definitions"
 - "@fluidframework/dds-interceptions"
 - "@fluidframework/react-inputs"
 - "@fluidframework/react"
-- "@fluidframework/test-utils"
 - "@fluidframework/telemetry-utils"
-tools:
-- "@fluidframework/debugger"
-- "@fluidframework/merge-tree-client-replay"
-- "@fluidframework/replay-tool"
+- "@fluidframework/test-utils"
+protocol:
+- "@fluidframework/protocol-base"
+- "@fluidframework/protocol-definitions"
 experimental:
 - "@fluidframework/last-edited-experimental"
 - "@fluidframework/data-object-base"
