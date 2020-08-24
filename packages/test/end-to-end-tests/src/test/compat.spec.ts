@@ -6,12 +6,15 @@
 import assert from "assert";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
+import { LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { OpProcessingController } from "@fluidframework/test-utils";
 import {
     compatTest,
     createContainer,
     createContainerWithOldLoader,
+    createLoader,
+    createOldLoader,
     createOldPrimedDataStoreFactory,
     createOldRuntimeFactory,
     createPrimedDataStoreFactory,
@@ -72,21 +75,26 @@ describe("loader/runtime compatibility", () => {
             assert.strictEqual(await dataStore._root.wait(test[0]), test[1]);
 
             const containersP: Promise<Container | old.Container>[] = [
-                createContainer( // new everything
+                // new everything
+                createContainer(createLoader(
                     { fluidExport: createRuntimeFactory(TestDataStore.type, createPrimedDataStoreFactory()) },
-                    args.deltaConnectionServer),
-                createContainerWithOldLoader( // old loader, new container/data store runtimes
+                    args.documentServiceFactory as LocalDocumentServiceFactory)),
+                // old loader, new container/data store runtimes
+                createContainerWithOldLoader(createOldLoader(
                     { fluidExport: createRuntimeFactory(TestDataStore.type, createPrimedDataStoreFactory()) },
-                    args.deltaConnectionServer),
-                createContainerWithOldLoader( // old everything
+                    args.documentServiceFactory as old.LocalDocumentServiceFactory)),
+                // old everything
+                createContainerWithOldLoader(createOldLoader(
                     { fluidExport: createOldRuntimeFactory(TestDataStore.type, createOldPrimedDataStoreFactory()) },
-                    args.deltaConnectionServer),
-                createContainer( // new loader, old container/data store runtimes
+                    args.documentServiceFactory as old.LocalDocumentServiceFactory)),
+                // new loader, old container/data store runtimes
+                createContainer(createLoader(
                     { fluidExport: createOldRuntimeFactory(TestDataStore.type, createOldPrimedDataStoreFactory()) },
-                    args.deltaConnectionServer),
-                createContainer( // new loader/container runtime, old data store runtime
+                    args.documentServiceFactory as LocalDocumentServiceFactory)),
+                // new loader/container runtime, old data store runtime
+                createContainer(createLoader(
                     { fluidExport: createRuntimeFactory(TestDataStore.type, createOldPrimedDataStoreFactory()) },
-                    args.deltaConnectionServer),
+                    args.documentServiceFactory as LocalDocumentServiceFactory)),
             ];
 
             const dataStores = await Promise.all(containersP.map(async (containerP) => containerP.then(

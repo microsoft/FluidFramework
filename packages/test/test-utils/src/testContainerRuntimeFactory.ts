@@ -29,7 +29,10 @@ export class TestContainerRuntimeFactory implements IRuntimeFactory {
 
         const runtime = await ContainerRuntime.load(
             context,
-            [[this.type, Promise.resolve(this.dataStoreFactory)]],
+            [
+                ["default", Promise.resolve(this.dataStoreFactory)],
+                [this.type, Promise.resolve(this.dataStoreFactory)],
+            ],
             async (req, rt) => builder.handleRequest(req, rt),
             this.runtimeOptions,
         );
