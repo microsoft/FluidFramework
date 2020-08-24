@@ -12,7 +12,7 @@ This is analagous to the React view but as a functional hook. Users can similarl
 
 ## syncedObject
 
-This folder contains DDS specific hooks for setting state on a SharedMap and powering views using a the SharedMap to generate a synced state that can be powered by DDS' such as SharedCounters, SharedObjectSequences, and SharedStrings.
+This folder contains DDS specific hooks for setting state on a SharedMap and powering views using a the SharedMap to generate a synced state that can be powered by DDSes such as SharedCounters, SharedObjectSequences, and SharedStrings.
 
 ## useReducerFluid
 

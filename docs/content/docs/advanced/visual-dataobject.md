@@ -114,7 +114,7 @@ through its constructor. Specifically, the `PrimedComponent` class gives us acce
   worry! We'll take a look at them in the next section.
 
 - `runtime`: The `runtime` is a `ComponentRuntime` object that manages the Fluid component lifecycle. The key thing to
-  note here is that it will be used for the creation of other Fluid components and DDS'.
+  note here is that it will be used for the creation of other Fluid components and DDSes.
 
 ```typescript
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
@@ -127,7 +127,7 @@ export const fluidExport = ClickerInstantiationFactory;
 ```
 These two lines in combination allow the Clicker component to be consumed as a Fluid component. While the first two
 parameters that `PrimedComponentFactory` takes in simply define `Clicker`'s name and pass the class itself, the third
-parameter is important to keep in mind for later as it will list the Fluid DDS' (Distributed Data Structures) that
+parameter is important to keep in mind for later as it will list the Fluid DDSes (Distributed Data Structures) that
 `Clicker` utilizes.
 
 Finally, the last line consisting of an exported `fluidExport` variable is what Fluid containers look for in order to
@@ -219,7 +219,7 @@ public render(elm: HTMLElement) {
 ```
 
 Now that we can start using the SharedCounter DDS and have labeled this component as one that provides a view, we can
-start filling out the view itself and how it updates to changes in DDS'.
+start filling out the view itself and how it updates to changes in DDSes.
 
 ## Creating the View
 
@@ -302,7 +302,7 @@ To cater to these two scenarios, the Fluid component lifecycle provides three di
 - `hasInitialized` - This code will be run by clients in both the new and existing session scenarios
 
 These all run prior to the first time `render` is called and can be async. As such, this is the perfect place to do any
-setup work, such as assembling any DDS' you will need.
+setup work, such as assembling any DDSes you will need.
 
 With this knowledge, let's examine what Clicker is doing with these functions.
 
@@ -522,7 +522,7 @@ be able to increment the counter together, and they can refresh their page and s
 
 While this may seem trivial, the patterns of listening to events emitted on DDS updates can be extended to any
 `SharedObject` including [SharedString](../docs/SharedString.md), [SharedMap](../docs/SharedMap.md), etc. These can then
-be hooked up to different React views, and UI callbacks on these views can then be piped into actions on Fluid DDS'.
+be hooked up to different React views, and UI callbacks on these views can then be piped into actions on Fluid DDSes.
 
 ### OPTION B: React views
 
@@ -685,7 +685,7 @@ Okay, now we have everything necessary to pass in as props to our `CounterReactV
   interfering in the updates of the other
 - `root` - The same `SharedDirectory` provided by `this.root` from `PrimedComponent`
 - `dataProps.fluidObjectMap` - This can just take a new `Map` instance for now but will need to be filled when
-  establishing multi-component relationships in more complex cases. This map is where all the DDS' that we use are
+  establishing multi-component relationships in more complex cases. This map is where all the DDSes that we use are
   stored after being fetched from their handles, and it used to make the corresponding component synchronously available
   in the view.
 - `dataProps.runtime` - The same `ComponentRuntime` provided by `this.runtime` from `PrimedComponent`
@@ -721,5 +721,5 @@ The view itself can now directly use the `this.state.counter.value` and we can u
 listeners to be additionally set up. And there you have it, a synced clicker with persistent state without needing to
 directly use IComponentHandles or set up event listeners!
 
-We can extend this example to other DDS' by passing in their corresponding `create` functions in and listening to their
+We can extend this example to other DDSes by passing in their corresponding `create` functions in and listening to their
 respective events.

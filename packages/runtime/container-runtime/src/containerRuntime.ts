@@ -1016,7 +1016,7 @@ export class ContainerRuntime extends EventEmitter
 
         if (connected) {
             // Once we are connected, all acks are accounted.
-            // If there are any pending ops, DDSs will resubmit them right away (below) and
+            // If there are any pending ops, DDSes will resubmit them right away (below) and
             // we will switch back to dirty state in such case.
             this.updateDocumentDirtyState(false);
         }

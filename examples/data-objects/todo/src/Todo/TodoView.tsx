@@ -72,7 +72,7 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
     }
 
     public render(): JSX.Element {
-        // Getting the subcomponents and DDSs is async and happens after the first render in componentDidMount.
+        // Getting the subcomponents and DDSes is async and happens after the first render in componentDidMount.
         // Until those finish loading, we'll render a loading indicator.
         if (!this.state.modelLoaded) {
             return <div>Loading...</div>;
