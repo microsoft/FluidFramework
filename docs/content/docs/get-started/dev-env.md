@@ -8,7 +8,7 @@ running locally on your machine.
 
 ## Set up your development environment
 
-To get started you need the following installed
+To get started you need the following installed.
 
 - [Git](https://git-scm.com/downloads)
 - [Node.js](https://nodejs.org/en/download) - {{< include file="_includes/node-versions.md" >}}
