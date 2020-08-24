@@ -55,9 +55,9 @@ export class VltavaView extends React.Component<IVltavaViewProps, IVltavaViewSta
     }
 
     async componentDidMount() {
-        const component = await this.props.dataModel.getDefaultComponent();
+        const fluidObject = await this.props.dataModel.getDefaultFluidObject();
         this.setState({
-            view: <ReactViewAdapter view={component} />,
+            view: <ReactViewAdapter view={fluidObject} />,
         });
     }
 
