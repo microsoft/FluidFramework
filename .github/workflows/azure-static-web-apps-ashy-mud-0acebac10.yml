@@ -12,7 +12,7 @@ on:
     # all types
 
 jobs:
-  download_json_job:
+  api-extractor-artifact:
     if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     name: api-extractor JSON
@@ -38,7 +38,7 @@ jobs:
           name: api-extractor
           path: api-extractor.tar.gz
 
-  download_storybook_job:
+  storybook_artifact:
     if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     name: Storybook
@@ -68,6 +68,7 @@ jobs:
     if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
+    needs: [api-extractor-artifact, storybook_artifact]
     steps:
       - uses: actions/checkout@v2
         with:
