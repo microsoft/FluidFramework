@@ -3,7 +3,11 @@ title: Introducing distributed data structures
 MenuPosition: 2
 ---
 
+<<<<<<< HEAD
 The primary way that developers interact with the Fluid Framework is through a collection of objects called _distributed
+=======
+Fluid Framework provides developers with distributed data structures (DDSes) that automatically ensure that each client has access to the same state.
+>>>>>>> hugo-md-only
 data structures_ (DDSes). We call them this because they are similar to data structures used commonly when programming, like
 strings, maps/dictionaries, and sequences/lists. The APIs provided by distributed data structures are designed to be
 familiar to programmers who've used these types of data structures before. For example, the `SharedMap` DDS is used to
@@ -11,9 +15,13 @@ store key/value pairs, like a typical map or dictionary data structure, and prov
 and retrieve data in the map.
 
 When using a DDS, you can largely treat it as a local object. You can add data to it, remove data, update it, etc.
+<<<<<<< HEAD
 However, a DDS is not _just_ a local object. Fluid's purpose is to make it easier to build systems with _distributed_
 data, where multiple users are editing the same data source. A DDS can be changed not only by your code running locally
 on the client, but also by the Fluid runtime on behalf of other users that are editing.
+=======
+However, a DDS is not _just_ a local object. A DDS can also be changed by other users that are editing.
+>>>>>>> hugo-md-only
 
 {{% callout tip %}}
 
@@ -22,8 +30,13 @@ etc. This prefix indicates that the object is shared between multiple clients.
 
 {{% /callout %}}
 
+<<<<<<< HEAD
 When a DDS is changed by the Fluid runtime, it raises an [event](#events). Your code can listen to these events so that you
 know when data is changed by remote clients and can react appropriately. For example, you may need to recalculate a
+=======
+When a DDS is changed by another client, it raises an [event](#events) locally. Your code can listen to these events so that you
+know when data is changed by a remote client and can react appropriately. For example, you may need to recalculate a
+>>>>>>> hugo-md-only
 derived value when some data in a DDS changes.
 
 All Fluid distributed data structures are _eventually consistent_. This means that, assuming no new changes to the data
@@ -33,13 +46,21 @@ The quality of eventual consistency can improve performance in many cases becaus
 optimistically, knowing that the runtime will merge the change in the appropriate way eventually. This is a guarantee
 made by the Fluid runtime.
 
+<<<<<<< HEAD
 Clients must always assume their local view of data is stale since there are potentially changes from remote clients
+=======
+Clients must always assume their local DDS state is stale since there are potentially changes from remote clients
+>>>>>>> hugo-md-only
 that they have not yet received. For scenarios where modification of the data can only be done safely with an up-to-date
 view of the data, Fluid provides consensus-based data structures. These data structures build in protections to prevent
 modification of the data if the unsafe conditions are met, and clients wait to get confirmation from the server before
 assuming their modifications were accepted.
 
+<<<<<<< HEAD
 For example, to pop a distributed stack clients need an up-to-date view of the state of the stack. Otherwise, two
+=======
+For example, to pop a distributed stack, clients need an up-to-date view of the state of the stack. Otherwise, two
+>>>>>>> hugo-md-only
 clients may believe they've popped the same item.
 
 ## Merge behavior
@@ -68,10 +89,16 @@ the [Encapsulating data with DataObject](./dataobject-aqueduct.md) section.
 
 ### Storing a DDS within another DDS
 
+<<<<<<< HEAD
 Distributed data structures can store primitive values like numbers and strings, JavaScript Objects, or other
 distributed data structures. Primitive values and Objects can be stored directly, but when you store a DDS, you must
 store its _handle_, not the object itself.
 
+=======
+Distributed data structures can store primitive values like numbers and strings, serializable objects, Fluid objects, and other
+distributed data structures. Primitive values and objects can be stored directly, but when you store a DDS, or a Fluid object, you must
+store its _handle_, not the object itself.
+>>>>>>> hugo-md-only
 For example, consider this code:
 
 ```ts
@@ -97,8 +124,7 @@ recalculate a derived value when some data in a DDS changes.
 
 ```ts
 myMap.on("valueChanged", () => {
-    setSelectedOption(getSelectedOptionKey());
-    setHistoryItems(getHistoryItems());
+    recalculate();
 });
 ```
 
@@ -109,17 +135,18 @@ Refer to the sections below for more details about the events raised by each DDS
 
 Because distributed data structures can be stored within each other, you can combine DDSes to create collaborative data
 models. The following two questions can help determine the best data structures to use for a collaborative data model.
-First, what is the _granularity of collaboration_ that my scenario needs? And how does the merge behavior of a
-distributed data structure affect this?
+
+- What is the _granularity of collaboration_ that my scenario needs?
+- How does the merge behavior of a distributed data structure affect this?
 
 In your scenario, what do users need to individually edit? For example, imagine that you are storing data about
 geometric shapes because you're building a collaborative editing tool. You might store the coordinates of the shape, its
 length, width, etc.
 
 When users edit this data, what pieces of the data can be edited simultaneously? This is an important question to answer
-because it influences how you structure the data in Fluid.
+because it influences how you structure the data in your DDSes.
 
-Let's assume for a moment that all of the data about a shape is stored as a JSON object in a [SharedMap][]. Recall that
+Let's assume for a moment that all of the data about a shape is stored as a single JSON object in a `SharedMap`. Recall that
 the SharedMap uses a last writer wins merge strategy. This means that if two users are editing the data at the same
 time, then the one who made the most recent change will overwrite the changes made by the other user.
 
@@ -177,6 +204,7 @@ store that SharedMap in the root SharedDirectory.
 
 [undo-redo]: {{< relref "/apis/undo-redo.md" >}}
 
+<<<<<<< HEAD
 
 <!-- Sequences -->
 
@@ -185,4 +213,6 @@ store that SharedMap in the root SharedDirectory.
 [sequence.remove]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
 [sequenceDeltaEvent]: {{< relref "/apis/sequence/sequencedeltaevent.md" >}}
 
+=======
+>>>>>>> hugo-md-only
 <!-- AUTO-GENERATED-CONTENT:END -->

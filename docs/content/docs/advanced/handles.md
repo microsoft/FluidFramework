@@ -22,7 +22,7 @@ system and anyone who has the handle can easily get the underlying object by sim
 
   For example, the handle for a `PureDataObject` simply returns the underlying object. But when this handle is stored in
   a DDS so that it is serialized and then de-serialized in a remote client, it is represented by a [remote handle][].
-  The remote handle just has the absolute url to the object and requests the object from the root and returns it.
+  The remote handle only has the absolute url to the object, requests the object from the root, and then returns it.
 
 ### How to create a handle
 
@@ -46,7 +46,11 @@ and `get` the object.
 
 The following code snippet from the
 [Pond](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/pond) DataObject demonstrates this.
+<<<<<<< HEAD
 It creates a Clicker object which is a DataObject during first time initialization and stores its handle in the root
+=======
+It creates a Clicker object (which is a DataObject) during first time initialization and stores its handle in the root
+>>>>>>> hugo-md-only
 SharedDirectory. Any remote client can retrieve the handle from the root and get the Clicker by calling `get()` on the
 handle:
 

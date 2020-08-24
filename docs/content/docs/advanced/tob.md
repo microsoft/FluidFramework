@@ -10,7 +10,7 @@ an operation (often shortened to op) on the existing data (if you've used [Opera
 Transform](https://en.wikipedia.org/wiki/Operational_transformation), this concept may sound familiar).
 
 Operations describe changes to a data structure. By chaining a series of operations together we can represent changes to
-a data structure over time (history), and this operation is also what we communicate to other clients to share those
+a data structure over time (history). This operation is also what we communicate to other clients to share those
 changes. When clients receive operations, they apply those operations to their local data.
 
 However, just sending operations is not enough – we need to be sure that each client applies the operations in the right
@@ -18,7 +18,7 @@ order.
 
 Fluid is, at its core, a data model for distributed state. Building collaborative experiences boils down to managing
 distributed state, and Fluid provides powerful developer-friendly abstractions for managing this state in the form of
-distributed data structures. Each of these data structures is eventually consistent – this means that, assuming no new
+Distributed Data Structures (DDSes). Each of these data structures is eventually consistent – this means that, assuming no new
 changes to the data structures, all clients reach an identical state in a finite amount of time.
 
 Fluid guarantees eventual consistency via total order broadcast. That is, when a Distributed Data Structure (DDS) is
@@ -73,6 +73,6 @@ storage and broadcast an event to the connected clients acknowledging that the s
 the clients will ignore both the summary op itself and the acknowledgement, since connected clients already receive all
 ops and are thus already consistent.
 
-Summary ops summarize the state of distributed data structures, so components (which are a collection of distributed
+Summary ops summarize the state of distributed data structures, so Data Objects (which are a collection of distributed
 data structures) don't need to do anything to participate in summarization; it happens automatically, and all
-components' data structures will be summarized.
+Data Objects' data structures will be summarized.
