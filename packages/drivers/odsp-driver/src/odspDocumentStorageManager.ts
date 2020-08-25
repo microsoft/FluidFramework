@@ -9,6 +9,8 @@ import {
     fromBase64ToUtf8,
     fromUtf8ToBase64,
     hashFile,
+    IsoBuffer,
+    Uint8ArrayToString,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
@@ -138,7 +140,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return "";
     }
 
-    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
+    public async createBlob(file: Uint8Array): Promise<api.ICreateBlobResponse> {
         this.checkSnapshotUrl();
 
         return PerformanceEvent.timedExecAsync(
@@ -406,7 +408,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         if (path) {
                             // Schedule the hashes for later, but keep track of the tasks
                             // to ensure they finish before they might be used
-                            const hashP = hashFile(Buffer.from(blob.content, blob.encoding)).then((hash: string) => {
+                            const hashP = hashFile(IsoBuffer.from(blob.content, blob.encoding)).then((hash: string) => {
                                 this.blobsShaToPathCache.set(hash, path);
                             });
                             this.blobsCachePendingHashes.add(hashP);
@@ -740,12 +742,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     break;
                 }
                 case api.SummaryType.Blob: {
-                    const content = typeof summaryObject.content === "string" ? summaryObject.content : summaryObject.content.toString("base64");
+                    const content = typeof summaryObject.content === "string" ? summaryObject.content : Uint8ArrayToString(summaryObject.content, "base64");
                     const encoding = typeof summaryObject.content === "string" ? "utf-8" : "base64";
 
                     // Promises for pending hashes in blobsCachePendingHashes should all have resolved and removed themselves
                     assert(this.blobsCachePendingHashes.size === 0);
-                    const hash = await hashFile(Buffer.from(content, encoding));
+                    const hash = await hashFile(IsoBuffer.from(content, encoding));
                     let completePath = this.blobsShaToPathCache.get(hash);
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
                     // to generate complete path for the given blob.

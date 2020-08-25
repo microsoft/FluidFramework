@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
@@ -88,15 +89,13 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         // Check for protocol attributes
         const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
         const protocolAttributes: IDocumentAttributes =
-            JSON.parse(Buffer.from(snapshotTree.trees[".protocol"].blobs[protocolAttributesBlobId],
-                "base64").toString());
+            JSON.parse(fromBase64ToUtf8(snapshotTree.trees[".protocol"].blobs[protocolAttributesBlobId]));
         assert.strictEqual(protocolAttributes.sequenceNumber, 0, "Seq number should be 0");
         assert.strictEqual(protocolAttributes.minimumSequenceNumber, 0, "Min Seq number should be 0");
 
         // Check for default dataStore
         const defaultDataStoreBlobId = snapshotTree.trees.default.blobs[".component"];
-        const dataStoreAttributes = JSON.parse(
-            Buffer.from(snapshotTree.trees.default.blobs[defaultDataStoreBlobId], "base64").toString());
+        const dataStoreAttributes = JSON.parse(fromBase64ToUtf8(snapshotTree.trees.default.blobs[defaultDataStoreBlobId]));
         assert.strictEqual(dataStoreAttributes.pkg, JSON.stringify(["default"]), "Package name should be default");
     });
 
@@ -118,11 +117,9 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         const protocolAttributesBlobId1 = snapshotTree1.trees[".protocol"].blobs.attributes;
         const protocolAttributesBlobId2 = snapshotTree2.trees[".protocol"].blobs.attributes;
         const protocolAttributes1: IDocumentAttributes =
-            JSON.parse(Buffer.from(snapshotTree1.trees[".protocol"].blobs[protocolAttributesBlobId1],
-                "base64").toString());
+            JSON.parse(fromBase64ToUtf8(snapshotTree1.trees[".protocol"].blobs[protocolAttributesBlobId1]));
         const protocolAttributes2: IDocumentAttributes =
-            JSON.parse(Buffer.from(snapshotTree2.trees[".protocol"].blobs[protocolAttributesBlobId2],
-                "base64").toString());
+            JSON.parse(fromBase64ToUtf8(snapshotTree2.trees[".protocol"].blobs[protocolAttributesBlobId2]));
         assert.strictEqual(JSON.stringify(protocolAttributes1), JSON.stringify(protocolAttributes2),
             "Protocol attributes should be same as no change happened");
 
