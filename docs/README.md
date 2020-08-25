@@ -1,4 +1,4 @@
-# FluidFramework.com Website
+# fluidframework-docs
 
 This repo hosts the code for https://fluidframework.com
 
