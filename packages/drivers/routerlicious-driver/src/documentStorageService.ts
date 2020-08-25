@@ -101,17 +101,22 @@ export class DocumentStorageService implements IDocumentStorageService {
         /** Entire previous snapshot, not subtree */
         previousFullSnapshot: ISnapshotTree | undefined,
     ): Promise<string> {
-        const entries = await Promise.all(Object.keys(summaryTree.tree).map(async (key) => {
-            const entry = summaryTree.tree[key];
-            const pathHandle = await this.writeSummaryTreeObject(key, entry, previousFullSnapshot);
-            const treeEntry: resources.ICreateTreeEntry = {
-                mode: this.getGitMode(entry),
-                path: encodeURIComponent(key),
-                sha: pathHandle,
-                type: this.getGitType(entry),
-            };
-            return treeEntry;
-        }));
+        const entries = await Promise.all(Object.keys(summaryTree.tree)
+            .filter((key) => {
+                // Attachment entries are used for garbage collection, which we don't do on r11s, so just ignore them
+                const entry = summaryTree.tree[key];
+                return entry.type !== SummaryType.Attachment;
+            }).map(async (key) => {
+                const entry = summaryTree.tree[key];
+                const pathHandle = await this.writeSummaryTreeObject(key, entry, previousFullSnapshot);
+                const treeEntry: resources.ICreateTreeEntry = {
+                    mode: this.getGitMode(entry),
+                    path: encodeURIComponent(key),
+                    sha: pathHandle,
+                    type: this.getGitType(entry),
+                };
+                return treeEntry;
+            }));
 
         const treeHandle = await this.manager.createGitTree({ tree: entries });
         return treeHandle.sha;

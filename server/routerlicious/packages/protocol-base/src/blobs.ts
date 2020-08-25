@@ -6,6 +6,7 @@
 import * as git from "@fluidframework/gitresources";
 import {
     FileMode,
+    IAttachment,
     IBlob,
     ISnapshotTree,
     ITree,
@@ -141,6 +142,24 @@ export class TreeTreeEntry implements ITreeEntry {
      * @param value - subtree
      */
     constructor(public readonly path: string, public readonly value: ITree) { }
+}
+
+/**
+ * Basic implementation of an attachment ITreeEntry
+ */
+export class AttachmentTreeEntry implements ITreeEntry {
+    public readonly mode = FileMode.File;
+    public readonly type = TreeEntry.Attachment;
+    public readonly value: IAttachment;
+
+    /**
+     * Creates an attachment ITreeEntry
+     * @param path - path of entry
+     * @param id - id of external blob attachment
+     */
+    constructor(public readonly path: string, public readonly id: string) {
+        this.value = { id };
+    }
 }
 
 export function addBlobToTree(tree: ITree, blobName: string, content: object) {

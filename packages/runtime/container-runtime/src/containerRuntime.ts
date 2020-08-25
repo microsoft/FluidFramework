@@ -131,6 +131,7 @@ export enum ContainerMessageType {
     // Chunked operation.
     ChunkedOp = "chunkedOp",
 
+    // Notifies the server that an external blob has been attached
     BlobAttach = "blobAttach"
 }
 
@@ -774,7 +775,7 @@ export class ContainerRuntime extends EventEmitter
 
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
-            this.storage,
+            () => this.storage,
             (blobId) => this.submit(ContainerMessageType.BlobAttach, blobId),
         );
         this.blobManager.load(blobsBlob);
@@ -1002,7 +1003,7 @@ export class ContainerRuntime extends EventEmitter
             root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
         }
 
-        root.entries.push(new BlobTreeEntry(blobsBlobName, this.blobManager.snapshot()));
+        root.entries.push(new TreeTreeEntry(".blobs", this.blobManager.snapshot()));
 
         return root;
     }
@@ -1012,7 +1013,8 @@ export class ContainerRuntime extends EventEmitter
             const content = JSON.stringify([...this.chunkMap]);
             summaryTreeBuilder.addBlob(chunksBlobName, content);
         }
-        summaryTreeBuilder.addBlob(blobsBlobName, this.blobManager.snapshot());
+        const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
+        summaryTreeBuilder.addWithStats(".blobs", blobsTree);
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {
@@ -1505,7 +1507,7 @@ export class ContainerRuntime extends EventEmitter
     }
 
     private processBlobAttachMessage(blobId: string) {
-        this.blobManager.setAttached(blobId);
+        this.blobManager.setAttachAcknowledged(blobId);
     }
 
     private bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
