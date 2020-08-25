@@ -11,7 +11,7 @@ both the power and simplicity of Fluid. Use these to learn and kickstart your ow
 ![A screenshot of draft.js](/images/draftjs-example.png)
 
 The [Fluid Draft.js](https://github.com/microsoft/FluidExamples/tree/main/draft-js) example shows how to use the
-Fluid Framework to take an existing open source project and make it collaborative. This example also demonstrates
+Fluid Framework to take an existing project and make it collaborative. This example also demonstrates
 how to build an app that supports real-time updates in a rich text editor.
 
 ## Brainstorming
