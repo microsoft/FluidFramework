@@ -47,7 +47,7 @@ npm start
 A new browser tab will open to [http://localhost:8080](http://localhost:8080) and you will see the Dice Roller appear!
 To see collaboration in action copy the full url in the browser, including the id, into a new tab.
 
-🥳**Congratulations**🎉 You have successfully unlocked the world of Fluid collaboration.
+🥳**Congratulations**🎉 You have successfully taken the first step towards unlocking the world of Fluid collaboration.
 
 ## Next Steps
 
