@@ -53,7 +53,7 @@ To see collaboration in action copy the full url in the browser, including the i
 
 ### Explore the code
 
-Using your code editor, open the FluidHelloWorld folder and navigate to the `./src` sub-folder. Any file changes will
+Using your code editor, open the FluidHelloWorld folder and navigate to the `./src` sub-folder. Any changes to these files will
 automatically trigger a re-render on any open tabs.
 
 ### Hello World Tutorial
