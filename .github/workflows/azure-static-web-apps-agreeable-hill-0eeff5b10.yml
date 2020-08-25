@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-    - 'docs/**'
+      - 'docs/**'
   repository_dispatch:
     # all types
   workflow_dispatch:
