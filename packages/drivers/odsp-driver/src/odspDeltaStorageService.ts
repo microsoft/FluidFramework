@@ -17,7 +17,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
     constructor(
         private readonly deltaFeedUrlProvider: () => Promise<string>,
         private ops: ISequencedDeltaOpMessage[] | undefined,
-        private readonly getStorageToken: (refresh: boolean, name?: string) => Promise<string | null>,
+        private readonly getStorageToken: (refresh: boolean, name?: string, claims?: string) => Promise<string | null>,
         private readonly logger?: ITelemetryLogger,
     ) {
     }
@@ -33,12 +33,12 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
         }
         this.ops = undefined;
 
-        return getWithRetryForTokenRefresh(async (refresh: boolean) => {
+        return getWithRetryForTokenRefresh(async (refresh: boolean, claims?: string) => {
             // Note - this call ends up in getSocketStorageDiscovery() and can refresh token
             // Thus it needs to be done before we call getStorageToken() to reduce extra calls
             const baseUrl = await this.buildUrl(from, to);
 
-            const storageToken = await this.getStorageToken(refresh, "DeltaStorage");
+            const storageToken = await this.getStorageToken(refresh, "DeltaStorage", claims);
 
             const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, storageToken);
 

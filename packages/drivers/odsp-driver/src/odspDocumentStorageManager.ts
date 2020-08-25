@@ -121,7 +121,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     constructor(
         odspResolvedUrl: IOdspResolvedUrl,
-        private readonly getStorageToken: (refresh: boolean, name?: string) => Promise<string | null>,
+        private readonly getStorageToken: (refresh: boolean, name?: string, claims?: string) => Promise<string | null>,
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
@@ -161,8 +161,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (!blob) {
             this.checkSnapshotUrl();
 
-            const response = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
-                const storageToken = await this.getStorageToken(refresh, "GetBlob");
+            const response = await getWithRetryForTokenRefresh(async (refresh, claims) => {
+                const storageToken = await this.getStorageToken(refresh, "GetBlob", claims);
 
                 const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/blobs/${blobid}`, storageToken);
 
@@ -279,7 +279,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
             this.firstVersionCall = false;
 
-            return getWithRetryForTokenRefresh(async (refresh) => {
+            return getWithRetryForTokenRefresh(async (refresh, claims) => {
                 if (refresh) {
                     // This is the most critical code path for boot.
                     // If we get incorrect / expired token first time, that adds up to latency of boot
@@ -310,8 +310,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 let cachedSnapshot: IOdspSnapshot | undefined;
 
                 // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
-                if (refresh) {
-                    cachedSnapshot = await this.fetchSnapshot(options, refresh);
+                if (refresh || claims) {
+                    cachedSnapshot = await this.fetchSnapshot(options, refresh, claims);
                 } else {
                     cachedSnapshot = await PerformanceEvent.timedExecAsync(
                         this.logger,
@@ -328,7 +328,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                             let method: string;
                             if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
-                                const snapshotP = this.fetchSnapshot(options, refresh);
+                                const snapshotP = this.fetchSnapshot(options, refresh, claims);
 
                                 const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
                                 cachedSnapshot = promiseRaceWinner.value;
@@ -347,7 +347,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 method = cachedSnapshot !== undefined ? "cache" : "network";
 
                                 if (cachedSnapshot === undefined) {
-                                    cachedSnapshot = await this.fetchSnapshot(options, refresh);
+                                    cachedSnapshot = await this.fetchSnapshot(options, refresh, claims);
                                 }
                             }
                             event.end({ method });
@@ -425,8 +425,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             });
         }
 
-        return getWithRetryForTokenRefresh(async (refresh) => {
-            const storageToken = await this.getStorageToken(refresh, "GetVersions");
+        return getWithRetryForTokenRefresh(async (refresh, claims) => {
+            const storageToken = await this.getStorageToken(refresh, "GetVersions", claims);
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`, storageToken);
 
             // Fetch the latest snapshot versions for the document
@@ -464,8 +464,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         });
     }
 
-    private async fetchSnapshot(options: string, refresh: boolean) {
-        const storageToken = await this.getStorageToken(refresh, "TreesLatest");
+    private async fetchSnapshot(options: string, refresh: boolean, claims?: string) {
+        const storageToken = await this.getStorageToken(refresh, "TreesLatest", claims);
 
         // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
         // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
@@ -571,8 +571,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
         let tree = this.treesCache.get(id);
         if (!tree) {
-            tree = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
-                const storageToken = await this.getStorageToken(refresh, "ReadTree");
+            tree = await getWithRetryForTokenRefresh(async (refresh, claims) => {
+                const storageToken = await this.getStorageToken(refresh, "ReadTree", claims);
 
                 const response = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger);
                 const odspSnapshot: IOdspSnapshot = response.content;
@@ -683,8 +683,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             type: SnapshotType.Channel,
         };
 
-        return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-            const storageToken = await this.getStorageToken(refresh, "WriteSummaryTree");
+        return getWithRetryForTokenRefresh(async (refresh, claims) => {
+            const storageToken = await this.getStorageToken(refresh, "WriteSummaryTree", claims);
 
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot`, storageToken);
             headers["Content-Type"] = "application/json";

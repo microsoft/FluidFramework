@@ -6,7 +6,7 @@
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 import { performanceNow, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     ChildLogger,
@@ -39,6 +39,7 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
+import { StorageTokenFetcher, PushTokenFetcher, tokenFromResponse, isTokenFromCache } from "./tokenFetch";
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
@@ -63,8 +64,8 @@ export class OdspDocumentService implements IDocumentService {
      */
     public static async create(
         resolvedUrl: IResolvedUrl,
-        getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-        getWebsocketToken: (refresh) => Promise<string | null>,
+        getStorageToken: StorageTokenFetcher,
+        getWebsocketToken: PushTokenFetcher,
         logger: ITelemetryLogger,
         socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         cache: IOdspCache,
@@ -85,8 +86,8 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly logger: TelemetryLogger;
 
-    private readonly getStorageToken: (refresh: boolean) => Promise<string | null>;
-    private readonly getWebsocketToken: (refresh) => Promise<string | null>;
+    private readonly getStorageToken: (refresh: boolean, name?: string, claims?: string) => Promise<string | null>;
+    private readonly getWebsocketToken: (refresh: boolean, claims?: string) => Promise<string | null>;
 
     private readonly localStorageAvailable: boolean;
 
@@ -112,8 +113,8 @@ export class OdspDocumentService implements IDocumentService {
      */
     constructor(
         public readonly odspResolvedUrl: IOdspResolvedUrl,
-        getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-        getWebsocketToken: (refresh) => Promise<string | null>,
+        getStorageToken: StorageTokenFetcher,
+        getWebsocketToken: PushTokenFetcher,
         logger: ITelemetryLogger,
         private readonly socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
@@ -133,7 +134,7 @@ export class OdspDocumentService implements IDocumentService {
             this.hostPolicy.summarizerClient = true;
         }
 
-        this.getStorageToken = async (refresh: boolean, name?: string) => {
+        this.getStorageToken = async (refresh: boolean, name?: string, claims?: string) => {
             if (refresh) {
                 // Potential perf issue: Host should optimize and provide non-expired tokens on all critical paths.
                 // Exceptions: race conditions around expiration, revoked tokens, host that does not care
@@ -141,14 +142,23 @@ export class OdspDocumentService implements IDocumentService {
                 this.logger.sendTelemetryEvent({ eventName: "StorageTokenRefresh" });
             }
 
+            const logEvent: ITelemetryGenericEvent = { eventName: `${name || "OdspDocumentService"}_GetToken` };
+
             return PerformanceEvent.timedExecAsync(this.logger,
-                { eventName: `${name || "OdspDocumentService"}_GetToken` },
-                async () => getStorageToken(this.odspResolvedUrl.siteUrl, refresh));
+                logEvent,
+                async () => getStorageToken(this.odspResolvedUrl.siteUrl, refresh, claims).then((tokenResponse) => {
+                    logEvent.fromCache = isTokenFromCache(tokenResponse);
+                    return tokenFromResponse(tokenResponse);
+                }));
         };
 
-        this.getWebsocketToken = async (refresh) => {
-            return PerformanceEvent.timedExecAsync(this.logger, { eventName: "GetWebsocketToken" },
-                async () => getWebsocketToken(refresh));
+        this.getWebsocketToken = async (refresh: boolean, claims?: string) => {
+            const logEvent: ITelemetryGenericEvent = { eventName: "GetWebsocketToken" };
+            return PerformanceEvent.timedExecAsync(this.logger, logEvent,
+                async () => getWebsocketToken(refresh).then((tokenResponse) => {
+                    logEvent.fromCache = isTokenFromCache(tokenResponse);
+                    return tokenFromResponse(tokenResponse);
+                }));
         };
 
         this.localStorageAvailable = isLocalStorageAvailable();
@@ -212,9 +222,9 @@ export class OdspDocumentService implements IDocumentService {
      */
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         // Attempt to connect twice, in case we used expired token.
-        return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (refresh: boolean) => {
+        return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (refresh: boolean, claims?: string) => {
             // For ODC, we just use the token from joinsession
-            const socketTokenPromise = this.isOdc ? Promise.resolve("") : this.getWebsocketToken(refresh);
+            const socketTokenPromise = this.isOdc ? Promise.resolve("") : this.getWebsocketToken(refresh, claims);
             const [websocketEndpoint, webSocketToken, io] =
                 await Promise.all([this.joinSession(), socketTokenPromise, this.socketIoClientFactory()]);
 

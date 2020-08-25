@@ -1,0 +1,40 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+/**
+ * Checks if response headers contains `www-authenticate` header and extracts claims that should be
+ * passed to token authority when requesting new token. More details can be found here:
+ * https://microsoft.sharepoint.com/:w:/t/aad/protocols/ERSWYtOQB45GgG4e2q3Cz00B6C36zi4gAs6JhdQG_wvVeQ
+ *
+ * Header sample:
+ * www-authenticate=Bearer realm="",
+ * authorization_uri="https://login.microsoftonline.com/common/oauth2/authorize",
+ * error="insufficient_claims",
+ * claims="eyJhY2Nlc3NfdG9rZW4iOnsibmJmIjp7ImVzc2VudGlhbCI6ZmFsc2UsInZhbHVlIjoxNTM5Mjg0Mzc2fX19"
+ *
+ * Note that claims value is base64 encoded inside header but this method will return unencoded value.
+ */
+export function parseAuthErrorClaims(responseHeader: Headers): string | undefined {
+    const authHeaderData = responseHeader.get("www-authenticate");
+    if (!authHeaderData) {
+      return undefined;
+    }
+
+    let claims: string | undefined;
+    let detectedErrorIndicator = false;
+    authHeaderData.split(",").map((section) => {
+      const nameValuePair = section.split("=");
+      // Values can be encoded and contain '=' symbol inside so it is possible to have more than one
+      if (nameValuePair.length >= 2) {
+        if (!detectedErrorIndicator && nameValuePair[0].trim().toLowerCase() === "error") {
+          detectedErrorIndicator = JSON.parse(nameValuePair[1].trim().toLowerCase()) === "insufficient_claims";
+        } else if (!claims && nameValuePair[0].trim().toLowerCase() === "claims") {
+          claims = atob(JSON.parse(section.substring(section.indexOf("=") + 1).trim()));
+        }
+      }
+    });
+
+    return detectedErrorIndicator ? claims : undefined;
+  }

@@ -25,6 +25,7 @@ import {
 import { OdspDocumentService } from "./odspDocumentService";
 import { INewFileInfo } from "./odspUtils";
 import { createNewFluidFile } from "./createFile";
+import { StorageTokenFetcher, PushTokenFetcher } from "./tokenFetch";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -91,8 +92,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
    * @param persistedCache - PersistedCache provided by host for use in this session.
    */
     constructor(
-        private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-        private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
+        private readonly getStorageToken: StorageTokenFetcher,
+        private readonly getWebsocketToken: PushTokenFetcher,
         private readonly getSocketIOClient: () => Promise<SocketIOClientStatic>,
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},

@@ -33,6 +33,7 @@ import {
     invalidFileNameStatusCode,
     fetchIncorrectResponse,
 } from "./odspError";
+import { StorageTokenFetcher, tokenFromResponse } from "./tokenFetch";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -44,7 +45,7 @@ const isInvalidFileName = (fileName: string): boolean => {
  * Returns resolved url
  */
 export async function createNewFluidFile(
-    getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
+    getStorageToken: StorageTokenFetcher,
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree,
@@ -60,8 +61,8 @@ export async function createNewFluidFile(
         `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
         `${filePath}/${encodedFilename}`;
 
-    const itemId = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
-        const storageToken = await getStorageToken(newFileInfo.siteUrl, refresh);
+    const itemId = await getWithRetryForTokenRefresh(async (refresh: boolean, claims?: string) => {
+        const storageToken = tokenFromResponse(await getStorageToken(newFileInfo.siteUrl, refresh, claims));
 
         return PerformanceEvent.timedExecAsync(
             logger,

@@ -77,7 +77,7 @@ class KeyValueLoader {
         const documentServiceFactories: IDocumentServiceFactory[] = [];
         // TODO: figure out how to pass clientId and token here
         documentServiceFactories.push(new OdspDocumentServiceFactory(
-            async (siteUrl: string) => Promise.resolve("fake token"),
+            async () => Promise.resolve("fake token"),
             async () => Promise.resolve("fake token")));
 
         documentServiceFactories.push(new RouterliciousDocumentServiceFactory(

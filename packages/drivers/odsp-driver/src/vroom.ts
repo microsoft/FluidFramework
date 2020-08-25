@@ -34,10 +34,10 @@ export async function fetchJoinSession(
     path: string,
     method: string,
     logger: ITelemetryLogger,
-    getVroomToken: (refresh: boolean, name?: string) => Promise<string | undefined | null>,
+    getVroomToken: (refresh: boolean, name?: string, claims?: string) => Promise<string | null>,
 ): Promise<ISocketStorageDiscovery> {
-    return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-        const token = await getVroomToken(refresh, "JoinSession");
+    return getWithRetryForTokenRefresh(async (refresh: boolean, claims?: string) => {
+        const token = await getVroomToken(refresh, "JoinSession", claims);
         if (!token) {
             throwOdspNetworkError("Failed to acquire Vroom token", fetchIncorrectResponse);
         }

@@ -42,12 +42,13 @@ export function getHashedDocumentId(driveId: string, itemId: string): string {
  * token on failure. Only specific cases get retry call with refresh = true, all other / unknonw errors
  * simply propagate to caller
  */
-export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
+export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean, claims?: string) => Promise<T>) {
     return get(false).catch(async (e) => {
         switch (e.errorType) {
             // If the error is 401 or 403 refresh the token and try once more.
-            // fetchIncorrectResponse indicates some error on the wire, retry once.
             case DriverErrorType.authorizationError:
+                return get(true, e.claims);
+            // fetchIncorrectResponse indicates some error on the wire, retry once.
             case DriverErrorType.incorrectServerResponse:
                 return get(true);
             default:
@@ -63,9 +64,8 @@ export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => 
 
 /**
  * A utility function to do fetch with support for retries
- * @param url - fetch requestInfo, can be a string
+ * @param requestInfo - fetch requestInfo, can be a string
  * @param requestInit - fetch requestInit
- * @param retryPolicy - how to do retries
  */
 export async function fetchHelper<T>(
     requestInfo: RequestInfo,
