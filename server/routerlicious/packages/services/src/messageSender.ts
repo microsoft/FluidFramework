@@ -53,7 +53,29 @@ class RabbitmqTaskSender implements ITaskMessageSender {
     }
 }
 
+class DummyTaskMessageSender implements ITaskMessageSender
+{
+   public async initialize()
+   {
+       await new Promise(function(resolve, reject) {});
+   }
+
+  public sendTask(queueName: string, message: ITaskMessage) {}
+
+   public on(event: string, listener: (...args: any[]) => void): this {
+       return this;
+   }
+
+   public async close() {}
+}
+
 // Factory to switch between different message sender.
 export function createMessageSender(rabbitmqConfig: any, config: any): ITaskMessageSender {
-    return new RabbitmqTaskSender(rabbitmqConfig, config);
+    // Service developers can swap implementations by changing the rabbitMqConfig connection str
+    if (rabbitmqConfig.connectionString === "") {
+      return new DummyTaskMessageSender();
+    }
+    else {
+       return new RabbitmqTaskSender(rabbitmqConfig, config);
+    }
 }
