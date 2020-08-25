@@ -7,10 +7,10 @@
 name: $(Build.BuildId)
 
 variables:
-  - name: skipComponentGovernanceDetection
-    value: true
   - group: doc-versions
   - group: storage-vars
+  - name: repoToTrigger
+    value: microsoft/FluidFramework
   - name: latestPipeline
     value: ${{ or(
       eq(variables['Build.SourceBranchName'], 'main'),
@@ -24,8 +24,6 @@ variables:
     value: ${{ eq(variables['Build.SourceBranchName'], variables['RELEASE_BRANCH']) }}
   - name: validRun
     value: ${{ or(variables.releasePipeline, variables.n1Pipeline, variables.latestPipeline) }}
-  - name: repoToTrigger
-    value: microsoft/FluidFramework-docs
 
 # no branch and PR triggers
 trigger:
@@ -38,13 +36,6 @@ pr: none
 
 resources:
   pipelines:
-  # - pipeline: test
-  #   source: test - trigger
-  #   trigger:
-  #     branches:
-  #       include:
-  #       - docs/hugo
-  #       - pl-test
   - pipeline: common_definitions
     source: Build - common-definitions
   - pipeline: common_utils
@@ -77,6 +68,7 @@ stages:
         echo releasePipeline ${{ variables.releasePipeline }}
         echo latestPipeline ${{ variables.latestPipeline }}
         echo n1Pipeline ${{ variables.n1Pipeline }}
+        echo repoToTrigger ${{ variables.repoToTrigger }}
       displayName: 'Show Variables'
     - task: ComponentGovernanceComponentDetection@0
       displayName: Component Detection
@@ -119,6 +111,6 @@ stages:
           method: 'POST' # Options: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, PATCH
           headers: '{"Accept": "application/vnd.github.v3+json"}'
           body: '{"event_type": "Docs build for SHA $(Build.SourceVersion)"}' # Required when method != GET && Method != HEAD
-          urlSuffix: 'repos/${{ variables.repoToTrigger }}/dispatches' # Optional
+          urlSuffix: 'repos/$(repoToTrigger)/dispatches' # Optional
           waitForCompletion: 'false' # Options: true, false
           #successCriteria: # Optional
