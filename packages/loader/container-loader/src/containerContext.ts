@@ -118,7 +118,7 @@ export class ContainerContext implements IContainerContext {
     }
 
     public get runtimeVersion(): string | undefined {
-        return this.runtime.runtimeVersion;
+        return this.runtime?.runtimeVersion;
     }
 
     public get connected(): boolean {
