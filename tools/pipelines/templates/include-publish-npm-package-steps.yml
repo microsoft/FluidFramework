@@ -18,9 +18,12 @@ parameters:
 jobs:
   - ${{ each feed in parameters.feeds }}:
     - deployment: publish_${{ replace(feed.environment, '-', '_') }}
+      variables:
+        enabled: ${{ feed.enabled }} 
       displayName: Publish ${{ feed.environment }}
       pool: ${{ parameters.pool }}
       environment: ${{ feed.environment }}
+      condition: and(succeeded(), eq(variables['enabled'], true))
       workspace:
         clean: all
       strategy:
@@ -77,7 +80,7 @@ jobs:
                       tag="--tag canary"
                       if [[ "$(Build.SourceBranch)" = refs/heads/main ]]; then
                         tag="--tag next"
-                      elif [[ "$(Build.SourceBranch)" == refs/tags/* ]]; then
+                      elif [[ "$(release)" == "true" ]]; then
                         tag="--tag latest"
                       fi
                       echo Tag: $tag
@@ -92,3 +95,6 @@ jobs:
                       done
                       rm ~/.npmrc
                       exit $t1
+
+                - ${{ feed.tagSteps }}
+  
