@@ -4,13 +4,13 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { CollaborativeTextArea } from "@fluidframework/react-inputs";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 
 import React from "react";
 import ReactDOM from "react-dom";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { CollaborativeTextView } from "../view";
 
 /**
  * CollaborativeText uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
@@ -22,10 +22,10 @@ export class CollaborativeText extends DataObject implements IFluidHTMLView {
 
     public get IFluidHTMLView() { return this; }
 
-    public static get ComponentName() { return "@fluid-example/collaborative-textarea"; }
+    public static get Name() { return "@fluid-example/collaborative-textarea"; }
 
     private static readonly factory = new DataObjectFactory(
-        CollaborativeText.ComponentName,
+        CollaborativeText.Name,
         CollaborativeText,
         [
             SharedString.getFactory(),
@@ -55,9 +55,7 @@ export class CollaborativeText extends DataObject implements IFluidHTMLView {
         }
 
         ReactDOM.render(
-            <div className="text-area">
-                <CollaborativeTextArea sharedString={this.text} />
-            </div>,
+            <CollaborativeTextView text={this.text} />,
             div,
         );
         return div;

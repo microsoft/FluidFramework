@@ -72,7 +72,7 @@ const codemirrorItemEntry: ISpacesItemEntry<AsSerializable<ISingleHandleItem>> =
 };
 
 const textboxItemEntry: ISpacesItemEntry<AsSerializable<ISingleHandleItem>> = {
-    create: createSingleHandleItem(CollaborativeText.ComponentName),
+    create: createSingleHandleItem(CollaborativeText.Name),
     getView: getAdaptedViewForSingleHandleItem,
     friendlyName: "Text Box",
     fabricIconName: "Edit",
@@ -104,7 +104,7 @@ export const spacesItemMap = new Map<string, ISpacesItemEntry>([
 export const spacesRegistryEntries: NamedFluidDataStoreRegistryEntries = new Map([
     ClickerInstantiationFactory.registryEntry,
     [cmfe.type, Promise.resolve(cmfe)],
-    [CollaborativeText.ComponentName, Promise.resolve(CollaborativeText.getFactory())],
+    [CollaborativeText.Name, Promise.resolve(CollaborativeText.getFactory())],
     [pmfe.type, Promise.resolve(pmfe)],
     Coordinate.getFactory().registryEntry,
 ]);

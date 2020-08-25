@@ -38,6 +38,7 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.25.1",
     "@fluidframework/core-interfaces": "^0.25.1",
+    "@fluidframework/get-tinylicious-container": "0.25.1",
     "@fluidframework/react-inputs": "^0.25.1",
     "@fluidframework/sequence": "^0.25.1",
     "@fluidframework/view-interfaces": "^0.25.1",
