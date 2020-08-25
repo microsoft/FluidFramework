@@ -10,7 +10,7 @@ export {
     DataObjectFactory,
 } from "old-aqueduct";
 export { IChannelFactory } from "old-datastore-definitions";
-export { IContainerContext, IFluidModule, IRuntimeFactory } from "old-container-definitions";
+export { IContainer, IContainerContext, IFluidModule, IRuntimeFactory } from "old-container-definitions";
 export { Container } from "old-container-loader";
 export { ContainerRuntime, IContainerRuntimeOptions } from "old-container-runtime";
 export {
