@@ -11,16 +11,19 @@ patterns similar to those used to work with local data.
 
 ## Why Fluid?
 
-Microsoft has invested heavily to build collaboration into the M365 ecosystem. A big part of that investment was completely
-rethinking the way collaborative experiences are built. The result of that effort is Fluid Framework.
+Because building low-latency, collaborative experiences is hard!
 
-Within Microsoft, Fluid is powering a new generation of experiences that promise to be fast,
-simple to iterate over, and easy to deliver. As we've built these experiences, we've realized there is unmet
-demand for a technology like Fluid Framework. Developers, and especially front-end web developers, have very limited
-options if they want to build modern, collaborative experiences. Inevitably they need to invest in backend
-infrastructure and some amount of custom server code.
+Fluid Framework offers:
 
-But what if you didn't have to invest in server code at all. Imagine if you could use a general purpose server
+* Serverless data storage and app logic
+* Distributed data structures with familiar programming patterns
+* Very low latency
+
+The developers at Microsoft have built collaboration into many applications, but many required application specific 
+server-side logic to manage the collaborative experience. The Fluid Framework is the result of Microsoft's investment 
+in reducing the complexity of creating collaborative applications.
+
+What if you didn't have to invest in server code at all? Imagine if you could use a general purpose server
 which was designed to be light-weight and low cost. Imagine if all your development was focused on the client
 experience and data sync was handled for you. That is the promise of Fluid.
 
@@ -36,20 +39,20 @@ flexible.
 
 ## How Fluid works
 
-From the start, Fluid was designed to deliver collaborative experiences with blazing performance. To achieve this goal,
-the team kept the server logic as simple and light-weight as possible. This approach helped ensure virtually instant
-syncing across clients. It also came with the added benefit of very low server costs.
+Fluid was designed to deliver collaborative experiences with blazing performance. To achieve this goal, the team kept 
+the server logic as simple and light-weight as possible. This approach helped ensure virtually instant syncing across
+clients with very low server costs.
 
-To keep the server simple, each Fluid client is responsible for its own state. In order to ensure
-that all clients arrive at the same state, the server sequences data operations and Fluid ensures that clients
-are running the same code. Each client is able to use that sequence to independently and accurately produce the current
-state regardless of the order it receives operations.
+To keep the server simple, each Fluid client is responsible for its own state. While previous systems keep a source of
+truth on the server, the Fluid service is responsible for taking in data operations, sequencing the operations, and 
+returning the sequenced operations to the clients. Each client is able to use that sequence to independently and 
+accurately produce the current state regardless of the order it receives operations.
 
 Here is a typical flow...
 
 - Client code changes data locally
 - Fluid runtime sends that change to the Fluid server
-- Fluid server orders that operation and broadcasts it to all clients
+- Fluid server sequences that operation and broadcasts it to all clients
 - Fluid runtime incorporates that operation into local data and raises a "valueChanged" event
 - Client code handles that event (updates view, runs business logic)
 
