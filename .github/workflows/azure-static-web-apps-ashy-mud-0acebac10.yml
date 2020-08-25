@@ -15,7 +15,7 @@ jobs:
   api-extractor-artifact:
     if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    name: api-extractor JSON
+    name: API Extractor Artifact
     steps:
       - name: Download JSON by SHA
         id: download-sha-json
@@ -38,9 +38,9 @@ jobs:
           path: api-extractor.tar.gz
 
   storybook_artifact:
+    name: Storybook Artifact
     if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    name: Storybook
     steps:
       - name: Download Storybook by SHA
         id: download-sha-storybook
@@ -63,9 +63,9 @@ jobs:
           path: storybook.tar.gz
 
   build_and_deploy_job:
+    name: Azure Static Web App
     if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
-    name: Build and Deploy Job
     needs: [api-extractor-artifact, storybook_artifact]
     steps:
       - uses: actions/checkout@v2
@@ -112,9 +112,9 @@ jobs:
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
+    name: Close PR Job
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
-    name: Close PR Job
     steps:
       - name: Close PR
         id: closepullrequest
