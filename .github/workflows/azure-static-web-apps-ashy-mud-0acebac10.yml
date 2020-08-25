@@ -12,11 +12,45 @@ on:
     # all types
 
 jobs:
-  api-extractor-artifact:
-    if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
+  # api-extractor-artifact:
+  #   if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
+  #   runs-on: ubuntu-latest
+  #   name: API Extractor Artifact
+  #   steps:
+  #     - name: Upload JSON
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         name: api-extractor
+  #         path: api-extractor.tar.gz
+
+  # storybook_artifact:
+  #   name: Storybook Artifact
+  #   if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Upload Storybook artifact
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         name: storybook
+  #         path: storybook.tar.gz
+
+  build_and_deploy_job:
+    name: Azure Static Web App
+    if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
-    name: API Extractor Artifact
+    # needs: [api-extractor-artifact, storybook_artifact]
     steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: false
+      # - name: Download all workflow run artifacts
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #       path: artifacts
+      # - name: Display structure of downloaded files
+      #   run: ls -R
+      #   working-directory: artifacts
+
       - name: Download JSON by SHA
         id: download-sha-json
         continue-on-error: true
@@ -31,17 +65,13 @@ jobs:
         with:
           file-url: https://fluidframework.blob.core.windows.net/api-extractor-json/latest.tar.gz
           file-name: api-extractor.tar.gz
-      - name: Upload JSON
-        uses: actions/upload-artifact@v2
-        with:
-          name: api-extractor
-          path: api-extractor.tar.gz
+      - name: Extract api-extractor JSON
+        id: extract-json
+        run: |
+          mkdir -pv $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/
+          tar -C $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/ -zxvf api-extractor.tar.gz
 
-  storybook_artifact:
-    name: Storybook Artifact
-    if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    steps:
+
       - name: Download Storybook by SHA
         id: download-sha-storybook
         continue-on-error: true
@@ -56,40 +86,11 @@ jobs:
         with:
           file-url: https://fluidframework.blob.core.windows.net/storybook/latest.tar.gz
           file-name: storybook.tar.gz
-      - name: Upload Storybook artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: storybook
-          path: storybook.tar.gz
-
-  build_and_deploy_job:
-    name: Azure Static Web App
-    if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed')
-    runs-on: ubuntu-latest
-    needs: [api-extractor-artifact, storybook_artifact]
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: false
-      - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v2
-        with:
-            path: artifacts
-      - name: Display structure of downloaded files
-        run: ls -R
-        working-directory: artifacts
-
-      - name: Extract api-extractor JSON
-        id: extract-json
-        run: |
-          mkdir -pv $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/
-          tar -C $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/ -zxvf artifacts/api-extractor/api-extractor.tar.gz
-
       - name: Extract Storybook
         id: extract-storybook
         run: |
           mkdir -pv $GITHUB_WORKSPACE/docs/static/storybook/
-          tar -C $GITHUB_WORKSPACE/docs/static/storybook/ -zxvf artifacts/storybook/storybook.tar.gz
+          tar -C $GITHUB_WORKSPACE/docs/static/storybook/ -zxvf storybook.tar.gz
 
       - name: Hugo Build And Deploy
         id: builddeploy
