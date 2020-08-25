@@ -92,7 +92,7 @@ export abstract class SyncedDataObject<
     }
 
     /**
-     * Returns the data props used by the view to manage the different DDS' and add any new ones
+     * Returns the data props used by the view to manage the different DDSes and add any new ones
      */
     public get dataProps() {
         return {
@@ -169,7 +169,7 @@ export abstract class SyncedDataObject<
                 `syncedState-${syncedStateId}`,
                 storedFluidState.handle,
             );
-            // Initialize any DDS' needed for the state or fetch any values from the root if they are stored
+            // Initialize any DDSes needed for the state or fetch any values from the root if they are stored
             // on the root under a different key
             for (const [key, value] of fluidToView.entries()) {
                 const fluidKey = key as string;

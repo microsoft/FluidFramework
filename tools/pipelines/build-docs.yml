@@ -24,9 +24,16 @@ variables:
     value: ${{ eq(variables['Build.SourceBranchName'], variables['RELEASE_BRANCH']) }}
   - name: validRun
     value: ${{ or(variables.releasePipeline, variables.n1Pipeline, variables.latestPipeline) }}
+  - name: repoToTrigger
+    value: microsoft/FluidFramework-docs
 
 # no branch and PR triggers
-trigger: none
+trigger:
+  branches:
+    include:
+    - master
+    - release/*
+    - main
 pr: none
 
 resources:
@@ -48,12 +55,14 @@ resources:
       branches:
         include:
         - main
+        - docs/hugo
         - pl-test
   - pipeline: server
     source: server-routerlicious
 
 stages:
 - stage: check
+  displayName: Checks
   pool: Lite
   jobs:
   - job:
@@ -109,7 +118,7 @@ stages:
           #azureServiceConnection: # Required when connectionType == ConnectedServiceNameARM
           method: 'POST' # Options: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, PATCH
           headers: '{"Accept": "application/vnd.github.v3+json"}'
-          body: '{"event_type": "Trigger docs"}' # Required when method != GET && Method != HEAD
-          urlSuffix: repos/microsoft/FluidFramework/dispatches # Optional
+          body: '{"event_type": "Docs build for SHA $(Build.SourceVersion)"}' # Required when method != GET && Method != HEAD
+          urlSuffix: 'repos/${{ variables.repoToTrigger }}/dispatches' # Optional
           waitForCompletion: 'false' # Options: true, false
           #successCriteria: # Optional
