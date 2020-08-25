@@ -5,6 +5,8 @@ on:
     types: [opened, synchronize, reopened, closed]
     branches:
       - main
+    paths:
+    - 'docs/**'
   repository_dispatch:
     # all types
   workflow_dispatch:
@@ -40,7 +42,6 @@ jobs:
         run: |
           mkdir -pv $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/
           tar -C $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/ -zxvf api-extractor.tar.gz
-
 
       - name: Download Storybook by SHA
         id: download-sha-storybook
