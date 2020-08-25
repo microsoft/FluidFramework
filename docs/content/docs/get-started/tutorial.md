@@ -3,12 +3,9 @@ title: Tutorial
 menuPosition: 3
 ---
 
-
-In this walkthrough, we'll go over some of the basics of using Fluid Framework by examining a simple application. You
-can [get the application
-here](https://github.com/microsoft/FluidHelloWorld) to try it
-yourself -- we recommend trying it out first and following along in the code.
-
+In this walkthrough, we'll go over some of the basics of using the Fluid Framework by examining a simple
+[Hello World](https://github.com/microsoft/FluidHelloWorld) Fluid application. To get started, and follow along, go
+through our [Quick Start](./dev-env.md) guide.
 
 ## Key terms and concepts
 
