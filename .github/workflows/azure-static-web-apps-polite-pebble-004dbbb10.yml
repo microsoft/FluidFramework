@@ -1,4 +1,4 @@
-name: polite-pebble
+name: 'Azure Static Web App (polite-pebble)'
 
 on:
   repository_dispatch:
@@ -11,7 +11,7 @@ jobs:
     name: Azure Static Web App
     if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
-    # needs: [api-extractor-artifact, storybook_artifact]
+
     steps:
       - uses: actions/checkout@v2
         with:
@@ -36,7 +36,6 @@ jobs:
         run: |
           mkdir -pv $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/
           tar -C $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/ -zxvf api-extractor.tar.gz
-
 
       - name: Download Storybook by SHA
         id: download-sha-storybook
