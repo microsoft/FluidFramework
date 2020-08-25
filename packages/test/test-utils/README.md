@@ -23,7 +23,7 @@ On load, it retrieves the `fluidEntryPoint` matching the package in the `IFluidC
 
 This method creates a simple `Loader` that can be used to resolve a Container or request a fluid object.
 
-It should be created with a list of source to entry point mappings (of type `fluidEntryPoint` as explained in [LocalCodeLoader](#Local-Code-Loader) section above) and an `ILocalDeltaConnectionServer`:
+It should be created with a list of source to entry point mappings (of type `fluidEntryPoint` as explained in [LocalCodeLoader](#Local-Code-Loader) section above), an `ILocalDeltaConnectionServer` and an `IUrlResolver`:
 ```typeScript
 export function createLocalLoader(
     packageEntries: Iterable<[
@@ -31,26 +31,26 @@ export function createLocalLoader(
         Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IFluidModule>
     ]>,
     deltaConnectionServer: ILocalDeltaConnectionServer,
+    urlResolver: IUrlResolver,
 ): ILoader;
 ```
-
-- It creates a `LocalResolver` that it uses to resolve requests.
 - It creates a `LocalCodeLoader` using the `fluidEntryPoint` list to load Container code.
 - It creates a `DocumentServiceFactory` which serves as the driver layer between the container and the server.
 
-### `initializeLocalContainer`
+### `createAndAttachContainer`
 
-This method creates and initializes a `Container` with the given `documentId` and `codeDetails`. An `ILoader` should also be passed in that will be used to load the `Container`:
+This method creates and attaches a `Container` with the given `documentId`, `source` and an `IUrlResolver`. An `ILoader` should also be passed in that will be used to load the `Container`:
 
-```typeScript
-export async function initializeLocalContainer(
+```typescript
+export async function createAndAttachContainer(
     documentId: string,
+    source: IFluidCodeDetails,
     loader: ILoader,
-    codeDetails: IFluidCodeDetails,
-): Promise<Container>;
+    urlResolver: IUrlResolver,
+): Promise<IContainer>
 ```
 
-The usual flow is to create a `LocalLoader` by calling `createLocalLoader` and then using it to call `initializeLocalContainer`. However, this should work with any `ILoader`.
+The usual flow is to create a `LocalLoader` by calling `createLocalLoader` and then using it to call `createAndAttachContainer`. However, this should work with any `ILoader`.
 
 ## Test Fluid Object
 
@@ -94,7 +94,12 @@ The typical usage for testing a fluid object is as follows:
     const deltaConnectionServer: ILocalDeltaConnectionServer = LocalDeltaConnectionServer.create();
     ```
 
-2. Create an `IFluidCodeDetails` and a `TestFluidObjectFactory` which will serve as the fluid entry point (code details to factory mapping):
+2. Create a `LocalResolver`:
+    ```typescript
+    const urlResolver: IUrlResolver = new LocalResolver();
+    ```
+
+3. Create an `IFluidCodeDetails` and a `TestFluidObjectFactory` which will serve as the fluid entry point (code details to factory mapping):
     ```typescript
     const codeDetails: IFluidCodeDetails = {
         package: "sharedStringTestPackage",
@@ -104,35 +109,34 @@ The typical usage for testing a fluid object is as follows:
     ```
     > This can replaced by any `IFluidDataStoreFactory` or `IRuntimeFactory`. When the loader is asked to resolve a Container with the above code details, it will load the above factory.
 
-3. Create a local `Loader`:
+4. Create a local `Loader`:
     ```typescript
-    const loader: ILoader = createLocalLoader([[codeDetails, entryPoint]], deltaConnectionServer);
+    const loader: ILoader = createLocalLoader([[codeDetails, entryPoint]], deltaConnectionServer, urlResolver);
     ```
 
-4. Create and initialize a `Container` by giving it a `id` which is used as a URL to resolve the container:
+5. Create and attach a `Container` by giving it a `documentId` which is used as a URL to resolve the container:
     ```typescript
-    const id = "fluid-test://localhost/sharedStringTest";
-    const container = await initializeLocalContainer(id, loader, codeDetails);
+    const documentId = "testDocument";
+    const container = await createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
     ```
     > We used the same `IFluidCodeDetails` that was used to create the `Loader` in step 3.
 
-5. Create a `Fluid object (TestFluidObject)` and get the `SharedString`:
+6. Get the `Fluid object (TestFluidObject)` by using `requestFluidObject` API in `@fluidframework/runtime-utils`. Then get the `DDS` to test:
     ```typescript
-    const response = await container.request({ url: "default" }); // "default" represent the default Fluid object.
-    const fluidObject = response.value as ITestFluidObject;
+    const fluidObject = await requestFluidObject<ITestFluidObject>(container, "default"); // "default" represent the default fluid object.
     const sharedString = await fluidObject.getSharedObject<SharedString>("sharedString");
     ```
     > The `ITestFluidObject` would have already created a `SharedString` based off the parameters we provided when creating the `TestFluidObjectFactory` in step 2.
 
-6. To truly test collaboration, create a second `Loader`, `Container`, `fluid object` and `DDS` which will serve as a remote client:
+7. To truly test collaboration, create a second `Loader`, `Container`, `fluid object` and `DDS` which will serve as a remote client:
     ```typescript
-    const loader2: ILoader = createLocalLoader([[codeDetails, entryPoint]], deltaConnectionServer);
-    const container2 = await initializeLocalContainer(id, loader2, codeDetails);
-    const response2 = await container2.request({ url: "default" });
-    const fluidObject2 = response2.value as ITestFluidObject;
+    const documentUrl = `fluid-test://localhost/${documentId}`;
+    const loader2: ILoader = createLocalLoader([[codeDetails, entryPoint]], deltaConnectionServer, urlResolver);
+    const container2 = await loader2.resolver({ url: documentUrl });
+    const fluidObject = await requestFluidObject<ITestFluidObject>(container2, "default");
     const sharedString2 = await fluidObject2.getSharedObject<SharedString>("sharedString");
     ```
-    > It is important to use the same `ILocalDeltaConnectionServer` to create the `Loader` and the same `id` to create / initialize the `Container`. This will make sure that we load the `Container` that was created earlier and do not create a new one.
+    > It is important to use the same `ILocalDeltaConnectionServer` to create the `Loader` and the same `documentId` to load the `Container`. This will make sure that we load the `Container` that was created earlier and do not create a new one.
 
 These steps are demonstrated in the image below:
 
