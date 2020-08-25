@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+
 /**
  * Checks if response headers contains `www-authenticate` header and extracts claims that should be
  * passed to token authority when requesting new token. More details can be found here:
@@ -31,7 +33,7 @@ export function parseAuthErrorClaims(responseHeader: Headers): string | undefine
         if (!detectedErrorIndicator && nameValuePair[0].trim().toLowerCase() === "error") {
           detectedErrorIndicator = JSON.parse(nameValuePair[1].trim().toLowerCase()) === "insufficient_claims";
         } else if (!claims && nameValuePair[0].trim().toLowerCase() === "claims") {
-          claims = atob(JSON.parse(section.substring(section.indexOf("=") + 1).trim()));
+          claims = fromBase64ToUtf8(JSON.parse(section.substring(section.indexOf("=") + 1).trim()));
         }
       }
     });
