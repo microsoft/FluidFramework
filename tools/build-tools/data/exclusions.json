@@ -1,5 +1,6 @@
 [
-    "docs/tutorials/.*\\.tsx?",
+    "docs/layouts/",
+    "docs/themes/thxvscode/layouts/",
     "server/routerlicious/packages/services-client/src/dockerNames.ts",
     "tools/generator-fluid/app/templates/"
 ]
