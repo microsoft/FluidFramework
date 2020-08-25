@@ -13,6 +13,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const tenantManager = new services.TenantManager(authEndpoint);
 
     const foremanConfig = config.get("foreman");
+    // Service developers can swap between implementations of messageSender by changing the rabbitMqConfig connectionStr
     const messageSender = services.createMessageSender(config.get("rabbitmq"), foremanConfig);
 
     // Preps message sender.
