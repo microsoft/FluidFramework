@@ -31,6 +31,14 @@ following command.
 git clone https://github.com/microsoft/FluidHelloWorld.git
 ```
 
+{{< callout note >}}
+
+If you don't have git available you can [click here](https://github.com/microsoft/FluidHelloWorld/archive/main.zip) to
+download a zip of the FluidHelloWorld repo. Once the file downloads, extract the contents of the .zip file and run the
+following steps.
+
+{{< /callout >}}
+
 Navigate to the newly created folder and install required dependencies.
 
 ```bash
