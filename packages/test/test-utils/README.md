@@ -55,7 +55,7 @@ The usual flow is to create a `LocalLoader` by calling `createLocalLoader` and t
 ## Test Fluid Object
 
 `testFluidObject.ts` provides `TestFluidObject` and `TestFluidObjectFactory` that help in the testing of Distributed Data Structures (DDS).
-It can be used to create a fluid object (TestFluidObject) with a given set of DDSs which can then be retrieved later as required.
+It can be used to create a fluid object (TestFluidObject) with a given set of DDSes which can then be retrieved later as required.
 
 For example, if you need a fluid object with couple of SharedStrings, a SharedDirectory and a SparseMatrix, create a `TestFluidObjectFactory` as follows and use this factory to create the fluid object:
 ```typeScript
@@ -67,7 +67,7 @@ new TestFluidObjectFactory([
 ]);
 ```
 
-The `TestFluidObject` will then create the above DDSs when initializing and they can then be retrieved by calling `getSharedObject` on it and providing the `id` that was used to create it:
+The `TestFluidObject` will then create the above DDSes when initializing and they can then be retrieved by calling `getSharedObject` on it and providing the `id` that was used to create it:
 ```typeScript
 const sharedString1 = testFluidObject.getSharedObject<SharedString>("sharedString1");
 const sharedString1 = testFluidObject.getSharedObject<SharedString>("sharedString2");

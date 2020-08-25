@@ -1,14 +1,6 @@
-###############
-#    folder   #
-###############
-/**/DROP/
-/**/TEMP/
-/**/packages/
-/**/bin/
-/**/obj/
-_site/
-.cache/
-.vuepress/public/fluid/*/**
-
-# every directory under api is generated during a build
-api/**
+themes/thxvscode/assets/js/node_modules/
+public/
+content/apis/
+assets/doc-models/*.json
+node_modules/
+scripts/api-documenter/temp

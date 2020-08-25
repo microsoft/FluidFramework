@@ -20,3 +20,4 @@ export * from "./odspCache";
 export * from "./createFile";
 export * from "./odspUrlHelper";
 export * from "./odspError";
+export * from "./createOdspCreateContainerRequest";

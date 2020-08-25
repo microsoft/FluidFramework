@@ -206,7 +206,7 @@ export interface IFluidState {
      */
     syncedStateId?: string;
     /**
-     * Boolean indicating if any DDS' or Fluid objects on this state are being listened on
+     * Boolean indicating if any DDSes or Fluid objects on this state are being listened on
      * for synced state updates to trigger React state updates
      */
     isInitialized?: boolean;

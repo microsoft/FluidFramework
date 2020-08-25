@@ -22,7 +22,7 @@ These are tests that require a remote DDS and need the DDS to be connected. For 
 To write a unit test for these scenarios, follow these steps:
 - Create a `MockComponentRuntime`.
 - Use the `MockComponentRuntime` to create the DDS.
-- We need the ability to process messages from multiple DDSs / clients. Create a `MockContainerRuntimeFactory` which stores messages from multiple clients and processes them when required.
+- We need the ability to process messages from multiple DDSes / clients. Create a `MockContainerRuntimeFactory` which stores messages from multiple clients and processes them when required.
 - Create a `MockContainerRuntime` by calling `createContainerRuntime` on the `MockContainerRuntimeFactory`. `MockContainerRuntime` keeps track of the message and localOpMetadata until it is ack'd.
 - We need to connect and attach the DDS to an IDeltaConnection so it can submit and process messages. Create a `MockDeltaConnection` by calling `createDeltaConnection` on the `MockContainerRuntime`.
 - Use the `MockDeltaConnection` to connect the DDS.
@@ -31,7 +31,7 @@ Examples - [sequenceHandler](..\\..\framework\undo-redo\src\test\sequenceHandler
 
 ### Reconnection unit tests
 
-These are remote unit tests and in addition they need the capability to disconnect and reconnect the client. For example, testing that on reconnection - DDSs resubmits ops correctly, remote clients receive ops correctly, local clients ack the ops correctly, etc.
+These are remote unit tests and in addition they need the capability to disconnect and reconnect the client. For example, testing that on reconnection - DDSes resubmits ops correctly, remote clients receive ops correctly, local clients ack the ops correctly, etc.
 To write a unit test for these scenarios, follow these steps:
 - Follow all the steps from scenario 2 above with these changes:
   - Create `MockContainerRuntimeFactoryForReconnection` instead of `MockContainerRuntimeFactory`.

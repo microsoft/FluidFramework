@@ -90,7 +90,7 @@ export class PureDataObjectFactory<P extends IFluidObject, S = undefined> implem
         context: IFluidDataStoreContext,
         initialState?: S): void {
         // Create a new runtime for our data store
-        // The runtime is what Fluid uses to create DDS' and route to your data store
+        // The runtime is what Fluid uses to create DDSes and route to your data store
         const runtime = FluidDataStoreRuntime.load(
             context,
             this.sharedObjectRegistry,

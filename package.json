@@ -13,7 +13,7 @@
     "build:fast": "fluid-build --root .",
     "build:full": "npm run build:genver && npm run build:full:compile && npm run lint && npm run build:docs",
     "build:full:compile": "lerna run build:full:compile --stream",
-    "build:gendocs": "copyfiles server/routerlicious/_api-extractor-temp/** ./_api-extractor-temp/doc-models/ -f -V && api-documenter markdown -i _api-extractor-temp/doc-models -o docs/api",
+    "build:gendocs": "copyfiles server/routerlicious/_api-extractor-temp/** ./_api-extractor-temp/doc-models/ -f -V && cd docs && npm run build",
     "build:genver": "lerna run build:genver --stream --parallel",
     "bump-version": "fluid-bump-version --root .",
     "bundle-analysis": "npm run webpack:profile && fluid-collect-bundle-analyses",
@@ -96,11 +96,10 @@
     ],
     "temp-directory": "nyc/.nyc_output"
   },
-  "dependencies": {},
   "devDependencies": {
     "@fluidframework/build-tools": "^0.2.1272",
     "@fluidframework/test-tools": "^0.1.0",
-    "@microsoft/api-documenter": "^7.4.6",
+    "@mattetti/custom-api-documenter": "^0.2.1",
     "@microsoft/api-extractor": "^7.7.2",
     "concurrently": "^5.2.0",
     "copyfiles": "^2.1.0",
