@@ -60,9 +60,7 @@ client, gives the op a sequential order number, and sends the ordered op back to
 structures use these ops to reconstruct state on each client. The Fluid service doesn't parse any of these ops; in fact,
 the service knows nothing about the contents of any Fluid container.
 
-![A diagram depicting operations being sent from a Fluid client to a Fluid service](/docs/concepts/images/op-send.png)
-![A diagram depicting operations being broadcast to Fluid clients](/docs/concepts/images/op-broadcast.png)
-
+![A diagram depicting operations being sent from a Fluid client to a Fluid service and broadcast to Fluid clients](/docs/concepts/images/fluid-service.png)
 From the client perspective, this op flow is accessed through a **DeltaConnection** object.
 
 The service also stores old operations, accessible to clients through a **DeltaStorageService** object, and stores
