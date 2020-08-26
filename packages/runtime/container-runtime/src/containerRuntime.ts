@@ -455,6 +455,9 @@ export class ContainerRuntime extends EventEmitter
     public get IContainerRuntimeDirtyable() { return this; }
     public get IFluidRouter() { return this; }
 
+    // 0.24 back-compat attachingBeforeSummary
+    public readonly runtimeVersion = pkgVersion;
+
     /**
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -607,6 +610,8 @@ export class ContainerRuntime extends EventEmitter
         ) => CreateChildSummarizerNodeFn;
     } & ({ readonly enabled: true; readonly node: SummarizerNode } | { readonly enabled: false });
     private readonly notBoundContexts = new Set<string>();
+    // 0.24 back-compat attachingBeforeSummary
+    private readonly attachOpFiredForDataStore = new Set<string>();
 
     private tasks: string[] = [];
 
@@ -1475,13 +1480,14 @@ export class ContainerRuntime extends EventEmitter
         const context = this.getContext(fluidDataStoreRuntime.id) as LocalFluidDataStoreContext;
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
-        // clients but we do need to submit op if container forced us to do so.
+        // clients.
         if (this.attachState !== AttachState.Detached) {
             context.emit("attaching");
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(fluidDataStoreRuntime.id, message);
             this.submit(ContainerMessageType.Attach, message);
+            this.attachOpFiredForDataStore.add(fluidDataStoreRuntime.id);
         }
 
         // Resolve the deferred so other local stores can access it.
@@ -1549,8 +1555,12 @@ export class ContainerRuntime extends EventEmitter
             // Iterate over each data store and ask it to snapshot
             Array.from(this.contexts)
                 .filter(([key, _]) =>
-                    // Take summary of bounded data stores only and make sure we haven't summarized them already.
-                    !(this.notBoundContexts.has(key) || builderTree[key]),
+                    // Take summary of bounded data stores only, make sure we haven't summarized them already
+                    // and no attach op has been fired for that data store because for loader versions <= 0.24
+                    // we set attach state as "attaching" before taking createNew summary.
+                    !(this.notBoundContexts.has(key)
+                        || builderTree[key]
+                        || this.attachOpFiredForDataStore.has(key)),
                 )
                 .map(([key, value]) => {
                     const snapshot = value.generateAttachMessage().snapshot;

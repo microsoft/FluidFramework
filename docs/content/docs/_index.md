@@ -19,8 +19,8 @@ Fluid Framework offers:
 * Distributed data structures with familiar programming patterns
 * Very low latency
 
-The developers at Microsoft have built collaboration into many applications, but many required application specific 
-server-side logic to manage the collaborative experience. The Fluid Framework is the result of Microsoft's investment 
+The developers at Microsoft have built collaboration into many applications, but many required application specific
+server-side logic to manage the collaborative experience. The Fluid Framework is the result of Microsoft's investment
 in reducing the complexity of creating collaborative applications.
 
 What if you didn't have to invest in server code at all? Imagine if you could use a general purpose server
@@ -39,13 +39,13 @@ flexible.
 
 ## How Fluid works
 
-Fluid was designed to deliver collaborative experiences with blazing performance. To achieve this goal, the team kept 
+Fluid was designed to deliver collaborative experiences with blazing performance. To achieve this goal, the team kept
 the server logic as simple and light-weight as possible. This approach helped ensure virtually instant syncing across
 clients with very low server costs.
 
 To keep the server simple, each Fluid client is responsible for its own state. While previous systems keep a source of
-truth on the server, the Fluid service is responsible for taking in data operations, sequencing the operations, and 
-returning the sequenced operations to the clients. Each client is able to use that sequence to independently and 
+truth on the server, the Fluid service is responsible for taking in data operations, sequencing the operations, and
+returning the sequenced operations to the clients. Each client is able to use that sequence to independently and
 accurately produce the current state regardless of the order it receives operations.
 
 Here is a typical flow...
@@ -62,6 +62,6 @@ If you want to learn a lot more about how Fluid works, start with our
 **[architecture](concepts/architecture.md)** overview.
 
 If you prefer to get your hands dirty right away, head for our coding **[tutorial](get-started/tutorial.md)** and **[examples](get-started/examples.md)**.
-But first, get your **[dev environment](get-started/dev-env.md)** set up.
+But first, get your **[dev environment](get-started/quick-start.md)** set up.
 
 Still have questions? Maybe we've answered them in our **[FAQ](faq.md)**. If not, check out our **[Community page](/community/)**.
