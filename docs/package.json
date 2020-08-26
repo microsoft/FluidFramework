@@ -6,7 +6,7 @@
   "license": "MIT",
   "author": "Microsoft",
   "scripts": {
-    "build": "npm run build:md-magic && npm run build:api-documenter && build:hugo",
+    "build": "npm run build:md-magic && npm run build:api-documenter && npm run build:hugo",
     "build:api-documenter": "api-documenter generate --config api-documenter.json --input-folder ../_api-extractor-temp/doc-models/ --output-folder content/apis/",
     "build:hugo": "run-script-os",
     "build:hugo:default": "\"./bin/hugo\"",
