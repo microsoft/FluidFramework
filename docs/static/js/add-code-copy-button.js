@@ -1,6 +1,12 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 // Including this script on a page will add a Copy button to all code blocks.
 // It determines a code block by looking for the "highlight" element.
+// to include this script in your md file add `codeCopyButton: true` in the
+// metadata at the top of the file
 
 const copyMessage = "Copy";
 const addCopyButtonsToCodeBlocks = () => {
@@ -54,8 +60,12 @@ const addCopyButtonsToCodeBlocks = () => {
     Array.prototype.forEach.call(highlightBlocks, addCopyButton);
 };
 
-// Run the script after the page has been loaded
-function r(f) {
-    /in/.test(document.readyState) ? setTimeout("r(" + f + ")", 0) : f();
+// Recursive function that checks to see if the page has loaded.
+// Checks every 9ms and calls addCopyButtonsToCodeBlocks when loading is complete.
+// Ensures we only attempt to add the Copy buttons after the elements exist
+function checkPageLoaded() {
+    document.readyState !== "complete"
+        ? setTimeout(checkPageLoaded, 9)
+        : addCopyButtonsToCodeBlocks();
 }
-r(addCopyButtonsToCodeBlocks);
+checkPageLoaded();
