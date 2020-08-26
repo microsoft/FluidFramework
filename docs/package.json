@@ -6,12 +6,22 @@
   "license": "MIT",
   "author": "Microsoft",
   "scripts": {
-    "build": "npm run build:md-magic && npm run build:api-documenter",
+    "build": "npm run build:md-magic && npm run build:api-documenter && build:hugo",
     "build:api-documenter": "api-documenter generate --config api-documenter.json --input-folder ../_api-extractor-temp/doc-models/ --output-folder content/apis/",
-    "build:md-magic": "md-magic --path '**/*.md' --ignore 'node_modules'"
+    "build:hugo": "run-script-os",
+    "build:hugo:default": "\"./bin/hugo\"",
+    "build:hugo:win32": "call \"bin/hugo.exe\"",
+    "build:md-magic": "md-magic --path '**/*.md' --ignore 'node_modules' --config markdown.config.js",
+    "postinstall": "hugo-installer --version 0.74.3 --destination bin",
+    "start:default": "\"./bin/hugo\" server",
+    "start:win32": "call \"bin/hugo.exe\" server",
+    "start": "run-script-os"
   },
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
+    "run-script-os": "^1.0.7",
     "@mattetti/custom-api-documenter": "^0.3.2",
+    "hugo-installer": "^1.0.1",
     "markdown-magic": "^1.0.0"
   }
 }
