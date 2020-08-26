@@ -1,8 +1,11 @@
+{{ $idPrefix := .Get "idPrefix" }}
+{{ $bundleName := .Get "bundleName" }}
+
 <div id="content" style="min-height: 200px; display: flex;">
-    <div id="dice-roller-left" style="flex-grow: 1; width: 50%; border: 1px solid lightgray; box-sizing: border-box; position:
+    <div id="{{ $idPrefix }}-left" style="flex-grow: 1; width: 50%; border: 1px solid lightgray; box-sizing: border-box; position:
     relative; padding-bottom: 10px"></div>
-    <div id="dice-roller-right" style="flex-grow: 1; width: 50%; border: 1px solid lightgray; box-sizing: border-box; position:
+    <div id="{{ $idPrefix }}-right" style="flex-grow: 1; width: 50%; border: 1px solid lightgray; box-sizing: border-box; position:
     relative; padding-bottom: 10px"></div>
 </div>
 
-<script async src="https://fluidframework.blob.core.windows.net/static/js/dice-roller.376ccc4b8ef6aabc4904.js"></script>
+<script async src="https://fluidframework.blob.core.windows.net/static/js/{{ $bundleName }}"></script>
