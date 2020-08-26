@@ -48,6 +48,10 @@
     {{ partial "extra-head.html" . }}
     {{- end }}
 
+    {{- if .Params.codeCopyButton -}}
+        <script src="/js/add-code-copy-button.js"></script>
+    {{- end }}
+
     <meta name=" description" content="{{ $summary }}" />
     <meta property="og:title" content="{{.Title}}" />
     <meta property="og:description" content="{{ $summary }}" />
