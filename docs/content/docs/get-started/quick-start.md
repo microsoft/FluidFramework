@@ -1,6 +1,7 @@
 ---
 title: Quick Start
 menuPosition: 2
+codeCopyButton: true
 ---
 
 In this Quick Start we will be getting the [Hello World](https://github.com/microsoft/FluidHelloWorld) Fluid application
@@ -43,6 +44,9 @@ Navigate to the newly created folder and install required dependencies.
 
 ```bash
 cd FluidHelloWorld
+```
+
+```bash
 npm i
 ```
 
