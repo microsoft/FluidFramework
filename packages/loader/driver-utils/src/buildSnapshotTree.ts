@@ -4,8 +4,7 @@
  */
 
 import assert from "assert";
-import { Buffer } from "buffer";
-import { gitHashFileAsync } from "@fluidframework/common-utils";
+import { gitHashFile, IsoBuffer } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import {
     FileMode,
@@ -28,8 +27,8 @@ async function flattenCore(
 
         if (treeEntry.type === TreeEntry.Blob) {
             const blob = treeEntry.value as IBlob;
-            const buffer = Buffer.from(blob.contents, blob.encoding);
-            const sha = await gitHashFileAsync(buffer);
+            const buffer = IsoBuffer.from(blob.contents, blob.encoding);
+            const sha = await gitHashFile(buffer);
             blobMap.set(sha, buffer.toString("base64"));
 
             const entry: git.ITreeEntry = {
