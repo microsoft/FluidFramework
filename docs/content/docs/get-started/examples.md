@@ -3,7 +3,7 @@ title: Examples
 menuPosition: 4
 ---
 
-We've included several example apps in a [GitHub](https://github.com/microsoft/FluidExamples) repo to demonstrate
+We've included several example apps in a [GitHub repository](https://github.com/microsoft/FluidExamples) to demonstrate
 both the power and simplicity of Fluid. Use these to learn and kickstart your own projects.
 
 ## Draft.js
