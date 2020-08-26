@@ -742,8 +742,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     break;
                 }
                 case api.SummaryType.Blob: {
-                    const content = typeof summaryObject.content === "string" ? summaryObject.content : Uint8ArrayToString(summaryObject.content, "base64");
-                    const encoding = typeof summaryObject.content === "string" ? "utf-8" : "base64";
+                    const [content, encoding] = typeof summaryObject.content === "string"
+                        ? [summaryObject.content, "utf-8"]
+                        : [Uint8ArrayToString(summaryObject.content, "base64"), "base64"];
 
                     // Promises for pending hashes in blobsCachePendingHashes should all have resolved and removed themselves
                     assert(this.blobsCachePendingHashes.size === 0);
