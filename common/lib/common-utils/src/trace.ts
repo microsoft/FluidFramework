@@ -7,6 +7,7 @@ import { performanceNow } from "./performanceNowNode";
 
 /**
  * Helper class for tracing performance of events
+ * Time measurements are in milliseconds as a floating point with a decimal
  */
 export class Trace {
     public static start(): Trace {
@@ -37,10 +38,12 @@ export class Trace {
 export interface ITraceEvent {
     /**
      * Total time elapsed since the start of the Trace.
+     * Measured in milliseconds as a floating point with a decimal
      */
     readonly totalTimeElapsed: number;
     /**
      * Time elapsed since the last trace event.
+     * Measured in milliseconds as a floating point with a decimal
      */
     readonly duration: number;
     /**

@@ -63,10 +63,19 @@ parameters:
   type: string
   default:
 
+- name: publishOverride
+  type: string
+
+- name: releaseBuildOverride
+  type: string
+
 trigger: none
 
 variables:
   - template: include-vars.yml
+    parameters:
+      publishOverride: ${{ parameters.publishOverride }}
+      releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
 
 stages:
   - stage: build
@@ -76,8 +85,8 @@ stages:
       - job: Build
         pool: ${{ parameters.poolBuild }}
         variables:
-        - name: testCoverage
-          value: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
+          testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
+          releaseBuildVar: $[variables.releaseBuild]
         steps:
         # Setup
         - checkout: self
@@ -92,11 +101,28 @@ stages:
             script: |
               # Show all task group conditions
 
-              echo Build=${{ parameters.taskBuild }}
-              echo Lint=${{ parameters.taskLint }}
-              echo Test=${{ parameters.taskTest }}
-              echo BuildDoc=${{ parameters.taskBuildDocs }}
-              echo TestCoverage=$(testCoverage)
+              echo "
+              Pipeline Variables:
+                releaseBuild=$(releaseBuildVar)
+
+              Override Parameters:
+                publishOverride=${{ parameters.publishOverride }}
+                releaseBuildOverride=${{ parameters.releaseBuildOverride }}
+
+              Tasks Parameters:
+                Build=${{ parameters.taskBuild }}
+                Lint=${{ parameters.taskLint }}
+                Test=${{ parameters.taskTest }}
+                BuildDoc=${{ parameters.taskBuildDocs }}
+                TestCoverage=$(testCoverage)
+
+              Computed variables:
+                shouldPublish=${{ variables.shouldPublish }}
+                componentDetection=${{ variables.componentDetection }}
+                pushImage=${{ variables.pushImage }}
+                publish=${{ variables.publish }}
+                release=$(release)"
+
         - task: Bash@3
           displayName: Strip MIT License
           inputs:
@@ -137,6 +163,7 @@ stages:
           parameters:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            release: $(release)
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:

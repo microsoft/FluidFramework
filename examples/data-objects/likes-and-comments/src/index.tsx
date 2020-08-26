@@ -35,7 +35,7 @@ interface IComment {
     message: string;
 }
 
-// ---- Functional Component w/ a mixture of DDS' and local state ----
+// ---- Functional Component w/ a mixture of DDSes and local state ----
 
 function LikesAndCommentsView(
     props: ILikesAndCommentsViewProps,

@@ -13,8 +13,8 @@ trigger:
     include:
     - server/gitssh
     - tools/pipelines/server-gitssh.yml
-    - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-vars.yml
 
 pr:
   branches:
@@ -24,8 +24,8 @@ pr:
     include:
     - server/gitssh
     - tools/pipelines/server-gitssh.yml
-    - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-vars.yml
 
 extends:
   template: templates/build-docker-service.yml

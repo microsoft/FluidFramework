@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
-    "@fluidframework/common-utils": "^0.21.0",
+    "@fluidframework/common-utils": "^0.22.1-0",
     "@fluidframework/driver-base": "^0.25.1",
     "@fluidframework/driver-definitions": "^0.25.1",
     "@fluidframework/driver-utils": "^0.25.1",
@@ -65,7 +65,7 @@
     "eslint-plugin-prefer-arrow": "~1.1.7",
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
-    "mocha": "^8.0.1",
+    "mocha": "^8.1.1",
     "nock": "^10.0.1",
     "rimraf": "^2.6.2",
     "typescript": "~3.7.4",
