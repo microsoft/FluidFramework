@@ -95,7 +95,8 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
 
         // Check for default dataStore
         const defaultDataStoreBlobId = snapshotTree.trees.default.blobs[".component"];
-        const dataStoreAttributes = JSON.parse(fromBase64ToUtf8(snapshotTree.trees.default.blobs[defaultDataStoreBlobId]));
+        const dataStoreAttributes =
+            JSON.parse(fromBase64ToUtf8(snapshotTree.trees.default.blobs[defaultDataStoreBlobId]));
         assert.strictEqual(dataStoreAttributes.pkg, JSON.stringify(["default"]), "Package name should be default");
     });
 
