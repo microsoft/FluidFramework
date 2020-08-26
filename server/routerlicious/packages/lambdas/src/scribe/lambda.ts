@@ -181,19 +181,24 @@ export class ScribeLambda extends SequencedLambda {
                                 this.pendingCheckpointMessages.toArray(),
                             );
 
-                            // On a successful write, send an ack message to clients and a control message to deli.
-                            // Otherwise send a nack and revert the protocol state back to pre summary state.
-                            if (summaryResponse.status) {
-                                await this.sendSummaryAck(summaryResponse.message as ISummaryAck);
-                                await this.sendSummaryConfirmationMessage(operation.sequenceNumber, false);
-                                this.protocolHead = this.protocolHandler.sequenceNumber;
-                                this.context.log.info(
+                            // This block is only executed if the writer is not external. For an external writer,
+                            // (e.g., job queue) the responsibility of sending ops to the stream is up to the
+                            // external writer.
+                            if (!this.summaryWriter.isExternal) {
+                                // On a successful write, send an ack message to clients and a control message to deli.
+                                // Otherwise send a nack and revert the protocol state back to pre summary state.
+                                if (summaryResponse.status) {
+                                    await this.sendSummaryAck(summaryResponse.message as ISummaryAck);
+                                    await this.sendSummaryConfirmationMessage(operation.sequenceNumber, false);
+                                    this.protocolHead = this.protocolHandler.sequenceNumber;
+                                    this.context.log.info(
                                     `Client summary success @${value.operation.sequenceNumber}`, { messageMetaData });
-                            } else {
-                                await this.sendSummaryNack(summaryResponse.message as ISummaryNack);
-                                this.context.log.error(
+                                } else {
+                                    await this.sendSummaryNack(summaryResponse.message as ISummaryNack);
+                                    this.context.log.error(
                                     `Client summary failure @${value.operation.sequenceNumber}`, { messageMetaData });
-                                this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
+                                    this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
+                                }
                             }
                         } catch (ex) {
                             this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
@@ -256,6 +261,11 @@ export class ScribeLambda extends SequencedLambda {
                 } else if (value.operation.type === MessageType.SummaryAck) {
                     const content = value.operation.contents as ISummaryAck;
                     this.lastClientSummaryHead = content.handle;
+                    // An external summary writer can only update the protocolHead when the ack is sequenced
+                    // back to the stream.
+                    if (this.summaryWriter.isExternal) {
+                        this.protocolHead = content.summaryProposal.summarySequenceNumber;
+                    }
                 }
             }
         }
