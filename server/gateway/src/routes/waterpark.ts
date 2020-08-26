@@ -18,6 +18,8 @@ import { IAlfred } from "../interfaces";
 import { getConfig, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
+// TODO: Remove the ECL reference here as the package is now removed
+// Since it is in the @fluidframework feed, this will still function fine
 const defaultChaincode =
     `@fluidframework/external-component-loader@^0.25.0-0`;
 
@@ -32,16 +34,14 @@ export function create(
 
     router.get("/", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response, next) => {
         let redirect = `${request.baseUrl}/${moniker.choose()}`;
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (request.query.chaincode) {
+        if (request.query.chaincode !== undefined) {
             redirect += `?chaincode=${request.query.chaincode}`;
         }
         return response.status(302).redirect(redirect);
     });
 
     router.get("/:id*", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response, next) => {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        const chaincode = request.query.chaincode ? request.query.chaincode : defaultChaincode;
+        const chaincode = typeof request.query.chaincode === "string" ? request.query.chaincode : defaultChaincode;
         const start = Date.now();
 
         const jwtToken = jwt.sign(

@@ -85,7 +85,7 @@ export function syncState<
         ?.fluidObject as ISharedMap;
 
     if (viewMatchingMap === undefined || fluidMatchingMap === undefined) {
-        throw Error("Failed to fetch shared map DDS' from the schema handles");
+        throw Error("Failed to fetch shared map DDSes from the schema handles");
     }
 
     // Create the combined root state by combining the current root state and the new

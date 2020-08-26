@@ -4,5 +4,3 @@
  */
 
 export * from "./collection";
-
-export * from "./fluidDefaultFactoryName";

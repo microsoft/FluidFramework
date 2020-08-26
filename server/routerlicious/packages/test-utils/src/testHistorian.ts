@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { gitHashFile } from "@fluidframework/common-utils";
+import { gitHashFile, IsoBuffer } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { IHistorian } from "@fluidframework/server-services-client";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
@@ -62,7 +62,7 @@ export class TestHistorian implements IHistorian {
     public async getBlob(sha: string): Promise<git.IBlob> {
         const blob = await this.blobs.findOne({ _id: sha });
         return {
-            content: Buffer.from(
+            content: IsoBuffer.from(
                 blob.content ?? blob.value?.content,
                 blob.encoding ?? blob.value?.encoding).toString("base64"),
             encoding: "base64",
@@ -73,7 +73,7 @@ export class TestHistorian implements IHistorian {
     }
 
     public async createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
-        const _id = gitHashFile(Buffer.from(blob.content, blob.encoding));
+        const _id = await gitHashFile(IsoBuffer.from(blob.content, blob.encoding));
         await this.blobs.insertOne({
             _id,
             ...blob,
