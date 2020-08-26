@@ -16,7 +16,6 @@ title: Glossary
 
 **Fluid Object** - Any JavaScript object that implements fluid feature interfaces.
 
-**Fluid runtime** -
 
 **Fluid service** – A service endpoint that is responsible for recieving, processing, storing, and broadcasting operations.
 
