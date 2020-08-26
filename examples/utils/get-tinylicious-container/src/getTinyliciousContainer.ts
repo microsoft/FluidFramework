@@ -19,11 +19,12 @@ import jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 
 // URLResolver knows how to get the URLs to the service to use for a given request, in this case Tinylicious.
-// In order to avoid imposing requirements on the app's URL shapes, we'll expect our requests to simply include the
-// documentId for the URL (as opposed to a more traditional URL).
+// In order to avoid imposing requirements on the app's URL shapes, we'll expect our request url to have this
+// format (as opposed to a more traditional URL):
+// documentId/containerRelativePathing
 class InsecureTinyliciousUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const documentId = request.url;
+        const documentId = request.url.split("/")[0];
         const encodedDocId = encodeURIComponent(documentId);
 
         const documentUrl = `fluid://localhost:3000/tinylicious/${encodedDocId}`;
@@ -43,9 +44,13 @@ class InsecureTinyliciousUrlResolver implements IUrlResolver {
         return response;
     }
 
+    // Detached flow calls getAbsoluteUrl with the resolved.url produced above (the documentUrl).  It expects
+    // getAbsoluteUrl's return value to be a URL that can then be roundtripped back through resolve again,
+    // and get the same result again.  So we'll return a URL with the same format described above.
     public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
-        // Detached flow requires getAbsoluteUrl to return a string, though this is not really valid.
-        return "";
+        const url = (resolvedUrl as IFluidResolvedUrl).url;
+        const documentId = decodeURIComponent(url.replace("fluid://localhost:3000/tinylicious/", ""));
+        return `${documentId}/${relativeUrl}`;
     }
 
     private auth(documentId: string) {
