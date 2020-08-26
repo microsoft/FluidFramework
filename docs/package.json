@@ -14,19 +14,19 @@
     "build:hugo:default": "\"./bin/hugo\"",
     "build:hugo:win32": "call \"bin/hugo.exe\"",
     "build:md-magic": "md-magic --path '**/*.md' --ignore 'node_modules' --config markdown.config.js",
-    "install:hugo": "hugo-installer --version 0.74.3 --destination bin",
     "postinstall": "run-script-os",
+    "install:hugo": "hugo-installer --version 0.74.3 --destination bin",
     "postinstall:default": "[ ! -f bin/hugo ] && npm run install:hugo ; exit 0",
     "postinstall:win32": "if not exist bin/hugo.exe npm run install:hugo",
+    "start": "run-script-os",
     "start:default": "\"./bin/hugo\" server",
-    "start:win32": "call \"bin/hugo.exe\" server",
-    "start": "run-script-os"
+    "start:win32": "call \"bin/hugo.exe\" server"
   },
   "dependencies": {},
   "devDependencies": {
-    "run-script-os": "^1.0.7",
     "@mattetti/custom-api-documenter": "^0.3.2",
     "hugo-installer": "^1.0.1",
-    "markdown-magic": "^1.0.0"
+    "markdown-magic": "^1.0.0",
+    "run-script-os": "^1.0.7"
   }
 }
