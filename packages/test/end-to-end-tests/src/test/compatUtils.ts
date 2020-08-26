@@ -204,8 +204,8 @@ export const compatTest = (
         tests({
             makeTestContainer,
             loadTestContainer,
-            // This is a getter because tests() is called before the beforeEach()
-            // callback, at which point deltaConnectionServer is undefined.
+            // These are getters because tests() is called before the beforeEach() callback, at which point
+            // these are undefined.
             get deltaConnectionServer() { return deltaConnectionServer; },
             get urlResolver() { return urlResolver; },
         });
