@@ -15,7 +15,7 @@ title: "Fluid Framework"
     img="/images/placeholder.svg" >}}
     {{< swimlane title="Web First"
     subTitle="Focusing on browsers and Node.js first, Fluid was designed to easily integrate with popular application frameworks such as React, Angular, and Vue. Fluid was born on the Web."
-    img="/images/love_js.jpg"
+    img="/images/love_js.png"
     pos="right" >}}
     {{< swimlane title="Open Source"
     subTitle="Everything you need to use Fluid Framework to instantly sync data across clients is open source and on GitHub."
