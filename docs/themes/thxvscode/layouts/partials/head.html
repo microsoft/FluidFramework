@@ -7,12 +7,15 @@
 
     <!-- Twitter and Facebook OpenGraph Metadata-->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@fluidframework" />
+    <meta name="twitter:site" content="@{{.Site.Params.twitterHandle}}" />
 
     <meta itemprop="datePublished" content="{{ now.Format "2006-01-02" }}">
 
     <!-- sections.meta -->
     {{ $summary := .Params.summary | plainify | truncate 140 }}
+    {{ if eq $summary ""}}
+    {{ $summary = .Title }}
+    {{ end }}
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -27,7 +30,8 @@
     <!-- EU Cookie Compliance CSS -->
     <link rel="stylesheet" href="//uhf.microsoft.com/mscc/statics/mscc-0.3.6.min.css">
     <!--Fabric CSS-->
-    <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/11.0.0/css/fabric.min.css">
+    <link rel="stylesheet"
+        href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/11.0.0/css/fabric.min.css">
 
     {{ $style := resources.Get "scss/style.scss" | resources.ExecuteAsTemplate "css/style.css" . | toCSS | minify | fingerprint -}}
     <link rel="stylesheet" href="{{ $style.Permalink | relURL }}"
