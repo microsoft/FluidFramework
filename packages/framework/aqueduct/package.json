@@ -68,7 +68,6 @@
     "@fluidframework/runtime-definitions": "^0.25.1",
     "@fluidframework/runtime-utils": "^0.25.1",
     "@fluidframework/synthesize": "^0.25.1",
-    "@fluidframework/view-adapters": "^0.25.1",
     "@fluidframework/view-interfaces": "^0.25.1",
     "uuid": "^3.3.2"
   },
