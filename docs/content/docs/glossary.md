@@ -8,8 +8,6 @@ title: Glossary
 
 **Container code** – You’ll write container code to define which data objects your scenario uses and how you’ll access them.
 
-**Url resolver** - Fluid's API surface makes use of urls, for example in the `Loader`'s `resolve()` method and `Container`'s `request()` method.  The url resolver is used to interpret these urls for use with the Fluid service.
-
 **Data objects** – You’ll write data objects to organize DDSes into semantically meaningful groupings for your scenario. You can define their API surface to control how collaborators will modify the data.
 
 **Distributed data structures (DDSes)** – DDSes are the data structures Fluid Framework provides for storing the collaborative data. As collaborators modify the data, the changes will be reflected to all other collaborators.
@@ -21,3 +19,5 @@ title: Glossary
 **Fluid service** – The container will connect to a service to send and receive changes to collaborative data.
 
 **Fluid service driver** - Client code responsible for connecting to the Fluid service.
+
+**Url resolver** - Fluid's API surface makes use of urls, for example in the `Loader`'s `resolve()` method and `Container`'s `request()` method.  The url resolver is used to interpret these urls for use with the Fluid service.
