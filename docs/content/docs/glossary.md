@@ -8,7 +8,7 @@ title: Glossary
 
 **Container code** – You’ll write container code to define which data objects your scenario uses and how you’ll access them.
 
-**Data objects** – You’ll write data objects to organize DDSes into semantically meaningful groupings for your scenario. You can define their API surface to control how collaborators will modify the data.
+**DataObject** – Aqueduct's implementation of a Fluid Object. Designed to organize Distributed Data Structures into semantically meaningful groupings for your scenario, as well as, providing an API surface to your data.
 
 **Distributed data structures (DDSes)** – DDSes are the data structures Fluid Framework provides for storing the collaborative data. As collaborators modify the data, the changes will be reflected to all other collaborators.
 
