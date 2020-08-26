@@ -30,7 +30,7 @@ There are a handful of key concepts to understand.
 
 ## The DiceRoller app
 
-![](/docs/get-started/images/dice-roller.gif)
+{{< fluid_bundle_loader >}}
 
 To explore these concepts, we'll be looking at a simple app that enables all connected clients to roll a dice and view
 the result. We'll do this by writing a data object to represent the dice, configuring container code to use that Data
