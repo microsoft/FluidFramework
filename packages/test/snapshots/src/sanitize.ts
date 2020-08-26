@@ -3,6 +3,17 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * This tool cleans up a message.json file downloaded through fluid-fetch to remove
+ * user content and user identifying information.  Anonymous identifying information
+ * such as client IDs are retained, It works by explicit inclusion rather than
+ * explicit exclusion for everything under contents.contents.content.contents.value
+ * to attempt to be flexible with variable json structure.
+ *
+ * Object keys are NOT scrubbed, including those that are nested within values
+ * (only leaf values are scrubbed)
+ */
+
 import fs from "fs";
 import {
     ISequencedDocumentMessage,
@@ -13,71 +24,180 @@ function printUsage() {
     console.log("   Sanitize <input>");
     console.log("Where");
     console.log("  <input> - file path to message.json - file downloaded by FluidFetch tool");
+    console.log("Note: <input> is sanitized in place");
     process.exit(-1);
 }
 
-function replaceTextCore(len: number): string {
-    let str = "";
-    while (str.length < len) {
-        str = str + Math.random().toString(36).substring(2);
-    }
-    return str.substr(0, len);
+enum TextType {
+    Generic,
+    Email,
+    Name,
+    FluidObject
 }
 
-function replaceText(input?: string): string {
+function replaceText(input?: string, type: TextType = TextType.Generic): string {
     if (input === undefined) {
         return undefined;
     }
-    return replaceTextCore(input.length);
-}
-
-function replaceEmail(input?: string): string {
-    if (input === undefined) {
-        return undefined;
+    switch (type) {
+        case TextType.Email:
+            // email values have a trailing "}" that is preserved here
+            return "xxxxx@xxxxx.xxx}";
+        case TextType.Name:
+            return "Xxxxx Xxxxx";
+        case TextType.FluidObject:
+            return "@xx/xxxxx";
+        case TextType.Generic:
+        default:
+            return "xxxxx";
     }
-    return `${replaceTextCore(9)}@example.com}`;
 }
 
-function replaceName(input?: string): string {
-    if (input === undefined) {
-        return undefined;
+// "Forward declaration" of replaceObject to facilitate mutual recursion
+let replaceObject = (input: object | null): object | null => {
+    // eslint-disable-next-line no-null/no-null
+    return null;
+};
+
+function replaceArray(input: any[]): any[] {
+    for (let i = 0; i < input.length; i++) {
+        const value = input[i];
+        if (typeof value === "string") {
+            input[i] = replaceText(value);
+        } else if (Array.isArray(value)) {
+            input[i] = replaceArray(value);
+        } else if (typeof value === "object") {
+            input[i] = replaceObject(value);
+        }
     }
-    return replaceTextCore(15);
+    return input;
 }
 
-function fixContents(messageContents: any) {
-    if (!messageContents ||
-        !messageContents.contents ||
-        !messageContents.contents.content ||
-        !messageContents.contents.content.contents) {
+/**
+ * (sort of) recurses down the values of a JSON object to sanitize all its strings
+ * (only checks strings, arrays, and objects)
+ * @param input - The object to sanitize
+ */
+replaceObject = (input: object | null): object | null => {
+    // File might contain actual nulls
+    // eslint-disable-next-line no-null/no-null
+    if (input === null) {
+        // eslint-disable-next-line no-null/no-null
+        return null;
+    }
+
+    const keys = Object.keys(input);
+    keys.forEach((key) => {
+        const value = input[key];
+        if (typeof value === "string") {
+            input[key] = replaceText(value);
+        } else if (Array.isArray(value)) {
+            input[key] = replaceArray(value);
+        } else if (typeof value === "object") {
+            input[key] = replaceObject(value);
+        }
+    });
+    return input;
+};
+
+/**
+ * Remove fluid object identifiers at the contents level.  These can also exist further
+ * down in the case of "attach" messages, but that is handled with the "attach" logic.
+ */
+function fixFluidObjectNames(messageContents: any) {
+    if (messageContents) {
+        messageContents.id = replaceText(messageContents.id, TextType.FluidObject);
+        messageContents.type = replaceText(messageContents.type, TextType.FluidObject);
+    }
+}
+
+function fixSnapshotEntries(entries: any) {
+    if (!Array.isArray(entries)) {
+        console.error("Unexpected snapshot.entries value format");
         return;
     }
 
-    const contents = messageContents.contents.content.contents;
+    entries.forEach((element) => {
+        if (element.value?.contents) {
+            try {
+                let data = JSON.parse(element.value.contents);
+                data = replaceObject(data);
+                element.value.contents = JSON.stringify(data);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    });
+}
+
+/**
+ * Check the "contents" key for fixes
+ * Primarily for "op" and "attach" messages
+ */
+function fixContents(messageContents: any) {
+    fixFluidObjectNames(messageContents);
+
+    if (messageContents?.snapshot?.entries) {
+        fixSnapshotEntries(messageContents.snapshot.entries);
+    }
+
+    // "attach" message info can also be nested inside an "op"
+    if (messageContents?.contents?.content?.snapshot?.entries) {
+        fixSnapshotEntries(messageContents.contents.content.snapshot.entries);
+    }
+
+    const contents = messageContents?.contents?.content?.contents;
+    if (contents === undefined) {
+        return;
+    }
+
+    // Sequence op-specific fields
     if (contents.seg) {
         if (contents.seg.text) {
             contents.seg.text = replaceText(contents.seg.text);
         } else if (typeof contents.seg === "string") {
             contents.seg = replaceText(contents.seg);
         }
+        if (typeof contents.props === "object") {
+            contents.props = replaceObject(contents.props);
+        }
     }
 
+    // Map op-specific fields
+    if (contents.type === "set" || contents.type === "delete") {
+        contents.key = replaceText(contents.key);
+    }
+
+    // Everything else under contents.contents.content.contents
     if (contents.value) {
-        const value = contents.value;
-        value.userPrincipalName = replaceEmail(value.userPrincipalName);
-        value.displayName = replaceName(value.displayName);
-        value.originalName = replaceName(value.originalName);
-        if (contents.value.value && typeof contents.value.value === "object") {
-            const value2 = contents.value.value;
-            value2.userPrincipalName = replaceEmail(value2.userPrincipalName);
-            value2.displayName = replaceName(value2.displayName);
-            value2.originalName = replaceName(value2.originalName);
-        }
+        replaceObject(contents.value);
+    }
+
+    if (contents.props) {
+        contents.props = replaceObject(contents.props);
     }
 }
 
-function DoStuff() {
-    const input = fs.readFileSync(process.argv[2], { encoding: "utf-8" });
+function fixJoin(message: any) {
+    const data = JSON.parse(message.data);
+
+    const user = data.detail.user;
+    user.id = replaceText(user.id, TextType.Email);
+    user.email = replaceText(user.email, TextType.Email);
+    user.name = replaceText(user.name, TextType.Name);
+
+    message.data = JSON.stringify(data);
+}
+
+function fixPropose(message: any) {
+    const key = message.contents?.key;
+    if (key !== undefined && (key as string).startsWith("code")) {
+        message.contents.value = replaceText(message.contents.value, TextType.FluidObject);
+    }
+}
+
+function Sanitize(msgPath: string) {
+    const input = fs.readFileSync(msgPath, { encoding: "utf-8" });
     const messages = JSON.parse(input) as ISequencedDocumentMessage[];
 
     let seq = 0;
@@ -94,19 +214,16 @@ function DoStuff() {
                     fixContents(contents);
                     message.contents = JSON.stringify(contents);
                 } catch (e) {
+                    // This is sometimes empty string, which will fail the json parse
                 }
             }
 
             if (message.type === "join") {
-                const obj = message as any;
-                const data = JSON.parse(obj.data);
+                fixJoin(message);
+            }
 
-                const user = data.detail.user;
-                user.id = replaceEmail(user.id);
-                user.email = replaceEmail(user.email);
-                user.name = replaceName(user.name);
-
-                obj.data = JSON.stringify(data);
+            if (message.type === "propose") {
+                fixPropose(message);
             }
         });
     } catch (error) {
@@ -114,13 +231,17 @@ function DoStuff() {
         throw error;
     }
 
-    fs.writeFileSync(process.argv[2], JSON.stringify(messages, undefined, 2));
+    fs.writeFileSync(msgPath, JSON.stringify(messages, undefined, 2));
 
     console.log("Done.");
+}
+
+function main() {
+    Sanitize(process.argv[2]);
 }
 
 if (process.argv.length !== 3) {
     printUsage();
 }
 
-DoStuff();
+main();
