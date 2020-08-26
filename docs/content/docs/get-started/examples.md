@@ -25,7 +25,8 @@ voted for those ideas.
 
 ## Sudoku
 
-![A screenshot of Sudoku](/images/sudoku-example.png)
+<img src="/images/sudoku-example.png" alt="A screenshot of Sudoku" style="max-height: 400px; margin-left: auto;
+margin-right: auto;">
 
 The [Sudoku](https://github.com/microsoft/FluidExamples/tree/main/sudoku) example demonstrates how to build
 a collaborative game. This example includes key features like presence.
