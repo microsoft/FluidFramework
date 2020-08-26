@@ -1,6 +1,6 @@
 # Routerlicious
 
-Routerlicious handles the receiving of delta operations and is responsible for the ordering and assignment of a
+Routerlicious is the server side component handling the receiving of delta operations and is responsible for the ordering and assignment of a
 sequence number to them. Once assigned it is also responsible for notifying connected clients of a new sequence
 number.
 
@@ -14,7 +14,7 @@ via Redis.
 
 The services follow the [twelve factor](https://12factor.net) methodology and are considered [cattle and not pets](http://cloudscaling.com/blog/cloud-computing/the-history-of-pets-vs-cattle/).
 
-## Getting Started
+## Getting Started with Fluid
 
 Get up and running quickly using our [Getting Started guide](https://aka.ms/fluid).
 
@@ -22,11 +22,12 @@ Get up and running quickly using our [Getting Started guide](https://aka.ms/flui
 
 Questions can be directed to [Stack Overflow](https://stackoverflow.com/questions/tagged/fluidframework)
 
-## Building and Running
+## Building and Running Routerlicious
 
-Note that we also provide an npm package of our client side API which allows you to program against the production
-Routerlicious service. See the [API documentation](https://aka.ms/fluid) for more details. You only need to follow the
-below steps if you'd like to run a local version of the service or need to make changes to it.
+An npm package of our client side API which allows you to program against the production
+Routerlicious service is available. See the [API documentation](https://aka.ms/fluid) for more details. 
+This documentation focuses on running this service locally.
+You only need to follow the below steps if you'd like to run a local version of the service or need to make changes to it.
 
 ### Prerequisities
 
@@ -43,9 +44,15 @@ below steps if you'd like to run a local version of the service or need to make 
 
 ### Development
 
-Docker is the preferred method of development.
+Docker is the preferred method of development. After cloning this repository, go to the `server/routerlicious` path.
 
-To build the service:
+```
+git clone git@github.com:microsoft/FluidFramework.git
+cd FluidFramework/server/routerlicious
+```
+
+
+Then use docker-compose to build the service:
 
 ```
 docker-compose build
