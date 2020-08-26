@@ -14,6 +14,8 @@ title: Glossary
 
 **Fluid loader** - Responsible for connecting to a Fluid service and loading a Container.
 
+**Fluid Object** - Any JavaScript object that implements fluid feature interfaces.
+
 **Fluid runtime** -
 
 **Fluid service** – The container will connect to a service to send and receive changes to collaborative data.
