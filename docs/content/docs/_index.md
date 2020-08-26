@@ -15,7 +15,7 @@ Because building low-latency, collaborative experiences is hard!
 
 Fluid Framework offers:
 
-* Serverless data storage and app logic
+* Serverless application model with data persistence
 * Distributed data structures with familiar programming patterns
 * Very low latency
 
