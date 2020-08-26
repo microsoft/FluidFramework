@@ -26,6 +26,8 @@ repository. To contribute new content, or to preview the site, you need to
 install [Hugo](https://gohugo.io), [instructions
 here](https://gohugo.io/getting-started/installing/).
 
+> For Windows users, the fastest way to set up Hugo is to download the [latest release](https://github.com/gohugoio/hugo/releases), unpack the zip file, and place `hugo.exe` in this directory. With that binary in place you can run the same below commands by calling the binary directly `./hogo server`.
+
 Once you have Hugo installed.
 
 Make sure you are in the `docs` folder (`cd docs`) and then you can start the server:

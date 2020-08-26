@@ -4,3 +4,4 @@ content/apis/
 assets/doc-models/*.json
 node_modules/
 scripts/api-documenter/temp
+hugo*
