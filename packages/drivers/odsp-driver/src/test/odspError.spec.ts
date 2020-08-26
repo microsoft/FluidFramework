@@ -198,7 +198,7 @@ describe("Odsp Error", () => {
     });
 
     it("AuthorizationError errors retries with insufficient claims", async () => {
-        const res = getWithRetryForTokenRefresh(async (refresh, claims) => {
+        const res = await getWithRetryForTokenRefresh(async (refresh, claims) => {
             if (refresh && claims === "{\"access_token\":{\"nbf\":{\"essential\":true, \"value\":\"1597959090\"}}}") {
                 return 1;
             } else {
