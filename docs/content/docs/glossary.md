@@ -18,7 +18,7 @@ title: Glossary
 
 **Fluid runtime** -
 
-**Fluid service** – The container will connect to a service to send and receive changes to collaborative data.
+**Fluid service** – A service endpoint that is responsible for recieving, processing, storing, and broadcasting operations.
 
 **Fluid service driver** - Client code responsible for connecting to the Fluid service.
 
