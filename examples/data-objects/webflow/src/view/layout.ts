@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { Dom, hasTagName, isTextNode, Scheduler, TagName } from "@fluid-example/flow-util-lib";
 import { IFluidObject } from "@fluidframework/core-interfaces";

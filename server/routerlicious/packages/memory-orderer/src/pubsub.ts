@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IWebSocket } from "@fluidframework/server-services-core";
 
 export interface ISubscriber {
