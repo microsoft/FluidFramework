@@ -1,6 +1,6 @@
 # @fluidframework/react
 
-The Fluid Framework's React package provides the `SyncedDataObject`, Fluid React hooks and base view class for building React views that use synced states provided by Fluid. Its goal is to allow a React developer to quickly start building large, scalable React apps with synced views powered by Fluid data.
+The Fluid Framework's React package enables React developers to quickly start building large, scalable React apps with synced views powered by Fluid data. It does this by providing a `SyncedDataObject`, Fluid React hooks and a base view class for building React views that use synced states provided by Fluid. 
 
 Examples on how to use all of the different tools in this package can be found in the [clicker-react](../../../examples/data-objects/clicker-react) and [`likes-and-comments`](../../../examples/data-objects/likes-and-comments) folders under `./examples/data-object/` from the Fluid Framework repo root.
 
