@@ -85,7 +85,7 @@ stages:
                 targetType: 'inline'
                 workingDirectory: ${{ parameters.buildDirectory }}
                 script: |
-                  git pull origin $(Build.SourceBranchName)
+                  git pull origin $(Build.SourceBranch)
                   if [ -f "lerna.json" ]; then
                     npx lerna version patch --no-git-tag-version --no-push --yes
                     version=`node -e "console.log(require('./lerna.json').version)"`
@@ -96,10 +96,10 @@ stages:
 
                   npm run build:genver --if-present
 
-                  echo Bump ${{ parameters.tagName }} version to $version in $(Build.SourceBranchName)
+                  echo Bump ${{ parameters.tagName }} version to $version in $(Build.SourceBranch)
 
                   git config --global user.email "ffbuilder@microsoft.com"
                   git config --global user.name "Fluid Framework Builder"
 
                   git commit -a -m "[bump] ${{ parameters.tagName }} version to $version"
-                  git push origin HEAD:$(Build.SourceBranchName)
+                  git push origin HEAD:$(Build.SourceBranch)
