@@ -67,7 +67,7 @@ export class ScribeLambda extends SequencedLambda {
         private readonly summaryReader: ISummaryReader,
         private readonly checkpointManager: ICheckpointManager,
         scribe: IScribe,
-        private readonly producer: IProducer,
+        private readonly producer: IProducer | undefined,
         private protocolHandler: ProtocolOpHandler,
         private term: number,
         private protocolHead: number,
@@ -192,11 +192,11 @@ export class ScribeLambda extends SequencedLambda {
                                     await this.sendSummaryConfirmationMessage(operation.sequenceNumber, false);
                                     this.protocolHead = this.protocolHandler.sequenceNumber;
                                     this.context.log.info(
-                                    `Client summary success @${value.operation.sequenceNumber}`, { messageMetaData });
+                                        `Client summary success @${value.operation.sequenceNumber}`, { messageMetaData });
                                 } else {
                                     await this.sendSummaryNack(summaryResponse.message as ISummaryNack);
                                     this.context.log.error(
-                                    `Client summary failure @${value.operation.sequenceNumber}`, { messageMetaData });
+                                        `Client summary failure @${value.operation.sequenceNumber}`, { messageMetaData });
                                     this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                                 }
                             }
@@ -300,10 +300,10 @@ export class ScribeLambda extends SequencedLambda {
                 }
             } catch (error) {
                 this.context.log.error(`Protocol error ${error}`,
-                {
-                    documentId: this.documentId,
-                    tenantId: this.tenantId,
-                });
+                    {
+                        documentId: this.documentId,
+                        tenantId: this.tenantId,
+                    });
             }
         }
     }
@@ -427,6 +427,10 @@ export class ScribeLambda extends SequencedLambda {
             timestamp: Date.now(),
             type: RawOperationType,
         };
+
+        if (!this.producer) {
+            throw new Error("Invalid producer");
+        }
 
         return this.producer.send(
             [message],
