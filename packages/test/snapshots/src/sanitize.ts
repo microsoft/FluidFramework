@@ -118,6 +118,9 @@ function fixSnapshotEntries(entries: any) {
     }
 
     entries.forEach((element) => {
+        if (element.value?.entries) {
+            fixSnapshotEntries(element.value.entries);
+        }
         if (element.value?.contents) {
             try {
                 let data = JSON.parse(element.value.contents);
@@ -158,9 +161,6 @@ function fixContents(messageContents: any) {
         } else if (typeof contents.seg === "string") {
             contents.seg = replaceText(contents.seg);
         }
-        if (typeof contents.props === "object") {
-            contents.props = replaceObject(contents.props);
-        }
     }
 
     // Map op-specific fields
@@ -169,11 +169,11 @@ function fixContents(messageContents: any) {
     }
 
     // Everything else under contents.contents.content.contents
-    if (contents.value) {
-        replaceObject(contents.value);
+    if (typeof contents.value === "object") {
+        contents.value = replaceObject(contents.value);
     }
 
-    if (contents.props) {
+    if (typeof contents.props === "object") {
         contents.props = replaceObject(contents.props);
     }
 }
