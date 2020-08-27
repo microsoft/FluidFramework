@@ -188,7 +188,6 @@ describe("Odsp Error", () => {
             assert.notEqual(error.message.indexOf("TestMessage"), -1,
                 "message should contain original message");
             assert.equal(error.canRetry, false, "canRetry should be false");
-            assert.equal(error.statusCode, 401, "status code should be 401");
             assert.equal(
                 error.claims,
                 "{\"access_token\":{\"nbf\":{\"essential\":true, \"value\":\"1597959090\"}}}",
