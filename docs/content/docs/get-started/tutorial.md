@@ -124,7 +124,7 @@ And that's it -- our DiceRoller data object is done!
 ### The container code
 
 Our container code will define the contents of our container and how we'll access them -- in our case, just a single
-DiceRoller. We can accomplish this using a [containerRuntimeFactoryWithDefaultDataStore](/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md) -- this will create a
+DiceRoller. We can accomplish this using a [ContainerRuntimeFactoryWithDefaultDataStore](/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md) -- this will create a
 single DiceRoller and make it available to be retrieved from the container. We'll provide it with the name of the
 default data object and a mapping of the name to factory.
 
