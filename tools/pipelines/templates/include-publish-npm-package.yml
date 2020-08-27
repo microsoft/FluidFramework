@@ -57,7 +57,7 @@ stages:
             displayName: npm ci
             inputs:
               command: 'custom'
-              customCommand: 'ci --ignore-scripts'
+              customCommand: 'ci --unsafe-perm'
               customRegistry: 'useNpmrc'
           - task: Bash@3
             displayName: Tag Release

@@ -27,7 +27,6 @@ trigger:
     include:
     - main
     - release/*
-    - refs/tags/eslint-config-fluid_v*
   paths:
     include:
     - common/build/eslint-config-fluid
