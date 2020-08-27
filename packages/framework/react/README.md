@@ -1,11 +1,11 @@
 # @fluidframework/react
 
-The Fluid Framework's React package enables React developers to quickly start building large, scalable React apps with synced views powered by Fluid data. It does this by providing a `SyncedDataObject`, Fluid React hooks and a base view class for building React views that use synced states provided by Fluid. 
+The Fluid Framework's React package enables React developers to quickly start building large, scalable React apps with synced views powered by Fluid data. It does this by providing a `SyncedDataObject`, Fluid React hooks and a base view class for building React views that use synced states provided by Fluid.
 
 Examples on how to use all of the different tools in this package can be found in the [clicker-react](../../../examples/data-objects/clicker-react) and [`likes-and-comments`](../../../examples/data-objects/likes-and-comments) folders under `./examples/data-object/` from the Fluid Framework repo root.
 
 A good general order of operations to follow when writing a `SyncedDataObject` implementation is the following:
-1. Define the DDSes needed in the `SyncedDataObject`constructor. This can be done using the `setXConfig` functions.
+1. Define the DDSes needed in the `SyncedDataObject`constructor. This can be done using the `set*Config` functions.
 2. Fill in the `render(element: HTMLElement)` function with a call to `ReactDOM.render` and pass in a React view.
 3. Build out the React view either using the `FluidReactView` class or as a functional view using the various hooks that are available.
 
@@ -64,7 +64,7 @@ export class LikesAndComments extends SyncedDataObject {
 
 ## syncedObject Hooks
 
-The [synced Objects folder](./src/syncedObjects) contains a collection of setSyncedXConfig helper function and useSyncedX hook pairings. These functions allow you to easily start using the DDSes that were prepared in the `syncedDataObject`. Since these are all wrappers around the `React.useState` hook, with added syncing functionality, simply calling these functions using regular React hook rules will automatically convert the function into a React functional view.
+The [synced Objects folder](./src/syncedObjects) contains a collection of setSynced*Config helper function and useSynced* hook pairings. These functions allow you to easily start using the DDSes that were prepared in the `syncedDataObject`. Since these are all wrappers around the `React.useState` hook, with added syncing functionality, simply calling these functions using regular React hook rules will automatically convert the function into a React functional view.
 
 Each of these helper & hook pairings take a Fluid DDS and binds them to the `syncedDataObject` under the unique `syncedStateId`. This ensures that any changes that happen on these DDSes see synced updates show up live on all connected React views.
 
@@ -88,7 +88,7 @@ This example provides the view for the `syncedDataObject` in the example above.
 function LikesAndCommentsView(
     props: ILikesAndCommentsViewProps,
 ) {
-    // Use the synced states that were prepared on our syncedDataObject above using the setSyncedXConfig helper functions. Note that the useSyncedX function and the ID passed in correspond to the how the config was set above. These values are guaranteed to be available in the view
+    // Use the synced states that were prepared on our syncedDataObject above using the setSynced*Config helper functions. Note that the useSynced* function and the ID passed in correspond to the how the config was set above. These values are guaranteed to be available in the view
     const [likes, likesReducer] = useSyncedCounter(props.syncedDataObject, "likes");
     const [comments, commentReducer] = useSyncedArray<IComment>(props.syncedDataObject, "comments");
     const [imgUrl, setImgUrl] = useSyncedString(props.syncedDataObject,"imgUrl");
@@ -275,7 +275,7 @@ If we wanted to access our second counter, we can simply do `this.state.counter2
 
 This is analogous to the React view but as a functional hook. Users can similarly use the returned setState callback to perform synced updates to both their local and synced states.
 
-Some of the `useSyncedX` hooks that we discussed above use this underlying call to power their DDS-specifc behavior. It can also be used directly.
+Some of the `useSynced*` hooks that we discussed above use this underlying call to power their DDS-specifc behavior. It can also be used directly.
 
 ## useReducerFluid
 
