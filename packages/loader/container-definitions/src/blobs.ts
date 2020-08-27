@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Buffer } from "buffer";
-
 export interface IBlobManager {
     // Rehydrate a blob manager from a snapshot
     loadBlobMetadata(blobs: IGenericBlob[]): void;
@@ -32,7 +30,7 @@ export interface IBlobManager {
 export type IGenericBlob = IDataBlob | IImageBlob | IVideoBlob;
 
 export interface IBaseBlob {
-    content: Buffer;
+    content: Uint8Array;
     id: string;
     size: number;
     fileName: string;

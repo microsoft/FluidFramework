@@ -16,7 +16,7 @@ const myMap = SharedMap.create(this.runtime, id);
 
 ### Usage
 
-Unlike the JavaScript `Map`, a `SharedMap`'s keys must be strings. The value must only be plain JS objects or handles (e.g. to another DDS or component).
+Unlike the JavaScript `Map`, a `SharedMap`'s keys must be strings. The value must only be plain JS objects or handles (e.g. to another DDS or Fluid objects).
 
 In collaborative scenarios, the value is settled with a policy of _last write wins_.
 

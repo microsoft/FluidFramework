@@ -1,0 +1,116 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# build-docs pipeline
+# This pipeline builds the main branch docs each time the client packages are built
+
+name: $(Build.BuildId)
+
+variables:
+  - group: doc-versions
+  - group: storage-vars
+  - name: repoToTrigger
+    value: microsoft/FluidFramework
+  - name: latestPipeline
+    value: ${{ or(
+      eq(variables['Build.SourceBranchName'], 'main'),
+      eq(variables['Build.SourceBranchName'], 'pl-test')
+      )}}
+  - name: n1Branch
+    value: ${{ join('/refs/heads/release/', variables['N1_BRANCH']) }}
+  - name: n1Pipeline
+    value: ${{ eq(variables['Build.SourceBranchName'], variables['N1_BRANCH']) }}
+  - name: releasePipeline
+    value: ${{ eq(variables['Build.SourceBranchName'], variables['RELEASE_BRANCH']) }}
+  - name: validRun
+    value: ${{ or(variables.releasePipeline, variables.n1Pipeline, variables.latestPipeline) }}
+
+# no branch and PR triggers
+trigger:
+  branches:
+    include:
+    - master
+    - release/*
+    - main
+pr: none
+
+resources:
+  pipelines:
+  - pipeline: common_definitions
+    source: Build - common-definitions
+  - pipeline: common_utils
+    source: Build - common-utils
+  - pipeline: client
+    source: Build - client packages
+    trigger:
+      branches:
+        include:
+        - main
+        - docs/hugo
+        - pl-test
+  - pipeline: server
+    source: server-routerlicious
+
+stages:
+- stage: check
+  displayName: Checks
+  pool: Lite
+  jobs:
+  - job:
+    displayName: Component Detection
+    steps:
+    - script: |
+        echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
+        echo BASE_URL: $(BASE_URL)
+        echo RELEASE_VERSION: $(RELEASE_VERSION)
+        echo MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
+        echo N1_VERSION: $(N1_VERSION)
+        echo releasePipeline ${{ variables.releasePipeline }}
+        echo latestPipeline ${{ variables.latestPipeline }}
+        echo n1Pipeline ${{ variables.n1Pipeline }}
+        echo repoToTrigger ${{ variables.repoToTrigger }}
+      displayName: 'Show Variables'
+    - task: ComponentGovernanceComponentDetection@0
+      displayName: Component Detection
+      inputs:
+        sourceScanPath: docs
+        verbosity: Verbose
+        scanType: Register
+        alertWarningLevel: High
+
+- stage: json
+  displayName: 'API Extractor'
+  pool: Main
+  jobs:
+    - deployment: upload_json
+      displayName: 'Upload JSON'
+      environment: 'fluid-docs-env'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - template: templates/upload-json-steps.yml
+              parameters:
+                STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+                STORAGE_KEY: $(STORAGE_KEY)
+                uploadAsLatest: true
+
+- stage: github_actions
+  displayName: GitHub Action
+  pool: server
+  dependsOn: json
+  jobs:
+    - job: trigger_github_action
+      displayName: 'Trigger repository_dispatch'
+      steps:
+      - task: InvokeRESTAPI@1
+        inputs:
+          connectionType: 'connectedServiceName' # Options: connectedServiceName, connectedServiceNameARM
+          serviceConnection: 'GitHub Actions' # Required when connectionType == ConnectedServiceName
+          #azureServiceConnection: # Required when connectionType == ConnectedServiceNameARM
+          method: 'POST' # Options: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, PATCH
+          headers: '{"Accept": "application/vnd.github.v3+json"}'
+          body: '{"event_type": "Docs build for SHA $(Build.SourceVersion)"}' # Required when method != GET && Method != HEAD
+          urlSuffix: 'repos/$(repoToTrigger)/dispatches' # Optional
+          waitForCompletion: 'false' # Options: true, false
+          #successCriteria: # Optional

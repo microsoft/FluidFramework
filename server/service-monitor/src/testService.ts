@@ -25,7 +25,7 @@ interface ILoadParams {
     user: string;
     waitMSec: number;
     docId: string;
-    component: {
+    dataStore: {
         load: boolean,
         packageName: string,
         installPath: string,
@@ -46,7 +46,7 @@ async function waitForFullConnection(container: Container): Promise<void> {
     }
 }
 
-// Initializes the component.
+// Initializes the data store.
 async function initializeChaincode(container: Container, pkg?: IFluidCodeDetails): Promise<void> {
     if (pkg === undefined) {
         return;
@@ -67,10 +67,10 @@ async function runInternal(loader: Loader, docUrl: string, params: ILoadParams):
     winston.info(`Resolved ${docUrl}`);
     await waitForFullConnection(container);
     winston.info(`Fully connected to ${docUrl}`);
-    if (params.component.load) {
+    if (params.dataStore.load) {
         const codePackage: IFluidCodeDetails = {
             config: undefined,
-            package: params.component.packageName,
+            package: params.dataStore.packageName,
         };
         await initializeChaincode(container, codePackage);
         winston.info(`Proposed code`);
@@ -143,8 +143,8 @@ export async function testFluidService(config: Provider): Promise<void> {
         resolver,
         new RouterliciousDocumentServiceFactory(),
         new NodeCodeLoader(
-            params.component.installPath,
-            params.component.timeoutMS,
+            params.dataStore.installPath,
+            params.dataStore.timeoutMS,
             new NodeAllowList()),
         config,
         {},

@@ -1,0 +1,94 @@
+name: 'Azure Static Web App (agreeable-hill)'
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+    paths:
+    - 'docs/**'
+  repository_dispatch:
+    # all types
+  workflow_dispatch:
+    # all types
+
+jobs:
+  build_and_deploy_job:
+    name: Azure Static Web App
+    if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: false
+
+      - name: Download JSON by SHA
+        id: download-sha-json
+        continue-on-error: true
+        uses: carlosperate/download-file-action@v1.0.3
+        with:
+          file-url: https://fluidframework.blob.core.windows.net/api-extractor-json/${{ github.sha }}.tar.gz
+          file-name: api-extractor.tar.gz
+      - name: "Download latest JSON (only if previous step fails)"
+        id: download-latest-json
+        if: steps.download-sha-json.outcome != 'success'
+        uses: carlosperate/download-file-action@v1.0.3
+        with:
+          file-url: https://fluidframework.blob.core.windows.net/api-extractor-json/latest.tar.gz
+          file-name: api-extractor.tar.gz
+      - name: Extract api-extractor JSON
+        id: extract-json
+        run: |
+          mkdir -pv $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/
+          tar -C $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/ -zxvf api-extractor.tar.gz
+
+      - name: Download Storybook by SHA
+        id: download-sha-storybook
+        continue-on-error: true
+        uses: carlosperate/download-file-action@v1.0.3
+        with:
+          file-url: https://fluidframework.blob.core.windows.net/storybook/${{ github.sha }}.tar.gz
+          file-name: storybook.tar.gz
+      - name: "Download latest Storybook (only if previous step fails)"
+        id: download-latest-storybook
+        if: steps.download-sha-storybook.outcome != 'success'
+        uses: carlosperate/download-file-action@v1.0.3
+        with:
+          file-url: https://fluidframework.blob.core.windows.net/storybook/latest.tar.gz
+          file-name: storybook.tar.gz
+      - name: Extract Storybook
+        id: extract-storybook
+        run: |
+          mkdir -pv $GITHUB_WORKSPACE/docs/static/storybook/
+          tar -C $GITHUB_WORKSPACE/docs/static/storybook/ -zxvf storybook.tar.gz
+
+      - name: Hugo Build And Deploy
+        id: builddeploy
+        uses: Azure/static-web-apps-deploy@v0.0.1-preview
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AGREEABLE_HILL_0EEFF5B10 }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
+          action: "upload"
+          app_build_command: |
+            # npm install is run automatically
+            npm run build # converts JSON to Markdown
+            hugo
+          ###### Repository/Build Configurations - These values can be configured to match you app requirements. ######
+          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
+          app_location: "/docs" # App source code path
+          # api_location: "api" # Api source code path - optional
+          app_artifact_location: "public" # Built app content directory - optional
+          ###### End of Repository/Build Configurations ######
+
+  close_pull_request_job:
+    name: Close PR Job
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close PR
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v0.0.1-preview
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AGREEABLE_HILL_0EEFF5B10 }}
+          action: "close"

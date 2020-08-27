@@ -5,20 +5,20 @@
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideComponentUserInformation>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideFluidUserInformation>> { }
 }
 
-export const IComponentUserInformation: keyof IProvideComponentUserInformation = "IComponentUserInformation";
+export const IFluidUserInformation: keyof IProvideFluidUserInformation = "IFluidUserInformation";
 
-export interface IProvideComponentUserInformation {
-    readonly IComponentUserInformation: IComponentUserInformation;
+export interface IProvideFluidUserInformation {
+    readonly IFluidUserInformation: IFluidUserInformation;
 }
 
 /**
- * A component that implements a collection of components.  Typically, the
- * components in the collection would be like-typed.
+ * A Fluid object that implements a collection of Fluid objects.  Typically, the
+ * Fluid objects in the collection would be like-typed.
  */
-export interface IComponentUserInformation extends IProvideComponentUserInformation {
+export interface IFluidUserInformation extends IProvideFluidUserInformation {
     readonly userCount: number;
     readonly getUsers: () => string[];
     on(event: "membersChanged", listener: () => void): this;

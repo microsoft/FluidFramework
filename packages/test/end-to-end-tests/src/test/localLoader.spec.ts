@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { DataObject, DataObjectFactory, ISharedComponentProps } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
@@ -16,25 +16,25 @@ import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidf
 import {
     createLocalLoader,
     OpProcessingController,
-    ITestFluidComponent,
+    ITestFluidObject,
     initializeLocalContainer,
-    TestFluidComponentFactory,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 const counterKey = "count";
 
 /**
- * Implementation of counter component for testing.
+ * Implementation of counter dataStore for testing.
  */
-export class TestComponent extends DataObject {
-    public static readonly type = "@fluid-example/test-component";
+export class TestDataStore extends DataObject {
+    public static readonly type = "@fluid-example/test-dataStore";
 
-    public static getFactory() { return TestComponent.factory; }
+    public static getFactory() { return TestDataStore.factory; }
 
     private static readonly factory = new DataObjectFactory(
-        TestComponent.type,
-        TestComponent,
+        TestDataStore.type,
+        TestDataStore,
         [],
         {},
     );
@@ -47,7 +47,7 @@ export class TestComponent extends DataObject {
 
     public runtime: IFluidDataStoreRuntime;
 
-    public constructor(props: ISharedComponentProps) {
+    public constructor(props: IDataObjectProps) {
         super(props);
         this.runtime = props.runtime;
     }
@@ -75,9 +75,9 @@ export class TestComponent extends DataObject {
     }
 }
 
-const testComponentFactory = new DataObjectFactory(
-    TestComponent.type,
-    TestComponent,
+const testDataStoreFactory = new DataObjectFactory(
+    TestDataStore.type,
+    TestDataStore,
     [
         SharedCounter.getFactory(),
         SharedString.getFactory(),
@@ -100,17 +100,17 @@ describe("LocalLoader", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    describe("1 component", () => {
-        let component: TestComponent;
+    describe("1 dataStore", () => {
+        let dataStore: TestDataStore;
 
         beforeEach(async () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
-            const container = await createContainer(testComponentFactory);
-            component = await requestFluidObject<TestComponent>(container, "default");
+            const container = await createContainer(testDataStoreFactory);
+            dataStore = await requestFluidObject<TestDataStore>(container, "default");
         });
 
         it("opened", async () => {
-            assert(component instanceof TestComponent, "requestFluidObject() must return the expected component type.");
+            assert(dataStore instanceof TestDataStore, "requestFluidObject() must return the expected dataStore type.");
         });
 
         afterEach(async () => {
@@ -118,7 +118,7 @@ describe("LocalLoader", () => {
         });
     });
 
-    describe("2 components", () => {
+    describe("2 dataStores", () => {
         beforeEach(async () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
             opProcessingController = new OpProcessingController(deltaConnectionServer);
@@ -129,58 +129,58 @@ describe("LocalLoader", () => {
         });
 
         it("early open / late close", async () => {
-            // Create/open both instance of TestComponent before applying ops.
-            const container1 = await createContainer(testComponentFactory);
-            const component1 = await requestFluidObject<TestComponent>(container1, "default");
+            // Create/open both instance of TestDataStore before applying ops.
+            const container1 = await createContainer(testDataStoreFactory);
+            const dataStore1 = await requestFluidObject<TestDataStore>(container1, "default");
 
-            const container2 = await createContainer(testComponentFactory);
-            const component2 = await requestFluidObject<TestComponent>(container2, "default");
+            const container2 = await createContainer(testDataStoreFactory);
+            const dataStore2 = await requestFluidObject<TestDataStore>(container2, "default");
 
-            assert(component1 !== component2, "Each container must return a separate TestComponent instance.");
+            assert(dataStore1 !== dataStore2, "Each container must return a separate TestDataStore instance.");
 
             opProcessingController.addDeltaManagers(
-                component1.runtime.deltaManager,
-                component2.runtime.deltaManager);
+                dataStore1.runtime.deltaManager,
+                dataStore2.runtime.deltaManager);
 
-            component1.increment();
-            assert.equal(component1.value, 1, "Local update by 'component1' must be promptly observable");
-
-            await opProcessingController.process();
-            assert.equal(
-                component2.value, 1, "Remote update by 'component1' must be observable to 'component2' after sync.");
-
-            component2.increment();
-            assert.equal(component2.value, 2, "Local update by 'component2' must be promptly observable");
+            dataStore1.increment();
+            assert.equal(dataStore1.value, 1, "Local update by 'dataStore1' must be promptly observable");
 
             await opProcessingController.process();
             assert.equal(
-                component1.value, 2, "Remote update by 'component2' must be observable to 'component1' after sync.");
+                dataStore2.value, 1, "Remote update by 'dataStore1' must be observable to 'dataStore2' after sync.");
+
+            dataStore2.increment();
+            assert.equal(dataStore2.value, 2, "Local update by 'dataStore2' must be promptly observable");
+
+            await opProcessingController.process();
+            assert.equal(
+                dataStore1.value, 2, "Remote update by 'dataStore2' must be observable to 'dataStore1' after sync.");
 
             await deltaConnectionServer.webSocketServer.close();
         });
 
         it("late open / early close", async () => {
-            const container1 = await createContainer(testComponentFactory);
-            const component1 = await requestFluidObject<TestComponent>(container1, "default");
+            const container1 = await createContainer(testDataStoreFactory);
+            const dataStore1 = await requestFluidObject<TestDataStore>(container1, "default");
 
-            component1.increment();
-            assert.equal(component1.value, 1, "Local update by 'component1' must be promptly observable");
+            dataStore1.increment();
+            assert.equal(dataStore1.value, 1, "Local update by 'dataStore1' must be promptly observable");
 
-            // Wait until ops are pending before opening second TestComponent instance.
-            const container2 = await createContainer(testComponentFactory);
-            const component2 = await requestFluidObject<TestComponent>(container2, "default");
-            assert(component1 !== component2, "Each container must return a separate TestComponent instance.");
+            // Wait until ops are pending before opening second TestDataStore instance.
+            const container2 = await createContainer(testDataStoreFactory);
+            const dataStore2 = await requestFluidObject<TestDataStore>(container2, "default");
+            assert(dataStore1 !== dataStore2, "Each container must return a separate TestDataStore instance.");
 
             opProcessingController.addDeltaManagers(
-                component1.runtime.deltaManager,
-                component2.runtime.deltaManager);
+                dataStore1.runtime.deltaManager,
+                dataStore2.runtime.deltaManager);
 
             await opProcessingController.process();
             assert.equal(
-                component2.value, 1, "Remote update by 'component1' must be observable to 'component2' after sync.");
+                dataStore2.value, 1, "Remote update by 'dataStore1' must be observable to 'dataStore2' after sync.");
 
-            component2.increment();
-            assert.equal(component2.value, 2, "Local update by 'component2' must be promptly observable");
+            dataStore2.increment();
+            assert.equal(dataStore2.value, 2, "Local update by 'dataStore2' must be promptly observable");
 
             await opProcessingController.process();
 
@@ -188,7 +188,7 @@ describe("LocalLoader", () => {
             await deltaConnectionServer.webSocketServer.close();
 
             assert.equal(
-                component1.value, 2, "Remote update by 'component2' must be observable to 'component1' after sync.");
+                dataStore1.value, 2, "Remote update by 'dataStore2' must be observable to 'dataStore1' after sync.");
         });
     });
 
@@ -199,14 +199,14 @@ describe("LocalLoader", () => {
             beforeEach(async () => {
                 deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-                const factory = new TestFluidComponentFactory([["text", SharedString.getFactory()]]);
+                const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
                 const container = await createContainer(factory);
-                const component = await requestFluidObject<ITestFluidComponent>(container, "default");
-                text = await component.getSharedObject("text");
+                const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+                text = await dataStore.getSharedObject("text");
             });
 
             it("opened", async () => {
-                assert(text instanceof SharedString, "createType() must return the expected component type.");
+                assert(text instanceof SharedString, "createType() must return the expected dataStore type.");
             });
 
             afterEach(async () => {
@@ -215,8 +215,8 @@ describe("LocalLoader", () => {
         });
 
         describe("2 data types", () => {
-            let component1: ITestFluidComponent;
-            let component2: ITestFluidComponent;
+            let dataStore1: ITestFluidObject;
+            let dataStore2: ITestFluidObject;
             let text1: SharedString;
             let text2: SharedString;
 
@@ -224,31 +224,31 @@ describe("LocalLoader", () => {
                 deltaConnectionServer = LocalDeltaConnectionServer.create();
                 opProcessingController = new OpProcessingController(deltaConnectionServer);
 
-                const factory = new TestFluidComponentFactory([["text", SharedString.getFactory()]]);
+                const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 
                 const container1 = await createContainer(factory);
-                component1 = await requestFluidObject<ITestFluidComponent>(container1, "default");
-                text1 = await component1.getSharedObject<SharedString>("text");
+                dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+                text1 = await dataStore1.getSharedObject<SharedString>("text");
 
                 const container2 = await createContainer(factory);
-                component2 = await requestFluidObject<ITestFluidComponent>(container2, "default");
-                text2 = await component2.getSharedObject<SharedString>("text");
+                dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+                text2 = await dataStore2.getSharedObject<SharedString>("text");
 
                 opProcessingController.addDeltaManagers(
-                    component1.runtime.deltaManager,
-                    component2.runtime.deltaManager);
+                    dataStore1.runtime.deltaManager,
+                    dataStore2.runtime.deltaManager);
             });
 
             it("edits propagate", async () => {
-                assert.strictEqual(text1.getLength(), 0, "The SharedString in component1 is not empty.");
-                assert.strictEqual(text2.getLength(), 0, "The SharedString in component2 is not empty.");
+                assert.strictEqual(text1.getLength(), 0, "The SharedString in dataStore1 is not empty.");
+                assert.strictEqual(text2.getLength(), 0, "The SharedString in dataStore2 is not empty.");
 
                 text1.insertText(0, "1");
                 text2.insertText(0, "2");
                 await opProcessingController.process();
 
-                assert.strictEqual(text1.getLength(), 2, "The SharedString in component1 is has incorrect length.");
-                assert.strictEqual(text2.getLength(), 2, "The SharedString in component2 is has incorrect length.");
+                assert.strictEqual(text1.getLength(), 2, "The SharedString in dataStore1 is has incorrect length.");
+                assert.strictEqual(text2.getLength(), 2, "The SharedString in dataStore2 is has incorrect length.");
             });
 
             afterEach(async () => {
@@ -256,47 +256,47 @@ describe("LocalLoader", () => {
             });
         });
 
-        describe("Controlling component coauth via OpProcessingController", () => {
-            let component1: TestComponent;
-            let component2: TestComponent;
+        describe("Controlling dataStore coauth via OpProcessingController", () => {
+            let dataStore1: TestDataStore;
+            let dataStore2: TestDataStore;
 
             beforeEach(async () => {
                 deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-                const container1 = await createContainer(testComponentFactory);
-                component1 = await requestFluidObject<TestComponent>(container1, "default");
+                const container1 = await createContainer(testDataStoreFactory);
+                dataStore1 = await requestFluidObject<TestDataStore>(container1, "default");
 
-                const container2 = await createContainer(testComponentFactory);
-                component2 = await requestFluidObject<TestComponent>(container2, "default");
+                const container2 = await createContainer(testDataStoreFactory);
+                dataStore2 = await requestFluidObject<TestDataStore>(container2, "default");
             });
 
             it("Controlled inbounds and outbounds", async () => {
                 opProcessingController = new OpProcessingController(deltaConnectionServer);
                 opProcessingController.addDeltaManagers(
-                    component1.runtime.deltaManager,
-                    component2.runtime.deltaManager);
+                    dataStore1.runtime.deltaManager,
+                    dataStore2.runtime.deltaManager);
 
                 await opProcessingController.pauseProcessing();
 
-                component1.increment();
-                assert.equal(component1.value, 1, "Expected user1 to see the local increment");
-                assert.equal(component2.value, 0,
+                dataStore1.increment();
+                assert.equal(dataStore1.value, 1, "Expected user1 to see the local increment");
+                assert.equal(dataStore2.value, 0,
                     "Expected user 2 NOT to see the increment due to pauseProcessing call");
-                await opProcessingController.processOutgoing(component1.runtime.deltaManager);
-                assert.equal(component2.value, 0,
+                await opProcessingController.processOutgoing(dataStore1.runtime.deltaManager);
+                assert.equal(dataStore2.value, 0,
                     "Expected user 2 NOT to see the increment due to no processIncoming call yet");
-                await opProcessingController.processIncoming(component2.runtime.deltaManager);
-                assert.equal(component2.value, 1, "Expected user 2 to see the increment now");
+                await opProcessingController.processIncoming(dataStore2.runtime.deltaManager);
+                assert.equal(dataStore2.value, 1, "Expected user 2 to see the increment now");
 
-                component2.increment();
-                assert.equal(component2.value, 2, "Expected user 2 to see the local increment");
-                assert.equal(component1.value, 1,
+                dataStore2.increment();
+                assert.equal(dataStore2.value, 2, "Expected user 2 to see the local increment");
+                assert.equal(dataStore1.value, 1,
                     "Expected user 1 NOT to see the increment due to pauseProcessing call");
-                await opProcessingController.processOutgoing(component2.runtime.deltaManager);
-                assert.equal(component1.value, 1,
+                await opProcessingController.processOutgoing(dataStore2.runtime.deltaManager);
+                assert.equal(dataStore1.value, 1,
                     "Expected user 1 NOT to see the increment due to no processIncoming call yet");
-                await opProcessingController.processIncoming(component1.runtime.deltaManager);
-                assert.equal(component1.value, 2, "Expected user 1 to see the increment now");
+                await opProcessingController.processIncoming(dataStore1.runtime.deltaManager);
+                assert.equal(dataStore1.value, 2, "Expected user 1 to see the increment now");
             });
 
             afterEach(async () => {

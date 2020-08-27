@@ -25,29 +25,36 @@ parameters:
   type: string
   default: /home/node/server
 
+- name: buildNumberInPatch
+  type: string
+  default: true
+
+- name: setVersion
+  type: boolean
+  default: true
+
 trigger: none
 
 variables:
-  skipComponentGovernanceDetection: true
-  pushImage: ${{
-    and(
-      ne(variables['Build.Reason'], 'PullRequest'),
-      eq(variables['Build.SourceBranch'], 'refs/heads/master')
-    )}}
-  generateNotice: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
-  registry: prague.azurecr.io
-  baseContainerTag: ${{ parameters.containerName }}:$(Build.BuildId)
-  ${{ if eq(variables.pushImage, false) }}:
-    containerRegistry:
-    containerTag: $(baseContainerTag)
-  ${{ if eq(variables.pushImage, true) }}:
-    containerRegistry: Fluid Azure Container Registry
-    containerTag: $(registry)/$(baseContainerTag)
+- template: include-vars.yml
+- group: container-registry-info
+- name: baseContainerTag
+  value: ${{ parameters.containerName }}:$(Build.BuildNumber)
+- ${{ if eq(variables.pushImage, false) }}:
+  - name: containerRegistry
+    value:
+  - name: containerTag
+    value: $(baseContainerTag)
+- ${{ if eq(variables.pushImage, true) }}:
+  - name: containerRegistry
+    value: $(containerRegistryConnection)
+  - name: containerTag
+    value: $(containerRegistryUrl)/$(baseContainerTag)
 
 jobs:
   - job: build
     displayName: Build Container - ${{ parameters.containerName }}
-    pool: Shared
+    pool: Lite
     steps:
     # Setup
     - checkout: self
@@ -55,8 +62,8 @@ jobs:
       lfs: false
       submodules: false
 
-    # Component detection (not pull request)
-    - ${{ if eq(variables.generateNotice, true) }}:
+    # Component detection
+    - ${{ if eq(variables.componentDetection, true) }}:
       - template: include-generate-notice-steps.yml
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
@@ -75,6 +82,18 @@ jobs:
         displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/.npmrc'
         inputs:
           workingFile: ${{ parameters.buildDirectory }}/.npmrc
+          customEndpoint: Offnet Packages
+
+    # Set version
+    - ${{ if eq(parameters.setVersion, true) }}:
+      - task: UseNode@1
+        displayName: Use Node 12.x
+        inputs:
+          version: 12.x
+      - template: include-set-package-version.yml
+        parameters:
+          buildDirectory: ${{ parameters.buildDirectory }}
+          buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 
     # Build
     - task: Docker@2
@@ -86,7 +105,7 @@ jobs:
         dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
         buildContext: ${{ parameters.buildDirectory }}
         tags: |
-          $(Build.BuildId)
+          $(Build.BuildNumber)
 
     # Lint
     - ${{ if eq(parameters.lint, true) }}:
@@ -125,11 +144,11 @@ jobs:
       - task: Docker@2
         displayName: Docker Push
         inputs:
-          containerRegistry: $(containerRegistry)
+          containerRegistry: $(containerRegistryConnection)
           repository: ${{ parameters.containerName }}
           command: push
           tags: |
-            $(Build.BuildId)
+            $(Build.BuildNumber)
 
     # Cleanup
     - task: Docker@0

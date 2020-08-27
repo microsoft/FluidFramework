@@ -13,7 +13,7 @@ import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import * as jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 import { NodeCodeLoader } from "./nodeCodeloader";
-import { fetchComponent, initializeChaincode } from "./component";
+import { fetchFluidObject, initializeChaincode } from "./utils";
 
 // Base service configuration.
 const ordererEndpoint = "";
@@ -24,7 +24,7 @@ const bearerSecret = "";
 
 // Code package details.
 const defaultPackage = "@fluid-example/key-value-cache@0.19.0-28557";
-const installPath = "/tmp/components";
+const installPath = "/tmp/fluid-objects";
 const timeoutMS = 60000;
 
 // Document id (randomly chosen if not specified)
@@ -96,9 +96,9 @@ export async function start(): Promise<void> {
     // Resolving the URL to its underlying Fluid document.
     const fluidDocument = await loader.resolve({ url: documentUrl });
 
-    // Fetches the underlying component.
+    // Fetches the underlying Fluid object.
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    fetchComponent(loader, fluidDocument, documentUrl);
+    fetchFluidObject(loader, fluidDocument, documentUrl);
 
     // Proposes the code package for a new document.
     if (!fluidDocument.existing) {

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
 import {
     ICollection,
@@ -56,7 +57,7 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
         }
 
         const content = await this.gitManager.getContent(existingRef.object.sha, ".protocol/attributes");
-        const attributes = JSON.parse(Buffer.from(content.content, "base64").toString()) as IDocumentAttributes;
+        const attributes = JSON.parse(fromBase64ToUtf8(content.content)) as IDocumentAttributes;
 
         return attributes.sequenceNumber;
     }

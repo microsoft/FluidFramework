@@ -5,6 +5,7 @@
  */
 
 import { strict as assert } from "assert";
+import { IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import {
     SummaryObject,
     ISummaryTree,
@@ -47,8 +48,8 @@ describe("Summary Utils", () => {
         let inputTree: ITree;
 
         beforeEach(() => {
-            const base64Content = Buffer.from("test-b64").toString("base64");
-            bufferLength = Buffer.from(base64Content, "base64").byteLength;
+            const base64Content = IsoBuffer.from("test-b64").toString("base64");
+            bufferLength = IsoBuffer.from(base64Content, "base64").byteLength;
             inputTree = {
                 id: null,
                 entries: [
@@ -87,7 +88,7 @@ describe("Summary Utils", () => {
             const subBlobUtf8 = assertSummaryBlob(subTree.tree.bu8);
             assert.strictEqual(subBlobUtf8.content, "test-u8");
             const subBlobBase64 = assertSummaryBlob(subTree.tree.b64);
-            assert.strictEqual(subBlobBase64.content.toString("utf-8"), "test-b64");
+            assert.strictEqual(Uint8ArrayToString(subBlobBase64.content as Uint8Array), "test-b64");
         });
 
         it("Should convert correctly with fullTree enabled", () => {
@@ -108,7 +109,7 @@ describe("Summary Utils", () => {
             const subBlobUtf8 = assertSummaryBlob(subTree.tree.bu8);
             assert.strictEqual(subBlobUtf8.content, "test-u8");
             const subBlobBase64 = assertSummaryBlob(subTree.tree.b64);
-            assert.strictEqual(subBlobBase64.content.toString("utf-8"), "test-b64");
+            assert.strictEqual(Uint8ArrayToString(subBlobBase64.content as Uint8Array), "test-b64");
         });
 
         it("Should calculate summary data correctly", () => {
@@ -118,7 +119,7 @@ describe("Summary Utils", () => {
             assert.strictEqual(summaryResults.stats.handleNodeCount, 1);
             assert.strictEqual(summaryResults.stats.treeNodeCount, 2);
             assert.strictEqual(summaryResults.stats.totalBlobSize,
-                bufferLength + Buffer.byteLength("test-blob") + Buffer.byteLength("test-u8"));
+                bufferLength + IsoBuffer.from("test-blob").byteLength + IsoBuffer.from("test-u8").byteLength);
         });
     });
 });

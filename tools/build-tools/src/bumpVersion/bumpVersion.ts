@@ -22,6 +22,7 @@ function printUsage() {
         `
 Usage: fluid-bump-version <options>
 Options:
+     --branch                    Create release branch and bump the version that would be released on main branch
   -b --bump [<pkg>[=<type>]]     Bump the package version of specified package or monorepo (default: client)
   -d --dep [<pkg>[=<version>]]   Bump the dependencies version of specified package or monorepo (default: client)
   -r --release [<pkg>[=<type>]]  Release and bump version of specified package or monorepo and dependencies (default: client)
@@ -33,8 +34,8 @@ ${commonOptionString}
 type VersionBumpType = "minor" | "patch";
 type VersionChangeType = VersionBumpType | semver.SemVer;
 
-
 const paramBumpDepPackages = new Map<string, string | undefined>();
+let paramBranch = false;
 let paramPush = true;
 let paramPublishCheck = true;
 let paramReleaseName: string | undefined;
@@ -124,6 +125,11 @@ function parseOptions(argv: string[]) {
             continue;
         }
 
+        if (arg === "--branch") {
+            paramBranch = true;
+            paramClean = true;
+            break;
+        }
         if (arg === "--local") {
             paramPush = false;
             paramPublishCheck = false;
@@ -512,7 +518,7 @@ class BumpVersion {
     }
 
     /**
-     * Determine either we want to bump minor on master or patch version on release/* based on branch name
+     * Determine either we want to bump minor on main or patch version on release/* based on branch name
      */
     private async getVersionBumpKind(): Promise<VersionBumpType> {
         if (paramReleaseVersion !== undefined) {
@@ -521,10 +527,10 @@ class BumpVersion {
 
         // Determine the kind of bump
         const branchName = this.originalBranchName;
-        if (branchName !== "master" && !branchName!.startsWith("release/")) {
+        if (branchName !== "main" && !branchName!.startsWith("release/")) {
             fatal(`Unrecognized branch '${branchName}'`);
         }
-        return branchName === "master" ? "minor" : "patch";
+        return branchName === "main" ? "minor" : "patch";
     }
 
     private async collectVersionInfo(releaseName: string) {
@@ -981,6 +987,51 @@ class BumpVersion {
     }
 
     /**
+     * Create release branch based on the repo state, bump minor version immediately 
+     * and push it to `main` and the new release branch to remote
+     */
+    public async createReleaseBranch() {
+        // Create release branch based on client version
+        const releaseName = MonoRepoKind[MonoRepoKind.Client];
+        
+        const depVersions = await this.collectBumpInfo(releaseName);
+        const releaseVersion = depVersions.repoVersions.get(releaseName);
+        if (!releaseVersion) {
+            fatal(`Missing ${releaseName} packages`);
+        }
+
+        // creating the release branch and bump the version
+        const releaseBranchVersion = `${semver.major(releaseVersion)}.${semver.minor(releaseVersion)}`;
+        const releaseBranch = `release/${releaseBranchVersion}.x`;
+        console.log(`Creating release development branch ${releaseBranch}`);
+        const commit = await this.gitRepo.getShaForBranch(releaseBranch);
+        if (commit) {
+            fatal(`${releaseBranch} already exists`);
+        }
+        await this.createBranch(releaseBranch);
+        const originalCommit = await this.gitRepo.getShaForBranch(this.originalBranchName);
+        if (!originalCommit) {
+            fatal(`Unable to get commit for branch ${this.originalBranchName}`);
+        }
+        await this.gitRepo.switchBranch(originalCommit);
+
+        // Make sure everything is installed (so that we can do build:genver)
+        if (!await this.repo.install()) {
+            fatal("Install failed");
+        }
+
+        // Bump the version
+        console.log(`Bumping minor version for development`)
+        console.log(await this.bumpCurrentBranch("minor", releaseName, depVersions));
+
+        // Push to main remote
+        await this.gitRepo.pushBranch(this.remote, "HEAD", "main");
+
+        // Push the release branch to remote
+        await this.gitRepo.pushBranch(this.remote, releaseBranch, releaseBranch);
+    }
+
+    /**
      * Bump package version of the client monorepo
      * If it has dependencies to the current version of the other monorepo packages, bump package version of those too
      *
@@ -1010,7 +1061,7 @@ class BumpVersion {
         }
         let releaseBranch: string;
         if (versionBump !== "patch") {
-            // This is master, we need to creating the release branch and bump the version
+            // This is main, we need to creating the release branch and bump the version
             const releaseBranchVersion = `${semver.major(releaseVersion)}.${semver.minor(releaseVersion)}`;
             releaseBranch = `release/${releaseBranchVersion}.x`;
             console.log(`Creating release development branch ${releaseBranch}`);
@@ -1239,7 +1290,21 @@ async function main() {
     const bv = new BumpVersion(gitRepo, await gitRepo.getCurrentBranchName(), remote);
 
     try {
-        if (paramBumpDepPackages.size) {
+        if (paramBranch) {
+            if (paramBumpDepPackages.size) {
+                fatal("Conflicting switches --dep and --branch");
+            }
+            if (paramReleaseName) {
+                fatal("Conflicting switches --release and --branch");
+            }
+            if (paramVersionName) {
+                fatal("Conflicting switches --version and --branch");
+            }
+            if (paramBumpName) {
+                fatal("Conflicting switches --bump and --branch");
+            }
+            await bv.createReleaseBranch();
+        } else if (paramBumpDepPackages.size) {
             if (paramReleaseName) {
                 fatal("Conflicting switches --release and --dep");
             }

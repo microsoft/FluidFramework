@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Buffer } from "buffer";
 import {
     IDocumentStorageService,
     ISummaryContext,
@@ -48,7 +47,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
         return this.internalStorageService.downloadSummary(handle);
     }
 
-    public async createBlob(file: Buffer): Promise<ICreateBlobResponse> {
+    public async createBlob(file: Uint8Array): Promise<ICreateBlobResponse> {
         return this.internalStorageService.createBlob(file);
     }
 

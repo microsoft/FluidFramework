@@ -209,7 +209,7 @@ export interface IContainerRuntimeOptions {
     initialSummarizerDelayMs?: number;
 
     // Flag to enable summarizing with new SummarizerNode strategy.
-    // Enabling this feature will allow components that fail to summarize to
+    // Enabling this feature will allow data stores that fail to summarize to
     // try to still summarize based on previous successful summary + ops since.
     // Enabled by default.
     enableSummarizerNode?: boolean;
@@ -455,6 +455,9 @@ export class ContainerRuntime extends EventEmitter
     public get IContainerRuntimeDirtyable() { return this; }
     public get IFluidRouter() { return this; }
 
+    // 0.24 back-compat attachingBeforeSummary
+    public readonly runtimeVersion = pkgVersion;
+
     /**
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -607,6 +610,8 @@ export class ContainerRuntime extends EventEmitter
         ) => CreateChildSummarizerNodeFn;
     } & ({ readonly enabled: true; readonly node: SummarizerNode } | { readonly enabled: false });
     private readonly notBoundContexts = new Set<string>();
+    // 0.24 back-compat attachingBeforeSummary
+    private readonly attachOpFiredForDataStore = new Set<string>();
 
     private tasks: string[] = [];
 
@@ -713,7 +718,7 @@ export class ContainerRuntime extends EventEmitter
                 // Must set to false to prevent sending summary handle which would be pointing to
                 // a summary with an older protocol state.
                 canReuseHandle: false,
-                // Must set to true to throw on any component failure that was too severe to be handled.
+                // Must set to true to throw on any data stores failure that was too severe to be handled.
                 // We also are not decoding the base summaries at the root.
                 throwOnFailure: true,
             },
@@ -913,15 +918,15 @@ export class ContainerRuntime extends EventEmitter
             const wait =
                 typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 
-            const component = await this.getDataStore(requestParser.pathParts[0], wait);
+            const dataStore = await this.getDataStore(requestParser.pathParts[0], wait);
             const subRequest = requestParser.createSubRequest(1);
             if (subRequest !== undefined) {
-                return component.IFluidRouter.request(subRequest);
+                return dataStore.IFluidRouter.request(subRequest);
             } else {
                 return {
                     status: 200,
                     mimeType: "fluid/object",
-                    value: component,
+                    value: dataStore,
                 };
             }
         }
@@ -1016,7 +1021,7 @@ export class ContainerRuntime extends EventEmitter
 
         if (connected) {
             // Once we are connected, all acks are accounted.
-            // If there are any pending ops, DDSs will resubmit them right away (below) and
+            // If there are any pending ops, DDSes will resubmit them right away (below) and
             // we will switch back to dirty state in such case.
             this.updateDocumentDirtyState(false);
         }
@@ -1397,10 +1402,10 @@ export class ContainerRuntime extends EventEmitter
                 assert(value.attachState !== AttachState.Attaching);
                 return value.attachState === AttachState.Attached;
             }).map(async ([key, value]) => {
-                const componentSummary = this.summarizerNode.enabled
+                const contextSummary = this.summarizerNode.enabled
                     ? await value.summarize(fullTree)
                     : convertToSummaryTree(await value.snapshot(fullTree), fullTree);
-                builder.addWithStats(key, componentSummary);
+                builder.addWithStats(key, contextSummary);
             }));
 
         this.serializeContainerBlobs(builder);
@@ -1475,13 +1480,14 @@ export class ContainerRuntime extends EventEmitter
         const context = this.getContext(fluidDataStoreRuntime.id) as LocalFluidDataStoreContext;
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
-        // clients but we do need to submit op if container forced us to do so.
+        // clients.
         if (this.attachState !== AttachState.Detached) {
             context.emit("attaching");
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(fluidDataStoreRuntime.id, message);
             this.submit(ContainerMessageType.Attach, message);
+            this.attachOpFiredForDataStore.add(fluidDataStoreRuntime.id);
         }
 
         // Resolve the deferred so other local stores can access it.
@@ -1546,11 +1552,15 @@ export class ContainerRuntime extends EventEmitter
         do {
             const builderTree = builder.summary.tree;
             notBoundContextsLength = this.notBoundContexts.size;
-            // Iterate over each component and ask it to snapshot
+            // Iterate over each data store and ask it to snapshot
             Array.from(this.contexts)
                 .filter(([key, _]) =>
-                    // Take summary of bounded components only and make sure we haven't summarized them already.
-                    !(this.notBoundContexts.has(key) || builderTree[key]),
+                    // Take summary of bounded data stores only, make sure we haven't summarized them already
+                    // and no attach op has been fired for that data store because for loader versions <= 0.24
+                    // we set attach state as "attaching" before taking createNew summary.
+                    !(this.notBoundContexts.has(key)
+                        || builderTree[key]
+                        || this.attachOpFiredForDataStore.has(key)),
                 )
                 .map(([key, value]) => {
                     const snapshot = value.generateAttachMessage().snapshot;

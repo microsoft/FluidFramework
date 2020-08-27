@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/build-common",
-  "version": "0.19.0",
+  "version": "0.19.2",
   "description": "Package containing common configs",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

@@ -5,32 +5,59 @@
 
 name: $(Build.BuildId)
 
+parameters:
+- name: publishOverride
+  displayName: Publish Override
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+- name: releaseBuildOverride
+  displayName: Release Build Override
+  type: string
+  default: default
+  values:
+    - default
+    - false
+    - true
+
 trigger:
   branches:
     include:
-    - master
+    - main
     - release/*
     - refs/tags/common-definitions_v*
   paths:
     include:
     - common/lib/common-definitions
     - tools/pipelines/build-common-definitions.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
-    - tools/pipelines/templates/publish-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
 
 pr:
   branches:
     include:
-    - master
+    - main
     - release/*
   paths:
     include:
     - common/lib/common-definitions
     - tools/pipelines/build-common-definitions.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
 
 extends:
   template: templates/build-npm-package.yml
   parameters:
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: common/lib/common-definitions
+    tagName: common-definitions
     taskTest: false

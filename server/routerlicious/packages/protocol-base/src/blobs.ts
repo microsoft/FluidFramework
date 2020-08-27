@@ -99,7 +99,7 @@ export function buildHierarchy(
  */
 export class BlobTreeEntry implements ITreeEntry {
     public readonly mode = FileMode.File;
-    public readonly type = TreeEntry[TreeEntry.Blob];
+    public readonly type = TreeEntry.Blob;
     public readonly value: IBlob;
 
     /**
@@ -118,7 +118,7 @@ export class BlobTreeEntry implements ITreeEntry {
  */
 export class CommitTreeEntry implements ITreeEntry {
     public readonly mode = FileMode.Commit;
-    public readonly type = TreeEntry[TreeEntry.Commit];
+    public readonly type = TreeEntry.Commit;
 
     /**
      * Creates a commit ITreeEntry
@@ -133,7 +133,7 @@ export class CommitTreeEntry implements ITreeEntry {
  */
 export class TreeTreeEntry implements ITreeEntry {
     public readonly mode = FileMode.Directory;
-    public readonly type = TreeEntry[TreeEntry.Tree];
+    public readonly type = TreeEntry.Tree;
 
     /**
      * Creates a tree ITreeEntry
@@ -148,7 +148,7 @@ export function addBlobToTree(tree: ITree, blobName: string, content: object) {
         {
             mode: FileMode.File,
             path: blobName,
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: JSON.stringify(content),
                 encoding: "utf-8",

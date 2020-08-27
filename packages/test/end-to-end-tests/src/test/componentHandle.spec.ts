@@ -18,13 +18,13 @@ import {
     createLocalLoader,
     OpProcessingController,
     initializeLocalContainer,
-    TestFluidComponent,
+    TestFluidObject,
 } from "@fluidframework/test-utils";
 
 /**
- * Test component that extends DataObject so that we can test the FluidOjectHandle created by PureDataObject.
+ * Test dataStore that extends DataObject so that we can test the FluidOjectHandle created by PureDataObject.
  */
-class TestSharedComponent extends DataObject {
+class TestSharedDataStore extends DataObject {
     public get _root() {
         return this.root;
     }
@@ -38,31 +38,31 @@ class TestSharedComponent extends DataObject {
     }
 }
 
-const TestSharedComponentFactory = new DataObjectFactory(
-    "TestSharedComponent",
-    TestSharedComponent,
+const TestSharedDataStoreFactory = new DataObjectFactory(
+    "TestSharedDataStore",
+    TestSharedDataStore,
     [SharedMap.getFactory()],
     []);
 
 describe("FluidOjectHandle", () => {
-    const id = "fluid-test://localhost/componentHandleTest";
+    const id = "fluid-test://localhost/dataStoreHandleTest";
     const codeDetails: IFluidCodeDetails = {
-        package: "componentHandleTestPackage",
+        package: "dataStoreHandleTestPackage",
         config: {},
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let opProcessingController: OpProcessingController;
-    let firstContainerComponent1: TestSharedComponent;
-    let firstContainerComponent2: TestSharedComponent;
-    let secondContainerComponent1: TestSharedComponent;
+    let firstContainerDataStore1: TestSharedDataStore;
+    let firstContainerDataStore2: TestSharedDataStore;
+    let secondContainerDataStore1: TestSharedDataStore;
 
-    async function requestFluidObject(componentId: string, container: Container): Promise<TestSharedComponent> {
-        const response = await container.request({ url: componentId });
+    async function requestFluidObject(dataStoreId: string, container: Container): Promise<TestSharedDataStore> {
+        const response = await container.request({ url: dataStoreId });
         if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
+            throw new Error(`DataStore with id: ${dataStoreId} not found`);
         }
-        return response.value as TestSharedComponent;
+        return response.value as TestSharedDataStore;
     }
 
     async function createContainer(): Promise<Container> {
@@ -70,8 +70,8 @@ describe("FluidOjectHandle", () => {
             new ContainerRuntimeFactoryWithDefaultDataStore(
                 "default",
                 [
-                    ["default", Promise.resolve(TestSharedComponentFactory)],
-                    ["TestSharedComponent", Promise.resolve(TestSharedComponentFactory)],
+                    ["default", Promise.resolve(TestSharedDataStoreFactory)],
+                    ["TestSharedDataStore", Promise.resolve(TestSharedDataStoreFactory)],
                 ],
             );
 
@@ -83,16 +83,16 @@ describe("FluidOjectHandle", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
         const firstContainer = await createContainer();
-        firstContainerComponent1 = await requestFluidObject("default", firstContainer);
-        firstContainerComponent2 =
-            await TestSharedComponentFactory.createInstance(firstContainerComponent1._context) as TestSharedComponent;
+        firstContainerDataStore1 = await requestFluidObject("default", firstContainer);
+        firstContainerDataStore2 =
+            await TestSharedDataStoreFactory.createInstance(firstContainerDataStore1._context) as TestSharedDataStore;
 
         const secondContainer = await createContainer();
-        secondContainerComponent1 = await requestFluidObject("default", secondContainer);
+        secondContainerDataStore1 = await requestFluidObject("default", secondContainer);
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);
         opProcessingController.addDeltaManagers(
-            firstContainerComponent1._runtime.deltaManager, secondContainerComponent1._runtime.deltaManager);
+            firstContainerDataStore1._runtime.deltaManager, secondContainerDataStore1._runtime.deltaManager);
 
         await opProcessingController.process();
     });
@@ -102,24 +102,24 @@ describe("FluidOjectHandle", () => {
         const absolutePath = "";
 
         // Verify that the local client's ContainerRuntime has the correct absolute path.
-        const containerRuntime1 = firstContainerComponent1._context.containerRuntime.IFluidHandleContext;
+        const containerRuntime1 = firstContainerDataStore1._context.containerRuntime.IFluidHandleContext;
         assert.equal(containerRuntime1.absolutePath, absolutePath, "The ContainerRuntime's path is incorrect");
 
         // Verify that the remote client's ContainerRuntime has the correct absolute path.
-        const containerRuntime2 = secondContainerComponent1._context.containerRuntime.IFluidHandleContext;
+        const containerRuntime2 = secondContainerDataStore1._context.containerRuntime.IFluidHandleContext;
         assert.equal(containerRuntime2.absolutePath, absolutePath, "The remote ContainerRuntime's path is incorrect");
     });
 
     it("should generate the absolute path for FluidDataStoreRuntime correctly", () => {
         // The expected absolute path for the FluidDataStoreRuntime.
-        const absolutePath = `/${firstContainerComponent1._runtime.id}`;
+        const absolutePath = `/${firstContainerDataStore1._runtime.id}`;
 
         // Verify that the local client's FluidDataStoreRuntime has the correct absolute path.
-        const dataStoreRuntime1 = firstContainerComponent1._runtime.IFluidHandleContext;
+        const dataStoreRuntime1 = firstContainerDataStore1._runtime.IFluidHandleContext;
         assert.equal(dataStoreRuntime1.absolutePath, absolutePath, "The FluidDataStoreRuntime's path is incorrect");
 
         // Verify that the remote client's FluidDataStoreRuntime has the correct absolute path.
-        const dataStoreRuntime2 = secondContainerComponent1._runtime.IFluidHandleContext;
+        const dataStoreRuntime2 = secondContainerDataStore1._runtime.IFluidHandleContext;
         assert.equal(
             dataStoreRuntime2.absolutePath,
             absolutePath,
@@ -127,8 +127,8 @@ describe("FluidOjectHandle", () => {
     });
 
     it("can store and retrieve a DDS from handle within same data store runtime", async () => {
-        // Create a new SharedMap in `firstContainerComponent1` and set a value.
-        const sharedMap = SharedMap.create(firstContainerComponent1._runtime);
+        // Create a new SharedMap in `firstContainerDataStore1` and set a value.
+        const sharedMap = SharedMap.create(firstContainerDataStore1._runtime);
         sharedMap.set("key1", "value1");
 
         const sharedMapHandle = sharedMap.handle;
@@ -139,13 +139,13 @@ describe("FluidOjectHandle", () => {
         // Verify that the local client's handle has the correct absolute path.
         assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");
 
-        // Add the handle to the root DDS of `firstContainerComponent1`.
-        firstContainerComponent1._root.set("sharedMap", sharedMapHandle);
+        // Add the handle to the root DDS of `firstContainerDataStore1`.
+        firstContainerDataStore1._root.set("sharedMap", sharedMapHandle);
 
         await opProcessingController.process();
 
         // Get the handle in the remote client.
-        const remoteSharedMapHandle = secondContainerComponent1._root.get<IFluidHandle<SharedMap>>("sharedMap");
+        const remoteSharedMapHandle = secondContainerDataStore1._root.get<IFluidHandle<SharedMap>>("sharedMap");
 
         // Verify that the remote client's handle has the correct absolute path.
         assert.equal(remoteSharedMapHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
@@ -157,25 +157,25 @@ describe("FluidOjectHandle", () => {
     });
 
     it("can store and retrieve a DDS from handle in different data store runtime", async () => {
-        // Create a new SharedMap in `firstContainerComponent2` and set a value.
-        const sharedMap = SharedMap.create(firstContainerComponent2._runtime);
+        // Create a new SharedMap in `firstContainerDataStore2` and set a value.
+        const sharedMap = SharedMap.create(firstContainerDataStore2._runtime);
         sharedMap.set("key1", "value1");
 
         const sharedMapHandle = sharedMap.handle;
 
         // The expected absolute path.
-        const absolutePath = `/${firstContainerComponent2._runtime.id}/${sharedMap.id}`;
+        const absolutePath = `/${firstContainerDataStore2._runtime.id}/${sharedMap.id}`;
 
         // Verify that the local client's handle has the correct absolute path.
         assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");
 
-        // Add the handle to the root DDS of `firstContainerComponent1` so that the FluidDataStoreRuntime is different.
-        firstContainerComponent1._root.set("sharedMap", sharedMap.handle);
+        // Add the handle to the root DDS of `firstContainerDataStore1` so that the FluidDataStoreRuntime is different.
+        firstContainerDataStore1._root.set("sharedMap", sharedMap.handle);
 
         await opProcessingController.process();
 
         // Get the handle in the remote client.
-        const remoteSharedMapHandle = secondContainerComponent1._root.get<IFluidHandle<SharedMap>>("sharedMap");
+        const remoteSharedMapHandle = secondContainerDataStore1._root.get<IFluidHandle<SharedMap>>("sharedMap");
 
         // Verify that the remote client's handle has the correct absolute path.
         assert.equal(remoteSharedMapHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
@@ -188,30 +188,30 @@ describe("FluidOjectHandle", () => {
 
     it("can store and retrieve a PureDataObject from handle in different data store runtime", async () => {
         // The expected absolute path.
-        const absolutePath = `/${firstContainerComponent2._runtime.id}`;
+        const absolutePath = `/${firstContainerDataStore2._runtime.id}`;
 
-        const componentHandle = firstContainerComponent2.handle;
+        const dataStoreHandle = firstContainerDataStore2.handle;
 
         // Verify that the local client's handle has the correct absolute path.
-        assert.equal(componentHandle.absolutePath, absolutePath, "The handle's absolutepath is not correct");
+        assert.equal(dataStoreHandle.absolutePath, absolutePath, "The handle's absolutepath is not correct");
 
-        // Add `firstContainerComponent2's` handle to the root DDS of `firstContainerComponent1` so that the
+        // Add `firstContainerDataStore2's` handle to the root DDS of `firstContainerDataStore1` so that the
         // FluidDataStoreRuntime is different.
-        firstContainerComponent1._root.set("component2", firstContainerComponent2.handle);
+        firstContainerDataStore1._root.set("dataStore2", firstContainerDataStore2.handle);
 
         await opProcessingController.process();
 
         // Get the handle in the remote client.
-        const remoteComponentHandle =
-            secondContainerComponent1._root.get<IFluidHandle<TestFluidComponent>>("component2");
+        const remoteDataStoreHandle =
+            secondContainerDataStore1._root.get<IFluidHandle<TestFluidObject>>("dataStore2");
 
         // Verify that the remote client's handle has the correct absolute path.
-        assert.equal(remoteComponentHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
+        assert.equal(remoteDataStoreHandle.absolutePath, absolutePath, "The remote handle's path is incorrect");
 
-        // Get the component from the handle.
-        const container2Component2 = await remoteComponentHandle.get();
-        // Verify that the `url` matches with that of the component in container1.
-        assert.equal(container2Component2.url, firstContainerComponent2.url, "The urls do not match");
+        // Get the dataStore from the handle.
+        const container2DataStore2 = await remoteDataStoreHandle.get();
+        // Verify that the `url` matches with that of the dataStore in container1.
+        assert.equal(container2DataStore2.url, firstContainerDataStore2.url, "The urls do not match");
     });
 
     afterEach(async () => {

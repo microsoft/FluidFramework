@@ -88,13 +88,13 @@ data:
         "auth": {
             "endpoint": "http://{{ template "riddler.fullname" . }}"
         },
-        "routemaster": {
+        "routemanager": {
             "topics": {
                 "receive": "{{ .Values.kafka.topics.deltas }}",
                 "send": "{{ .Values.kafka.topics.rawdeltas }}"
             },
-            "clientId": "{{ template "routemaster.fullname" . }}",
-            "groupId": "{{ template "routemaster.fullname" . }}",
+            "clientId": "{{ template "routemanager.fullname" . }}",
+            "groupId": "{{ template "routemanager.fullname" . }}",
             "checkpointBatchSize": 10,
             "checkpointTimeIntervalMsec": 1000
         },
@@ -103,8 +103,8 @@ data:
                 "group": "{{ template "deli.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.rawdeltas }}"
             },
-            "routemaster": {
-                "group": "{{ template "routemaster.fullname" . }}",
+            "routemanager": {
+                "group": "{{ template "routemanager.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
             },
             "scriptorium": {

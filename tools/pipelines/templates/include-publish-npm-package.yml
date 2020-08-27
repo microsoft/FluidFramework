@@ -1,0 +1,105 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# include-publish-npm-package
+
+parameters:
+- name: buildDirectory
+  type: string
+
+- name: buildNumberInPatch
+  type: string
+
+- name: namespace
+  type: boolean
+
+- name: tagName
+  type: string
+
+stages:
+- stage: publish
+  dependsOn: build
+  displayName: Publish Stage
+  jobs:
+  - template: include-publish-npm-package-steps.yml
+    parameters:
+      namespace: ${{ parameters.namespace }}
+      feeds:
+      - name: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/ 
+        environment: build-feed
+        internal: true
+        enabled: true
+        tagSteps: []
+      - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
+        environment: fluid-feed
+        customEndPoint: Offnet Packages
+        internal: false
+        enabled: $[variables.release]
+        tagSteps:
+        - ${{ if ne(parameters.tagName, '') }}:
+          - checkout: self
+            clean: true
+            persistCredentials: true
+          - task: npmAuthenticate@0
+            displayName: 'npm Authenticate root .npmrc'
+            inputs:
+              workingFile: .npmrc
+              customEndpoint: Offnet Packages
+          - task: Npm@1
+            displayName: npm ci
+            inputs:
+              command: 'custom'
+              customCommand: 'ci --ignore-scripts'
+              customRegistry: 'useNpmrc'
+          - task: Bash@3
+            displayName: Tag Release
+            env:
+              VERSION_RELEASE: $(release)
+              VERSION_BUILDNUMBER: $(Build.BuildNumber)
+              VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                # expect lerna.json and package.json be in the current working directory
+
+                echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
+                echo VERSION_RELEASE=$VERSION_RELEASE
+                echo VERSION_PATCH=$VERSION_PATCH
+          
+                version=`node $(Build.SourcesDirectory)/tools/pipelines/scripts/build-version.js`
+                echo COMPUTED_VERSION=$version
+                if [ "$version" = "" ]; then
+                  exit -1
+                fi
+
+                tag=${{ parameters.tagName }}_v$version
+
+                echo Tag=$tag
+                git tag $tag
+                git push origin $tag
+          - ${{ if ne(parameters.buildNumberInPatch, true) }}:
+            - task: Bash@3
+              displayName: Patch Version Bump
+              inputs:
+                targetType: 'inline'
+                workingDirectory: ${{ parameters.buildDirectory }}
+                script: |
+                  git pull origin $(Build.SourceBranch)
+                  if [ -f "lerna.json" ]; then
+                    npx lerna version patch --no-git-tag-version --no-push --yes
+                    version=`node -e "console.log(require('./lerna.json').version)"`
+                  else
+                    npm version patch --no-git-tag-version
+                    version=`node -e "console.log(require('./package.json').version)"`
+                  fi
+
+                  npm run build:genver --if-present
+
+                  echo Bump ${{ parameters.tagName }} version to $version in $(Build.SourceBranch)
+
+                  git config --global user.email "ffbuilder@microsoft.com"
+                  git config --global user.name "Fluid Framework Builder"
+
+                  git commit -a -m "[bump] ${{ parameters.tagName }} version to $version"
+                  git push origin HEAD:$(Build.SourceBranch)

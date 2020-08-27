@@ -8,4 +8,4 @@ export * from "./localLoader";
 export * from "./localCodeLoader";
 export * from "./opProcessingController";
 export * from "./testContainerRuntimeFactory";
-export * from "./testFluidComponent";
+export * from "./testFluidObject";
