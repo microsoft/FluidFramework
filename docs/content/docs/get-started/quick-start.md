@@ -4,8 +4,11 @@ menuPosition: 2
 codeCopyButton: true
 ---
 
-In this Quick Start we will be getting the [Hello World](https://github.com/microsoft/FluidHelloWorld) Fluid application
+In this Quick Start we will be getting the following [Hello World](https://github.com/microsoft/FluidHelloWorld) Fluid application
 running locally on your machine.
+
+{{< fluid_bundle_loader idPrefix="dice-roller"
+bundleName="dice-roller.9af6bdd702e6cd4ad6cf.js" >}}
 
 ## Set up your development environment
 
