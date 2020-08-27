@@ -56,8 +56,8 @@
     "@fluidframework/common-utils": "^0.22.1",
     "@fluidframework/core-interfaces": "^0.25.1",
     "@fluidframework/datastore-definitions": "^0.25.1",
-    "@fluidframework/protocol-base": "^0.1011.1-0",
-    "@fluidframework/protocol-definitions": "^0.1011.1-0",
+    "@fluidframework/protocol-base": "^0.1011.1",
+    "@fluidframework/protocol-definitions": "^0.1011.1",
     "@fluidframework/runtime-definitions": "^0.25.1"
   },
   "devDependencies": {
