@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalResolver } from "@fluidframework/local-driver";
@@ -93,7 +93,7 @@ describe("LocalTestServer", () => {
             });
 
             sharedString2.on("op", (msg, local) => {
-            if (!local) {
+                if (!local) {
                     if (msg.type === MessageType.Operation) {
                         user2ReceivedMsgCount = user2ReceivedMsgCount + 1;
                     }
