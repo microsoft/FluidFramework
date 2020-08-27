@@ -78,7 +78,7 @@ export function createOdspNetworkError(
             break;
         case 401:
         case 403:
-            error = new AuthorizationError(errorMessage, statusCode, claims);
+            error = new AuthorizationError(errorMessage, claims);
             break;
         case 404:
             error = new NetworkErrorBasic(errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, false);

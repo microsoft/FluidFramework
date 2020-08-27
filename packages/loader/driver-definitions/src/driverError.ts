@@ -86,7 +86,6 @@ export interface IGenericNetworkError extends IDriverErrorBase {
 
 export interface IAuthorizationError extends IDriverErrorBase {
     readonly errorType: DriverErrorType.authorizationError;
-    readonly statusCode?: number;
     readonly claims?: string;
 }
 
