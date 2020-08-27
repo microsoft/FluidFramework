@@ -311,8 +311,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 let cachedSnapshot: IOdspSnapshot | undefined;
 
                 // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
-                if (tokenFetchOptions.refresh || tokenFetchOptions.claims) {
-                    cachedSnapshot = await this.fetchSnapshot(snapshotOptions,tokenFetchOptions);
+                if (tokenFetchOptions.refresh) {
+                    cachedSnapshot = await this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
                 } else {
                     cachedSnapshot = await PerformanceEvent.timedExecAsync(
                         this.logger,
