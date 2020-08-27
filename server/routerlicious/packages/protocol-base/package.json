@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/protocol-base",
-  "version": "0.1011.1",
+  "version": "0.1011.2",
   "description": "Fluid protocol base",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -51,8 +51,8 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.22.1",
-    "@fluidframework/gitresources": "^0.1011.1",
-    "@fluidframework/protocol-definitions": "^0.1011.1",
+    "@fluidframework/gitresources": "^0.1011.2",
+    "@fluidframework/protocol-definitions": "^0.1011.2",
     "assert": "^2.0.0",
     "lodash": "^4.17.19"
   },
