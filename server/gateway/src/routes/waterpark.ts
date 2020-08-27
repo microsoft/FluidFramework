@@ -21,7 +21,7 @@ import { defaultPartials } from "./partials";
 // TODO: Remove the ECL reference here as the package is now removed
 // Since it is in the @fluidframework feed, this will still function fine
 const defaultChaincode =
-    `@fluidframework/external-component-loader@^0.25.0-0`;
+    `@fluidframework/external-component-loader@^0.25.1-0`;
 
 export function create(
     config: Provider,
