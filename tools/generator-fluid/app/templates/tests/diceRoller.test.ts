@@ -1,6 +1,6 @@
 import { globals } from "../jest.config";
 
-describe("component", () => {
+describe("DataObject", () => {
     beforeAll(async () => {
         // Wait for the page to load first before running any tests
         // so this time isn't attributed to the first test
