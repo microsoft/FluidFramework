@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -26,7 +26,7 @@ describe("TableDocument", () => {
     let opProcessingController: OpProcessingController;
 
     function makeId(type: string) {
-        const newId =  Math.random().toString(36).substr(2);
+        const newId = Math.random().toString(36).substr(2);
         return newId;
     }
 

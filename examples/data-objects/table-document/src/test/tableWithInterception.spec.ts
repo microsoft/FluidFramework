@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { PropertySet } from "@fluidframework/merge-tree";
