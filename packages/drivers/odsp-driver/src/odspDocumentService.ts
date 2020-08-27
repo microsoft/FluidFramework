@@ -236,8 +236,7 @@ export class OdspDocumentService implements IDocumentService {
                 const connection = await this.connectToDeltaStreamWithRetry(
                     websocketEndpoint.tenantId,
                     websocketEndpoint.id,
-                    // This is workaround for fluid-fetcher. Need to have better long term solution
-                    webSocketToken ? webSocketToken : websocketEndpoint.socketToken,
+                    webSocketToken,
                     io,
                     client,
                     websocketEndpoint.deltaStreamSocketUrl,
