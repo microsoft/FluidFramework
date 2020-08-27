@@ -53,7 +53,7 @@
   "devDependencies": {
     "@fluid-internal/test-loader-utils": "^0.25.1",
     "@fluidframework/build-common": "^0.18.0",
-    "@fluidframework/common-utils": "^0.22.1-0",
+    "@fluidframework/common-utils": "^0.22.1",
     "@fluidframework/container-loader": "^0.25.1",
     "@fluidframework/container-runtime": "^0.25.1",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
