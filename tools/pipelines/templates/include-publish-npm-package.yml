@@ -25,15 +25,14 @@ stages:
     parameters:
       namespace: ${{ parameters.namespace }}
       feeds:
-      - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
-        environment: fluid-feed
-        customEndPoint: Offnet Packages
+      - name: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/ 
+        environment: build-feed
         internal: true
         enabled: true
         tagSteps: []
-      - name: https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
-        environment: office-feed
-        customEndPoint: Office Packages
+      - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
+        environment: fluid-feed
+        customEndPoint: Offnet Packages
         internal: false
         enabled: $[variables.release]
         tagSteps:
