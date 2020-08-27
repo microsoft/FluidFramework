@@ -5,7 +5,7 @@
 
 /* eslint-disable no-null/no-null */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import {
     IDocumentMessage,
@@ -192,13 +192,11 @@ export class ScribeLambda extends SequencedLambda {
                                     await this.sendSummaryConfirmationMessage(operation.sequenceNumber, false);
                                     this.protocolHead = this.protocolHandler.sequenceNumber;
                                     this.context.log.info(
-                                        `Client summary success @${value.operation.sequenceNumber}`,
-                                        { messageMetaData });
+                                        `Client summary success @${value.operation.sequenceNumber}`, { messageMetaData });
                                 } else {
                                     await this.sendSummaryNack(summaryResponse.message as ISummaryNack);
                                     this.context.log.error(
-                                        `Client summary failure @${value.operation.sequenceNumber}`,
-                                        { messageMetaData });
+                                        `Client summary failure @${value.operation.sequenceNumber}`, { messageMetaData });
                                     this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                                 }
                             }

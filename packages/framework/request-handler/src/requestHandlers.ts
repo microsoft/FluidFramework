@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import {
     IFluidObject,
     IResponse,
@@ -69,7 +69,6 @@ class LegacyUriHandle<T = IFluidObject & IFluidLoadable> implements IFluidHandle
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function handleFromLegacyUri<T = IFluidObject & IFluidLoadable>(
     uri: string,
-    runtime: IContainerRuntimeBase): IFluidHandle<T>
-{
+    runtime: IContainerRuntimeBase): IFluidHandle<T> {
     return new LegacyUriHandle<T>(uri, runtime);
 }
