@@ -40,7 +40,7 @@ stages:
           - checkout: self
             clean: true
             persistCredentials: true
-          - ${{ if eq(parameters.tagName, "server") }}:
+          - ${{ if eq(parameters.tagName, 'server') }}:
             - task: Bash@3
               displayName: Strip npmrc auth token preamble
               inputs:
