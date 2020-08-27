@@ -16,6 +16,7 @@ import {
     fetchIncorrectResponse,
     throwOdspNetworkError,
 } from "./odspError";
+import { TokenFetchOptions } from "./tokenFetch";
 
 /**
  * Makes join session call on SPO to get information about the web socket for a document
@@ -34,15 +35,15 @@ export async function fetchJoinSession(
     path: string,
     method: string,
     logger: ITelemetryLogger,
-    getVroomToken: (refresh: boolean, name?: string, claims?: string) => Promise<string | null>,
+    getVroomToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
 ): Promise<ISocketStorageDiscovery> {
-    return getWithRetryForTokenRefresh(async (refresh: boolean, claims?: string) => {
-        const token = await getVroomToken(refresh, "JoinSession", claims);
+    return getWithRetryForTokenRefresh(async (options) => {
+        const token = await getVroomToken(options, "JoinSession");
         if (!token) {
             throwOdspNetworkError("Failed to acquire Vroom token", fetchIncorrectResponse);
         }
 
-        const extraProps = refresh ? { secondAttempt: 1 } : {};
+        const extraProps = options.refresh ? { secondAttempt: 1, hasClaims: !!options.claims } : {};
         return PerformanceEvent.timedExecAsync(logger, { eventName: "JoinSession", ...extraProps }, async (event) => {
             // TODO Extract the auth header-vs-query logic out
             const siteOrigin = getOrigin(siteUrl);

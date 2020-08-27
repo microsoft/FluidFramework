@@ -6,13 +6,9 @@
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
 
-import { ITelemetryLogger, ITelemetryGenericEvent } from "@fluidframework/common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performanceNow, TelemetryNullLogger } from "@fluidframework/common-utils";
-import {
-    ChildLogger,
-    PerformanceEvent,
-    TelemetryLogger,
-} from "@fluidframework/telemetry-utils";
+import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -39,7 +35,7 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
-import { StorageTokenFetcher, PushTokenFetcher, tokenFromResponse, isTokenFromCache } from "./tokenFetch";
+import { TokenFetchOptions } from "./tokenFetch";
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
@@ -52,8 +48,8 @@ export class OdspDocumentService implements IDocumentService {
     protected updateUsageOpFrequency = startingUpdateUsageOpFrequency;
 
     /**
-     * @param getStorageToken - function that can provide the storage token for a given site. This is
-     * is also referred to as the "VROOM" token in SPO.
+     * @param getStorageToken - function that can provide the storage token. This is is also referred to as
+     * the "VROOM" token in SPO.
      * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
      * referred to as the "Push" token in SPO.
      * @param logger - a logger that can capture performance and diagnostic information
@@ -64,8 +60,8 @@ export class OdspDocumentService implements IDocumentService {
      */
     public static async create(
         resolvedUrl: IResolvedUrl,
-        getStorageToken: StorageTokenFetcher,
-        getWebsocketToken: PushTokenFetcher,
+        getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
+        getWebsocketToken: (options: TokenFetchOptions) => Promise<string | null>,
         logger: ITelemetryLogger,
         socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         cache: IOdspCache,
@@ -86,9 +82,6 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly logger: TelemetryLogger;
 
-    private readonly getStorageToken: (refresh: boolean, name?: string, claims?: string) => Promise<string | null>;
-    private readonly getWebsocketToken: (refresh: boolean, claims?: string) => Promise<string | null>;
-
     private readonly localStorageAvailable: boolean;
 
     private readonly joinSessionKey: string;
@@ -102,8 +95,8 @@ export class OdspDocumentService implements IDocumentService {
     private readonly hostPolicy: HostStoragePolicyInternal;
 
     /**
-     * @param getStorageToken - function that can provide the storage token for a given site. This is is also referred
-     * to as the "VROOM" token in SPO.
+     * @param getStorageToken - function that can provide the storage token. This is is also referred to as
+     * the "VROOM" token in SPO.
      * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also referred
      * to as the "Push" token in SPO.
      * @param logger - a logger that can capture performance and diagnostic information
@@ -113,8 +106,8 @@ export class OdspDocumentService implements IDocumentService {
      */
     constructor(
         public readonly odspResolvedUrl: IOdspResolvedUrl,
-        getStorageToken: StorageTokenFetcher,
-        getWebsocketToken: PushTokenFetcher,
+        private readonly getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
+        private readonly getWebsocketToken: (options: TokenFetchOptions) => Promise<string | null>,
         logger: ITelemetryLogger,
         private readonly socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
@@ -133,33 +126,6 @@ export class OdspDocumentService implements IDocumentService {
             this.hostPolicy = cloneDeep(this.hostPolicy);
             this.hostPolicy.summarizerClient = true;
         }
-
-        this.getStorageToken = async (refresh: boolean, name?: string, claims?: string) => {
-            if (refresh) {
-                // Potential perf issue: Host should optimize and provide non-expired tokens on all critical paths.
-                // Exceptions: race conditions around expiration, revoked tokens, host that does not care
-                // (fluid-fetcher)
-                this.logger.sendTelemetryEvent({ eventName: "StorageTokenRefresh" });
-            }
-
-            const logEvent: ITelemetryGenericEvent = { eventName: `${name || "OdspDocumentService"}_GetToken` };
-
-            return PerformanceEvent.timedExecAsync(this.logger,
-                logEvent,
-                async () => getStorageToken(this.odspResolvedUrl.siteUrl, refresh, claims).then((tokenResponse) => {
-                    logEvent.fromCache = isTokenFromCache(tokenResponse);
-                    return tokenFromResponse(tokenResponse);
-                }));
-        };
-
-        this.getWebsocketToken = async (refresh: boolean, claims?: string) => {
-            const logEvent: ITelemetryGenericEvent = { eventName: "GetWebsocketToken" };
-            return PerformanceEvent.timedExecAsync(this.logger, logEvent,
-                async () => getWebsocketToken(refresh).then((tokenResponse) => {
-                    logEvent.fromCache = isTokenFromCache(tokenResponse);
-                    return tokenFromResponse(tokenResponse);
-                }));
-        };
 
         this.localStorageAvailable = isLocalStorageAvailable();
     }
@@ -222,9 +188,9 @@ export class OdspDocumentService implements IDocumentService {
      */
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         // Attempt to connect twice, in case we used expired token.
-        return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (refresh: boolean, claims?: string) => {
+        return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (options) => {
             // For ODC, we just use the token from joinsession
-            const socketTokenPromise = this.isOdc ? Promise.resolve("") : this.getWebsocketToken(refresh, claims);
+            const socketTokenPromise = this.isOdc ? Promise.resolve("") : this.getWebsocketToken(options);
             const [websocketEndpoint, webSocketToken, io] =
                 await Promise.all([this.joinSession(), socketTokenPromise, this.socketIoClientFactory()]);
 

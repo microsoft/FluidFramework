@@ -9,8 +9,23 @@
 export interface TokenResponse {
     /** Token value */
     token: string;
+
     /** Flag indicating whether token was obtained from local cache */
     fromCache?: boolean;
+}
+
+/**
+ * Represents token fetch options
+ */
+export interface TokenFetchOptions {
+    /**
+     * Value indicating whether fresh token has to be returned.
+     * If false then it is okay to return cached unexpired token if available.
+     */
+    refresh: boolean;
+
+    /** Claims that have to be passed with token fetch request */
+    claims?: string;
 }
 
 /**

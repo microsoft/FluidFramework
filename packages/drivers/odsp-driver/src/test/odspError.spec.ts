@@ -124,8 +124,8 @@ describe("Odsp Error", () => {
     });
 
     it("Access Denied retries", async () => {
-        const res = await getWithRetryForTokenRefresh(async (refresh, _claims) => {
-            if (refresh) {
+        const res = await getWithRetryForTokenRefresh(async (options) => {
+            if (options.refresh) {
                 return 1;
             } else {
                 throwOdspNetworkError("some error", 401);
@@ -135,8 +135,8 @@ describe("Odsp Error", () => {
     });
 
     it("fetch incorrect response retries", async () => {
-        const res = await getWithRetryForTokenRefresh(async (refresh, _claims) => {
-            if (refresh) {
+        const res = await getWithRetryForTokenRefresh(async (options) => {
+            if (options.refresh) {
                 return 1;
             } else {
                 throwOdspNetworkError("some error", fetchIncorrectResponse);
@@ -146,8 +146,8 @@ describe("Odsp Error", () => {
     });
 
     it("Other errors - no retries", async () => {
-        const res = getWithRetryForTokenRefresh(async (refresh, _claims) => {
-            if (refresh) {
+        const res = getWithRetryForTokenRefresh(async (options) => {
+            if (options.refresh) {
                 return 1;
             } else {
                 throwOdspNetworkError("some error", invalidFileNameStatusCode);
@@ -198,8 +198,11 @@ describe("Odsp Error", () => {
     });
 
     it("AuthorizationError errors retries with insufficient claims", async () => {
-        const res = await getWithRetryForTokenRefresh(async (refresh, claims) => {
-            if (refresh && claims === "{\"access_token\":{\"nbf\":{\"essential\":true, \"value\":\"1597959090\"}}}") {
+        const res = await getWithRetryForTokenRefresh(async (options) => {
+            if (
+                options.refresh &&
+                options.claims === "{\"access_token\":{\"nbf\":{\"essential\":true, \"value\":\"1597959090\"}}}"
+            ) {
                 return 1;
             } else {
                 throwAuthorizationError("some error");
