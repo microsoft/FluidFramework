@@ -19,7 +19,7 @@ import * as styles from "./index.css";
  * The Host provides the Editor with a registry of view factories which will be used to render components that have
  * been inserted into the document.
  */
-export interface IComponentHTMLViewFactory {
+export interface IFluidHTMLViewFactory {
     createView(model: IFluidObject, scope?: IFluidObject): IFluidHTMLView;
 }
 
@@ -29,7 +29,7 @@ export class Editor {
     private readonly caretSync: () => void;
     private get doc() { return this.layout.doc; }
 
-    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, viewFactoryRegistry?: Map<string, IComponentHTMLViewFactory>, scope?: IFluidObject) {
+    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, viewFactoryRegistry?: Map<string, IFluidHTMLViewFactory>, scope?: IFluidObject) {
         const scheduler = new Scheduler();
         this.layout = new Layout(doc, root, formatter, scheduler, viewFactoryRegistry, scope);
         this.caret = new Caret(this.layout);
