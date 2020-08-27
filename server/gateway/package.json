@@ -59,16 +59,16 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "@fluid-example/host-service-interfaces": "^0.25.1",
     "@fluidframework/base-host": "^0.25.1",
     "@fluidframework/common-utils": "^0.21.0",
-    "@fluidframework/core-interfaces": "^0.25.1",
     "@fluidframework/container-definitions": "^0.25.1",
     "@fluidframework/container-loader": "^0.25.1",
+    "@fluidframework/core-interfaces": "^0.25.1",
     "@fluidframework/driver-definitions": "^0.25.1",
     "@fluidframework/driver-utils": "^0.25.1",
     "@fluidframework/execution-context-loader": "^0.25.1",
     "@fluidframework/gitresources": "^0.1011.1",
-    "@fluid-example/host-service-interfaces": "^0.25.1",
     "@fluidframework/iframe-driver": "^0.25.1",
     "@fluidframework/odsp-driver": "^0.25.1",
     "@fluidframework/odsp-utils": "^0.25.1",
