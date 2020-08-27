@@ -73,8 +73,8 @@ npm run hugo -- new posts/fluid-everywhere.md
 
 ### Content guidelines
 
-Try to use Markdown as much as possible. You can embed HTML in
-Markdown, it is recommended to stick to md and shortcodes/partials.
+Try to use Markdown as much as possible. You can embed HTML in Markdown, but we
+recommended sticking to Markdown and shortcodes/partials.
 
 ## Menus
 
