@@ -20,8 +20,11 @@ import {
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
+import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
-import { fetchLatestSummaryState, initializeProtocol } from "./summaryHelper";
+import { SummaryReader } from "./summaryReader";
+import { SummaryWriter } from "./summaryWriter";
+import { initializeProtocol } from "./utils";
 
 const DefaultScribe: IScribe = {
     lastClientSummaryHead: undefined,
@@ -55,8 +58,9 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         const tenant = await this.tenantManager.getTenant(tenantId);
         const gitManager = tenant.gitManager;
 
+        const summaryReader = new SummaryReader(documentId, gitManager);
         const [latestSummary, document] = await Promise.all([
-            fetchLatestSummaryState(gitManager, documentId, context.log),
+            summaryReader.readLastSummary(),
             this.documentCollection.findOne({ documentId, tenantId }),
         ]);
 
@@ -102,17 +106,26 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             lastCheckpoint = JSON.parse(document.scribe);
         }
 
-        const term = latestSummary.fromSummary ? latestSummary.term : 1;
-        const protocolHandler = initializeProtocol(document.documentId, lastCheckpoint.protocolState, term);
+        const protocolHandler = initializeProtocol(
+            document.documentId,
+            lastCheckpoint.protocolState,
+            latestSummary.term);
+
+        const summaryWriter = new SummaryWriter(tenantId, documentId, gitManager, this.messageCollection);
+        const checkpointManager = new CheckpointManager(
+            tenantId,
+            documentId,
+            this.documentCollection,
+            this.messageCollection);
 
         return new ScribeLambda(
             context,
-            this.documentCollection,
-            this.messageCollection,
             document.tenantId,
             document.documentId,
+            summaryWriter,
+            summaryReader,
+            checkpointManager,
             lastCheckpoint,
-            gitManager,
             this.producer,
             protocolHandler,
             latestSummary.term,

@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { toUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
     ICollection,
@@ -167,8 +168,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         if (existingRef) {
             try {
                 const content = await gitManager.getContent(existingRef.object.sha, ".serviceProtocol/deli");
-                const summaryCheckpoint = JSON.parse(
-                    Buffer.from(content.content, content.encoding).toString()) as IDeliCheckpoint;
+                const summaryCheckpoint = JSON.parse(toUtf8(content.content, content.encoding)) as IDeliCheckpoint;
                 return summaryCheckpoint;
             } catch (exception) {
                 const messageMetaData = {
@@ -231,7 +231,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             gitManager.getCommit(existingRef.object.sha),
             gitManager.getContent(existingRef.object.sha, ".serviceProtocol/scribe")]);
 
-        const scribe = Buffer.from(scribeContent.content, scribeContent.encoding).toString();
+        const scribe = toUtf8(scribeContent.content, scribeContent.encoding);
         const serviceProtocolEntries = generateServiceProtocolEntries(JSON.stringify(checkpoint), scribe);
 
         const [serviceProtocolTree, lastSummaryTree] = await Promise.all([

@@ -39,7 +39,10 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.26.0",
     "@fluidframework/core-interfaces": "^0.26.0",
+<<<<<<< HEAD:examples/apps/collaborative-textarea/package.json
     "@fluidframework/get-tinylicious-container": "0.26.0",
+=======
+>>>>>>> main:examples/data-objects/collaborative-textarea/package.json
     "@fluidframework/react-inputs": "^0.26.0",
     "@fluidframework/sequence": "^0.26.0",
     "@fluidframework/view-interfaces": "^0.26.0",

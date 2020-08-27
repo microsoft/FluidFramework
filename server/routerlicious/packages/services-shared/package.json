@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-shared",
-  "version": "0.1011.1",
+  "version": "0.1012.0",
   "description": "Fluid shared services",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -23,12 +23,12 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.21.0",
-    "@fluidframework/gitresources": "^0.1011.1",
-    "@fluidframework/protocol-base": "^0.1011.1",
-    "@fluidframework/protocol-definitions": "^0.1011.1",
-    "@fluidframework/server-services-client": "^0.1011.1",
-    "@fluidframework/server-services-core": "^0.1011.1",
+    "@fluidframework/common-utils": "^0.22.1-0",
+    "@fluidframework/gitresources": "^0.1012.0",
+    "@fluidframework/protocol-base": "^0.1012.0",
+    "@fluidframework/protocol-definitions": "^0.1012.0",
+    "@fluidframework/server-services-client": "^0.1012.0",
+    "@fluidframework/server-services-core": "^0.1012.0",
     "debug": "^4.1.1",
     "lodash": "^4.17.19",
     "moniker": "^0.1.2",

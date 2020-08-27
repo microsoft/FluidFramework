@@ -31,12 +31,13 @@ trigger:
   paths:
     include:
     - server/routerlicious
-    - tools/build-server-resources
     - tools/pipelines/server-routerlicious.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
-    - tools/pipelines/templates/publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
   
@@ -48,8 +49,8 @@ pr:
   paths:
     include:
     - server/routerlicious
-    - tools/build-server-resources
     - tools/pipelines/server-routerlicious.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     exclude:
@@ -274,20 +275,9 @@ stages:
 
 # Publish stage
 - ${{ if eq(variables.publish, true) }}:
-  - stage: publish
-    dependsOn: build
-    displayName: Publish Stage
-    jobs:
-    - template: templates/publish-npm-package.yml
-      parameters:
-        feeds:
-        - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
-          environment: fluid-feed
-          customEndPoint: Offnet Packages
-          internal: false
-        # only publish release bits
-        - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
-          - name: https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
-            environment: office-feed
-            customEndPoint: Office Packages
-            internal: false
+  - template: templates/include-publish-npm-package.yml
+    parameters:
+      buildDirectory: server/routerlicious
+      namespace: true
+      tagName: server
+      buildNumberInPatch: false
