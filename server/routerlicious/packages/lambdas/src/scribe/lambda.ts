@@ -193,13 +193,13 @@ export class ScribeLambda extends SequencedLambda {
                                     this.protocolHead = this.protocolHandler.sequenceNumber;
                                     this.context.log.info(
                                         `Client summary success @${value.operation.sequenceNumber}`,
-                                        { messageMetaData }
+                                        { messageMetaData },
                                     );
                                 } else {
                                     await this.sendSummaryNack(summaryResponse.message as ISummaryNack);
                                     this.context.log.error(
                                         `Client summary failure @${value.operation.sequenceNumber}`,
-                                        { messageMetaData }
+                                        { messageMetaData },
                                     );
                                     this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                                 }
