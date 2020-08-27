@@ -29,7 +29,7 @@
     "@fluidframework/container-definitions": "^0.25.1",
     "@fluidframework/core-interfaces": "^0.25.1",
     "@fluidframework/driver-definitions": "^0.25.1",
-    "@fluidframework/protocol-definitions": "^0.1011.1-0",
+    "@fluidframework/protocol-definitions": "^0.1011.1",
     "@types/node": "^10.17.24"
   },
   "devDependencies": {
