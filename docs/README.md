@@ -1,39 +1,37 @@
 # fluidframework-docs
 
-This repo hosts the code for https://fluidframework.com
-
-## Contributing
-
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
-
-When you submit a pull request, a CLA bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
-
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+This repo hosts the code for <https://fluidframework.com>
 
 ## Contributing documentation
-
 
 ### Setup
 
 The Fluid website is a generated static website based on content found in this
 repository. To contribute new content, or to preview the site, you need to
-install [Hugo](https://gohugo.io), [instructions
-here](https://gohugo.io/getting-started/installing/).
+use Hugo. It will automatically be downloaded as part of the setup steps below.
 
-Once you have Hugo installed.
-
-Make sure you are in the `docs` folder (`cd docs`) and then you can start the server:
+Open the docs folder in a terminal and install the dependencies using npm.
 
 ```bash
-hugo server
+cd docs
+npm install
 ```
 
+This will download all dependencies, including Hugo.
+
+#### Using Hugo manually (optional)
+
+You can install Hugo manually if you want. Use the [instructions on the Hugo
+site](https://gohugo.io/getting-started/installing/) to download it.
+
+### Previewing the site
+
+Once you have Hugo installed you can then start the
+developer preview site like so:
+
+```bash
+npm start
+```
 
 Open `http://localhost:1313` to preview the site. Any changes to the source
 content will automatically force an HTML re-render allowing you to preview your
@@ -43,21 +41,20 @@ If you want to debug the generated content, you can build the site and see the
 output in the `public/` folder:
 
 ```bash
-hugo
+npm run build
 ```
 
 Note that content with a published date in the future or draft flag on won't be
-rendered, you can pass 2 extra flags to preview this content.
+rendered, you can pass two extra flags to preview this content.
 
 ```bash
-hugo  server --buildDrafts --buildFuture
+npm run build -- --buildDrafts --buildFuture
 ```
 
 If you create a content with a future published date, it won't be automatically
-published at that time, you need to trigger the build process.
+published at that time; you need to trigger the build process.
 
-
-## New Content
+## New content
 
 You need to generate new content manually by creating new files by hand or by
 generating them using the `hugo` command as shown below:
@@ -65,121 +62,125 @@ generating them using the `hugo` command as shown below:
 ### Static doc
 
 ```bash
-hugo new docs/concepts/flux-capacitor.md
+npm run hugo -- new docs/concepts/flux-capacitor.md
 ```
 
 ### Blog post
 
 ```bash
-hugo new posts/fluid-everywhere.md
+npm run hugo -- new posts/fluid-everywhere.md
 ```
 
 ### Content guidelines
 
-Try to use markdown as much as possible, while we enabled HTML embedding in
+Try to use Markdown as much as possible. You can embed HTML in
 Markdown, it is recommended to stick to md and shortcodes/partials.
 
 ## Menus
 
-Menus are mainly managed in config.toml but depending on the menu, the sub
+Menus are mainly managed in `config.yml` but depending on the menu, the sub
 headers might be driven by the content in the repo (pages or data files).
 
 ### Main menu (top menu)
 
-The top menu is configured in the `config.toml` file and can look like that:
+The top menu is configured in the `config.yml` file and can look like this:
 
-```toml
-[menu]
-
-[[menu.main]]
-name = "What is Fluid?"
-url = "/what-is-fluid"
-weight = -100
-
-[[menu.main]]
-name = "Docs"
-url = "/docs/"
-weight = -90
-
+```yaml
+menu:
+  main:
+  - name: "Docs"
+    url: "/docs/"
+    weight: -90
+  - name: "API"
+    url: "/apis/"
+    weight: -80
+  - name: "Blog"
+    url: "/posts/"
+    weight: -50
 ```
 
 ### Docs menu
 
-The docs menu is implemented in the theme's `_partial/docNav.html` and is using
-the `config.toml` to find the headers and then uses the area attribute of each
-sub section (sub folders in the content folder) to populate the pages displayed
-in the menu.
+The docs menu is implemented in the theme's `_partial/docNav.html` and is using the
+`config.yml` to find the headers and then uses the area attribute of each sub section (sub
+folders in the content folder) to populate the pages displayed in the menu.
 
-Here is an example of what `config.toml` could contain:
+Here is an example of what `config.yml` could contain:
 
-```toml
-[[menu.docs]]
-identifier = "get-started"
-name = "Get Started"
-weight = -100
-
-[[menu.docs]]
-identifier = "concepts"
-name = "Main concepts"
-weight = 0
+```yaml
+menu:
+  docs:
+  - identifier: "get-started"
+    name: "Get Started"
+    weight: -500
+  - identifier: "concepts"
+    name: "Main concepts"
+    weight: -300
+  - identifier: "faq"
+    name: "FAQ"
+    url: "/docs/faq/"
+    weight: -100
 ```
 
-Those are headers for the Docs menu, they each have a `name` field which us used
-to display the header in the menu. They also have an `identifier` key which is
-used to map content with matching `area` field (often set to cascade within a
-sub folder). Finally, you have a `weight` field that is used to decide the
-positioning of each item in the menu. The lighter an item is, the higher it goes
-in order (closer to the top).
-
+Those are headers for the Docs menu, they each have a `name` field which us used to
+display the header in the menu. They also have an `identifier` key which is used to map
+content with matching `area` field (often set to cascade within a sub folder). Finally,
+you have a `weight` field that is used to decide the positioning of each item in the menu.
+The lighter an item is, the higher it goes in order (closer to the top).
 
 ### API menu
 
-The API menu is a bit more complex since it's driven by content. The left menu
-(API overview) is a list of grouped packages, the grouping comes from a yaml
-file in the `data` folder (`packages.yaml`). The API documentation is being generated with
-metadata which allows the template to link pages and load the right information.
+The API menu is a bit more complex since it's driven by content. The left menu (API
+overview) is a list of grouped packages, the grouping comes from a yaml file in the `data`
+folder (`packages.yaml`). The API documentation is being generated with metadata which
+allows the template to link pages and load the right information.
 
 ### Table of Contents
 
-Some template pages include a TOC of the page, this is generated on the fly by
-reading the headers.
+Some template pages include a TOC of the page, this is generated on the fly by reading the
+headers.
 
 ### Social action
 
-There is a menu with actions such as tweeting the page, subscribing to the feed,
-asking questions etc... this is driven from the theme and the information for
-the accounts should be in the config.
-
+There is a menu with actions such as tweeting the page, subscribing to the feed, asking
+questions etc... this is driven from the theme and the information for the accounts should
+be in the config.
 
 ## Shortcodes
 
-Shortcodes are custom functions that can be called from within the Markdown to
-insert specific content.
-
+[Shortcodes](https://gohugo.io/content-management/shortcodes/) are custom functions that
+can be called from within the Markdown to insert specific content.
 
 
 ## Working on the template
 
-If you need to work on the scss you need to install [hugo extended](https://gohugo.io/getting-started/installing/).
-The template lives in `themes/thxvscode`.
+If you need to work on the scss you need to install [Hugo
+extended](https://gohugo.io/getting-started/installing/). The template lives in
+`themes/thxvscode`.
 
 
-## Generating API docs
+The API docs comes from the FluidFramework repo where the code is compiled and the API is
+extracted using api-extractor. The JSON output is then converted in this repo into
+Markdown via [a fork of the api-documenter
+tool](https://github.com/mattetti/custom-api-documenter).
 
-The API docs comes from the main code repo where the code is compiled and the
-API is extracted using a fork of api-extractor. The json output is then converted in this
-repo into markdown via a fork of the api-documenter tool.
+## Generating API documentation
 
-From this folder and if we have extracted the TS doc as JSON and put the files in `../_api-extractor-temp/doc-models`:
+_Note: you only need to do this if you want to preview the API documentation (that is,
+everything in the API section of the docs). Otherwise skip this._
 
+To build the API documentation, do the following from the root of the repository:
+
+```bash
+npm install
+npm run build:fast -- --symlink:full --install --all
+npm run build:fast -- -s build -s build:docs --nolint --all
 ```
-npm run build
-```
 
-This will regenerate the `content/apis/*.md` files from the provided json files.
-Note that the `api-documenter.json` file is used to configure the output.
+_Note that this can take 5-10 minutes for all the steps combined._
+
+You can then build or preview the docs using the steps described earlier.
 
 ### Updating the API generator code
 
-
-Feel free to send a PR to [this repo](https://github.com/mattetti/custom-api-documenter)
+Send PRs to [this repo](https://github.com/mattetti/custom-api-documenter).
