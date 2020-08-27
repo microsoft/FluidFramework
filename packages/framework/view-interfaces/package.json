@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/view-interfaces",
-  "version": "0.25.1",
+  "version": "0.26.0",
   "description": "View interfaces for rendering views",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,7 +26,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.25.1"
+    "@fluidframework/core-interfaces": "^0.26.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
