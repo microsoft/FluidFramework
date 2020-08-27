@@ -94,7 +94,7 @@ export class DiceRoller extends DataObject implements IDiceRoller {
     }
 
     public readonly roll = () => {
-        const rollValue = Math.floor(Math.random() \* 6) + 1;
+        const rollValue = Math.floor(Math.random() * 6) + 1;
         this.root.set(diceValueKey, rollValue);
     };
 }
