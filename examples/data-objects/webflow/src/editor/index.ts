@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { Editor, IComponentHTMLViewFactory } from "./editor";
+export { Editor, IFluidHTMLViewFactory } from "./editor";

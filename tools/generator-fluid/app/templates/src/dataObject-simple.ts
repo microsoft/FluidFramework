@@ -7,19 +7,19 @@ import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 const diceValueKey = "diceValue";
 
 /**
- * Fluid component
+ * Fluid DataObject
  */
 export class DiceRoller extends DataObject implements IFluidHTMLView {
-    public static get ComponentName() { return "dice-roller"; }
+    public static get DataObjectName() { return "dice-roller"; }
 
     public get IFluidHTMLView() { return this; }
 
     /**
-     * The factory defines how to create an instance of the component as well as the
-     * dependencies of the component.
+     * The factory defines how to create an instance of the DataObject as well as the
+     * dependencies of the DataObject.
      */
     public static readonly factory = new DataObjectFactory(
-        DiceRoller.ComponentName,
+        DiceRoller.DataObjectName,
         DiceRoller,
         [],
         {},
@@ -27,9 +27,9 @@ export class DiceRoller extends DataObject implements IFluidHTMLView {
 
     /**
      * initializingFirstTime is called only once, it is executed only by the first client to open the
-     * component and all work will resolve before the view is presented to any user.
+     * DataObject and all work will resolve before the view is presented to any user.
      *
-     * This method is used to perform component setup, which can include setting an initial schema or initial values.
+     * This method is used to perform DataObject setup, which can include setting an initial schema or initial values.
      */
     protected async initializingFirstTime() {
         this.root.set(diceValueKey, 1);

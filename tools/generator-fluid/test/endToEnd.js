@@ -21,7 +21,7 @@ describe("Yo fluid", function () {
                 oldCwd = process.cwd();
                 runContext = helpers.run(path.join(__dirname, "../app/index.js"))
                     .withPrompts({
-                        componentName: "foobar",
+                        dataObjectName: "foobar",
                         viewFramework: "react",
                         scaffolding: "beginner",
                     }).inTmpDir((dir) => {
@@ -36,16 +36,16 @@ describe("Yo fluid", function () {
                 assert.file(expectedFiles);
 
                 // Navigate to the temp folder that 
-                const tempComponentPath = `${dirPath}/foobar`;
-                shell.echo(`Navigating to temp path ${tempComponentPath}`);
-                shell.cd(tempComponentPath);
+                const tempDataObjectPath = `${dirPath}/foobar`;
+                shell.echo(`Navigating to temp path ${tempDataObjectPath}`);
+                shell.cd(tempDataObjectPath);
 
                 // Navigate to the temp folder that is created
                 shell.echo("Running npm i - this can take some time...");
                 const installResponse = shell.exec("npm i", { silent: true });
                 assert.equal(installResponse.code, 0, `npm install failed with code: ${installResponse.code} - error: ${installResponse.stderr}`);
                 
-                // Run jest test for new component
+                // Run jest test for new DataObject
                 shell.echo("Running npm test - this can take some time...");
                 const testResponse = shell.exec("npm test", { silent: true });
                 assert.equal(testResponse.code && testResponse.code, 0, `npm test failed with code: ${testResponse.code} - error: ${testResponse.stderr}`);
@@ -65,7 +65,7 @@ describe("Yo fluid", function () {
                 oldCwd = process.cwd();
                 runContext = helpers.run(path.join(__dirname, "../app/index.js"))
                     .withPrompts({
-                        componentName: "foobar",
+                        dataObjectName: "foobar",
                         viewFramework: "react",
                         scaffolding: "advanced",
                     }).inTmpDir((dir) => {
@@ -80,16 +80,16 @@ describe("Yo fluid", function () {
                 assert.file(expectedFiles);
 
                 // Navigate to the temp folder that 
-                const tempComponentPath = `${dirPath}/foobar`;
-                shell.echo(`Navigating to temp path ${tempComponentPath}`);
-                shell.cd(tempComponentPath);
+                const tempDataObjectPath = `${dirPath}/foobar`;
+                shell.echo(`Navigating to temp path ${tempDataObjectPath}`);
+                shell.cd(tempDataObjectPath);
 
                 // Navigate to the temp folder that is created
                 shell.echo("Running npm i - this can take some time...");
                 const installResponse = shell.exec("npm i", { silent: true });
                 assert.equal(installResponse.code, 0, `npm install failed with code: ${installResponse.code} - error: ${installResponse.stderr}`);
                 
-                // Run jest test for new component
+                // Run jest test for new DataObject
                 shell.echo("Running npm test - this can take some time...");
                 const testResponse = shell.exec("npm test", { silent: true });
                 assert.equal(testResponse.code && testResponse.code, 0, `npm test failed with code: ${testResponse.code} - error: ${testResponse.stderr}`);
@@ -109,7 +109,7 @@ describe("Yo fluid", function () {
                 oldCwd = process.cwd();
                 runContext = helpers.run(path.join(__dirname, "../app/index.js"))
                     .withPrompts({
-                        componentName: "foobar",
+                        dataObjectName: "foobar",
                         viewFramework: "none",
                         scaffolding: "beginner",
                     }).inTmpDir((dir) => {
@@ -124,16 +124,16 @@ describe("Yo fluid", function () {
                 assert.file(expectedFiles);
 
                 // Navigate to the temp folder that 
-                const tempComponentPath = `${dirPath}/foobar`;
-                shell.echo(`Navigating to temp path ${tempComponentPath}`);
-                shell.cd(tempComponentPath);
+                const tempDataObjectPath = `${dirPath}/foobar`;
+                shell.echo(`Navigating to temp path ${tempDataObjectPath}`);
+                shell.cd(tempDataObjectPath);
 
                 // Navigate to the temp folder that is created
                 shell.echo("Running npm i - this can take some time...");
                 const installResponse = shell.exec("npm i", { silent: true });
                 assert.equal(installResponse.code, 0, `npm install failed with code: ${installResponse.code} - error: ${installResponse.stderr}`);
                 
-                // Run jest test for new component
+                // Run jest test for new DataObject
                 shell.echo("Running npm test - this can take some time...");
                 const testResponse = shell.exec("npm test", { silent: true });
                 assert.equal(testResponse.code && testResponse.code, 0, `npm test failed with code: ${testResponse.code} - error: ${testResponse.stderr}`);
@@ -153,7 +153,7 @@ describe("Yo fluid", function () {
                 oldCwd = process.cwd();
                 runContext = helpers.run(path.join(__dirname, "../app/index.js"))
                     .withPrompts({
-                        componentName: "foobar",
+                        dataObjectName: "foobar",
                         viewFramework: "none",
                         scaffolding: "advanced",
                     }).inTmpDir((dir) => {
@@ -168,16 +168,16 @@ describe("Yo fluid", function () {
                 assert.file(expectedFiles);
 
                 // Navigate to the temp folder that 
-                const tempComponentPath = `${dirPath}/foobar`;
-                shell.echo(`Navigating to temp path ${tempComponentPath}`);
-                shell.cd(tempComponentPath);
+                const tempDataObjectPath = `${dirPath}/foobar`;
+                shell.echo(`Navigating to temp path ${tempDataObjectPath}`);
+                shell.cd(tempDataObjectPath);
 
                 // Navigate to the temp folder that is created
                 shell.echo("Running npm i - this can take some time...");
                 const installResponse = shell.exec("npm i", { silent: true });
                 assert.equal(installResponse.code, 0, `npm install failed with code: ${installResponse.code} - error: ${installResponse.stderr}`);
                 
-                // Run jest test for new component
+                // Run jest test for new DataObject
                 shell.echo("Running npm test - this can take some time...");
                 const testResponse = shell.exec("npm test", { silent: true });
                 assert.equal(testResponse.code && testResponse.code, 0, `npm test failed with code: ${testResponse.code} - error: ${testResponse.stderr}`);

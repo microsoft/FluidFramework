@@ -42,6 +42,10 @@ menu:
     name: "FAQ"
     url: "/docs/faq/"
     weight: -100
+  - identifier: "glossary"
+    name: "Glossary"
+    url: "/docs/Glossary/"
+    weight: -90
 
 markup:
   goldmark:

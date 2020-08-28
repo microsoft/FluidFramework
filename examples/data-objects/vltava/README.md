@@ -28,7 +28,7 @@ and also offer a surface area API to the Hosting Application.
 
 **Tabs** works similarly to browser tabs. You can create a new tab which will have an independent Component.
 The list of components that Tabs can generate is pulled dynamically from the container registry based on
-components that support `IComponentHTMLView`. This allows tabs to be consumable from multiple Containers
+components that support `IFluidHTMLView`. This allows tabs to be consumable from multiple Containers
 without hard coding direct component dependencies like you see in other component examples.
 
 ### [Vltava](./src/components/vltava/vltava.tsx)

@@ -95,7 +95,7 @@ export class DiceRoller extends DataObject implements IDiceRoller {
     }
 
     public readonly roll = () => {
-        const rollValue = Math.floor(Math.random() \* 6) + 1;
+        const rollValue = Math.floor(Math.random() * 6) + 1;
         this.root.set(diceValueKey, rollValue);
     };
 }
@@ -125,7 +125,7 @@ And that's it -- our DiceRoller data object is done!
 ### The container code
 
 Our container code will define the contents of our container and how we'll access them -- in our case, just a single
-DiceRoller. We can accomplish this using a containerRuntimeFactoryWithDefaultDataStore\<link\> -- this will create a
+DiceRoller. We can accomplish this using a [ContainerRuntimeFactoryWithDefaultDataStore][] -- this will create a
 single DiceRoller and make it available to be retrieved from the container. We'll provide it with the name of the
 default data object and a mapping of the name to factory.
 
@@ -231,3 +231,33 @@ Once the application loads the container will communicate with the server to exc
 ![](/docs/get-started/images/full-structure.png)
 
 The [full code for this application is available](https://github.com/microsoft/FluidHelloWorld) for you to try out.
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
+<!-- Links -->
+
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+
+[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
+
+[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
+
+[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
+[shareddirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
+
+[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+[sharedobjectsequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+
+[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
+[sharedmap]: {{< relref "/apis/map/sharedmap.md" >}}
+
+[undo-redo]: {{< relref "/apis/undo-redo.md" >}}
+
+
+<!-- Sequences -->
+
+[sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/apis/sequence/sequencedeltaevent.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->
