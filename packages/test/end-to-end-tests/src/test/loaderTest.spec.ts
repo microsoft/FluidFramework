@@ -16,7 +16,7 @@ import {
     initializeLocalContainer,
 } from "@fluidframework/test-utils";
 
-class TestSharedDataStore extends DataObject {
+class TestSharedDataObject1 extends DataObject {
     public get _root() {
         return this.root;
     }
@@ -30,13 +30,33 @@ class TestSharedDataStore extends DataObject {
     }
 }
 
-const testSharedDataStoreFactory = new DataObjectFactory(
-    "TestSharedDataStore",
-    TestSharedDataStore,
+class TestSharedDataObject2 extends DataObject {
+    public get _root() {
+        return this.root;
+    }
+
+    public get _runtime() {
+        return this.runtime;
+    }
+
+    public get _context() {
+        return this.context;
+    }
+}
+
+const testSharedDataObjectFactory1 = new DataObjectFactory(
+    "TestSharedDataObject",
+    TestSharedDataObject1,
     [],
     []);
 
-describe("Cell", () => {
+const testSharedDataObjectFactory2 = new DataObjectFactory(
+    "TestSharedDataObject",
+    TestSharedDataObject2,
+    [],
+    []);
+
+describe("Loader.request", () => {
     const id = "fluid-test://localhost/cellTest";
     const codeDetails: IFluidCodeDetails = {
         package: "sharedCellTestPackage",
@@ -44,8 +64,8 @@ describe("Cell", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let dataStore1: TestSharedDataStore;
-    let dataStore2: TestSharedDataStore;
+    let dataStore1: TestSharedDataObject1;
+    let dataStore2: TestSharedDataObject2;
     let loader: ILoader;
 
     async function requestObject(url: string) {
@@ -55,13 +75,13 @@ describe("Cell", () => {
         }
         return response.value;
     }
-    async function requestFromLoader(myurl: string): Promise<TestSharedDataStore> {
+    async function requestFromLoader(myurl: string): Promise<TestSharedDataObject1> {
         const runtimeFactory =
             new ContainerRuntimeFactoryWithDefaultDataStore(
                 "default",
                 [
-                    ["default", Promise.resolve(testSharedDataStoreFactory)],
-                    ["TestSharedDataStore", Promise.resolve(testSharedDataStoreFactory)],
+                    ["default", Promise.resolve(testSharedDataObjectFactory1)],
+                    ["TestSharedDataObject", Promise.resolve(testSharedDataObjectFactory1)],
                 ],
             );
         loader = createLocalLoader([[codeDetails, runtimeFactory]], deltaConnectionServer);
@@ -75,29 +95,30 @@ describe("Cell", () => {
         const url = `${id}/default`;
         dataStore1 = await requestFromLoader(url);
 
-        dataStore2 = await testSharedDataStoreFactory.createInstance(dataStore1._context) as TestSharedDataStore;
-
+        dataStore2 = await testSharedDataObjectFactory2.createInstance(dataStore1._context) as TestSharedDataObject2;
+        // this binds dataStore2 to dataStore1
         dataStore1._root.set("key",dataStore2.handle);
-        dataStore1._root.set("test_value","a");
-        dataStore2._root.set("test_value","b");
     });
 
-    it("return type is correct", async () => {
-        assert(dataStore1 instanceof TestSharedDataStore, "requestFromLoader returns the right type");
-        assert(dataStore2 instanceof TestSharedDataStore, "requestFromLoader returns the right type");
+    it("can create the data objects with correct types", async () => {
+        assert(dataStore1 instanceof TestSharedDataObject1, "requestFromLoader returns the wrong type");
+        assert(dataStore2 instanceof TestSharedDataObject2, "requestFromLoader returns the wrong type");
     });
 
-    it("returns correct type with new url", async () => {
+    it("can create data object using url with second id, having correct type and id", async () => {
         const url = `${id}/${dataStore2.id}`;
         const myDataStore = await requestObject(url);
 
-        assert(myDataStore instanceof TestSharedDataStore, "requestFromLoader returns the wrong type");
+        assert(myDataStore instanceof TestSharedDataObject2, "requestFromLoader returns the wrong type");
         assert.equal(myDataStore.id, dataStore2.id, "id is not correct");
     });
 
-    it("returns correct value with new url", async () => {
+    it("can create data object using url with second id, having distinct value from default", async () => {
         const url = `${id}/${dataStore2.id}`;
         const myDataStore = await requestObject(url);
+
+        dataStore1._root.set("test_value","a");
+        dataStore2._root.set("test_value","b");
 
         assert.equal(dataStore1._root.get("test_value"), "a", "datastore1 value incorrect");
         assert.equal(myDataStore._root.get("test_value"), dataStore2._root.get("test_value"), "values do not match");
