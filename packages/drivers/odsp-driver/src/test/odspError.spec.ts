@@ -134,6 +134,17 @@ describe("Odsp Error", () => {
         assert.equal(res, 1, "did not successfully retried with new token");
     });
 
+    it("invalid file name - no retry", async () => {
+        const res = getWithRetryForTokenRefresh(async (options) => {
+            if (options.refresh) {
+                return 1;
+            } else {
+                throwOdspNetworkError("some error", invalidFileNameStatusCode);
+            }
+        });
+        await assert.rejects(res, "Invalid file name should not result in retry!");
+    });
+
     it("fetch incorrect response retries", async () => {
         const res = await getWithRetryForTokenRefresh(async (options) => {
             if (options.refresh) {
