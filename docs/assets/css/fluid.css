@@ -117,6 +117,7 @@ footer {
 
 .callout {
     font-size: 1.6rem;
+    background-color: #f3f5f7;
 }
 
 .callout .callout-title {
@@ -126,17 +127,14 @@ footer {
 }
 
 .callout.tip {
-    background-color: #f3f5f7;
     border-color: #42b983;
 }
 
 .callout.important {
-    background-color: #f3f5f7;
     border-color: #00bcf2;
 }
 
 .callout.tip {
-    background-color: #f3f5f7;
     border-color: #42b983;
 }
 
