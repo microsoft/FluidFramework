@@ -96,15 +96,15 @@ export const createTestFluidDataStoreFactory = (registry: ChannelFactoryRegistry
 };
 
 export const createOldTestFluidDataStoreFactory = (registry?: ChannelFactoryRegistry): old.IFluidDataStoreFactory => {
-    return new old.TestFluidComponentFactory(convertRegistry(registry));
+    return new old.TestFluidObjectFactory(convertRegistry(registry));
 };
 
 export const createRuntimeFactory = (
     type: string,
-    DataStoreFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
+    dataStoreFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
     runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): IRuntimeFactory => {
-    return new TestContainerRuntimeFactory(type, DataStoreFactory as IFluidDataStoreFactory, runtimeOptions);
+    return new TestContainerRuntimeFactory(type, dataStoreFactory as IFluidDataStoreFactory, runtimeOptions);
 };
 
 // TODO: once 0.25 is released this can import the old version of TestContainerRuntimeFactory used above
@@ -113,28 +113,7 @@ export const createOldRuntimeFactory = (
     dataStoreFactory: IFluidDataStoreFactory | old.IFluidDataStoreFactory,
     runtimeOptions: old.IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
 ): old.IRuntimeFactory => {
-    const builder = new old.RuntimeRequestHandlerBuilder();
-    builder.pushHandler(
-        old.dataStoreRuntimeRequestHandler,
-        old.defaultDataStoreRuntimeRequestHandler("default"));
-
-    return {
-        get IRuntimeFactory() { return this; },
-        instantiateRuntime: async (context: old.IContainerContext) => {
-            const runtime = await old.ContainerRuntime.load(
-                context,
-                [[type, Promise.resolve(dataStoreFactory as old.IFluidDataStoreFactory)]],
-                async (req, rt) => builder.handleRequest(req, rt),
-                runtimeOptions,
-            );
-            if (!runtime.existing) {
-                const dataStoreRuntime = await runtime._createDataStore("default", type);
-                await dataStoreRuntime.request({ url: "/" });
-                dataStoreRuntime.bindToContext();
-            }
-            return runtime;
-        },
-    };
+    return new old.TestContainerRuntimeFactory(type, dataStoreFactory as old.IFluidDataStoreFactory, runtimeOptions);
 };
 
 export async function createContainer(

@@ -1,6 +1,7 @@
-themes/thxvscode/assets/js/node_modules/
-public/
-content/apis/
 assets/doc-models/*.json
+bin/
+content/apis/
 node_modules/
+public/
 scripts/api-documenter/temp
+themes/thxvscode/assets/js/node_modules/

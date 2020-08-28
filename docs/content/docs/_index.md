@@ -50,11 +50,22 @@ accurately produce the current state regardless of the order it receives operati
 
 Here is a typical flow...
 
-- Client code changes data locally
-- Fluid runtime sends that change to the Fluid server
-- Fluid server sequences that operation and broadcasts it to all clients
-- Fluid runtime incorporates that operation into local data and raises a "valueChanged" event
-- Client code handles that event (updates view, runs business logic)
+* Client code changes data locally
+* Fluid runtime sends that change to the Fluid server
+* Fluid server sequences that operation and broadcasts it to all clients
+* Fluid runtime incorporates that operation into local data and raises a "valueChanged" event
+* Client code handles that event (updates view, runs business logic)
+
+## Getting to version 1.0
+
+The core technology powering Fluid Framework is mature and stable. However, the layers built on top of that
+foundation are still a work in progress. Over the coming months we will be evolving APIs, adding new features,
+and working to further simplify using the framework. These changes are driven by Microsoft's use of
+Fluid internally as well as by requirements we are gathering from developers currently building on Fluid.
+
+Fluid Framework is not ready to power production-quality solutions yet. But we are excited to open source it now
+to give developers an opportunity to explore, learn, and contribute both through feedback and through direct
+participation.
 
 ## Next steps
 
