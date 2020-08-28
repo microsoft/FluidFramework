@@ -49,7 +49,7 @@ npm start
 
 ## Documentation sources
 
-The Fluid documentation comes from three different sources.
+The Fluid documentation comes from multiple sources.
 
 Narrative documentation
 : The overall structure of the documentation comes from Markdown files in the `docs/` folder.
