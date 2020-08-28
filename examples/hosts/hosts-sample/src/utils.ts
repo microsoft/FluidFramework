@@ -34,7 +34,7 @@ export async function initializeChaincode(document: Container, pkg?: IFluidCodeD
 }
 
 /**
- * attachCore is used to make a request against the loader to load a fluid object. And then attaches to it once
+ * attachCore is used to make a request against the loader to load a Fluid object. And then attaches to it once
  * found.
  */
 async function attachCore(loader: Loader, url: string, div: HTMLDivElement) {
@@ -45,7 +45,7 @@ async function attachCore(loader: Loader, url: string, div: HTMLDivElement) {
     }
 
     const fluidObject = response.value as IFluidObject;
-    // Try to render the fluid object if it is a view
+    // Try to render the Fluid object if it is a view
     const view: IFluidHTMLView | undefined = fluidObject.IFluidHTMLView;
     if (view !== undefined) {
         view.render(div, { display: "block" });

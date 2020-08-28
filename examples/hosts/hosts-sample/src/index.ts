@@ -82,8 +82,8 @@ export async function start(url: string, code: string): Promise<void> {
     // behavior and can instead just directly make requests against the document.
     const fluidDocument = await loader.resolve({ url });
 
-    // The attach helper method performs the actual attachment of the above platform to the fluid object identified
-    // by the URL in the browser. Once the attach is complete the fluid object will render to the provided div.
+    // The attach helper method performs the actual attachment of the above platform to the Fluid object identified
+    // by the URL in the browser. Once the attach is complete the Fluid object will render to the provided div.
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     attach(loader, fluidDocument, url, document.getElementById("content") as HTMLDivElement);
 
