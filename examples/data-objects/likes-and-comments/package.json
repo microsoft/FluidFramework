@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/likes-and-comments",
   "version": "0.26.0",
-  "description": "A component for storing like counts and comments using pre-build DDS hooks",
+  "description": "A Fluid object for storing like counts and comments using pre-build DDS hooks",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
