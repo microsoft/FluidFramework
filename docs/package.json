@@ -1,6 +1,7 @@
 {
   "name": "fluidframework-docs",
   "version": "0.25.0",
+  "private": true,
   "description": "Fluid Framework documentation",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
