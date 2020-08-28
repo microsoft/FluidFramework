@@ -39,7 +39,7 @@ class NotUsedUrlResolver implements IUrlResolver {
     }
 }
 
-// Loader class to load a container and proxy component interfaces from within a web worker.
+// Loader class to load a container and proxy fluid object interfaces from within a web worker.
 // Only supports IFluidRunnable for now.
 class WorkerLoader implements ILoader, IFluidRunnable {
     private container: Container | undefined;

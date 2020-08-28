@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/datastore",
   "version": "0.26.0",
-  "description": "Fluid component API",
+  "description": "Fluid data store API",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

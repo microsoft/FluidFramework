@@ -264,7 +264,7 @@ export class DeltaManager
 
     /**
      * Tells if container is in read-only mode.
-     * Components should listen for "readonly" notifications and disallow user
+     * Data stores should listen for "readonly" notifications and disallow user
      * making changes to data stores.
      * Readonly state can be because of no storage write permission,
      * or due to host forcing readonly mode for container.

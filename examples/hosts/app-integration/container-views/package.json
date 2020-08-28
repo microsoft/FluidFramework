@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/app-integration-container-views",
   "version": "0.26.0",
-  "description": "Minimal Fluid Container & Component sample to implement a collaborative dice roller as a standalone app.",
+  "description": "Minimal Fluid container & data store sample to implement a collaborative dice roller as a standalone app.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
