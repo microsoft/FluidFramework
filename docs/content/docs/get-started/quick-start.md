@@ -18,25 +18,17 @@ To get started you need the following installed.
 - [Node.js](https://nodejs.org/en/download) - {{< include file="_includes/node-versions.md" >}}
 - Code Editor - We recommend [Visual Studio Code](https://code.visualstudio.com/)
 
-{{< callout tip >}}
-
-If you need to preserve an installation of an earlier version of Node that does not support fluid, then we
-recommend that you first install nvm (for [Windows](https://github.com/coreybutler/nvm-windows) or
-[MacOS/Linux](https://github.com/nvm-sh/nvm)). Then use nvm to install a Fluid-compatible version of Node.js.
-
-{{< /callout >}}
-
 We also recommend that you install the following:
 
 - [Git](https://git-scm.com/downloads)
 
 ## Getting Started
 
-Open a new commanding window and navigate to the folder you where you want to install the project, and then clone the [FluidHelloWorld repo](https://github.com/microsoft/FluidHelloWorld) with the
-following commands.
+Open a new command window and navigate to the folder you where you want to install the project, and then clone the [FluidHelloWorld repo](https://github.com/microsoft/FluidHelloWorld) with the
+following commands. The cloning process will create a subfolder named FluidHelloWorld with the project files in it.
 
 ```bash
-cd C:\MyFluidProjects
+cd C:\\MyFluidProjects
 git clone https://github.com/microsoft/FluidHelloWorld.git
 ```
 
@@ -69,9 +61,8 @@ To see collaboration in action copy the full url in the browser, including the i
 browser. This opens a second client for your dice roller application. With both windows open, click the **Roll** button
 in either and note that the state of the dice changes in both clients.
 
-
 🥳**Congratulations**🎉 You have successfully taken the first step towards unlocking the world of Fluid collaboration.
 
-## Next Step
+## Next Steps
 
-Get an explanation of the code for the dice roller application on our [Tutorial](./tutorial.md) page.
+Get an explanation of the code for the dice roller application in our [Tutorial](./tutorial.md).
