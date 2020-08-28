@@ -1,7 +1,7 @@
 import { EventEmitter } from "events";
 
 /**
- * Describes the public API surface for our Fluid component.
+ * Describes the public API surface for our Fluid DataObject.
  */
 export interface IDiceRoller extends EventEmitter {
     /**

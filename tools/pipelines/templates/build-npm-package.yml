@@ -69,6 +69,9 @@ parameters:
 - name: releaseBuildOverride
   type: string
 
+- name: tagName
+  type: string
+
 trigger: none
 
 variables:
@@ -299,22 +302,10 @@ stages:
 
   # Publish stage
   - ${{ if eq(variables.publish, true) }}:
-    - stage: publish
-      dependsOn: build
-      displayName: Publish Stage
-      jobs:
-      - template: publish-npm-package.yml
-        parameters:
-          namespace: ${{ parameters.namespace }}
-          feeds:
-          - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
-            environment: fluid-feed
-            customEndPoint: Offnet Packages
-            internal: true
-          # only publish release bits
-          - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
-            - name: https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
-              environment: office-feed
-              customEndPoint: Office Packages
-              internal: false
-
+    - template: include-publish-npm-package.yml
+      parameters:
+        buildDirectory: ${{ parameters.buildDirectory }}
+        namespace: ${{ parameters.namespace }}
+        tagName: ${{ parameters.tagName }}
+        buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+        

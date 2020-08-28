@@ -128,7 +128,8 @@ export class TscTask extends LeafTask {
                 logVerbose(`${this.node.pkg.nameColored}: ts fail to parse ${configFileFullPath}`);
                 return undefined;
             }
-            const options = ts.parseJsonConfigFileContent(config, ts.sys, this.node.pkg.directory, parsedCommand.options, configFileFullPath);
+            const configDir = path.parse(configFileFullPath).dir;
+            const options = ts.parseJsonConfigFileContent(config, ts.sys, configDir, parsedCommand.options, configFileFullPath);
             if (options.errors.length) {
                 logVerbose(`${this.node.pkg.nameColored}: ts fail to parse file content ${configFileFullPath}`);
                 return undefined;

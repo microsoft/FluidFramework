@@ -27,15 +27,16 @@ trigger:
     include:
     - main
     - release/*
-    - refs/tags/build-common_v*
   paths:
     include:
     - common/build/build-common
     - tools/pipelines/build-build-common.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
-    - tools/pipelines/templates/publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
 
 pr:
   branches:
@@ -46,6 +47,7 @@ pr:
     include:
     - common/build/build-common
     - tools/pipelines/build-build-common.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -56,6 +58,7 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: common/build/build-common
+    tagName: build-common
     taskBuild: false
     taskBuildDocs: false
     taskLint: false

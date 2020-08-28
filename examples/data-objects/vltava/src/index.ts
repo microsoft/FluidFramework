@@ -90,7 +90,7 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultData
 const generateFactory = () => {
     const containerFluidObjectsDefinition: IInternalRegistryEntry[] = [
         {
-            type: Anchor.getFactory().type,
+            type: ClickerInstantiationFactory.type,
             factory: Promise.resolve(ClickerInstantiationFactory),
             capabilities: ["IFluidHTMLView", "IFluidLoadable"],
             friendlyName: "Clicker",
