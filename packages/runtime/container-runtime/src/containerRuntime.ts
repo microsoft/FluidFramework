@@ -1314,7 +1314,7 @@ export class ContainerRuntime extends EventEmitter
     /**
      * Notifies this object to register tasks to be performed.
      * @param tasks - List of tasks.
-     * @param version - Version of the fluid package.
+     * @param version - Version of the Fluid package.
      */
     public registerTasks(tasks: string[], version?: string) {
         this.verifyNotClosed();

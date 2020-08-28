@@ -194,7 +194,7 @@ class CodemirrorView implements IFluidHTMLView {
 }
 
 /**
- * CodeMirrorComponent builds a fluid collaborative code editor on top of the open source code editor CodeMirror.
+ * CodeMirrorComponent builds a Fluid collaborative code editor on top of the open source code editor CodeMirror.
  * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */

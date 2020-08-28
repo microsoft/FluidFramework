@@ -102,7 +102,7 @@ export abstract class SyncedDataObject<
     }
 
     /**
-     * Set values to the syncedStateConfig where the view and fluid states have the same values defined by S.
+     * Set values to the syncedStateConfig where the view and Fluid states have the same values defined by S.
      * Each view with a unique syncedStateId needs its own value in the syncedStateConfig.
      * @param key - The syncedStateId that maps to the view that will be using these definitions
      * @param value - The config value containing the syncedStateId and the fluidToView and viewToFluid maps
@@ -112,9 +112,9 @@ export abstract class SyncedDataObject<
     }
 
     /**
-     * Set values to the syncedStateConfig with different view and fluid state definitions.
+     * Set values to the syncedStateConfig with different view and Fluid state definitions.
      * Each view with a unique syncedStateId needs its own value in the syncedStateConfig,
-     * with SV being the view state definition and SF being the fluid state definition.
+     * with SV being the view state definition and SF being the Fluid state definition.
      * @param key - The syncedStateId that maps to the view that will be using these definitions
      * @param value - The config value containing the syncedStateId and the fluidToView and viewToFluid maps
      * that establish the relationship between SV and SF

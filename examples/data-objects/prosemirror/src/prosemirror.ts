@@ -93,7 +93,7 @@ class ProseMirrorView implements IFluidHTMLView {
 }
 
 /**
- * ProseMirror builds a fluid collaborative text editor on top of the open source text editor ProseMirror.
+ * ProseMirror builds a Fluid collaborative text editor on top of the open source text editor ProseMirror.
  * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */

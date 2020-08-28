@@ -40,7 +40,7 @@ const isInvalidFileName = (fileName: string): boolean => {
 };
 
 /**
- * Creates a new fluid file. '.fluid' is appended to the filename
+ * Creates a new Fluid file. '.fluid' is appended to the filename
  * Returns resolved url
  */
 export async function createNewFluidFile(

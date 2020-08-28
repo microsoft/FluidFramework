@@ -34,7 +34,7 @@ export interface ICodeLoader {
  */
 export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
     /**
-     * A resolved version of the fluid package. All fluid browser file entries should be absolute urls.
+     * A resolved version of the Fluid package. All Fluid browser file entries should be absolute urls.
      */
     resolvedPackage: IFluidPackage;
     /**
@@ -44,18 +44,18 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 }
 
 /**
- * Fluid code resolvers take a fluid code details, and resolve the
- * full fluid package including absolute urls for the browser file entries.
- * The fluid code resolver is coupled to a specific cdn and knows how to resolve
+ * Fluid code resolvers take a Fluid code details, and resolve the
+ * full Fluid package including absolute urls for the browser file entries.
+ * The Fluid code resolver is coupled to a specific cdn and knows how to resolve
  * the code detail for loading from that cdn. This include resolving to the most recent
  * version of package that supports the provided code details.
  */
 export interface IFluidCodeResolver {
     /**
-     * Resolves a fluid code details into a form that can be loaded
-     * @param details - The fluid code details to resolve
+     * Resolves a Fluid code details into a form that can be loaded
+     * @param details - The Fluid code details to resolve
      * @returns - A IResolvedFluidCodeDetails where the
-     *            resolvedPackage's fluid file entries are absolute urls, and
+     *            resolvedPackage's Fluid file entries are absolute urls, and
      *            an optional resolvedPackageCacheId if the loaded package should be
      *            cached.
      */

@@ -8,7 +8,7 @@ import { IOdspResolvedUrl } from "@fluidframework/odsp-driver";
 import { FluidAppOdspUrlResolver } from "../urlResolver";
 
 describe("Fluid App Url Resolver", () => {
-    it("Should resolve the fluid app urls correctly", async () => {
+    it("Should resolve the Fluid app urls correctly", async () => {
         const urlResolver = new FluidAppOdspUrlResolver();
         // eslint-disable-next-line max-len
         const resolved = (await urlResolver.resolve({ url: "https://dev.fluidpreview.office.net/p/c3BvOmh0dHBzOi8vbWljcm9zb2Z0LnNoYXJlcG9pbnQtZGYuY29tL3RlYW1zL09mZmljZU9ubGluZVByYWd1ZQ%3D%3D/randomDrive/randomItem/OXO-Dogfood-remaining-items?nav=&e=_Ha3TtNhQEaX-jy2yOQM3A&at=15&scriptVersion=3016031" })) as IOdspResolvedUrl;
