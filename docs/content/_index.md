@@ -28,6 +28,5 @@ title: "Fluid Framework"
     iconClasses="play"
     linkText="Play with Fluid"
   >}}
-
 {{< /cta_container  >}}
 
