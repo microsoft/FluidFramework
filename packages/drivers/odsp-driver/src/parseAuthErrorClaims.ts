@@ -7,8 +7,7 @@ import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 
 /**
  * Checks if response headers contains `www-authenticate` header and extracts claims that should be
- * passed to token authority when requesting new token. More details can be found here:
- * https://microsoft.sharepoint.com/:w:/t/aad/protocols/ERSWYtOQB45GgG4e2q3Cz00B6C36zi4gAs6JhdQG_wvVeQ
+ * passed to token authority when requesting new token.
  *
  * Header sample:
  * www-authenticate=Bearer realm="",
