@@ -1,7 +1,3 @@
-
-
-Swap the order of the Explore the code and see the tutorial sections OR BETTER DON'T HAVE MULTIPLE NEXT STEPS AT THIS POINT. SAVE THEM UNTIL AFTER THE TUTORIAL (also if they explore the code they see "documents" in the comments
-
 ---
 title: Quick Start
 menuPosition: 2
