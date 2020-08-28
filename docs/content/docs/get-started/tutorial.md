@@ -4,21 +4,20 @@ menuPosition: 3
 ---
 
 In this walkthrough, we'll learn about using the Fluid Framework by building a simple
-[Hello World](https://github.com/microsoft/FluidHelloWorld) Fluid application together. To get started, and follow along, go
+[DiceRoller](https://github.com/microsoft/FluidHelloWorld) application together. To get started, and follow along, go
 through our [Quick Start](./quick-start.md) guide.
-
-
-## The DiceRoller app
 
 {{< fluid_bundle_loader idPrefix="dice-roller"
 bundleName="dice-roller.9af6bdd702e6cd4ad6cf.js" >}}
 
-In our DiceRoller app we'll show users a dice with a button to roll it.  When the dice is rolled, we'll use the Fluid Framework to sync the data across clients so everyone sees the same result.  We'll do this in four parts:
+In our DiceRoller app we'll show users a dice with a button to roll it.  When the dice is rolled, we'll use the Fluid Framework to sync the data across clients so everyone sees the same result.  We'll do this in N parts:
 
 1. Write the view
-1. Write the model for the dice using Fluid Framework
-1. Define how the Fluid Framework should instantiate and use our model
-1. Connect our model to the service for collaboration, and also to the view for rendering
+1. Define the interface our model will expose
+1. Write the model using Fluid Framework
+1. Include our model in our container
+1. Connect our container to the service for collaboration
+1. Connect our model instance to our view for rendering
 
 
 ### The view
@@ -54,7 +53,7 @@ export function renderDiceRoller(div: HTMLDivElement) {
 
 ### The model interface
 
-Before we implement our model, let's start by defining its public interface.
+To clarify what our model needs to support, let's start by defining its public interface.
 
 ```ts
 export interface IDiceRoller extends EventEmitter {
@@ -64,9 +63,9 @@ export interface IDiceRoller extends EventEmitter {
 }
 ```
 
-As you might expect, we have the ability to read its value and command it to roll.  However, we also declare an event `"diceRolled"` in our interface.  We'll fire this event whenever the dice is rolled (using [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)).
+As you might expect, we have the ability to read its value and command it to roll.  However, we also need to declare an event `"diceRolled"` in our interface.  We'll fire this event whenever the dice is rolled (using [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)).
 
-This event is particularly important since we're building a collaborative experience. It's how each client will observe that other clients have rolled the dice remotely.
+This event is particularly important because we're building a collaborative experience. It's how each client will observe that other clients have rolled the dice remotely, so they know to update with the new value.
 
 ### Implementing the model
 
@@ -111,7 +110,7 @@ DataObject also provides a "root" **Distributed Data Structure (DDS)**.  DDSes a
 
 To instantiate the DataObject, the Fluid Framework needs a corresponding factory. Since we're using the DataObject
 class, we'll also use the [DataObjectFactory][] which pairs with it. In this case we just need to provide it with a unique
-name ("dice-roller" in this case) and the class. The third and fourth parameters are not used:
+name ("dice-roller" in this case) and the class constructor. The third and fourth parameters are not used:
 
 ```ts
 export const DiceRollerInstantiationFactory = new DataObjectFactory(
@@ -122,21 +121,14 @@ export const DiceRollerInstantiationFactory = new DataObjectFactory(
 );
 ```
 
-![](/docs/get-started/images/data-object.png)
-
 And that's it -- our DiceRoller model is done!
 
 
-### The container code
+### Defining the container contents
 
-Our container code will define the contents of our container and how we'll access them -- in our case, just a single
-DiceRoller. We can accomplish this using a [ContainerRuntimeFactoryWithDefaultDataStore][] -- this will create a
-single DiceRoller and make it available to be retrieved from the container. We'll provide it with the name of the
-default data object and a mapping of the name to factory.
+In our app, we only need a single instance of this single model for our single dice.  However, in more complex scenarios we might have multiple model types with many model instances.  The code you'll write to specify the type and number of data objects your application uses is the **container code**.
 
-![](/docs/get-started/images/container-code.png)
-
-*containerCode.ts*
+Since we only need a single dice, Fluid Framework provides a class called [ContainerRuntimeFactoryWithDefaultDataStore][] that we can use.  This particular container code will instantiate a single instance of the model type we specify from the registry we provide.
 
 ```ts
 export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
@@ -147,12 +139,13 @@ export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactor
 );
 ```
 
-In more complex scenarios where we want multiple data objects or specialized routing we might customize this more, but
-it's not necessary for this app.
+
+### Connecting our container to the service for collaboration
+
 
 ### Integrating into our app
 
-![](/docs/get-started/images/app-integration.png)
+
 
 Now that we've created our data object and configured container code to use it, we're ready to load that container code
 into a container and access it in our app. We'll also connect the container to the service that orchestrates the
@@ -259,6 +252,12 @@ There are a handful of key concepts to understand.
 - **Fluid service** -- The container will connect to a service to send and receive changes to collaborative data.
 
 ![](/docs/get-started/images/full-structure.png)
+
+![](/docs/get-started/images/data-object.png)
+
+![](/docs/get-started/images/container-code.png)
+
+![](/docs/get-started/images/app-integration.png)
 
 
 
