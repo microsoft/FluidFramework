@@ -32,7 +32,7 @@
     "@fluidframework/core-interfaces": "^0.26.0",
     "@fluidframework/local-driver": "^0.26.0",
     "@fluidframework/runtime-definitions": "^0.26.0",
-    "@fluidframework/server-local-server": "^0.1011.1-0",
+    "@fluidframework/server-local-server": "^0.1011.1",
     "@fluidframework/view-adapters": "^0.26.0",
     "uuid": "^3.3.2"
   },

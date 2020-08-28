@@ -27,7 +27,6 @@ trigger:
     include:
     - main
     - release/*
-    - refs/tags/server_v*
   paths:
     include:
     - server/routerlicious

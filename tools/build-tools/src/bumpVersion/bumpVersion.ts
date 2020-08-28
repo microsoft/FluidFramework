@@ -334,6 +334,19 @@ class ReferenceVersionBag extends VersionBag {
         }
     }
 
+    public static checkPrivate(pkg: Package, dep: Package, dev: boolean) {
+        if (dep.packageJson.private) {
+            if (!pkg.packageJson.private && !dev)  {
+                fatal(`Private package not a dev dependency\n   ${pkg.name}@${pkg.version}\n  ${dep.name}@${dep.version}`)
+            }
+            if (!MonoRepo.isSame(pkg.monoRepo, dep.monoRepo)) {
+                fatal(`Private package not in the same monorepo\n   ${pkg.name}@${pkg.version}\n  ${dep.name}@${dep.version}`)
+            }
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Given a package a version range, ask NPM for a list of version that satisfies it, and find the latest version.
      * That version is added to the version bag, and will error on conflict.
@@ -385,6 +398,9 @@ class ReferenceVersionBag extends VersionBag {
             for (const d in dep) {
                 const depPkg = this.fullPackageMap.get(d);
                 if (depPkg) {
+                    if (ReferenceVersionBag.checkPrivate(pkg, depPkg, dev)) {
+                        continue;
+                    }
                     pending.push(this.collectPublishedPackageDependencies(depPkg, dep[d], dev, versionSpec));
                 }
             }
@@ -569,6 +585,10 @@ class BumpVersion {
             for (const { name: dep, version, dev } of pkg.combinedDependencies) {
                 const depBuildPackage = this.fullPackageMap.get(dep);
                 if (depBuildPackage) {
+                    if (ReferenceVersionBag.checkPrivate(pkg, depBuildPackage, dev)) {
+                        continue;
+                    }
+
                     if (MonoRepo.isSame(pkg.monoRepo, depBuildPackage.monoRepo)) {
                         // If it is the same repo, there are all related, and we would have added them to the pendingDepCheck as a set already.
                         // Just verify that the two package has the same version and the dependency has the same version
