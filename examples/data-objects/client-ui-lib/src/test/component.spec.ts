@@ -26,7 +26,7 @@ describe("Routerlicious", () => {
 
             describe(".getChildren()", () => {
                 it("Should return the children of the component", () => {
-                    assert.equal(0, component.getChildren());
+                    assert.equal(0, component.getChildren().length);
                 });
             });
         });

@@ -169,7 +169,7 @@ describe("Routerlicious", () => {
                         const message = deliKafka.getLastMessage();
                         const systemJoinMessage = message.operation as ISequencedDocumentSystemMessage;
                         assert.equal(message.documentId, testId);
-                        assert.equal(systemJoinMessage.clientId, null);
+                        assert.equal(systemJoinMessage.clientId, undefined);
                         assert.equal(systemJoinMessage.type, MessageType.ClientJoin);
                         const JoinMessage = JSON.parse(systemJoinMessage.data) as IClientJoin;
                         assert.equal(JoinMessage.clientId, connectMessage.clientId);
@@ -203,7 +203,7 @@ describe("Routerlicious", () => {
                         const message = deliKafka.getMessage(1);
                         assert.equal(message.documentId, testId);
                         const systemLeaveMessage = message.operation as ISequencedDocumentSystemMessage;
-                        assert.equal(systemLeaveMessage.clientId, null);
+                        assert.equal(systemLeaveMessage.clientId, undefined);
                         assert.equal(systemLeaveMessage.type, MessageType.ClientLeave);
                         const clientId = JSON.parse(systemLeaveMessage.data) as string;
                         assert.equal(clientId, connectMessage.clientId);
