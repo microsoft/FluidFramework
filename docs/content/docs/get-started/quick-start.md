@@ -28,7 +28,7 @@ Open a new command window and navigate to the folder you where you want to insta
 following commands. The cloning process will create a subfolder named FluidHelloWorld with the project files in it.
 
 ```bash
-cd C:\\MyFluidProjects
+cd C:\MyFluidProjects
 git clone https://github.com/microsoft/FluidHelloWorld.git
 ```
 
