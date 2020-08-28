@@ -64,6 +64,7 @@ jobs:
           tar -C $GITHUB_WORKSPACE/docs/static/playground/ -zxvf storybook.tar.gz
       - name: "Copy playground.html"
         id: copy-playground
+        run: |
           cp $GITHUB_WORKSPACE/docs/static/playground/playground.html $GITHUB_WORKSPACE/docs/layouts/page/playground.html
 
       - name: Hugo Build And Deploy
