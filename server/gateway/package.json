@@ -61,7 +61,7 @@
   "dependencies": {
     "@fluid-example/host-service-interfaces": "^0.25.1",
     "@fluidframework/base-host": "^0.25.1",
-    "@fluidframework/common-utils": "^0.21.0",
+    "@fluidframework/common-utils": "^0.22.1",
     "@fluidframework/container-definitions": "^0.25.1",
     "@fluidframework/container-loader": "^0.25.1",
     "@fluidframework/core-interfaces": "^0.25.1",
