@@ -129,7 +129,7 @@
         "directory": "server/tinylicious"
       },
       {
-        "directory": "server",
+        "directory": "server/routerlicious",
         "skipBuild": true,
         "hasLerna": true
       }
