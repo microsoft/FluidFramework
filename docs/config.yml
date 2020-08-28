@@ -38,6 +38,9 @@ menu:
   - identifier: "concepts"
     name: "Main concepts"
     weight: -300
+  - identifier: "advanced"
+    name: "Advanced concepts"
+    weight: -200
   - identifier: "faq"
     name: "FAQ"
     url: "/docs/faq/"

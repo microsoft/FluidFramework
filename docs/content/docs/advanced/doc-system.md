@@ -1,8 +1,7 @@
 ---
-sidebarDepth: 3
+title: Using the documentation system effectively
 ---
 
-# Using the documentation system effectively
 
 The Fluid docs are built using [VuePress](https://vuepress.vuejs.org/). It contains many of the features one would
 expect from a modern documentation system. Content is written in Markdown.
