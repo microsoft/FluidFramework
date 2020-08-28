@@ -36,7 +36,7 @@ Open a new commanding window and navigate to the folder you where you want to in
 following commands.
 
 ```bash
-cd \\MyFluidProjects
+cd C:\MyFluidProjects
 git clone https://github.com/microsoft/FluidHelloWorld.git
 ```
 
@@ -67,7 +67,7 @@ npm start
 A new browser tab will open to [http://localhost:8080](http://localhost:8080) and you will see the Dice Roller appear!
 To see collaboration in action copy the full url in the browser, including the id, into a new window or even a different
 browser. This opens a second client for your dice roller application. With both windows open, click the **Roll** button
-in either and note that the state of the dice changes in both clients almost instantaneously.
+in either and note that the state of the dice changes in both clients.
 
 
 🥳**Congratulations**🎉 You have successfully taken the first step towards unlocking the world of Fluid collaboration.
