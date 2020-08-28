@@ -161,7 +161,11 @@ store that SharedMap in the root SharedDirectory.
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
 
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+
 [DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
+
+[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
 
 [SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
 [shareddirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
@@ -173,5 +177,13 @@ store that SharedMap in the root SharedDirectory.
 [sharedmap]: {{< relref "/apis/map/sharedmap.md" >}}
 
 [undo-redo]: {{< relref "/apis/undo-redo.md" >}}
+
+
+<!-- Sequences -->
+
+[sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/apis/sequence/sequencedeltaevent.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->
