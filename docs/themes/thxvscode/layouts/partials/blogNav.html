@@ -7,9 +7,6 @@
         <li {{if eq .RelPermalink "/community/"}} class="active" {{end}}>
             <a class="docs-home{{if eq .RelPermalink "/community/"}} active{{end}}" href="/community/">Community</a>
         </li>
-        <li {{if eq .RelPermalink "/roadmap/"}} class="active" {{end}}>
-            <a class="docs-home {{if eq .RelPermalink "/roadmap/"}} active{{end}}" href="/roadmap/">Roadmap</a>
-        </li>
         <li {{ if eq .RelPermalink "/posts/"  }} class="active" {{ end }}>
             <a class="docs-home" href="/posts/" {{ if eq .RelPermalink "/posts/" }} aria-label="Current Page: Blog"
                 {{ end }}>Updates</a>
