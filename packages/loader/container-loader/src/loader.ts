@@ -103,7 +103,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         throw new Error("Relative loader should not create a detached container");
     }
 
-    public async createDetachedContainerFromSnapshot(source: ISnapshotTree): Promise<Container> {
+    public async rehydrateDetachedContainerFromSnapshot(source: ISnapshotTree): Promise<Container> {
         throw new Error("Relative loader should not create a detached container from snapshot");
     }
 
@@ -160,7 +160,7 @@ export class Loader extends EventEmitter implements ILoader {
         this.documentServiceFactory = MultiDocumentServiceFactory.create(documentServiceFactory);
     }
 
-    public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
+    public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container> {
         debug(`Container creating in detached state: ${performanceNow()} `);
 
         return Container.create(
@@ -168,14 +168,16 @@ export class Loader extends EventEmitter implements ILoader {
             this.options,
             this.scope,
             this,
-            source,
-            undefined,
+            {
+                codeDetails,
+                create: true,
+            },
             this.documentServiceFactory,
             this.resolver,
             this.subLogger);
     }
 
-    public async createDetachedContainerFromSnapshot(source: ISnapshotTree): Promise<Container> {
+    public async rehydrateDetachedContainerFromSnapshot(snapshot: ISnapshotTree): Promise<Container> {
         debug(`Container creating in detached state: ${performanceNow()} `);
 
         return Container.create(
@@ -183,8 +185,10 @@ export class Loader extends EventEmitter implements ILoader {
             this.options,
             this.scope,
             this,
-            undefined,
-            source,
+            {
+                snapshot,
+                create: false,
+            },
             this.documentServiceFactory,
             this.resolver,
             this.subLogger);

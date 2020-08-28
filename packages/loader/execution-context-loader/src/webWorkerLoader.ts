@@ -76,7 +76,7 @@ export class WebWorkerLoader implements ILoader, IFluidRunnable, IFluidRouter {
         return this.proxy.createDetachedContainer(source);
     }
 
-    public async createDetachedContainerFromSnapshot(source: ISnapshotTree): Promise<IContainer> {
-        return this.proxy.createDetachedContainerFromSnapshot(source);
+    public async rehydrateDetachedContainerFromSnapshot(source: ISnapshotTree): Promise<IContainer> {
+        return this.proxy.rehydrateDetachedContainerFromSnapshot(source);
     }
 }

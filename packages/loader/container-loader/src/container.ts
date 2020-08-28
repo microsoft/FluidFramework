@@ -124,6 +124,14 @@ export enum ConnectionState {
     Connected,
 }
 
+export type DetachedContainerSource = {
+    codeDetails: IFluidCodeDetails,
+    create: true,
+} | {
+    snapshot: ISnapshotTree,
+    create: false,
+};
+
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
 
@@ -194,8 +202,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         options: any,
         scope: IFluidObject,
         loader: Loader,
-        codeDetails: IFluidCodeDetails | undefined,
-        snapshot: ISnapshotTree | undefined,
+        source: DetachedContainerSource,
         serviceFactory: IDocumentServiceFactory,
         urlResolver: IUrlResolver,
         logger?: ITelemetryBaseLogger,
@@ -210,11 +217,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {},
             logger);
 
-        if (snapshot !== undefined) {
-            await container.createDetachedFromSnapshot(snapshot);
+        if (source.create) {
+            await container.createDetached(source.codeDetails);
         } else {
-            assert(codeDetails, "One of the source should be there to load from!!");
-            await container.createDetached(codeDetails);
+            await container.rehydrateDetachedFromSnapshot(source.snapshot);
         }
 
         return container;
@@ -1047,7 +1053,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.propagateConnectionState();
     }
 
-    private async createDetachedFromSnapshot(snapshotTree: ISnapshotTree) {
+    private async rehydrateDetachedFromSnapshot(snapshotTree: ISnapshotTree) {
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
         assert.strictEqual(attributes.sequenceNumber, 0, "Seq number in detached container should be 0!!");
         this.attachDeltaManagerOpHandler(attributes);

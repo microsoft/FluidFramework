@@ -184,7 +184,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
 
         const snapshotTree = JSON.parse(container.serialize());
 
-        const container2 = await loader.createDetachedContainerFromSnapshot(snapshotTree);
+        const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
         // Check for scheduler
         const schedulerResponse = await container2.request({ url: "_scheduler" });
@@ -227,7 +227,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
 
         const snapshotTree = JSON.parse(container.serialize());
 
-        const container2 = await loader.createDetachedContainerFromSnapshot(snapshotTree);
+        const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
         await container2.attach(request);
 
         // Check for scheduler
@@ -276,7 +276,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
 
         const snapshotTree = JSON.parse(container.serialize());
 
-        const container2 = await loader.createDetachedContainerFromSnapshot(snapshotTree);
+        const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
         const responseAfter = await container2.request({ url: "/" });
         const defaultComponentAfter = responseAfter.value as TestFluidObject;
@@ -295,7 +295,7 @@ describe(`Dehydrate Rehydrate Container Test`, () => {
         sharedString1.insertText(0, str);
         const snapshotTree = JSON.parse(container.serialize());
 
-        const container2 = await loader.createDetachedContainerFromSnapshot(snapshotTree);
+        const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
         const responseBefore = await container2.request({ url: "/" });
         const defaultDataStoreBefore = responseBefore.value as TestFluidObject;
         const sharedStringBefore = await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);

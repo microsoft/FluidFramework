@@ -149,13 +149,13 @@ export interface ILoader {
      * Creates a new container using the specified chaincode but in an unattached state. While unattached all
      * updates will only be local until the user explicitly attaches the container to a service provider.
      */
-    createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer>;
+    createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
 
     /**
      * Creates a new container using the specified snapshot but in an unattached state. While unattached all
      * updates will only be local until the user explicitly attaches the container to a service provider.
      */
-    createDetachedContainerFromSnapshot(source: ISnapshotTree): Promise<IContainer>;
+    rehydrateDetachedContainerFromSnapshot(snapshot: ISnapshotTree): Promise<IContainer>;
 }
 
 export enum LoaderHeader {
