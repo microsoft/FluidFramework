@@ -8,7 +8,7 @@
   "scripts": {
     "build": "npm run build:md-magic && npm run build:api-documenter",
     "build:api-documenter": "api-documenter generate --config api-documenter.json --input-folder ../_api-extractor-temp/doc-models/ --output-folder content/apis/",
-    "build:md-magic": "md-magic --path '**/*.md' --ignore 'node_modules'"
+    "build:md-magic": "md-magic --path \"**/*.md\" --ignore \"node_modules\""
   },
   "dependencies": {
     "@mattetti/custom-api-documenter": "^0.3.2",

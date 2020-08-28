@@ -56,12 +56,12 @@ export interface IDiceRoller extends EventEmitter {
 }
 ```
 
-Next, we'll implement our data object by extending the [DataObject](/apis/aqueduct/dataobject.md) class. The DataObject class provides tools to
+Next, we'll implement our data object by extending the [DataObject][] class. The DataObject class provides tools to
 make data object development easier.
 
 One of these tools is a "root" DDS, which is a
 [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)-like data structure called
-[SharedDirectory](/apis/map/shareddirectory.md). We'll be storing the dice value on it with root.set(), retrieving the value with root.get(), and
+[SharedDirectory][]. We'll be storing the dice value on it with root.set(), retrieving the value with root.get(), and
 observing changes to the value with the "valueChanged" event.
 
 Data objects are persisted over time by the Fluid service and will be loaded from the service when clients connect.
@@ -104,7 +104,7 @@ In this scenario we only needed a single DDS, so the root SharedDirectory is suf
 create additional DDSes to manage their data.
 
 To instantiate the data object, the Fluid Framework needs a corresponding factory. Since we're using the DataObject
-class, we'll use the [DataObjectFactory](/apis/aqueduct/dataobjectfactory.md) which pairs with it. In this case we just need to provide it with a unique
+class, we'll use the [DataObjectFactory][] which pairs with it. In this case we just need to provide it with a unique
 name ("@fluid-example/dice-roller" in this case) and the class; the third and fourth parameters are not used:
 
 *dataObject.ts*
@@ -124,7 +124,7 @@ And that's it -- our DiceRoller data object is done!
 ### The container code
 
 Our container code will define the contents of our container and how we'll access them -- in our case, just a single
-DiceRoller. We can accomplish this using a [ContainerRuntimeFactoryWithDefaultDataStore](/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md) -- this will create a
+DiceRoller. We can accomplish this using a [ContainerRuntimeFactoryWithDefaultDataStore][] -- this will create a
 single DiceRoller and make it available to be retrieved from the container. We'll provide it with the name of the
 default data object and a mapping of the name to factory.
 
@@ -230,3 +230,33 @@ Once the application loads the container will communicate with the server to exc
 ![](/docs/get-started/images/full-structure.png)
 
 The [full code for this application is available](https://github.com/microsoft/FluidHelloWorld) for you to try out.
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
+<!-- Links -->
+
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+
+[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
+
+[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
+
+[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
+[shareddirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
+
+[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+[sharedobjectsequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+
+[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
+[sharedmap]: {{< relref "/apis/map/sharedmap.md" >}}
+
+[undo-redo]: {{< relref "/apis/undo-redo.md" >}}
+
+
+<!-- Sequences -->
+
+[sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/apis/sequence/sequencedeltaevent.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->

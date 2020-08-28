@@ -1,6 +1,10 @@
 <!-- Links -->
 
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+
 [DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
+
+[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
 
 [SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
 [shareddirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
