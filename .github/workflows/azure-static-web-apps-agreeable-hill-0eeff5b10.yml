@@ -57,11 +57,14 @@ jobs:
         with:
           file-url: https://fluidframework.blob.core.windows.net/storybook/latest.tar.gz
           file-name: storybook.tar.gz
-      - name: Extract Storybook
+      - name: "Extract Storybook ==> /docs/static/playground/"
         id: extract-storybook
         run: |
-          mkdir -pv $GITHUB_WORKSPACE/docs/static/storybook/
-          tar -C $GITHUB_WORKSPACE/docs/static/storybook/ -zxvf storybook.tar.gz
+          mkdir -pv $GITHUB_WORKSPACE/docs/static/playground/
+          tar -C $GITHUB_WORKSPACE/docs/static/playground/ -zxvf storybook.tar.gz
+      - name: "Copy playground.html"
+        id: copy-playground
+          cp $GITHUB_WORKSPACE/docs/static/playground/playground.html $GITHUB_WORKSPACE/docs/layouts/page/playground.html
 
       - name: Hugo Build And Deploy
         id: builddeploy
