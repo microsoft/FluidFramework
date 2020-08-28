@@ -45,7 +45,7 @@ The Container provides a `createDataStore` method to create new Data Objects. Th
 
 The Fluid Container is interacted with through the request paradigm. While aqueduct creates a default request handler that returns the default Data Object, the request paradigm is a powerful pattern that lets developers create custom logic.
 
-To retrieve the default component, you can perform a request on the container. Similar to the [loaders api](./hosts.md) this will return a status code and the default component.
+To retrieve the default data store, you can perform a request on the container. Similar to the [loaders api](./hosts.md) this will return a status code and the default data store.
 
 ```
 container.request({url: "/"})

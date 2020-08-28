@@ -11,4 +11,4 @@ The two major interfaces required to implement a Fliud Handle are `IFluidHandle`
 ## IFluidHandleContext
 `IFluidHandleContext` describes a routing context (another `IFluidHandleContext`) that has a path to this `IFluidHandleContext`. When creating a Data Store Handle the route context should be the `FluidDataStoreRuntime` which knows how to reach the `FluidDataStore`. Similarly, the `FluidDataStoreRuntime's` route context should be the `ContainerRuntime` which knows how to reach it.
 
-For more details on Fluid Handles, check this [doc](../../../docs/docs/component-handles.md).
+For more details on Fluid Handles, check this [doc](../../../content/docs/advanced/handles.md).

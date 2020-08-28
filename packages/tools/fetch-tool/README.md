@@ -57,11 +57,11 @@ In order to connect to ODSP, the clientID and clientSecret must be set as enviro
     109 total messages (107 delta storage, 2 initial ws messages, 0 dup)
     Channel name (Operations only)                                           | Count      Bytes
     ----------------------------------------------------------------------------------------------------
-    [defaultComponent]/root (map)                                            |     3       1232
-    [defaultComponent]/0fb26504-369f-4234-ad97-0a303d3ec81f (map)            |     0          0
-    [defaultComponent]/74577601-3af5-49a1-9ca5-db5d9ee128a8 (mergeTree)      |    20       7450
-    [defaultComponent]/91ac6df2-dda6-409a-b5e3-be84ce9ab138 (map)            |    25      11940
-    [defaultComponent]/92ebb388-68a0-4fc2-859e-5c01f12e992d (map)            |     0          0
+    [defaultDataStore]/root (map)                                            |     3       1232
+    [defaultDataStore]/0fb26504-369f-4234-ad97-0a303d3ec81f (map)            |     0          0
+    [defaultDataStore]/74577601-3af5-49a1-9ca5-db5d9ee128a8 (mergeTree)      |    20       7450
+    [defaultDataStore]/91ac6df2-dda6-409a-b5e3-be84ce9ab138 (map)            |    25      11940
+    [defaultDataStore]/92ebb388-68a0-4fc2-859e-5c01f12e992d (map)            |     0          0
     ----------------------------------------------------------------------------------------------------
     Total                                                                    |    48      20622
 
@@ -78,18 +78,18 @@ In order to connect to ODSP, the clientID and clientSecret must be set as enviro
     !CONTAINER!/quorumMembers                                                  | 220
     !CONTAINER!/quorumProposals                                                | 4
     !CONTAINER!/quorumValues                                                   | 184
-    [defaultComponent]/.component                                              | 32
-    [defaultComponent]/0fb26504-369f-4234-ad97-0a303d3ec81f/.attributes        | 64
-    [defaultComponent]/0fb26504-369f-4234-ad97-0a303d3ec81f/header             | 4
-    [defaultComponent]/74577601-3af5-49a1-9ca5-db5d9ee128a8/.attributes        | 72
-    [defaultComponent]/74577601-3af5-49a1-9ca5-db5d9ee128a8/content/header     | 448
-    [defaultComponent]/74577601-3af5-49a1-9ca5-db5d9ee128a8/content/catchupOps | 4
-    [defaultComponent]/74577601-3af5-49a1-9ca5-db5d9ee128a8/header             | 180
-    [defaultComponent]/91ac6df2-dda6-409a-b5e3-be84ce9ab138/.attributes        | 64
-    [defaultComponent]/91ac6df2-dda6-409a-b5e3-be84ce9ab138/header             | 168
-    [defaultComponent]/92ebb388-68a0-4fc2-859e-5c01f12e992d/.attributes        | 64
-    [defaultComponent]/92ebb388-68a0-4fc2-859e-5c01f12e992d/header             | 4
-    [defaultComponent]/root/.attributes                                        | 64
-    [defaultComponent]/root/header                                             | 300
+    [defaultDataStore]/.component                                              | 32
+    [defaultDataStore]/0fb26504-369f-4234-ad97-0a303d3ec81f/.attributes        | 64
+    [defaultDataStore]/0fb26504-369f-4234-ad97-0a303d3ec81f/header             | 4
+    [defaultDataStore]/74577601-3af5-49a1-9ca5-db5d9ee128a8/.attributes        | 72
+    [defaultDataStore]/74577601-3af5-49a1-9ca5-db5d9ee128a8/content/header     | 448
+    [defaultDataStore]/74577601-3af5-49a1-9ca5-db5d9ee128a8/content/catchupOps | 4
+    [defaultDataStore]/74577601-3af5-49a1-9ca5-db5d9ee128a8/header             | 180
+    [defaultDataStore]/91ac6df2-dda6-409a-b5e3-be84ce9ab138/.attributes        | 64
+    [defaultDataStore]/91ac6df2-dda6-409a-b5e3-be84ce9ab138/header             | 168
+    [defaultDataStore]/92ebb388-68a0-4fc2-859e-5c01f12e992d/.attributes        | 64
+    [defaultDataStore]/92ebb388-68a0-4fc2-859e-5c01f12e992d/header             | 4
+    [defaultDataStore]/root/.attributes                                        | 64
+    [defaultDataStore]/root/header                                             | 300
     ----------------------------------------------------------------------------------------------------
     Total snapshot size                                                        | 3048
