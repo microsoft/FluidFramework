@@ -24,7 +24,7 @@ title: "Fluid Framework"
 
   {{< cta
     linkClasses="play"
-    linkURL="/docs/get-started/quick-start/"
+    linkURL="/playground/"
     iconClasses="play"
     linkText="Play with Fluid"
   >}}
