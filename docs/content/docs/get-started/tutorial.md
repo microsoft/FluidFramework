@@ -3,29 +3,9 @@ title: Tutorial
 menuPosition: 3
 ---
 
-In this walkthrough, we'll go over some of the basics of using the Fluid Framework by examining a simple
-[Hello World](https://github.com/microsoft/FluidHelloWorld) Fluid application. To get started, and follow along, go
+In this walkthrough, we'll learn about using the Fluid Framework by building a simple
+[Hello World](https://github.com/microsoft/FluidHelloWorld) Fluid application together. To get started, and follow along, go
 through our [Quick Start](./quick-start.md) guide.
-
-## Key terms and concepts
-
-There are a handful of key concepts to understand.
-
-- **Distributed data structures (DDSes)** -- DDSes are the data structures Fluid Framework provides for locally storing copies of the
-  collaborative data. As collaborators modify the data, the changes will be reflected to all other collaborators.
-
-- **Data objects** -- You'll write data objects to organize DDSes into semantically meaningful groupings for your
-  scenario. You can define their API surface to control how collaborators will modify the data.
-
-- **Container code** -- You'll write container code to register the type and number of data objects your application uses and how
-  you'll access them.
-
-- **Container** -- The container is your application's entry point to Fluid Framework. It runs your container
-  code and is the object through which you'll retrieve your data objects.
-
-- **Fluid service** -- The container will connect to a service to send and receive changes to collaborative data.
-
-![](/docs/get-started/images/full-structure.png)
 
 
 ## The DiceRoller app
@@ -33,21 +13,48 @@ There are a handful of key concepts to understand.
 {{< fluid_bundle_loader idPrefix="dice-roller"
 bundleName="dice-roller.9af6bdd702e6cd4ad6cf.js" >}}
 
-To explore these concepts, we'll be looking at a simple app that enables all connected clients to roll a dice and view
-the result. We'll do this by writing a data object to represent the dice, configuring container code to use that data
-object, and finally loading that container code into a container to integrate into our app.
+In our DiceRoller app we'll show users a dice with a button to roll it.  When the dice is rolled, we'll use the Fluid Framework to sync the data across clients so everyone sees the same result.  We'll do this in four parts:
+
+1. Write the view
+1. Write the model for the dice using Fluid Framework
+1. Define how the Fluid Framework should instantiate and use our model
+1. Connect our model to the service for collaboration, and also to the view for rendering
 
 
-### The data object
+### The view
 
-![](/docs/get-started/images/data-object.png)
+In this app we're just going to render our view using plain Typescript and DOM methods.  Fluid is impartial to how you write your view, so you could use your favorite view framework instead if you'd like.
 
-First, we'll define our data object's public interface. We'll expose the dice's value as a number, a method to roll it,
-and an event to fire (using [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)) when the value
-changes. This event listener is particularly important since we're building a collaborative experience. It's how we'll
-observe that other collaborators have rolled the dice remotely.
+Since we haven't created our model yet, we'll just hardcode a "1" and log to the console when the button is clicked.
 
-*dataObject.ts*
+```ts
+export function renderDiceRoller(div: HTMLDivElement) {
+    const wrapperDiv = document.createElement("div");
+    wrapperDiv.style.textAlign = "center";
+    div.append(wrapperDiv);
+    const diceCharDiv = document.createElement("div");
+    diceCharDiv.style.fontSize = "200px";
+    const rollButton = document.createElement("button");
+    rollButton.style.fontSize = "50px";
+    rollButton.textContent = "Roll";
+
+    rollButton.addEventListener("click", () => { console.log("Roll!"); });
+    wrapperDiv.append(diceCharDiv, rollButton);
+
+    const updateDiceChar = () => {
+        const diceValue = 1;
+        // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
+        diceCharDiv.textContent = String.fromCodePoint(0x267F + diceValue);
+        diceCharDiv.style.color = `hsl(${diceValue * 60}, 70%, 50%)`;
+    };
+    updateDiceChar();
+}
+```
+
+
+### The model interface
+
+Before we implement our model, let's start by defining its public interface.
 
 ```ts
 export interface IDiceRoller extends EventEmitter {
@@ -57,25 +64,15 @@ export interface IDiceRoller extends EventEmitter {
 }
 ```
 
-Next, we'll implement our data object by extending the [DataObject][] class. The DataObject class provides tools to
-make data object development easier.
+As you might expect, we have the ability to read its value and command it to roll.  However, we also declare an event `"diceRolled"` in our interface.  We'll fire this event whenever the dice is rolled (using [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)).
 
-One of these tools is a "root" DDS, which is a
-[Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)-like data structure called
-[SharedDirectory][]. We'll be storing the dice value on it with root.set(), retrieving the value with root.get(), and
-observing changes to the value with the "valueChanged" event.
+This event is particularly important since we're building a collaborative experience. It's how each client will observe that other clients have rolled the dice remotely.
 
-Data objects are persisted over time by the Fluid service and will be loaded from the service when clients connect.
-Correspondingly, the DataObject class provides lifecycle methods to control these flows.
+### Implementing the model
 
-- `initializingFirstTime()` runs when a client creates the DiceRoller for the first time. It does not run when additional clients
-  connect to the application. We'll use this to provide an
-  initial value for the dice.
+Up to this point, we've just been using Typescript.  Now that we're implementing the model for our collaborative DiceRoller, we'll start to use features from Fluid Framework.
 
-- `hasInitialized()` runs when clients load the DiceRoller -- we'll use this to hook up our event listeners to respond to
-  data changes made in other clients.
-
-*dataObject.ts*
+Fluid Framework provides a class called **[DataObject][]** which we can extend to build our model.  We'll use a few features from DataObject, but let's take a look at the code first:
 
 ```ts
 export class DiceRoller extends DataObject implements IDiceRoller {
@@ -102,25 +99,32 @@ export class DiceRoller extends DataObject implements IDiceRoller {
 }
 ```
 
-In this scenario we only needed a single DDS, so the root SharedDirectory is sufficient. More complex data objects may
-create additional DDSes to manage their data.
+Since the models you create will be persisted over time as users load and close the app, DataObject provides lifecycle methods to control the first-time creation and subsequent loading of your model.
 
-To instantiate the data object, the Fluid Framework needs a corresponding factory. Since we're using the DataObject
-class, we'll use the [DataObjectFactory][] which pairs with it. In this case we just need to provide it with a unique
-name ("@fluid-example/dice-roller" in this case) and the class. The third and fourth parameters are not used:
+- `initializingFirstTime()` runs when a client creates the DiceRoller for the first time. It does not run when additional clients
+  connect to the application. We'll use this to provide an initial value for the dice.
 
-*dataObject.ts*
+- `hasInitialized()` runs when clients load the DiceRoller -- we'll use this to hook up our event listeners to respond to
+  data changes made in other clients.
+
+DataObject also provides a "root" **Distributed Data Structure (DDS)**.  DDSes are collaborative data structures that you'll use like local data structures, but as each client modifies the data, all other clients will see the changes.  This "root" DDS is a [SharedDirectory][] which stores key/value pairs and works very similarly to a [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map), providing methods like `set()` and `get()`.  However, it also fires a `"valueChanged"` event so we can observe changes to the data coming in from other users.
+
+To instantiate the DataObject, the Fluid Framework needs a corresponding factory. Since we're using the DataObject
+class, we'll also use the [DataObjectFactory][] which pairs with it. In this case we just need to provide it with a unique
+name ("dice-roller" in this case) and the class. The third and fourth parameters are not used:
 
 ```ts
 export const DiceRollerInstantiationFactory = new DataObjectFactory(
-    "@fluid-example/dice-roller",
+    "dice-roller",
     DiceRoller,
     [],
     {},
 );
 ```
 
-And that's it -- our DiceRoller data object is done!
+![](/docs/get-started/images/data-object.png)
+
+And that's it -- our DiceRoller model is done!
 
 
 ### The container code
@@ -232,6 +236,31 @@ Once the application loads the container will communicate with the server to exc
 ![](/docs/get-started/images/full-structure.png)
 
 The [full code for this application is available](https://github.com/microsoft/FluidHelloWorld) for you to try out.
+
+
+REMOVE/REHOME:
+
+## Key terms and concepts
+
+There are a handful of key concepts to understand.
+
+- **Distributed data structures (DDSes)** -- DDSes are the data structures Fluid Framework provides for locally storing copies of the
+  collaborative data. As collaborators modify the data, the changes will be reflected to all other collaborators.
+
+- **Data objects** -- You'll write data objects to organize DDSes into semantically meaningful groupings for your
+  scenario. You can define their API surface to control how collaborators will modify the data.
+
+- **Container code** -- You'll write container code to register the type and number of data objects your application uses and how
+  you'll access them.
+
+- **Container** -- The container is your application's entry point to Fluid Framework. It runs your container
+  code and is the object through which you'll retrieve your data objects.
+
+- **Fluid service** -- The container will connect to a service to send and receive changes to collaborative data.
+
+![](/docs/get-started/images/full-structure.png)
+
+
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
