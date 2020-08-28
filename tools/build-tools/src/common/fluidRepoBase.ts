@@ -13,20 +13,21 @@ import { ISymlinkOptions, symlinkPackage } from "./build/symlinkUtils";
 import { BuildGraph } from "./build/buildGraph";
 import { logVerbose } from "./logging";
 
-export enum FluidRepoName {
-    FDL,
-    Default
-}
-
 export interface IPackageMatchedOptions {
     match: string[];
     all: boolean;
     server: boolean;
 };
 
-export class FluidRepoBase {
-    public fluidRepoName = FluidRepoName.Default;
+export interface FluidRepoPackage {
+    directory: string,
+    ignoredDirs?: string[],
+    monoRepo?: MonoRepo,
+    hasLerna?: boolean,
+    skipBuild?: boolean
+}
 
+export class FluidRepoBase {
     // There are two separate definitions for repos as there is a common pattern of there
     // being a Fluid client side and server side repo. However, not all client repos necessarily
     // need to have a server mono repo.
@@ -34,16 +35,25 @@ export class FluidRepoBase {
     public readonly serverMonoRepo: MonoRepo | undefined;
 
     public packages: Packages;
-    constructor(public readonly resolvedRoot: string, serverPath: string, additionalPackages?: Package[]) {
+    constructor(public readonly resolvedRoot: string, serverPath: string, additionalRepoPackages?: FluidRepoPackage[]) {
         this.clientMonoRepo = new MonoRepo(MonoRepoKind.Client, this.resolvedRoot);
         if (serverPath) {
             this.serverMonoRepo = new MonoRepo(MonoRepoKind.Server, path.join(this.resolvedRoot, serverPath));
         }
+        let additionalPackages: Package[] = [];
+        additionalRepoPackages?.forEach((fluidPackage: FluidRepoPackage) => {
+            if (!fluidPackage.skipBuild) {
+                additionalPackages = [
+                    ...additionalPackages,
+                    ...Packages.loadDir(path.join(resolvedRoot, fluidPackage.directory), fluidPackage.monoRepo, fluidPackage.ignoredDirs)
+                ]
+            }
+        });
         this.packages = new Packages(
             [
                 ...this.clientMonoRepo.packages,
                 ...(this.serverMonoRepo?.packages || []),
-                ...(additionalPackages || []),
+                ...additionalPackages,
             ]
         );
     }
@@ -166,4 +176,14 @@ export class FluidRepoBase {
     public async clean() {
         return Packages.clean(this.packages.packages, false);
     }
+
+    public async uninstall() {
+        const cleanPackageNodeModules = this.packages.cleanNodeModules();
+        const removePromise = Promise.all(
+            [this.clientMonoRepo.uninstall(), this.serverMonoRepo?.uninstall()]
+        );
+
+        const r = await Promise.all([cleanPackageNodeModules, removePromise]);
+        return r[0] && !r[1].some(ret => ret?.error);
+    };
 };

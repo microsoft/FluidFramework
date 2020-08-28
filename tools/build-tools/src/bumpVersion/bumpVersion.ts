@@ -8,7 +8,7 @@ import * as path from "path";
 import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { FluidRepoBase, FluidRepoName } from "../common/fluidRepoBase";
+import { FluidRepoBase } from "../common/fluidRepoBase";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import * as semver from "semver";
 import { Package } from "../common/npmPackage";
@@ -987,13 +987,13 @@ class BumpVersion {
     }
 
     /**
-     * Create release branch based on the repo state, bump minor version immediately 
+     * Create release branch based on the repo state, bump minor version immediately
      * and push it to `main` and the new release branch to remote
      */
     public async createReleaseBranch() {
         // Create release branch based on client version
         const releaseName = MonoRepoKind[MonoRepoKind.Client];
-        
+
         const depVersions = await this.collectBumpInfo(releaseName);
         const releaseVersion = depVersions.repoVersions.get(releaseName);
         if (!releaseVersion) {
@@ -1096,20 +1096,16 @@ class BumpVersion {
             await this.createBranch(pendingReleaseBranch);
         }
 
-        switch (this.repo.fluidRepoName) {
-            case FluidRepoName.FDL:
-                // TODO: Don't hard code order
-                await this.releasePackage(depVersions, ["@fluidframework/eslint-config-fluid", "@fluidframework/build-common"]);
-                await this.releasePackage(depVersions, ["@fluidframework/common-definitions"]);
-                await this.releasePackage(depVersions, ["@fluidframework/common-utils"]);
-                assert(this.repo.serverMonoRepo, "FDL Repo is missing the server mono repo");
-                await this.releaseMonoRepo(depVersions, this.repo.serverMonoRepo!);
-                await this.releaseMonoRepo(depVersions, this.repo.clientMonoRepo);
-                await this.releasePackage(depVersions, [generatorFluidPackageName, "tinylicious"]);
-                break;
-            default:
-                await this.releaseMonoRepo(depVersions, this.repo.clientMonoRepo);
-        }
+
+        // TODO: Don't hard code order
+        // TODO: Dynamically fetch the bump version list from the package.json
+        await this.releasePackage(depVersions, ["@fluidframework/eslint-config-fluid", "@fluidframework/build-common"]);
+        await this.releasePackage(depVersions, ["@fluidframework/common-definitions"]);
+        await this.releasePackage(depVersions, ["@fluidframework/common-utils"]);
+        assert(this.repo.serverMonoRepo, "FDL Repo is missing the server mono repo");
+        await this.releaseMonoRepo(depVersions, this.repo.serverMonoRepo!);
+        await this.releaseMonoRepo(depVersions, this.repo.clientMonoRepo);
+        await this.releasePackage(depVersions, [generatorFluidPackageName, "tinylicious"]);
 
         // ------------------------------------------------------------------------------------------------------------------
         // Create the minor version bump for development in a temporary merge/<original branch> on top of the release commit
@@ -1271,7 +1267,7 @@ class BumpVersion {
 async function main() {
     parseOptions(process.argv);
     // TODO: Figure out how to dynamically get GitHub URL
-    const resolvedRoot = await getResolvedFluidRoot(FluidRepoName.Default);
+    const [resolvedRoot] = await getResolvedFluidRoot();
     console.log(`Repo: ${resolvedRoot}`);
     const gitRepo = new GitRepo(resolvedRoot);
     const remotes = await gitRepo.getRemotes();

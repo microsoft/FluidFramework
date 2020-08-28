@@ -108,5 +108,31 @@
     "rimraf": "^2.6.2",
     "run-script-os": "^1.0.7",
     "typescript": "~3.7.4"
+  },
+  "repoPackages": {
+    "client": [
+      {
+        "directory": "common"
+      },
+      {
+        "directory": "tools/generator-fluid"
+      }
+    ],
+    "server": [
+      {
+        "directory": "server",
+        "ignoredDirs": [
+          "routerlicious"
+        ]
+      },
+      {
+        "directory": "server/tinylicious"
+      },
+      {
+        "directory": "server",
+        "skipBuild": true,
+        "hasLerna": true
+      }
+    ]
   }
 }

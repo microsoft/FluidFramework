@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import fs from "fs";
 import { commonOptions } from "../common/commonOptions";
-import { FDLRepo } from "./FDLRepo";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { logStatus } from "../common/logging";
 import { Timer } from "../common/timer";
@@ -13,13 +13,13 @@ import { BuildResult } from "../common/build/buildGraph";
 import { parseOptions, options } from "../common/build/options";
 import * as path from "path";
 import chalk from "chalk";
-import { FluidRepoName } from "../common/fluidRepoBase";
+import { FluidRepoBase } from "../common/fluidRepoBase";
 
 parseOptions(process.argv);
 
 async function main() {
     const timer = new Timer(commonOptions.timer);
-    const resolvedRoot = await getResolvedFluidRoot(FluidRepoName.FDL);
+    const [resolvedRoot, repoPackages] = await getResolvedFluidRoot();
 
     logStatus(`Processing ${resolvedRoot}`);
 
@@ -33,7 +33,10 @@ async function main() {
     }
 
     // Load the package
-    const repo = new FDLRepo(resolvedRoot, options.services);
+    const additionalPackages = options.services
+        ? [...repoPackages["client"], ...repoPackages["server"]]
+        : repoPackages["client"];
+    const repo = new FluidRepoBase(resolvedRoot, "server/routerlicious", additionalPackages);
     timer.time("Package scan completed");
 
     // Set matched package based on options filter

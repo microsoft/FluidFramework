@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidRepoBase, FluidRepoName } from "../common/fluidRepoBase";
+import { FluidRepoBase } from "../common/fluidRepoBase";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
@@ -196,7 +196,7 @@ async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo) {
 async function main() {
     const timer = new Timer(commonOptions.timer);
 
-    const resolvedRoot = await getResolvedFluidRoot(FluidRepoName.Default);
+    const [resolvedRoot] = await getResolvedFluidRoot();
 
     // Load the package
     const repo = new FluidRepoBase(resolvedRoot, "server/routerlicious");

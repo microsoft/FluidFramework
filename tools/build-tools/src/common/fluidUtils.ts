@@ -8,34 +8,24 @@ import { commonOptions } from "./commonOptions";
 import { existsSync, realpathAsync, readJsonAsync, lookUpDir, isDirectory } from "./utils";
 import * as path from "path";
 import { logVerbose } from "./logging";
-import { FluidRepoName } from "./fluidRepoBase";
+import { FluidRepoPackage } from "./fluidRepoBase";
 
-async function isFluidRootLerna(dir: string, fluidRepoName: FluidRepoName) {
+async function isFluidRootLerna(dir: string) {
     const filename = path.join(dir, "lerna.json");
     if (!existsSync(filename)) {
         logVerbose(`InferRoot: lerna.json not found`);
         return false;
     }
-
-    switch(fluidRepoName) {
-        case FluidRepoName.FDL:
-            if (!existsSync(path.join(dir, "server", "routerlicious", "lerna.json"))) {
-                logVerbose(`InferRoot: server/routerlicious/lerna.json not found`);
+    const rootPackageManifest = await getPackage(dir);
+    const repoPackages = rootPackageManifest["repoPackages"];
+    const allPackages: FluidRepoPackage[] = [...repoPackages["client"], ...repoPackages["server"]];
+    for (const repoPackage of allPackages) {
+        if (repoPackage.hasLerna) {
+            if (!existsSync(path.join(dir, repoPackage.directory, "lerna.json"))) {
+                logVerbose(`InferRoot: ${dir}/${repoPackage.directory}/lerna.json not found`);
                 return false;
             }
-            break;
-        case FluidRepoName.Default:
-            if (existsSync(path.join(dir, "server")) && !existsSync(path.join(dir, "server", "lerna.json"))) {
-                const files = fs.readdirSync(dir);
-                for (const file of files) {
-                    if (isDirectory(file) && existsSync(path.join(file, "lerna.json"))) {
-                        return true;
-                    }
-                    logVerbose(`InferRoot: server/lerna.json not found nor did any child directories within the server folder.
-                    If server packages do exist and are not being detected, please add the specific server path to InferRoot.`);
-                    return false;
-                }
-            }
+        }
     }
     return true;
 }
@@ -55,15 +45,15 @@ async function isFluidRootPackage(dir: string) {
     return false;
 }
 
-async function isFluidRoot(dir: string, fluidRepoName: FluidRepoName) {
-    return await isFluidRootLerna(dir, fluidRepoName) && await isFluidRootPackage(dir);
+async function isFluidRoot(dir: string) {
+    return await isFluidRootLerna(dir) && await isFluidRootPackage(dir);
 }
 
-async function inferRoot(fluidRepoName: FluidRepoName) {
+async function inferRoot() {
     return lookUpDir(process.cwd(), async (curr) => {
         logVerbose(`InferRoot: probing ${curr}`);
         try {
-            if (await isFluidRoot(curr, fluidRepoName)) {
+            if (await isFluidRoot(curr)) {
                 return true;
             }
         } catch {
@@ -72,13 +62,13 @@ async function inferRoot(fluidRepoName: FluidRepoName) {
     });
 }
 
-export async function getResolvedFluidRoot(fluidRepoName: FluidRepoName) {
+export async function getResolvedFluidRoot() {
     let checkFluidRoot = true;
     let root = commonOptions.root;
     if (root) {
         logVerbose(`Using argument root @ ${root}`);
     } else {
-        root = await inferRoot(fluidRepoName);
+        root = await inferRoot();
         if (root) {
             checkFluidRoot = false;
             logVerbose(`Using inferred root @ ${root}`);
@@ -91,7 +81,7 @@ export async function getResolvedFluidRoot(fluidRepoName: FluidRepoName) {
         }
     }
 
-    if (checkFluidRoot && !isFluidRoot(root, fluidRepoName)) {
+    if (checkFluidRoot && !isFluidRoot(root)) {
         console.error(`ERROR: '${root}' is not a root of fluid repo.`);
         process.exit(-100);
     }
@@ -101,7 +91,13 @@ export async function getResolvedFluidRoot(fluidRepoName: FluidRepoName) {
         console.error(`ERROR: Repo root '${resolvedRoot}' not exist.`);
         process.exit(-102);
     }
-
+    const rootPackageManifest = await getPackage(resolvedRoot);
+    const repoPackages = rootPackageManifest["repoPackages"];
     // Use realpath.native to get the case-sensitive path on windows
-    return await realpathAsync(resolvedRoot);
+    return [await realpathAsync(resolvedRoot), repoPackages];
+}
+
+async function getPackage(rootDir: string) {
+    const pkgString = fs.readFileSync(`${rootDir}/package.json`);
+    return JSON.parse(pkgString as any);
 }
