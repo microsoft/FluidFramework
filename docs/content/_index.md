@@ -7,4 +7,27 @@ title: "Fluid Framework"
   subText="Real time. Web first. Open source."
 >}}
 
-{{< ctas >}}
+{{< cta_container  >}}
+  {{< cta
+    linkClasses="get-started"
+    linkURL="/docs/get-started/quick-start/"
+    iconClasses="get-started"
+    linkText="Get Started"
+  >}}
+
+  {{< cta
+    linkClasses="learn-more"
+    linkURL="/docs/"
+    iconClasses="learn-more"
+    linkText="Learn More"
+  >}}
+
+  {{< cta
+    linkClasses="play"
+    linkURL="/docs/get-started/quick-start/"
+    iconClasses="play"
+    linkText="Play with Fluid"
+  >}}
+
+{{< /cta_container  >}}
+
