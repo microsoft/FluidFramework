@@ -17,11 +17,13 @@ export class CombinedContext {
 
 	private readonly checkpoints: (IQueuedMessage | undefined)[];
 
-	constructor(private readonly context: IContext, private readonly lambdaCount: number) {
-		this.checkpoints = new Array(lambdaCount);
+	constructor(private readonly context: IContext) {
+		this.checkpoints = [];
 	}
 
-	public getContext(id: number): IContext {
+	public createContext(): IContext {
+		const id = this.checkpoints.push(undefined) - 1;
+
 		return {
 			log: this.log,
 			checkpoint: (message) => this.checkpoint(id, message),
@@ -30,10 +32,6 @@ export class CombinedContext {
 	}
 
 	private checkpoint(id: number, queuedMessage: IQueuedMessage): void {
-		if (id > this.lambdaCount || id < 0) {
-			throw new Error("Invalid checkpoint lambda id");
-		}
-
 		this.checkpoints[id] = queuedMessage;
 
 		const lowestMessage = this.getLowestMessage();
