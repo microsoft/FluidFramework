@@ -61,13 +61,13 @@ const handlers: Handler[] = [
 // synchronize output, exit code, and resolve decision for all handlers
 function routeToHandlers(file: string) {
     handlers.filter(handler => handler.match.test(file) && handlerRegex.test(handler.name)).map(handler => {
-        const result = handler.handler(file);
+        const result = handler.handler(file, pathToGitRoot);
         if (result) {
             let output = newline + 'file failed policy check: ' + file + newline + result;
 
             if (program.resolve && handler.resolver) {
                 output += newline + 'attempting to resolve: ' + file;
-                const resolveResult = handler.resolver(file);
+                const resolveResult = handler.resolver(file, pathToGitRoot);
 
                 if (resolveResult.message) {
                     output += newline + resolveResult.message;
