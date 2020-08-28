@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/clicker-context",
   "version": "0.26.0",
-  "description": "Minimal Fluid component sample to implement a collaborative counter using Fluid React hooks",
+  "description": "Minimal Fluid object sample to implement a collaborative counter using Fluid React hooks",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

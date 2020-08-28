@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/clicker-with-hook",
   "version": "0.26.0",
-  "description": "Minimal Fluid component sample to implement a collaborative counter using the synced counter hook",
+  "description": "Minimal Fluid object sample to implement a collaborative counter using the synced counter hook",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

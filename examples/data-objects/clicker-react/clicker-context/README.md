@@ -1,6 +1,10 @@
 # @fluid-example/clicker-context
 
+<<<<<<< Updated upstream
 **Clicker** is a Fluid Component that displays a number with a button. Pressing the button
+=======
+**Clicker** is a Fluid object that displays a number with a button. Pressing the button
+>>>>>>> Stashed changes
 increments the counter. This is a basic example using the interface model and stock
 classes.
 
