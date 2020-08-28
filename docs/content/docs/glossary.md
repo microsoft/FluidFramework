@@ -18,7 +18,7 @@ collaborative data. As collaborators modify the data, the changes will be reflec
 
 **Fluid loader** - Responsible for connecting to a Fluid service and loading a Container.
 
-**Fluid Object** - Any JavaScript object that implements fluid feature interfaces.
+**Fluid Object** - Any JavaScript object that implements Fluid feature interfaces.
 
 **Fluid service** – A service endpoint that is responsible for receiving, processing, storing, and broadcasting operations.
 

@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/fluidapp-odsp-urlresolver",
   "version": "0.26.0",
-  "description": "Url Resolver for fluid app urls.",
+  "description": "Url Resolver for Fluid app urls.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

@@ -20,7 +20,7 @@ export interface IBaseHostConfig {
     config?: any;
 
     // A fluid object that gives host provided capabilities/configurations
-    // to the fluid object in the container(such as auth).
+    // to the Fluid object in the container(such as auth).
     scope?: IFluidObject;
 
     proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;

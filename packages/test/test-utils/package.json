@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/test-utils",
   "version": "0.26.0",
-  "description": "Utilities for fluid tests",
+  "description": "Utilities for Fluid tests",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/aqueduct",
   "version": "0.26.0",
-  "description": "A set of implementations for fluid framework interfaces.",
+  "description": "A set of implementations for Fluid Framework interfaces.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
