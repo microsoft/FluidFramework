@@ -20,7 +20,7 @@ export const handler: Handler = {
         }
         // search for the work 'fluid' surround by other words
         if (content.search(/[a-z] fluid [a-z]/) !== -1) {
-            return `'fluid' need to be capitalized`;
+            return `'fluid' needs to be capitalized`;
         }
     },
     resolver: file => {
