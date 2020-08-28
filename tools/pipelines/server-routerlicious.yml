@@ -90,16 +90,6 @@ stages:
           lfs: false
           submodules: false
 
-        - task: Bash@3
-          displayName: Strip MIT License
-          inputs:
-            targetType: 'inline'
-            workingDirectory: server/routerlicious
-            script: |
-              sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
-              perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
-              git status
-
         # for npm ci in component detection and set version
         - task: UseNode@1
           displayName: Use Node 12.x
