@@ -1,4 +1,4 @@
-# Routerlicious
+# root
 
 Routerlicious handles the receiving of delta operations and is responsible for the ordering and assignment of a
 sequence number to them. Once assigned it is also responsible for notifying connected clients of a new sequence
@@ -307,3 +307,10 @@ Passing an invalid token will fail the load call.
 
 ## Verdaccio and the Chaincode CDN
 Coming Soon...
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these
+trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/
+intellectualproperty/trademarks/usage/general). Use of Microsoft trademarks or logos in modified versions of this
+project must not cause confusion or imply Microsoft sponsorship.
