@@ -20,6 +20,7 @@ footer {
     height: 100%;
     display: block;
     color:#f3f5f7;
+    transition: .1s ease-in;
 }
 
 .filler {
@@ -34,8 +35,8 @@ footer {
 }
 
 .cta:hover {
-    background:red;
     text-decoration: none;
+    transition: none;
 }
 
 .cta.get-started {
