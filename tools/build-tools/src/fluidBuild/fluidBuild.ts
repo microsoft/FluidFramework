@@ -19,7 +19,7 @@ parseOptions(process.argv);
 
 async function main() {
     const timer = new Timer(commonOptions.timer);
-    const [resolvedRoot, repoPackages] = await getResolvedFluidRoot();
+    const [resolvedRoot, packageManifest] = await getResolvedFluidRoot();
 
     logStatus(`Processing ${resolvedRoot}`);
 
@@ -34,9 +34,9 @@ async function main() {
 
     // Load the package
     const additionalPackages = options.services
-        ? [...repoPackages["client"], ...repoPackages["server"]]
-        : repoPackages["client"];
-    const repo = new FluidRepoBase(resolvedRoot, "server/routerlicious", additionalPackages);
+        ? [...packageManifest.repoPackages.client, ...packageManifest.repoPackages.server]
+        : packageManifest.repoPackages.client;
+    const repo = new FluidRepoBase(resolvedRoot, packageManifest.serverPath, additionalPackages);
     timer.time("Package scan completed");
 
     // Set matched package based on options filter

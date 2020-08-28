@@ -19,12 +19,18 @@ export interface IPackageMatchedOptions {
     server: boolean;
 };
 
-export interface FluidRepoPackage {
+export interface IPackageManifest {
+    repoPackages: {
+        client: IFluidRepoPackage[],
+        server: IFluidRepoPackage[]
+    },
+    serverPath: string
+}
+
+export interface IFluidRepoPackage {
     directory: string,
     ignoredDirs?: string[],
-    monoRepo?: MonoRepo,
-    hasLerna?: boolean,
-    skipBuild?: boolean
+    monoRepo?: MonoRepo
 }
 
 export class FluidRepoBase {
@@ -35,19 +41,17 @@ export class FluidRepoBase {
     public readonly serverMonoRepo: MonoRepo | undefined;
 
     public packages: Packages;
-    constructor(public readonly resolvedRoot: string, serverPath: string, additionalRepoPackages?: FluidRepoPackage[]) {
+    constructor(public readonly resolvedRoot: string, serverPath: string, additionalRepoPackages?: IFluidRepoPackage[]) {
         this.clientMonoRepo = new MonoRepo(MonoRepoKind.Client, this.resolvedRoot);
         if (serverPath) {
             this.serverMonoRepo = new MonoRepo(MonoRepoKind.Server, path.join(this.resolvedRoot, serverPath));
         }
         let additionalPackages: Package[] = [];
-        additionalRepoPackages?.forEach((fluidPackage: FluidRepoPackage) => {
-            if (!fluidPackage.skipBuild) {
+        additionalRepoPackages?.forEach((fluidPackage: IFluidRepoPackage) => {
                 additionalPackages = [
                     ...additionalPackages,
                     ...Packages.loadDir(path.join(resolvedRoot, fluidPackage.directory), fluidPackage.monoRepo, fluidPackage.ignoredDirs)
                 ]
-            }
         });
         this.packages = new Packages(
             [
