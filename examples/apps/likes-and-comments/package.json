@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/likes-and-comments",
-  "version": "0.25.1",
+  "version": "0.26.0",
   "description": "A component for storing like counts and comments using pre-build DDS hooks",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -16,6 +16,7 @@
     "webpack": "webpack"
   },
   "dependencies": {
+<<<<<<< HEAD:examples/apps/likes-and-comments/package.json
     "@fluidframework/aqueduct": "^0.25.1",
     "@fluidframework/counter": "^0.25.1",
     "@fluidframework/datastore-definitions": "^0.25.1",
@@ -30,13 +31,26 @@
     "@fluidframework/view-interfaces": "^0.25.1",
     "draft-js": "^0.11.0",
     "immutable": "~3.7.4",
+=======
+    "@fluidframework/aqueduct": "^0.26.0",
+    "@fluidframework/counter": "^0.26.0",
+    "@fluidframework/react": "^0.26.0",
+    "@fluidframework/react-inputs": "^0.26.0",
+    "@fluidframework/sequence": "^0.26.0",
+>>>>>>> 56268496fbc25ff25b3a074885236da293ac945d:examples/data-objects/likes-and-comments/package.json
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
+<<<<<<< HEAD:examples/apps/likes-and-comments/package.json
     "@fluidframework/get-session-storage-container": "^0.25.1",
     "@fluidframework/test-tools": "^0.1.0",
     "@types/draft-js": "^0.10.34",
+=======
+    "@fluidframework/build-common": "^0.18.0",
+    "@fluidframework/webpack-fluid-loader": "^0.26.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
+>>>>>>> 56268496fbc25ff25b3a074885236da293ac945d:examples/data-objects/likes-and-comments/package.json
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",

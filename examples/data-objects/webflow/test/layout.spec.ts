@@ -8,8 +8,10 @@ window.performance.mark = window.performance.mark || (() => { });
 window.performance.measure = window.performance.measure || (() => { });
 
 import assert from "assert";
-import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
+import { LocalResolver } from "@fluidframework/local-driver";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
 import { htmlFormatter } from "../src";
 import { FlowDocument } from "../src/document";
 import { Layout } from "../src/view/layout";
@@ -38,7 +40,7 @@ function expectTree(actual: Node, expected: ISnapshotNode) {
 }
 
 describe("Layout", () => {
-    const id = "fluid-test://localhost/layoutTest";
+    const documentUrl = "fluid-test://localhost/layoutTest";
     const codeDetails = {
         package: "layoutTestPkg",
         config: {},
@@ -50,14 +52,10 @@ describe("Layout", () => {
 
     before(async () => {
         const deltaConnectionServer = LocalDeltaConnectionServer.create();
-        const loader = createLocalLoader([[codeDetails, FlowDocument.getFactory()]], deltaConnectionServer);
-        const container = await initializeLocalContainer(id, loader, codeDetails);
-
-        const response = await container.request({ url: "default" });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Default component not found`);
-        }
-        doc = response.value;
+        const urlResolver = new LocalResolver();
+        const loader = createLocalLoader([[codeDetails, FlowDocument.getFactory()]], deltaConnectionServer, urlResolver);
+        const container = await createAndAttachContainer(documentUrl, codeDetails, loader, urlResolver);
+        doc = await requestFluidObject<FlowDocument>(container, "default");
     });
 
     beforeEach(() => {

@@ -45,6 +45,6 @@ export async function fetchSnapshot(
             eventName: "fetchSnapshot",
             headers: Object.keys(headers).length !== 0 ? true : undefined,
         },
-        async () => fetchHelper<IOdspSnapshot>(url, headers),
+        async () => fetchHelper<IOdspSnapshot>(url, { headers }),
     );
 }

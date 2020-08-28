@@ -5,20 +5,38 @@
 
 name: $(Build.BuildId)
 
+parameters:
+- name: publishOverride
+  displayName: Publish Override
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+- name: releaseBuildOverride
+  displayName: Release Build Override
+  type: string
+  default: default
+  values:
+    - default
+    - false
+    - true
+
 trigger:
   branches:
     include:
     - main
     - release/*
-    - refs/tags/server_v*
   paths:
     include:
     - server/routerlicious
-    - tools/build-server-resources
     - tools/pipelines/server-routerlicious.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
-    - tools/pipelines/templates/publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
   
@@ -30,14 +48,18 @@ pr:
   paths:
     include:
     - server/routerlicious
-    - tools/build-server-resources
     - tools/pipelines/server-routerlicious.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
 variables:
 - template: templates/include-vars.yml
+  parameters:
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
 - group: container-registry-info
 - name: containerName
   value: fluid-server
@@ -67,16 +89,6 @@ stages:
           clean: true
           lfs: false
           submodules: false
-
-        - task: Bash@3
-          displayName: Strip MIT License
-          inputs:
-            targetType: 'inline'
-            workingDirectory: server/routerlicious
-            script: |
-              sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
-              perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
-              git status
 
         # for npm ci in component detection and set version
         - task: UseNode@1
@@ -129,6 +141,8 @@ stages:
         - template: templates/include-set-package-version.yml
           parameters:
             buildDirectory: server/routerlicious
+            release: $(release)
+
         # Build
         - task: Docker@2
           displayName: Docker Build - Base
@@ -250,20 +264,9 @@ stages:
 
 # Publish stage
 - ${{ if eq(variables.publish, true) }}:
-  - stage: publish
-    dependsOn: build
-    displayName: Publish Stage
-    jobs:
-    - template: templates/publish-npm-package.yml
-      parameters:
-        feeds:
-        - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
-          environment: fluid-feed
-          customEndPoint: Offnet Packages
-          internal: false
-        # only publish release bits
-        - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
-          - name: https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
-            environment: office-feed
-            customEndPoint: Office Packages
-            internal: false
+  - template: templates/include-publish-npm-package.yml
+    parameters:
+      buildDirectory: server/routerlicious
+      namespace: true
+      tagName: server
+      buildNumberInPatch: false

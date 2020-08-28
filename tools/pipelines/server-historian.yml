@@ -13,8 +13,10 @@ trigger:
     include:
     - server/historian
     - tools/pipelines/server-historian.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
 
 pr:
@@ -25,8 +27,10 @@ pr:
     include:
     - server/historian
     - tools/pipelines/server-historian.yml
-    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
 
 extends:
   template: templates/build-docker-service.yml

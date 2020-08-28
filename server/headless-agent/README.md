@@ -1,7 +1,7 @@
 # headless-agent
 ## Headless Agent
 
-Loads Fluid components on a headless chromium browser, as opposed to the Node.js runtime.
+Loads Fluid data stores on a headless chromium browser, as opposed to the Node.js runtime.
 
 To build
 ```

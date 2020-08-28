@@ -9,9 +9,9 @@ import replace from "replace-in-file";
 import path from "path";
 import sortPackageJson from "sort-package-json";
 import {
-  Handler,
-  readFile,
-  writeFile,
+    Handler,
+    readFile,
+    writeFile,
 } from "../common";
 
 const licenseId = 'MIT';
@@ -30,16 +30,6 @@ function packageShouldBePrivate(name: string): boolean {
 }
 
 function packageShouldNotBePrivate(name: string): boolean {
-    // See https://github.com/microsoft/FluidFramework/issues/2642
-    if (name === "@fluidframework/server-gateway") {
-        return false;
-    }
-
-    // see https://github.com/microsoft/FluidFramework/issues/3054
-    if (name === "@fluidframework/core-interfaces") {
-        return false;
-    }
-
     return (
         name.startsWith("@fluidframework") ||
         name.startsWith("@fluid-example"));
@@ -255,6 +245,48 @@ export const handlers: Handler[] = [
                     return `Containing folder ${folderName} for package ${packageName} should be named similarly to the package`;
                 }
             }
+        },
+    },
+    {
+        name: "npm-package-license",
+        match,
+        handler: (file, root) => {
+            let json;
+            try {
+                json = JSON.parse(readFile(file));
+            } catch (err) {
+                return 'Error parsing JSON file: ' + file;
+            }
+
+            if (json.private) {
+                return;
+            }
+
+            const packageName = json.name;
+            const packageDir = path.dirname(file);
+            const licensePath = path.join(packageDir, "LICENSE");
+            const rootLicensePath = path.join(root, "LICENSE");
+
+            if (!fs.existsSync(licensePath)) {
+                return `LICENSE file missing for package ${packageName}`;
+            }
+
+            const licenseFile = readFile(licensePath);
+            const rootFile = readFile(rootLicensePath);
+            if (licenseFile !== rootFile) {
+                return `LICENSE file in ${packageDir} doesn't match ${rootLicensePath}`;
+            }
+        },
+        resolver: (file, root) => {
+            const packageDir = path.dirname(file);
+            const licensePath = path.join(packageDir, "LICENSE");
+            const rootLicensePath = path.join(root, "LICENSE");
+            try {
+                fs.copyFileSync(rootLicensePath, licensePath);
+            } catch {
+                return { resolved: false, message: `Error copying file from ${rootLicensePath} to ${licensePath}` };
+            }
+            return { resolved: true };
         },
     },
 ];
