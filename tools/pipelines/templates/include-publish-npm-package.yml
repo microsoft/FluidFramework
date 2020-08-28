@@ -25,15 +25,14 @@ stages:
     parameters:
       namespace: ${{ parameters.namespace }}
       feeds:
-      - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
-        environment: fluid-feed
-        customEndPoint: Offnet Packages
+      - name: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/ 
+        environment: build-feed
         internal: true
         enabled: true
         tagSteps: []
-      - name: https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
-        environment: office-feed
-        customEndPoint: Office Packages
+      - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
+        environment: fluid-feed
+        customEndPoint: Offnet Packages
         internal: false
         enabled: $[variables.release]
         tagSteps:
@@ -86,7 +85,7 @@ stages:
                 targetType: 'inline'
                 workingDirectory: ${{ parameters.buildDirectory }}
                 script: |
-                  git pull origin $(Build.SourceBranchName)
+                  git pull origin $(Build.SourceBranch)
                   if [ -f "lerna.json" ]; then
                     npx lerna version patch --no-git-tag-version --no-push --yes
                     version=`node -e "console.log(require('./lerna.json').version)"`
@@ -97,10 +96,10 @@ stages:
 
                   npm run build:genver --if-present
 
-                  echo Bump ${{ parameters.tagName }} version to $version in $(Build.SourceBranchName)
+                  echo Bump ${{ parameters.tagName }} version to $version in $(Build.SourceBranch)
 
                   git config --global user.email "ffbuilder@microsoft.com"
                   git config --global user.name "Fluid Framework Builder"
 
                   git commit -a -m "[bump] ${{ parameters.tagName }} version to $version"
-                  git push origin HEAD:$(Build.SourceBranchName)
+                  git push origin HEAD:$(Build.SourceBranch)
