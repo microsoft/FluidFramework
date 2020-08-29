@@ -1,4 +1,4 @@
-# @fluidframework/server-routerlicious
+# @fluid-internal/server-routerlicious
 
 Fluid server package containing the reference implementation of Fluid ordering service.
 
