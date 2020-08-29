@@ -2,6 +2,7 @@
   "name": "@fluidframework/iframe-driver",
   "version": "0.26.0",
   "description": "Connection Fluid service API that crosses iframe boundary",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

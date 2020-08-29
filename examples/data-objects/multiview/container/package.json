@@ -2,6 +2,7 @@
   "name": "@fluid-example/multiview-container",
   "version": "0.26.0",
   "description": "Container for multiview sample",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

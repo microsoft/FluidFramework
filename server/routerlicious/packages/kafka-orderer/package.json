@@ -2,6 +2,7 @@
   "name": "@fluidframework/server-kafka-orderer",
   "version": "0.1012.0",
   "description": "Fluid ordering services",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

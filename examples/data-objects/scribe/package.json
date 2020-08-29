@@ -2,6 +2,7 @@
   "name": "@fluid-example/scribe",
   "version": "0.26.0",
   "description": "Scribe document writer",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
