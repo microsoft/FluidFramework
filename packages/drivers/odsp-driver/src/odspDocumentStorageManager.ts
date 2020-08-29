@@ -403,7 +403,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     for (const blob of this.blobCache.values()) {
                         const path = blobsIdToPathMap.get(blob.id);
                         // If this is the first container that was created for the service, it cannot be
-                        // the summarizing container (becauase the summarizing container is always created
+                        // the summarizing container (because the summarizing container is always created
                         // after the main container). In this case, we do not need to do any hashing
                         if (path) {
                             // Schedule the hashes for later, but keep track of the tasks

@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/server-services",
   "version": "0.1012.0",
-  "description": "Fluid service lambdas",
+  "description": "Fluid server services",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

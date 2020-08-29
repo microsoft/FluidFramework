@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/server-local-server",
   "version": "0.1012.0",
-  "description": "Local server implementation",
+  "description": "Fluid local server implementation",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

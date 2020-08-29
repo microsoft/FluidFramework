@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/server-services-shared",
   "version": "0.1012.0",
-  "description": "Fluid shared services",
+  "description": "Fluid server shared services",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

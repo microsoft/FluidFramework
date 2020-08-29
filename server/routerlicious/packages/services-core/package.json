@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/server-services-core",
   "version": "0.1012.0",
-  "description": "Fluid services core definitions",
+  "description": "Fluid server services core definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
