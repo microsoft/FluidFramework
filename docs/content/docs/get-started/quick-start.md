@@ -74,7 +74,7 @@ You can find a complete walk though of this code on our [Tutorial](./tutorial.md
 
 ### Playground
 
-Checkout our [Playground](/playground) to discover more examples in the browser.
+Checkout our [Playground](/playground) to discover more examples in the browser. 
 
 ### Advanced Examples
 
