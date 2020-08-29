@@ -75,12 +75,7 @@ class KeyValueLoader {
             });
 
         const documentServiceFactories: IDocumentServiceFactory[] = [];
-        documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
-            false,
-            new DefaultErrorTracking(),
-            false,
-            true,
-            undefined));
+        documentServiceFactories.push(new RouterliciousDocumentServiceFactory());
 
         const resolver = new ContainerUrlResolver(
             config.gatewayUrl,

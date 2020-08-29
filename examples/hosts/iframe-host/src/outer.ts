@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import {
-    DefaultErrorTracking,
     RouterliciousDocumentServiceFactory,
 } from "@fluidframework/routerlicious-driver";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
@@ -29,12 +28,7 @@ const getTinyliciousResolver =
         "bearer");
 
 const getTinyliciousDocumentServiceFactory =
-    () => new RouterliciousDocumentServiceFactory(
-        false,
-        new DefaultErrorTracking(),
-        false,
-        true,
-        undefined);
+    () => new RouterliciousDocumentServiceFactory();
 
 export async function loadFrame(iframeId: string, logId: string) {
     const iframe = document.getElementById(iframeId) as HTMLIFrameElement;
