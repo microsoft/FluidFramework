@@ -30,13 +30,16 @@ menu:
   - name: "Blog"
     url: "/posts/"
     weight: -50
+  - name: "Community"
+    url: "/community/"
+    weight: -40
 
   docs:
   - identifier: "get-started"
     name: "Get Started"
     weight: -500
   - identifier: "concepts"
-    name: "Main concepts"
+    name: "Learn"
     weight: -300
   - identifier: "faq"
     name: "FAQ"
