@@ -27,15 +27,12 @@ const getTinyliciousResolver =
         { id: "userid0" },
         "bearer");
 
-const getTinyliciousDocumentServiceFactory =
-    () => new RouterliciousDocumentServiceFactory();
-
 export async function loadFrame(iframeId: string, logId: string) {
     const iframe = document.getElementById(iframeId) as HTMLIFrameElement;
 
     const urlResolver = getTinyliciousResolver();
 
-    const documentServiceFactory = getTinyliciousDocumentServiceFactory();
+    const documentServiceFactory = new RouterliciousDocumentServiceFactory();
 
     const host = new IFrameOuterHost({
         urlResolver,
@@ -75,7 +72,7 @@ export async function loadDiv(divId: string) {
 
     const urlResolver = getTinyliciousResolver();
 
-    const documentServiceFactory = getTinyliciousDocumentServiceFactory();
+    const documentServiceFactory = new RouterliciousDocumentServiceFactory();
 
     const pkg: IFluidCodeDetails = {
         package: "@fluid-example/todo@^0.15.0",
