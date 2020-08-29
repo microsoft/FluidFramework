@@ -40,17 +40,6 @@ stages:
           - checkout: self
             clean: true
             persistCredentials: true
-          - task: npmAuthenticate@0
-            displayName: 'npm Authenticate root .npmrc'
-            inputs:
-              workingFile: .npmrc
-              customEndpoint: Offnet Packages
-          - task: Npm@1
-            displayName: npm ci
-            inputs:
-              command: 'custom'
-              customCommand: 'ci --ignore-scripts'
-              customRegistry: 'useNpmrc'
           - task: Bash@3
             displayName: Tag Release
             env:
@@ -78,28 +67,3 @@ stages:
                 echo Tag=$tag
                 git tag $tag
                 git push origin $tag
-          - ${{ if ne(parameters.buildNumberInPatch, true) }}:
-            - task: Bash@3
-              displayName: Patch Version Bump
-              inputs:
-                targetType: 'inline'
-                workingDirectory: ${{ parameters.buildDirectory }}
-                script: |
-                  git pull origin $(Build.SourceBranch)
-                  if [ -f "lerna.json" ]; then
-                    npx lerna version patch --no-git-tag-version --no-push --yes
-                    version=`node -e "console.log(require('./lerna.json').version)"`
-                  else
-                    npm version patch --no-git-tag-version
-                    version=`node -e "console.log(require('./package.json').version)"`
-                  fi
-
-                  npm run build:genver --if-present
-
-                  echo Bump ${{ parameters.tagName }} version to $version in $(Build.SourceBranch)
-
-                  git config --global user.email "ffbuilder@microsoft.com"
-                  git config --global user.name "Fluid Framework Builder"
-
-                  git commit -a -m "[bump] ${{ parameters.tagName }} version to $version"
-                  git push origin HEAD:$(Build.SourceBranch)

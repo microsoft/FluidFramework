@@ -1,5 +1,5 @@
 # Fluid authentication instruction
-This document provides instruction for creating a fluid tenant and authenticate to the api using json web token.
+This document provides instruction for creating a Fluid tenant and authenticate to the api using json web token.
 
 ## Creating a tenant
 The first step is to create a tenant. A tenant is representative of a team/org using Fluid API. Navigate to https://admin.wu2.prague.office-int.com/ and add a new tenant with one of the three storage endpoints. Selecting 'github' as a storage endpoint would require more info such as github repository, username, and credential.

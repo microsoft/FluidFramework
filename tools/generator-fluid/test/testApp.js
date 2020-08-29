@@ -20,7 +20,7 @@ describe("Yo fluid", function () {
                 oldCwd = process.cwd();
                 runContext = helpers.run(path.join(__dirname, "../app/index.js"))
                     .withPrompts({
-                        componentName: "foobar",
+                        dataObjectName: "foobar",
                         viewFramework: "react",
                         scaffolding: "advanced",
                     });
@@ -29,7 +29,7 @@ describe("Yo fluid", function () {
 
             it("Produces the expected files", () => {
                 const expectedFiles = [
-                    "src/component.tsx",
+                    "src/dataObject.tsx",
                     "src/index.ts",
                     "src/interface.ts",
                     "src/view.tsx",
@@ -45,7 +45,7 @@ describe("Yo fluid", function () {
                 assert.file(expectedFiles);
 
                 const unexpectedFiles = [
-                    "src/component.ts",
+                    "src/dataObject.ts",
                     "src/view.ts",
                 ]
                 assert.noFile(unexpectedFiles);
@@ -64,7 +64,7 @@ describe("Yo fluid", function () {
                 oldCwd = process.cwd();
                 runContext = helpers.run(path.join(__dirname, "../app/index.js"))
                     .withPrompts({
-                        componentName: "foobar",
+                        dataObjectName: "foobar",
                         viewFramework: "react",
                         scaffolding: "beginner",
                     });
@@ -73,7 +73,7 @@ describe("Yo fluid", function () {
 
             it("Produces the expected files", () => {
                 const expectedFiles = [
-                    "src/component.tsx",
+                    "src/dataObject.tsx",
                     "src/index.ts",
                     ".gitignore",
                     ".npmrc",
@@ -87,7 +87,7 @@ describe("Yo fluid", function () {
                 assert.file(expectedFiles);
 
                 const unexpectedFiles = [
-                    "src/component.ts",
+                    "src/dataObject.ts",
                     "src/view.ts",
                 ]
                 assert.noFile(unexpectedFiles);
@@ -106,7 +106,7 @@ describe("Yo fluid", function () {
                 oldCwd = process.cwd();
                 runContext = helpers.run(path.join(__dirname, "../app/index.js"))
                     .withPrompts({
-                        componentName: "foobar",
+                        dataObjectName: "foobar",
                         viewFramework: "none",
                         scaffolding: "advanced",
                     });
@@ -115,7 +115,7 @@ describe("Yo fluid", function () {
 
             it("Produces the expected files", () => {
                 const expectedFiles = [
-                    "src/component.ts",
+                    "src/dataObject.ts",
                     "src/index.ts",
                     "src/interface.ts",
                     "src/view.ts",
@@ -131,7 +131,7 @@ describe("Yo fluid", function () {
                 assert.file(expectedFiles);
 
                 const unexpectedFiles = [
-                    "src/component.tsx",
+                    "src/dataObject.tsx",
                     "src/view.tsx",
                 ]
                 assert.noFile(unexpectedFiles);
@@ -151,7 +151,7 @@ describe("Yo fluid", function () {
                 oldCwd = process.cwd();
                 runContext = helpers.run(path.join(__dirname, "../app/index.js"))
                     .withPrompts({
-                        componentName: "foobar",
+                        dataObjectName: "foobar",
                         viewFramework: "none",
                         scaffolding: "beginner",
                     });
@@ -160,7 +160,7 @@ describe("Yo fluid", function () {
 
             it("Produces the expected files", () => {
                 const expectedFiles = [
-                    "src/component.ts",
+                    "src/dataObject.ts",
                     "src/index.ts",
                     ".gitignore",
                     ".npmrc",
@@ -174,7 +174,7 @@ describe("Yo fluid", function () {
                 assert.file(expectedFiles);
 
                 const unexpectedFiles = [
-                    "src/component.tsx",
+                    "src/dataObject.tsx",
                     "src/view.tsx",
                 ]
                 assert.noFile(unexpectedFiles);

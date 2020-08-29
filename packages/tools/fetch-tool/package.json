@@ -25,7 +25,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.22.1-0",
+    "@fluidframework/common-utils": "^0.22.1",
     "@fluidframework/container-runtime": "^0.26.0",
     "@fluidframework/datastore": "^0.26.0",
     "@fluidframework/driver-definitions": "^0.26.0",
@@ -34,7 +34,7 @@
     "@fluidframework/odsp-driver": "^0.26.0",
     "@fluidframework/odsp-urlresolver": "^0.26.0",
     "@fluidframework/odsp-utils": "^0.26.0",
-    "@fluidframework/protocol-definitions": "^0.1011.1-0",
+    "@fluidframework/protocol-definitions": "^0.1011.1",
     "@fluidframework/routerlicious-driver": "^0.26.0",
     "@fluidframework/routerlicious-urlresolver": "^0.26.0",
     "@fluidframework/runtime-definitions": "^0.26.0",

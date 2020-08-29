@@ -80,4 +80,4 @@ the DataObject across Containers and to load it from anywhere, you just have to 
 
 
 [remote handle]:
-https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/runtime-utils/src/remoteComponentHandle.ts
+https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/runtime-utils/src/remoteFluidObjectHandle.ts

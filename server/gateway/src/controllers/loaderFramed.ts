@@ -7,7 +7,7 @@ import {
     BaseHost,
     IBaseHostConfig,
 } from "@fluidframework/base-host";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IProxyLoaderFactory, IResolvedFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { WebWorkerLoaderFactory } from "@fluidframework/execution-context-loader";
@@ -27,7 +27,7 @@ async function getFluidObjectAndRender(baseHost: BaseHost, url: string, div: HTM
         return;
     }
 
-    // Render the fluid object with an HTMLViewAdapter to abstract the UI framework used by the fluid object
+    // Render the Fluid object with an HTMLViewAdapter to abstract the UI framework used by the Fluid object
     const view = new HTMLViewAdapter(fluidObject);
     view.render(div, { display: "block" });
 }

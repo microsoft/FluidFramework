@@ -1,6 +1,6 @@
 # Fluid
 
-The Fluid Framework is a TypeScript library for building distributed, real-time collaborative web components and
+The Fluid Framework is a TypeScript library for building distributed, real-time collaborative web
 applications.
 
 ## Getting started using the Fluid Framework
@@ -10,9 +10,9 @@ You may be here because you want to...
 - Learn more about the Fluid Framework
 - Build a Fluid object
 
-Documentation and guides can be found at <https://fluidframework.com/>  
-Hello World Repo can be found at <https://github.com/microsoft/FluidHelloWorld>  
-Core Examples Repo can be found at <https://github.com/microsoft/FluidExamples>  
+Documentation and guides can be found at <https://fluidframework.com/>
+Hello World Repo can be found at <https://github.com/microsoft/FluidHelloWorld>
+Core Examples Repo can be found at <https://github.com/microsoft/FluidExamples>
 
 Got questions? Engage with other Fluid Framework users and developers on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
 

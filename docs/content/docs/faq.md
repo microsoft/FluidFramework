@@ -65,7 +65,7 @@ all of the connections so that Fluid client developers can focus on local experi
 
 It depends. Because the Fluid service is extremely lightweight, even a simple implementation of the service can
 support 100s of concurrent users. A more sophisticated implementation can distribute the work and support 1000s. The
-experience on the client will vary depending on the Fluid component and local device. When considering scale for
+experience on the client will vary depending on the Fluid data store and local device. When considering scale for
 Fluid solutions, consider how well the client can handle and render changes, not whether the service is able to
 distribute them efficiently.
 

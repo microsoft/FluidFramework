@@ -42,6 +42,10 @@ A service endpoint that is responsible for receiving, processing, storing, and b
 
 Client code responsible for connecting to the Fluid service.
 
+## Fluid Object
+
+Any JavaScript object that implements Fluid feature interfaces.
+
 ## Url resolver
 
 Fluid's API surface makes use of urls, for example in the `Loader`'s `resolve()` method and

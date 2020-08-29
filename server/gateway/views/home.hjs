@@ -29,18 +29,6 @@
         </p>
     </div>
     </p>
-
-    <h3>Component Waterpark</h3>
-    <p>
-        The Component Waterpark is a place to explore, test, and share components.
-        It can load any component made with "yo fluid" and published to a local instance of <a href="https://verdaccio.org/">Verdaccio</a>.
-
-        We document our usage of Verdaccio in the <a
-            href="https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious">Routerlicious README</a>.
-        <br>
-        <a href="/waterpark">Water Park</a>
-    </p>
-    </p>
 </div>
 {{/content}}
 {{/layout}}
