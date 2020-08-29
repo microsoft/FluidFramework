@@ -1,8 +1,8 @@
 {
-  "name": "@fluidframework/server-routerlicious",
+  "name": "@fluid-internal/server-routerlicious",
   "version": "0.1012.0",
-  "description": "Fluid reference server implementation",
   "private": true,
+  "description": "Fluid reference server implementation",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
