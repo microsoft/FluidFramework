@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/driver-base",
   "version": "0.26.0",
-  "description": "Shared package across different socket-storage implementation",
+  "description": "Shared driver code for Fluid driver implementations",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

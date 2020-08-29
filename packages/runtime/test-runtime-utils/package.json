@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/test-runtime-utils",
   "version": "0.26.0",
-  "description": "Distributed map",
+  "description": "Fluid runtime test utilities",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

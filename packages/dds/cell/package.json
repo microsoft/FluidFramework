@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/cell",
   "version": "0.26.0",
-  "description": "Distributed map",
+  "description": "Distributed data structure for a single value",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

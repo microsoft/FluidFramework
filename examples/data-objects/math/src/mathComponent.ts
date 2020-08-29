@@ -17,9 +17,7 @@ import {
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
-import {
-    IFluidObjectCollection,
-} from "@fluidframework/framework-interfaces";
+import { IFluidObjectCollection } from "@fluid-example/data-object-interfaces";
 import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";

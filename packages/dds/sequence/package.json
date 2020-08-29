@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/sequence",
   "version": "0.26.0",
-  "description": "Distributed map",
+  "description": "Distributed sequence",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

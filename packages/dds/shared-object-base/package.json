@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/shared-object-base",
   "version": "0.26.0",
-  "description": "Fluid document loader",
+  "description": "Fluid base class for shared distributed data structures",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/datastore-definitions",
   "version": "0.26.0",
-  "description": "Fluid Runtime definitions",
+  "description": "Fluid data store definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

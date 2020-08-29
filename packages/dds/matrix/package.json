@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/matrix",
   "version": "0.26.0",
-  "description": "Distributed map",
+  "description": "Distributed matrix",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
