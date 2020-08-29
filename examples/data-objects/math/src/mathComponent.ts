@@ -16,7 +16,7 @@ import {
     IResponse,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { FluidOjectHandle } from "@fluidframework/datastore";
+import { FluidObjectHandle } from "@fluidframework/datastore";
 import {
     IFluidObjectCollection,
 } from "@fluidframework/framework-interfaces";
@@ -24,7 +24,7 @@ import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
-import { PureDataObjectFactory, PureDataObject } from "@fluidframework/component-base";
+import { LazyLoadedDataObjectFactory, LazyLoadedDataObject } from "@fluidframework/data-object-base";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import * as Katex from "katex";
 import * as MathExpr from "./mathExpr";
@@ -418,7 +418,7 @@ export class MathInstance extends EventEmitter implements IFluidLoadable, IFluid
     public get IFluidLoadable() { return this; }
     public get IFluidRouter() { return this; }
 
-    public handle: FluidOjectHandle;
+    public handle: FluidObjectHandle;
     public endMarker: IMathMarkerInst;
     public startMarker: MergeTree.Marker;
     public solnText = "x=0";
@@ -433,7 +433,7 @@ export class MathInstance extends EventEmitter implements IFluidLoadable, IFluid
         inCombinedText = false,
     ) {
         super();
-        this.handle = new FluidOjectHandle(this, leafId, context);
+        this.handle = new FluidObjectHandle(this, leafId, context);
         this.initialize(inCombinedText);
     }
 
@@ -489,8 +489,8 @@ const endIdPrefix = "end-";
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IMathOptions extends IFluidHTMLOptions { }
 
-export class MathCollection extends PureDataObject<ISharedDirectory> implements IFluidObjectCollection {
-    private static readonly factory = new PureDataObjectFactory<MathCollection>(
+export class MathCollection extends LazyLoadedDataObject<ISharedDirectory> implements IFluidObjectCollection {
+    private static readonly factory = new LazyLoadedDataObjectFactory<MathCollection>(
         "@fluid-example/math",
         MathCollection,
         /* root: */ SharedDirectory.getFactory(),

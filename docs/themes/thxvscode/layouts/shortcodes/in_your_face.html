@@ -1,0 +1,25 @@
+{{ $allParams := .Params }}
+{{ $lead := "" }}
+{{ $subText := "" }}
+
+{{ if .IsNamedParams }}
+{{ $lead = .Get "lead" | safeHTML}}
+{{ $subText = .Get "subText" | safeHTML}}
+{{ else }}
+{{ $lead  = index $allParams 0 | safeHTML}}
+{{ $subText = index $allParams 1}}
+{{ end }}
+
+<div class="in-your-face">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4"></div>
+            <div class="col-md-4 copy">
+                <div class="lead">{{$lead}}</div>
+                <div class="subText">
+                    <p>{{ $subText }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

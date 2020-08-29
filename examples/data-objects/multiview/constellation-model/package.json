@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/multiview-constellation-model",
-  "version": "0.25.0",
+  "version": "0.26.0",
   "description": "Constellation model for multiview sample",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -35,17 +35,17 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/multiview-coordinate-interface": "^0.25.0",
-    "@fluid-example/multiview-coordinate-model": "^0.25.0",
-    "@fluidframework/aqueduct": "^0.25.0",
-    "@fluidframework/core-interfaces": "^0.25.0",
-    "@fluidframework/map": "^0.25.0"
+    "@fluid-example/multiview-coordinate-interface": "^0.26.0",
+    "@fluid-example/multiview-coordinate-model": "^0.26.0",
+    "@fluidframework/aqueduct": "^0.26.0",
+    "@fluidframework/core-interfaces": "^0.26.0",
+    "@fluidframework/map": "^0.26.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@fluidframework/test-tools": "^0.1.0",
-    "@fluidframework/webpack-fluid-loader": "^0.25.0",
+    "@fluidframework/webpack-fluid-loader": "^0.26.0",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",
@@ -68,7 +68,7 @@
     "jest-puppeteer": "^4.3.0",
     "puppeteer": "^1.20.0",
     "rimraf": "^2.6.2",
-    "ts-jest": "24.1.0",
+    "ts-jest": "^26.2.0",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",
     "typescript-formatter": "7.1.0",

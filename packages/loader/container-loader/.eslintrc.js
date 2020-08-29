@@ -8,7 +8,6 @@ module.exports = {
         "@fluidframework/eslint-config-fluid"
     ],
     "rules": {
-        "@typescript-eslint/no-non-null-assertion": "off",
         "no-null/no-null": "off"
     }
 }

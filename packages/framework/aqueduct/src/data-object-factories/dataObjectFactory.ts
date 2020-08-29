@@ -13,27 +13,27 @@ import {
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { ComponentSymbolProvider } from "@fluidframework/synthesize";
+import { FluidObjectSymbolProvider } from "@fluidframework/synthesize";
 
-import { DataObject, ISharedComponentProps } from "../data-objects";
+import { DataObject, IDataObjectProps } from "../data-objects";
 import { PureDataObjectFactory } from "./pureDataObjectFactory";
 
 /**
- * DataObjectFactory is the IFluidDataStoreFactory for use with PrimedComponents.
+ * DataObjectFactory is the IFluidDataStoreFactory for use with DataObjects.
  * It facilitates DataObject's features (such as its shared directory) by
  * ensuring relevant shared objects etc are available to the factory.
  *
  * Generics:
  * P - represents a type that will define optional providers that will be injected
- * S - the initial state type that the produced component may take during creation
+ * S - the initial state type that the produced data object may take during creation
  */
 export class DataObjectFactory<TObj extends DataObject<P, S>, P, S> extends PureDataObjectFactory<TObj, P, S>
 {
     constructor(
         type: string,
-        ctor: new (props: ISharedComponentProps<P>) => TObj,
+        ctor: new (props: IDataObjectProps<P>) => TObj,
         sharedObjects: readonly IChannelFactory[] = [],
-        optionalProviders: ComponentSymbolProvider<P>,
+        optionalProviders: FluidObjectSymbolProvider<P>,
         registryEntries?: NamedFluidDataStoreRegistryEntries,
         onDemandInstantiation = true,
     ) {

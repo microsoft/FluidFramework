@@ -37,7 +37,6 @@ describe("Treebuilder", () => {
             isBare);
 
         const buffer = Buffer.from("Hello, World!", "utf-8");
-        // eslint-disable-next-line @typescript-eslint/await-thenable
         await repository.createBlobFromBuffer(buffer);
 
         // create a queue object with concurrency 2

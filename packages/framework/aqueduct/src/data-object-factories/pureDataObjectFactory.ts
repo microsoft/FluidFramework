@@ -19,12 +19,12 @@ import {
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
-    ComponentSymbolProvider,
+    FluidObjectSymbolProvider,
     DependencyContainer,
 } from "@fluidframework/synthesize";
 
 import {
-    ISharedComponentProps,
+    IDataObjectProps,
     PureDataObject,
 } from "../data-objects";
 
@@ -104,11 +104,11 @@ export const getFluidObjectFactoryFromInstance = (context: IFluidDataStoreContex
 /**
  * PureDataObjectFactory is a barebones IFluidDataStoreFactory for use with PureDataObject.
  * Consumers should typically use DataObjectFactory instead unless creating
- * another base component factory.
+ * another base data store factory.
  *
  * Generics:
  * P - represents a type that will define optional providers that will be injected
- * S - the initial state type that the produced component may take during creation
+ * S - the initial state type that the produced data store may take during creation
  */
 export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
     implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
@@ -118,9 +118,9 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
 
     constructor(
         public readonly type: string,
-        private readonly ctor: new (props: ISharedComponentProps<P>) => TObj,
+        private readonly ctor: new (props: IDataObjectProps<P>) => TObj,
         sharedObjects: readonly IChannelFactory[],
-        private readonly optionalProviders: ComponentSymbolProvider<P>,
+        private readonly optionalProviders: FluidObjectSymbolProvider<P>,
         registryEntries?: NamedFluidDataStoreRegistryEntries,
         private readonly onDemandInstantiation = true,
     ) {
@@ -140,7 +140,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
     }
 
     /**
-     * Convenience helper to get the component's/factory's component registry entry.
+     * Convenience helper to get the data store's/factory's data store registry entry.
      * The return type hides the factory's generics, easing grouping of registry
      * entries that differ only in this way into the same array.
      * @returns The NamedFluidDataStoreRegistryEntry
@@ -150,29 +150,29 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
     }
 
     /**
-     * This is where we do component setup.
+     * This is where we do data store setup.
      *
-     * @param context - component context used to load a data store runtime
+     * @param context - data store context used to load a data store runtime
      */
     public async instantiateDataStore(context: IFluidDataStoreContext) {
         return this.instantiateDataStoreCore(context);
     }
 
-        /**
-     * This is where we do component setup.
+    /**
+     * Private method for data store instantiation that exposes initial state
      *
-     * @param context - component context used to load a data store runtime
+     * @param context - data store context used to load a data store runtime
      */
     protected instantiateDataStoreCore(context: IFluidDataStoreContext, props?: S) {
-        // Create a new runtime for our component
-        // The runtime is what Fluid uses to create DDS' and route to your component
+        // Create a new runtime for our data store
+        // The runtime is what Fluid uses to create DDS' and route to your data store
         const runtime = FluidDataStoreRuntime.load(
             context,
             this.sharedObjectRegistry,
         );
 
         let instanceP: Promise<TObj>;
-        // For new runtime, we need to force the component instance to be create
+        // For new runtime, we need to force the data store instance to be create
         // run the initialization.
         if (!this.onDemandInstantiation || !runtime.existing) {
             // Create a new instance of our component up front
@@ -182,7 +182,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
         runtime.registerRequestHandler(async (request: IRequest) => {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             if (!instanceP) {
-                // Create a new instance of our component on demand
+                // Create a new instance of our data store on demand
                 instanceP = this.instantiateInstance(runtime, context, props);
             }
             const instance = await instanceP;
@@ -193,9 +193,9 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
     }
 
     /**
-     * Instantiate and initialize the component object
-     * @param runtime - data store runtime created for the component context
-     * @param context - component context used to load a data store runtime
+     * Instantiate and initialize the data store object
+     * @param runtime - data store runtime created for the data store context
+     * @param context - data store context used to load a data store runtime
      */
     private async instantiateInstance(
         runtime: FluidDataStoreRuntime,
@@ -204,39 +204,39 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
     ): Promise<TObj> {
         const dependencyContainer = new DependencyContainer(context.scope.IFluidDependencySynthesizer);
         const providers = dependencyContainer.synthesize<P>(this.optionalProviders, {});
-        // Create a new instance of our component
+        // Create a new instance of our data store
         const instance = new this.ctor({ runtime, context, providers });
         await instance.initializeInternal(props);
         return instance;
     }
 
-    /**
-     * Takes context, and creates package path for a sub-entry (represented by factory) in context registry.
-     * Package path returned is used to reach given factory from root (container runtime) registry, and thus
-     * is used to serizlize and de-serialize future data store that such factory would create in future.
-     * Function validates that given factory is present in registry, otherwise it throws.
-     */
-    protected buildRegistryPath(
-        context: IFluidDataStoreContext | IContainerRuntimeBase)
-    {
-        let packagePath: string[];
-        if ("containerRuntime" in context) {
-            packagePath = buildRegistryPath(context, this);
-        } else {
-            packagePath = [this.type];
-        }
+   /**
+    * Takes context, and creates package path for a sub-entry (represented by factory in context registry).
+    * Package path returned is used to reach given factory from root (container runtime) registry, and thus
+    * is used to serialize and de-serialize data store that this factory would create.
+    * Function validates that given factory is present in registry, otherwise it throws.
+    */
+   protected buildRegistryPath(
+       context: IFluidDataStoreContext | IContainerRuntimeBase)
+   {
+       let packagePath: string[];
+       if ("containerRuntime" in context) {
+           packagePath = buildRegistryPath(context, this);
+       } else {
+           packagePath = [this.type];
+       }
 
-        return packagePath;
-    }
+       return packagePath;
+   }
 
     /**
      * Creates a new instance of the object. Uses parent context's registry to build package path to this factory.
      * In other words, registry of context passed in has to contain this factory, with the name that matches
      * this factory's type.
      * It is intended to be used by data store objects that create sub-objects.
-     * @param context - The component context being used to create the object
+     * @param context - The context being used to create the runtime
      * (the created object will have its own new context created as well)
-     * @param initialState - The initial state to provide to the created component.
+     * @param initialState - The initial state to provide to the created data store.
      * @returns an object created by this factory. Data store and objects created are not attached to container.
      * They get attached only when a handle to one of them is attached to already attached objects.
      */
@@ -289,7 +289,6 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
     ): Promise<TObj> {
         const newContext = containerRuntime.createDetachedDataStore();
 
-        // const runtime = this.instantiateDataStoreCore(newContext, initialState);
         const runtime = FluidDataStoreRuntime.load(
             newContext,
             this.sharedObjectRegistry,

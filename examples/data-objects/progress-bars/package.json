@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/progress-bars",
-  "version": "0.25.0",
+  "version": "0.26.0",
   "description": "Progress bar collection",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -27,13 +27,13 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.25.0",
-    "@fluidframework/datastore": "^0.25.0",
-    "@fluidframework/datastore-definitions": "^0.25.0",
-    "@fluidframework/framework-interfaces": "^0.25.0",
-    "@fluidframework/map": "^0.25.0",
-    "@fluidframework/runtime-definitions": "^0.25.0",
-    "@fluidframework/view-interfaces": "^0.25.0",
+    "@fluidframework/core-interfaces": "^0.26.0",
+    "@fluidframework/datastore": "^0.26.0",
+    "@fluidframework/datastore-definitions": "^0.26.0",
+    "@fluidframework/framework-interfaces": "^0.26.0",
+    "@fluidframework/map": "^0.26.0",
+    "@fluidframework/runtime-definitions": "^0.26.0",
+    "@fluidframework/view-interfaces": "^0.26.0",
     "@types/node": "^10.17.24",
     "bootstrap": "^3.3.7"
   },

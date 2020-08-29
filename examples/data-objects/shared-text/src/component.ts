@@ -20,7 +20,7 @@ import {
     IResponse,
     IFluidRouter,
 } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore";
+import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
 import { Ink } from "@fluidframework/ink";
 import {
     ISharedMap,
@@ -89,7 +89,7 @@ export class SharedTextRunner
         private readonly context: IFluidDataStoreContext,
     ) {
         super();
-        this.innerHandle = new FluidOjectHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public render(element: HTMLElement) {

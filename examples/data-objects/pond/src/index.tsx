@@ -16,8 +16,8 @@ import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import {
     Clicker,
     ExampleUsingProviders,
-} from "./internal-components";
-import { IComponentUserInformation } from "./interfaces";
+} from "./data-objects";
+import { IFluidUserInformation } from "./interfaces";
 import { userInfoFactory } from "./providers";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -121,7 +121,7 @@ export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     ]),
     [
         {
-            type: IComponentUserInformation,
+            type: IFluidUserInformation,
             provider: async (dc) => userInfoFactory(dc),
         },
     ]);

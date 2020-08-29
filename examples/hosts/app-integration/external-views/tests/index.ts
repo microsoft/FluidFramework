@@ -6,11 +6,9 @@
 import { getSessionStorageContainer } from "@fluidframework/get-session-storage-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
-import { renderDiceRoller } from "../src/app/views";
-import {
-    DiceRoller,
-    DiceRollerContainerRuntimeFactory,
-} from "../src";
+import { renderDiceRoller } from "../src/view";
+import { DiceRollerContainerRuntimeFactory } from "../src/containerCode";
+import { DiceRoller } from "../src/dataObject";
 
 // Since this is a single page fluid application we are generating a new document id
 // if one was not provided

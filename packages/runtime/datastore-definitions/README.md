@@ -1,8 +1,8 @@
 # @fluidframework/datastore-definitions
 
-Interface `IDatastoreRuntime` specifies the data store developer API.
+Interface `IFluidDataStoreRuntime` specifies the data store developer API.
 
-## Capabilities exposed on `IDatastoreRuntime`
+## Capabilities exposed on `IFluidDataStoreRuntime`
 
 _TODO: The full set of functionality is under review_
 

@@ -12,7 +12,7 @@ import {
     IResponse,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore";
+import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
 import {
     IContainerContext,
     IFluidCodeDetails,
@@ -20,7 +20,7 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IDocumentFactory } from "@fluidframework/host-service-interfaces";
+import { IDocumentFactory } from "@fluid-example/host-service-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IFluidDataStoreRuntime,
@@ -408,7 +408,7 @@ export class Scribe
         super();
 
         this.url = context.id;
-        this.innerHandle = new FluidOjectHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

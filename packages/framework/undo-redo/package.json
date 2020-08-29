@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/undo-redo",
-  "version": "0.25.0",
+  "version": "0.26.0",
   "description": "Undo Redo",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -51,15 +51,15 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/map": "^0.25.0",
-    "@fluidframework/merge-tree": "^0.25.0",
-    "@fluidframework/sequence": "^0.25.0"
+    "@fluidframework/map": "^0.26.0",
+    "@fluidframework/merge-tree": "^0.26.0",
+    "@fluidframework/sequence": "^0.26.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/mocha-test-setup": "^0.25.0",
-    "@fluidframework/test-runtime-utils": "^0.25.0",
+    "@fluidframework/mocha-test-setup": "^0.26.0",
+    "@fluidframework/test-runtime-utils": "^0.26.0",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
@@ -79,7 +79,7 @@
     "eslint-plugin-prefer-arrow": "~1.1.7",
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
-    "mocha": "^8.0.1",
+    "mocha": "^8.1.1",
     "mocha-junit-reporter": "^1.18.0",
     "nyc": "^15.0.0",
     "random-js": "^1.0.8",

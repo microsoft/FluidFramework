@@ -17,7 +17,7 @@ import { BlobHandle } from "./blobHandle";
 import { PureDataObject } from "./pureDataObject";
 
 /**
- * DataObject is a base component that is primed with a root directory and task manager. It
+ * DataObject is a base data store that is primed with a root directory and task manager. It
  * ensures that both are created and ready before you can access it.
  *
  * Having a single root directory allows for easier development. Instead of creating
@@ -26,7 +26,7 @@ import { PureDataObject } from "./pureDataObject";
  *
  * Generics:
  * P - represents a type that will define optional providers that will be injected
- * S - the initial state type that the produced component may take during creation
+ * S - the initial state type that the produced data store may take during creation
  * E - represents events that will be available in the EventForwarder
  */
 export abstract class DataObject<P extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
@@ -102,7 +102,7 @@ export abstract class DataObject<P extends IFluidObject = object, S = undefined,
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
             this.internalRoot.bindToContext();
         } else {
-            // Component has a root directory so we just need to set it before calling initializingFromExisting
+            // data store has a root directory so we just need to set it before calling initializingFromExisting
             this.internalRoot = await this.runtime.getChannel(this.rootDirectoryId) as ISharedDirectory;
 
             // This will actually be an ISharedMap if the channel was previously created by the older version of
@@ -111,7 +111,7 @@ export abstract class DataObject<P extends IFluidObject = object, S = undefined,
             if (this.internalRoot.attributes.type === MapFactory.Type) {
                 this.runtime.logger.send({
                     category: "generic",
-                    eventName: "MapPrimedComponent",
+                    eventName: "MapDataObject",
                     message: "Legacy document, SharedMap is masquerading as SharedDirectory in DataObject",
                 });
             }

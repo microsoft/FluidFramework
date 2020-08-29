@@ -13,7 +13,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, FluidOjectHandle } from "@fluidframework/datastore";
+import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
 import { LoaderHeader, AttachState } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
@@ -93,7 +93,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IFluidRout
         private readonly context: IFluidDataStoreContext,
         private readonly scheduler: ConsensusRegisterCollection<string | null>) {
         super();
-        this.innerHandle = new FluidOjectHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -404,7 +404,7 @@ export class TaskManager implements ITaskManager {
         private readonly scheduler: IAgentScheduler,
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly context: IFluidDataStoreContext) {
-        this.innerHandle = new FluidOjectHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -425,19 +425,25 @@ export class TaskManager implements ITaskManager {
         }
     }
 
+    /**
+     * {@inheritDoc ITaskManager.register}
+     */
     public register(...tasks: ITask[]): void {
         for (const task of tasks) {
             this.taskMap.set(task.id, task.instance);
         }
     }
 
-    public async pick(componentUrl: string, taskId: string, worker?: boolean): Promise<void> {
+    /**
+     * {@inheritDoc ITaskManager.pick}
+     */
+    public async pick(dataStoreUrl: string, taskId: string, worker?: boolean): Promise<void> {
         if (!this.context.deltaManager.clientDetails.capabilities.interactive) {
             return Promise.reject("Picking not allowed on secondary copy");
         } else if (this.runtime.attachState !== AttachState.Attached) {
             return Promise.reject("Picking not allowed in detached container in task manager");
         } else {
-            const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
+            const urlWithSlash = dataStoreUrl.startsWith("/") ? dataStoreUrl : `/${dataStoreUrl}`;
             const fullUrl = `${urlWithSlash}/${this.url}/${taskId}`;
             return this.scheduler.pick(
                 fullUrl,

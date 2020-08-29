@@ -12,7 +12,7 @@ import {
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
-import { FluidOjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { FluidObjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { IFluidObjectCollection } from "@fluidframework/framework-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
@@ -80,7 +80,7 @@ export class ProgressBar extends EventEmitter implements
     IFluidLoadable,
     IFluidHTMLView,
     IFluidRouter {
-    public handle: FluidOjectHandle;
+    public handle: FluidObjectHandle;
 
     constructor(
         public value: number,
@@ -90,7 +90,7 @@ export class ProgressBar extends EventEmitter implements
         private readonly collection: ProgressCollection,
     ) {
         super();
-        this.handle = new FluidOjectHandle(this, keyId, context);
+        this.handle = new FluidObjectHandle(this, keyId, context);
     }
 
     public get IFluidLoadable() { return this; }
@@ -135,7 +135,7 @@ export class ProgressCollection
     public get IFluidObjectCollection() { return this; }
 
     public url: string;
-    public handle: FluidOjectHandle;
+    public handle: FluidObjectHandle;
 
     private readonly progressBars = new Map<string, ProgressBar>();
     private root: ISharedMap;
@@ -144,7 +144,7 @@ export class ProgressCollection
         super();
 
         this.url = context.id;
-        this.handle = new FluidOjectHandle(this, "", this.runtime.IFluidHandleContext);
+        this.handle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
     }
 
     public changeValue(key: string, newValue: number) {
