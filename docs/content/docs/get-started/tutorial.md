@@ -10,7 +10,7 @@ through our [Quick Start](./quick-start.md) guide.
 {{< fluid_bundle_loader idPrefix="dice-roller"
 bundleName="dice-roller.9af6bdd702e6cd4ad6cf.js" >}}
 
-In our DiceRoller app we'll show users a dice with a button to roll it.  When the dice is rolled, we'll use the Fluid Framework to sync the data across clients so everyone sees the same result.  We'll do this in N parts:
+In our DiceRoller app we'll show users a dice with a button to roll it.  When the dice is rolled, we'll use the Fluid Framework to sync the data across clients so everyone sees the same result.  We'll do this in 6 parts:
 
 1. Write the view
 1. Define the interface our model will expose
@@ -139,33 +139,22 @@ export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactor
 );
 ```
 
-
-### Connecting our container to the service for collaboration
-
-
-### Integrating into our app
+Now we've defined all the pieces and it's just time to put them all together!
 
 
+### Connect container to service for collaboration
 
-Now that we've created our data object and configured container code to use it, we're ready to load that container code
-into a container and access it in our app. We'll also connect the container to the service that orchestrates the
-collaboration. For now, we'll just run on a local test service called [Tinylicious][].
+To orchestrate the collaboration, we need to connect to a service to send and receive the updates to the data.  The way we do this is to connect a Fluid [Container][] object to the service and load our container code into it.
 
-To make this easier we've provided a helper function `getTinyliciousContainer()` -- this will look a little different
-when moving to a production service, but you'll still ultimately be getting a reference to a container. This helper
-function takes a unique ID to identify our document, the container code, and a flag to indicate whether we want to
-create a new document or load an existing one.
-
-*app.ts*
+For now, we'll just run on a local test service called [Tinylicious][], and to make this easier we've provided a helper function `getTinyliciousContainer()`.  The helper function takes a unique ID to identify our document (the collection of data used by our app), the container code, and a flag to indicate whether we want to create a new document or load an existing one.
 
 ```ts
 const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
 ```
 
-Now that we have a container, we can make a request against it to get a reference to our data object. Since we built our
-container code using a ContainerRuntimeFactoryWithDefaultDataStore, our data object can be requested using a URL of "/".
+This will look a little different when moving to a production service, but you'll still ultimately be getting a reference to a Container object running your code and connected to a service. 
 
-*app.ts*
+After we have the connected Container object, our container code will have already run to create an instance of our model.  Since we built our container code using a ContainerRuntimeFactoryWithDefaultDataStore, the model can be requested from the Container object using a URL of "/".:
 
 ```ts
 const url = "/";
@@ -180,12 +169,9 @@ if (response.status !== 200 || response.mimeType !== "fluid/object") {
 const diceRoller: IDiceRoller = response.value;
 ```
 
-At this point the Fluid Framework work is done and our DiceRoller is ready to be used. We can now read its value to
-render it into the DOM and provide a button to roll the dice by calling its roll() method. We'll also register a
-listener for "diceRolled" to learn when the value changes and update the rendering. You could use a view framework of
-your choice here if you'd like.
+### Connect model instance to view for rendering
 
-*view.ts*
+Now that we have the model instance, we can revisit our view to integrate it.  We'll update the function to take an IDiceRoller, connect our button to the `roll()` method, listen to the `"diceRolled"` event to detect value changes, and read that value from the model.
 
 ```ts
 export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
@@ -215,50 +201,7 @@ export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivEleme
 }
 ```
 
-And then all that's left to do is render using the view:
-
-*app.ts*
-
-```ts
-const div = document.getElementById("content") as HTMLDivElement;
-renderDiceRoller(diceRoller, div);
-```
-
-Once the application loads the container will communicate with the server to exchange DDS data:
-
-![](/docs/get-started/images/full-structure.png)
-
 The [full code for this application is available](https://github.com/microsoft/FluidHelloWorld) for you to try out.
-
-
-REMOVE/REHOME:
-
-## Key terms and concepts
-
-There are a handful of key concepts to understand.
-
-- **Distributed data structures (DDSes)** -- DDSes are the data structures Fluid Framework provides for locally storing copies of the
-  collaborative data. As collaborators modify the data, the changes will be reflected to all other collaborators.
-
-- **Data objects** -- You'll write data objects to organize DDSes into semantically meaningful groupings for your
-  scenario. You can define their API surface to control how collaborators will modify the data.
-
-- **Container code** -- You'll write container code to register the type and number of data objects your application uses and how
-  you'll access them.
-
-- **Container** -- The container is your application's entry point to Fluid Framework. It runs your container
-  code and is the object through which you'll retrieve your data objects.
-
-- **Fluid service** -- The container will connect to a service to send and receive changes to collaborative data.
-
-![](/docs/get-started/images/full-structure.png)
-
-![](/docs/get-started/images/data-object.png)
-
-![](/docs/get-started/images/container-code.png)
-
-![](/docs/get-started/images/app-integration.png)
-
 
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
