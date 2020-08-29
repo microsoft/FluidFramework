@@ -9,10 +9,21 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IFluidCodeDetails, IFluidPackage, ILoader, IRuntimeFactory } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import {
+    IContainer,
+    IFluidCodeDetails,
+    IFluidPackage,
+    ILoader,
+    IRuntimeFactory,
+} from "@fluidframework/container-definitions";
+import { LocalResolver } from "@fluidframework/local-driver";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
+import {
+    createAndAttachContainer,
+    createLocalLoader,
+    OpProcessingController,
+} from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
 
 const V1 = "0.1.0";
@@ -66,7 +77,8 @@ class OldTestDataStoreV2 extends OldTestDataStore {
 }
 
 describe("context reload", function() {
-    const id = "fluid-test://localhost/contextReloadTest";
+    const documentId = "contextReloadTest";
+    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
     const codeDetails = (version: string): IFluidCodeDetails => {
         return {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -76,7 +88,7 @@ describe("context reload", function() {
     };
     const defaultCodeDetails = codeDetails(V1);
 
-    const proposeAndWaitForReload = async (version: string, ...containers: Container[]) => {
+    const proposeAndWaitForReload = async (version: string, ...containers: IContainer[]) => {
         // propose
         await containers[0].getQuorum().propose("code", codeDetails(version));
         // wait for "contextChanged" events on all containers
@@ -86,23 +98,19 @@ describe("context reload", function() {
                     typeof code.package === "object" && code.package.version === version ? resolve() : reject()))));
     };
 
-    async function createContainer(packageEntries, server): Promise<Container> {
-        const loader: ILoader = createLocalLoader(packageEntries, server);
-        return initializeLocalContainer(id, loader, defaultCodeDetails);
+    async function createContainer(packageEntries, server, urlResolver): Promise<IContainer> {
+        const loader: ILoader = createLocalLoader(packageEntries, server, urlResolver);
+        return createAndAttachContainer(documentId, defaultCodeDetails, loader, urlResolver);
     }
 
-    async function createContainerWithOldLoader(packageEntries, server): Promise<old.Container> {
+    async function loadContainer(packageEntries, server, urlResolver): Promise<IContainer> {
+        const loader: ILoader = createLocalLoader(packageEntries, server, urlResolver);
+        return loader.resolve({ url: documentLoadUrl });
+    }
+
+    async function createContainerWithOldLoader(packageEntries, server): Promise<old.IContainer> {
         const loader = old.createLocalLoader(packageEntries, server);
-        return old.initializeLocalContainer(id, loader, defaultCodeDetails);
-    }
-
-    async function requestFluidObject<T>(dataStoreId: string, container: Container | old.Container): Promise<T> {
-        const response = await container.request({ url: dataStoreId });
-        if (response.status !== 200
-            || (response.mimeType !== "fluid/dataStore" && response.mimeType !== "fluid/object")) {
-            throw new Error(`DataStore with id: ${dataStoreId} not found`);
-        }
-        return response.value as T;
+        return old.initializeLocalContainer(documentLoadUrl, loader, defaultCodeDetails);
     }
 
     const createRuntimeFactory = (dataStore): IRuntimeFactory => {
@@ -135,6 +143,14 @@ describe("context reload", function() {
         });
 
         it("is followed by an immediate summary", async function() {
+            // Set a key in the root map. The Container is created in "read" mode so the first op it sends will
+            // get nack'd and it reconnects.
+            // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
+            const test = ["fluid", "is great!"];
+            this.dataStoreV1._root.set(test[0], test[1]);
+
+            await this.opProcessingController.process();
+
             await this.container.getQuorum().propose("code", codeDetails(V2));
 
             // wait for summary ack/nack (non-immediate summary will result in test timeout)
@@ -148,12 +164,17 @@ describe("context reload", function() {
         });
 
         it("retains data", async function() {
+            // Set a key in the root map. The Container is created in "read" mode so the first op it sends will
+            // get nack'd and it reconnects.
+            // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
             const test = ["fluid", "is great!"];
             this.dataStoreV1._root.set(test[0], test[1]);
 
+            await this.opProcessingController.process();
+
             await proposeAndWaitForReload(V2, this.container);
 
-            const dataStoreV2 = await requestFluidObject<TestDataStore>("default", this.container);
+            const dataStoreV2 = await requestFluidObject<TestDataStore>(this.container, "default");
 
             assert.strictEqual(await dataStoreV2._root.get(test[0]), test[1]);
         });
@@ -161,9 +182,17 @@ describe("context reload", function() {
         it("loads version 2", async function() {
             assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
 
+            // Set a key in the root map. The Container is created in "read" mode so the first op it sends will
+            // get nack'd and it reconnects.
+            // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
+            const test = ["fluid", "is great!"];
+            this.dataStoreV1._root.set(test[0], test[1]);
+
+            await this.opProcessingController.process();
+
             await proposeAndWaitForReload(V2, this.container);
 
-            const dataStoreV2 = await requestFluidObject<TestDataStore>("default", this.container);
+            const dataStoreV2 = await requestFluidObject<TestDataStore>(this.container, "default");
 
             assert.strictEqual(dataStoreV2.version, TestDataStoreV2.version);
 
@@ -174,12 +203,19 @@ describe("context reload", function() {
     describe("single container", () => {
         beforeEach(async function() {
             this.deltaConnectionServer = LocalDeltaConnectionServer.create();
-            this.container = await createContainer([
-                [codeDetails(V1), { fluidExport: createRuntimeFactory(TestDataStoreV1) }],
-                [codeDetails(V2), { fluidExport: createRuntimeFactory(TestDataStoreV2) }],
-            ], this.deltaConnectionServer);
-            this.dataStoreV1 = await requestFluidObject<TestDataStore>("default", this.container);
+            this.urlResolver = new LocalResolver();
+            this.container = await createContainer(
+                [
+                    [codeDetails(V1), createRuntimeFactory(TestDataStoreV1)],
+                    [codeDetails(V2), createRuntimeFactory(TestDataStoreV2)],
+                ],
+                this.deltaConnectionServer,
+                this.urlResolver);
+            this.dataStoreV1 = await requestFluidObject<TestDataStore>(this.container, "default");
             assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
+
+            this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
+            this.opProcessingController.addDeltaManagers(this.dataStoreV1._runtime.deltaManager);
         });
 
         tests();
@@ -192,30 +228,42 @@ describe("context reload", function() {
     describe("two containers", () => {
         it("loads version 2", async () => {
             const deltaConnectionServer = LocalDeltaConnectionServer.create();
+            const urlResolver = new LocalResolver();
+            const opProcessingController = new OpProcessingController(deltaConnectionServer);
 
             const packageEntries = [
-                [codeDetails(V1), { fluidExport: createRuntimeFactory(TestDataStoreV1) }],
-                [codeDetails(V2), { fluidExport: createRuntimeFactory(TestDataStoreV2) }],
+                [codeDetails(V1), createRuntimeFactory(TestDataStoreV1)],
+                [codeDetails(V2), createRuntimeFactory(TestDataStoreV2)],
             ];
 
-            const containers = await Promise.all([
-                createContainer(packageEntries, deltaConnectionServer),
-                createContainer(packageEntries, deltaConnectionServer),
-            ]);
+            const containers: IContainer[] = [];
+            containers.push(await createContainer(packageEntries, deltaConnectionServer, urlResolver));
+            containers.push(await loadContainer(packageEntries, deltaConnectionServer, urlResolver));
+
             let success = true;
             containers.map((container) => container.on("warning", () => success = false));
             containers.map((container) => container.on("closed", (error) => success = success && error === undefined));
 
+            containers.map((container) => opProcessingController.addDeltaManagers(container.deltaManager));
+
             let dataStores = await Promise.all(containers.map(
-                async (container) => requestFluidObject<TestDataStore>("default", container)));
+                async (container) => requestFluidObject<TestDataStore>(container, "default")));
 
             assert.strictEqual(dataStores[0].version, TestDataStoreV1.version);
             assert.strictEqual(dataStores[1].version, TestDataStoreV1.version);
 
+            // Set a key in the root map. The Container is created in "read" mode so the first op it sends will
+            // get nack'd and it reconnects.
+            // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
+            const test = ["fluid", "is great!"];
+            dataStores[0]._root.set(test[0], test[1]);
+
+            await opProcessingController.process();
+
             await proposeAndWaitForReload(V2, ...containers);
 
             dataStores = await Promise.all(containers.map(
-                async (container) => requestFluidObject<TestDataStore>("default", container)));
+                async (container) => requestFluidObject<TestDataStore>(container, "default")));
 
             assert.strictEqual(dataStores[0].version, TestDataStoreV2.version);
             assert.strictEqual(dataStores[1].version, TestDataStoreV2.version);
@@ -234,11 +282,14 @@ describe("context reload", function() {
             beforeEach(async function() {
                 this.deltaConnectionServer = LocalDeltaConnectionServer.create();
                 this.container = await createContainerWithOldLoader([
-                    [codeDetails(V1), { fluidExport: createOldRuntimeFactory(OldTestDataStoreV1) }],
-                    [codeDetails(V2), { fluidExport: createRuntimeFactory(TestDataStoreV2) }],
+                    [codeDetails(V1), createOldRuntimeFactory(OldTestDataStoreV1)],
+                    [codeDetails(V2), createRuntimeFactory(TestDataStoreV2)],
                 ], this.deltaConnectionServer);
-                this.dataStoreV1 = await requestFluidObject<OldTestDataStore>("default", this.container);
+                this.dataStoreV1 = await requestFluidObject<OldTestDataStore>(this.container, "default");
                 assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
+
+                this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
+                this.opProcessingController.addDeltaManagers(this.container.deltaManager);
             });
 
             tests();
@@ -250,12 +301,18 @@ describe("context reload", function() {
         describe("new loader, old runtime", () => {
             beforeEach(async function() {
                 this.deltaConnectionServer = LocalDeltaConnectionServer.create();
+                this.urlResolver = new LocalResolver();
                 this.container = await createContainer([
-                    [codeDetails(V1), { fluidExport: createRuntimeFactory(TestDataStoreV1) }],
-                    [codeDetails(V2), { fluidExport: createOldRuntimeFactory(OldTestDataStoreV2) }],
-                ], this.deltaConnectionServer);
-                this.dataStoreV1 = await requestFluidObject<TestDataStore>("default", this.container);
+                    [codeDetails(V1), createRuntimeFactory(TestDataStoreV1)],
+                    [codeDetails(V2), createOldRuntimeFactory(OldTestDataStoreV2)],
+                ],
+                this.deltaConnectionServer,
+                this.urlResolver);
+                this.dataStoreV1 = await requestFluidObject<TestDataStore>(this.container, "default");
                 assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
+
+                this.opProcessingController = new OpProcessingController(this.deltaConnectionServer);
+                this.opProcessingController.addDeltaManagers(this.container.deltaManager);
             });
 
             tests();

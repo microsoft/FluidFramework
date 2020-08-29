@@ -42,7 +42,7 @@ Deprecated in 0.18, removed.
 
 ### IContainerRuntimeBase._createDataStoreWithProps is removed
 `IContainerRuntimeBase._createDataStoreWithProps()` has been removed. Please use `IContainerRuntimeBase.createDataStore()` (returns IFluidRouter).
-If you need to pass props to data store, either use request() route to pass initial props directly, or to query fluid object to interact with it (pass props / call methods to configure object).
+If you need to pass props to data store, either use request() route to pass initial props directly, or to query Fluid object to interact with it (pass props / call methods to configure object).
 
 ### _createDataStore APIs are removed
 `IFluidDataStoreContext._createDataStore()` & `IContainerRuntimeBase._createDataStore()` are removed
@@ -438,7 +438,7 @@ aqueduct-react is actually just a react library and renamed it to reflect such.
 - [Package rename from `@microsoft/fluid-*` to `@fluidframework/*`](#package-rename)
 
 ### Package rename
-Package with the prefix "@microsoft/fluid-" is renamed to "@fluidframework/" to take advanage a separate namespace for fluid framework SDK packages.
+Package with the prefix "@microsoft/fluid-" is renamed to "@fluidframework/" to take advanage a separate namespace for Fluid Framework SDK packages.
 
 ### Container Error Event
 "error" event is gone. All critical errors are raised on "closed" event via optiona error object.

@@ -1,23 +1,23 @@
-# How to write a visual component
+# How to write a visual data store
 
-## Introducing IComponentHtmlView
+## Introducing IFluidHtmlView
 
-All Fluid components expose their capabilities using the `IComponentX` interface pattern. Please see [Feature detection
-and delegation](./components.md#feature-detection-and-delegation) for more information on this.
+All Fluid data stores expose their capabilities using the `IFluidX` interface pattern. Please see [Feature detection
+and delegation](../concepts/feature-detection-iprovide.md) for more information on this.
 
-As such, any component that provides a view -- that is, a component that is presented to the user visually -- exposes
-this capability by implementing the `IComponentHTMLView` interface provided by the Fluid Framework. Let's take a look at
+As such, any data store that provides a view -- that is, a data store that is presented to the user visually -- exposes
+this capability by implementing the `IFluidHTMLView` interface provided by the Fluid Framework. Let's take a look at
 what this interface needs:
 
 ```typescript
 /**
- * An IComponentHTMLView is a renderable component
+ * An IFluidHTMLView is a renderable data store
  */
-export interface IComponentHTMLView extends IProvideComponentHTMLView {
+export interface IFluidHTMLView extends IProvideFluidHTMLView {
     /**
-     * Render the component into an HTML element.
+     * Render the data store into an HTML element.
      */
-    render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
+    render(elm: HTMLElement, options?: IFluidHTMLOptions): void;
 
     /**
      * Views which need to perform cleanup (e.g. remove event listeners, timers, etc.) when
@@ -26,22 +26,22 @@ export interface IComponentHTMLView extends IProvideComponentHTMLView {
     remove?(): void;
 }
 
-export interface IProvideComponentHTMLView {
-    readonly IComponentHTMLView: IComponentHTMLView;
+export interface IProvideFluidHTMLView {
+    readonly IFluidHTMLView: IFluidHTMLView;
 }
 ```
 
-As we can see, the two functions that we must implement are the `IComponentHTMLView` identifier and a `render(elm:
+As we can see, the two functions that we must implement are the `IFluidHTMLView` identifier and a `render(elm:
 HTMLElement)` function. `remove()` is not mandatory and only necessary for clean up operations when the view is being
 removed.
 
-- `IComponentHTMLView` can simply provide itself as `this` to identify that this component itself is a view provider.
-  With Fluid, each component uses the identifiers to expose their capabilities and are anonymous interfaces otherwise.
-  As such, another component (`componentB`) that does not know if this component (`componentA`) provides a view but can
-  check by seeing if `componentA.IComponentHTMLView` is defined or not. If `componentA.IComponentHTMLView` is defined,
-  it is guaranteed to return a `IComponentHTMLView` object. At this point, it can render `componentA` by calling
-  `componentA.IComponentHTMLView.render()`. This may seem initially confusing but the example below should demonstrate
-  its ease of implementation and you can read [here](../docs/components.md#feature-detection-and-delegation) for more
+- `IFluidHTMLView` can simply provide itself as `this` to identify that this data store itself is a view provider.
+  With Fluid, each data store uses the identifiers to expose their capabilities and are anonymous interfaces otherwise.
+  As such, another data store (`dataStoreB`) that does not know if this data store (`dataStoreA`) provides a view but can
+  check by seeing if `dataStoreA.IFluidHTMLView` is defined or not. If `dataStoreA.IFluidHTMLView` is defined,
+  it is guaranteed to return a `IFluidHTMLView` object. At this point, it can render `dataStoreA` by calling
+  `dataStoreA.IFluidHTMLView.render()`. This may seem initially confusing but the example below should demonstrate
+  its ease of implementation and you can read [here](../concepts/feature-detection-iprovide.md) for more
   reference.
 - `render` is a function that takes in the parent HTML document element and allows children to inject their views into
   it. The `elm` parameter passed in here can be modified and returned. If you are using React as your view framework,
@@ -57,27 +57,27 @@ public render(elm: HTMLElement) {
  ```
 
 
-To see an example of how a Fluid component can implement this interface, we will be looking at a simple `Clicker`
-component that consists of a label with a number starting at `0` and a button that increments the displayed number for
+To see an example of how a Fluid data store can implement this interface, we will be looking at a simple `Clicker`
+data store that consists of a label with a number starting at `0` and a button that increments the displayed number for
 all users simultaneously.
 
-Over the course of this example, we will incrementally build out our entire component in one file. The final two
+Over the course of this example, we will incrementally build out our entire data store in one file. The final two
 versions of the code can be found at the bottom of each section. Each of these files define an entire, self-sufficient
-Fluid component that can be exported in its own package.
+Fluid data store that can be exported in its own package.
 
-First, we will look at how `Clicker` is set up such that it defines itself as a Fluid Component and uses a shared state.
+First, we will look at how `Clicker` is set up such that it defines itself as a Fluid data store and uses a shared state.
 Then, we will take a look at two different ways of generating a view that responds to changes on that shared state when
 a user presses a button:
 
 - Option A: Using a robust, event-driven pattern that can be emulated for different view frameworks.
 - Option B: Using a React adapter that React developers may find more familiar but uses experimental code that is still being developed.
 
-## Setting Up the Fluid Component
+## Setting Up the Fluid Data Store
 
-Before we do either of the options, we first need to do some common steps to say that `Clicker` is a Fluid component,
+Before we do either of the options, we first need to do some common steps to say that `Clicker` is a Fluid data store,
 and bring in the necessary imports. Below is the initial code to get you started; we will incrementally build on this
-throughout the example. The final result of this file is sufficient to produce a standalone component, and can be
-supplied as the `main` script in your component `package.json`.
+throughout the example. The final result of this file is sufficient to produce a standalone data store, and can be
+supplied as the `main` script in your data store `package.json`.
 
 Alright, lets take a look at some initial scaffolding.
 
@@ -97,7 +97,7 @@ export const ClickerInstantiationFactory = new PrimedComponentFactory(
 export const fluidExport = ClickerInstantiationFactory;
  ```
 
-Believe it or not, we are now 90% of the way to having a visual Fluid component! Do not worry if it doesn't compile yet.
+Believe it or not, we are now 90% of the way to having a visual Fluid data store! Do not worry if it doesn't compile yet.
 Let's take a quick summary of what we've written though before going the last bit to attain compilation.
 
 ```typescript
@@ -108,13 +108,13 @@ By extending the abstract `PrimedComponent` class, we have actually let it do a 
 through its constructor. Specifically, the `PrimedComponent` class gives us access to two items
 
 - `root`: The `root` is a `SharedDirectory` [object](../docs/SharedDirectory.md) which, as the name implies, is a
-  directory that is shared amongst all users that are rendering this component in the same session. Any items that are
+  directory that is shared amongst all users that are rendering this data store in the same session. Any items that are
   set here on a key will be accessible to other users using the same key on their respective client's root. The stored
   values can be primitives or the handles of other `SharedObject` items. If you don't know what handles are, don't
   worry! We'll take a look at them in the next section.
 
-- `runtime`: The `runtime` is a `ComponentRuntime` object that manages the Fluid component lifecycle. The key thing to
-  note here is that it will be used for the creation of other Fluid components and DDSes.
+- `runtime`: The `runtime` is a `ComponentRuntime` object that manages the Fluid data store lifecycle. The key thing to
+  note here is that it will be used for the creation of other Fluid data stores and DDSes.
 
 ```typescript
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
@@ -125,13 +125,13 @@ export const ClickerInstantiationFactory = new PrimedComponentFactory(
 );
 export const fluidExport = ClickerInstantiationFactory;
 ```
-These two lines in combination allow the Clicker component to be consumed as a Fluid component. While the first two
+These two lines in combination allow the Clicker data store to be consumed as a Fluid data store. While the first two
 parameters that `PrimedComponentFactory` takes in simply define `Clicker`'s name and pass the class itself, the third
 parameter is important to keep in mind for later as it will list the Fluid DDSes (Distributed Data Structures) that
 `Clicker` utilizes.
 
 Finally, the last line consisting of an exported `fluidExport` variable is what Fluid containers look for in order to
-instantiate this component using the factory it provides.
+instantiate this data store using the factory it provides.
 
 Awesome, now that we're up to speed with our code scaffolding, let's add the actual counter data structure that we will
 use to keep track of multiple users clicking the button, and a rudimentary render function. Following that, we will link
@@ -142,14 +142,14 @@ the two together.
 ```typescript
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { SharedCounter } from "@fluidframework/counter";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 
 const ClickerName = "Clicker";
 
-export class Clicker extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class Clicker extends PrimedComponent implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     public render(elm: HTMLElement) {
         ReactDOM.render(
@@ -173,7 +173,7 @@ export const fluidExport = ClickerInstantiationFactory;
 
 Now, our clicker has a `SharedCounter` available, which is an extension of `SharedObject` and can provide a simple empty
 view. Although a little light on functionality, by just adding those few lines, our `Clicker` is now a compiling, visual
-component! We will add in our business logic in a second but first, let's see what these few lines achieved.
+data store! We will add in our business logic in a second but first, let's see what these few lines achieved.
 
 As discussed above, the `PrimedComponent` already gives us a `SharedObject` in the form of the `SharedDirectory` root.
 Any primitive we set to a key of the root, i.e. `root.set("key", 1)`, can be fetched by another user, i.e.
@@ -194,14 +194,14 @@ export const ClickerInstantiationFactory = new PrimedComponentFactory(
 );
 ```
 
-We will also be displaying our `Clicker` incrementing in a view, so we also need to mark our component as an
-`IComponentHTMLView` component to say that it provides a render function, as explained at the beginning of this page.
-This is done by adding the adding the `IComponentHTMLView` interface and implementing the first mandatory function,
-`IComponentHTMLView`, by returning itself.
+We will also be displaying our `Clicker` incrementing in a view, so we also need to mark our data store as an
+`IFluidHTMLView` data store to say that it provides a render function, as explained at the beginning of this page.
+This is done by adding the adding the `IFluidHTMLView` interface and implementing the first mandatory function,
+`IFluidHTMLView`, by returning itself.
 
 ```typescript
-export class Clicker extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class Clicker extends PrimedComponent implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 }
 ```
 
@@ -218,7 +218,7 @@ public render(elm: HTMLElement) {
 }
 ```
 
-Now that we can start using the SharedCounter DDS and have labeled this component as one that provides a view, we can
+Now that we can start using the SharedCounter DDS and have labeled this data store as one that provides a view, we can
 start filling out the view itself and how it updates to changes in DDSes.
 
 ## Creating the View
@@ -230,8 +230,8 @@ to trigger re-renders for any view framework. When using React, instead of needi
 `setState` with the new value.
 
 There is a also a new, experimental Fluid React library that React developers may find easier to use since it abstracts
-much of the event-driven state update logic, but it is a still a WiP for scenarios such as cross-component relationships
-and may be unstable. However, we can use it for standalone components such as this. It is still recommended to read the
+much of the event-driven state update logic, but it is a still a WiP for scenarios such as cross-data store relationships
+and may be unstable. However, we can use it for standalone data stores such as this. It is still recommended to read the
 event-driven case even if you choose to apply the Fluid React libraries to understand the logic that is happening
 beneath the abstraction the libraries provide.
 
@@ -244,17 +244,17 @@ Now that we have all of our scaffolding ready, we can actually start adding in t
 
 ```typescript
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 
 const ClickerName = "Clicker";
 const counterKey = "counter";
 
-export class Clicker extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class Clicker extends PrimedComponent implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private _counter: SharedCounter | undefined;
 
@@ -264,7 +264,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async hasInitialized() {
-        const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(counterKey);
+        const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
         this._counter = await counterHandle.get();
     }
 
@@ -287,15 +287,15 @@ export const ClickerInstantiationFactory = new PrimedComponentFactory(
 export const fluidExport = ClickerInstantiationFactory;
 ```
 
-A good way of understanding what is happening here is thinking about the two different scenarios this component will be rendered in.
+A good way of understanding what is happening here is thinking about the two different scenarios this data store will be rendered in.
 
-- This is the first time this component is being rendered in this session for any user, i.e. some user opened this
+- This is the first time this data store is being rendered in this session for any user, i.e. some user opened this
   `Clicker` session for the first time
-- This is another user who is joining an existing session and is rendering a component with data that has already been
+- This is another user who is joining an existing session and is rendering a data store with data that has already been
   updated, i.e. somebody clicked the `Clicker` a number of times already and now a new user enters to see the already
   incremented value
 
-To cater to these two scenarios, the Fluid component lifecycle provides three different functions:
+To cater to these two scenarios, the Fluid data store lifecycle provides three different functions:
 
 - `initializingFirstTime` - This code will be run by clients in the first, new session scenario
 - `initializingFromExisting` - This code will be run by clients in the second, existing session scenario
@@ -315,7 +315,7 @@ protected async initializingFirstTime() {
 }
 ```
 
-Since this is the first time this component has been rendered in this session, we need to add a `SharedCounter` to
+Since this is the first time this data store has been rendered in this session, we need to add a `SharedCounter` to
 everyone's shared `root` so we can all increment on the same object. We do this using the `SharedCounter.create`
 function that simply takes in the `runtime` object that we have handy from the `PrimedComponent` class we inherited
 earlier.
@@ -339,7 +339,7 @@ look at how to fetch it.
 
 ```typescript
 protected async hasInitialized() {
-    const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(counterKey);
+    const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
     this._counter = await counterHandle.get();
 }
 ```
@@ -359,17 +359,17 @@ Alright, now for the moment you've been waiting for, connecting the counter to t
 
 ```typescript
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { IComponentHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 
 const ClickerName = "Clicker";
 const counterKey = "counter";
 
-export class Clicker extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class Clicker extends PrimedComponent implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     private _counter: SharedCounter | undefined;
 
@@ -379,7 +379,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async hasInitialized() {
-        const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(counterKey);
+        const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
         this._counter = await counterHandle.get();
     }
 
@@ -458,8 +458,8 @@ public render(div: HTMLElement) {
 
 By the time any client reaches the render function, they should have either created a `SharedCounter` and fetched it
 from the root, or fetched an existing one from the root. As such, we will error if it's not available. Then we pass the
-counter as a prop to our new React component `CounterReactView` inside `ReactDOM.render`. This will be your main entry
-point into the React view lifecycle. Let's take a look at the `CounterReactView` component next.
+counter as a prop to our new React data store `CounterReactView` inside `ReactDOM.render`. This will be your main entry
+point into the React view lifecycle. Let's take a look at the `CounterReactView` data store next.
 
 ```typescript
 interface CounterProps {
@@ -550,7 +550,7 @@ import {
     FluidToViewMap,
 } from "@fluidframework/react";
 import { SharedCounter } from "@fluidframework/counter";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -562,8 +562,8 @@ type CounterViewState = IViewState & CounterState;
 type CounterFluidState = IFluidState & CounterState;
 
 
-export class Clicker extends PrimedComponent implements IComponentHTMLView {
-    public get IComponentHTMLView() { return this; }
+export class Clicker extends PrimedComponent implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
 
     public render(element: HTMLElement) {
         const fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map();
@@ -615,7 +615,7 @@ export const ClickerInstantiationFactory = new PrimedComponentFactory(
 export const fluidExport = ClickerInstantiationFactory;
 ```
 
-Let's take this in parts to understand the link between the Fluid Component and the view that we establish here.
+Let's take this in parts to understand the link between the Fluid data store and the view that we establish here.
 
 First, let's just take a look at the interfaces our view will be using.
 
@@ -661,9 +661,9 @@ public render(element: HTMLElement) {
 ```
 
 Here, we construct a `fluidToView` mapping to describe the relationship between `counter` in the view state and
-`counter` in the Fluid state. If this is the first time this component is being rendered, it will use the callback in
+`counter` in the Fluid state. If this is the first time this data store is being rendered, it will use the callback in
 `sharedObjectCreate` to initialize the `SharedCounter` object on the synced state. Any returning clients will
-automatically fetch this stored value, convert it from a handle to the component itself, and pass it into the view
+automatically fetch this stored value, convert it from a handle to the data store itself, and pass it into the view
 state.
 
 We also pass in the `listenedEvents` parameter to indicate which events on this Fluid state value should trigger a state
@@ -672,7 +672,7 @@ update. Here we pass in `"incremented"` as we want the view to refresh when the 
 This also optionally takes in `stateKey`, `viewConverter`, and `rootKey` parameters to handle cases where the view and
 fluid states do not match, but they are not needed here.
 
-If you read Option A above, you will notice that we no longer need to set up the `SharedCounter` in the component
+If you read Option A above, you will notice that we no longer need to set up the `SharedCounter` in the data store
 lifecycle and that we only have the `render` function now. This is because this initialization is happening within the
 React lifecycle, and the `SharedCounter` instance will be made available through a state update after it finishes
 initializing. This is why you see that `CounterState` is defined as `{counter?: SharedCounter}` instead of `{counter:
@@ -680,18 +680,18 @@ SharedCounter}`. Prior to initialization, `state.counter` will return undefined.
 
 Okay, now we have everything necessary to pass in as props to our `CounterReactView`.
 
-- `syncedStateId` - This should be unique for each component that shares the same root, i.e. if there was another
-  clicker being render alongside this one in this component, it should receive its own ID to prevent one from
+- `syncedStateId` - This should be unique for each data store that shares the same root, i.e. if there was another
+  clicker being render alongside this one in this data store, it should receive its own ID to prevent one from
   interfering in the updates of the other
 - `root` - The same `SharedDirectory` provided by `this.root` from `PrimedComponent`
 - `dataProps.fluidObjectMap` - This can just take a new `Map` instance for now but will need to be filled when
-  establishing multi-component relationships in more complex cases. This map is where all the DDSes that we use are
-  stored after being fetched from their handles, and it used to make the corresponding component synchronously available
+  establishing multi-data store relationships in more complex cases. This map is where all the DDSes that we use are
+  stored after being fetched from their handles, and it used to make the corresponding data store synchronously available
   in the view.
 - `dataProps.runtime` - The same `ComponentRuntime` provided by `this.runtime` from `PrimedComponent`
 - `fluidToView` - The fluidToView relationship map we set up above.
 
-We're ready to go through our view, which is now super simple due to the setup we did in the Fluid component itself.
+We're ready to go through our view, which is now super simple due to the setup we did in the Fluid data store itself.
 
 ```typescript
 class CounterReactView extends FluidReactView<CounterViewState, CounterFluidState> {
@@ -719,7 +719,7 @@ We can see that the state is initially empty as it only consists of the `SharedC
 The view itself can now directly use the `this.state.counter.value` and we can update it by simply using
 `this.state.counter.increment(1)`. This will directly update the `this.state.counter.value` without needing any event
 listeners to be additionally set up. And there you have it, a synced clicker with persistent state without needing to
-directly use IComponentHandles or set up event listeners!
+directly use IFluidHandles or set up event listeners!
 
 We can extend this example to other DDSes by passing in their corresponding `create` functions in and listening to their
 respective events.

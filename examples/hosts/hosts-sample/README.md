@@ -100,7 +100,7 @@ export interface IUrlResolver {
 ```
 
 This simple interface defines a single method, `resolve`, which takes in an `IRequest` object and resolves it to an
-`IResolvedUrl`. An `IRequest` is simply the URL for the document. And the `IResolvedUrl` is the fluid based URL
+`IResolvedUrl`. An `IRequest` is simply the URL for the document. And the `IResolvedUrl` is the Fluid based URL
 along with associated access tokens.
 
 In our example the URL format is of the form `http://localhost:8080/<documentId>/<path>`. To implement the resolve

@@ -11,17 +11,17 @@ through our [Quick Start](./quick-start.md) guide.
 
 There are a handful of key concepts to understand.
 
-- **Distributed data structures (DDSes)** -- DDSes are the data structures Fluid Framework provides for storing the
+- **Distributed data structures (DDSes)** -- DDSes are the data structures Fluid Framework provides for locally storing copies of the
   collaborative data. As collaborators modify the data, the changes will be reflected to all other collaborators.
 
 - **Data objects** -- You'll write data objects to organize DDSes into semantically meaningful groupings for your
   scenario. You can define their API surface to control how collaborators will modify the data.
 
-- **Container code** -- You'll write container code to define which data objects your scenario uses and how
+- **Container code** -- You'll write container code to register the type and number of data objects your application uses and how
   you'll access them.
 
 - **Container** -- The container is your application's entry point to Fluid Framework. It runs your container
-  Code and is the object through which you'll retrieve your data objects.
+  code and is the object through which you'll retrieve your data objects.
 
 - **Fluid service** -- The container will connect to a service to send and receive changes to collaborative data.
 
@@ -34,8 +34,8 @@ There are a handful of key concepts to understand.
 bundleName="dice-roller.9af6bdd702e6cd4ad6cf.js" >}}
 
 To explore these concepts, we'll be looking at a simple app that enables all connected clients to roll a dice and view
-the result. We'll do this by writing a data object to represent the dice, configuring container code to use that Data
-Object, and finally loading that container code into a container to integrate into our app.
+the result. We'll do this by writing a data object to represent the dice, configuring container code to use that data
+object, and finally loading that container code into a container to integrate into our app.
 
 
 ### The data object
@@ -68,7 +68,8 @@ observing changes to the value with the "valueChanged" event.
 Data objects are persisted over time by the Fluid service and will be loaded from the service when clients connect.
 Correspondingly, the DataObject class provides lifecycle methods to control these flows.
 
-- `initializingFirstTime()` runs when a client creates the DiceRoller for the first time -- we'll use this to provide an
+- `initializingFirstTime()` runs when a client creates the DiceRoller for the first time. It does not run when additional clients
+  connect to the application. We'll use this to provide an
   initial value for the dice.
 
 - `hasInitialized()` runs when clients load the DiceRoller -- we'll use this to hook up our event listeners to respond to
@@ -95,7 +96,7 @@ export class DiceRoller extends DataObject implements IDiceRoller {
     }
 
     public readonly roll = () => {
-        const rollValue = Math.floor(Math.random() \* 6) + 1;
+        const rollValue = Math.floor(Math.random() * 6) + 1;
         this.root.set(diceValueKey, rollValue);
     };
 }
@@ -106,7 +107,7 @@ create additional DDSes to manage their data.
 
 To instantiate the data object, the Fluid Framework needs a corresponding factory. Since we're using the DataObject
 class, we'll use the [DataObjectFactory][] which pairs with it. In this case we just need to provide it with a unique
-name ("@fluid-example/dice-roller" in this case) and the class; the third and fourth parameters are not used:
+name ("@fluid-example/dice-roller" in this case) and the class. The third and fourth parameters are not used:
 
 *dataObject.ts*
 
@@ -125,7 +126,7 @@ And that's it -- our DiceRoller data object is done!
 ### The container code
 
 Our container code will define the contents of our container and how we'll access them -- in our case, just a single
-DiceRoller. We can accomplish this using a containerRuntimeFactoryWithDefaultDataStore\<link\> -- this will create a
+DiceRoller. We can accomplish this using a [ContainerRuntimeFactoryWithDefaultDataStore][] -- this will create a
 single DiceRoller and make it available to be retrieved from the container. We'll provide it with the name of the
 default data object and a mapping of the name to factory.
 
@@ -231,3 +232,33 @@ Once the application loads the container will communicate with the server to exc
 ![](/docs/get-started/images/full-structure.png)
 
 The [full code for this application is available](https://github.com/microsoft/FluidHelloWorld) for you to try out.
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
+<!-- Links -->
+
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+
+[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
+
+[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
+
+[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
+[shareddirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
+
+[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+[sharedobjectsequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+
+[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
+[sharedmap]: {{< relref "/apis/map/sharedmap.md" >}}
+
+[undo-redo]: {{< relref "/apis/undo-redo.md" >}}
+
+
+<!-- Sequences -->
+
+[sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/apis/sequence/sequencedeltaevent.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->

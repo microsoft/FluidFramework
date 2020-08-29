@@ -20,6 +20,7 @@ import { FluidObjectHandle } from "@fluidframework/datastore";
 import { IDirectory } from "@fluidframework/map";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
+import { RequestParser } from "@fluidframework/runtime-utils";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { serviceRoutePathRoot } from "../container-services";
 
@@ -104,14 +105,15 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      *  3. the request url is empty
      */
     public async request(req: IRequest): Promise<IResponse> {
-        if (req.url === "/" || req.url === this.url || req.url === "") {
+        const pathParts = RequestParser.getPathParts(req.url);
+        const requestUrl = (pathParts.length > 0) ? pathParts[0] : req.url;
+        if (requestUrl === "/" || requestUrl === this.url || requestUrl === "") {
             return {
                 mimeType: "fluid/object",
                 status: 200,
                 value: this,
             };
         }
-
         return Promise.reject(`unknown request url: ${req.url}`);
     }
 

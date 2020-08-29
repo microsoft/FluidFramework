@@ -27,7 +27,6 @@ trigger:
     include:
     - main
     - release/*
-    - refs/tags/generator-fluid_v*
   paths:
     include:
     - tools/generator-fluid

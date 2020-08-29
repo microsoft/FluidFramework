@@ -47,12 +47,12 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
-    "@fluidframework/common-utils": "^0.22.1-0",
+    "@fluidframework/common-utils": "^0.22.1",
     "@fluidframework/core-interfaces": "^0.26.0",
     "@fluidframework/driver-definitions": "^0.26.0",
-    "@fluidframework/gitresources": "^0.1011.1-0",
-    "@fluidframework/protocol-base": "^0.1011.1-0",
-    "@fluidframework/protocol-definitions": "^0.1011.1-0",
+    "@fluidframework/gitresources": "^0.1011.1",
+    "@fluidframework/protocol-base": "^0.1011.1",
+    "@fluidframework/protocol-definitions": "^0.1011.1",
     "@fluidframework/telemetry-utils": "^0.26.0"
   },
   "devDependencies": {

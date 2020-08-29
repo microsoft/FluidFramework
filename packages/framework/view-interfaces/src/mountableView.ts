@@ -29,7 +29,7 @@ export interface IFluidMountableViewClass {
 /**
  * An IFluidMountableView provides a view bundled with a mounting mechanism.  That view can be mounted and
  * unmounted from a given element.  This bundling of view + mounting mechanism is important for React, which
- * needs the same React instance to be used for the mounting ReactDOM.render() call as the fluid object it's mounting,
+ * needs the same React instance to be used for the mounting ReactDOM.render() call as the Fluid object it's mounting,
  * or else React hooks don't work.  This is the case in scenarios like webpack-fluid-loader, which attempts
  * to do cross-bundle mounting.
  *

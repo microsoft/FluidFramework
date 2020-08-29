@@ -62,7 +62,7 @@ interface IBlockViewMarker extends MergeTree.Marker {
     instance?: IFluidHTMLView & IFluidObject;
 }
 
-interface IComponentViewMarker extends MergeTree.Marker {
+interface IFluidViewMarker extends MergeTree.Marker {
     instanceP?: Promise<IFluidHTMLView>;
     instance?: IFluidHTMLView;
 }
@@ -810,7 +810,7 @@ function renderSegmentIntoLine(
                 lineContext.contentDiv.appendChild(span);
             } else if (isComponentView(marker)) {
                 const span = document.createElement("span");
-                const componentMarker = marker as IComponentViewMarker;
+                const componentMarker = marker as IFluidViewMarker;
 
                 // Delay load the instance if not available
                 if (componentMarker.instance === undefined) {

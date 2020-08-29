@@ -67,7 +67,7 @@ Within the Fluid Framework, the runtime consists of a few parts:
    Fluid will create an instance of the Fluid `ContainerRuntime` by passing it a registry- which instructs how to
    instantiate data stores; this may be dynamic, or all data store code could bundled with the container runtime.
 2. The data-store-level runtime code: this corresponds to each loaded data store within a container.  The data-store-level
-   runtime code is dictated by the ".component" package information in its attach op.  The data-store-level runtime code
+   runtime code is dictated by the package information in its attach op.  The data-store-level runtime code
    and container-level runtime code depend on each other through the APIs defined in runtime-definitions.  For reference,
    this boundary occurs between the `IFluidDataStoreContext`
    (container-level) and the `IFluidDataStoreRuntime` (data-store-level).  Fluid tries to keep the container runtime backwards

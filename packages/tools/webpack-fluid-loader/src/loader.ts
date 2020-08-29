@@ -119,7 +119,7 @@ class WebpackCodeResolver implements IFluidCodeResolver {
             pkg = await resp.json() as IFluidPackage;
         }
         if (!isFluidPackage(pkg)) {
-            throw new Error("Not a fluid package");
+            throw new Error("Not a Fluid package");
         }
         const files = pkg.fluid.browser.umd.files;
         for (let i = 0; i < pkg.fluid.browser.umd.files.length; i++) {
@@ -236,19 +236,19 @@ export async function start(
     const reqParser = new RequestParser({ url });
     const fluidObjectUrl = `/${reqParser.createSubRequest(4).url}`;
 
-    // Load and render the fluid object.
+    // Load and render the Fluid object.
     await getFluidObjectAndRender(container1, fluidObjectUrl, leftDiv);
     // Handle the code upgrade scenario (which fires contextChanged)
     container1.on("contextChanged", () => {
         getFluidObjectAndRender(container1, fluidObjectUrl, leftDiv).catch(() => { });
     });
 
-    // We have rendered the fluid object. If the container is detached, attach it now.
+    // We have rendered the Fluid object. If the container is detached, attach it now.
     if (container1.attachState === AttachState.Detached) {
         await attachContainer(container1, urlResolver, documentId, url, rightDiv, manualAttach);
     }
 
-    // For side by side mode, we need to create a second container and fluid object.
+    // For side by side mode, we need to create a second container and Fluid object.
     if (rightDiv) {
         // Create a new loader that is used to load the second container.
         const loader2 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails);
@@ -294,9 +294,9 @@ async function getFluidObjectAndRender(container: Container, url: string, div: H
     }
 
     // If we don't get a mountable view back, we can still try to use a view adapter.  This won't always work (e.g.
-    // if the response is a React-based fluid object using hooks) and is not the preferred path, but sometimes it
+    // if the response is a React-based Fluid object using hooks) and is not the preferred path, but sometimes it
     // can work.
-    console.warn(`Container returned a non-IFluidMountableView.  This can cause errors when mounting fluid objects `
+    console.warn(`Container returned a non-IFluidMountableView.  This can cause errors when mounting Fluid objects `
         + `with React hooks across bundle boundaries.  URL: ${url}`);
     const view = new HTMLViewAdapter(fluidObject);
     view.render(div, { display: "block" });

@@ -27,7 +27,6 @@ trigger:
     include:
     - main
     - release/*
-    - refs/tags/tinylicious_v*
   paths:
     include:
     - server/tinylicious

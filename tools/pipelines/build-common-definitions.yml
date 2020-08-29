@@ -27,7 +27,6 @@ trigger:
     include:
     - main
     - release/*
-    - refs/tags/common-definitions_v*
   paths:
     include:
     - common/lib/common-definitions
