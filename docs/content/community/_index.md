@@ -4,7 +4,7 @@ title: Welcome to the Fluid Community
 
 {{< in_your_face
   lead=`Community`
-  subText="We believe that an <strong>open, inclusive, and respectful</strong> community will help shape a better future for this project. That's why Fluid Framework is <strong>Open Source</strong>. Below you will find various ways to get <strong>involved</strong>"
+  subText="We believe that an <strong>open, inclusive, and respectful</strong> community will help shape a better future for this project. That's why Fluid Framework is <strong>Open Source</strong>. Below you will find various ways to get <strong>involved</strong>."
 >}}
 
 {{< cta_container  >}}
