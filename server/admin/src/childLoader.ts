@@ -13,7 +13,7 @@ import {
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { NodeCodeLoader, NodeAllowList } from "@fluidframework/server-services";
 import { promiseTimeout } from "@fluidframework/server-services-client";
