@@ -1,6 +1,6 @@
 # @fluidframework/core-interfaces
 
-The loader makes up the minimal kernal of the Fluid runtime. This kernel is responsible for providing access to
+The loader makes up the minimal kernel of the Fluid runtime. This kernel is responsible for providing access to
 Fluid storage as well as consensus over a quorum of clients.
 
 Storage includes snapshots as well as the live and persisted operation stream.
@@ -27,7 +27,7 @@ A proposal begins in the propose state. The proposal is sent to the server and r
 used to uniquely identify it. Clients within the collaboration window accept the proposal by allowing their
 reference sequence number to go above the sequence number for the proposal. They reject it by submitting a reject
 message prior to sending a reference sequence number above the proposal number. Once the minimum sequence number
-goes above the sequence number for the proposal without any rejections it is conisdered accepted.
+goes above the sequence number for the proposal without any rejections it is considered accepted.
 
 The proposal enters the commit state when the minimum sequence number goes above the sequence number at which it
 became accepted. In the commit state all subsequent messages are guaranteed to have been sent with knowledge of

@@ -11,7 +11,7 @@ It should be created by passing in a list of source to entry point mapping. Then
 // The fluidEntryPoint type.
 export type fluidEntryPoint = Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IFluidModule>;
 
-// Constructior for LocalCodeLoader.
+// Constructor for LocalCodeLoader.
 constructor(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>);
 ```
 On load, it retrieves the `fluidEntryPoint` matching the package in the `IFluidCodeDetails` and loads it.

@@ -100,6 +100,10 @@ export const handlers: Handler[] = [
                 missing.push(`${repository} repository entry`);
             }
 
+            if (!json.private && !json.description) {
+                missing.push("description entry");
+            }
+            
             const ret = [];
             if (missing.length > 0) {
                 ret.push(`missing or incorrect ${missing.join(' and ')}`);
