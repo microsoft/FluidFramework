@@ -57,7 +57,7 @@ footer {
 .cta-icon {
     background-repeat: no-repeat;
     background-position: center;
-    background-size: 64px 64px;
+    background-size: 48px 48px;
     width: 15rem;
     height: 10rem;
     margin-left: auto;
@@ -80,14 +80,17 @@ footer {
 
 .cta-icon.octocat {
     background-image: url("/images/Octocat.png");
+    background-size: 64px 64px;
 }
 
 .cta-icon.github {
     background-image: url("/images/GitHub-Mark.png");
+    background-size: 64px 64px;
 }
 
 .cta-icon.stack-overflow {
     background-image: url("/images/so-icon.svg");
+    background-size: 64px 64px;
 }
 
 .cta-icon.issues {
