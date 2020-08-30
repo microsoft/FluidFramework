@@ -1,0 +1,44 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# release-create-branch pipeline
+
+name: $(Build.BuildId)
+
+trigger: none
+pr: none
+
+pool: Lite
+
+jobs:
+- deployment: release_create_branch
+  displayName: Create Release branch
+  environment: release-create-branch
+  strategy:
+    runOnce:
+        deploy:
+            steps:
+            - checkout: self
+              clean: true
+              persistCredentials: true
+            - task: UseNode@1
+              displayName: Use Node 12.x
+              inputs: 
+                version: 12.x
+            - task: npmAuthenticate@0
+              displayName: 'npm Authenticate root .npmrc'
+              inputs:
+                workingFile: .npmrc
+                customEndpoint: Offnet Packages
+            - task: Npm@1
+              displayName: npm ci
+              inputs:
+                command: 'custom'
+                customCommand: 'ci --ignore-scripts'
+                customRegistry: 'useNpmrc'
+            - task: Bash@3
+              displayName: Create branch
+              inputs:
+                targetType: 'inline'
+                script: |
+                    npm run bump-version --branch

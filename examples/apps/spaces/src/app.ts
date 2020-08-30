@@ -12,7 +12,7 @@ import { SpacesContainer } from "./container";
 // Re-export everything
 export { Spaces as SpacesExample, SpacesContainer };
 
-// Since this is a single page fluid application we are generating a new document id
+// Since this is a single page Fluid application we are generating a new document id
 // if one was not provided
 let createNew = false;
 if (window.location.hash.length === 0) {

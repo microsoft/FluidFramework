@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Buffer } from "buffer";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 
@@ -23,7 +22,7 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
         return Promise.reject("Invalid operation");
     }
 
-    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
+    public async createBlob(file: Uint8Array): Promise<api.ICreateBlobResponse> {
         return Promise.reject("Invalid operation");
     }
 

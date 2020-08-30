@@ -18,12 +18,15 @@ import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@flui
 import jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 
-// URLResolver knows how to get the URLs to the service to use for a given request, in this case Tinylicious.
-// In order to avoid imposing requirements on the app's URL shapes, we'll expect our requests to simply include the
-// documentId for the URL (as opposed to a more traditional URL).
+/**
+ * InsecureTinyliciousUrlResolver knows how to get the URLs to the service (in this case Tinylicious) to use
+ * for a given request.  This particular implementation has a goal to avoid imposing requirements on the app's
+ * URL shape, so it expects the request url to have this format (as opposed to a more traditional URL):
+ * documentId/containerRelativePathing
+ */
 class InsecureTinyliciousUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const documentId = request.url;
+        const documentId = request.url.split("/")[0];
         const encodedDocId = encodeURIComponent(documentId);
 
         const documentUrl = `fluid://localhost:3000/tinylicious/${encodedDocId}`;
@@ -43,9 +46,15 @@ class InsecureTinyliciousUrlResolver implements IUrlResolver {
         return response;
     }
 
-    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
-        // Detached flow requires getAbsoluteUrl to return a string, though this is not really valid.
-        return "";
+    public async getAbsoluteUrl(resolvedUrl: IFluidResolvedUrl, relativeUrl: string): Promise<string> {
+        const documentId = decodeURIComponent(resolvedUrl.url.replace("fluid://localhost:3000/tinylicious/", ""));
+        /*
+         * The detached container flow will ultimately call getAbsoluteUrl() with the resolved.url produced by
+         * resolve().  The container expects getAbsoluteUrl's return value to be a URL that can then be roundtripped
+         * back through resolve() again, and get the same result again.  So we'll return a "URL" with the same format
+         * described above.
+         */
+        return `${documentId}/${relativeUrl}`;
     }
 
     private auth(documentId: string) {

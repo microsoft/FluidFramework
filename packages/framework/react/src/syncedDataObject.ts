@@ -92,7 +92,7 @@ export abstract class SyncedDataObject<
     }
 
     /**
-     * Returns the data props used by the view to manage the different DDS' and add any new ones
+     * Returns the data props used by the view to manage the different DDSes and add any new ones
      */
     public get dataProps() {
         return {
@@ -102,7 +102,7 @@ export abstract class SyncedDataObject<
     }
 
     /**
-     * Set values to the syncedStateConfig where the view and fluid states have the same values defined by S.
+     * Set values to the syncedStateConfig where the view and Fluid states have the same values defined by S.
      * Each view with a unique syncedStateId needs its own value in the syncedStateConfig.
      * @param key - The syncedStateId that maps to the view that will be using these definitions
      * @param value - The config value containing the syncedStateId and the fluidToView and viewToFluid maps
@@ -112,9 +112,9 @@ export abstract class SyncedDataObject<
     }
 
     /**
-     * Set values to the syncedStateConfig with different view and fluid state definitions.
+     * Set values to the syncedStateConfig with different view and Fluid state definitions.
      * Each view with a unique syncedStateId needs its own value in the syncedStateConfig,
-     * with SV being the view state definition and SF being the fluid state definition.
+     * with SV being the view state definition and SF being the Fluid state definition.
      * @param key - The syncedStateId that maps to the view that will be using these definitions
      * @param value - The config value containing the syncedStateId and the fluidToView and viewToFluid maps
      * that establish the relationship between SV and SF
@@ -169,7 +169,7 @@ export abstract class SyncedDataObject<
                 `syncedState-${syncedStateId}`,
                 storedFluidState.handle,
             );
-            // Initialize any DDS' needed for the state or fetch any values from the root if they are stored
+            // Initialize any DDSes needed for the state or fetch any values from the root if they are stored
             // on the root under a different key
             for (const [key, value] of fluidToView.entries()) {
                 const fluidKey = key as string;

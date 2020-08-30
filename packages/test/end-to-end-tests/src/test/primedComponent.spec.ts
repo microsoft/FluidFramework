@@ -5,21 +5,23 @@
 
 import assert from "assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { ISharedDirectory } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
+import { createLocalLoader, createAndAttachContainer } from "@fluidframework/test-utils";
 import { compatTest, ICompatTestArgs } from "./compatUtils";
 
-const PrimedType = "@fluidframework/primedDataStore";
+const PrimedType = "@fluidframework/primedTestDataObject";
 
 /**
- * My sample dataStore
+ * My sample dataObject
  */
-class DataStore extends DataObject {
+class TestDataObject extends DataObject {
     public get root(): ISharedDirectory {
         return super.root;
     }
@@ -29,49 +31,59 @@ class DataStore extends DataObject {
 }
 
 const tests = (args: ICompatTestArgs) => {
-    let dataStore: DataStore;
+    let dataObject: TestDataObject;
 
     beforeEach(async () => {
         const container = await args.makeTestContainer() as Container;
-        dataStore = await requestFluidObject<DataStore>(container, "default");
+        dataObject = await requestFluidObject<TestDataObject>(container, "default");
     });
 
     it("Blob support", async () => {
-        const handle = await dataStore.writeBlob("aaaa");
-        assert(await handle.get() === "aaaa", "Could not write blob to dataStore");
-        dataStore.root.set("key", handle);
+        const handle = await dataObject.writeBlob("aaaa");
+        assert(await handle.get() === "aaaa", "Could not write blob to dataObject");
+        dataObject.root.set("key", handle);
 
-        const handle2 = dataStore.root.get<IFluidHandle<string>>("key");
+        const handle2 = dataObject.root.get<IFluidHandle<string>>("key");
         const value2 = await handle2.get();
-        assert(value2 === "aaaa", "Could not get blob from shared object in the dataStore");
+        assert(value2 === "aaaa", "Could not get blob from shared object in the dataObject");
 
-        const container2 = await args.makeTestContainer() as Container;
-        const dataStore2 = await requestFluidObject<DataStore>(container2, "default");
-        const value = await dataStore2.root.get<IFluidHandle<string>>("key").get();
+        const container2 = await args.loadTestContainer() as Container;
+        const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
+        const blobHandle = await dataObject2.root.wait<IFluidHandle<string>>("key");
+        const value = await blobHandle.get();
         assert(value === "aaaa", "Blob value not synced across containers");
     });
 };
 
 describe("DataObject", () => {
     describe("Blob support", () => {
-        const id = "fluid-test://localhost/primedDataStoreTest";
+        const documentId = "primedComponentTest";
+        const documentLoadUrl = `fluid-test://localhost/${documentId}`;
         const codeDetails: IFluidCodeDetails = {
-            package: "primedDataStoreTestPackage",
+            package: "primedTestDataObjectTestPackage",
             config: {},
         };
-        let deltaConnectionServer: ILocalDeltaConnectionServer;
+        const factory = new DataObjectFactory(PrimedType, TestDataObject, [], {});
 
-        async function makeTestContainer(): Promise<Container> {
-            const factory = new DataObjectFactory(PrimedType, DataStore, [], {});
-            const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-            return initializeLocalContainer(id, loader, codeDetails);
+        let deltaConnectionServer: ILocalDeltaConnectionServer;
+        let urlResolver: IUrlResolver;
+
+        async function makeTestContainer(): Promise<IContainer> {
+            const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+            return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+        }
+
+        async function loadTestContainer(): Promise<IContainer> {
+            const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+            return loader.resolve({ url: documentLoadUrl });
         }
 
         beforeEach(async () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
+            urlResolver = new LocalResolver();
         });
 
-        tests({ makeTestContainer });
+        tests({ makeTestContainer, loadTestContainer });
 
         afterEach(async () => {
             await deltaConnectionServer.webSocketServer.close();

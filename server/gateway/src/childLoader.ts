@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { parse } from "url";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { Deferred } from "@fluidframework/common-utils";
@@ -135,7 +135,7 @@ class KeyValueLoader {
         }
         const fluidObject = response.value as IFluidObject;
         const keyValue = (fluidObject.IFluidRouter as unknown) as IKeyValue;
-        winston.info(`Resolved key-value fluid object`);
+        winston.info(`Resolved key-value Fluid object`);
         this.kvDeferred.resolve(keyValue);
     }
 }

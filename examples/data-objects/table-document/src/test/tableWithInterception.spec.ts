@@ -5,10 +5,12 @@
 
 import assert from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
+import { createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
 import { ITable } from "../table";
 import { TableDocument } from "../document";
 import { TableDocumentType } from "../componentTypes";
@@ -16,7 +18,7 @@ import { createTableWithInterception } from "../interception";
 
 describe("Table Document with Interception", () => {
     describe("Simple User Attribution", () => {
-        const id = "fluid-test://localhost/tableWithInterceptionTest";
+        const documentId = "fluid-test://localhost/tableWithInterceptionTest";
         const codeDetails = {
             package: "tableWithInterceptionTestPkg",
             config: {},
@@ -72,14 +74,10 @@ describe("Table Document with Interception", () => {
             );
 
             const deltaConnectionServer = LocalDeltaConnectionServer.create();
-            const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-            const container = await initializeLocalContainer(id, loader, codeDetails);
-
-            const response = await container.request({ url: "default" });
-            if (response.status !== 200 || response.mimeType !== "fluid/object") {
-                throw new Error(`Default component not found`);
-            }
-            tableDocument = response.value;
+            const urlResolver = new LocalResolver();
+            const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+            const container = await createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+            tableDocument = await requestFluidObject<TableDocument>(container, "default");
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             componentContext = { containerRuntime: { orderSequentially } } as IFluidDataStoreContext;

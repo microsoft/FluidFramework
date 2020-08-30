@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/framework-interfaces",
-  "version": "0.25.1",
-  "description": "Definitions for fluid framework.",
+  "version": "0.26.0",
+  "description": "Definitions for Fluid Framework.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -26,7 +26,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.25.1"
+    "@fluidframework/core-interfaces": "^0.26.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",

@@ -30,7 +30,7 @@ import {
  * @param syncedState - The synced data object's shared state map
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
  * respective converters
- * @param dataProps - Contains the runtime and fluidObjectMap to create and store DDS'
+ * @param dataProps - Contains the runtime and fluidObjectMap to create and store DDSes
  * @param state - Current view state
  * @param setState - Callback to update view state
  * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
@@ -79,7 +79,7 @@ export async function initializeState<
         fluidToView,
     );
     if (currentFluidState === undefined) {
-        throw Error("Synced state update triggered before fluid state was initialized");
+        throw Error("Synced state update triggered before Fluid state was initialized");
     }
 
     for (const fluidStateKey of fluidToView.keys()) {

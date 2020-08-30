@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+import { Uint8ArrayToString } from "@fluidframework/common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
 import { SummaryType, ISummaryTree, ISummaryBlob, MessageType } from "@fluidframework/protocol-definitions";
@@ -39,7 +40,7 @@ const isInvalidFileName = (fileName: string): boolean => {
 };
 
 /**
- * Creates a new fluid file. '.fluid' is appended to the filename
+ * Creates a new Fluid file. '.fluid' is appended to the filename
  * Returns resolved url
  */
 export async function createNewFluidFile(
@@ -163,7 +164,7 @@ export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree):
             }
             case SummaryType.Blob: {
                 const content = typeof summaryObject.content === "string" ?
-                    summaryObject.content : summaryObject.content.toString("base64");
+                    summaryObject.content : Uint8ArrayToString(summaryObject.content, "base64");
                 const encoding = typeof summaryObject.content === "string" ? "utf-8" : "base64";
 
                 value = {
