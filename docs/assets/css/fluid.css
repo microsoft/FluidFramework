@@ -57,7 +57,7 @@ footer {
 .cta-icon {
     background-repeat: no-repeat;
     background-position: center;
-    background-size: 48px 48px;
+    background-size: 64px 64px;
     width: 15rem;
     height: 10rem;
     margin-left: auto;
@@ -76,6 +76,10 @@ footer {
 
 .cta-icon.play {
     background-image: url("/images/Beaker.svg");
+}
+
+.cta-icon.octocat {
+    background-image: url("/images/Octocat.png");
 }
 
 .cta-icon.github {
