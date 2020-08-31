@@ -300,7 +300,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     hostPolicy.mds = undefined;
                 }
 
-                const options = getQueryString(hostPolicy);
+                const snapshotOptions = getQueryString(hostPolicy);
 
                 let cachedSnapshot: IOdspSnapshot | undefined;
 
