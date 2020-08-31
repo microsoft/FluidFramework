@@ -11,9 +11,7 @@ import {
     IFluidHandle,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import {
-    IFluidObjectCollection,
-} from "@fluidframework/framework-interfaces";
+import { IFluidObjectCollection } from "@fluidframework/framework-interfaces";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";
@@ -60,7 +58,7 @@ interface IBlockViewMarker extends MergeTree.Marker {
     instance?: IFluidHTMLView & IFluidObject;
 }
 
-interface IComponentViewMarker extends MergeTree.Marker {
+interface IFluidViewMarker extends MergeTree.Marker {
     instanceP?: Promise<IFluidHTMLView>;
     instance?: IFluidHTMLView;
 }
@@ -808,7 +806,7 @@ function renderSegmentIntoLine(
                 lineContext.contentDiv.appendChild(span);
             } else if (isComponentView(marker)) {
                 const span = document.createElement("span");
-                const componentMarker = marker as IComponentViewMarker;
+                const componentMarker = marker as IFluidViewMarker;
 
                 // Delay load the instance if not available
                 if (componentMarker.instance === undefined) {

@@ -7,16 +7,13 @@ parameters:
 - name: buildNumberInPatch
   type: string
   default:
-- name: release
-  type: string
-  default:
 
 # Set version
 steps:
 - task: Bash@3
   displayName: Set Package Version
   env:
-    VERSION_RELEASE: ${{ parameters.release }}
+    VERSION_RELEASE: $(release)
     VERSION_BUILDNUMBER: $(Build.BuildNumber)
     VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
   inputs:
@@ -29,7 +26,7 @@ steps:
       echo VERSION_RELEASE=$VERSION_RELEASE
       echo VERSION_PATCH=$VERSION_PATCH
 
-      version=`node $(Build.SourcesDirectory)/tools/build-server-resources/build-version.js`
+      version=`node $(Build.SourcesDirectory)/tools/pipelines/scripts/build-version.js`
       echo COMPUTED_VERSION=$version
 
       if [ "$version" = "" ]; then
@@ -39,5 +36,5 @@ steps:
       if [ -f "lerna.json" ]; then
         npx lerna version $version --no-git-tag-version --no-push --yes
       else
-        npm version --no-git-tag-version $version -f --allow-same-version
+        npm version $version --no-git-tag-version -f --allow-same-version
       fi

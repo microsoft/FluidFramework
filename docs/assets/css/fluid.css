@@ -1,46 +1,100 @@
-.home .ctas {
+html {
+    background-color: #2c2c32;
+    overflow-y:scroll;
+}
+
+footer {
+    background-color: #2c2c32;
+}
+
+.ctas {
     font-size: 2rem;
     font-family: #000000;
     text-align: center;
+    background-color: #404049;
 }
 
-.home .cta {
+.row-cta {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.cta {
     padding: 2rem 0;
     width: 100%;
     height: 100%;
-    display: block;
-    color: #444;
+    display: flex;
+    flex-flow: column;
+    color:#f3f5f7;
+    transition: .1s ease-in;
+    background: #404049;
+}
+
+.cta-subtext {
+    font-size: medium;
+    margin: 1em 1em 1em 1em;
+    text-align: center;
+}
+
+.filler {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+}
+
+.no-gutters {
+    padding-right: 0;
+    padding-left: 0;
 }
 
 .cta:hover {
-    color: #000;
-    background: #e3e3e3;
     text-decoration: none;
+    transition: none;
+    background: #5a5a66;
+    color: #f3f5f7;
 }
 
 .cta-icon {
     background-repeat: no-repeat;
     background-position: center;
-    width: 5rem;
-    height: 5rem;
-    margin: auto;
+    background-size: 48px 48px;
+    width: 15rem;
+    height: 10rem;
+    margin-left: auto;
+    margin-right: auto;
     margin-bottom: 1rem;
-    font-family: FabricMDL2Icons;
-    font-style: normal;
-    font-weight: 400;
-    font-size: 2em;
+    display: block;
 }
 
 .cta-icon.get-started {
-    background-image: url("/images/start.svg");
+    background-image: url("/images/PlayCircle.svg");
 }
 
-.cta-icon.learn {
-    background-image: url("/images/bulb.svg");
+.cta-icon.learn-more {
+    background-image: url("/images/Lightbulb.svg");
 }
 
 .cta-icon.play {
-    background-image: url("/images/experiment.svg");
+    background-image: url("/images/Beaker.svg");
+}
+
+.cta-icon.octocat {
+    background-image: url("/images/Octocat.png");
+    background-size: 64px 64px;
+}
+
+.cta-icon.github {
+    background-image: url("/images/GitHub-Mark.png");
+    background-size: 64px 64px;
+}
+
+.cta-icon.stack-overflow {
+    background-image: url("/images/so-icon.svg");
+    background-size: 64px 64px;
+}
+
+.cta-icon.issues {
+    background-image: url("/images/Beaker.svg");
 }
 
 #github.swimlane .screenshot {
@@ -63,6 +117,7 @@
 
 .callout {
     font-size: 1.6rem;
+    background-color: #f3f5f7;
 }
 
 .callout .callout-title {
@@ -72,17 +127,14 @@
 }
 
 .callout.tip {
-    background-color: #f3f5f7;
     border-color: #42b983;
 }
 
 .callout.important {
-    background-color: #f3f5f7;
     border-color: #00bcf2;
 }
 
 .callout.tip {
-    background-color: #f3f5f7;
     border-color: #42b983;
 }
 
@@ -108,4 +160,30 @@
 
 .callout.danger .callout-title {
     color: #900;
+}
+
+.highlight {
+    position: relative;
+}
+
+.highlight-copy-btn {
+    position: absolute;
+    right: 7px;
+    border: 0;
+    border-radius: 4px;
+    margin: 0;
+    top: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+    padding: 1px;
+    font-size: 0.7em;
+    line-height: 1.8;
+    color: #fff;
+    background-color: #777;
+    min-width: 55px;
+    text-align: center;
+}
+
+.highlight-copy-btn:hover {
+    background-color: #666;
 }

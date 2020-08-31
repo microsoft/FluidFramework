@@ -1,7 +1,8 @@
 {
   "name": "@fluidframework/merge-tree",
-  "version": "0.25.1",
+  "version": "0.26.0",
   "description": "Merge tree",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -52,17 +53,17 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
-    "@fluidframework/common-utils": "^0.21.0",
-    "@fluidframework/core-interfaces": "^0.25.1",
-    "@fluidframework/datastore-definitions": "^0.25.1",
-    "@fluidframework/protocol-definitions": "^0.1011.1-0",
-    "@fluidframework/telemetry-utils": "^0.25.1"
+    "@fluidframework/common-utils": "^0.22.1",
+    "@fluidframework/core-interfaces": "^0.26.0",
+    "@fluidframework/datastore-definitions": "^0.26.0",
+    "@fluidframework/protocol-definitions": "^0.1011.1",
+    "@fluidframework/telemetry-utils": "^0.26.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/mocha-test-setup": "^0.25.1",
-    "@fluidframework/test-runtime-utils": "^0.25.1",
+    "@fluidframework/mocha-test-setup": "^0.26.0",
+    "@fluidframework/test-runtime-utils": "^0.26.0",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",

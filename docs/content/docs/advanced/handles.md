@@ -1,4 +1,6 @@
-## Handles
+---
+title: Handles
+---
 
 A [Fluid Handle](../../packages/loader/core-interfaces/src/handles.ts) is a handle to a _Fluid object_. It is
 used to represent the object and has a function `get()` that returns the underlying object. Handles move the ownership
@@ -80,4 +82,4 @@ the DataObject across Containers and to load it from anywhere, you just have to 
 
 
 [remote handle]:
-https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/runtime-utils/src/remoteComponentHandle.ts
+https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/runtime-utils/src/remoteFluidObjectHandle.ts

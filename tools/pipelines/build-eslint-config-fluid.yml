@@ -16,26 +16,27 @@ parameters:
 - name: releaseBuildOverride
   displayName: Release Build Override
   type: string
-  default: default
+  default: none
   values:
-    - default
-    - false
-    - true
+    - none
+    - prerelease
+    - release
 
 trigger:
   branches:
     include:
     - main
     - release/*
-    - refs/tags/eslint-config-fluid_v*
   paths:
     include:
     - common/build/eslint-config-fluid
     - tools/pipelines/build-eslint-config-fluid.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
-    - tools/pipelines/templates/publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
 
 pr:
   branches:
@@ -46,6 +47,7 @@ pr:
     include:
     - common/build/eslint-config-fluid
     - tools/pipelines/build-eslint-config-fluid.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -56,6 +58,7 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: common/build/eslint-config-fluid
+    tagName: eslint-config-fluid
     taskBuild: false
     taskBuildDocs: false
     taskLint: false

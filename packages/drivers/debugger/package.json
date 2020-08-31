@@ -1,7 +1,8 @@
 {
   "name": "@fluidframework/debugger",
-  "version": "0.25.1",
+  "version": "0.26.0",
   "description": "Fluid Debugger - a tool to play through history of a file",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -26,11 +27,11 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.21.0",
-    "@fluidframework/driver-definitions": "^0.25.1",
-    "@fluidframework/driver-utils": "^0.25.1",
-    "@fluidframework/protocol-definitions": "^0.1011.1-0",
-    "@fluidframework/replay-driver": "^0.25.1"
+    "@fluidframework/common-utils": "^0.22.1",
+    "@fluidframework/driver-definitions": "^0.26.0",
+    "@fluidframework/driver-utils": "^0.26.0",
+    "@fluidframework/protocol-definitions": "^0.1011.1",
+    "@fluidframework/replay-driver": "^0.26.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",

@@ -1,13 +1,14 @@
 {
   "name": "@fluidframework/server-memory-orderer",
-  "version": "0.1011.1",
-  "description": "Fluid ordering services",
+  "version": "0.1012.0",
+  "description": "Fluid server in memory orderer",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/index.js",
   "browser": {
-    "moniker": "@fluidframework/server-services-client/dist/dockerNames.js"
+    "moniker": "@fluidframework/server-services-client/dist/generateNames.js"
   },
   "types": "dist/index.d.ts",
   "scripts": {
@@ -26,12 +27,12 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.22.1-0",
-    "@fluidframework/protocol-base": "^0.1011.1",
-    "@fluidframework/protocol-definitions": "^0.1011.1",
-    "@fluidframework/server-lambdas": "^0.1011.1",
-    "@fluidframework/server-services-client": "^0.1011.1",
-    "@fluidframework/server-services-core": "^0.1011.1",
+    "@fluidframework/common-utils": "^0.22.1",
+    "@fluidframework/protocol-base": "^0.1012.0",
+    "@fluidframework/protocol-definitions": "^0.1012.0",
+    "@fluidframework/server-lambdas": "^0.1012.0",
+    "@fluidframework/server-services-client": "^0.1012.0",
+    "@fluidframework/server-services-core": "^0.1012.0",
     "@types/debug": "^4.1.5",
     "@types/double-ended-queue": "^2.1.0",
     "@types/lodash": "^4.14.118",

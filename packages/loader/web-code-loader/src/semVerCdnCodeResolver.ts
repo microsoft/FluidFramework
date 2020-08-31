@@ -32,7 +32,7 @@ class FluidPackage {
         }
 
         if (!isFluidPackage(packageJson)) {
-            throw new Error(`Package ${packageJson.name} not a fluid module.`);
+            throw new Error(`Package ${packageJson.name} not a Fluid module.`);
         }
         const files = packageJson.fluid.browser.umd.files;
         for (let i = 0; i < packageJson.fluid.browser.umd.files.length; i++) {
@@ -57,7 +57,7 @@ class FluidPackage {
  * The `@package_scope?` is optional, and only needed it the package has a scope.
  * The `package_version` can be an npm style semantic version.
  *
- * The `cdn_base` is provided in the config of the fluid code details, as either a global `config.cdn` property, or
+ * The `cdn_base` is provided in the config of the Fluid code details, as either a global `config.cdn` property, or
  * a per scope cdn, `config["@package_scope:cdn"]`. A scope specific cdn base will take precedence over
  * the global cdn.
  */

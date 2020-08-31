@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { parse } from "url";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { Deferred } from "@fluidframework/common-utils";
@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { NodeCodeLoader, NodeAllowList } from "@fluidframework/server-services";
 import { promiseTimeout } from "@fluidframework/server-services-client";
@@ -77,15 +77,10 @@ class KeyValueLoader {
         const documentServiceFactories: IDocumentServiceFactory[] = [];
         // TODO: figure out how to pass clientId and token here
         documentServiceFactories.push(new OdspDocumentServiceFactory(
-            async (siteUrl: string) => Promise.resolve("fake token"),
+            async () => Promise.resolve("fake token"),
             async () => Promise.resolve("fake token")));
 
-        documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
-            false,
-            new DefaultErrorTracking(),
-            false,
-            true,
-            undefined));
+        documentServiceFactories.push(new RouterliciousDocumentServiceFactory());
 
         const resolver = new ContainerUrlResolver(
             config.gatewayUrl,
@@ -135,7 +130,7 @@ class KeyValueLoader {
         }
         const fluidObject = response.value as IFluidObject;
         const keyValue = (fluidObject.IFluidRouter as unknown) as IKeyValue;
-        winston.info(`Resolved key-value fluid object`);
+        winston.info(`Resolved key-value Fluid object`);
         this.kvDeferred.resolve(keyValue);
     }
 }

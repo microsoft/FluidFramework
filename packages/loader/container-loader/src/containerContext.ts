@@ -114,6 +114,10 @@ export class ContainerContext implements IContainerContext {
         return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
+    public get runtimeVersion(): string | undefined {
+        return this.runtime?.runtimeVersion;
+    }
+
     public get connected(): boolean {
         return this.container.connected;
     }

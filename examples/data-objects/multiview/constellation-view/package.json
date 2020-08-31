@@ -1,7 +1,8 @@
 {
   "name": "@fluid-example/multiview-constellation-view",
-  "version": "0.25.1",
+  "version": "0.26.0",
   "description": "View for multiview sample",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -36,15 +37,15 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/multiview-coordinate-interface": "^0.25.1",
-    "@fluid-example/multiview-slider-coordinate-view": "^0.25.1",
+    "@fluid-example/multiview-coordinate-interface": "^0.26.0",
+    "@fluid-example/multiview-slider-coordinate-view": "^0.26.0",
     "react": "^16.10.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@fluidframework/test-tools": "^0.1.0",
-    "@fluidframework/webpack-fluid-loader": "^0.25.1",
+    "@fluidframework/webpack-fluid-loader": "^0.26.0",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",

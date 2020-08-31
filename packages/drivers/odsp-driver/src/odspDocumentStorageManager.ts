@@ -9,6 +9,8 @@ import {
     fromBase64ToUtf8,
     fromUtf8ToBase64,
     hashFile,
+    IsoBuffer,
+    Uint8ArrayToString,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
@@ -48,6 +50,8 @@ import {
 } from "./odspCache";
 import { getWithRetryForTokenRefresh, fetchHelper } from "./odspUtils";
 import { throwOdspNetworkError } from "./odspError";
+import { TokenFetchOptions } from "./tokenFetch";
+import { getQueryString } from "./getQueryString";
 
 /* eslint-disable max-len */
 
@@ -119,7 +123,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     constructor(
         odspResolvedUrl: IOdspResolvedUrl,
-        private readonly getStorageToken: (refresh: boolean, name?: string) => Promise<string | null>,
+        private readonly getStorageToken: (options: TokenFetchOptions, name?: string) => Promise<string | null>,
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
@@ -138,7 +142,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return "";
     }
 
-    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
+    public async createBlob(file: Uint8Array): Promise<api.ICreateBlobResponse> {
         this.checkSnapshotUrl();
 
         return PerformanceEvent.timedExecAsync(
@@ -159,8 +163,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (!blob) {
             this.checkSnapshotUrl();
 
-            const response = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
-                const storageToken = await this.getStorageToken(refresh, "GetBlob");
+            const response = await getWithRetryForTokenRefresh(async (options) => {
+                const storageToken = await this.getStorageToken(options, "GetBlob");
 
                 const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/blobs/${blobid}`, storageToken);
 
@@ -277,11 +281,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
             this.firstVersionCall = false;
 
-            return getWithRetryForTokenRefresh(async (refresh) => {
-                if (refresh) {
+            return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
+                if (tokenFetchOptions.refresh) {
                     // This is the most critical code path for boot.
                     // If we get incorrect / expired token first time, that adds up to latency of boot
-                    this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall" });
+                    this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall", hasClaims: !!tokenFetchOptions.claims });
                 }
 
                 const hostPolicy: ISnapshotOptions = {
@@ -296,20 +300,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     hostPolicy.mds = undefined;
                 }
 
-                let delimiter = "?";
-                let options = "";
-                for (const [key, value] of Object.entries(hostPolicy)) {
-                    if (value !== undefined) {
-                        options = `${options}${delimiter}${key}=${value}`;
-                        delimiter = "&";
-                    }
-                }
+                const snapshotOptions = getQueryString(hostPolicy);
 
                 let cachedSnapshot: IOdspSnapshot | undefined;
 
                 // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
-                if (refresh) {
-                    cachedSnapshot = await this.fetchSnapshot(options, refresh);
+                if (tokenFetchOptions.refresh) {
+                    cachedSnapshot = await this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
                 } else {
                     cachedSnapshot = await PerformanceEvent.timedExecAsync(
                         this.logger,
@@ -326,7 +323,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                             let method: string;
                             if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
-                                const snapshotP = this.fetchSnapshot(options, refresh);
+                                const snapshotP = this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
 
                                 const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
                                 cachedSnapshot = promiseRaceWinner.value;
@@ -345,7 +342,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 method = cachedSnapshot !== undefined ? "cache" : "network";
 
                                 if (cachedSnapshot === undefined) {
-                                    cachedSnapshot = await this.fetchSnapshot(options, refresh);
+                                    cachedSnapshot = await this.fetchSnapshot(snapshotOptions, tokenFetchOptions);
                                 }
                             }
                             event.end({ method });
@@ -401,12 +398,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     for (const blob of this.blobCache.values()) {
                         const path = blobsIdToPathMap.get(blob.id);
                         // If this is the first container that was created for the service, it cannot be
-                        // the summarizing container (becauase the summarizing container is always created
+                        // the summarizing container (because the summarizing container is always created
                         // after the main container). In this case, we do not need to do any hashing
                         if (path) {
                             // Schedule the hashes for later, but keep track of the tasks
                             // to ensure they finish before they might be used
-                            const hashP = hashFile(Buffer.from(blob.content, blob.encoding)).then((hash: string) => {
+                            const hashP = hashFile(IsoBuffer.from(blob.content, blob.encoding)).then((hash: string) => {
                                 this.blobsShaToPathCache.set(hash, path);
                             });
                             this.blobsCachePendingHashes.add(hashP);
@@ -423,8 +420,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             });
         }
 
-        return getWithRetryForTokenRefresh(async (refresh) => {
-            const storageToken = await this.getStorageToken(refresh, "GetVersions");
+        return getWithRetryForTokenRefresh(async (options) => {
+            const storageToken = await this.getStorageToken(options, "GetVersions");
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`, storageToken);
 
             // Fetch the latest snapshot versions for the document
@@ -462,12 +459,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         });
     }
 
-    private async fetchSnapshot(options: string, refresh: boolean) {
-        const storageToken = await this.getStorageToken(refresh, "TreesLatest");
+    private async fetchSnapshot(snapshotOptions: string, tokenFetchOptions: TokenFetchOptions) {
+        const storageToken = await this.getStorageToken(tokenFetchOptions, "TreesLatest");
 
         // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
         // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
-        const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${options}`, storageToken);
+        const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${snapshotOptions}`, storageToken);
 
         // This event measures only successful cases of getLatest call (no tokens, no retries).
         const { snapshot, canCache } = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "TreesLatest" }, async (event) => {
@@ -569,8 +566,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
         let tree = this.treesCache.get(id);
         if (!tree) {
-            tree = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
-                const storageToken = await this.getStorageToken(refresh, "ReadTree");
+            tree = await getWithRetryForTokenRefresh(async (options) => {
+                const storageToken = await this.getStorageToken(options, "ReadTree");
 
                 const response = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger);
                 const odspSnapshot: IOdspSnapshot = response.content;
@@ -681,8 +678,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             type: SnapshotType.Channel,
         };
 
-        return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-            const storageToken = await this.getStorageToken(refresh, "WriteSummaryTree");
+        return getWithRetryForTokenRefresh(async (options) => {
+            const storageToken = await this.getStorageToken(options, "WriteSummaryTree");
 
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot`, storageToken);
             headers["Content-Type"] = "application/json";
@@ -692,7 +689,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             return PerformanceEvent.timedExecAsync(this.logger,
                 {
                     eventName: "uploadSummary",
-                    attempt: refresh ? 2 : 1,
+                    attempt: options.refresh ? 2 : 1,
+                    hasClaims: !!options.claims,
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                 },
                 async () => {
@@ -740,12 +738,13 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     break;
                 }
                 case api.SummaryType.Blob: {
-                    const content = typeof summaryObject.content === "string" ? summaryObject.content : summaryObject.content.toString("base64");
-                    const encoding = typeof summaryObject.content === "string" ? "utf-8" : "base64";
+                    const [content, encoding] = typeof summaryObject.content === "string"
+                        ? [summaryObject.content, "utf-8"]
+                        : [Uint8ArrayToString(summaryObject.content, "base64"), "base64"];
 
                     // Promises for pending hashes in blobsCachePendingHashes should all have resolved and removed themselves
                     assert(this.blobsCachePendingHashes.size === 0);
-                    const hash = await hashFile(Buffer.from(content, encoding));
+                    const hash = await hashFile(IsoBuffer.from(content, encoding));
                     let completePath = this.blobsShaToPathCache.get(hash);
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
                     // to generate complete path for the given blob.

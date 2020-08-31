@@ -1,6 +1,6 @@
 # Fluid
 
-The Fluid Framework is a TypeScript library for building distributed, real-time collaborative web components and
+The Fluid Framework is a TypeScript library for building distributed, real-time collaborative web
 applications.
 
 ## Getting started using the Fluid Framework
@@ -10,9 +10,9 @@ You may be here because you want to...
 - Learn more about the Fluid Framework
 - Build a Fluid object
 
-Documentation and guides can be found at <https://fluidframework.com/>  
-Hello World Repo can be found at <https://github.com/microsoft/FluidHelloWorld>  
-Core Examples Repo can be found at <https://github.com/microsoft/FluidExamples>  
+Documentation and guides can be found at <https://fluidframework.com/>
+Hello World Repo can be found at <https://github.com/microsoft/FluidHelloWorld>
+Core Examples Repo can be found at <https://github.com/microsoft/FluidExamples>
 
 Got questions? Engage with other Fluid Framework users and developers on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
 
@@ -122,7 +122,7 @@ _This will use an in-memory implementation of the Fluid server to sync between t
 
 _This will run the local Fluid server implementation we like to call "tinylicious", so you can sync between multiple browser instances._
 
-First, start Tinylicous by running these commands from `/server/tinylicous`:
+First, start Tinylicious by running these commands from `/server/tinylicious`:
 
 ```shell
 npm install

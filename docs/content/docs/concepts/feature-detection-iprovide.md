@@ -88,7 +88,11 @@ object of the correct type or `undefined`.
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
 
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+
 [DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
+
+[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
 
 [SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
 [shareddirectory]: {{< relref "/apis/map/shareddirectory.md" >}}

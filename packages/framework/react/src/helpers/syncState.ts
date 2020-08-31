@@ -54,7 +54,7 @@ export function syncState<
     fluidToView: FluidToViewMap<SV, SF>,
     viewToFluid?: ViewToFluidMap<SV, SF>,
 ) {
-    // Use the provided fluid state if it is available, or use the one fetched from the synced state
+    // Use the provided Fluid state if it is available, or use the one fetched from the synced state
     const currentFluidState = getFluidState(
         syncedStateId,
         syncedState,
@@ -63,7 +63,7 @@ export function syncState<
     );
     if (currentFluidState === undefined) {
         throw Error(
-            "Attempted to sync view and fluid states before fluid state was initialized",
+            "Attempted to sync view and Fluid states before Fluid state was initialized",
         );
     }
     // Fetch the schema

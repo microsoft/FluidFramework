@@ -463,10 +463,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 {
                     eventName: "ContainerClose",
                     sequenceNumber: error.sequenceNumber ?? this._deltaManager.lastSequenceNumber,
+                    loading: !this.loaded,
                 },
                 error,
             );
         } else {
+            assert(this.loaded);
             this.logger.sendTelemetryEvent({ eventName: "ContainerClose" });
         }
 
@@ -489,16 +491,24 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
+        assert(this.loaded);
+
         // If container is already attached or attach is in progress, return.
         if (this._attachState === AttachState.Attached || this.attachInProgress) {
             return;
         }
+
         this.attachInProgress = true;
         try {
             assert.strictEqual(this.deltaManager.inbound.length, 0, "Inbound queue should be empty when attaching");
             // Only take a summary if the container is in detached state, otherwise we could have local changes.
             // In failed attach call, we would already have a summary cached.
             if (this._attachState === AttachState.Detached) {
+                // 0.24 back-compat attachingBeforeSummary
+                if (this.context.runtimeVersion === undefined || this.context.runtimeVersion < "0.25") {
+                    this._attachState = AttachState.Attaching;
+                    this.emit("attaching");
+                }
                 // Get the document state post attach - possibly can just call attach but we need to change the
                 // semantics around what the attach means as far as async code goes.
                 const appSummary: ISummaryTree = this.context.createSummary();
@@ -512,8 +522,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // This should be fired after taking the summary because it is the place where we are
                 // starting to attach the container to storage.
                 // Also, this should only be fired in detached container.
-                this._attachState = AttachState.Attaching;
-                this.emit("attaching");
+                if (this.context.runtimeVersion !== undefined && this.context.runtimeVersion >= "0.25") {
+                    this._attachState = AttachState.Attaching;
+                    this.emit("attaching");
+                }
             }
             assert(this.cachedAttachSummary,
                 "Summary should be there either by this attach call or previous attach call!!");
@@ -647,8 +659,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     protected resumeInternal(args: IConnectionArgs = {}) {
-        assert(this.loaded);
-
         if (this.closed) {
             throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
         }
@@ -953,15 +963,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         await this.loadContext(attributes, maybeSnapshotTree);
 
-        // Internal context is fully loaded at this point
-        this.loaded = true;
-
         // Propagate current connection state through the system.
         this.propagateConnectionState();
 
         if (!pause) {
             this.resume();
         }
+
+        // Internal context is fully loaded at this point
+        this.loaded = true;
 
         return {
             existing: this._existing,
@@ -1003,9 +1013,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // The load context - given we seeded the quorum - will be great
         await this.createDetachedContext(attributes);
 
-        this.loaded = true;
-
         this.propagateConnectionState();
+
+        this.loaded = true;
     }
 
     private async getDocumentStorageService(): Promise<IDocumentStorageService> {
@@ -1352,7 +1362,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private propagateConnectionState() {
-        assert(this.loaded);
         const logOpsOnReconnect: boolean =
             this._connectionState === ConnectionState.Connected &&
             !this.firstConnection &&

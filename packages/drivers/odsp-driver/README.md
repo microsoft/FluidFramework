@@ -1,4 +1,8 @@
 # @fluidframework/odsp-driver
 
-This is an implementation of a driver which provides a DocumentService which uses sharepoint to interact with different endpoints 
-like Document Storage, Delta Storage and Delta stream. It also provides implementation of Document Storage, Delta Storage and Delta stream.
+The ODSP (OneDrive/Sharepoint) driver is an implementation of a Fluid driver that facilitate communication between
+the client and the ODSP server to retrieve Fluid content and connect to the Fluid collaboration session.
+
+The ODSP Fluid service is not a publicly available service, and currently it is not possible to use this driver
+to connect to it. This driver is present as an illustration of a different Fluid driver implementation.
+Developers should not depend on this driver for their own solutions.
