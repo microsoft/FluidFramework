@@ -100,6 +100,10 @@ export const handlers: Handler[] = [
                 missing.push(`${repository} repository entry`);
             }
 
+            if (!json.private && !json.description) {
+                missing.push("description entry");
+            }
+            
             if (json.homepage !== homepage) {
                 missing.push(`${homepage} homepage entry`);
             }

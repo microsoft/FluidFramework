@@ -1,6 +1,7 @@
 {
   "name": "@fluidframework/local-web-host",
   "version": "0.26.0",
+  "description": "Fluid local in-memory server for running in a webpage",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
