@@ -1,7 +1,7 @@
 # @fluidframework/protocol-base
 
 Shared protocol code for client and service to share. Manages the lifetime of Quorum and proposals that needs to be
-consistent across client and service. In addition, it also provides a few utilities for facilitating summary creation.
+consistent across client and service. It also provides utilities for facilitating summary creation.
 
 ## Quorum and Proposal
 
