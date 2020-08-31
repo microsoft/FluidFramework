@@ -66,9 +66,10 @@ the [Encapsulating data with DataObject](./dataobject-aqueduct.md) section.
 
 ### Storing a DDS within another DDS
 
-Distributed data structures can store primitive values like numbers and strings, serializable objects, Fluid objects,
-and other distributed data structures. Primitive values and objects can be stored directly, but when you store a DDS, or
-a Fluid object, you must store its _handle_, not the object itself. For example, consider this code:
+Distributed data structures can store primitive values like numbers and strings, serializable objects, Fluid objects, and other
+distributed data structures. Primitive values and objects can be stored directly, but when you store a DDS, or a Fluid object, you must
+store its _handle_, not the object itself.
+For example, consider this code:
 
 ```ts
 // Create a new map for our Fluid data
@@ -81,7 +82,8 @@ const myCounter = SharedCounter.create(this.runtime);
 myMap.set("counter", myCounter.handle);
 ```
 
-Handles are used in Fluid to enable the runtime to implement features like garbage collection.
+Handles are used in Fluid to enable the runtime to implement features like garbage collection. You can learn more about
+handles in the [handles section](../advanced/handles.md).
 
 
 ## Events
