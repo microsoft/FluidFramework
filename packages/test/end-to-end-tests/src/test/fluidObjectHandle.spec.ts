@@ -85,8 +85,8 @@ describe("FluidObjectHandle", () => {
         // Create a Container for the first client.
         const firstContainer = await createContainer();
         firstContainerObject1 = await requestFluidObject<TestSharedDataObject>(firstContainer, "default");
-        firstContainerObject2 = await testSharedDataObjectFactory.createRootInstance(firstContainerObject1._context)
-            .containerRuntime;
+        firstContainerObject2 = await testSharedDataObjectFactory.createRootInstance(
+            firstContainerObject1._context.containerRuntime);
 
         // Load the Container that was created by the first client.
         const secondContainer = await loadContainer();

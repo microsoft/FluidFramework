@@ -24,7 +24,7 @@ import {
     IFluidDataStoreFactory,
     ITask,
     ITaskManager,
-    SchedulerType,
+    NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import debug from "debug";
 import { v4 as uuid } from "uuid";
@@ -437,14 +437,13 @@ export class TaskManager implements ITaskManager {
     /**
      * {@inheritDoc ITaskManager.pick}
      */
-    public async pick(dataStoreUrl: string, taskId: string, worker?: boolean): Promise<void> {
+    public async pick(taskId: string, worker?: boolean): Promise<void> {
         if (!this.context.deltaManager.clientDetails.capabilities.interactive) {
             return Promise.reject("Picking not allowed on secondary copy");
         } else if (this.runtime.attachState !== AttachState.Attached) {
             return Promise.reject("Picking not allowed in detached container in task manager");
         } else {
-            const urlWithSlash = dataStoreUrl.startsWith("/") ? dataStoreUrl : `/${dataStoreUrl}`;
-            const fullUrl = `${urlWithSlash}/${this.url}/${taskId}`;
+            const fullUrl = `/${this.runtime.id}/${this.url}/${taskId}`;
             return this.scheduler.pick(
                 fullUrl,
                 async () => this.runTask(fullUrl, worker !== undefined ? worker : false));
@@ -481,10 +480,14 @@ export class TaskManager implements ITaskManager {
 }
 
 export class AgentSchedulerFactory implements IFluidDataStoreFactory {
-    public static readonly type = SchedulerType;
+    public static readonly type = "_scheduler";
     public readonly type = AgentSchedulerFactory.type;
 
     public get IFluidDataStoreFactory() { return this; }
+
+    public static get registryEntry(): NamedFluidDataStoreRegistryEntry {
+        return [this.type, Promise.resolve(new AgentSchedulerFactory())];
+    }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
         const mapFactory = SharedMap.getFactory();

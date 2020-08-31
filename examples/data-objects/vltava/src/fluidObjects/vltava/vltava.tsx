@@ -9,7 +9,7 @@ import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { TabsComponent } from "../tabs";
+import { TabsFluidObject } from "../tabs";
 import { IVltavaDataModel, VltavaDataModel } from "./dataModel";
 import { VltavaView } from "./view";
 
@@ -36,7 +36,7 @@ export class Vltava extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
     protected async initializingFirstTime() {
-        const tabsFluidObject = await TabsComponent.getFactory().createChildInstance(this.context);
+        const tabsFluidObject = await TabsFluidObject.getFactory().createChildInstance(this.context);
         this.root.set("tabs-component-id", tabsFluidObject.handle);
     }
 

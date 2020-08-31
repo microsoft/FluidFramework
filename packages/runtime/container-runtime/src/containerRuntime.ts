@@ -79,7 +79,6 @@ import {
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedFluidDataStoreRegistryEntries,
-    SchedulerType,
     ISummaryTreeWithStats,
     ISummaryStats,
     ISummarizeInternalResult,
@@ -435,14 +434,14 @@ export class ScheduleManager {
     }
 }
 
-export const schedulerId = SchedulerType;
+export const schedulerId = "_scheduler";
 
 // Wraps the provided list of packages and augments with some system level services.
 class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
     constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
         super([
             ...namedEntries,
-            [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
+            AgentSchedulerFactory.registryEntry,
         ]);
     }
 }
@@ -499,7 +498,7 @@ export class ContainerRuntime extends EventEmitter
 
         // Create all internal stores in first load.
         if (!context.existing) {
-            await runtime.createRootDataStore(schedulerId, schedulerId);
+            await runtime.createRootDataStore(AgentSchedulerFactory.type, schedulerId);
         }
 
         runtime.subscribeToLeadership();

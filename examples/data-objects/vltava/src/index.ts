@@ -18,7 +18,6 @@ import {
 import {
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreFactory,
-    IFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -124,7 +123,7 @@ const generateFactory = () => {
 
     const containerFluidObjects: [string, Promise<IProvideFluidDataStoreFactory>][] = [];
     containerFluidObjectsDefinition.forEach((value) => {
-        containerFluidObjects.push([value.factory.type, value.factory]);
+        containerFluidObjects.push([value.factory.type, Promise.resolve(value.factory)]);
     });
 
     // TODO: You should be able to specify the default registry instead of just a list of fluidObjects
@@ -137,7 +136,7 @@ const generateFactory = () => {
             // We don't want to include the default wrapper fluidObject in our list of available fluidObjects
             Anchor.getFactory().registryEntry,
             Vltava.getFactory().registryEntry,
-            [internalRegistry"", Promise.resolve(new InternalRegistry(containerFluidObjectsDefinition))],
+            ["internalRegistry", Promise.resolve(new InternalRegistry(containerFluidObjectsDefinition))],
         ],
     );
 };
