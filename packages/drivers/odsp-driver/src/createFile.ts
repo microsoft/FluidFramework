@@ -61,6 +61,9 @@ export async function createNewFluidFile(
         `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
         `${filePath}/${encodedFilename}`;
 
+    const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
+    const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot`;
+
     const itemId = await getWithRetryForTokenRefresh(async (options) => {
         const storageToken = await getStorageToken(options, "CreateNewFile");
 
@@ -68,8 +71,6 @@ export async function createNewFluidFile(
             logger,
             { eventName: "createNewFile" },
             async (event) => {
-                const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
-                const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot`;
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
 
