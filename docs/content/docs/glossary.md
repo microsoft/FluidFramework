@@ -32,7 +32,7 @@ Responsible for connecting to a Fluid service and loading a Container.
 
 ## Fluid Object
 
-Any JavaScript object that implements fluid feature interfaces.
+Any JavaScript object that implements Fluid feature interfaces.
 
 ## Fluid service
 
