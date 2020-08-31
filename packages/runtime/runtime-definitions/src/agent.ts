@@ -49,11 +49,10 @@ export interface ITaskManager extends IProvideTaskManager, IFluidLoadable, IFlui
      *
      * @param worker - Flag that will execute tasks in web worker if connected to a service that supports them.
      */
-    pick(dataStoreUrl: string, taskId: string, worker?: boolean): Promise<void>;
+    pick(taskId: string, worker?: boolean): Promise<void>;
 }
 
 export const IAgentScheduler: keyof IProvideAgentScheduler = "IAgentScheduler";
-export const SchedulerType = "_scheduler";
 
 export interface IProvideAgentScheduler {
     readonly IAgentScheduler: IAgentScheduler;

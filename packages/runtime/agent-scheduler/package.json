@@ -2,6 +2,7 @@
   "name": "@fluidframework/agent-scheduler",
   "version": "0.26.0",
   "description": "Built in runtime object for distributing agents across instances of a container",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

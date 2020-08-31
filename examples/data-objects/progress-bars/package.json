@@ -2,6 +2,7 @@
   "name": "@fluid-example/progress-bars",
   "version": "0.26.0",
   "description": "Progress bar collection",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

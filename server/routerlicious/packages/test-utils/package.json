@@ -2,6 +2,7 @@
   "name": "@fluidframework/server-test-utils",
   "version": "0.1012.0",
   "description": "Fluid server test utilities",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

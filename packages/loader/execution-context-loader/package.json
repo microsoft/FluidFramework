@@ -2,6 +2,7 @@
   "name": "@fluidframework/execution-context-loader",
   "version": "0.26.0",
   "description": "Allows loading container inside execution contexts. Currently supports web worker",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

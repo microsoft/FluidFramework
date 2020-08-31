@@ -2,6 +2,7 @@
   "name": "@fluidframework/request-handler",
   "version": "0.26.0",
   "description": "A simple request handling library for Fluid Framework",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

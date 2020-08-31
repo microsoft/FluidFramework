@@ -2,6 +2,7 @@
   "name": "@fluidframework/last-edited-experimental",
   "version": "0.26.0",
   "description": "Tracks the last edited information in the Container.",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

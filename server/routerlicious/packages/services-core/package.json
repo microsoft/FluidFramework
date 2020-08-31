@@ -2,6 +2,7 @@
   "name": "@fluidframework/server-services-core",
   "version": "0.1012.0",
   "description": "Fluid server services core definitions",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

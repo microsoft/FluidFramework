@@ -2,6 +2,7 @@
   "name": "@fluid-example/vltava",
   "version": "0.26.0",
   "description": "Vltava is a Application Experience",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

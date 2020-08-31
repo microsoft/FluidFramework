@@ -2,6 +2,7 @@
   "name": "@fluidframework/server-services-utils",
   "version": "0.1012.0",
   "description": "Fluid server services shared utilities",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

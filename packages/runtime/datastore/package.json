@@ -2,6 +2,7 @@
   "name": "@fluidframework/datastore",
   "version": "0.26.0",
   "description": "Fluid data store implementation",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

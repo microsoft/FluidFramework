@@ -2,6 +2,7 @@
   "name": "@fluidframework/sequence",
   "version": "0.26.0",
   "description": "Distributed sequence",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

@@ -16,11 +16,11 @@ parameters:
 - name: releaseBuildOverride
   displayName: Release Build Override
   type: string
-  default: default
+  default: none
   values:
-    - default
-    - false
-    - true
+    - none
+    - prerelease
+    - release
 
 trigger:
   branches:
@@ -141,7 +141,6 @@ stages:
         - template: templates/include-set-package-version.yml
           parameters:
             buildDirectory: server/routerlicious
-            release: $(release)
 
         # Build
         - task: Docker@2

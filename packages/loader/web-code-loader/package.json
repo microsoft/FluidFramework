@@ -2,6 +2,7 @@
   "name": "@fluidframework/web-code-loader",
   "version": "0.26.0",
   "description": "Fluid web code loader",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

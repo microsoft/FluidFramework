@@ -2,6 +2,7 @@
   "name": "@fluidframework/server-lambdas-driver",
   "version": "0.1012.0",
   "description": "Fluid server lambda driver components",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

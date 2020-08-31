@@ -2,6 +2,7 @@
   "name": "@fluidframework/driver-definitions",
   "version": "0.26.0",
   "description": "Fluid driver definitions",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

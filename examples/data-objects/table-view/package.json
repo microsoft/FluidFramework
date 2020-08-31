@@ -2,6 +2,7 @@
   "name": "@fluid-example/table-view",
   "version": "0.26.0",
   "description": "Chaincode component that provides a view for a table-document.",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
