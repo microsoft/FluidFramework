@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Buffer } from "buffer";
 import { EventEmitter } from "events";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     IFluidHandleContext,
     IFluidSerializer,
@@ -102,7 +102,7 @@ export interface IFluidDataStoreRuntime extends
      * Api to upload a blob of data.
      * @param file - blob to be uploaded.
      */
-    uploadBlob(file: Buffer): Promise<IFluidHandle<string>>;
+    uploadBlob(file: IsoBuffer): Promise<IFluidHandle<string>>;
 
     /**
      * Submits the signal to be sent to other clients.

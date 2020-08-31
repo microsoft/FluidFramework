@@ -11,7 +11,7 @@ import {
     IFluidHandle,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { IFluidObjectCollection } from "@fluidframework/framework-interfaces";
+import { IFluidObjectCollection } from "@fluid-example/fluid-object-interfaces";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";

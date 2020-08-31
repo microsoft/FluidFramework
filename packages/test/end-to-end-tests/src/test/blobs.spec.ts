@@ -6,13 +6,14 @@
 import * as assert from "assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { IFluidCodeDetails, IContainer } from "@fluidframework/container-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer, TestContainerRuntimeFactory } from "@fluidframework/test-utils";
+import { createLocalLoader, createAndAttachContainer, TestContainerRuntimeFactory } from "@fluidframework/test-utils";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalResolver } from "@fluidframework/local-driver";
 
 class TestComponent extends DataObject {
     public static readonly type = "@fluid-example/test-component";
@@ -21,15 +22,16 @@ class TestComponent extends DataObject {
 }
 
 describe("blobs", () => {
-    const id = "fluid-test://localhost/localLoaderTest";
+    const docId = "fluid-test://localhost/localLoaderTest";
     const codeDetails: IFluidCodeDetails = {
         package: "localLoaderTestPackage",
         config: {},
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
+    let urlResolver: IUrlResolver;
 
-    async function createContainer(): Promise<Container> {
+    async function createContainer(): Promise<IContainer> {
         const fluidModule = {
             fluidExport: new TestContainerRuntimeFactory(
                 TestComponent.type,
@@ -37,8 +39,8 @@ describe("blobs", () => {
                 { initialSummarizerDelayMs: 100 },
             ),
         };
-        const loader = createLocalLoader([[codeDetails, fluidModule]], deltaConnectionServer);
-        return initializeLocalContainer(id, loader, codeDetails);
+        const loader = createLocalLoader([[codeDetails, fluidModule]], deltaConnectionServer, urlResolver);
+        return createAndAttachContainer(docId, codeDetails, loader, urlResolver);
     }
 
     beforeEach(async () => {
@@ -47,6 +49,7 @@ describe("blobs", () => {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             { summary: { maxOps: 1 } as ISummaryConfiguration },
         );
+        urlResolver = new LocalResolver();
     });
 
     afterEach(async () => {

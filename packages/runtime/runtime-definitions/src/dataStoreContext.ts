@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Buffer } from "buffer";
 import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
+import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     IFluidObject,
     IFluidRouter,
@@ -114,7 +114,7 @@ export interface IContainerRuntimeBase extends
 
     getTaskManager(): Promise<ITaskManager>;
 
-    uploadBlob(blob: Buffer): Promise<IFluidHandle<string>>;
+    uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>>;
 }
 
 /**
@@ -336,7 +336,7 @@ export interface IFluidDataStoreContext extends EventEmitter, Partial<IProvideFl
         createParam: CreateChildSummarizerNodeParam,
     ): CreateChildSummarizerNodeFn;
 
-    uploadBlob(blob: Buffer): Promise<IFluidHandle<string>>;
+    uploadBlob(blob: IsoBuffer): Promise<IFluidHandle<string>>;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
