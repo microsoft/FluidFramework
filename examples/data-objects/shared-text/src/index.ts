@@ -12,6 +12,8 @@ import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/co
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
+    IFluidDataStoreFactory,
+    IFluidDataStoreRegistry,
     IProvideFluidDataStoreFactory,
     IProvideFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
@@ -57,7 +59,7 @@ const defaultRegistryEntries: NamedFluidDataStoreRegistryEntries = [
     ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
 ];
 
-class MyRegistry implements IProvideFluidDataStoreRegistry {
+class MyRegistry implements IFluidDataStoreRegistry {
     constructor(
         private readonly context: IContainerContext,
         private readonly defaultRegistry: string) {
@@ -82,7 +84,7 @@ class MyRegistry implements IProvideFluidDataStoreRegistry {
     }
 }
 
-class SharedTextFactoryComponent implements IProvideFluidDataStoreFactory, IRuntimeFactory {
+class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFactory {
     public static readonly type = "@fluid-example/shared-text";
     public readonly type = SharedTextFactoryComponent.type;
 

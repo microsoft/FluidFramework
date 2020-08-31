@@ -266,16 +266,16 @@ export class PureDataObjectFactory<TObj extends PureDataObject<P, S>, P, S>
     }
 
     /**
-     * Creates a new instance of the object. Uses container's registry (root) to find this factory.
+     * Creates a new instance of the object. Uses container's registry to find this factory.
      * It's expected that only container owners would use this functionality, as only such developers
-     * have knowledge of root entries in container registry.
+     * have knowledge of entries in container registry.
      * The name in this registry for such record should match type of this factory.
      * @param runtime - container runtime. It's registry is used to create an object.
      * @param initialState - The initial state to provide to the created component.
      * @returns an object created by this factory. Data store and objects created are not attached to container.
      * They get attached only when a handle to one of them is attached to already attached objects.
      */
-    public async createRootInstance(
+    public async createInstance(
         runtime: IContainerRuntimeBase,
         initialState?: S,
     ): Promise<TObj> {
