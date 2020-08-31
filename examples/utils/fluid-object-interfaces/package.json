@@ -1,7 +1,7 @@
 {
-  "name": "@fluidframework/framework-interfaces",
+  "name": "@fluid-example/fluid-object-interfaces",
   "version": "0.26.0",
-  "description": "Definitions for Fluid Framework.",
+  "description": "Framework interfaces used by examples.",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

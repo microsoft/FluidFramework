@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/container-runtime",
   "version": "0.26.0",
-  "description": "Fluid runtime API",
+  "description": "Fluid container runtime",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

@@ -26,12 +26,12 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
+    "@fluid-internal/fluidapp-odsp-urlresolver": "^0.26.0",
     "@fluidframework/common-utils": "^0.22.1",
     "@fluidframework/container-runtime": "^0.26.0",
     "@fluidframework/datastore": "^0.26.0",
     "@fluidframework/driver-definitions": "^0.26.0",
     "@fluidframework/driver-utils": "^0.26.0",
-    "@fluidframework/fluidapp-odsp-urlresolver": "^0.26.0",
     "@fluidframework/odsp-driver": "^0.26.0",
     "@fluidframework/odsp-urlresolver": "^0.26.0",
     "@fluidframework/odsp-utils": "^0.26.0",

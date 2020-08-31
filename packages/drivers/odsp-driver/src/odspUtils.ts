@@ -40,7 +40,7 @@ export function getHashedDocumentId(driveId: string, itemId: string): string {
 /**
  * This API should be used with pretty much all network calls (fetch, webSocket connection) in order
  * to correctly handle expired tokens. It relies on callback fetching token, and be able to refetch
- * token on failure. Only specific cases get retry call with refresh = true, all other / unknonw errors
+ * token on failure. Only specific cases get retry call with refresh = true, all other / unknown errors
  * simply propagate to caller
  */
 export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOptions) => Promise<T>) {

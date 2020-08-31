@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/server-memory-orderer",
   "version": "0.1012.0",
-  "description": "Fluid ordering services",
+  "description": "Fluid server in memory orderer",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

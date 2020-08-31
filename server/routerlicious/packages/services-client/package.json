@@ -1,7 +1,7 @@
 {
   "name": "@fluidframework/server-services-client",
   "version": "0.1012.0",
-  "description": "Isomorphic services for communicating with Fluid",
+  "description": "Fluid server isomorphic services for communicating with Fluid",
   "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

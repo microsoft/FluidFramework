@@ -37,6 +37,7 @@
   "dependencies": {
     "@fluid-example/clicker": "^0.26.0",
     "@fluid-example/codemirror": "^0.26.0",
+    "@fluid-example/fluid-object-interfaces": "^0.26.0",
     "@fluid-example/prosemirror": "^0.26.0",
     "@fluid-example/spaces": "^0.26.0",
     "@fluidframework/aqueduct": "^0.26.0",
@@ -44,7 +45,6 @@
     "@fluidframework/container-runtime-definitions": "^0.26.0",
     "@fluidframework/core-interfaces": "^0.26.0",
     "@fluidframework/datastore-definitions": "^0.26.0",
-    "@fluidframework/framework-interfaces": "^0.26.0",
     "@fluidframework/last-edited-experimental": "^0.26.0",
     "@fluidframework/map": "^0.26.0",
     "@fluidframework/protocol-definitions": "^0.1011.1",

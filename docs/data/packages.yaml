@@ -21,7 +21,6 @@ container-runtime:
 - "@fluidframework/runtime-definitions"
 libraries:
 - "@fluidframework/aqueduct"
-- "@fluidframework/framework-interfaces"
 - "@fluidframework/undo-redo"
 - "@fluidframework/view-adapters"
 - "@fluidframework/view-interfaces"
