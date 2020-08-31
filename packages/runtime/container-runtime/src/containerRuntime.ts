@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
+import { TaskManagerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
@@ -434,14 +434,14 @@ export class ScheduleManager {
     }
 }
 
-export const schedulerId = "_scheduler";
+export const taskSchedulerId = "_scheduler";
 
 // Wraps the provided list of packages and augments with some system level services.
 class ContainerRuntimeDataStoreRegistry extends FluidDataStoreRegistry {
     constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {
         super([
             ...namedEntries,
-            AgentSchedulerFactory.registryEntry,
+            TaskManagerFactory.registryEntry,
         ]);
     }
 }
@@ -498,7 +498,7 @@ export class ContainerRuntime extends EventEmitter
 
         // Create all internal stores in first load.
         if (!context.existing) {
-            await runtime.createRootDataStore(AgentSchedulerFactory.type, schedulerId);
+            await runtime.createRootDataStore(TaskManagerFactory.type, taskSchedulerId);
         }
 
         runtime.subscribeToLeadership();
@@ -1350,12 +1350,12 @@ export class ContainerRuntime extends EventEmitter
     private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
         if (type === ContainerMessageType.Attach) {
             const attachMessage = contents as InboundAttachMessage;
-            if (attachMessage.id === schedulerId) {
+            if (attachMessage.id === taskSchedulerId) {
                 return false;
             }
         } else if (type === ContainerMessageType.FluidDataStoreOp) {
             const envelope = contents as IEnvelope;
-            if (envelope.address === schedulerId) {
+            if (envelope.address === taskSchedulerId) {
                 return false;
             }
         }
@@ -1913,7 +1913,7 @@ export class ContainerRuntime extends EventEmitter
 
     public async getTaskManager(): Promise<ITaskManager> {
         return requestFluidObject<ITaskManager>(
-            await this.getDataStore(schedulerId, true),
+            await this.getDataStore(taskSchedulerId, true),
             "");
     }
 
