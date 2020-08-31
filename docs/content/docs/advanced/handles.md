@@ -2,6 +2,15 @@
 title: Handles
 ---
 
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/draft-doc.md) -->
+{{% callout warning "Draft!" %}}
+
+This documentation is a **Draft**. It is technically accurate but has not yet been reviewed for consistency and clarity.
+
+{{% /callout %}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 A [Fluid Handle](../../packages/loader/core-interfaces/src/handles.ts) is a handle to a _Fluid object_. It is
 used to represent the object and has a function `get()` that returns the underlying object. Handles move the ownership
 of retrieving a Fluid object from the user of the object to the object itself. The handle can be passed around in the
