@@ -2,6 +2,7 @@
   "name": "@fluidframework/protocol-base",
   "version": "0.1012.0",
   "description": "Fluid protocol base",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

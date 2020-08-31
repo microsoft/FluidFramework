@@ -2,6 +2,7 @@
   "name": "@fluid-example/multiview-plot-coordinate-view",
   "version": "0.26.0",
   "description": "View for multiview sample",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

@@ -2,6 +2,7 @@
   "name": "@fluid-example/intelligence-runner-agent",
   "version": "0.26.0",
   "description": "Generates insights on distributed data structures",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

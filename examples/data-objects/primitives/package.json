@@ -2,6 +2,7 @@
   "name": "@fluid-example/primitives",
   "version": "0.26.0",
   "description": "Minimal Fluid container sample to showcase some of the distributed data structures.",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

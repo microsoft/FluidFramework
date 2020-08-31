@@ -2,6 +2,7 @@
   "name": "root",
   "version": "0.14.0",
   "private": true,
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
