@@ -7,7 +7,7 @@
   "author": "Microsoft",
   "main": "dist/index.js",
   "browser": {
-    "moniker": "@fluidframework/server-services-client/dist/dockerNames.js"
+    "moniker": "@fluidframework/server-services-client/dist/generateNames.js"
   },
   "types": "dist/index.d.ts",
   "scripts": {
