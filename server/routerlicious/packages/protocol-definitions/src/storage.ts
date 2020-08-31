@@ -44,11 +44,6 @@ export interface IBlob {
     encoding: string;
 }
 
-export interface IAttachment {
-    // ID of external data blob
-    id: string;
-}
-
 export interface ICreateBlobResponse {
     id: string;
     url: string;
@@ -65,7 +60,7 @@ export interface ITreeEntry {
     type: string;
 
     // The value of the entry - either a tree or a blob
-    value: IBlob | ITree | IAttachment | string;
+    value: IBlob | ITree | string;
 
     // The file mode; one of 100644 for file (blob), 100755 for executable (blob), 040000 for subdirectory (tree),
     // 160000 for submodule (commit), or 120000 for a blob that specifies the path of a symlink
@@ -79,7 +74,6 @@ export enum TreeEntry {
     Blob = "Blob",
     Commit = "Commit",
     Tree = "Tree",
-    Attachment = "Attachment",
 }
 
 export interface ITree {

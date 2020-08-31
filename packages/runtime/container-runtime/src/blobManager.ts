@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import {
     IFluidHandle,
     IFluidHandleContext,
@@ -13,8 +12,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
-import { ITree, TreeEntry, IAttachment } from "@fluidframework/protocol-definitions";
-import { AttachmentTreeEntry } from "@fluidframework/protocol-base";
 
 /**
  * This class represents blob (long string)
@@ -57,35 +54,11 @@ export class BlobHandle implements IFluidHandle {
 }
 
 export class BlobManager {
-    private readonly attachAcknowledgedBlobs: Set<string>;
-
     constructor(
         private readonly routeContext: IFluidHandleContext,
         private readonly getStorage: () => IDocumentStorageService,
         private readonly sendBlobAttachOp: (blobId: string) => void,
-    ) {
-        this.attachAcknowledgedBlobs = new Set<string>();
-    }
-
-    public setAttachAcknowledged(...blobIds: string[]) {
-        blobIds.map((blobId) => this.attachAcknowledgedBlobs.add(blobId));
-    }
-
-    public load(blobsBlob?: string) {
-        if (blobsBlob) {
-            const decoded = Buffer.from(blobsBlob, "base64").toString();
-            const tree = JSON.parse(decoded) as ITree;
-            tree.entries.map((entry) => {
-                assert.strictEqual(entry.type, TreeEntry.Attachment);
-                this.setAttachAcknowledged((entry.value as IAttachment).id);
-            });
-        }
-    }
-
-    public snapshot(): ITree {
-        const entries = [...this.attachAcknowledgedBlobs].map((id) => new AttachmentTreeEntry(id, id));
-        return { entries, id: null };
-    }
+    ) { }
 
     public async getBlob(blobId: string): Promise<BlobHandle> {
         return new BlobHandle(

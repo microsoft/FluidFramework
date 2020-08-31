@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export type SummaryObject = ISummaryCommit | ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
+import { Buffer } from "buffer";
+
+export type SummaryObject = ISummaryCommit | ISummaryTree | ISummaryBlob | ISummaryHandle;
 
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
@@ -26,7 +28,6 @@ export const enum SummaryType {
     Tree = 1,
     Blob = 2,
     Handle = 3,
-    Attachment = 4,
 }
 
 export interface ISummaryHandle {
@@ -40,12 +41,7 @@ export interface ISummaryHandle {
 
 export interface ISummaryBlob {
     type: SummaryType.Blob;
-    content: string | Uint8Array;
-}
-
-export interface ISummaryAttachment {
-    type: SummaryType.Attachment;
-    id: string;
+    content: string | Buffer;
 }
 
 export interface ISummaryTree {

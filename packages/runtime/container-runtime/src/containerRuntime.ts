@@ -119,7 +119,6 @@ import { pkgVersion } from "./packageVersion";
 import { BlobManager } from "./blobManager";
 
 const chunksBlobName = ".chunks";
-const blobsBlobName = ".blobs";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -490,17 +489,10 @@ export class ContainerRuntime extends EventEmitter
             ? await readAndParse<[string, string[]][]>(context.storage!, chunkId)
             : [];
 
-        const blobId = context.baseSnapshot?.blobs[blobsBlobName];
-        const blobsBlob = blobId
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            ? await context.storage!.read(blobId)
-            : undefined;
-
         const runtime = new ContainerRuntime(
             context,
             registry,
             chunks,
-            blobsBlob,
             runtimeOptions,
             containerScope,
             requestHandler);
@@ -673,7 +665,6 @@ export class ContainerRuntime extends EventEmitter
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
         chunks: [string, string[]][],
-        blobsBlob: string | undefined,
         private readonly runtimeOptions: IContainerRuntimeOptions = {
             generateSummaries: true,
             enableWorker: false,
@@ -778,7 +769,6 @@ export class ContainerRuntime extends EventEmitter
             () => this.storage,
             (blobId) => this.submit(ContainerMessageType.BlobAttach, blobId),
         );
-        this.blobManager.load(blobsBlob);
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
@@ -1003,8 +993,6 @@ export class ContainerRuntime extends EventEmitter
             root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
         }
 
-        root.entries.push(new TreeTreeEntry(".blobs", this.blobManager.snapshot()));
-
         return root;
     }
 
@@ -1013,8 +1001,6 @@ export class ContainerRuntime extends EventEmitter
             const content = JSON.stringify([...this.chunkMap]);
             summaryTreeBuilder.addBlob(chunksBlobName, content);
         }
-        const blobsTree = convertToSummaryTree(this.blobManager.snapshot(), false);
-        summaryTreeBuilder.addWithStats(".blobs", blobsTree);
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {
@@ -1134,8 +1120,6 @@ export class ContainerRuntime extends EventEmitter
                 case ContainerMessageType.FluidDataStoreOp:
                     this.processFluidDataStoreOp(message, local, localMessageMetadata);
                     break;
-                case ContainerMessageType.BlobAttach:
-                    this.processBlobAttachMessage(message.contents);
                 default:
             }
 
@@ -1504,10 +1488,6 @@ export class ContainerRuntime extends EventEmitter
         const transformed = { ...message, contents: envelope.contents };
         const context = this.getContext(envelope.address);
         context.process(transformed, local, localMessageMetadata);
-    }
-
-    private processBlobAttachMessage(blobId: string) {
-        this.blobManager.setAttachAcknowledged(blobId);
     }
 
     private bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
