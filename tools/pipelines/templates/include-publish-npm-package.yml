@@ -78,4 +78,4 @@ stages:
 
                 echo Tag=$tag
                 git tag $tag
-                git push origin $tag
+                # git push origin $tag
