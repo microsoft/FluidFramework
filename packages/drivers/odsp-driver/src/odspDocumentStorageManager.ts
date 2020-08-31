@@ -50,6 +50,7 @@ import {
 } from "./odspCache";
 import { getWithRetryForTokenRefresh, fetchHelper } from "./odspUtils";
 import { throwOdspNetworkError } from "./odspError";
+import { getQueryString } from "./getQueryString";
 
 /* eslint-disable max-len */
 
@@ -298,14 +299,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     hostPolicy.mds = undefined;
                 }
 
-                let delimiter = "?";
-                let options = "";
-                for (const [key, value] of Object.entries(hostPolicy)) {
-                    if (value !== undefined) {
-                        options = `${options}${delimiter}${key}=${value}`;
-                        delimiter = "&";
-                    }
-                }
+                const options = getQueryString(hostPolicy);
 
                 let cachedSnapshot: IOdspSnapshot | undefined;
 
