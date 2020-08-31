@@ -2,6 +2,7 @@
   "name": "@fluid-example/todo",
   "version": "0.26.0",
   "description": "Simple todo canvas.",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

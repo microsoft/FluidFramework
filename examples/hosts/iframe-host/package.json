@@ -2,6 +2,7 @@
   "name": "@fluid-example/iframe-host",
   "version": "0.26.0",
   "description": "IFrame Host",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

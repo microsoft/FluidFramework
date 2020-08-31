@@ -2,6 +2,7 @@
   "name": "@fluidframework/webpack-fluid-loader",
   "version": "0.26.0",
   "description": "Fluid object loader for webpack-dev-server",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

@@ -14,7 +14,7 @@ import {
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
-import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 
@@ -79,13 +79,7 @@ export async function getTinyliciousContainer(
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
 ): Promise<Container> {
-    const documentServiceFactory = new RouterliciousDocumentServiceFactory(
-        false,
-        new DefaultErrorTracking(),
-        false,
-        true,
-        undefined,
-    );
+    const documentServiceFactory = new RouterliciousDocumentServiceFactory();
 
     const urlResolver = new InsecureTinyliciousUrlResolver();
 

@@ -2,6 +2,7 @@
   "name": "@fluidframework/container-loader",
   "version": "0.26.0",
   "description": "Fluid container loader",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

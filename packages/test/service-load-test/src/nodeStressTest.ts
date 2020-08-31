@@ -22,15 +22,15 @@ import { ITestConfig, IRunConfig, fluidExport, ILoadTest } from "./loadTestDataS
 const packageName = `${pkgName}@${pkgVersion}`;
 
 interface ITestConfigs {
-    full: ITestConfig,
-    mini: ITestConfig,
+    full: ITestConfig;
+    mini: ITestConfig;
 }
 
 interface IConfig {
-    server: string,
-    driveId: string,
-    username: string,
-    profiles: ITestConfigs,
+    server: string;
+    driveId: string;
+    username: string;
+    profiles: ITestConfigs;
 }
 
 const codeDetails: IFluidCodeDetails = {
@@ -53,7 +53,7 @@ function createLoader(config: IConfig, password: string) {
     const loader = new Loader(
         urlResolver,
         new OdspDocumentServiceFactory(
-            async (siteUrl: string, refresh) => {
+            async (_siteUrl: string, refresh: boolean, _claims?: string) => {
                 const tokens = await odspTokenManager.getOdspTokens(
                     config.server,
                     getMicrosoftConfiguration(),
@@ -62,7 +62,7 @@ function createLoader(config: IConfig, password: string) {
                 );
                 return tokens.accessToken;
             },
-            async (refresh: boolean) => {
+            async (refresh: boolean, _claims?: string) => {
                 const tokens = await odspTokenManager.getPushTokens(
                     config.server,
                     getMicrosoftConfiguration(),

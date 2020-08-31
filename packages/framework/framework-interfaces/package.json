@@ -2,6 +2,7 @@
   "name": "@fluidframework/framework-interfaces",
   "version": "0.26.0",
   "description": "Definitions for Fluid Framework.",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

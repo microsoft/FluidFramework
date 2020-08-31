@@ -2,6 +2,7 @@
   "name": "@fluidframework/shared-summary-block",
   "version": "0.26.0",
   "description": "A DDS that does not generate ops but is part of summary",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

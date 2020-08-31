@@ -7,6 +7,7 @@ import {
     NetworkErrorBasic,
     GenericNetworkError,
     NonRetryableError,
+    AuthorizationError,
     isOnline,
     createGenericNetworkError,
     OnlineStatus,
@@ -16,6 +17,7 @@ import {
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import { IOdspSocketError } from "./contracts";
+import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
 
 export const offlineFetchFailureStatusCode: number = 709;
 export const fetchFailureStatusCode: number = 710;
@@ -66,6 +68,7 @@ export function createOdspNetworkError(
     errorMessage: string,
     statusCode?: number,
     retryAfterSeconds?: number,
+    claims?: string,
 ): OdspError {
     let error: OdspError;
 
@@ -75,7 +78,7 @@ export function createOdspNetworkError(
             break;
         case 401:
         case 403:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.authorizationError, false);
+            error = new AuthorizationError(errorMessage, claims);
             break;
         case 404:
             error = new NetworkErrorBasic(errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, false);
@@ -113,6 +116,7 @@ export function createOdspNetworkError(
     }
 
     error.online = OnlineStatus[isOnline()];
+
     return error;
 }
 
@@ -124,18 +128,16 @@ export function throwOdspNetworkError(
     statusCode: number,
     response?: Response,
 ) {
-    let message = errorMessage;
-    let sprequestguid;
-    if (response) {
-        message = `${message}, msg = ${response.statusText}, type = ${response.type}`;
-        sprequestguid = response.headers ? `${response.headers.get("sprequestguid")}` : undefined;
-    }
+    const claims = statusCode === 401 && response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
 
     const networkError = createOdspNetworkError(
-        message,
+        response ? `${errorMessage}, msg = ${response.statusText}, type = ${response.type}` : errorMessage,
         statusCode,
-        undefined /* retryAfterSeconds */);
-    (networkError as any).sprequestguid = sprequestguid;
+        undefined /* retryAfterSeconds */,
+        claims);
+
+    (networkError as any).sprequestguid = response?.headers ? `${response.headers.get("sprequestguid")}` : undefined;
+
     throw networkError;
 }
 
@@ -146,5 +148,8 @@ export function errorObjectFromSocketError(socketError: IOdspSocketError) {
     return createOdspNetworkError(
         socketError.message,
         socketError.code,
-        socketError.retryAfter);
+        socketError.retryAfter,
+        // TODO: When long lived token is supported for websocket then IOdspSocketError need to support
+        // passing "claims" value that is used to fetch new token
+        undefined /* claims */);
 }

@@ -2,6 +2,7 @@
   "name": "@fluid-example/key-value-cache",
   "version": "0.26.0",
   "description": "Key-value cache that runs in the node.js service",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

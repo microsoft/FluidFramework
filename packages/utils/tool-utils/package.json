@@ -2,6 +2,7 @@
   "name": "@fluidframework/tool-utils",
   "version": "0.26.0",
   "description": "Common utilities for Fluid tools",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

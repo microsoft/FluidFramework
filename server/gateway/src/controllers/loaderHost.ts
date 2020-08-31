@@ -38,7 +38,7 @@ export async function initialize(
     const documentServiceFactories: IDocumentServiceFactory[] = [];
     // TODO: need to be support refresh token
     documentServiceFactories.push(new OdspDocumentServiceFactory(
-        async (siteUrl: string) => Promise.resolve(resolved.tokens.storageToken),
+        async () => Promise.resolve(resolved.tokens.storageToken),
         async () => Promise.resolve(resolved.tokens.socketToken)));
 
     documentServiceFactories.push(new RouterliciousDocumentServiceFactory(

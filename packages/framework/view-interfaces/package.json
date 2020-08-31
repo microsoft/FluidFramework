@@ -2,6 +2,7 @@
   "name": "@fluidframework/view-interfaces",
   "version": "0.26.0",
   "description": "View interfaces for rendering views",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

@@ -2,12 +2,13 @@
   "name": "@fluidframework/server-memory-orderer",
   "version": "0.1012.0",
   "description": "Fluid ordering services",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/index.js",
   "browser": {
-    "moniker": "@fluidframework/server-services-client/dist/dockerNames.js"
+    "moniker": "@fluidframework/server-services-client/dist/generateNames.js"
   },
   "types": "dist/index.d.ts",
   "scripts": {
