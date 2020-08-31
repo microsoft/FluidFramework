@@ -1,3 +1,3 @@
 # @fluid-example/fluid-object-interfaces
 
-Interfaces used by examples that data object can extend in the examples.
+This package contains common interfaces used by Fluid examples. These interfaces can be extended by Fluid objects in the examples.
