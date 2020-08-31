@@ -4,22 +4,22 @@
  */
 
 import assert from "assert";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
-    ITestFluidComponent,
-    TestFluidComponentFactory,
-    TestFluidComponent,
+    ITestFluidObject,
+    TestFluidObjectFactory,
+    TestFluidObject,
 } from "@fluidframework/test-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 describe(`Attach/Bind Api Tests For Attached Container`, () => {
     const documentId = "detachedContainerTest";
@@ -37,32 +37,30 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
     const createTestStatementForAttachedDetached = (name: string, attached: boolean) =>
         `${name} should be ${attached ? "Attached" : "Detached"}`;
 
-    async function createDetachedContainerAndGetRootComponent() {
+    async function createDetachedContainerAndGetRootDataStore() {
         const container = await loader.createDetachedContainer(codeDetails);
-        // Get the root component from the detached container.
+        // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
-        const defaultComponent = response.value;
+        const defaultDataStore = response.value;
         return {
             container,
-            defaultComponent,
+            defaultDataStore,
         };
     }
 
-    const createPeerComponent = async (
+    const createPeerDataStore = async (
         containerRuntime: IContainerRuntimeBase,
     ) => {
-        const peerComponentRuntimeChannel = await (containerRuntime as IContainerRuntime)
-            .createDataStoreWithRealizationFn(["default"]);
-        const peerComponent =
-            (await peerComponentRuntimeChannel.request({ url: "/" })).value as ITestFluidComponent;
+        const router = await containerRuntime.createDataStore(["default"]);
+        const peerDataStore = await requestFluidObject<ITestFluidObject>(router, "/");
         return {
-            peerComponent,
-            peerComponentRuntimeChannel,
+            peerDataStore,
+            peerDataStoreRuntimeChannel: peerDataStore.channel,
         };
     };
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
-        const factory: TestFluidComponentFactory = new TestFluidComponentFactory([
+        const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
             [mapId1, SharedMap.getFactory()],
             [mapId2, SharedMap.getFactory()],
         ]);
@@ -84,414 +82,414 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         loader = createTestLoader(urlResolver);
     });
 
-    it("Attaching component should not attach unregistered DDS", async () => {
-        const { container, defaultComponent } =
-            await createDetachedContainerAndGetRootComponent();
+    it("Attaching dataStore should not attach unregistered DDS", async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
         await container.attach(request);
 
-        // Create another component which returns the runtime channel.
-        const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
-        const component2 = peerComponent.peerComponent;
-        const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
+        // Create another dataStore which returns the runtime channel.
+        const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+        const dataStore2 = peerDataStore.peerDataStore;
+        const dataStore2RuntimeChannel = peerDataStore.peerDataStoreRuntimeChannel;
 
-        assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
-            createTestStatementForAttachedDetached("Component2", false));
+        assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
+            createTestStatementForAttachedDetached("DataStore2", false));
 
         // Create a channel
-        const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
+        const channel = dataStore2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
         assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
-        component2RuntimeChannel.bindToContext();
+        dataStore2RuntimeChannel.bindToContext();
 
-        assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, true,
-            createTestStatementForAttachedDetached("Component2", true));
+        assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, true,
+            createTestStatementForAttachedDetached("DataStore2", true));
 
         assert.strictEqual(channel.handle.isAttached, false,
             "Channel should not be attached as it was not registered");
     });
 
-    it("Attaching component should attach registered DDS", async () => {
-        const { container, defaultComponent } =
-            await createDetachedContainerAndGetRootComponent();
+    it("Attaching dataStore should attach registered DDS", async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
         await container.attach(request);
 
-        // Create another component which returns the runtime channel.
-        const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
-        const component2 = peerComponent.peerComponent;
-        const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
-        assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
-            createTestStatementForAttachedDetached("Component2", false));
+        // Create another dataStore which returns the runtime channel.
+        const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+        const dataStore2 = peerDataStore.peerDataStore;
+        const dataStore2RuntimeChannel = peerDataStore.peerDataStoreRuntimeChannel;
+        assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
+            createTestStatementForAttachedDetached("DataStore2", false));
 
         // Create a channel
-        const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
+        const channel = dataStore2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
         assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
         // Now register the channel
         (await channel.handle.get() as SharedObject).bindToContext();
-        component2RuntimeChannel.bindToContext();
+        dataStore2RuntimeChannel.bindToContext();
 
-        assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, true,
-            createTestStatementForAttachedDetached("Component2", true));
+        assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, true,
+            createTestStatementForAttachedDetached("DataStore2", true));
 
-        // Channel should get attached as it was registered to its component
+        // Channel should get attached as it was registered to its dataStore
         assert.strictEqual(channel.handle.isAttached, true,
             createTestStatementForAttachedDetached("Channel", true));
     });
 
-    it("Attaching DDS should attach component", async () => {
-        const { container, defaultComponent } =
-            await createDetachedContainerAndGetRootComponent();
+    it("Attaching DDS should attach dataStore", async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
         await container.attach(request);
 
-        // Create another component which returns the runtime channel.
-        const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
-        const component2 = peerComponent.peerComponent;
-        assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
-            createTestStatementForAttachedDetached("Component2", false));
+        // Create another dataStore which returns the runtime channel.
+        const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+        const dataStore2 = peerDataStore.peerDataStore;
+        assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
+            createTestStatementForAttachedDetached("DataStore2", false));
 
         // Create a channel
-        const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
+        const channel = dataStore2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
         assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
         channel.handle.attachGraph();
 
-        // Channel should get attached as it was registered to its component
+        // Channel should get attached as it was registered to its dataStore
         assert.strictEqual(channel.handle.isAttached, true,
             createTestStatementForAttachedDetached("Channel", true));
 
-        assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, true,
-            createTestStatementForAttachedDetached("Component2", true));
+        assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, true,
+            createTestStatementForAttachedDetached("DataStore2", true));
     });
 
     it("Sticking handle in attached dds should attach the DDS in attached container", async () => {
-        const { container, defaultComponent } =
-            await createDetachedContainerAndGetRootComponent();
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
         await container.attach(request);
 
-        // Create another component which returns the runtime channel.
-        const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
-        const component2 = peerComponent.peerComponent;
-        const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
-        assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
-            createTestStatementForAttachedDetached("Component2", false));
+        // Create another dataStore which returns the runtime channel.
+        const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+        const dataStore2 = peerDataStore.peerDataStore;
+        const dataStore2RuntimeChannel = peerDataStore.peerDataStoreRuntimeChannel;
+        assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
+            createTestStatementForAttachedDetached("DataStore2", false));
 
         // Create a channel
-        const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
+        const channel = dataStore2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
         assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
-        component2RuntimeChannel.bindToContext();
+        dataStore2RuntimeChannel.bindToContext();
 
-        const rootOfComponent2 = await component2.runtime.getChannel("root") as SharedMap;
-        const testChannelOfComponent2 = await component2.runtime.getChannel("test1");
+        const rootOfDataStore2 = await dataStore2.runtime.getChannel("root") as SharedMap;
+        const testChannelOfDataStore2 = await dataStore2.runtime.getChannel("test1");
 
-        assert.strictEqual(rootOfComponent2.isAttached(), true,
+        assert.strictEqual(rootOfDataStore2.isAttached(), true,
             "Root Channel should be attached");
-        assert.strictEqual(testChannelOfComponent2.isAttached(), false,
+        assert.strictEqual(testChannelOfDataStore2.isAttached(), false,
             "Test Channel should not be attached");
-        rootOfComponent2.set("test1handle", channel.handle);
+        rootOfDataStore2.set("test1handle", channel.handle);
 
-        assert.strictEqual(testChannelOfComponent2.isAttached(), true,
+        assert.strictEqual(testChannelOfDataStore2.isAttached(), true,
             "Test Channel should be bound only in attached container after sticking it in bounded dds");
     });
 
-    it("Registering DDS in attached component should attach it", async () => {
-        const { container, defaultComponent } =
-            await createDetachedContainerAndGetRootComponent();
+    it("Registering DDS in attached dataStore should attach it", async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
         await container.attach(request);
 
-        // Create another component which returns the runtime channel.
-        const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
-        const component2 = peerComponent.peerComponent;
-        const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
+        // Create another dataStore which returns the runtime channel.
+        const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+        const dataStore2 = peerDataStore.peerDataStore;
+        const dataStore2RuntimeChannel = peerDataStore.peerDataStoreRuntimeChannel;
 
-        assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
-            createTestStatementForAttachedDetached("Component2", false));
+        assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
+            createTestStatementForAttachedDetached("DataStore2", false));
 
         // Create a channel
-        const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
+        const channel = dataStore2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
         assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
-        component2RuntimeChannel.bindToContext();
+        dataStore2RuntimeChannel.bindToContext();
 
         (await channel.handle.get() as SharedObject).bindToContext();
         assert.strictEqual(channel.handle.isAttached, true,
             createTestStatementForAttachedDetached("Channel", true));
     });
 
-    it("Registering DDS in detached component should not attach it", async () => {
-        const { container, defaultComponent } =
-            await createDetachedContainerAndGetRootComponent();
+    it("Registering DDS in detached dataStore should not attach it", async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
         await container.attach(request);
 
-        // Create another component which returns the runtime channel.
-        const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
-        const component2 = peerComponent.peerComponent;
+        // Create another dataStore which returns the runtime channel.
+        const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+        const dataStore2 = peerDataStore.peerDataStore;
 
-        assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
-            createTestStatementForAttachedDetached("Component2", false));
-        assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
-            "Component2 should be unattached");
+        assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
+            createTestStatementForAttachedDetached("DataStore2", false));
+        assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
+            "DataStore2 should be unattached");
 
         // Create a channel
-        const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
+        const channel = dataStore2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
         assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
         (await channel.handle.get() as SharedObject).bindToContext();
         assert.strictEqual(channel.handle.isAttached, false,
-            "Channel should not get attached on registering it to unattached component");
+            "Channel should not get attached on registering it to unattached dataStore");
     });
 
-    it("Stick handle of 2 dds in each other and then attaching component should attach both DDS",
+    it("Stick handle of 2 dds in each other and then attaching dataStore should attach both DDS",
         async () => {
-            const { container, defaultComponent } =
-                await createDetachedContainerAndGetRootComponent();
+            const { container, defaultDataStore } =
+                await createDetachedContainerAndGetRootDataStore();
             await container.attach(request);
 
-            // Create another component which returns the runtime channel.
-            const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
-            const component2 = peerComponent.peerComponent;
-            const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
+            // Create another dataStore which returns the runtime channel.
+            const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+            const dataStore2 = peerDataStore.peerDataStore;
+            const dataStore2RuntimeChannel = peerDataStore.peerDataStoreRuntimeChannel;
 
-            assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
-                createTestStatementForAttachedDetached("Component2", false));
-            assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
-                "Component2 should be unattached");
+            assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
+                createTestStatementForAttachedDetached("DataStore2", false));
+            assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
+                "DataStore2 should be unattached");
 
             // Create first channel
-            const channel1 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
+            const channel1 = dataStore2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel1.handle.isAttached, false, "Channel should be detached");
 
             // Create second channel
-            const channel2 = component2.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
+            const channel2 = dataStore2.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
 
-            // Now register both dds to parent component
+            // Now register both dds to parent dataStore
             (await channel1.handle.get() as SharedObject).bindToContext();
             (await channel2.handle.get() as SharedObject).bindToContext();
 
-            const testChannel1OfComponent2 = await component2.runtime.getChannel("test1") as SharedMap;
-            const testChannel2OfComponent2 = await component2.runtime.getChannel("test2") as SharedMap;
+            const testChannel1OfDataStore2 = await dataStore2.runtime.getChannel("test1") as SharedMap;
+            const testChannel2OfDataStore2 = await dataStore2.runtime.getChannel("test2") as SharedMap;
 
-            testChannel1OfComponent2.set("test2handle", channel2.handle);
-            testChannel2OfComponent2.set("test1handle", channel1.handle);
+            testChannel1OfDataStore2.set("test2handle", channel2.handle);
+            testChannel2OfDataStore2.set("test1handle", channel1.handle);
 
-            // Now attach the component2. Currently this will end up in infinite loop.
-            component2RuntimeChannel.bindToContext();
-            assert.strictEqual(testChannel1OfComponent2.handle.isAttached, true,
+            // Now attach the dataStore2. Currently this will end up in infinite loop.
+            dataStore2RuntimeChannel.bindToContext();
+            assert.strictEqual(testChannel1OfDataStore2.handle.isAttached, true,
                 createTestStatementForAttachedDetached("Test Channel 1", true));
-            assert.strictEqual(testChannel2OfComponent2.handle.isAttached, true,
+            assert.strictEqual(testChannel2OfDataStore2.handle.isAttached, true,
                 createTestStatementForAttachedDetached("Test Channel 1", true));
         });
 
     it("Stick handle of 2 dds in each other and then attaching 1 DDS should attach other DDS",
         async () => {
-            const { container, defaultComponent } =
-                await createDetachedContainerAndGetRootComponent();
+            const { container, defaultDataStore } =
+                await createDetachedContainerAndGetRootDataStore();
             await container.attach(request);
 
-            // Create another component which returns the runtime channel.
-            const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
-            const component2 = peerComponent.peerComponent;
+            // Create another dataStore which returns the runtime channel.
+            const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+            const dataStore2 = peerDataStore.peerDataStore;
 
-            assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
-                createTestStatementForAttachedDetached("Component2", false));
-            assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
-                "Component2 should be unattached");
+            assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
+                createTestStatementForAttachedDetached("DataStore2", false));
+            assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
+                "DataStore2 should be unattached");
 
             // Create first channel
-            const channel1 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
+            const channel1 = dataStore2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel1.handle.isAttached, false, "Channel should be detached");
 
             // Create second channel
-            const channel2 = component2.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
+            const channel2 = dataStore2.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
 
-            // Now register both dds to parent component
+            // Now register both dds to parent dataStore
             (await channel1.handle.get() as SharedObject).bindToContext();
             (await channel2.handle.get() as SharedObject).bindToContext();
 
-            const testChannel1OfComponent2 = await component2.runtime.getChannel("test1") as SharedMap;
-            const testChannel2OfComponent2 = await component2.runtime.getChannel("test2") as SharedMap;
+            const testChannel1OfDataStore2 = await dataStore2.runtime.getChannel("test1") as SharedMap;
+            const testChannel2OfDataStore2 = await dataStore2.runtime.getChannel("test2") as SharedMap;
 
-            testChannel1OfComponent2.set("test2handle", channel2.handle);
-            testChannel2OfComponent2.set("test1handle", channel1.handle);
+            testChannel1OfDataStore2.set("test2handle", channel2.handle);
+            testChannel2OfDataStore2.set("test1handle", channel1.handle);
 
             channel1.handle.attachGraph();
-            assert.strictEqual(testChannel1OfComponent2.isAttached(), true,
+            assert.strictEqual(testChannel1OfDataStore2.isAttached(), true,
                 "Test Channel 1 should be bound now after attaching graph it");
-            assert.strictEqual(testChannel2OfComponent2.isAttached(), true,
+            assert.strictEqual(testChannel2OfDataStore2.isAttached(), true,
                 "Test Channel 2 should be bound now after attaching other DDS");
         });
 
-    it("Stick handle of 2 dds(of 2 different components) in each other and then attaching 1 DDS should " +
-        "attach other DDS and component with correct recursion",
+    it("Stick handle of 2 dds(of 2 different dataStores) in each other and then attaching 1 DDS should " +
+        "attach other DDS and dataStore with correct recursion",
         async () => {
-            const { container, defaultComponent } =
-                await createDetachedContainerAndGetRootComponent();
+            const { container, defaultDataStore } =
+                await createDetachedContainerAndGetRootDataStore();
             await container.attach(request);
 
-            // Create another component which returns the runtime channel.
-            const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
-            const component2 = peerComponent1.peerComponent;
-            assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
-                createTestStatementForAttachedDetached("Component2", false));
-            assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
-                "Component2 should be unattached");
+            // Create another dataStore which returns the runtime channel.
+            const peerDataStore1 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+            const dataStore2 = peerDataStore1.peerDataStore;
+            assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
+                createTestStatementForAttachedDetached("DataStore2", false));
+            assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
+                "DataStore2 should be unattached");
 
-            // Create another component which returns the runtime channel.
-            const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
-            const component3 = peerComponent2.peerComponent;
-            assert.strictEqual(component3.runtime.IFluidHandleContext.isAttached, false,
-                createTestStatementForAttachedDetached("Component2", false));
+            // Create another dataStore which returns the runtime channel.
+            const peerDataStore2 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+            const dataStore3 = peerDataStore2.peerDataStore;
+            assert.strictEqual(dataStore3.runtime.IFluidHandleContext.isAttached, false,
+                createTestStatementForAttachedDetached("DataStore2", false));
 
-            // Create first channel from component2
-            const channel2 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
+            // Create first channel from dataStore2
+            const channel2 = dataStore2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
 
-            // Create second channel from component 3
-            const channel3 = component3.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
+            // Create second channel from dataStore 3
+            const channel3 = dataStore3.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
 
-            const testChannelOfComponent2 = await component2.runtime.getChannel("test1") as SharedMap;
-            const testChannelOfComponent3 = await component3.runtime.getChannel("test2") as SharedMap;
+            const testChannelOfDataStore2 = await dataStore2.runtime.getChannel("test1") as SharedMap;
+            const testChannelOfDataStore3 = await dataStore3.runtime.getChannel("test2") as SharedMap;
 
-            testChannelOfComponent2.set("channel3handle", channel3.handle);
-            testChannelOfComponent3.set("channel2handle", channel2.handle);
+            testChannelOfDataStore2.set("channel3handle", channel3.handle);
+            testChannelOfDataStore3.set("channel2handle", channel2.handle);
 
             // Currently it will go in infinite loop.
             channel2.handle.attachGraph();
-            assert.strictEqual(testChannelOfComponent2.isAttached(), true,
+            assert.strictEqual(testChannelOfDataStore2.isAttached(), true,
                 "Test Channel 1 should be bound now after attaching it");
-            assert.strictEqual(testChannelOfComponent3.isAttached(), true,
+            assert.strictEqual(testChannelOfDataStore3.isAttached(), true,
                 "Test Channel 2 should be bound now after attaching other DDS");
-            assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, true,
-                "Component 2 should be attached");
-            assert.strictEqual(component3.runtime.IFluidHandleContext.isAttached, true,
-                "Component 3 should be attached");
+            assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, true,
+                "DataStore 2 should be attached");
+            assert.strictEqual(dataStore3.runtime.IFluidHandleContext.isAttached, true,
+                "DataStore 3 should be attached");
         });
 
-    it("Stick handle of 2 different components and dds in each other and then attaching 1 component should " +
-        "attach other components and dds with correct recursion",
+    it("Stick handle of 2 different dataStores and dds in each other and then attaching 1 dataStore should " +
+        "attach other dataStores and dds with correct recursion",
         async () => {
-            const { container, defaultComponent } =
-                await createDetachedContainerAndGetRootComponent();
+            const { container, defaultDataStore } =
+                await createDetachedContainerAndGetRootDataStore();
             await container.attach(request);
 
-            // Create another component which returns the runtime channel.
-            const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
-            const component2 = peerComponent1.peerComponent as TestFluidComponent;
-            assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
-                "Component2 should be unattached");
+            // Create another data store which returns the runtime channel.
+            const peerDataStore1 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+            const dataStore2 = peerDataStore1.peerDataStore as TestFluidObject;
+            assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
+                "DataStore2 should be unattached");
 
-            // Create another component which returns the runtime channel.
-            const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
-            const component3 = peerComponent2.peerComponent as TestFluidComponent;
-            assert.strictEqual(component3.runtime.IFluidHandleContext.isAttached, false,
-                "Component3 should be unattached");
+            // Create another data store which returns the runtime channel.
+            const peerDataStore2 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+            const dataStore3 = peerDataStore2.peerDataStore as TestFluidObject;
+            assert.strictEqual(dataStore3.runtime.IFluidHandleContext.isAttached, false,
+                "DataStore3 should be unattached");
 
-            // Create first channel from component2
-            const channel2 = await component2.getSharedObject<SharedMap>(mapId1);
+            // Create first channel from dataStore2
+            const channel2 = await dataStore2.getSharedObject<SharedMap>(mapId1);
             assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
 
-            // Create second channel from component 3
-            const channel3 = await component3.getSharedObject<SharedMap>(mapId2);
+            // Create second channel from dataStore 3
+            const channel3 = await dataStore3.getSharedObject<SharedMap>(mapId2);
             assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
 
-            // component2 POINTS TO component3, channel3
-            // component3 POINTS TO component2, channel2
-            // channel2   POINTS TO component3, channel3
-            // channel3   POINTS TO component2, channel2
+            // dataStore2 POINTS TO dataStore3, channel3
+            // dataStore3 POINTS TO dataStore2, channel2
+            // channel2   POINTS TO dataStore3, channel3
+            // channel3   POINTS TO dataStore2, channel2
             channel2.set("channel3handle", channel3.handle);
             channel3.set("channel2handle", channel2.handle);
-            channel2.set("component3", component3.handle);
-            channel3.set("component2", component2.handle);
-            component2.handle.bind(component3.handle);
-            component2.handle.bind(channel3.handle);
-            component3.handle.bind(component2.handle);
-            component3.handle.bind(channel2.handle);
+            channel2.set("dataStore3", dataStore3.handle);
+            channel3.set("dataStore2", dataStore2.handle);
+            dataStore2.handle.bind(dataStore3.handle);
+            dataStore2.handle.bind(channel3.handle);
+            dataStore3.handle.bind(dataStore2.handle);
+            dataStore3.handle.bind(channel2.handle);
 
-            component2.handle.attachGraph();
+            dataStore2.handle.attachGraph();
             assert.strictEqual(channel2.isAttached(), true,
                 "Test Channel 2 should be bound now after attaching it");
             assert.strictEqual(channel3.isAttached(), true,
                 "Test Channel 3 should be bound now after attaching other DDS");
-            assert.strictEqual(component2.handle.isAttached, true,
-                createTestStatementForAttachedDetached("Component2", true));
+            assert.strictEqual(dataStore2.handle.isAttached, true,
+                createTestStatementForAttachedDetached("DataStore2", true));
         });
 
-    it("Generate more than 1 dds of a component and then stick handles in different dds and then attaching " +
+    it("Generate more than 1 dds of a dataStore and then stick handles in different dds and then attaching " +
         "1 handle should attach entire graph",
         async () => {
-            const { container, defaultComponent } =
-                await createDetachedContainerAndGetRootComponent();
+            const { container, defaultDataStore } =
+                await createDetachedContainerAndGetRootDataStore();
             await container.attach(request);
 
-            // Create another component which returns the runtime channel.
-            const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
-            const component2 = peerComponent1.peerComponent as TestFluidComponent;
-            assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, false,
-                "Component2 should be unattached");
+            // Create another dataStore which returns the runtime channel.
+            const peerDataStore1 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+            const dataStore2 = peerDataStore1.peerDataStore as TestFluidObject;
+            assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, false,
+                "DataStore2 should be unattached");
 
-            // Create another component which returns the runtime channel.
-            // Create another component which returns the runtime channel.
-            const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
-            const component3 = peerComponent2.peerComponent as TestFluidComponent;
-            assert.strictEqual(component3.runtime.IFluidHandleContext.isAttached, false,
-                "Component3 should be unattached");
+            // Create another dataStore which returns the runtime channel.
+            // Create another dataStore which returns the runtime channel.
+            const peerDataStore2 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+            const dataStore3 = peerDataStore2.peerDataStore as TestFluidObject;
+            assert.strictEqual(dataStore3.runtime.IFluidHandleContext.isAttached, false,
+                "DataStore3 should be unattached");
 
-            // Create another component which returns the runtime channel.
-            const peerComponent3 = await createPeerComponent(defaultComponent.context.containerRuntime);
-            const component4 = peerComponent3.peerComponent as TestFluidComponent;
-            assert.strictEqual(component4.runtime.IFluidHandleContext.isAttached, false,
-                "Component4 should be unattached");
+            // Create another dataStore which returns the runtime channel.
+            const peerDataStore3 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+            const dataStore4 = peerDataStore3.peerDataStore as TestFluidObject;
+            assert.strictEqual(dataStore4.runtime.IFluidHandleContext.isAttached, false,
+                "DataStore4 should be unattached");
 
-            // Create two channel from component2
-            const channel1OfComponent2 = await component2.getSharedObject<SharedMap>(mapId1);
-            assert.strictEqual(channel1OfComponent2.handle.isAttached, false, "Channel should be detached");
+            // Create two channel from dataStore2
+            const channel1OfDataStore2 = await dataStore2.getSharedObject<SharedMap>(mapId1);
+            assert.strictEqual(channel1OfDataStore2.handle.isAttached, false, "Channel should be detached");
 
-            const channel2OfComponent2 = await component2.getSharedObject<SharedMap>(mapId2);
-            assert.strictEqual(channel2OfComponent2.handle.isAttached, false, "Channel should be detached");
+            const channel2OfDataStore2 = await dataStore2.getSharedObject<SharedMap>(mapId2);
+            assert.strictEqual(channel2OfDataStore2.handle.isAttached, false, "Channel should be detached");
 
-            // Create two channel from component 3
-            const channel1OfComponent3 = await component3.getSharedObject<SharedMap>(mapId1);
-            assert.strictEqual(channel1OfComponent3.handle.isAttached, false, "Channel should be detached");
+            // Create two channel from dataStore 3
+            const channel1OfDataStore3 = await dataStore3.getSharedObject<SharedMap>(mapId1);
+            assert.strictEqual(channel1OfDataStore3.handle.isAttached, false, "Channel should be detached");
 
-            const channel2OfComponent3 = await component3.getSharedObject<SharedMap>(mapId2);
-            assert.strictEqual(channel2OfComponent3.handle.isAttached, false, "Channel should be detached");
+            const channel2OfDataStore3 = await dataStore3.getSharedObject<SharedMap>(mapId2);
+            assert.strictEqual(channel2OfDataStore3.handle.isAttached, false, "Channel should be detached");
 
-            // Create one channel from component 4
-            const channel1OfComponent4 = await component4.getSharedObject<SharedMap>(mapId1);
-            assert.strictEqual(channel1OfComponent4.handle.isAttached, false, "Channel should be detached");
+            // Create one channel from dataStore 4
+            const channel1OfDataStore4 = await dataStore4.getSharedObject<SharedMap>(mapId1);
+            assert.strictEqual(channel1OfDataStore4.handle.isAttached, false, "Channel should be detached");
 
-            channel2OfComponent2.set("componet3Handle", component3.handle);
-            channel1OfComponent3.set("channel23handle", channel2OfComponent3.handle);
-            component3.handle.bind(component4.handle);
+            channel2OfDataStore2.set("componet3Handle", dataStore3.handle);
+            channel1OfDataStore3.set("channel23handle", channel2OfDataStore3.handle);
+            dataStore3.handle.bind(dataStore4.handle);
 
-            // Channel 1 of component 2 points to its parent component 2.
-            // Channel 2 of component 2 points to its parent component 2 and also to component 3.
-            // Channel 1 of component 3 points to its parent component 3 and its sibling channel 2 of component 3.
-            // Channel 2 of component 3 points to its parent component 3.
-            // Channel 1 of component 4 points to its parent component 4.
-            // Component 3 points to component 4.
-            channel1OfComponent2.handle.attachGraph();
+            // Channel 1 of dataStore 2 points to its parent dataStore 2.
+            // Channel 2 of dataStore 2 points to its parent dataStore 2 and also to dataStore 3.
+            // Channel 1 of dataStore 3 points to its parent dataStore 3 and its sibling channel 2 of dataStore 3.
+            // Channel 2 of dataStore 3 points to its parent dataStore 3.
+            // Channel 1 of dataStore 4 points to its parent dataStore 4.
+            // DataStore 3 points to dataStore 4.
+            channel1OfDataStore2.handle.attachGraph();
 
-            // Everything should be attached except channel 1 of component 4
-            assert.strictEqual(channel1OfComponent2.isAttached(), true, "Test Channel 12 should be bound");
-            assert.strictEqual(channel2OfComponent2.isAttached(), true, "Test Channel 22 should be bound");
-            assert.strictEqual(channel1OfComponent3.isAttached(), true, "Test Channel 13 should be bound");
-            assert.strictEqual(channel2OfComponent3.isAttached(), true, "Test Channel 23 should be bound");
-            assert.strictEqual(component2.runtime.IFluidHandleContext.isAttached, true,
-                "Component 2 should have get bound");
-            assert.strictEqual(component3.runtime.IFluidHandleContext.isAttached, true,
-                "Component 3 should have get bound");
-            assert.strictEqual(component4.runtime.IFluidHandleContext.isAttached, true,
-                "Component 4 should have get bound");
-            assert.strictEqual(channel1OfComponent4.isAttached(), true, "Test Channel 14 should be bound");
+            // Everything should be attached except channel 1 of dataStore 4
+            assert.strictEqual(channel1OfDataStore2.isAttached(), true, "Test Channel 12 should be bound");
+            assert.strictEqual(channel2OfDataStore2.isAttached(), true, "Test Channel 22 should be bound");
+            assert.strictEqual(channel1OfDataStore3.isAttached(), true, "Test Channel 13 should be bound");
+            assert.strictEqual(channel2OfDataStore3.isAttached(), true, "Test Channel 23 should be bound");
+            assert.strictEqual(dataStore2.runtime.IFluidHandleContext.isAttached, true,
+                "DataStore 2 should have get bound");
+            assert.strictEqual(dataStore3.runtime.IFluidHandleContext.isAttached, true,
+                "DataStore 3 should have get bound");
+            assert.strictEqual(dataStore4.runtime.IFluidHandleContext.isAttached, true,
+                "DataStore 4 should have get bound");
+            assert.strictEqual(channel1OfDataStore4.isAttached(), true, "Test Channel 14 should be bound");
         });
 
     it("Attach events on container", async () => {
         const { container } =
-            await createDetachedContainerAndGetRootComponent();
+            await createDetachedContainerAndGetRootDataStore();
         let containerAttachState = AttachState.Detached;
         container.on("attaching", () => {
             assert.strictEqual(containerAttachState, AttachState.Detached, "Should be fire from Detached state");
@@ -509,141 +507,141 @@ describe(`Attach/Bind Api Tests For Attached Container`, () => {
         assert.strictEqual(containerAttachState, AttachState.Attached, "Container should end up in attached state");
     });
 
-    it("Attach events on components", async () => {
-        const { container, defaultComponent } =
-            await createDetachedContainerAndGetRootComponent();
-        let componentContextAttachState = AttachState.Detached;
-        let componentRuntimeAttachState = AttachState.Detached;
-        defaultComponent.context.once("attaching", () => {
-            assert.strictEqual(componentContextAttachState, AttachState.Detached,
+    it("Attach events on dataStores", async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
+        let dataStoreContextAttachState = AttachState.Detached;
+        let dataStoreRuntimeAttachState = AttachState.Detached;
+        defaultDataStore.context.once("attaching", () => {
+            assert.strictEqual(dataStoreContextAttachState, AttachState.Detached,
                 "Should be fire from Detached state for context");
-            assert.strictEqual(defaultComponent.context.attachState, AttachState.Attaching,
-                "Component context should be attaching at this stage");
-            componentContextAttachState = AttachState.Attaching;
+            assert.strictEqual(defaultDataStore.context.attachState, AttachState.Attaching,
+                "DataStore context should be attaching at this stage");
+            dataStoreContextAttachState = AttachState.Attaching;
         });
 
-        defaultComponent.context.once("attached", () => {
-            assert.strictEqual(componentContextAttachState, AttachState.Attaching,
+        defaultDataStore.context.once("attached", () => {
+            assert.strictEqual(dataStoreContextAttachState, AttachState.Attaching,
                 "Should be fire from attaching state for context");
-            assert.strictEqual(defaultComponent.context.attachState, AttachState.Attached,
-                "Component context should be attached at this stage");
-            componentContextAttachState = AttachState.Attached;
+            assert.strictEqual(defaultDataStore.context.attachState, AttachState.Attached,
+                "DataStore context should be attached at this stage");
+            dataStoreContextAttachState = AttachState.Attached;
         });
 
-        defaultComponent.runtime.once("attaching", () => {
-            assert.strictEqual(componentRuntimeAttachState, AttachState.Detached,
+        defaultDataStore.runtime.once("attaching", () => {
+            assert.strictEqual(dataStoreRuntimeAttachState, AttachState.Detached,
                 "Should be fire from Detached state for runtime");
-            assert.strictEqual(defaultComponent.runtime.attachState, AttachState.Attaching,
-                "Component runtime should be attaching at this stage");
-            componentRuntimeAttachState = AttachState.Attaching;
+            assert.strictEqual(defaultDataStore.runtime.attachState, AttachState.Attaching,
+                "Data store runtime should be attaching at this stage");
+            dataStoreRuntimeAttachState = AttachState.Attaching;
         });
 
-        defaultComponent.runtime.once("attached", () => {
-            assert.strictEqual(componentRuntimeAttachState, AttachState.Attaching,
+        defaultDataStore.runtime.once("attached", () => {
+            assert.strictEqual(dataStoreRuntimeAttachState, AttachState.Attaching,
                 "Should be fire from attaching state for runtime");
-            assert.strictEqual(defaultComponent.runtime.attachState, AttachState.Attached,
-                "Component runtime should be attached at this stage");
-            componentRuntimeAttachState = AttachState.Attached;
+            assert.strictEqual(defaultDataStore.runtime.attachState, AttachState.Attached,
+                "Data store runtime should be attached at this stage");
+            dataStoreRuntimeAttachState = AttachState.Attached;
         });
         await container.attach(request);
-        assert.strictEqual(componentContextAttachState, AttachState.Attached,
-            "Component context should end up in attached state");
-        assert.strictEqual(componentRuntimeAttachState, AttachState.Attached,
-            "Component runtime should end up in attached state");
+        assert.strictEqual(dataStoreContextAttachState, AttachState.Attached,
+            "DataStore context should end up in attached state");
+        assert.strictEqual(dataStoreRuntimeAttachState, AttachState.Attached,
+            "Data store runtime should end up in attached state");
     });
 
-    it("Attach events on not bounded components", async () => {
-        const { container, defaultComponent } =
-            await createDetachedContainerAndGetRootComponent();
-        const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
-        const component1 = peerComponent1.peerComponent as TestFluidComponent;
-        peerComponent1.peerComponentRuntimeChannel.bindToContext();
+    it("Attach events on not bounded dataStores", async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
+        const peerDataStore1 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+        const dataStore1 = peerDataStore1.peerDataStore as TestFluidObject;
+        peerDataStore1.peerDataStoreRuntimeChannel.bindToContext();
 
-        const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
-        const component2 = peerComponent2.peerComponent as TestFluidComponent;
+        const peerDataStore2 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+        const dataStore2 = peerDataStore2.peerDataStore as TestFluidObject;
 
-        let component1AttachState = AttachState.Detached;
-        component1.context.once("attaching", () => {
-            assert.strictEqual(component1AttachState, AttachState.Detached,
+        let dataStore1AttachState = AttachState.Detached;
+        dataStore1.context.once("attaching", () => {
+            assert.strictEqual(dataStore1AttachState, AttachState.Detached,
                 "Should be fire from Detached state for context");
-            assert.strictEqual(component1.context.attachState, AttachState.Attaching,
-                "Component context should be attaching at this stage");
-            component1AttachState = AttachState.Attaching;
+            assert.strictEqual(dataStore1.context.attachState, AttachState.Attaching,
+                "DataStore context should be attaching at this stage");
+            dataStore1AttachState = AttachState.Attaching;
         });
 
-        component1.context.once("attached", () => {
-            assert.strictEqual(component1AttachState, AttachState.Attaching,
+        dataStore1.context.once("attached", () => {
+            assert.strictEqual(dataStore1AttachState, AttachState.Attaching,
                 "Should be fire from attaching state for context");
-            assert.strictEqual(component1.context.attachState, AttachState.Attached,
-                "Component context should be attached at this stage");
-            component1AttachState = AttachState.Attached;
+            assert.strictEqual(dataStore1.context.attachState, AttachState.Attached,
+                "DataStore context should be attached at this stage");
+            dataStore1AttachState = AttachState.Attached;
         });
 
-        component2.context.once("attaching", () => {
+        dataStore2.context.once("attaching", () => {
             assert.fail("Attaching event should not be fired for not bounded context");
         });
 
-        component2.context.once("attached", () => {
+        dataStore2.context.once("attached", () => {
             assert.fail("Attached event should not be fired for not bounded context");
         });
         await container.attach(request);
-        assert.strictEqual(component1.runtime.attachState, AttachState.Attached,
-            "Component 1 should end up in attached state");
-        assert.strictEqual(component2.runtime.attachState, AttachState.Detached,
-            "Component 2 should end up in detached state as it was not bound");
+        assert.strictEqual(dataStore1.runtime.attachState, AttachState.Attached,
+            "DataStore 1 should end up in attached state");
+        assert.strictEqual(dataStore2.runtime.attachState, AttachState.Detached,
+            "DataStore 2 should end up in detached state as it was not bound");
     });
 
-    it("Attach events on handle bounded components", async () => {
-        const { container, defaultComponent } =
-            await createDetachedContainerAndGetRootComponent();
-        const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
-        const component1 = peerComponent1.peerComponent as TestFluidComponent;
-        peerComponent1.peerComponentRuntimeChannel.bindToContext();
+    it("Attach events on handle bounded dataStores", async () => {
+        const { container, defaultDataStore } =
+            await createDetachedContainerAndGetRootDataStore();
+        const peerDataStore1 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+        const dataStore1 = peerDataStore1.peerDataStore as TestFluidObject;
+        peerDataStore1.peerDataStoreRuntimeChannel.bindToContext();
 
-        const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
-        const component2 = peerComponent2.peerComponent as TestFluidComponent;
+        const peerDataStore2 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+        const dataStore2 = peerDataStore2.peerDataStore as TestFluidObject;
 
-        const rootMapOfComponent1 = await component1.getSharedObject<SharedMap>(mapId1);
-        rootMapOfComponent1.set("comp2", component2.handle);
+        const rootMapOfDataStore1 = await dataStore1.getSharedObject<SharedMap>(mapId1);
+        rootMapOfDataStore1.set("comp2", dataStore2.handle);
 
-        let component1AttachState = AttachState.Detached;
-        let component2AttachState = AttachState.Detached;
-        component1.context.once("attaching", () => {
-            assert.strictEqual(component1AttachState, AttachState.Detached,
+        let dataStore1AttachState = AttachState.Detached;
+        let dataStore2AttachState = AttachState.Detached;
+        dataStore1.context.once("attaching", () => {
+            assert.strictEqual(dataStore1AttachState, AttachState.Detached,
                 "Should be fire from Detached state for context");
-            assert.strictEqual(component1.context.attachState, AttachState.Attaching,
-                "Component context should be attaching at this stage");
-            component1AttachState = AttachState.Attaching;
+            assert.strictEqual(dataStore1.context.attachState, AttachState.Attaching,
+                "DataStore context should be attaching at this stage");
+            dataStore1AttachState = AttachState.Attaching;
         });
 
-        component1.context.once("attached", () => {
-            assert.strictEqual(component1AttachState, AttachState.Attaching,
+        dataStore1.context.once("attached", () => {
+            assert.strictEqual(dataStore1AttachState, AttachState.Attaching,
                 "Should be fire from attaching state for context");
-            assert.strictEqual(component1.context.attachState, AttachState.Attached,
-                "Component context should be attached at this stage");
-            component1AttachState = AttachState.Attached;
+            assert.strictEqual(dataStore1.context.attachState, AttachState.Attached,
+                "DataStore context should be attached at this stage");
+            dataStore1AttachState = AttachState.Attached;
         });
 
-        component2.context.once("attaching", () => {
-            assert.strictEqual(component2AttachState, AttachState.Detached,
+        dataStore2.context.once("attaching", () => {
+            assert.strictEqual(dataStore2AttachState, AttachState.Detached,
                 "Should be fire from Detached state for context");
-            assert.strictEqual(component2.context.attachState, AttachState.Attaching,
-                "Component context should be attaching at this stage");
-            component2AttachState = AttachState.Attaching;
+            assert.strictEqual(dataStore2.context.attachState, AttachState.Attaching,
+                "DataStore context should be attaching at this stage");
+            dataStore2AttachState = AttachState.Attaching;
         });
 
-        component2.context.once("attached", () => {
-            assert.strictEqual(component2AttachState, AttachState.Attaching,
+        dataStore2.context.once("attached", () => {
+            assert.strictEqual(dataStore2AttachState, AttachState.Attaching,
                 "Should be fire from attaching state for context");
-            assert.strictEqual(component2.context.attachState, AttachState.Attached,
-                "Component context should be attached at this stage");
-            component2AttachState = AttachState.Attached;
+            assert.strictEqual(dataStore2.context.attachState, AttachState.Attached,
+                "DataStore context should be attached at this stage");
+            dataStore2AttachState = AttachState.Attached;
         });
         await container.attach(request);
-        assert.strictEqual(component1.runtime.attachState, AttachState.Attached,
-            "Component 1 should end up in attached state");
-        assert.strictEqual(component2.runtime.attachState, AttachState.Attached,
-            "Component 2 should end up in attached state as its handle was stored in map of bound component");
+        assert.strictEqual(dataStore1.runtime.attachState, AttachState.Attached,
+            "DataStore 1 should end up in attached state");
+        assert.strictEqual(dataStore2.runtime.attachState, AttachState.Attached,
+            "DataStore 2 should end up in attached state as its handle was stored in map of bound dataStore");
     });
 
     afterEach(async () => {

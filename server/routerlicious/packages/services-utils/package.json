@@ -1,7 +1,8 @@
 {
   "name": "@fluidframework/server-services-utils",
-  "version": "0.1011.0",
-  "description": "Fluid service lambdas",
+  "version": "0.1012.0",
+  "description": "Fluid server services shared utilities",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -24,7 +25,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/protocol-definitions": "^0.1011.0",
+    "@fluidframework/protocol-definitions": "^0.1012.0",
     "@sentry/node": "^5.6.2",
     "debug": "^4.1.1",
     "nconf": "^0.10.0",

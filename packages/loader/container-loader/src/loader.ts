@@ -10,7 +10,7 @@ import {
     IFluidObject,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
     ICodeLoader,
     IContainer,
@@ -38,7 +38,7 @@ import { debug } from "./debug";
 import { IParsedUrl, parseUrl } from "./utils";
 
 function canUseCache(request: IRequest): boolean {
-    if (!request.headers) {
+    if (request.headers === undefined) {
         return true;
     }
 
@@ -79,7 +79,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         const baseRequest = this.baseRequest();
         if (request.url.startsWith("/")) {
             if (this.needExecutionContext(request)) {
-                if (!baseRequest) {
+                if (baseRequest === undefined) {
                     throw new Error("Base Request is not provided");
                 }
                 return (this.loader as Loader).requestWorker(baseRequest.url, request);
@@ -87,7 +87,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
                 let container: IContainer;
                 if (canUseCache(request)) {
                     container = await this.containerDeferred.promise;
-                } else if (!baseRequest) {
+                } else if (baseRequest === undefined) {
                     throw new Error("Base Request is not provided");
                 } else {
                     container = await this.loader.resolve({ url: baseRequest.url, headers: request.headers });
@@ -144,7 +144,7 @@ export class Loader extends EventEmitter implements ILoader {
         documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
-        private readonly scope: IFluidObject & IFluidObject,
+        private readonly scope: IFluidObject,
         private readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
         logger?: ITelemetryBaseLogger,
     ) {
@@ -152,20 +152,8 @@ export class Loader extends EventEmitter implements ILoader {
 
         this.subLogger = DebugLogger.mixinDebugLogger("fluid:telemetry", logger, { loaderId: uuid() });
         this.logger = ChildLogger.create(this.subLogger, "Loader");
-
-        if (!resolver) {
-            throw new Error("An IUrlResolver must be provided");
-        }
         this.resolver = createCachedResolver(MultiUrlResolver.create(resolver));
-
-        if (!documentServiceFactory) {
-            throw new Error("An IDocumentServiceFactory must be provided");
-        }
         this.documentServiceFactory = MultiDocumentServiceFactory.create(documentServiceFactory);
-
-        if (!codeLoader) {
-            throw new Error("An ICodeLoader must be provided");
-        }
     }
 
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
@@ -203,14 +191,14 @@ export class Loader extends EventEmitter implements ILoader {
         const proxyLoaderFactory = this.proxyLoaderFactories.get(supportedEnvironment);
 
         // If the loader does not support any other environment, request falls back to current loader.
-        if (!proxyLoaderFactory) {
+        if (proxyLoaderFactory === undefined) {
             const container = await this.resolve({ url: baseUrl, headers: request.headers });
             return container.request(request);
         } else {
             const resolved = await this.resolver.resolve({ url: baseUrl, headers: request.headers });
             const resolvedAsFluid = resolved as IFluidResolvedUrl;
             const parsed = parseUrl(resolvedAsFluid.url);
-            if (!parsed) {
+            if (parsed === undefined) {
                 return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
             }
             const { fromSequenceNumber } =
@@ -231,24 +219,24 @@ export class Loader extends EventEmitter implements ILoader {
         const resolvedAsFluid = await this.resolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
 
-        // Parse URL into components
+        // Parse URL into data stores
         const parsed = parseUrl(resolvedAsFluid.url);
-        if (!parsed) {
+        if (parsed === undefined) {
             return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
         }
 
-        request.headers = request.headers ? request.headers : {};
+        request.headers = request.headers ?? {};
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
 
         debug(`${canCache} ${request.headers[LoaderHeader.pause]} ${request.headers[LoaderHeader.version]}`);
 
         let container: Container;
         if (canCache) {
-            const versionedId = request.headers[LoaderHeader.version]
+            const versionedId = request.headers[LoaderHeader.version] !== undefined
                 ? `${parsed.id}@${request.headers[LoaderHeader.version]}`
                 : parsed.id;
             const maybeContainer = await this.containers.get(versionedId);
-            if (maybeContainer) {
+            if (maybeContainer !== undefined) {
                 container = maybeContainer;
             } else {
                 const containerP =
@@ -284,14 +272,14 @@ export class Loader extends EventEmitter implements ILoader {
     }
 
     private canUseCache(request: IRequest): boolean {
-        if (!request.headers) {
+        if (request.headers === undefined) {
             return true;
         }
 
         const noCache =
             request.headers[LoaderHeader.cache] === false ||
             request.headers[LoaderHeader.reconnect] === false ||
-            request.headers[LoaderHeader.pause];
+            request.headers[LoaderHeader.pause] === true;
 
         return !noCache;
     }
@@ -299,15 +287,15 @@ export class Loader extends EventEmitter implements ILoader {
     private parseHeader(parsed: IParsedUrl, request: IRequest) {
         let fromSequenceNumber = -1;
 
-        request.headers = request.headers ? request.headers : {};
+        request.headers = request.headers ?? {};
 
         const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
-        if (headerSeqNum) {
+        if (headerSeqNum !== undefined) {
             fromSequenceNumber = headerSeqNum;
         }
 
         // If set in both query string and headers, use query string
-        request.headers[LoaderHeader.version] = parsed.version || request.headers[LoaderHeader.version];
+        request.headers[LoaderHeader.version] = parsed.version ?? request.headers[LoaderHeader.version];
 
         // Version === null means not use any snapshot.
         if (request.headers[LoaderHeader.version] === "null") {

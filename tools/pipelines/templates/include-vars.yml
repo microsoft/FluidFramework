@@ -1,0 +1,48 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# common variables
+
+parameters:
+- name: publishOverride
+  type: string
+  default: default
+
+- name: releaseBuildOverride
+  type: string
+  default: none
+
+variables:
+- name: skipComponentGovernanceDetection
+  value: true
+- name: shouldPublish
+  value: ${{
+    and(
+      ne(variables['Build.Reason'], 'PullRequest'),
+      ne(variables['System.TeamProject'], 'public')
+    )}}
+- name: publish
+  value: ${{
+    and(
+      ne(parameters.publishOverride, 'skip'),
+      eq(variables.shouldPublish, true)
+    )}}
+- name: componentDetection
+  value: ${{ variables.publish }}
+- name: pushImage
+  value: ${{
+    and(
+      variables.publish,
+      eq(variables['Build.SourceBranch'], 'refs/heads/main')
+    )}}
+# compute the release variable
+- ${{ if eq(parameters.releaseBuildOverride, 'none') }}:
+  - ${{ if eq(variables.shouldPublish, true) }}:
+    - name: release
+      value: $[variables.releaseBuild]
+  - ${{ if not(variables.shouldPublish) }}:
+    - name: release
+      value: none
+- ${{ if ne(parameters.releaseBuildOverride, 'none') }}:
+  - name: release
+    value: ${{ parameters.releaseBuildOverride }}

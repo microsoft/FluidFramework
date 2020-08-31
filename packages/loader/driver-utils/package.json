@@ -1,7 +1,8 @@
 {
   "name": "@fluidframework/driver-utils",
-  "version": "0.25.0",
+  "version": "0.26.0",
   "description": "Collection of utility functions for Fluid drivers",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -47,13 +48,13 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
-    "@fluidframework/common-utils": "^0.21.0",
-    "@fluidframework/component-core-interfaces": "^0.25.0",
-    "@fluidframework/driver-definitions": "^0.25.0",
-    "@fluidframework/gitresources": "^0.1010.0",
-    "@fluidframework/protocol-base": "^0.1010.0",
-    "@fluidframework/protocol-definitions": "^0.1010.0",
-    "@fluidframework/telemetry-utils": "^0.25.0"
+    "@fluidframework/common-utils": "^0.22.1",
+    "@fluidframework/core-interfaces": "^0.26.0",
+    "@fluidframework/driver-definitions": "^0.26.0",
+    "@fluidframework/gitresources": "^0.1011.1",
+    "@fluidframework/protocol-base": "^0.1011.1",
+    "@fluidframework/protocol-definitions": "^0.1011.1",
+    "@fluidframework/telemetry-utils": "^0.26.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",
@@ -72,7 +73,7 @@
     "eslint-plugin-prefer-arrow": "~1.1.7",
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
-    "mocha": "^8.0.1",
+    "mocha": "^8.1.1",
     "mocha-junit-reporter": "^1.18.0",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",

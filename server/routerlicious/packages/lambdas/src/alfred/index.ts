@@ -231,7 +231,12 @@ export function configureWebSocketServices(
 
                 // Eventually we will send disconnect reason as headers to client.
                 connection.once("error", (error) => {
-                    logger.error(`Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`);
+                    const messageMetaData = {
+                        documentId: connection.documentId,
+                        tenantId: connection.tenantId,
+                    };
+                    // eslint-disable-next-line max-len
+                    logger.error(`Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
                     socket.disconnect(true);
                 });
 
@@ -291,7 +296,11 @@ export function configureWebSocketServices(
                     }
                 },
                 (error) => {
-                    logger.error(`Connect Document error: ${safeStringify(error, undefined, 2)}`);
+                    const messageMetaData = {
+                        documentId: connectionMessage.id,
+                        tenantId: connectionMessage.tenantId,
+                    };
+                    logger.error(`Connect Document error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
                     socket.emit("connect_document_error", error);
                 });
         });
@@ -424,14 +433,22 @@ export function configureWebSocketServices(
         socket.on("disconnect", async () => {
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, connection] of connectionsMap) {
-                logger.info(`Disconnect of ${clientId}`);
+                const messageMetaData = {
+                    documentId: connection.documentId,
+                    tenantId: connection.tenantId,
+                };
+                logger.info(`Disconnect of ${clientId}`, { messageMetaData });
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 connection.disconnect();
             }
             // Send notification messages for all client IDs in the room map
             const removeP = [];
             for (const [clientId, room] of roomMap) {
-                logger.info(`Disconnect of ${clientId} from room`);
+                const messageMetaData = {
+                    documentId: room.documentId,
+                    tenantId: room.tenantId,
+                };
+                logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
                 removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
                 // Back-compat check for older clients.
                 if (versionMap.has(clientId)) {

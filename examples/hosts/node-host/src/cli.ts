@@ -5,7 +5,7 @@
 
 import * as readline from "readline";
 import { IKeyValue } from "@fluid-example/key-value-cache";
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 async function readlineAsync(input: readline.ReadLine, prompt: string): Promise<string> {
@@ -15,10 +15,10 @@ async function readlineAsync(input: readline.ReadLine, prompt: string): Promise<
 }
 
 /**
- * A simple command line utility to interact with the key-value-cache component.
+ * A simple command line utility to interact with the key-value-cache fluidObject.
  */
-export async function launchCLI(component: IFluidObject) {
-    const keyValue: IKeyValue | undefined = component.IKeyValue;
+export async function launchCLI(fluidObject: IFluidObject) {
+    const keyValue: IKeyValue | undefined = fluidObject.IKeyValue;
     if (keyValue === undefined) {
         return;
     }

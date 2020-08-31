@@ -23,13 +23,21 @@ parameters:
   type: string
   default: ci:test
 
+- name: taskAuth
+  type: boolean
+  default: true
+ 
+- name: extraAuth
+  type: string
+  default:
+
 - name: poolCG
   type: object
-  default: Shared
+  default: Lite
 
 - name: poolBuild
   type: object
-  default: Shared
+  default: Lite
 
 - name: preCG
   type: stepList
@@ -47,10 +55,30 @@ parameters:
   type: boolean
   default: true
 
+- name: runBundleAnalysis
+  type: boolean
+  default: false
+
+- name: buildNumberInPatch
+  type: string
+  default:
+
+- name: publishOverride
+  type: string
+
+- name: releaseBuildOverride
+  type: string
+
+- name: tagName
+  type: string
+
 trigger: none
 
 variables:
-  skipComponentGovernanceDetection: true
+  - template: include-vars.yml
+    parameters:
+      publishOverride: ${{ parameters.publishOverride }}
+      releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
 
 stages:
   - stage: build
@@ -60,8 +88,8 @@ stages:
       - job: Build
         pool: ${{ parameters.poolBuild }}
         variables:
-        - name: testCoverage
-          value: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
+          testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
+          releaseBuildVar: $[variables.releaseBuild]
         steps:
         # Setup
         - checkout: self
@@ -76,64 +104,58 @@ stages:
             script: |
               # Show all task group conditions
 
-              echo Build=${{ parameters.taskBuild }}
-              echo Lint=${{ parameters.taskLint }}
-              echo Test=${{ parameters.taskTest }}
-              echo BuildDoc=${{ parameters.taskBuildDocs }}
-              echo TestCoverage=$(testCoverage)
+              echo "
+              Pipeline Variables:
+                releaseBuild=$(releaseBuildVar)
 
-        - task: UseNode@1
-          displayName: Use Node 12.x
-          inputs: 
-            version: 12.x
+              Override Parameters:
+                publishOverride=${{ parameters.publishOverride }}
+                releaseBuildOverride=${{ parameters.releaseBuildOverride }}
 
-        - task: Bash@3
-          displayName: Strip MIT License
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
-            script: |
-              sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
-              perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
-              git status
+              Tasks Parameters:
+                Build=${{ parameters.taskBuild }}
+                Lint=${{ parameters.taskLint }}
+                Test=${{ parameters.taskTest }}
+                BuildDoc=${{ parameters.taskBuildDocs }}
+                TestCoverage=$(testCoverage)
+
+              Computed variables:
+                shouldPublish=${{ variables.shouldPublish }}
+                componentDetection=${{ variables.componentDetection }}
+                pushImage=${{ variables.pushImage }}
+                publish=${{ variables.publish }}
+                release=$(release)"
 
         # Install
+        - task: UseNode@1
+          displayName: Use Node 12.x
+          inputs:
+            version: 12.x
+        - ${{ if eq(parameters.taskAuth, true) }}:
+          - task: npmAuthenticate@0
+            displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/.npmrc'
+            inputs:
+              workingFile: ${{ parameters.buildDirectory }}/.npmrc
+              customEndpoint: Offnet Packages
+        - ${{ if ne(parameters.extraAuth, '') }}:
+          - task: npmAuthenticate@0
+            displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/${{ parameters.extraAuth }}/.npmrc'
+            inputs:
+              workingFile: ${{ parameters.buildDirectory }}/${{ parameters.extraAuth }}/.npmrc
+              customEndpoint: Offnet Packages
         - task: Npm@1
           displayName: npm ci
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.buildDirectory }}
             customCommand: 'ci --unsafe-perm'
-            customRegistry: 'useFeed'
-            customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+            customRegistry: 'useNpmrc'
 
         # Set version
-        - task: Bash@3
-          displayName: Set Package Version
-          env:
-            VERSION_BUILDBRANCH: $(Build.SourceBranch)
-            VERSION_BUILDNUMBER: $(Build.BuildNumber)
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
-            script: |
-              # expect lerna.json and package.json be in the current working directory
-
-              echo VERSION_BUILDBRANCH=$VERSION_BUILDBRANCH
-              echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
-
-              version=`node $(Build.SourcesDirectory)/tools/build-server-resources/build-version.js`
-              echo COMPUTED_VERSION=$version
-
-              if [ "$version" == '' ]; then
-                exit -1
-              fi
-
-              if [ -f "lerna.json" ]; then
-                npx lerna version $version --no-git-tag-version --no-push --yes
-              else
-                npm version --no-git-tag-version $version -f --allow-same-version
-              fi
+        - template: include-set-package-version.yml
+          parameters:
+            buildDirectory: ${{ parameters.buildDirectory }}
+            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -213,6 +235,23 @@ stages:
             ArtifactName: 'pack'
             publishLocation: 'Container'
 
+        # Collect bundle analysis
+        - ${{ if eq(parameters.runBundleAnalysis, true) }}:
+          - task: Npm@1
+            displayName: npm run bundle-analysis
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run bundle-analysis'
+
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifacts - bundle-analysis
+            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+            inputs:
+              PathtoPublish: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
+              Artifactname: 'bundleAnalysis'
+              publishLocation: 'Container'
+
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:
           - task: Npm@1
@@ -230,7 +269,7 @@ stages:
               publishLocation: 'Container'
 
       # Job - Component detection
-      - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+      - ${{ if eq(variables.componentDetection, true) }}:
         - job: CG
           displayName: Component Detection
           pool: ${{ parameters.poolCG }}
@@ -251,22 +290,11 @@ stages:
               alertWarningLevel: High
 
   # Publish stage
-  - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-    - stage: publish
-      dependsOn: build
-      displayName: Publish Stage
-      jobs:
-      - template: publish-npm-package.yml
-        parameters:
-          namespace: ${{ parameters.namespace }}
-          feeds:
-          - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
-            environment: fluid-feed
-            internal: true
-          # only publish release bits
-          - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
-            - name: https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
-              environment: office-feed
-              customEndPoint: Office Packages
-              internal: false
-
+  - ${{ if eq(variables.publish, true) }}:
+    - template: include-publish-npm-package.yml
+      parameters:
+        buildDirectory: ${{ parameters.buildDirectory }}
+        namespace: ${{ parameters.namespace }}
+        tagName: ${{ parameters.tagName }}
+        buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+        

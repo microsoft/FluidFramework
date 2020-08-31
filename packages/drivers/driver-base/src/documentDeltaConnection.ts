@@ -264,7 +264,6 @@ export class DocumentDeltaConnection
             this.details.initialContents.push(...this.queuedContents);
 
             this.details.initialContents.sort((a, b) =>
-                // tslint:disable-next-line:strict-boolean-expressions
                 (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) ||
                     a.clientSequenceNumber - b.clientSequenceNumber);
             this.queuedContents.length = 0;
@@ -387,8 +386,7 @@ export class DocumentDeltaConnection
                     return;
                 }
 
-                // TODO: Get latest server bits
-                this.checkpointSequenceNumber = (response as any).checkpointSequenceNumber;
+                this.checkpointSequenceNumber = response.checkpointSequenceNumber;
 
                 this.removeTrackedListeners(true);
                 resolve(response);

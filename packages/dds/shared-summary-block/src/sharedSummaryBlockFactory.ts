@@ -8,7 +8,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelServices,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import {
     ISharedObject,
 } from "@fluidframework/shared-object-base";
@@ -21,12 +21,12 @@ import { SharedSummaryBlock } from "./sharedSummaryBlock";
  */
 export class SharedSummaryBlockFactory implements IChannelFactory {
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
      */
     public static readonly Type = "https://graph.microsoft.com/types/shared-summary-block";
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
      */
     public static readonly Attributes: IChannelAttributes = {
         type: SharedSummaryBlockFactory.Type,
@@ -35,21 +35,21 @@ export class SharedSummaryBlockFactory implements IChannelFactory {
     };
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory."type"}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
      */
     public get type() {
         return SharedSummaryBlockFactory.Type;
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.attributes}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
      */
     public get attributes() {
         return SharedSummaryBlockFactory.Attributes;
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.load}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
      */
     public async load(
         runtime: IFluidDataStoreRuntime,
@@ -64,7 +64,7 @@ export class SharedSummaryBlockFactory implements IChannelFactory {
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#IChannelFactory.create}
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
      */
     public create(runtime: IFluidDataStoreRuntime, id: string): ISharedObject {
         const sharedSummaryBlock = new SharedSummaryBlock(id, runtime, SharedSummaryBlockFactory.Attributes);

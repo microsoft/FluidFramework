@@ -1,0 +1,100 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# publish-npm-package template to publish NPM packages/projects
+
+parameters:
+- name: feeds
+  type: object
+
+- name: pool
+  type: object
+  default: Lite
+
+- name: namespace
+  type: boolean
+
+jobs:
+  - ${{ each feed in parameters.feeds }}:
+    - deployment: publish_${{ replace(feed.environment, '-', '_') }}
+      variables:
+        enabled: ${{ feed.enabled }} 
+      displayName: Publish ${{ feed.environment }}
+      pool: ${{ parameters.pool }}
+      environment: ${{ feed.environment }}
+      condition: and(succeeded(), or(eq(variables['enabled'], 'release'), eq(variables['enabled'], 'prerelease')))
+      workspace:
+        clean: all
+      strategy:
+        runOnce:
+            deploy:
+                steps:
+                - download: current
+                  artifact: pack
+                - task: UseNode@1
+                  displayName: Use Node 12.x
+                  inputs: 
+                    version: 12.x
+                - task: Bash@3
+                  displayName: Generate .npmrc
+                  inputs:
+                    targetType: 'inline'
+                    workingDirectory: $(Pipeline.Workspace)/pack
+                    ${{ if eq(parameters.namespace, true) }}:
+                      ${{ if eq(feed.official, false) }}:
+                        script: |
+                          echo Generating .npmrc for ${{ feed.name }}
+                          echo "@fluidframework:registry=${{ feed.name }}" >> ./.npmrc
+                          echo "@fluid-example:registry=${{ feed.name }}" >> ./.npmrc
+                          echo "@fluid-internal:registry=${{ feed.name }}" >> ./.npmrc
+                          echo "always-auth=true" >> ./.npmrc
+                          cat .npmrc
+                      ${{ if eq(feed.official, true) }}:
+                        script: |
+                          echo Generating .npmrc for ${{ feed.name }}
+                          echo "@fluidframework:registry=${{ feed.name }}" >> ./.npmrc
+                          echo "always-auth=true" >> ./.npmrc
+                          cat .npmrc
+
+                          echo Deleteing @fluid-internal packages
+                          rm -f fluid-internal-*
+                          echo Deleteing @fluid-example packages
+                          rm -f fluid-example-*
+                    ${{ if eq(parameters.namespace, false) }}:
+                      script: |
+                        echo Generating .npmrc for ${{ feed.name }}
+                        echo "registry=${{ feed.name }}" >> ./.npmrc
+                        echo "always-auth=true" >> ./.npmrc
+                        cat .npmrc
+                - task: npmAuthenticate@0
+                  displayName: npm Authenticate
+                  inputs:
+                    workingFile: $(Pipeline.Workspace)/pack/.npmrc
+                    customEndPoint: ${{ feed.customEndPoint }}
+                - task: Bash@3
+                  displayName: Publish Packages
+                  inputs:
+                    targetType: 'inline'
+                    workingDirectory: $(Pipeline.Workspace)/pack
+                    script: |
+                      tag="--tag canary"
+                      if [[ "$(Build.SourceBranch)" = refs/heads/main ]]; then
+                        tag="--tag next"
+                      elif [[ "$(release)" == "release" ]]; then
+                        tag="--tag latest"
+                      fi
+                      echo Tag: $tag
+                      cp .npmrc ~/.npmrc
+                      t1=0
+                      for f in *.tgz
+                      do 
+                          if ! npm publish $f $tag ${{ feed.publishFlags }}
+                          then
+                              let t1+=1
+                          fi
+                      done
+                      rm ~/.npmrc
+                      exit $t1
+
+                - ${{ feed.tagSteps }}
+  

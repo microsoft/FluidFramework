@@ -6,78 +6,66 @@
 import assert from "assert";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    createAndAttachContainer,
     createLocalLoader,
     OpProcessingController,
-    ITestFluidComponent,
-    initializeLocalContainer,
-    TestFluidComponentFactory,
+    ITestFluidObject,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
+import { compatTest, ICompatTestArgs } from "./compatUtils";
 
-describe("TestSignals", () => {
-    const id = "fluid-test://localhost/localSignalsTest";
-    const codeDetails: IFluidCodeDetails = {
-        package: "localSignalsTestPackage",
-        config: {},
-    };
+const documentId = "localSignalsTest";
+const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+const codeDetails: IFluidCodeDetails = {
+    package: "localSignalsTestPackage",
+    config: {},
+};
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
+const tests = (args: ICompatTestArgs) => {
+    let dataObject1: ITestFluidObject;
+    let dataObject2: ITestFluidObject;
     let opProcessingController: OpProcessingController;
-    let component1: ITestFluidComponent;
-    let component2: ITestFluidComponent;
-
-    async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([]);
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-        return initializeLocalContainer(id, loader, codeDetails);
-    }
-
-    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
-        const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
-        }
-        return response.value as ITestFluidComponent;
-    }
 
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
+        const container1 = await args.makeTestContainer() as Container;
+        dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 
-        const container1 = await createContainer();
-        component1 = await requestFluidObject("default", container1);
+        const container2 = await args.loadTestContainer() as Container;
+        dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
-        const container2 = await createContainer();
-        component2 = await requestFluidObject("default", container2);
-
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
-        opProcessingController.addDeltaManagers(component1.runtime.deltaManager, component2.runtime.deltaManager);
+        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
+        opProcessingController.addDeltaManagers(dataObject1.runtime.deltaManager, dataObject2.runtime.deltaManager);
     });
 
     describe("Attach signal Handlers on Both Clients", () => {
-        it("Validate component runtime signals", async () => {
+        it("Validate data store runtime signals", async () => {
             let user1SignalReceivedCount = 0;
             let user2SignalReceivedCount = 0;
 
-            component1.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+            dataObject1.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
                 if (message.type === "TestSignal") {
                     user1SignalReceivedCount += 1;
                 }
             });
 
-            component2.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+            dataObject2.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
                 if (message.type === "TestSignal") {
                     user2SignalReceivedCount += 1;
                 }
             });
 
-            component1.runtime.submitSignal("TestSignal", true);
+            dataObject1.runtime.submitSignal("TestSignal", true);
             await opProcessingController.process();
             assert.equal(user1SignalReceivedCount, 1, "client 1 did not received signal");
             assert.equal(user2SignalReceivedCount, 1, "client 2 did not received signal");
 
-            component2.runtime.submitSignal("TestSignal", true);
+            dataObject2.runtime.submitSignal("TestSignal", true);
             await opProcessingController.process();
             assert.equal(user1SignalReceivedCount, 2, "client 1 did not received signal");
             assert.equal(user2SignalReceivedCount, 2, "client 2 did not received signal");
@@ -86,8 +74,8 @@ describe("TestSignals", () => {
         it("Validate host runtime signals", async () => {
             let user1SignalReceivedCount = 0;
             let user2SignalReceivedCount = 0;
-            const user1ContainerRuntime = component1.context.containerRuntime;
-            const user2ContainerRuntime = component2.context.containerRuntime;
+            const user1ContainerRuntime = dataObject1.context.containerRuntime;
+            const user2ContainerRuntime = dataObject2.context.containerRuntime;
 
             user1ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
                 if (message.type === "TestSignal") {
@@ -118,18 +106,18 @@ describe("TestSignals", () => {
         let user2HostSignalReceivedCount = 0;
         let user1CompSignalReceivedCount = 0;
         let user2CompSignalReceivedCount = 0;
-        const user1ContainerRuntime = component1.context.containerRuntime;
-        const user2ContainerRuntime = component2.context.containerRuntime;
-        const user1ComponentRuntime = component1.runtime;
-        const user2ComponentRuntime = component2.runtime;
+        const user1ContainerRuntime = dataObject1.context.containerRuntime;
+        const user2ContainerRuntime = dataObject2.context.containerRuntime;
+        const user1DtaStoreRuntime = dataObject1.runtime;
+        const user2DataStoreRuntime = dataObject2.runtime;
 
-        user1ComponentRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+        user1DtaStoreRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             if (message.type === "TestSignal") {
                 user1CompSignalReceivedCount += 1;
             }
         });
 
-        user2ComponentRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+        user2DataStoreRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             if (message.type === "TestSignal") {
                 user2CompSignalReceivedCount += 1;
             }
@@ -151,18 +139,48 @@ describe("TestSignals", () => {
         await opProcessingController.process();
         assert.equal(user1HostSignalReceivedCount, 1, "client 1 did not receive signal on host runtime");
         assert.equal(user2HostSignalReceivedCount, 1, "client 2 did not receive signal on host runtime");
-        assert.equal(user1CompSignalReceivedCount, 0, "client 1 should not receive signal on component runtime");
-        assert.equal(user2CompSignalReceivedCount, 0, "client 2 should not receive signal on component runtime");
+        assert.equal(user1CompSignalReceivedCount, 0, "client 1 should not receive signal on data store runtime");
+        assert.equal(user2CompSignalReceivedCount, 0, "client 2 should not receive signal on data store runtime");
 
-        user2ComponentRuntime.submitSignal("TestSignal", true);
+        user2DataStoreRuntime.submitSignal("TestSignal", true);
         await opProcessingController.process();
         assert.equal(user1HostSignalReceivedCount, 1, "client 1 should not receive signal on host runtime");
         assert.equal(user2HostSignalReceivedCount, 1, "client 2 should not receive signal on host runtime");
-        assert.equal(user1CompSignalReceivedCount, 1, "client 1 did not receive signal on component runtime");
-        assert.equal(user2CompSignalReceivedCount, 1, "client 2 did not receive signal on component runtime");
+        assert.equal(user1CompSignalReceivedCount, 1, "client 1 did not receive signal on data store runtime");
+        assert.equal(user2CompSignalReceivedCount, 1, "client 2 did not receive signal on data store runtime");
+    });
+};
+
+describe("TestSignals", () => {
+    const factory = new TestFluidObjectFactory([]);
+    let deltaConnectionServer: ILocalDeltaConnectionServer;
+    let urlResolver: IUrlResolver;
+    const makeTestContainer = async () => {
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+    };
+    const loadTestContainer = async () => {
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        return loader.resolve({ url: documentLoadUrl });
+    };
+
+    beforeEach(async () => {
+        deltaConnectionServer = LocalDeltaConnectionServer.create();
+        urlResolver = new LocalResolver();
+    });
+
+    tests({
+        makeTestContainer,
+        loadTestContainer,
+        get deltaConnectionServer() { return deltaConnectionServer; },
+        get urlResolver() { return urlResolver; },
     });
 
     afterEach(async () => {
         await deltaConnectionServer.webSocketServer.close();
+    });
+
+    describe("compatibility", () => {
+        compatTest(tests, { testFluidDataObject: true });
     });
 });

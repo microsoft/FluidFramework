@@ -78,7 +78,7 @@ from this URL to a Fluid based url of the form:
 And also provided the required access tokens with this. In the above the protocol part of the URL defines which Fluid
 driver to use to to talk to the server. The domain gives the location of the service. Document ID is the identifier for
 the Fluid document. And finally the path is a string handed down to the document itself and allows it to select which
-component to render and parameters for it.
+Fluid object to render and parameters for it.
 
 Deferring to the host for this resolution allows it to perform access control checks on the user's identity and only
 return the resolved Fluid URL with access tokens if these pass.
@@ -100,7 +100,7 @@ export interface IUrlResolver {
 ```
 
 This simple interface defines a single method, `resolve`, which takes in an `IRequest` object and resolves it to an
-`IResolvedUrl`. An `IRequest` is simply the URL for the document. And the `IResolvedUrl` is the fluid based URL
+`IResolvedUrl`. An `IRequest` is simply the URL for the document. And the `IResolvedUrl` is the Fluid based URL
 along with associated access tokens.
 
 In our example the URL format is of the form `http://localhost:8080/<documentId>/<path>`. To implement the resolve
@@ -223,18 +223,18 @@ if (response.status !== 200) {
 ```
 
 A mime type is also provided with the request to distinguish the type of object.  The most common thing you'll receive
-is a Fluid component. Components implement the attach interface which allow them to participate in the web component
+is a Fluid object. Fluid objects implement the attach interface which allow them to participate in the web component
 model. But a document could also return different mime types like static images, videos, etc...
 
-The host can then switch on the mime type and act accordingly. In the case of the component, we check if is a viewable
+The host can then switch on the mime type and act accordingly. In the case of the Fluid object, we check if is a viewable
 and provide it a div for it to render.
 
 ```typescript
 switch (response.mimeType) {
-    case "fluid/component":
-        // Check if the component is a view
-        const component = response.value as IComponent;
-        const view = component.IComponentHTMLView;
+    case "fluid/object":
+        // Check if the object is a view
+        const fluidObject = response.value as IFluidObject;
+        const view = fluidObject.IFluidHTMLView;
         if (!view) {
             return;
         }
@@ -244,14 +244,14 @@ switch (response.mimeType) {
 }
 ```
 
-#### IComponent interface
+#### IFluidObject interface
 
-The Fluid component model supports a delegation and feature detection mechanism. As is typical in JavaScript,
-a feature detection pattern can be used to determine what capabilities are exposed by a component. The `IComponent`
+The Fluid object model supports a delegation and feature detection mechanism. As is typical in JavaScript,
+a feature detection pattern can be used to determine what capabilities are exposed by an object. The `IFluidObject`
 interface serves as a Fluid-specific form of “any” that clients can cast objects to in order to probe for implemented
-component interfaces. For example, if you need to determine the capabilities that a component exposes, you first
-cast the object as an `IComponent`, and then access the property on the `IComponent` that matches the interface you
-are testing for.  The above checks if the component implements `IComponentHTMLView`, and uses it to get the instance
+object interfaces. For example, if you need to determine the capabilities that an object exposes, you first
+cast the object as an `IFluidObject`, and then access the property on the `IFluidObject` that matches the interface you
+are testing for.  The above checks if the object implements `IFluidHTMLView`, and uses it to get the instance
 that implements the rendering capability.
 
 ### Quoruming on a code package
@@ -305,10 +305,9 @@ if (!quorum.has("code")) {
 And that's all that's needed to create or load Fluid documents. It's intended to be light weight and simple to get
 setup as a host. And once done you gain full access to the power of the Fluid platform.
 
-Once you have a host setup the next best step to try is using our Fluid generator to create a new component.
-Insructions for that are at https://github.com/Microsoft/FluidFramework/blob/master/tools/generator-fluid/README.md.
+Instructions for that are at https://github.com/Microsoft/FluidFramework/blob/main/tools/generator-fluid/README.md.
 You can then publish this package to Verdaccio and load it inside of your new loader!
 
-When creating your new component also note that the API provides it access to the underlying loader. You can use this
-to follow similar attach steps as above to load components within your component. In this way your component can
+When creating your new Fluid object also note that the API provides it access to the underlying loader. You can use this
+to follow similar attach steps as above to load objects within your objects. In this way your Fluid object can
 also serve as a host for other Fluid content.

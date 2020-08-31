@@ -7,31 +7,12 @@ import {
     IFluidHandle,
     IFluidHandleContext,
     IFluidSerializer,
-} from "@fluidframework/component-core-interfaces";
-import { RemoteFluidObjectHandle } from "./remoteComponentHandle";
+} from "@fluidframework/core-interfaces";
+import { RemoteFluidObjectHandle } from "./remoteFluidObjectHandle";
 import { isSerializedHandle } from "./utils";
 
 /**
- * 0.21 back-compat
- * Retrieves the absolute URL for a handle
- */
-function toAbsoluteUrl(handle: IFluidHandle): string {
-    let result = "";
-    let context: IFluidHandleContext | undefined = handle;
-
-    while (context !== undefined) {
-        if (context.path !== "") {
-            result = `/${context.path}${result}`;
-        }
-
-        context = context.routeContext;
-    }
-
-    return result;
-}
-
-/**
- * Component serializer implementation
+ * Data Store serializer implementation
  */
 export class FluidSerializer implements IFluidSerializer {
     public get IFluidSerializer() { return this; }
@@ -138,20 +119,9 @@ export class FluidSerializer implements IFluidSerializer {
 
     private serializeHandle(handle: IFluidHandle, context: IFluidHandleContext, bind: IFluidHandle) {
         bind.bind(handle);
-        let url: string;
-
-        if ("absolutePath" in handle) {
-            url = handle.absolutePath;
-        } else {
-            // 0.21 back-compat
-            // 0.21 and earlier version do not have `absolutePath` so we genrate the absolute path from the
-            // routeContext's `path`.
-            url = toAbsoluteUrl(handle);
-        }
-
         return {
             type: "__fluid_handle__",
-            url,
+            url: handle.absolutePath,
         };
     }
 }

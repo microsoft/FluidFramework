@@ -7,9 +7,9 @@ import {
     Serializable,
     IFluidDataStoreRuntime,
     IChannelStorageService,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import { FileMode, TreeEntry } from "@fluidframework/protocol-definitions";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 
 export function serializeBlob(
@@ -23,7 +23,7 @@ export function serializeBlob(
     return {
         mode: FileMode.File,
         path,
-        type: TreeEntry[TreeEntry.Blob],
+        type: TreeEntry.Blob,
         value: {
             contents: serializer !== undefined
                 ? serializer.stringify(snapshot, runtime.IFluidHandleContext, handle)

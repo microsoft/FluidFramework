@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IDocumentService } from "@fluidframework/driver-definitions";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
@@ -33,8 +33,8 @@ describe("Odsp Create Container Test", () => {
     };
 
     const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
-        async (url: string, refresh: boolean) => "token",
-        async (refresh: boolean) => "token");
+        async (_url: string, _refresh: boolean, _claims?: string) => "token",
+        async (_refresh: boolean, _claims?: string) => "token");
 
     const createSummary = (putAppTree: boolean, putProtocolTree: boolean, sequenceNumber: number) => {
         const summary: ISummaryTree = {

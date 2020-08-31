@@ -4,8 +4,7 @@
  */
 
 import * as cell from "@fluidframework/cell";
-import { IRequest } from "@fluidframework/component-core-interfaces";
-import { FluidDataStoreRuntime } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
     ICodeLoader,
     IContainerContext,
@@ -15,7 +14,6 @@ import {
     IFluidModule,
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import * as ink from "@fluidframework/ink";
 import * as map from "@fluidframework/map";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
@@ -24,11 +22,16 @@ import {
     IFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { CreateContainerError } from "@fluidframework/container-utils";
 import * as sequence from "@fluidframework/sequence";
+import {
+    deprecated_innerRequestHandler,
+    buildRuntimeRequestHandler,
+} from "@fluidframework/request-handler";
+import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { Document } from "./document";
 
 const rootMapId = "root";
+const rootStoreId = "rootStore";
 const insightsMapId = "insights";
 
 export class Chaincode implements IFluidDataStoreFactory {
@@ -38,7 +41,7 @@ export class Chaincode implements IFluidDataStoreFactory {
 
     public constructor(private readonly closeFn: () => void) { }
 
-    public instantiateDataStore(context: IFluidDataStoreContext): void {
+    public async instantiateDataStore(context: IFluidDataStoreContext) {
         // Create channel factories
         const mapFactory = map.SharedMap.getFactory();
         const sharedStringFactory = sequence.SharedString.getFactory();
@@ -92,27 +95,13 @@ export class Chaincode implements IFluidDataStoreFactory {
                 value: document,
             };
         });
+
+        return runtime;
     }
 }
 
 export class ChaincodeFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
-
-    /**
-     * A request handler for a container runtime
-     * @param request - The request
-     * @param runtime - Container Runtime instance
-     */
-    private static async containerRequestHandler(request: IRequest, runtime: IContainerRuntime) {
-        const trimmed = request.url
-            .substr(1)
-            .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));
-
-        const componentId = trimmed !== "" ? trimmed : rootMapId;
-
-        const component = await runtime.getDataStore(componentId, true);
-        return component.request({ url: trimmed.substr(1 + trimmed.length) });
-    }
 
     constructor(
         private readonly runtimeOptions: IContainerRuntimeOptions,
@@ -122,24 +111,21 @@ export class ChaincodeFactory implements IRuntimeFactory {
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const chaincode = new Chaincode(context.closeFn);
 
-        const runtime = await ContainerRuntime.load(
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             [
                 [chaincode.type, Promise.resolve(chaincode)],
                 ...this.registries,
             ],
-            ChaincodeFactory.containerRequestHandler,
+            buildRuntimeRequestHandler(
+                defaultRouteRequestHandler(rootStoreId),
+                deprecated_innerRequestHandler,
+            ),
             this.runtimeOptions);
 
-        // On first boot create the base component
+        // On first boot create the base data store
         if (!runtime.existing) {
-            runtime._createDataStore(rootMapId, "@fluid-internal/client-api")
-                .then((componentRuntime) => {
-                    componentRuntime.bindToContext();
-                })
-                .catch((error: any) => {
-                    context.closeFn(CreateContainerError(error));
-                });
+            await runtime.createRootDataStore("@fluid-internal/client-api", rootStoreId);
         }
 
         return runtime;

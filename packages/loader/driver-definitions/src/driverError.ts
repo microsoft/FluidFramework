@@ -46,7 +46,7 @@ export enum DriverErrorType {
 
     /**
      * User does not have write permissions to a file, but is changing content of a file.
-     * That might be indication of some component error - components should not generate ops in readonly mode.
+     * That might be indication of some data store error - data stores should not generate ops in readonly mode.
      */
     writeError = "writeError",
 
@@ -84,6 +84,11 @@ export interface IGenericNetworkError extends IDriverErrorBase {
     readonly statusCode?: number;
 }
 
+export interface IAuthorizationError extends IDriverErrorBase {
+    readonly errorType: DriverErrorType.authorizationError;
+    readonly claims?: string;
+}
+
 /**
  * Having this uber interface without types that have their own interfaces
  * allows compiler to differentiate interfaces based on error type
@@ -104,4 +109,5 @@ export interface IDriverBasicError extends IDriverErrorBase {
 export type DriverError =
     | IThrottlingWarning
     | IGenericNetworkError
+    | IAuthorizationError
     | IDriverBasicError;

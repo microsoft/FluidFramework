@@ -6,10 +6,10 @@
 import { parse } from "url";
 import { BaseTelemetryNullLogger } from "@fluidframework/common-utils";
 import {
-    IComponentRunnable,
+    IFluidRunnable,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { WebCodeLoader, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import Comlink from "comlink";
 
@@ -40,10 +40,10 @@ class NotUsedUrlResolver implements IUrlResolver {
 }
 
 // Loader class to load a container and proxy component interfaces from within a web worker.
-// Only supports IComponentRunnable for now.
-class WorkerLoader implements ILoader, IComponentRunnable {
+// Only supports IFluidRunnable for now.
+class WorkerLoader implements ILoader, IFluidRunnable {
     private container: Container | undefined;
-    private runnable: IComponentRunnable | undefined;
+    private runnable: IFluidRunnable | undefined;
 
     constructor(
         private readonly id: string,
@@ -58,16 +58,10 @@ class WorkerLoader implements ILoader, IComponentRunnable {
         const urlObj = parse(this.resolved.url);
         let factory: IDocumentServiceFactory;
         if (urlObj.protocol === "fluid:") {
-            factory = new RouterliciousDocumentServiceFactory(
-                false,
-                new DefaultErrorTracking(),
-                false,
-                true,
-                // eslint-disable-next-line no-null/no-null
-                null);
+            factory = new RouterliciousDocumentServiceFactory();
         } else {
             factory = new OdspDocumentServiceFactory(
-                async (siteUrl: string) => Promise.resolve(this.resolved.tokens.storageToken),
+                async () => Promise.resolve(this.resolved.tokens.storageToken),
                 async () => Promise.resolve(this.resolved.tokens.socketToken));
         }
         const container = await Container.load(
@@ -97,14 +91,15 @@ class WorkerLoader implements ILoader, IComponentRunnable {
         }
 
         const response = await this.container.request(request);
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+        if (response.status !== 200 ||
+            (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
-        this.runnable = response.value as IComponentRunnable;
+        this.runnable = response.value as IFluidRunnable;
         if (this.runnable === undefined) {
-            return { status: 404, mimeType: "text/plain", value: `IComponentRunnable not found` };
+            return { status: 404, mimeType: "text/plain", value: `IFluidRunnable not found` };
         }
-        return { status: 200, mimeType: "fluid/component", value: `loaded` };
+        return { status: 200, mimeType: "fluid/object", value: `loaded` };
     }
 
     public async resolve(request: IRequest): Promise<IContainer> {

@@ -7,23 +7,18 @@ import {
     IFluidHandleContext,
     IFluidHandle,
     IFluidLoadable,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { SummarizerHandle } from "../summarizerHandle";
 
 const mockHandleContext: IFluidHandleContext = {
-    path: "",
     absolutePath: "",
     isAttached: false,
-    IFluidRouter: undefined as any,
     IFluidHandleContext: undefined as any,
 
     attachGraph: () => {
         throw new Error("Method not implemented.");
     },
-    bind: () => {
-        throw new Error("Method not implemented.");
-    },
-    request: () => {
+    resolveHandle: () => {
         throw new Error("Method not implemented.");
     },
 };
@@ -44,13 +39,6 @@ describe("SummarizerHandle", () => {
             await handle?.get();
         } catch (e) {
             assert(e.message === "Do not try to get a summarizer object from the handle. Reference it directly.");
-        }
-    });
-    it("request should fail", async () => {
-        try {
-            await handle?.request({} as any);
-        } catch (e) {
-            assert(e.message === "Do not try to request on a summarizer handle object.");
         }
     });
 });

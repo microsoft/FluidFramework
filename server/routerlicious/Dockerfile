@@ -27,7 +27,6 @@ COPY package*.json ./
 COPY lerna.json .
 COPY lerna-package-lock.json .
 COPY .npmrc .
-COPY tools/build-server-resources/build-version.js tools/build-server-resources/
 
 COPY packages/gitresources/package*.json packages/gitresources/
 COPY packages/protocol-definitions/package*.json packages/protocol-definitions/
@@ -65,11 +64,8 @@ COPY . .
 WORKDIR /usr/src/server
 
 # Set the version number
-ARG VERSION_BUILDNUMBER=0
-ARG VERSION_BUILDBRANCH=refs/heads/unknown
-RUN echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
-RUN echo VERSION_BUILDBRANCH=$VERSION_BUILDBRANCH
-RUN version=`node tools/build-server-resources/build-version.js`; echo $version; npx lerna version $version --no-git-tag-version --no-push --yes
+ARG VERSION=0
+RUN if [ "$VERSION" != "0" ]; then npx lerna version $VERSION --no-git-tag-version --no-push --yes; fi
 RUN npm run build:ci
 
 # Build that alfred uses
@@ -84,16 +80,3 @@ ENTRYPOINT ["/tini", "--"]
 
 # And set the default command to start the server
 CMD ["npm", "run", "alfred"]
-
-# Partial Build Target for publishing
-FROM base AS publish
-
-# To auth against private VSTS
-ARG NPM_TOKEN
-
-# Webpack components for publishing
-RUN npm run webpack
-
-# Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
-# 1.13 but Kubernetes is at 1.12 so we prefer tini for now.
-ENTRYPOINT ["/tini", "--"]

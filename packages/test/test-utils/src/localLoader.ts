@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { initializeContainerCode } from "@fluidframework/base-host";
 import {
     ICodeLoader,
+    IContainer,
     ILoader,
     IFluidCodeDetails,
     IFluidModule,
     IProxyLoaderFactory,
     IProvideRuntimeFactory,
 } from "@fluidframework/container-definitions";
-import { Loader, Container } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
@@ -20,7 +21,7 @@ import { LocalCodeLoader } from "./localCodeLoader";
 
 /**
  * Creates a loader with the given package entries and a delta connection server.
- * @param packageEntries - A list of code details to fluid entry points.
+ * @param packageEntries - A list of code details to Fluid entry points.
  * @param deltaConnectionServer - The delta connection server to use as the server.
  */
 export function createLocalLoader(
@@ -29,8 +30,8 @@ export function createLocalLoader(
         Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IFluidModule>
     ]>,
     deltaConnectionServer: ILocalDeltaConnectionServer,
+    urlResolver: IUrlResolver,
 ): ILoader {
-    const urlResolver = new LocalResolver();
     const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
     const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
 
@@ -44,25 +45,22 @@ export function createLocalLoader(
 }
 
 /**
- * Gets and initializes a container with the given code details from the loader.
+ * Creates a detached Container and attaches it.
  * @param documentId - The documentId for the container.
+ * @param source - The code details used to create the Container.
  * @param loader - The loader to use to initialize the container.
- * @param codeDetails - The code details to retrieve the fluid entry point.
+ * @param urlresolver - The url resolver to get the create new request from.
  */
-export async function initializeLocalContainer(
+
+export async function createAndAttachContainer(
     documentId: string,
+    source: IFluidCodeDetails,
     loader: ILoader,
-    codeDetails: IFluidCodeDetails,
-): Promise<Container> {
-    const container = await loader.resolve({ url: documentId }) as unknown as Container;
-
-    await initializeContainerCode(container, codeDetails);
-
-    // If we're loading from ops, the context might be in the middle of reloading.  Check for that case and wait
-    // for the contextChanged event to avoid returning before that reload completes.
-    if (container.hasNullRuntime()) {
-        await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
-    }
+    urlResolver: IUrlResolver,
+): Promise<IContainer> {
+    const container = await loader.createDetachedContainer(source);
+    const attachUrl = (urlResolver as LocalResolver).createCreateNewRequest(documentId);
+    await container.attach(attachUrl);
 
     return container;
 }

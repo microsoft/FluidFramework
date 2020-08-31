@@ -1,4 +1,4 @@
-# Routerlicious
+# root
 
 Routerlicious handles the receiving of delta operations and is responsible for the ordering and assignment of a
 sequence number to them. Once assigned it is also responsible for notifying connected clients of a new sequence
@@ -100,7 +100,8 @@ The standalone app is meant to be run in a Linux container. If when running eith
 
 To test simply run `npm test` - either inside of the container or after building locally.
 
-You can use the --grep parameter of mocha to limit to a particilar test or suite of tests. For example, to just run the deli tests, you can use `npm run test -- --grep Deli`.
+You can use the --grep parameter of mocha to limit to a particular test or suite of tests. For example, to just run the
+deli tests, you can use `npm run test -- --grep Deli`.
 
 To debug simply add the mocha --inspect-brk parameter `npm run test -- --inspect-brk`. After which you can
 attach to the running tests with VS Code or any other node debugger.
@@ -113,7 +114,7 @@ If you want to build API documentation locally, see [Building Documentation](htt
 
 Historically: We make use of continuous integration and deployment via VSTS at https://offnet.visualstudio.com/officenet/
 
-Coming Soon... a public facing CI/CD loop 
+Coming Soon... a public facing CI/CD loop
 
 ## Design principals
 
@@ -179,7 +180,7 @@ Storage providers that implement this interface are then able to plug into the s
 support for [GitHub](https://developer.github.com/v3/git/), [Git](../gitrest), and
 [Cobalt](https://offnet.visualstudio.com/officenet/_git/cobalt-netcore).
 
-More details on content-adressable file systems and Git can be found at 
+More details on content-addressable file systems and Git can be found at 
 * https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain
 * http://stefan.saasen.me/articles/git-clone-in-haskell-from-the-bottom-up/
 
@@ -306,3 +307,9 @@ Passing an invalid token will fail the load call.
 
 ## Verdaccio and the Chaincode CDN
 Coming Soon...
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

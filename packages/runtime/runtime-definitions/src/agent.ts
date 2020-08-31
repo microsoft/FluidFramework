@@ -7,7 +7,7 @@ import {
     IFluidLoadable,
     IFluidRouter,
     IFluidRunnable,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 
 /**
  * Definition of a Task.
@@ -35,6 +35,11 @@ export interface IProvideTaskManager {
  */
 export interface ITaskManager extends IProvideTaskManager, IFluidLoadable, IFluidRouter {
     /**
+     * access to IAgentScheduler
+     */
+    readonly IAgentScheduler: IAgentScheduler;
+
+    /**
      * Registers tasks task so that the client can run the task later.
      */
     register(...tasks: ITask[]): void;
@@ -44,11 +49,10 @@ export interface ITaskManager extends IProvideTaskManager, IFluidLoadable, IFlui
      *
      * @param worker - Flag that will execute tasks in web worker if connected to a service that supports them.
      */
-    pick(componentUrl: string, taskId: string, worker?: boolean): Promise<void>;
+    pick(taskId: string, worker?: boolean): Promise<void>;
 }
 
 export const IAgentScheduler: keyof IProvideAgentScheduler = "IAgentScheduler";
-export const SchedulerType = "_scheduler";
 
 export interface IProvideAgentScheduler {
     readonly IAgentScheduler: IAgentScheduler;
@@ -101,7 +105,7 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IFluidRouter, I
      *      automatically, unless release() is called
      * "released" - the task was successfully released back to the pool. Client will not attempt to
      *      re-acquire the task, unless pick() is called.
-     * "lost" - task is lost due to disconnect or component / container being attached.
+     * "lost" - task is lost due to disconnect or data store / container being attached.
      *      Task will be picked up again by some connected client (this client will try as well,
      *      unless release() is called)
      * @param listener - callback notified when change happened for particular key
@@ -109,11 +113,7 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IFluidRouter, I
     on(event: "picked" | "released" | "lost", listener: (taskId: string) => void): this;
 }
 
-declare module "@fluidframework/component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends
-        Readonly<Partial<IProvideTaskManager & IProvideAgentScheduler>> { }
-
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends
         Readonly<Partial<IProvideTaskManager & IProvideAgentScheduler>> { }

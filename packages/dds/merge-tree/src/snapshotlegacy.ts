@@ -4,11 +4,12 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IsoBuffer } from "@fluidframework/common-utils";
 import {
     IFluidHandle,
     IFluidHandleContext,
     IFluidSerializer,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
@@ -28,7 +29,7 @@ export interface SnapChunk {
     position: number;
     lengthBytes: number;
     sequenceLength: number;
-    buffer?: Buffer;
+    buffer?: IsoBuffer;
 }
 
 export interface SnapshotHeader {
@@ -57,7 +58,7 @@ export class SnapshotLegacy {
 
     header: SnapshotHeader;
     seq: number;
-    buffer: Buffer;
+    buffer: IsoBuffer;
     pendingChunk: SnapChunk;
     segments: ops.IJSONSegment[];
     segmentLengths: number[];
@@ -114,7 +115,7 @@ export class SnapshotLegacy {
                 {
                     mode: FileMode.File,
                     path: SnapshotLegacy.header,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: serializeAsMinSupportedVersion(
                             SnapshotLegacy.header,
@@ -139,7 +140,7 @@ export class SnapshotLegacy {
             tree.entries.push({
                 mode: FileMode.File,
                 path: SnapshotLegacy.body,
-                type: TreeEntry[TreeEntry.Blob],
+                type: TreeEntry.Blob,
                 value: {
                     contents: serializeAsMinSupportedVersion(
                         SnapshotLegacy.body,
@@ -165,7 +166,7 @@ export class SnapshotLegacy {
         tree.entries.push({
             mode: FileMode.File,
             path: this.mergeTree.options?.catchUpBlobName ?? SnapshotLegacy.catchupOps,
-            type: TreeEntry[TreeEntry.Blob],
+            type: TreeEntry.Blob,
             value: {
                 contents: serializer ? serializer.stringify(catchUpMsgs, context, bind) : JSON.stringify(catchUpMsgs),
                 encoding: "utf-8",

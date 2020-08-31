@@ -16,7 +16,7 @@ import {
     IChannelStorageService,
     IChannelServices,
     IChannelFactory,
-} from "@fluidframework/component-runtime-definitions";
+} from "@fluidframework/datastore-definitions";
 import {
     SharedObject,
 } from "@fluidframework/shared-object-base";
@@ -84,7 +84,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     /**
      * Create a SharedIntervalCollection
      *
-     * @param runtime - component runtime the new shared map belongs to
+     * @param runtime - data store runtime the new shared map belongs to
      * @param id - optional name of the shared map
      * @returns newly create shared map (but not attached yet)
      */
@@ -93,7 +93,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     }
 
     /**
-     * Get a factory for SharedIntervalCollection to register with the component.
+     * Get a factory for SharedIntervalCollection to register with the data store.
      *
      * @returns a factory that creates and load SharedIntervalCollection
      */
@@ -151,7 +151,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
                 {
                     mode: FileMode.File,
                     path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: this.intervalMapKernel.serialize(),
                         encoding: "utf-8",

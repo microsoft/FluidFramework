@@ -41,62 +41,17 @@
                 "source-map-support/register",
                 "--no-timeouts",
                 // "test/**/matrix.spec.ts",
-                "test/**/matrix.stress.spec.ts",
+                "test/**/matrix.undo.spec.ts",
+                // "test/**/matrix.stress.spec.ts",
+                // "test/**/sparsearray2d.spec.ts",
                 // "-f",
-                // "stress failure",
+                // "fail",
                 "--exit"
             ],
             "env": { "TS_NODE_PROJECT": "tsconfig.json", },
             // "skipFiles": ["<node_internals>/**"],
             "console": "integratedTerminal",
             "smartStep": true,
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Flow-Util Tests",
-            "cwd": "${workspaceFolder}/packages/components/flow-util-lib",
-            "program": "${workspaceFolder}/packages/components/flow-util-lib/node_modules/ts-mocha/bin/ts-mocha",
-            "args": [
-                // Note: 'ignore-styles' must be after 'ts-node', otherwise 'ignore-styles' will intercept
-                //       'index.ts' files if there is an 'index.css' in the same directory.
-                "-r",
-                "ignore-styles",
-                "--no-timeouts",
-                "test/**/*.spec.ts",
-                //"test/**/layout.spec.ts",
-                "--exit"
-            ],
-            "env": {
-                // "DEBUG": "flow:*",
-                "TS_NODE_PROJECT": "tsconfig.json",
-            },
-            "console": "integratedTerminal"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Table Tests",
-            "cwd": "${workspaceFolder}/components/experimental/table-document",
-            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-            "args": [
-                "-r",
-                "ts-node/register",
-                "--no-timeouts",
-                "src/test/**/*.spec.ts",
-                // "src/**/table.spec.ts",
-                // "src/**/sparsematrix.spec.ts",
-                "--exit"
-            ],
-            "env": {
-                // "DEBUG": "*,-socket.io*,-engine.io*,-follow-redirects",
-                "RUSH_ROOT": "${workspaceFolder}",
-                "TS_NODE_PROJECT": "tsconfig.json"
-            },
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**/*.js"
-            ]
         },
         {
             "type": "node",
@@ -138,15 +93,6 @@
             "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
             "protocol": "inspector",
             "program": "${workspaceFolder}/dist/test/merge-tree/beastTest.js"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "MathFarm",
-            "sourceMaps": true,
-            "outFiles": [ "${workspaceFolder}/packages/components/math/dist/test/*.js" ],
-            "protocol": "inspector",
-            "program": "${workspaceFolder}/packages/components/math/dist/test/testFarm.js"
         },
         {
             "type": "node",
@@ -286,7 +232,7 @@
         {
             "type": "node",
             "request": "attach",
-            "name": "Attach to routemaster",
+            "name": "Attach to routemanager",
             "address": "localhost",
             "port": 5863,
             "restart": true,

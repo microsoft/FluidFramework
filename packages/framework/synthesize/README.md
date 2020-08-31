@@ -1,20 +1,20 @@
 # @fluidframework/synthesize
 
-An Ioc type library for synthesizing a fluid IComponent object based on registered IComponent providers.
+An Ioc type library for synthesizing a IFluidObject based on registered IFluidObject providers.
 
-It allows for the creation of a `DependencyContainer` that can have IComponent objects registered with it
-based on their interface Symbol. So for example if I wanted to register something as `IComponentFoo` I would
-need to provide and object that implements `IComponentFoo` along side it.
+It allows for the creation of a `DependencyContainer` that can have IFluidObjects registered with it
+based on their interface Symbol. So for example if I wanted to register something as `IFoo` I would
+need to provide and object that implements `IFoo` along side it.
 
 The `DependencyContainer` also exposes a `synthesize` method that returns an object with a `Promise` to the
 correct optional and required symbols requested.
 
-So if I wanted an object with an optional `IComponentFoo` and a required `IComponentBar` I would get back:
+So if I wanted an object with an optional `IFoo` and a required `IBar` I would get back:
 
 ```typescript
 {
-    IComponentFoo: Promise<IComponentFoo | undefined>
-    IComponentBar: Promise<IComponentBar>
+    IFoo: Promise<IFoo | undefined>
+    IBar: Promise<IBar>
 }
 ```
 
@@ -22,11 +22,11 @@ So if I wanted an object with an optional `IComponentFoo` and a required `ICompo
 
 ```typescript
 const dc = new DependencyContainer();
-dc.register(IComponentFoo, new Foo());
+dc.register(IFoo, new Foo());
 
-const s = dc.synthesize({IComponentFoo}, {});
-const foo = await s.IComponentFoo;
-console.log(s.IComponentFoo?.foo;)
+const s = dc.synthesize({IFoo}, {});
+const foo = await s.IFoo;
+console.log(s.IFoo?.foo;)
 ```
 
 # API
@@ -42,9 +42,9 @@ console.log(s.IComponentFoo?.foo;)
   - [Multiple Types](###Multiple-Types)
 - [Parent](##Parent)
 
-## Component Providers
+## Fluid object Providers
 
-Component Providers are the the different ways you can return a Component when registering.  
+Fluid object Providers are the the different ways you can return a IFluidObject when registering.
 
 There are four types of providers:
 
@@ -54,16 +54,16 @@ There are four types of providers:
 4. [`Async Factory Provider`](###Async-Factory-Provider)
 
 ```typescript
-type ComponentProvider<T extends keyof IComponent> =
-    IComponent[T]
-    | Promise<IComponent[T]>
-    | ((dependencyContainer: DependencyContainer) => IComponent[T])
-    | ((dependencyContainer: DependencyContainer) => Promise<IComponent[T]>);
+type FluidObjectProvider<T extends keyof IFluidObject> =
+    IFluidObject[T]
+    | Promise<IFluidObject[T]>
+    | ((dependencyContainer: DependencyContainer) => IFluidObject[T])
+    | ((dependencyContainer: DependencyContainer) => Promise<IFluidObject[T]>);
 ```
 
 ### Value Provider
 
-Provide an IComponent of a given type.
+Provide an IFluidObject of a given type.
 
 #### Usage
 
@@ -72,22 +72,22 @@ const dc = new DependencyContainer();
 
 // Singleton
 const foo = new Foo();
-dc.register(IComponentFoo, Foo);
+dc.register(IFoo, Foo);
 
 // Instance
-dc.register(IComponentFoo, new Foo())
+dc.register(IFoo, new Foo())
 ```
 
 ### Async Value Provider
 
-Provide a Promise to an IComponent of a given type.
+Provide a Promise to an IFluidObject of a given type.
 
 #### Usage
 
 ```typescript
 const dc = new DependencyContainer();
 
-const generateFoo: Promise<IComponentFoo> = await() => {
+const generateFoo: Promise<IFoo> = await() => {
     const foo = new Foo();
     await foo.initialize();
     return foo;
@@ -95,91 +95,92 @@ const generateFoo: Promise<IComponentFoo> = await() => {
 
 // Singleton
 const foo = generateFoo();
-dc.register(IComponentFoo, foo);
+dc.register(IFoo, foo);
 
 // Instance
-dc.register(IComponentFoo, generateFoo());
+dc.register(IFoo, generateFoo());
 ```
 
 ### Factory Provider
 
 ```typescript
-(dependencyContainer: DependencyContainer) => IComponent[T]
+(dependencyContainer: DependencyContainer) => IFluidObject[T]
 ```
 
-Provide a function that will resolve an IComponent object of a given type.
+Provide a function that will resolve an IFluidObject of a given type.
 
 #### Usage
 
 ```typescript
 const dc = new DependencyContainer();
 const fooFactory = () => new Foo();
-dc.register(IComponentFoo, fooFactory);
+dc.register(IFoo, fooFactory);
 
-// Factories can utilize the DependencyContainer if the IComponent object depends
+// Factories can utilize the DependencyContainer if the IFluidObject depends
 // on other providers
 const barFactory = (dc) => new Bar(dc);
-dc.register(IComponentBar, barFactory);
+dc.register(IFoo, barFactory);
 ```
 
 ### Async Factory Provider
 
 ```typescript
-(dependencyContainer: DependencyContainer) => Promise<IComponent[T]>
+(dependencyContainer: DependencyContainer) => Promise<IFluidObject[T]>
 ```
 
-Provide a function that will resolve a Promise to an IComponent object of a given type.
+Provide a function that will resolve a Promise to an IFluidObject of a given type.
 
 #### Usage
 
 ```typescript
 const dc = new DependencyContainer();
 
-const generateFoo: Promise<IComponentFoo> = await() => {
+const generateFoo: Promise<IFoo> = await() => {
     const foo = new Foo();
     await foo.initialize();
     return foo;
 }
 
-dc.register(IComponentFoo, generateFoo);
+dc.register(IFoo, generateFoo);
 
-const generateBar: Promise<IComponentBar> = await(dc) => {
+const generateBar: Promise<IBar> = await(dc) => {
     const bar = new Bar();
     await bar.initialize(dc);
     return bar;
 }
 
-dc.register(IComponentBar, generateBar);
+dc.register(IBar, generateBar);
 ```
 
 ## Synthesize
 
-Once you have a `DependencyContainer` with registered providers you can synthesize/generate a new IComponent object from it. The
-object that is returned will have the correct typing of optional and required types.
+Once you have a `DependencyContainer` with registered providers you can synthesize/generate a new IFluidObject 
+from it. The object that is returned will have the correct typing of optional and required types.
 
 An Example:
 
-If I wanted an object with an optional `IComponentFoo` and a required `IComponentBar` I would get back:
+If I wanted an object with an optional `IFoo` and a required `IBar` I would get back:
 
 ```typescript
 {
-    IComponentFoo: Promise<IComponentFoo | undefined>
-    IComponentBar: Promise<IComponentBar>
+    IFoo: Promise<IFoo | undefined>
+    IBar: Promise<IBar>
 }
 ```
 
-`synthesize` takes `optionalTypes` and `requiredTypes` as well as their corresponding types. `ComponentSymbolProvider<>`
+`synthesize` takes `optionalTypes` and `requiredTypes` as well as their corresponding types. `FluidObjectSymbolProvider<>`
 is a TypeScript `type` that ensures the types being passed match the ones in the object being provided.
 
 ### Optional Types
 
-Optional types will return a Promise to it's corresponding IComponent object or undefined. Because of this we need to do an if check to validate the object or use the `?` like in the example below.
+Optional types will return a Promise to it's corresponding IFluidObject  or undefined. Because of this we need to do 
+an if check to validate the object or use the `?` like in the example below.
 
 ```typescript
 const dc = new DependencyContainer();
 
-const s = dc.synthesize<IComponentFoo>({IComponentFoo}, {});
-const foo = await s.IComponentFoo;
+const s = dc.synthesize<IFoo>({IFoo}, {});
+const foo = await s.IFoo;
 console.log(foo?.foo);
 ```
 
@@ -188,15 +189,15 @@ need to provide the type.*
 
 ### Required Types
 
-Required types will return a Promise to it's corresponding IComponent object or it will throw.
+Required types will return a Promise to it's corresponding IFluidObject or it will throw.
 
 You can see below that we don't need to add the `?` to check our requested type.
 
 ```typescript
 const dc = new DependencyContainer();
 
-const scope = dc.synthesize<{}, IComponentFoo>({}, {IComponentFoo});
-const foo = await s.IComponentFoo;
+const scope = dc.synthesize<{}, IFoo>({}, {IFoo});
+const foo = await s.IFoo;
 console.log(foo.foo);
 ```
 
@@ -207,9 +208,9 @@ You can declare multiple types for both Optional and Required using the `&` or c
 ```typescript
 const dc = new DependencyContainer();
 
-const scope = dc.synthesize<IComponentFoo & IComponentBar>({IComponentFoo, IComponentBar}, {});
-const fooP = s.IComponentFoo;
-const barP = s.IComponentBar;
+const scope = dc.synthesize<IFoo & IBar>({IFoo, IBar}, {});
+const fooP = s.IFoo;
+const barP = s.IBar;
 const [foo, bar] = Promise.all([foo, bar]);
 console.log(foo?.foo);
 console.log(bar?.bar);
@@ -218,9 +219,9 @@ console.log(bar?.bar);
 ```typescript
 const dc = new DependencyContainer();
 
-const scope = dc.synthesize<{}, IComponentFoo & IComponentBar>({}, {IComponentFoo, IComponentBar});
-const fooP = s.IComponentFoo;
-const barP = s.IComponentBar;
+const scope = dc.synthesize<{}, IFoo & IBar>({}, {IFoo, IBar});
+const fooP = s.IFoo;
+const barP = s.IBar;
 const [foo, bar] = Promise.all([foo, bar]);
 console.log(foo.foo);
 console.log(bar.bar);
@@ -229,9 +230,9 @@ console.log(bar.bar);
 ```typescript
 const dc = new DependencyContainer();
 
-const scope = dc.synthesize<IComponentFoo, IComponentBar>({IComponentFoo}, {IComponentBar});
-const fooP = s.IComponentFoo;
-const barP = s.IComponentBar;
+const scope = dc.synthesize<IFoo, IBar>({IFoo}, {IBar});
+const fooP = s.IFoo;
+const barP = s.IBar;
 const [foo, bar] = Promise.all([foo, bar]);
 console.log(foo?.foo);
 console.log(bar.bar);

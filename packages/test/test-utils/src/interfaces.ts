@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap } from "@fluidframework/map";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideTestFluidComponent>> { }
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideTestFluidComponent>> { }
+    export interface IFluidObject extends Readonly<Partial<IProvideTestFluidObject>> { }
 }
 
-export interface IProvideTestFluidComponent {
-    readonly ITestFluidComponent: ITestFluidComponent;
+export interface IProvideTestFluidObject {
+    readonly ITestFluidObject: ITestFluidObject;
 }
 
-export interface ITestFluidComponent extends IProvideTestFluidComponent {
+export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadable {
     root: ISharedMap;
     readonly runtime: IFluidDataStoreRuntime;
+    readonly channel: IFluidDataStoreChannel;
     readonly context: IFluidDataStoreContext;
     getSharedObject<T = any>(id: string): Promise<T>;
 }

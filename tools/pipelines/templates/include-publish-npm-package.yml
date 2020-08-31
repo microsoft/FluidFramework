@@ -1,0 +1,73 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# include-publish-npm-package
+
+parameters:
+- name: buildDirectory
+  type: string
+
+- name: buildNumberInPatch
+  type: string
+
+- name: namespace
+  type: boolean
+
+- name: tagName
+  type: string
+
+stages:
+- stage: publish
+  dependsOn: build
+  displayName: Publish Stage
+  jobs:
+  - template: include-publish-npm-package-steps.yml
+    parameters:
+      namespace: ${{ parameters.namespace }}
+      feeds:
+      - name: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/ 
+        environment: build-feed
+        official: false
+        enabled: 'release'
+        tagSteps: []
+      - name: https://registry.npmjs.org
+        environment: npmjs-feed
+        customEndPoint: npmjs
+        official: true
+        publishFlags: --access public
+        enabled: $[variables.release]
+        tagSteps:
+        - ${{ if ne(parameters.tagName, '') }}:
+          - checkout: self
+            clean: true
+            persistCredentials: true
+            condition: and(succeeded(), eq(variables['enabled'], 'release'))
+
+          - task: Bash@3
+            displayName: Tag Release
+            condition: and(succeeded(), eq(variables['enabled'], 'release'))
+            env:
+              VERSION_RELEASE: $(release)
+              VERSION_BUILDNUMBER: $(Build.BuildNumber)
+              VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                # expect lerna.json and package.json be in the current working directory
+
+                echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
+                echo VERSION_RELEASE=$VERSION_RELEASE
+                echo VERSION_PATCH=$VERSION_PATCH
+          
+                version=`node $(Build.SourcesDirectory)/tools/pipelines/scripts/build-version.js`
+                echo COMPUTED_VERSION=$version
+                if [ "$version" = "" ]; then
+                  exit -1
+                fi
+
+                tag=${{ parameters.tagName }}_v$version
+
+                echo Tag=$tag
+                git tag $tag
+                git push origin $tag

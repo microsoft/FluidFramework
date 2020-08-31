@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import * as cell from "@fluidframework/cell";
-import { FluidDataStoreRuntime } from "@fluidframework/component-runtime";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
     IDeltaManager,
     IFluidCodeDetails,
@@ -238,7 +238,7 @@ function attach(loader: Loader, url: string, deferred: Deferred<Document>): void
                 return;
             }
 
-            // Check if the component is viewable
+            // Check if the Fluid object is viewable
             deferred.resolve(response.value);
         },
         (error) => {

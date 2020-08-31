@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
@@ -30,7 +30,7 @@ export interface IUrlResolver {
     // or do we split the token access from this?
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 
-    // Creates a url for the created container with any component path given in the relative url.
+    // Creates a url for the created container with any data store path given in the relative url.
     getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
@@ -45,7 +45,7 @@ export interface ICreateNewHeader {
     [CreateNewHeader.createNew]: any;
 }
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ICreateNewHeader> { }
 }

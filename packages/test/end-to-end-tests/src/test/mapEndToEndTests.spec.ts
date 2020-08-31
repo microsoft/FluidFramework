@@ -4,69 +4,60 @@
  */
 
 import assert from "assert";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { MessageType } from "@fluidframework/protocol-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    ChannelFactoryRegistry,
+    createAndAttachContainer,
     createLocalLoader,
+    ITestFluidObject,
     OpProcessingController,
-    ITestFluidComponent,
-    initializeLocalContainer,
-    TestFluidComponentFactory,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
+import { compatTest, ICompatTestArgs } from "./compatUtils";
 
-describe("Map", () => {
-    const id = "fluid-test://localhost/mapTest";
-    const mapId = "mapKey";
-    const codeDetails: IFluidCodeDetails = {
-        package: "sharedMapTestPackage",
-        config: {},
-    };
+const documentId = "mapTest";
+const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+const mapId = "mapKey";
+const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
+const codeDetails: IFluidCodeDetails = {
+    package: "sharedMapTestPackage",
+    config: {},
+};
 
-    let deltaConnectionServer: ILocalDeltaConnectionServer;
+const tests = (args: ICompatTestArgs) => {
     let opProcessingController: OpProcessingController;
-    let component1: ITestFluidComponent;
+    let dataObject1: ITestFluidObject;
     let sharedMap1: ISharedMap;
     let sharedMap2: ISharedMap;
     let sharedMap3: ISharedMap;
 
-    async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
-        const response = await container.request({ url: componentId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Component with id: ${componentId} not found`);
-        }
-        return response.value as ITestFluidComponent;
-    }
-
-    async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([[mapId, SharedMap.getFactory()]]);
-        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-        return initializeLocalContainer(id, loader, codeDetails);
-    }
-
     beforeEach(async () => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
+        const container1 = await args.makeTestContainer(registry) as Container;
+        dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 
-        const container1 = await createContainer();
-        component1 = await requestFluidObject("default", container1);
-        sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
+        const container2 = await args.loadTestContainer(registry) as Container;
+        const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
 
-        const container2 = await createContainer();
-        const component2 = await requestFluidObject("default", container2);
-        sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
+        const container3 = await args.loadTestContainer(registry) as Container;
+        const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+        sharedMap3 = await dataObject3.getSharedObject<SharedMap>(mapId);
 
-        const container3 = await createContainer();
-        const component3 = await requestFluidObject("default", container3);
-        sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
-
-        opProcessingController = new OpProcessingController(deltaConnectionServer);
+        opProcessingController = new OpProcessingController(args.deltaConnectionServer);
         opProcessingController.addDeltaManagers(
-            component1.runtime.deltaManager,
-            component2.runtime.deltaManager,
-            component3.runtime.deltaManager);
+            dataObject1.runtime.deltaManager,
+            dataObject2.runtime.deltaManager,
+            dataObject3.runtime.deltaManager,
+        );
 
         sharedMap1.set("testKey1", "testValue");
 
@@ -295,7 +286,7 @@ describe("Map", () => {
          */
 
         // Create a new map in local (detached) state.
-        const newSharedMap1 = SharedMap.create(component1.runtime);
+        const newSharedMap1 = SharedMap.create(dataObject1.runtime);
 
         // Set a value while in local state.
         newSharedMap1.set("newKey", "newValue");
@@ -319,8 +310,38 @@ describe("Map", () => {
         assert.equal(newSharedMap2.get("newKey"), "anotherNewValue", "The new value is not updated in map 2");
         assert.equal(newSharedMap1.get("newKey"), "anotherNewValue", "The new value is not updated in map 1");
     });
+};
+
+describe("Map", () => {
+    const factory = new TestFluidObjectFactory(registry);
+    let deltaConnectionServer: ILocalDeltaConnectionServer;
+    let urlResolver: IUrlResolver;
+    const makeTestContainer = async () => {
+        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
+    };
+    const loadTestContainer = async () => {
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        return loader.resolve({ url: documentLoadUrl });
+    };
+
+    beforeEach(async () => {
+        deltaConnectionServer = LocalDeltaConnectionServer.create();
+        urlResolver = new LocalResolver();
+    });
+
+    tests({
+        makeTestContainer,
+        loadTestContainer,
+        get deltaConnectionServer() { return deltaConnectionServer; },
+        get urlResolver() { return urlResolver; },
+    });
 
     afterEach(async () => {
         await deltaConnectionServer.webSocketServer.close();
+    });
+
+    describe("compatibility", () => {
+        compatTest(tests, { testFluidDataObject: true });
     });
 });

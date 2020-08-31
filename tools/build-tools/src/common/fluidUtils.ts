@@ -75,7 +75,7 @@ export async function getResolvedFluidRoot() {
     }
 
     if (checkFluidRoot && !isFluidRoot(root)) {
-        console.error(`ERROR: '${root}' is not a root of fluid repo.`);
+        console.error(`ERROR: '${root}' is not a root of Fluid repo.`);
         process.exit(-100);
     }
 

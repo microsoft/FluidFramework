@@ -9,7 +9,7 @@ import {
     IFluidHandle,
     IFluidHandleContext,
     IFluidSerializer,
-} from "@fluidframework/component-core-interfaces";
+} from "@fluidframework/core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -18,7 +18,7 @@ import {
     TreeEntry,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IChannelStorageService } from "@fluidframework/component-runtime-definitions";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as Properties from "./properties";
@@ -112,7 +112,7 @@ export class SnapshotV1 {
             return {
                 mode: FileMode.File,
                 path: id,
-                type: TreeEntry[TreeEntry.Blob],
+                type: TreeEntry.Blob,
                 value: {
                     contents: serializeAsMaxSupportedVersion(
                         id,
@@ -132,7 +132,7 @@ export class SnapshotV1 {
                 {
                     mode: FileMode.File,
                     path: SnapshotLegacy.header,
-                    type: TreeEntry[TreeEntry.Blob],
+                    type: TreeEntry.Blob,
                     value: {
                         contents: serializeAsMaxSupportedVersion(
                             SnapshotLegacy.header,

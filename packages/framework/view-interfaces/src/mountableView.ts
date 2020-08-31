@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/component-core-interfaces";
+import { IFluidObject } from "@fluidframework/core-interfaces";
 
 export const IFluidMountableView: keyof IProvideFluidMountableView = "IFluidMountableView";
 
@@ -29,7 +29,7 @@ export interface IFluidMountableViewClass {
 /**
  * An IFluidMountableView provides a view bundled with a mounting mechanism.  That view can be mounted and
  * unmounted from a given element.  This bundling of view + mounting mechanism is important for React, which
- * needs the same React instance to be used for the mounting ReactDOM.render() call as the fluid object it's mounting,
+ * needs the same React instance to be used for the mounting ReactDOM.render() call as the Fluid object it's mounting,
  * or else React hooks don't work.  This is the case in scenarios like webpack-fluid-loader, which attempts
  * to do cross-bundle mounting.
  *
@@ -50,7 +50,7 @@ export interface IFluidMountableView extends IProvideFluidMountableView {
     unmount(): void;
 }
 
-declare module "@fluidframework/component-core-interfaces" {
+declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IFluidObject extends Readonly<Partial<IProvideFluidMountableView>> { }
 }

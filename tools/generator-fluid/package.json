@@ -1,10 +1,11 @@
 {
   "name": "generator-fluid",
-  "version": "0.2.0",
-  "description": "A yeoman project generator for fluid components",
+  "version": "0.3.0",
+  "description": "A yeoman project generator for Fluid DataObjects",
   "keywords": [
     "yeoman-generator"
   ],
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -16,8 +17,8 @@
     "check": "npm ls --global --depth 0",
     "link": "npm install && npm link",
     "test": "npm run test:unit & npm run test:end-to-end",
-    "test:end-to-end": "mocha test/endToEnd.js -r make-promises-safe",
-    "test:unit": "mocha test/testApp.js -r make-promises-safe",
+    "test:end-to-end": "mocha test/endToEnd.js --unhandled-rejections=strict",
+    "test:unit": "mocha test/testApp.js --unhandled-rejections=strict",
     "unlink": "npm rm --global generator-fluid"
   },
   "dependencies": {
@@ -27,8 +28,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^5.2.5",
-    "make-promises-safe": "^5.1.0",
-    "mocha": "^8.0.1",
+    "mocha": "^8.1.1",
     "shelljs": "^0.8.4",
     "yeoman-assert": "^3.1.1",
     "yeoman-test": "^2.4.1"

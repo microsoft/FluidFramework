@@ -48,7 +48,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     }
 
     public get idle(): boolean {
-        return !this.processingDeferred && this.q.length === 0;
+        return this.processingDeferred === undefined && this.q.length === 0;
     }
 
     /**
@@ -88,7 +88,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         this.userPause = true;
         // If called from within the processing loop, we are in the middle of processing an op. Return a promise
         // that will resolve when processing has actually stopped.
-        if (this.processingDeferred) {
+        if (this.processingDeferred !== undefined) {
             return this.processingDeferred.promise;
         }
     }
@@ -104,7 +104,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         this.sysPause = true;
         // If called from within the processing loop, we are in the middle of processing an op. Return a promise
         // that will resolve when processing has actually stopped.
-        if (this.processingDeferred) {
+        if (this.processingDeferred !== undefined) {
             return this.processingDeferred.promise;
         }
     }
@@ -122,13 +122,13 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
      * not already started.
      */
     private ensureProcessing() {
-        if (!this.processingDeferred) {
+        if (this.processingDeferred === undefined) {
             this.processingDeferred = new Deferred<void>();
             // Use a resolved promise to start the processing on a separate stack.
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             Promise.resolve().then(() => {
                 this.processDeltas();
-                if (this.processingDeferred) {
+                if (this.processingDeferred !== undefined) {
                     this.processingDeferred.resolve();
                     this.processingDeferred = undefined;
                 }
@@ -142,11 +142,13 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     private processDeltas() {
         // For grouping to work we must process all local messages immediately and in the single turn.
         // So loop over them until no messages to process, we have become paused, or hit an error.
-        while (!(this.q.length === 0 || this.paused || this.error)) {
+        while (!(this.q.length === 0 || this.paused || this.error !== undefined)) {
             // Get the next message in the queue
             const next = this.q.shift();
             // Process the message.
             try {
+                // We know next is defined since we did a length check just prior to shifting.
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 this.worker(next!);
                 this.emit("op", next);
             } catch (error) {

@@ -55,7 +55,6 @@ export async function createTree(
         builder.insert(node.path, git.Oid.fromString(node.sha), parseInt(node.mode, 8));
     }
 
-    // eslint-disable-next-line @typescript-eslint/await-thenable
     const id = await builder.write();
     return getTreeInternal(repository, id.tostrS());
 }

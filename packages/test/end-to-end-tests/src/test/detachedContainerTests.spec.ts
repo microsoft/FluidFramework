@@ -4,32 +4,31 @@
  */
 
 import assert from "assert";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory, AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { IUrlResolver, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { IFluidDataStoreContext, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
-    ITestFluidComponent,
-    TestFluidComponentFactory,
+    ITestFluidObject,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { v4 as uuid } from "uuid";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { Deferred } from "@fluidframework/common-utils";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
 import { Ink, IColor } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { SharedCell } from "@fluidframework/cell";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
-import { MessageType } from "@fluidframework/protocol-definitions";
-import { ComponentMessageType } from "@fluidframework/component-runtime";
+import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 const detachedContainerRefSeqNumber = 1;
 
@@ -52,19 +51,20 @@ describe("Detached Container", () => {
 
     let request: IRequest;
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
+    let documentServiceFactory: IDocumentServiceFactory;
     let loader: Loader;
 
-    const createAndAttachDataStore = (async (
-        componentContext: IFluidDataStoreContext,
-        componentId: string,
+    const createFluidObject = (async (
+        dataStoreContext: IFluidDataStoreContext,
         type: string,
     ) => {
-        const doc = await componentContext._createDataStore(componentId, type);
-        doc.bindToContext();
+        return requestFluidObject<ITestFluidObject>(
+            await dataStoreContext.containerRuntime.createDataStore(type),
+            "");
     });
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
-        const factory: TestFluidComponentFactory = new TestFluidComponentFactory([
+        const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
             [sharedStringId, SharedString.getFactory()],
             [sharedMapId, SharedMap.getFactory()],
             [crcId, ConsensusRegisterCollection.getFactory()],
@@ -76,7 +76,7 @@ describe("Detached Container", () => {
             [sparseMatrixId, SparseMatrix.getFactory()],
         ]);
         const codeLoader = new LocalCodeLoader([[pkg, factory]]);
-        const documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
+        documentServiceFactory = new LocalDocumentServiceFactory(testDeltaConnectionServer);
         return new Loader(
             urlResolver,
             documentServiceFactory,
@@ -117,74 +117,61 @@ describe("Detached Container", () => {
         assert.strictEqual(container.id, documentId, "Doc id is not matching!!");
     });
 
-    it("Components in detached container", async () => {
+    it("DataStores in detached container", async () => {
         const container = await loader.createDetachedContainer(pkg);
-        // Get the root component from the detached container.
+        // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         if (response.mimeType !== "fluid/object" && response.status !== 200) {
-            assert.fail("Root component should be created in detached container");
+            assert.fail("Root dataStore should be created in detached container");
         }
-        const component = response.value as ITestFluidComponent;
+        const dataStore = response.value as ITestFluidObject;
 
-        // Create a sub component of type TestFluidComponent and verify that it is attached.
-        const subCompId = uuid();
-        await createAndAttachDataStore(component.context, subCompId, "default");
-        const subResponse = await container.request({ url: `/${subCompId}` });
-        if (subResponse.mimeType !== "fluid/object" && subResponse.status !== 200) {
-            assert.fail("New components should be created in detached container");
-        }
-        const subComponent = subResponse.value as ITestFluidComponent;
-        assert.strictEqual(subComponent.context.storage, undefined, "No storage should be there!!");
+        // Create a sub dataStore of type TestFluidObject and verify that it is attached.
+        const subDataStore = await createFluidObject(dataStore.context, "default");
+        dataStore.root.set("attachKey", subDataStore.handle);
+        assert.strictEqual(subDataStore.context.storage, undefined, "No storage should be there!!");
 
-        // Get the sub component's root channel and verify that it is attached.
-        const testChannel = await subComponent.runtime.getChannel("root");
+        // Get the sub dataStore's root channel and verify that it is attached.
+        const testChannel = await subDataStore.runtime.getChannel("root");
         assert.strictEqual(testChannel.isAttached(), false, "Channel should be detached!!");
-        assert.strictEqual(subComponent.context.attachState, AttachState.Detached, "Component should be detached!!");
+        assert.strictEqual(subDataStore.context.attachState, AttachState.Detached, "DataStore should be detached!!");
     });
 
-    it("Components in attached container", async () => {
+    it("DataStores in attached container", async () => {
         const container = await loader.createDetachedContainer(pkg);
-        // Get the root component from the detached container.
+        // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const dataStore = response.value as ITestFluidObject;
 
-        // Create a sub component of type TestFluidComponent.
-        const newComponentId = uuid();
-        await createAndAttachDataStore(component.context, newComponentId, "default");
+        // Create a sub dataStore of type TestFluidObject.
+        const testDataStore = await createFluidObject(dataStore.context, "default");
+        dataStore.root.set("attachKey", testDataStore.handle);
 
         // Now attach the container
         await container.attach(request);
 
-        // Get the sub component and verify that it is attached.
-        const testResponse = await container.request({ url: `/${newComponentId}` });
-        if (testResponse.mimeType !== "fluid/object" && testResponse.status !== 200) {
-            assert.fail("New components should be created in detached container");
-        }
-        const testComponent = testResponse.value as ITestFluidComponent;
-        assert.strictEqual(testComponent.runtime.IFluidHandleContext.isAttached, true,
-            "Component should be attached!!");
+        assert.strictEqual(testDataStore.runtime.IFluidHandleContext.isAttached, true,
+            "DataStore should be attached!!");
 
-        // Get the sub component's "root" channel and verify that it is attached.
-        const testChannel = await testComponent.runtime.getChannel("root");
+        // Get the sub dataStore's "root" channel and verify that it is attached.
+        const testChannel = await testDataStore.runtime.getChannel("root");
         assert.strictEqual(testChannel.isAttached(), true, "Channel should be attached!!");
 
-        assert.strictEqual(testComponent.context.attachState, AttachState.Attached, "Component should be attached!!");
+        assert.strictEqual(testDataStore.context.attachState, AttachState.Attached, "DataStore should be attached!!");
     });
 
-    it("Load attached container and check for components", async () => {
+    it("Load attached container and check for dataStores", async () => {
         const container = await loader.createDetachedContainer(pkg);
-        // Get the root component from the detached container.
+        // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const dataStore = response.value as ITestFluidObject;
 
-        // Create a sub component of type TestFluidComponent.
-        const subCompId = uuid();
-        await createAndAttachDataStore(component.context, subCompId, "default");
+        // Create a sub dataStore of type TestFluidObject.
+        const subDataStore1 = await createFluidObject(dataStore.context, "default");
+        dataStore.root.set("attachKey", subDataStore1.handle);
 
-        // Now attach the container and get the sub component.
+        // Now attach the container and get the sub dataStore.
         await container.attach(request);
-        const response1 = await container.request({ url: `/${subCompId}` });
-        const subComponent1 = response1.value as ITestFluidComponent;
 
         // Now load the container from another loader.
         const urlResolver2 = new LocalResolver();
@@ -193,20 +180,70 @@ describe("Detached Container", () => {
         const requestUrl2 = await urlResolver2.getAbsoluteUrl(container.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
 
-        // Get the sub component and assert that it is attached.
-        const response2 = await container2.request({ url: `/${subCompId}` });
-        const subComponent2 = response2.value as ITestFluidComponent;
-        assert.strictEqual(subComponent2.runtime.IFluidHandleContext.isAttached, true,
-            "Component should be attached!!");
+        // Get the sub dataStore and assert that it is attached.
+        const response2 = await container2.request({ url: `/${subDataStore1.context.id}` });
+        const subDataStore2 = response2.value as ITestFluidObject;
+        assert.strictEqual(subDataStore2.runtime.IFluidHandleContext.isAttached, true,
+            "DataStore should be attached!!");
 
-        // Verify the attributes of the root channel of both sub components.
-        const testChannel1 = await subComponent1.runtime.getChannel("root");
-        const testChannel2 = await subComponent2.runtime.getChannel("root");
+        // Verify the attributes of the root channel of both sub dataStores.
+        const testChannel1 = await subDataStore1.runtime.getChannel("root");
+        const testChannel2 = await subDataStore2.runtime.getChannel("root");
         assert.strictEqual(testChannel2.isAttached(), true, "Channel should be attached!!");
         assert.strictEqual(JSON.stringify(testChannel2.snapshot()), JSON.stringify(testChannel1.snapshot()),
             "Value for snapshot should be same!!");
         assert.strictEqual(testChannel2.isAttached(), testChannel1.isAttached(),
             "Value for isAttached should persist!!");
+    });
+
+    it("ReAttach detached container on failed attach", async () => {
+        const container = await loader.createDetachedContainer(pkg);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        const oldFunc = documentServiceFactory.createContainer;
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        documentServiceFactory.createContainer = (a, b, c) => { throw new Error("Test Error"); };
+        let failedOnce = false;
+        try {
+            await container.attach(request);
+        } catch (e) {
+            failedOnce = true;
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            documentServiceFactory.createContainer = oldFunc;
+        }
+        assert.strictEqual(failedOnce, true, "Attach call should fail");
+        assert.strictEqual(container.attachState, AttachState.Attaching, "Container should be in attaching state");
+        const response = await container.request({ url: "/" });
+        const dataStore = response.value as ITestFluidObject;
+
+        // Create a sub data store of type TestFluidObject.
+        const dataStore1 = await createFluidObject(dataStore.context, "default");
+        const defP = new Deferred();
+        container.on("op", (op: ISequencedDocumentMessage) => {
+            if (op.contents?.type === DataStoreMessageType.Attach) {
+                assert.strictEqual(op.contents.contents.id, dataStore1.context.id,
+                    "There should be an attach op for created data store");
+                defP.resolve();
+            }
+        });
+        dataStore1.channel.bindToContext();
+
+        await container.attach(request);
+        assert.strictEqual(container.attachState, AttachState.Attached, "Container should now be attached");
+        await defP.promise;
+
+        // Now load the container from another loader.
+        const urlResolver2 = new LocalResolver();
+        const loader2 = createTestLoader(urlResolver2);
+        // Create a new request url from the resolvedUrl of the first container.
+        const requestUrl2 = await urlResolver2.getAbsoluteUrl(container.resolvedUrl, "");
+        const container2 = await loader2.resolve({ url: requestUrl2 });
+
+        // Get the sub data store and assert that it is attached.
+        const response2 = await container2.request({ url: `/${dataStore1.context.id}` });
+        const dataStore2 = response2.value as ITestFluidObject;
+        assert(dataStore2, "Data store created in failed attach mode should exist");
+        assert.strictEqual(dataStore1.runtime.attachState, AttachState.Attached, "Data store 1 should be attached");
+        assert.strictEqual(dataStore2.runtime.attachState, AttachState.Attached, "Data store 2 should be attached");
     });
 
     it("Fire ops during container attach for shared string", async () => {
@@ -216,9 +253,9 @@ describe("Detached Container", () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.equal(type, MessageType.Operation);
-            assert.equal(contents.type, ContainerMessageType.ComponentOp);
+            assert.equal(contents.type, ContainerMessageType.FluidDataStoreOp);
 
-            assert.equal(contents.contents.contents.type, ComponentMessageType.ChannelOp);
+            assert.equal(contents.contents.contents.type, DataStoreMessageType.ChannelOp);
 
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedStringId, "Address should be shared string");
@@ -228,10 +265,10 @@ describe("Detached Container", () => {
             return 0;
         };
 
-        // Get the root component from the detached container.
+        // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
-        const testChannel1 = await component.getSharedObject<SharedString>(sharedStringId);
+        const dataStore = response.value as ITestFluidObject;
+        const testChannel1 = await dataStore.getSharedObject<SharedString>(sharedStringId);
 
         // Fire op before attaching the container
         testChannel1.insertText(0, "a");
@@ -258,10 +295,10 @@ describe("Detached Container", () => {
             return 0;
         };
 
-        // Get the root component from the detached container.
+        // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
-        const testChannel1 = await component.getSharedObject<SharedMap>(sharedMapId);
+        const dataStore = response.value as ITestFluidObject;
+        const testChannel1 = await dataStore.getSharedObject<SharedMap>(sharedMapId);
 
         // Fire op before attaching the container
         testChannel1.set("0", "a");
@@ -284,58 +321,63 @@ describe("Detached Container", () => {
                 testChannelId, "Channel id should match");
             assert.strictEqual(contents.contents.contents.content.type,
                 SharedMap.getFactory().type, "Channel type should match");
-            assert.strictEqual(contents.contents.contents.type, ComponentMessageType.Attach,
+            assert.strictEqual(contents.contents.contents.type, DataStoreMessageType.Attach,
                 "Op should be an attach op");
             defPromise.resolve();
             return 0;
         };
 
-        // Get the root component from the detached container.
+        // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
+        const dataStore = response.value as ITestFluidObject;
 
         const containerP = container.attach(request);
 
         // Fire attach op
-        const testChannel = component.runtime.createChannel(testChannelId, SharedMap.getFactory().type);
+        const testChannel = dataStore.runtime.createChannel(testChannelId, SharedMap.getFactory().type);
         testChannel.handle.attachGraph();
         await containerP;
         await defPromise.promise;
     });
 
-    it("Fire component attach ops during container attach", async () => {
-        const testComponentType = "default";
-        // eslint-disable-next-line prefer-const
-        let peerComponentRuntimeChannel: IFluidDataStoreChannel;
+    it("Fire dataStore attach ops during container attach", async () => {
+        const testDataStoreType = "default";
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
+
+        // Get the root dataStore from the detached container.
+        const response = await container.request({ url: "/" });
+        const dataStore = response.value as ITestFluidObject;
+
+        const containerP = container.attach(request);
+        const router = await dataStore.context.containerRuntime.createDataStore([testDataStoreType]);
+        const comp2 = await requestFluidObject<ITestFluidObject>(router, "/");
+
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
             assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
             assert.strictEqual(contents.contents.id,
-                peerComponentRuntimeChannel.id, "Component id should match");
+                comp2.context.id, "DataStore id should match");
             assert.strictEqual(contents.contents.type,
-                testComponentType, "Component type should match");
+                testDataStoreType, "DataStore type should match");
             defPromise.resolve();
             return 0;
         };
 
-        // Get the root component from the detached container.
-        const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
-
-        const containerP = container.attach(request);
-        peerComponentRuntimeChannel = await (component.context.containerRuntime as IContainerRuntime)
-            .createDataStoreWithRealizationFn([testComponentType]);
         // Fire attach op
-        peerComponentRuntimeChannel.bindToContext();
+        dataStore.root.set("attachComp", comp2.handle);
         await containerP;
         await defPromise.promise;
     });
 
     it("Fire ops during container attach for consensus register collection", async () => {
-        const op = { key: "1", type: "write", serializedValue: JSON.stringify("b"), refSeq: detachedContainerRefSeqNumber };
+        const op = {
+            key: "1",
+            type: "write",
+            serializedValue: JSON.stringify("b"),
+            refSeq: detachedContainerRefSeqNumber,
+        };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -348,10 +390,10 @@ describe("Detached Container", () => {
             return 0;
         };
 
-        // Get the root component from the detached container.
+        // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
-        const testChannel1 = await component.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
+        const dataStore = response.value as ITestFluidObject;
+        const testChannel1 = await dataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
 
         // Fire op before attaching the container
         await testChannel1.write("0", "a");
@@ -383,10 +425,10 @@ describe("Detached Container", () => {
             return 0;
         };
 
-        // Get the root component from the detached container.
+        // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
-        const testChannel1 = await component.getSharedObject<SharedDirectory>(sharedDirectoryId);
+        const dataStore = response.value as ITestFluidObject;
+        const testChannel1 = await dataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 
         // Fire op before attaching the container
         testChannel1.set("0", "a");
@@ -412,10 +454,10 @@ describe("Detached Container", () => {
             return 0;
         };
 
-        // Get the root component from the detached container.
+        // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
-        const testChannel1 = await component.getSharedObject<SharedCell>(sharedCellId);
+        const dataStore = response.value as ITestFluidObject;
+        const testChannel1 = await dataStore.getSharedObject<SharedCell>(sharedCellId);
 
         // Fire op before attaching the container
         testChannel1.set("a");
@@ -442,10 +484,10 @@ describe("Detached Container", () => {
             return 0;
         };
 
-        // Get the root component from the detached container.
+        // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
-        const testChannel1 = await component.getSharedObject<Ink>(sharedInkId);
+        const dataStore = response.value as ITestFluidObject;
+        const testChannel1 = await dataStore.getSharedObject<Ink>(sharedInkId);
 
         // Fire op before attaching the container
         const color: IColor = {
@@ -474,10 +516,10 @@ describe("Detached Container", () => {
             return 0;
         };
 
-        // Get the root component from the detached container.
+        // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
-        const testChannel1 = await component.getSharedObject<ConsensusQueue>(cocId);
+        const dataStore = response.value as ITestFluidObject;
+        const testChannel1 = await dataStore.getSharedObject<ConsensusQueue>(cocId);
 
         // Fire op before attaching the container
         await testChannel1.add("a");
@@ -510,10 +552,10 @@ describe("Detached Container", () => {
             return 0;
         };
 
-        // Get the root component from the detached container.
+        // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
-        const testChannel1 = await component.getSharedObject<SparseMatrix>(sparseMatrixId);
+        const dataStore = response.value as ITestFluidObject;
+        const testChannel1 = await dataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
 
         // Fire op before attaching the container
         testChannel1.insertRows(0, 1);
@@ -541,10 +583,10 @@ describe("Detached Container", () => {
             return 0;
         };
 
-        // Get the root component from the detached container.
+        // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
-        const component = response.value as ITestFluidComponent;
-        const testChannel1 = await component.getSharedObject<SharedMatrix>(sharedMatrixId);
+        const dataStore = response.value as ITestFluidObject;
+        const testChannel1 = await dataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 
         // Fire op before attaching the container
         testChannel1.insertRows(0, 20);

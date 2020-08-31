@@ -7,19 +7,19 @@ import {
     IFluidHandleContext,
     IRequest,
     IResponse,
-} from "@fluidframework/component-core-interfaces";
-import { FluidOjectHandle } from "@fluidframework/component-runtime";
+} from "@fluidframework/core-interfaces";
+import { FluidObjectHandle } from "@fluidframework/datastore";
 import { ISharedObject } from "./types";
 
 /**
- * Component handle for shared object
+ * Handle for shared object
  * This object is used for already loaded (in-memory) shared object
  * and is used only for serialization purposes.
- * De-serialization process goes through FluidOjectHandle and request flow:
+ * De-serialization process goes through FluidObjectHandle and request flow:
  * FluidDataStoreRuntime.request() recognizes requests in the form of '/<shared object id>'
  * and loads shared object.
  */
-export class SharedObjectHandle extends FluidOjectHandle<ISharedObject> {
+export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
     /**
      * Whether services have been attached for the associated shared object.
      */

@@ -4,9 +4,11 @@
  */
 
 import assert from "assert";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     acquireAndComplete,
@@ -15,14 +17,14 @@ import {
     IConsensusOrderedCollection,
     waitAcquireAndComplete,
 } from "@fluidframework/ordered-collection";
-import { IFluidDataStoreRuntime } from "@fluidframework/component-runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    createAndAttachContainer,
     createLocalLoader,
     OpProcessingController,
-    ITestFluidComponent,
-    initializeLocalContainer,
-    TestFluidComponentFactory,
+    ITestFluidObject,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
 interface ISharedObjectConstructor<T> {
@@ -33,61 +35,64 @@ function generate(
     name: string, ctor: ISharedObjectConstructor<IConsensusOrderedCollection>,
     input: any[], output: any[]) {
     describe(name, () => {
-        const id = "fluid-test://localhost/consensusOrderedCollectionTest";
+        const documentId = "consensusOrderedCollectionTest";
+        const documentLoadUrl = `fluid-test://localhost/${documentId}`;
         const mapId = "mapKey";
         const codeDetails: IFluidCodeDetails = {
             package: "consensusOrderedCollectionTestPackage",
             config: {},
         };
+        const factory = new TestFluidObjectFactory([
+            [mapId, SharedMap.getFactory()],
+            [undefined, ConsensusQueue.getFactory()],
+        ]);
 
         let deltaConnectionServer: ILocalDeltaConnectionServer;
+        let urlResolver: IUrlResolver;
         let opProcessingController: OpProcessingController;
-        let component1: ITestFluidComponent;
-        let component2: ITestFluidComponent;
+        let dataStore1: ITestFluidObject;
+        let dataStore2: ITestFluidObject;
         let sharedMap1: ISharedMap;
         let sharedMap2: ISharedMap;
         let sharedMap3: ISharedMap;
 
-        async function requestFluidObject(componentId: string, container: Container): Promise<ITestFluidComponent> {
-            const response = await container.request({ url: componentId });
-            if (response.status !== 200 || response.mimeType !== "fluid/object") {
-                throw new Error(`Component with id: ${componentId} not found`);
-            }
-            return response.value as ITestFluidComponent;
+        async function createContainer(): Promise<IContainer> {
+            const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+            return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
         }
 
-        async function createContainer(): Promise<Container> {
-            const factory = new TestFluidComponentFactory([
-                [mapId, SharedMap.getFactory()],
-                [undefined, ConsensusQueue.getFactory()],
-            ]);
-            const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-            return initializeLocalContainer(id, loader, codeDetails);
+        async function loadContainer(): Promise<IContainer> {
+            const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+            return loader.resolve({ url: documentLoadUrl });
         }
 
         beforeEach(async () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
+            urlResolver = new LocalResolver();
 
+            // Create a Container for the first client.
             const container1 = await createContainer();
-            component1 = await requestFluidObject("default", container1);
-            sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
+            dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+            sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
-            const container2 = await createContainer();
-            component2 = await requestFluidObject("default", container2);
-            sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
+            // Load the Container that was created by the first client.
+            const container2 = await loadContainer();
+            dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+            sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
-            const container3 = await createContainer();
-            const component3 = await requestFluidObject("default", container3);
-            sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
+            // Load the Container that was created by the first client.
+            const container3 = await loadContainer();
+            const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+            sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 
             opProcessingController = new OpProcessingController(deltaConnectionServer);
             opProcessingController.addDeltaManagers(
-                component1.runtime.deltaManager,
-                component2.runtime.deltaManager);
+                dataStore1.runtime.deltaManager,
+                dataStore2.runtime.deltaManager);
         });
 
         it("Should initialize after attach", async () => {
-            const collection1 = ctor.create(component1.runtime);
+            const collection1 = ctor.create(dataStore1.runtime);
             for (const item of input) {
                 await collection1.add(item);
             }
@@ -120,7 +125,7 @@ function generate(
         });
 
         it("Simultaneous add and remove should be ordered and value return to only one client", async () => {
-            const collection1 = ctor.create(component1.runtime);
+            const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
@@ -160,7 +165,7 @@ function generate(
         });
 
         it("Wait resolves", async () => {
-            const collection1 = ctor.create(component1.runtime);
+            const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
@@ -214,7 +219,7 @@ function generate(
 
         it("Can store handles", async () => {
             // Set up the collection with two handles and add it to the map so other containers can find it
-            const collection1 = ctor.create(component1.runtime);
+            const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("test", "sampleValue");
             sharedMap1.set("collection", collection1.handle);
             await collection1.add(sharedMap1.handle);
@@ -236,7 +241,7 @@ function generate(
         });
 
         it("Can add and release data", async () => {
-            const collection1 = ctor.create(component1.runtime);
+            const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
 
             const collection2Handle =
@@ -257,7 +262,7 @@ function generate(
         });
 
         it("cancel on close", async () => {
-            const collection1 = ctor.create(component1.runtime);
+            const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
 
             const collection2Handle =
@@ -267,7 +272,7 @@ function generate(
             let waitRejected = false;
             waitAcquireAndComplete(collection2)
                 .catch(() => { waitRejected = true; });
-            component2.runtime.deltaManager.close();
+            dataStore2.runtime.deltaManager.close();
 
             await collection1.add("testValue");
 
@@ -278,7 +283,7 @@ function generate(
         });
 
         it("Events", async () => {
-            const collection1 = ctor.create(component1.runtime);
+            const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
             const [collection2Handle, collection3Handle] = await Promise.all([
                 sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),

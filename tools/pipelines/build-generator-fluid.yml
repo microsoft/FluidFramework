@@ -5,36 +5,64 @@
 
 name: $(Build.BuildId)
 
+parameters:
+- name: publishOverride
+  displayName: Publish Override
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+- name: releaseBuildOverride
+  displayName: Release Build Override
+  type: string
+  default: none
+  values:
+    - none
+    - prerelease
+    - release
+
 trigger:
   branches:
     include:
-    - master
+    - main
     - release/*
-    - refs/tags/generator-fluid_v*
   paths:
     include:
     - tools/generator-fluid
     - tools/pipelines/build-generator-fluid.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
-    - tools/pipelines/templates/publish-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
 
 pr:
   branches:
     include:
-    - master
+    - main
     - release/*
   paths:
     include:
     - tools/generator-fluid
     - tools/pipelines/build-generator-fluid.yml
+    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
 
 extends:
   template: templates/build-npm-package.yml
   parameters:
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: tools/generator-fluid
+    tagName: generator-fluid
     taskBuild: false
     taskBuildDocs: false
     taskLint: false
     taskTest: test
     namespace: false
+    extraAuth: app/templates
+    buildNumberInPatch: true

@@ -5,19 +5,23 @@
 
 import assert from "assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/component-core-interfaces";
-import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { ISharedDirectory } from "@fluidframework/map";
-import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { createLocalLoader, createAndAttachContainer } from "@fluidframework/test-utils";
+import { compatTest, ICompatTestArgs } from "./compatUtils";
 
-const PrimedType = "@fluidframework/primedComponent";
+const PrimedType = "@fluidframework/primedTestDataObject";
 
 /**
- * My sample component
+ * My sample dataObject
  */
-class Component extends DataObject {
+class TestDataObject extends DataObject {
     public get root(): ISharedDirectory {
         return super.root;
     }
@@ -26,54 +30,67 @@ class Component extends DataObject {
     }
 }
 
+const tests = (args: ICompatTestArgs) => {
+    let dataObject: TestDataObject;
+
+    beforeEach(async () => {
+        const container = await args.makeTestContainer() as Container;
+        dataObject = await requestFluidObject<TestDataObject>(container, "default");
+    });
+
+    it("Blob support", async () => {
+        const handle = await dataObject.writeBlob("aaaa");
+        assert(await handle.get() === "aaaa", "Could not write blob to dataObject");
+        dataObject.root.set("key", handle);
+
+        const handle2 = dataObject.root.get<IFluidHandle<string>>("key");
+        const value2 = await handle2.get();
+        assert(value2 === "aaaa", "Could not get blob from shared object in the dataObject");
+
+        const container2 = await args.loadTestContainer() as Container;
+        const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
+        const blobHandle = await dataObject2.root.wait<IFluidHandle<string>>("key");
+        const value = await blobHandle.get();
+        assert(value === "aaaa", "Blob value not synced across containers");
+    });
+};
+
 describe("DataObject", () => {
     describe("Blob support", () => {
-        const id = "fluid-test://localhost/primedComponentTest";
+        const documentId = "primedComponentTest";
+        const documentLoadUrl = `fluid-test://localhost/${documentId}`;
         const codeDetails: IFluidCodeDetails = {
-            package: "primedComponentTestPackage",
+            package: "primedTestDataObjectTestPackage",
             config: {},
         };
-        let deltaConnectionServer: ILocalDeltaConnectionServer;
-        let component: Component;
+        const factory = new DataObjectFactory(PrimedType, TestDataObject, [], {});
 
-        async function createContainer(): Promise<Container> {
-            const factory = new DataObjectFactory(PrimedType, Component, [], {});
-            const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-            return initializeLocalContainer(id, loader, codeDetails);
+        let deltaConnectionServer: ILocalDeltaConnectionServer;
+        let urlResolver: IUrlResolver;
+
+        async function makeTestContainer(): Promise<IContainer> {
+            const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+            return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
         }
 
-        async function requestFluidObject(componentId: string, container: Container): Promise<Component> {
-            const response = await container.request({ url: componentId });
-            if (response.status !== 200 || response.mimeType !== "fluid/object") {
-                throw new Error(`Component with id: ${componentId} not found`);
-            }
-            return response.value as Component;
+        async function loadTestContainer(): Promise<IContainer> {
+            const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+            return loader.resolve({ url: documentLoadUrl });
         }
 
         beforeEach(async () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
-
-            const container = await createContainer();
-            component = await requestFluidObject("default", container);
+            urlResolver = new LocalResolver();
         });
 
-        it("Blob support", async () => {
-            const handle = await component.writeBlob("aaaa");
-            assert(await handle.get() === "aaaa", "Could not write blob to component");
-            component.root.set("key", handle);
-
-            const handle2 = component.root.get<IFluidHandle<string>>("key");
-            const value2 = await handle2.get();
-            assert(value2 === "aaaa", "Could not get blob from shared object in the component");
-
-            const container2 = await createContainer();
-            const component2 = await requestFluidObject("default", container2);
-            const value = await component2.root.get<IFluidHandle<string>>("key").get();
-            assert(value === "aaaa", "Blob value not synced across containers");
-        });
+        tests({ makeTestContainer, loadTestContainer });
 
         afterEach(async () => {
             await deltaConnectionServer.webSocketServer.close();
         });
+    });
+
+    describe("compatibility", () => {
+        compatTest(tests);
     });
 });
