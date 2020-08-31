@@ -52,7 +52,6 @@ export class Smde extends EventEmitter implements
     public get IFluidRouter() { return this; }
     public get IFluidHTMLView() { return this; }
 
-    public url: string;
     private root: ISharedMap | undefined;
     private _text: SharedString | undefined;
     private textArea: HTMLTextAreaElement | undefined;
@@ -65,8 +64,7 @@ export class Smde extends EventEmitter implements
     constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly context: IFluidDataStoreContext) {
         super();
 
-        this.url = context.id;
-        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

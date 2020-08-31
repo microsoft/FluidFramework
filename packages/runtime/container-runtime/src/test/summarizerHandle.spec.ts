@@ -24,7 +24,6 @@ const mockHandleContext: IFluidHandleContext = {
 };
 class MockSummarizer implements IFluidLoadable {
     public get IFluidLoadable() { return this; }
-    public get url() { return "url123"; }
     public get handle() { return new SummarizerHandle(this, "", mockHandleContext); }
 }
 

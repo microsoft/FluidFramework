@@ -100,7 +100,7 @@ export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements I
 
         waitForAttach(this.runtime)
             .then(async () => {
-                const url = await this.context.getAbsoluteUrl(this.url);
+                const url = await this.context.getAbsoluteUrl(this.handle.absolutePath);
                 this._absoluteUrl = url;
                 this.emit("stateChanged");
             })

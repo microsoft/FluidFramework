@@ -34,7 +34,7 @@ export class ImageComponent implements
     public readonly preferInline = false;
     public handle: FluidObjectHandle;
 
-    constructor(public imageUrl: string, public url: string, path: string, context: IFluidHandleContext) {
+    constructor(public imageUrl: string, path: string, context: IFluidHandleContext) {
         this.handle = new FluidObjectHandle(this, path, context);
     }
 
@@ -119,7 +119,6 @@ export class ImageCollection extends LazyLoadedDataObject<ISharedDirectory> impl
                 key,
                 new ImageComponent(
                     this.root.get(key),
-                    `${this.url}/${key}`,
                     key,
                     this.runtime.IFluidHandleContext));
         }
@@ -131,7 +130,6 @@ export class ImageCollection extends LazyLoadedDataObject<ISharedDirectory> impl
             } else {
                 const player = new ImageComponent(
                     this.root.get(changed.key),
-                    `${this.url}/${changed.key}`,
                     changed.key,
                     this.runtime.IFluidHandleContext);
                 this.images.set(changed.key, player);

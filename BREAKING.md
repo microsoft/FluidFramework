@@ -1,5 +1,11 @@
 # Breaking changes
 
+## 0.26 Breaking Changes
+- [IFluidLodable.url is removed](#IFluidLodable.url-is-removed)
+
+### IFluidLodable.url is removed
+`url` property is removed. As a temporary solution, you can use IFluidLoadable.handle.absolutePath instead. That said, internal routing and URIs will be hidden in future versions. If you rely on it, you need to rethink managing (external) URIs, as only handles can be used inside container - any external URI resolution should go through redirection of URI -> handle. `url` property is left on core objects but it will be cleared in next version. 
+
 ## 0.25 Breaking Changes
 - [External Component Loader and IComponentDefaultFactoryName removed](#External-Component-Loader-and-IComponentDefaultFactoryName-removed)
 - [MockFluidDataStoreRuntime api rename](#MockFluidDataStoreRuntime-api-rename)

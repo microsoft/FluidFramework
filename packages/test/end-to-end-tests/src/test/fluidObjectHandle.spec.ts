@@ -213,7 +213,10 @@ describe("FluidObjectHandle", () => {
         // Get the dataObject from the handle.
         const container2DataObject2 = await remoteDataObjectHandle.get();
         // Verify that the `url` matches with that of the dataObject in container1.
-        assert.equal(container2DataObject2.url, firstContainerObject2.url, "The urls do not match");
+        assert.equal(
+            container2DataObject2.handle.absolutePath,
+            firstContainerObject2.handle.absolutePath,
+            "The urls do not match");
     });
 
     afterEach(async () => {

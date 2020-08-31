@@ -44,7 +44,7 @@ class ProgressBarView implements IFluidHTMLView {
             div.innerHTML = `<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>`;
 
             const urlDiv = document.createElement("div");
-            urlDiv.innerText = this.bar.url;
+            urlDiv.innerText = this.bar.handle.absolutePath;
 
             const downButton = document.createElement("button");
             downButton.innerText = "down";
@@ -84,7 +84,6 @@ export class ProgressBar extends EventEmitter implements
 
     constructor(
         public value: number,
-        public url: string,
         private readonly keyId: string,
         context: IFluidHandleContext,
         private readonly collection: ProgressCollection,
@@ -134,7 +133,6 @@ export class ProgressCollection
     public get IFluidRouter() { return this; }
     public get IFluidObjectCollection() { return this; }
 
-    public url: string;
     public handle: FluidObjectHandle;
 
     private readonly progressBars = new Map<string, ProgressBar>();
@@ -143,7 +141,6 @@ export class ProgressCollection
     constructor(private readonly runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         super();
 
-        this.url = context.id;
         this.handle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
     }
 
@@ -200,7 +197,6 @@ export class ProgressCollection
                 key,
                 new ProgressBar(
                     this.root.get(key),
-                    `${this.url}/${key}`,
                     key,
                     this.runtime.IFluidHandleContext,
                     this));
@@ -214,7 +210,6 @@ export class ProgressCollection
                     changed.key,
                     new ProgressBar(
                         this.root.get(changed.key),
-                        `${this.url}/${changed.key}`,
                         changed.key,
                         this.runtime.IFluidHandleContext,
                         this));

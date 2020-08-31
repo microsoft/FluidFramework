@@ -69,9 +69,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         return this._connected;
     }
 
-    /**
-     * The loadable URL for this SharedObject
-     */
+    // Back-compat <= 0.25
     public get url(): string {
         return this.id;
     }
