@@ -37,7 +37,7 @@ export class TenantManager implements core.ITenantManager {
 
     public async createTenant(tenantId?: string): Promise<core.ITenantConfig & { key: string }> {
         const result = await Axios.post<core.ITenantConfig & { key: string }>(
-            `${this.endpoint}/api/tenants/${tenantId || ""}`);
+            `${this.endpoint}/api/tenants/${encodeURIComponent(tenantId || "")}`);
         return result.data;
     }
 
