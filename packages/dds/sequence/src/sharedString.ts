@@ -43,11 +43,6 @@ export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker | Mer
  * used to store metadata at positions within the text, like the details of an
  * image or Fluid object that should be rendered with the text.
  *
- * Both markers and text are stored as segments in the Shared String. Text segments
- * will be split and merged when modifications are made to the Shared String and
- * will therefore have variable length matching the length of the text content they
- * contain. Marker segments are never split or merged, and always have a length of
- * 1.
  */
 export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
     /**
