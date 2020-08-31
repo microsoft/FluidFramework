@@ -4,7 +4,7 @@
  */
 
 import {
-    OnlineStatus,
+    OnlineStatus, isOnline,
 } from "@fluidframework/driver-utils";
 import {
     DriverErrorType,
@@ -108,8 +108,8 @@ export async function fetchHelper<T>(
         // While we do not know for sure whether computer is offline, this error is not actionable and
         // is pretty good indicator we are offline. Treating it as offline scenario will make it
         // easier to see other errors in telemetry.
-        let online = OnlineStatus.Unknown;
-        if (error && typeof error === "object" && error.message === "TypeError: Failed to fetch") {
+        let online = isOnline();
+        if (`${error}` === "TypeError: Failed to fetch") {
             online = OnlineStatus.Offline;
         }
         throwOdspNetworkError(

@@ -106,7 +106,7 @@ export function createOdspNetworkError(
             error = new NetworkErrorBasic(errorMessage, DriverErrorType.offlineError, true);
             break;
         case fetchFailureStatusCode:
-            error = new NetworkErrorBasic(errorMessage, DriverErrorType.fetchFailure, false);
+            error = new NetworkErrorBasic(errorMessage, DriverErrorType.fetchFailure, true);
             break;
         case fetchIncorrectResponse:
             error = new NetworkErrorBasic(errorMessage, DriverErrorType.incorrectServerResponse, false);
