@@ -67,7 +67,7 @@ class WorkerLoader implements ILoader, IFluidRunnable {
                 null);
         } else {
             factory = new OdspDocumentServiceFactory(
-                async (siteUrl: string) => Promise.resolve(this.resolved.tokens.storageToken),
+                async () => Promise.resolve(this.resolved.tokens.storageToken),
                 async () => Promise.resolve(this.resolved.tokens.socketToken));
         }
         const container = await Container.load(

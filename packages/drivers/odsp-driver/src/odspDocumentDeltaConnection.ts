@@ -118,7 +118,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             if (errorObject !== null && typeof errorObject === "object" && errorObject.canRetry) {
                 const socketError: IOdspSocketError = errorObject.socketError;
                 if (typeof socketError === "object" && socketError !== null) {
-                    // We have to special-case error types here in terms of what is retrayable.
+                    // We have to special-case error types here in terms of what is retriable.
                     // These errors have to re retried, we just need new joinSession result to connect to right server:
                     //    400: Invalid tenant or document id. The WebSocket is connected to a different document
                     //         Document is full (with retryAfter)
