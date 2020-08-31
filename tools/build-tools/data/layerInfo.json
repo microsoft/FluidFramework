@@ -173,7 +173,6 @@
                 "dot": false,
                 "dev": true,
                 "dirs": [
-                    "components/",
                     "examples/",
                     "packages/agents/"
                 ],
@@ -262,7 +261,7 @@
             },
             "Routerlicious-Server": {
                 "packages": [
-                    "@fluidframework/server-routerlicious"
+                    "@fluid-internal/server-routerlicious"
                 ],
                 "deps": [
                     "Server-Libs"

@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM alpine:3.6
+FROM alpine:3.12
 
 # Install Git and OpenSSH so we can run a git server
 RUN apk add --no-cache git
@@ -11,12 +11,12 @@ RUN apk add --no-cache openssh
 RUN echo $(which git-shell) >> /etc/shells
 
 # Create a git user and group
-RUN addgroup -S git 
+RUN addgroup -S git
 RUN adduser -D -S -s $(which git-shell) -G git git
 RUN passwd -u git
 
 # Configure ssh
-RUN sed -i "s/#PermitEmptyPasswords.*/PermitEmptyPasswords\ yes/" /etc/ssh/sshd_config 
+RUN sed -i "s/#PermitEmptyPasswords.*/PermitEmptyPasswords\ yes/" /etc/ssh/sshd_config
 
 # Generate ssh keys. Note this will keep them unique across builds of the container which opens things up to possible
 # attacks. But the consistency also simplifies the development flow. An example script is included to generate them

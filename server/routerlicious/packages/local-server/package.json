@@ -1,7 +1,8 @@
 {
   "name": "@fluidframework/server-local-server",
-  "version": "0.1011.1",
-  "description": "Local server implementation",
+  "version": "0.1012.0",
+  "description": "Fluid local server implementation",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -49,13 +50,13 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.21.0",
-    "@fluidframework/protocol-definitions": "^0.1011.1",
-    "@fluidframework/server-lambdas": "^0.1011.1",
-    "@fluidframework/server-memory-orderer": "^0.1011.1",
-    "@fluidframework/server-services-client": "^0.1011.1",
-    "@fluidframework/server-services-core": "^0.1011.1",
-    "@fluidframework/server-test-utils": "^0.1011.1",
+    "@fluidframework/common-utils": "^0.22.1",
+    "@fluidframework/protocol-definitions": "^0.1012.0",
+    "@fluidframework/server-lambdas": "^0.1012.0",
+    "@fluidframework/server-memory-orderer": "^0.1012.0",
+    "@fluidframework/server-services-client": "^0.1012.0",
+    "@fluidframework/server-services-core": "^0.1012.0",
+    "@fluidframework/server-test-utils": "^0.1012.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
@@ -64,6 +65,7 @@
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",
     "@types/node": "^10.17.24",
+    "@types/webpack": "^4.41.2",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^5.2.0",
@@ -76,7 +78,7 @@
     "eslint-plugin-prefer-arrow": "~1.1.7",
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
-    "mocha": "^8.0.1",
+    "mocha": "^8.1.1",
     "mocha-junit-reporter": "^1.18.0",
     "nock": "^10.0.1",
     "nyc": "^15.0.0",

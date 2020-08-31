@@ -5,6 +5,7 @@
 
 import { EventEmitter } from "events";
 import ws from "ws";
+import { IsoBuffer } from "@fluidframework/common-utils";
 import { debug } from "./debug";
 
 export class Socket<T> extends EventEmitter {
@@ -75,7 +76,7 @@ export class Socket<T> extends EventEmitter {
     public on(event: "error", listener: (err: Error) => void): this;
     public on(event: "message", listener: (data: T) => void): this;
     public on(event: "open", listener: () => void): this;
-    public on(event: "ping" | "pong", listener: (data: Buffer) => void): this;
+    public on(event: "ping" | "pong", listener: (data: IsoBuffer) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         super.on(event, listener);
         return this;

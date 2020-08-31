@@ -76,10 +76,10 @@ export class TableDocument extends DataObject<{}, {}, ITableDocumentEvents> impl
         minCol: number,
         maxRow: number,
         maxCol: number): Promise<ITable> {
-        const component = await TableSlice.getFactory().createInstance(
+        const component = await TableSlice.getFactory().createChildInstance(
             this.context,
             { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol },
-        ) as TableSlice;
+        );
         this.root.set(sliceId, component.handle);
         return component;
     }

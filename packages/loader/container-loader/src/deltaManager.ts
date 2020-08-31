@@ -141,7 +141,7 @@ export class DeltaManager
 
     private inQuorum = false;
 
-    private updateSequenceNumberTimer: number | undefined;
+    private updateSequenceNumberTimer: ReturnType<typeof setTimeout> | undefined;
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
@@ -219,13 +219,16 @@ export class DeltaManager
     }
 
     public get maxMessageSize(): number {
-        return this.connection!.details.serviceConfiguration?.maxMessageSize
-            ?? this.connection!.details.maxMessageSize
+        return this.connection?.details.serviceConfiguration?.maxMessageSize
+            ?? this.connection?.details.maxMessageSize
             ?? DefaultChunkSize;
     }
 
     public get version(): string {
-        return this.connection!.details.version;
+        if (this.connection === undefined) {
+            throw new Error("Cannot check version without a connection");
+        }
+        return this.connection.details.version;
     }
 
     public get serviceConfiguration(): IServiceConfiguration | undefined {
@@ -310,7 +313,7 @@ export class DeltaManager
      * (server can return "write" mode even when asked for "read")
      * Leveraging same "readonly" event as runtime & data stores should behave the same in such case
      * as in read-only permissions.
-     * But this.active can be used by some DDSs to figure out if ops can be sent
+     * But this.active can be used by some DDSes to figure out if ops can be sent
      * (for example, read-only view still participates in code proposals / upgrades decisions)
      */
     public forceReadonly(readonly: boolean) {
@@ -354,7 +357,10 @@ export class DeltaManager
         // within an array *must* fit within the maxMessageSize and are guaranteed to be ordered sequentially.
         this._outbound = new DeltaQueue<IDocumentMessage[]>(
             (messages) => {
-                this.connection!.submit(messages);
+                if (this.connection === undefined) {
+                    throw new Error("Attempted to submit an outbound message without connection");
+                }
+                this.connection.submit(messages);
             });
 
         this._outbound.on("error", (error) => {
@@ -363,7 +369,10 @@ export class DeltaManager
 
         // Inbound signal queue
         this._inboundSignal = new DeltaQueue<ISignalMessage>((message) => {
-            this.handler!.processSignal({
+            if (this.handler === undefined) {
+                throw new Error("Attempted to process an inbound signal without a handler attached");
+            }
+            this.handler.processSignal({
                 clientId: message.clientId,
                 content: JSON.parse(message.content as string),
             });
@@ -447,8 +456,8 @@ export class DeltaManager
         // if we have any non-acked ops from last connection, reconnect as "write".
         // without that we would connect in view-only mode, which will result in immediate
         // firing of "connected" event from Container and switch of current clientId (as tracked
-        // by all DDSs). This will make it impossible to figure out if ops actually made it through,
-        // so DDSs will immediately resubmit all pending ops, and some of them will be duplicates, corrupting document
+        // by all DDSes). This will make it impossible to figure out if ops actually made it through,
+        // so DDSes will immediately resubmit all pending ops, and some of them will be duplicates, corrupting document
         if (this.clientSequenceNumberObserved !== this.clientSequenceNumber) {
             requestedMode = "write";
         }
@@ -902,7 +911,7 @@ export class DeltaManager
             return;
         }
 
-        // We cancel all ops on lost of connectivity, and rely on DDSs to resubmit them.
+        // We cancel all ops on lost of connectivity, and rely on DDSes to resubmit them.
         // Semantics are not well defined for batches (and they are broken right now on disconnects anyway),
         // but it's safe to assume (until better design is put into place) that batches should not exist
         // across multiple connections. Right now we assume runtime will not submit any ops in disconnected
@@ -1038,7 +1047,7 @@ export class DeltaManager
             return;
         }
 
-        // We cancel all ops on lost of connectivity, and rely on DDSs to resubmit them.
+        // We cancel all ops on lost of connectivity, and rely on DDSes to resubmit them.
         // Semantics are not well defined for batches (and they are broken right now on disconnects anyway),
         // but it's safe to assume (until better design is put into place) that batches should not exist
         // across multiple connections. Right now we assume runtime will not submit any ops in disconnected
@@ -1243,7 +1252,10 @@ export class DeltaManager
 
         this.emit("beforeOpProcessing", message);
 
-        const result = this.handler!.process(message);
+        if (this.handler === undefined) {
+            throw new Error("Attempted to process an inbound message without a handler attached");
+        }
+        const result = this.handler.process(message);
         this.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
 
         const endTime = Date.now();

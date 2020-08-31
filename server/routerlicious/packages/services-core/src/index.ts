@@ -6,6 +6,9 @@
 export * from "./cache";
 export * from "./celaNames";
 export * from "./clientManager";
+export * from "./combinedContext";
+export * from "./combinedLambda";
+export * from "./combinedProducer";
 export * from "./database";
 export * from "./document";
 export * from "./http";
@@ -19,5 +22,4 @@ export * from "./publisher";
 export * from "./queue";
 export * from "./taskMessages";
 export * from "./tenant";
-export * from "./combinedProducer";
 export * from "./zookeeper";

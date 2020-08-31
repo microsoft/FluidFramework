@@ -50,7 +50,7 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
         }
         const factory: IDocumentServiceFactory | undefined = this.protocolToDocumentFactoryMap.get(urlObj.protocol);
         if (factory === undefined) {
-            throw new Error("Unknown fluid protocol");
+            throw new Error("Unknown Fluid protocol");
         }
 
         return factory.createDocumentService(resolvedUrl, logger);
@@ -68,7 +68,7 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
         }
         const factory: IDocumentServiceFactory | undefined = this.protocolToDocumentFactoryMap.get(urlObj.protocol);
         if (factory === undefined) {
-            throw new Error("Unknown fluid protocol");
+            throw new Error("Unknown Fluid protocol");
         }
         return factory.createContainer(createNewSummary, createNewResolvedUrl, logger);
     }

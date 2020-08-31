@@ -17,14 +17,12 @@ import {
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
-import {
-    IFluidObjectCollection,
-} from "@fluidframework/framework-interfaces";
+import { IFluidObjectCollection } from "@fluid-example/fluid-object-interfaces";
 import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
-import { PureDataObjectFactory, PureDataObject } from "@fluidframework/component-base";
+import { LazyLoadedDataObjectFactory, LazyLoadedDataObject } from "@fluidframework/data-object-base";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import * as Katex from "katex";
 import * as MathExpr from "./mathExpr";
@@ -489,8 +487,8 @@ const endIdPrefix = "end-";
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IMathOptions extends IFluidHTMLOptions { }
 
-export class MathCollection extends PureDataObject<ISharedDirectory> implements IFluidObjectCollection {
-    private static readonly factory = new PureDataObjectFactory<MathCollection>(
+export class MathCollection extends LazyLoadedDataObject<ISharedDirectory> implements IFluidObjectCollection {
+    private static readonly factory = new LazyLoadedDataObjectFactory<MathCollection>(
         "@fluid-example/math",
         MathCollection,
         /* root: */ SharedDirectory.getFactory(),

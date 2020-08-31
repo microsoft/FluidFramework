@@ -63,10 +63,22 @@ parameters:
   type: string
   default:
 
+- name: publishOverride
+  type: string
+
+- name: releaseBuildOverride
+  type: string
+
+- name: tagName
+  type: string
+
 trigger: none
 
 variables:
-  skipComponentGovernanceDetection: true
+  - template: include-vars.yml
+    parameters:
+      publishOverride: ${{ parameters.publishOverride }}
+      releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
 
 stages:
   - stage: build
@@ -76,8 +88,8 @@ stages:
       - job: Build
         pool: ${{ parameters.poolBuild }}
         variables:
-        - name: testCoverage
-          value: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
+          testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
+          releaseBuildVar: $[variables.releaseBuild]
         steps:
         # Setup
         - checkout: self
@@ -92,20 +104,27 @@ stages:
             script: |
               # Show all task group conditions
 
-              echo Build=${{ parameters.taskBuild }}
-              echo Lint=${{ parameters.taskLint }}
-              echo Test=${{ parameters.taskTest }}
-              echo BuildDoc=${{ parameters.taskBuildDocs }}
-              echo TestCoverage=$(testCoverage)
-        - task: Bash@3
-          displayName: Strip MIT License
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
-            script: |
-              sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
-              perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
-              git status
+              echo "
+              Pipeline Variables:
+                releaseBuild=$(releaseBuildVar)
+
+              Override Parameters:
+                publishOverride=${{ parameters.publishOverride }}
+                releaseBuildOverride=${{ parameters.releaseBuildOverride }}
+
+              Tasks Parameters:
+                Build=${{ parameters.taskBuild }}
+                Lint=${{ parameters.taskLint }}
+                Test=${{ parameters.taskTest }}
+                BuildDoc=${{ parameters.taskBuildDocs }}
+                TestCoverage=$(testCoverage)
+
+              Computed variables:
+                shouldPublish=${{ variables.shouldPublish }}
+                componentDetection=${{ variables.componentDetection }}
+                pushImage=${{ variables.pushImage }}
+                publish=${{ variables.publish }}
+                release=$(release)"
 
         # Install
         - task: UseNode@1
@@ -133,37 +152,10 @@ stages:
             customRegistry: 'useNpmrc'
 
         # Set version
-        - task: Bash@3
-          displayName: Set Package Version
-          env:
-            VERSION_BUILDBRANCH: $(Build.SourceBranch)
-            VERSION_BUILDNUMBER: $(Build.BuildNumber)
-            VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
-            script: |
-              # expect lerna.json and package.json be in the current working directory
-              if [ "$VERSION_BUILD_ID" == "$VERSION_BUILDNUMBER" ]; then
-                VERSION_IS_ID=true
-              fi
-
-              echo VERSION_BUILDBRANCH=$VERSION_BUILDBRANCH
-              echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
-              echo VERSION_PATCH=$VERSION_PATCH
-
-              version=`node $(Build.SourcesDirectory)/tools/build-server-resources/build-version.js`
-              echo COMPUTED_VERSION=$version
-
-              if [ "$version" == '' ]; then
-                exit -1
-              fi
-
-              if [ -f "lerna.json" ]; then
-                npx lerna version $version --no-git-tag-version --no-push --yes
-              else
-                npm version --no-git-tag-version $version -f --allow-same-version
-              fi
+        - template: include-set-package-version.yml
+          parameters:
+            buildDirectory: ${{ parameters.buildDirectory }}
+            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -277,7 +269,7 @@ stages:
               publishLocation: 'Container'
 
       # Job - Component detection
-      - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+      - ${{ if eq(variables.componentDetection, true) }}:
         - job: CG
           displayName: Component Detection
           pool: ${{ parameters.poolCG }}
@@ -298,23 +290,11 @@ stages:
               alertWarningLevel: High
 
   # Publish stage
-  - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-    - stage: publish
-      dependsOn: build
-      displayName: Publish Stage
-      jobs:
-      - template: publish-npm-package.yml
-        parameters:
-          namespace: ${{ parameters.namespace }}
-          feeds:
-          - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
-            environment: fluid-feed
-            customEndPoint: Offnet Packages
-            internal: true
-          # only publish release bits
-          - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
-            - name: https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
-              environment: office-feed
-              customEndPoint: Office Packages
-              internal: false
-
+  - ${{ if eq(variables.publish, true) }}:
+    - template: include-publish-npm-package.yml
+      parameters:
+        buildDirectory: ${{ parameters.buildDirectory }}
+        namespace: ${{ parameters.namespace }}
+        tagName: ${{ parameters.tagName }}
+        buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+        

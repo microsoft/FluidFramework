@@ -125,6 +125,14 @@ export class GitRepo {
     }
 
     /**
+     * Push branch
+     * @param branchName 
+     */
+    public async pushBranch(remote: string, fromBranchName: string, toBranchName: string) {
+        await this.exec(`push ${remote} ${fromBranchName}:${toBranchName}`, `push branch ${fromBranchName}->${toBranchName} to ${remote}`);
+    }
+
+    /**
      * Delete a branch
      * NOTE: this doesn't fail on error
      * 

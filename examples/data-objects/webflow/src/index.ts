@@ -4,10 +4,10 @@
  */
 
 export { FlowDocument } from "./document";
-export { Editor, IComponentHTMLViewFactory } from "./editor";
+export { Editor, IFluidHTMLViewFactory } from "./editor";
 export { htmlFormatter } from "./html/formatters";
 
-import { RuntimeFactory } from "@fluidframework/component-base";
+import { RuntimeFactory } from "@fluidframework/data-object-base";
 import { WebFlow } from "./host";
 
 export const fluidExport = new RuntimeFactory(WebFlow.getFactory());

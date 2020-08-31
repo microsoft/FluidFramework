@@ -5,13 +5,15 @@
 
 import assert from "assert";
 import { TagName } from "@fluid-example/flow-util-lib";
-import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
+import { LocalResolver } from "@fluidframework/local-driver";
 import { Marker, ReferenceType } from "@fluidframework/merge-tree";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { createAndAttachContainer, createLocalLoader } from "@fluidframework/test-utils";
 import { FlowDocument } from "../src/document";
 
 describe("FlowDocument", () => {
-    const id = "fluid-test://localhost/flowDocumentTest";
+    const documentUrl = "fluid-test://localhost/flowDocumentTest";
     const codeDetails = {
         package: "flowDocumentTestPkg",
         config: {},
@@ -20,14 +22,10 @@ describe("FlowDocument", () => {
 
     beforeEach(async () => {
         const deltaConnectionServer = LocalDeltaConnectionServer.create();
-        const loader = createLocalLoader([[codeDetails, FlowDocument.getFactory()]], deltaConnectionServer);
-        const container = await initializeLocalContainer(id, loader, codeDetails);
-
-        const response = await container.request({ url: "default" });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Default component not found`);
-        }
-        doc = response.value;
+        const urlResolver = new LocalResolver();
+        const loader = createLocalLoader([[codeDetails, FlowDocument.getFactory()]], deltaConnectionServer, urlResolver);
+        const container = await createAndAttachContainer(documentUrl, codeDetails, loader, urlResolver);
+        doc = await requestFluidObject<FlowDocument>(container, "default");
     });
 
     function expect(expected: string) {

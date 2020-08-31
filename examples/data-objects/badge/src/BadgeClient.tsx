@@ -10,7 +10,7 @@ import { IBadgeClientProps, IBadgeType } from "./Badge.types";
 /**
 * The BadgeClient is a stateful, functional component that stores Fluid getters in state
 * and passes those getters and setters to the BadgeView. The state is updated each time that
-* the Fluid DDS's are modified.
+* the Fluid DDSess are modified.
 */
 
 export const BadgeClient: React.FC<IBadgeClientProps> = ({ model }: IBadgeClientProps) => {

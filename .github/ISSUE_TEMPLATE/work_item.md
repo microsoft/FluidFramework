@@ -24,6 +24,6 @@ assignees: ''
 <!--The full list of things that must be true before this work can be considered done -->
 
 
-<!-- By filing an Issue, you are expected to comply with the Code of Conduct: https://github.com/microsoft/FluidFramework/blob/master/CODE_OF_CONDUCT.md -->
+<!-- By filing an Issue, you are expected to comply with the Code of Conduct: https://github.com/microsoft/FluidFramework/blob/main/CODE_OF_CONDUCT.md -->
 
 <!-- Lastly, be sure to preview your issue before saving. Thanks! -->

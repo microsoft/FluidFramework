@@ -20,3 +20,6 @@ export * from "./odspCache";
 export * from "./createFile";
 export * from "./odspUrlHelper";
 export * from "./odspError";
+export * from "./createOdspCreateContainerRequest";
+export * from "./tokenFetch";
+export * from "./parseAuthErrorClaims";

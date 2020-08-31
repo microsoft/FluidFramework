@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:10.16.0-slim
+FROM node:12.18-stretch
 
 # To auth against private VSTS
 ARG NPM_TOKEN

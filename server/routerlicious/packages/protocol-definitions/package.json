@@ -1,7 +1,8 @@
 {
   "name": "@fluidframework/protocol-definitions",
-  "version": "0.1011.1",
+  "version": "0.1012.0",
   "description": "Fluid protocol definitions",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -27,8 +28,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-definitions": "^0.18.1",
-    "buffer": "^4.3.0"
+    "@fluidframework/common-definitions": "^0.18.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.18.0",

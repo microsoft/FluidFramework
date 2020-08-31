@@ -28,9 +28,9 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
     // Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
     tokens: {};
 
-    fileName: string,
+    fileName: string;
 
-    summarizer: boolean,
+    summarizer: boolean;
 }
 
 /**
@@ -47,13 +47,11 @@ export interface ISocketStorageDiscovery {
 
     snapshotStorageUrl: string;
     deltaStorageUrl: string;
-    storageToken: string;
 
     deltaStreamSocketUrl: string;
 
     // The AFD URL for PushChannel
     deltaStreamSocketUrl2?: string;
-    socketToken: string;
 }
 
 /**

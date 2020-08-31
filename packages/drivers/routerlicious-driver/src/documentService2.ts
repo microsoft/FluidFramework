@@ -35,7 +35,7 @@ export class DocumentService2 extends DocumentService {
             disableCache,
             historianApi,
             directCredentials,
-            null,
+            undefined,
             tokenProvider,
             tenantId,
             documentId);

@@ -5,44 +5,61 @@
 
 name: $(Build.BuildId)
 
+parameters:
+- name: publishOverride
+  displayName: Publish Override
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+- name: releaseBuildOverride
+  displayName: Release Build Override
+  type: string
+  default: none
+  values:
+    - none
+    - prerelease
+    - release
+
 trigger:
   branches:
     include:
-    - master
+    - main
     - release/*
-    - refs/tags/server_v*
   paths:
     include:
     - server/routerlicious
-    - tools/build-server-resources
     - tools/pipelines/server-routerlicious.yml
-    - tools/pipelines/templates/publish-npm-package.yml
+    - tools/pipelines/scripts/build-version.js
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
   
 pr:
   branches:
     include:
-    - master
+    - main
     - release/*
   paths:
     include:
     - server/routerlicious
-    - tools/build-server-resources
     - tools/pipelines/server-routerlicious.yml
+    - tools/pipelines/scripts/build-version.js
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
 variables:
-- name: skipComponentGovernanceDetection
-  value: true
-- name: pushImage
-  value: ${{
-    and(
-      ne(variables['Build.Reason'], 'PullRequest'),
-      eq(variables['Build.SourceBranch'], 'refs/heads/master')
-    )}}
+- template: templates/include-vars.yml
+  parameters:
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
 - group: container-registry-info
 - name: containerName
   value: fluid-server
@@ -73,22 +90,14 @@ stages:
           lfs: false
           submodules: false
 
-        - task: Bash@3
-          displayName: Strip MIT License
-          inputs:
-            targetType: 'inline'
-            workingDirectory: server/routerlicious
-            script: |
-              sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
-              perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
-              git status
+        # for npm ci in component detection and set version
+        - task: UseNode@1
+          displayName: Use Node 12.x
+          inputs: 
+            version: 12.x
 
         # Component detection (not pull request)
-        - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-          - task: UseNode@1
-            displayName: Use Node 12.x
-            inputs: 
-              version: 12.x
+        - ${{ if eq(variables.componentDetection, true) }}:
           - task: npmAuthenticate@0
             displayName: 'npm Authenticate root .npmrc'
             inputs:
@@ -128,6 +137,11 @@ stages:
             workingFile: server/routerlicious/.npmrc
             customEndpoint: Offnet Packages
 
+        # Set version
+        - template: templates/include-set-package-version.yml
+          parameters:
+            buildDirectory: server/routerlicious
+
         # Build
         - task: Docker@2
           displayName: Docker Build - Base
@@ -136,7 +150,7 @@ stages:
             command: build
             dockerFile: server/routerlicious/Dockerfile
             buildContext: server/routerlicious
-            arguments: --target base --build-arg VERSION_BUILDNUMBER=$(Build.BuildNumber) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)
+            arguments: --target base
             tags: |
               $(Build.BuildNumber)
 
@@ -208,7 +222,7 @@ stages:
               command: build
               dockerFile: server/routerlicious/Dockerfile
               buildContext: server/routerlicious
-              arguments: '--target runner --build-arg VERSION_BUILDNUMBER=$(Build.BuildNumber) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)'
+              arguments: --target runner
               tags: |
                 $(Build.BuildNumber)
           
@@ -248,21 +262,10 @@ stages:
           condition: succeededOrFailed()
 
 # Publish stage
-- ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-  - stage: publish
-    dependsOn: build
-    displayName: Publish Stage
-    jobs:
-    - template: templates/publish-npm-package.yml
-      parameters:
-        feeds:
-        - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
-          environment: fluid-feed
-          customEndPoint: Offnet Packages
-          internal: false
-        # only publish release bits
-        - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
-          - name: https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
-            environment: office-feed
-            customEndPoint: Office Packages
-            internal: false
+- ${{ if eq(variables.publish, true) }}:
+  - template: templates/include-publish-npm-package.yml
+    parameters:
+      buildDirectory: server/routerlicious
+      namespace: true
+      tagName: server
+      buildNumberInPatch: false

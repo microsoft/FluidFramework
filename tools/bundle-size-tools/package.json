@@ -2,6 +2,7 @@
   "name": "@fluidframework/bundle-size-tools",
   "version": "0.0.0",
   "description": "Utility for analyzing bundle size regressions",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
