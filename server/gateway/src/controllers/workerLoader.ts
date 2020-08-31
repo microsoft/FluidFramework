@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { WebCodeLoader, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import Comlink from "comlink";
 
@@ -58,13 +58,7 @@ class WorkerLoader implements ILoader, IFluidRunnable {
         const urlObj = parse(this.resolved.url);
         let factory: IDocumentServiceFactory;
         if (urlObj.protocol === "fluid:") {
-            factory = new RouterliciousDocumentServiceFactory(
-                false,
-                new DefaultErrorTracking(),
-                false,
-                true,
-                // eslint-disable-next-line no-null/no-null
-                null);
+            factory = new RouterliciousDocumentServiceFactory();
         } else {
             factory = new OdspDocumentServiceFactory(
                 async () => Promise.resolve(this.resolved.tokens.storageToken),
