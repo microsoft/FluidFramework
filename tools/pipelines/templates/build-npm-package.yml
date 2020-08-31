@@ -156,7 +156,6 @@ stages:
           parameters:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-            release: $(release)
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
