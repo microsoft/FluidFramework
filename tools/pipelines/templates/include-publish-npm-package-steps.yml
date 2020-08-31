@@ -19,7 +19,7 @@ jobs:
     - deployment: publish_${{ replace(feed.environment, '-', '_') }}
       displayName: Publish ${{ feed.environment }}
       pool: ${{ parameters.pool }}
-      environment: test # ${{ feed.environment }}
+      environment: ${{ feed.environment }}
       workspace:
         clean: all
       strategy:
@@ -83,13 +83,13 @@ jobs:
                       echo Tag: $tag
                       cp .npmrc ~/.npmrc
                       t1=0
-                      # for f in *.tgz
-                      # do 
-                      #     if ! npm publish $f $tag ${{ feed.publishFlags }}
-                      #     then
-                      #         let t1+=1
-                      #     fi
-                      # done
+                      for f in *.tgz
+                      do 
+                          if ! npm publish $f $tag ${{ feed.publishFlags }}
+                          then
+                              let t1+=1
+                          fi
+                      done
                       rm ~/.npmrc
                       exit $t1
 
