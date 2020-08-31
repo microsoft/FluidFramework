@@ -2,6 +2,7 @@
   "name": "@fluidframework/file-driver",
   "version": "0.26.0",
   "description": "A driver that reads/write from/to local file storage.",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

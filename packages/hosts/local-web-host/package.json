@@ -1,6 +1,7 @@
 {
   "name": "@fluidframework/local-web-host",
   "version": "0.26.0",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

@@ -2,6 +2,7 @@
   "name": "@fluidframework/common-definitions",
   "version": "0.19.1",
   "description": "Fluid common definitions",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

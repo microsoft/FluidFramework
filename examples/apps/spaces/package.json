@@ -2,6 +2,7 @@
   "name": "@fluid-example/spaces",
   "version": "0.26.0",
   "description": "Spaces is a grid layout component",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

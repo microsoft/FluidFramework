@@ -17,13 +17,13 @@ import {
 const licenseId = 'MIT';
 const author = 'Microsoft';
 const repository = 'microsoft/FluidFramework';
+const homepage = 'https://fluidframework.com';
 const trademark = `
 ## Trademark
 
-This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these
-trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/
-intellectualproperty/trademarks/usage/general). Use of Microsoft trademarks or logos in modified versions of this
-project must not cause confusion or imply Microsoft sponsorship.
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 `;
 
 function packageShouldBePrivate(name: string): boolean {
@@ -100,6 +100,10 @@ export const handlers: Handler[] = [
                 missing.push(`${repository} repository entry`);
             }
 
+            if (json.homepage !== homepage) {
+                missing.push(`${homepage} homepage entry`);
+            }
+
             const ret = [];
             if (missing.length > 0) {
                 ret.push(`missing or incorrect ${missing.join(' and ')}`);
@@ -138,6 +142,12 @@ export const handlers: Handler[] = [
             if (!json.repository) {
                 json.repository = repository;
             } else if (json.repository !== repository) {
+                resolved = false;
+            }
+
+            if (!json.homepage) {
+                json.homepage = homepage;
+            } else if (json.homepage !== homepage) {
                 resolved = false;
             }
 

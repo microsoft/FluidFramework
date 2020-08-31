@@ -2,6 +2,7 @@
   "name": "@fluid-example/image-collection",
   "version": "0.26.0",
   "description": "Collection of images",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

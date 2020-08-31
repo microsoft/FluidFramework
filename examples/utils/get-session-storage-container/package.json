@@ -2,6 +2,7 @@
   "name": "@fluidframework/get-session-storage-container",
   "version": "0.26.0",
   "description": "Tool for getting a Ram-a-licious configured container for testing app scenarios",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

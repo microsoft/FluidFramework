@@ -3,6 +3,7 @@
   "version": "0.26.0",
   "private": true,
   "description": "Fluid object to test version conversion.",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

@@ -52,7 +52,7 @@ export abstract class SyncedDataObject<
      * Runs the first time the SyncedDataObject is generated and sets up all necessary data structures for the view
      * To extend this function, please call super() prior to adding to functionality to ensure correct initializing
      */
-    protected async initializingFirstTime(props?: S): Promise<void> {
+    protected async initializingFirstTime(): Promise<void> {
         // Initialize our synced state map for the first time using our
         // syncedStateConfig values
         await this.initializeStateFirstTime();

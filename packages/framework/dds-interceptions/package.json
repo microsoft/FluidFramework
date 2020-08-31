@@ -2,6 +2,7 @@
   "name": "@fluidframework/dds-interceptions",
   "version": "0.26.0",
   "description": "Distributed Data Structures that support an interception callback",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
