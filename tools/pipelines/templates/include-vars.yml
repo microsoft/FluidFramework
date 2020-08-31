@@ -40,7 +40,7 @@ variables:
   - ${{ if eq(variables.shouldPublish, true) }}:
     - name: release
       value: $[variables.releaseBuild]
-  - ${{ if not(variables.shouldPublish) }}:
+  - ${{ if ne(variables.shouldPublish, true) }}:
     - name: release
       value: none
 - ${{ if ne(parameters.releaseBuildOverride, 'none') }}:

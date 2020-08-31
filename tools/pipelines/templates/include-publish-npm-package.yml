@@ -17,9 +17,9 @@ parameters:
   type: string
 
 stages:
-- stage: publish
+- stage: publish_internal
   dependsOn: build
-  displayName: Publish Stage
+  displayName: Internal Publish Stage
   jobs:
   - template: include-publish-npm-package-steps.yml
     parameters:
@@ -28,24 +28,32 @@ stages:
       - name: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/ 
         environment: build-feed
         official: false
-        enabled: 'release'
         tagSteps: []
+
+- stage: publish_official
+  dependsOn: build
+  displayName: Official Publish Stage
+  condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
+  jobs:
+  - template: include-publish-npm-package-steps.yml
+    parameters:
+      namespace: ${{ parameters.namespace }}
+      feeds:
       - name: https://registry.npmjs.org
         environment: npmjs-feed
         customEndPoint: npmjs
         official: true
         publishFlags: --access public
-        enabled: $[variables.release]
         tagSteps:
         - ${{ if ne(parameters.tagName, '') }}:
           - checkout: self
             clean: true
             persistCredentials: true
-            condition: and(succeeded(), eq(variables['enabled'], 'release'))
+            condition: and(succeeded(), eq(variables['release'], 'release'))
 
           - task: Bash@3
             displayName: Tag Release
-            condition: and(succeeded(), eq(variables['enabled'], 'release'))
+            condition: and(succeeded(), eq(variables['release'], 'release'))
             env:
               VERSION_RELEASE: $(release)
               VERSION_BUILDNUMBER: $(Build.BuildNumber)
