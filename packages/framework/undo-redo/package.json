@@ -2,6 +2,7 @@
   "name": "@fluidframework/undo-redo",
   "version": "0.26.0",
   "description": "Undo Redo",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

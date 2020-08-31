@@ -13,8 +13,8 @@ import fs from "fs";
 export interface Handler {
   name: string,
   match: RegExp,
-  handler: (file: string) => string | undefined,
-  resolver?: (file: string) => { resolved: boolean, message?: string };
+  handler: (file: string, root: string) => string | undefined,
+  resolver?: (file: string, root: string) => { resolved: boolean, message?: string };
 };
 
 export function readFile(file: string) {

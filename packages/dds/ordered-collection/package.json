@@ -2,6 +2,7 @@
   "name": "@fluidframework/ordered-collection",
   "version": "0.26.0",
   "description": "Consensus Collection",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -51,9 +52,9 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.22.1-0",
+    "@fluidframework/common-utils": "^0.22.1",
     "@fluidframework/datastore-definitions": "^0.26.0",
-    "@fluidframework/protocol-definitions": "^0.1011.1-0",
+    "@fluidframework/protocol-definitions": "^0.1011.1",
     "@fluidframework/shared-object-base": "^0.26.0",
     "uuid": "^3.3.2"
   },

@@ -27,7 +27,7 @@ async function getFluidObjectAndRender(baseHost: BaseHost, url: string, div: HTM
         return;
     }
 
-    // Render the fluid object with an HTMLViewAdapter to abstract the UI framework used by the fluid object
+    // Render the Fluid object with an HTMLViewAdapter to abstract the UI framework used by the Fluid object
     const view = new HTMLViewAdapter(fluidObject);
     view.render(div, { display: "block" });
 }

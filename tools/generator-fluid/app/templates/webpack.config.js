@@ -2,7 +2,7 @@ const fluidRoute = require("@fluidframework/webpack-fluid-loader");
 const path = require("path");
 
 const pkg = require("./package.json");
-const componentName = pkg.name.slice(1);
+const dataObjectName = pkg.name.slice(1);
 
 module.exports = env => {
     return({
@@ -24,7 +24,7 @@ module.exports = env => {
             library: "main",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939
-            devtoolNamespace: componentName,
+            devtoolNamespace: dataObjectName,
             libraryTarget: "umd",
         },
         devServer: {

@@ -3,6 +3,7 @@
   "version": "0.26.0",
   "private": true,
   "description": "A tool that lets the user to replay ops.",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -35,7 +36,7 @@
     "@fluidframework/core-interfaces": "^0.26.0",
     "@fluidframework/driver-definitions": "^0.26.0",
     "@fluidframework/file-driver": "^0.26.0",
-    "@fluidframework/protocol-definitions": "^0.1011.1-0",
+    "@fluidframework/protocol-definitions": "^0.1011.1",
     "@fluidframework/replay-driver": "^0.26.0",
     "@fluidframework/telemetry-utils": "^0.26.0"
   },

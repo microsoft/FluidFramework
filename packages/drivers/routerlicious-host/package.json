@@ -2,6 +2,7 @@
   "name": "@fluidframework/routerlicious-host",
   "version": "0.26.0",
   "description": "Routerlicious host interfaces",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -26,7 +27,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.22.1-0",
+    "@fluidframework/common-utils": "^0.22.1",
     "@fluidframework/core-interfaces": "^0.26.0",
     "@fluidframework/driver-definitions": "^0.26.0",
     "@types/debug": "^4.1.5",

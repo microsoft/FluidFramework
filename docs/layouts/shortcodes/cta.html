@@ -1,0 +1,15 @@
+{{ $linkClasses := .Get "linkClasses" }}
+{{ $iconClasses := .Get "iconClasses" }}
+{{ $linkURL := .Get "linkURL"}}
+{{ $linkText := .Get "linkText" }}
+{{ $subtext := .Get "subtext" }}
+
+<div class="col-sm-4 col-xs-12 no-gutters">
+    <a class="cta {{$linkClasses}}" href="{{$linkURL}}">
+        <span class="cta-icon {{$iconClasses}}"></span>
+        <span>{{$linkText}}</span>
+        {{ if ne $subtext ""}}
+        <span class="cta-subtext">{{$subtext}}</span>
+        {{ end }}
+    </a>
+</div>

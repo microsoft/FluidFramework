@@ -2,6 +2,7 @@
   "name": "@fluid-example/prosemirror",
   "version": "0.26.0",
   "description": "ProseMirror",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

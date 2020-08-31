@@ -8,6 +8,7 @@ import { HostStoragePolicy } from "./contracts";
 import { IPersistedCache } from "./odspCache";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 import { getSocketIo } from "./getSocketIo";
+import { StorageTokenFetcher, PushTokenFetcher } from "./tokenFetch";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -17,8 +18,8 @@ export class OdspDocumentServiceFactory
     extends OdspDocumentServiceFactoryCore
     implements IDocumentServiceFactory {
     constructor(
-        getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-        getWebsocketToken: (refresh: boolean) => Promise<string | null>,
+        getStorageToken: StorageTokenFetcher,
+        getWebsocketToken: PushTokenFetcher,
         persistedCache?: IPersistedCache,
         hostPolicy?: HostStoragePolicy,
     ) {

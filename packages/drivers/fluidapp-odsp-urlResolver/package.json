@@ -1,7 +1,9 @@
 {
-  "name": "@fluidframework/fluidapp-odsp-urlresolver",
+  "name": "@fluid-internal/fluidapp-odsp-urlresolver",
   "version": "0.26.0",
-  "description": "Url Resolver for fluid app urls.",
+  "private": true,
+  "description": "Url Resolver for Fluid app urls.",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -29,7 +31,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.22.1-0",
+    "@fluidframework/common-utils": "^0.22.1",
     "@fluidframework/core-interfaces": "^0.26.0",
     "@fluidframework/driver-definitions": "^0.26.0",
     "@fluidframework/odsp-driver": "^0.26.0"

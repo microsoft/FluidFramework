@@ -66,7 +66,7 @@ export class LocalDocumentService implements api.IDocumentService {
         // Add this document service for the clientId in the document service factory.
         this.documentDeltaConnectionsMap.set(clientId, documentDeltaConnection);
 
-        // Add a listener to remove this document service when the client is diconnected.
+        // Add a listener to remove this document service when the client is disconnected.
         documentDeltaConnection.on("disconnect", () => {
             this.documentDeltaConnectionsMap.delete(clientId);
         });

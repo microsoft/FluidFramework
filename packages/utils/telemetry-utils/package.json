@@ -2,6 +2,7 @@
   "name": "@fluidframework/telemetry-utils",
   "version": "0.26.0",
   "description": "Collection of telemetry relates utilities for Fluid",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -62,7 +63,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
-    "@fluidframework/common-utils": "^0.22.1-0",
+    "@fluidframework/common-utils": "^0.22.1",
     "debug": "^4.1.1",
     "events": "^3.1.0"
   },

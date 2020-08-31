@@ -16,18 +16,17 @@ parameters:
 - name: releaseBuildOverride
   displayName: Release Build Override
   type: string
-  default: default
+  default: none
   values:
-    - default
-    - false
-    - true
+    - none
+    - prerelease
+    - release
 
 trigger:
   branches:
     include:
     - main
     - release/*
-    - refs/tags/server_v*
   paths:
     include:
     - server/routerlicious
@@ -91,16 +90,6 @@ stages:
           lfs: false
           submodules: false
 
-        - task: Bash@3
-          displayName: Strip MIT License
-          inputs:
-            targetType: 'inline'
-            workingDirectory: server/routerlicious
-            script: |
-              sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
-              perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
-              git status
-
         # for npm ci in component detection and set version
         - task: UseNode@1
           displayName: Use Node 12.x
@@ -134,25 +123,10 @@ stages:
               rm server/routerlicious/packages/package-lock.json
             displayName: 'Cleanup mono repo package json'
 
-        # Setup
-        - task: Bash@3
-          displayName: Strip npmrc auth token preamble
-          inputs:
-            targetType: 'inline'
-            script: |
-              # In order to simplify the build and use the npm authenticate task we strip the auth token preamble from the npmrc
-              sed -i '/^; begin auth token/,/^\; end auth token/d;' server/routerlicious/.npmrc
-        - task: npmAuthenticate@0
-          displayName: npm Authenticate
-          inputs:
-            workingFile: server/routerlicious/.npmrc
-            customEndpoint: Offnet Packages
-
         # Set version
         - template: templates/include-set-package-version.yml
           parameters:
             buildDirectory: server/routerlicious
-            release: $(release)
 
         # Build
         - task: Docker@2

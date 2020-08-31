@@ -1,7 +1,8 @@
 {
   "name": "@fluidframework/matrix",
   "version": "0.26.0",
-  "description": "Distributed map",
+  "description": "Distributed matrix",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -51,11 +52,11 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
-    "@fluidframework/common-utils": "^0.22.1-0",
+    "@fluidframework/common-utils": "^0.22.1",
     "@fluidframework/core-interfaces": "^0.26.0",
     "@fluidframework/datastore-definitions": "^0.26.0",
     "@fluidframework/merge-tree": "^0.26.0",
-    "@fluidframework/protocol-definitions": "^0.1011.1-0",
+    "@fluidframework/protocol-definitions": "^0.1011.1",
     "@fluidframework/runtime-utils": "^0.26.0",
     "@fluidframework/shared-object-base": "^0.26.0",
     "@fluidframework/telemetry-utils": "^0.26.0",

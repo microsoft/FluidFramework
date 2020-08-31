@@ -4,23 +4,34 @@
  */
 
 import * as assert from "assert";
-import { OpProcessingController, initializeLocalContainer, LocalCodeLoader } from "@fluidframework/test-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { UpgradeManager } from "@fluidframework/base-host";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ICodeLoader, IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import {
+    ICodeLoader,
+    IContainer,
+    IFluidCodeDetails,
+    IProxyLoaderFactory,
+} from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import {
+    createAndAttachContainer,
+    LocalCodeLoader,
+    OpProcessingController,
+} from "@fluidframework/test-utils";
 
-class TestDataStore extends DataObject {
-    public static readonly type = "@fluid-example/test-dataStore";
+class TestDataObject extends DataObject {
+    public static readonly type = "@fluid-example/test-dataObject";
 
-    public static getFactory() { return TestDataStore.factory; }
+    public static getFactory() { return TestDataObject.factory; }
     private static readonly factory = new DataObjectFactory(
-        TestDataStore.type,
-        TestDataStore,
+        TestDataObject.type,
+        TestDataObject,
         [],
         {},
     );
@@ -30,18 +41,19 @@ class TestDataStore extends DataObject {
 }
 
 describe("UpgradeManager", () => {
-    const id = "fluid-test://localhost/localLoaderTest";
+    const documentId = "upgradeManagerTest";
+    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
     const codeDetails: IFluidCodeDetails = {
         package: "localLoaderTestPackage",
         config: {},
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
+    let urlResolver: IUrlResolver;
     let documentServiceFactory: LocalDocumentServiceFactory;
     let opProcessingController: OpProcessingController;
 
-    async function createContainer(factory: IFluidDataStoreFactory): Promise<Container> {
-        const urlResolver = new LocalResolver();
+    async function createContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
         const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const loader = new Loader(
             urlResolver,
@@ -51,19 +63,25 @@ describe("UpgradeManager", () => {
             {},
             new Map<string, IProxyLoaderFactory>());
 
-        return initializeLocalContainer(id, loader, codeDetails);
+        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
     }
 
-    async function requestFluidObject<T>(dataStoreId: string, container: Container): Promise<T> {
-        const response = await container.request({ url: dataStoreId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`DataStore with id: ${dataStoreId} not found`);
-        }
-        return response.value as T;
+    async function loadContainer(factory: IFluidDataStoreFactory): Promise<IContainer> {
+        const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
+        const loader = new Loader(
+            urlResolver,
+            documentServiceFactory,
+            codeLoader,
+            {},
+            {},
+            new Map<string, IProxyLoaderFactory>());
+
+        return loader.resolve({ url: documentLoadUrl });
     }
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
+        urlResolver = new LocalResolver();
         documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
         opProcessingController = new OpProcessingController(deltaConnectionServer);
     });
@@ -77,15 +95,24 @@ describe("UpgradeManager", () => {
 
         const addCounts = Array(clients).fill(0);
         const approveCounts = Array(clients).fill(0);
-        const containersP = Array(clients).fill(undefined).map(async () => createContainer(TestDataStore.getFactory()));
-        const dataStores = await Promise.all(containersP.map(
-            async (containerP) => (containerP).then(
-                async (container) => requestFluidObject<TestDataStore>("default", container))));
+        const containers: IContainer[] = [];
 
-        const containers = await Promise.all(containersP);
-        opProcessingController.addDeltaManagers(...dataStores.map((c) => c._runtime.deltaManager));
+        // Create the first Container.
+        const container1 = await createContainer(TestDataObject.getFactory());
+        containers.push(container1);
 
-        dataStores.map((c, i) => {
+        // Load rest of the Containers.
+        const restOfContainersP =
+            Array(clients - 1).fill(undefined).map(async () => loadContainer(TestDataObject.getFactory()));
+        const restOfContainers = await Promise.all(restOfContainersP);
+        containers.push(...restOfContainers);
+
+        const dataObjects = await Promise.all(containers.map(
+            async (container) => requestFluidObject<TestDataObject>(container, "default")));
+
+        opProcessingController.addDeltaManagers(...dataObjects.map((c) => c._runtime.deltaManager));
+
+        dataObjects.map((c, i) => {
             c._runtime.getQuorum().on("addProposal", () => { ++addCounts[i]; });
             c._runtime.getQuorum().on("approveProposal", () => { ++approveCounts[i]; });
         });
@@ -93,6 +120,15 @@ describe("UpgradeManager", () => {
         const upgradeManagers = containers.map((c) => new UpgradeManager((c as any).context.runtime));
 
         const succeededP = upgradeManagers.map(async (u) => new Promise<void>((res) => u.on("upgradeSucceeded", res)));
+
+        // Set a key in the root map of each dataObject. The Containers are created in "read" mode so the first op
+        // it sends will get nack'd and it reconnects.
+        // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
+        dataObjects.map((dataObject) => {
+            dataObject._root.set("tempKey", "tempValue");
+        });
+
+        await opProcessingController.process();
 
         // upgrade all containers at once
         const resultsP = upgradeManagers.map(async (u) => u.upgrade(codeDetails, true));
@@ -109,15 +145,21 @@ describe("UpgradeManager", () => {
     });
 
     it("1 client low priority is immediate", async () => {
-        const container = await createContainer(TestDataStore.getFactory());
-        const dataStore = await requestFluidObject<TestDataStore>("default", container);
+        const container = await createContainer(TestDataObject.getFactory());
+        const dataObject = await requestFluidObject<TestDataObject>(container, "default");
 
-        opProcessingController.addDeltaManagers(dataStore._runtime.deltaManager);
+        opProcessingController.addDeltaManagers(dataObject._runtime.deltaManager);
         const upgradeManager = new UpgradeManager((container as any).context.runtime);
 
         const upgradeP = new Promise<void>((resolve) => {
             upgradeManager.on("upgradeInProgress", resolve);
         });
+
+        // Set a key in the root map. The Container is created in "read" mode so the first op it sends will get
+        // nack'd and it reconnects.
+        // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
+        dataObject._root.set("tempKey", "tempValue");
+        await opProcessingController.process();
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         upgradeManager.upgrade(codeDetails);
@@ -126,31 +168,37 @@ describe("UpgradeManager", () => {
     });
 
     it("2 clients low priority is delayed", async () => {
-        const clients = 2;
-        const containersP = Array(clients).fill(undefined).map(async () => createContainer(TestDataStore.getFactory()));
+        // Create the first Container.
+        const container1 = await createContainer(TestDataObject.getFactory());
 
-        await Promise.all(containersP.map(
-            async (containerP) => (containerP).then(
-                async (container) => requestFluidObject<TestDataStore>("default", container))));
+        // Load the second Container.
+        const container2 = await loadContainer(TestDataObject.getFactory());
 
-        const containers = await Promise.all(containersP);
+        const upgradeManager = new UpgradeManager((container1 as any).context.runtime);
 
-        const upgradeManager = new UpgradeManager((containers[0] as any).context.runtime);
-
-        const quorumCount = (container: Container) =>
+        const quorumCount = (container: IContainer) =>
             Array.from(container.getQuorum().getMembers().values()).filter(
                 (c) => c.client.details.capabilities.interactive).length;
 
         // we expect UpgradeManager not to initiate upgrade (within test timeout) unless there is <= 1 client connected
         const upgradeP = new Promise<void>((resolve, reject) => {
-            upgradeManager.on("upgradeInProgress", () => quorumCount(containers[0]) === 1 ? resolve() : reject());
+            upgradeManager.on("upgradeInProgress", () => quorumCount(container1) === 1 ? resolve() : reject());
         });
+
+        const dataObject = await requestFluidObject<TestDataObject>(container1, "default");
+        opProcessingController.addDeltaManagers(dataObject._runtime.deltaManager);
+
+        // Set a key in the root map of the first container's dataObject. The Container is created in "read" mode so the
+        // first op it sends will get nack'd and it reconnects.
+        // We should wait for this to happen before we send a new code proposal so that it doesn't get nack'd.
+        dataObject._root.set("tempKey", "tempValue");
+        await opProcessingController.process();
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         upgradeManager.upgrade(codeDetails);
 
         // disconnect one client, which should initiate upgrade
-        documentServiceFactory.disconnectClient(containers[1].clientId, "test");
+        documentServiceFactory.disconnectClient((container2 as Container).clientId, "test");
 
         await upgradeP;
     });

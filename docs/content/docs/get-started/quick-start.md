@@ -64,4 +64,5 @@ in either and note that the state of the dice changes in both clients.
 
 ## Next Steps
 
-Get an explanation of the code for the dice roller application in our [Tutorial](./tutorial.md).
+See the code in the Dice Roller app in our [Tutorial](./tutorial.md).
+

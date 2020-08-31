@@ -2,6 +2,7 @@
   "name": "@fluid-example/collaborative-textarea",
   "version": "0.26.0",
   "description": "A minimal example using the react collaborative-textarea",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

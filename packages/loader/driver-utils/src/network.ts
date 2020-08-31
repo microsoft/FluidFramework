@@ -6,6 +6,7 @@
 import {
     IThrottlingWarning,
     IDriverErrorBase,
+    IAuthorizationError,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import { CustomErrorWithProps } from "@fluidframework/telemetry-utils";
@@ -37,6 +38,18 @@ export class GenericNetworkError extends CustomErrorWithProps implements IDriver
         errorMessage: string,
         readonly canRetry: boolean,
         readonly statusCode?: number,
+    ) {
+        super(errorMessage);
+    }
+}
+
+export class AuthorizationError extends CustomErrorWithProps implements IAuthorizationError {
+    readonly errorType = DriverErrorType.authorizationError;
+    readonly canRetry = false;
+
+    constructor(
+        errorMessage: string,
+        readonly claims?: string,
     ) {
         super(errorMessage);
     }

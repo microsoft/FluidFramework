@@ -2,6 +2,7 @@
   "name": "@fluidframework/build-common",
   "version": "0.19.2",
   "description": "Package containing common configs",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

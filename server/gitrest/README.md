@@ -80,3 +80,9 @@ curl -H "Content-Type: application/json" -X PATCH -d '{"force": true, "sha": "cf
 curl -H "Content-Type: application/json" -X POST -d '{"tag": "v1.0", "message": "Hello, World!", "object": "cf0b592907d683143b28edd64d274ca70f68998e", "type": "commit", "tagger": { "name": "Kurt Berglund", "email": "kurtb@microsoft.com", "date": "Thu Jul 13 2017 20:17:40 GMT-0700 (PDT)" }}' --verbose localhost:3000/repos/prague/test/git/tags
 curl --verbose localhost:3000/repos/prague/test/git/tags/a8588b3913aa692c3642697d6f136cec470dd82c
 ```
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

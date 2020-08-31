@@ -6,19 +6,22 @@
 import assert from "assert";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalResolver } from "@fluidframework/local-driver";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+    createAndAttachContainer,
     createLocalLoader,
     OpProcessingController,
     ITestFluidObject,
-    initializeLocalContainer,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
 describe("Cell", () => {
-    const id = "fluid-test://localhost/cellTest";
+    const documentId = "cellTest";
+    const documentLoadUrl = `fluid-test://localhost/${documentId}`;
     const cellId = "cellKey";
     const initialCellValue = "Initial cell value";
     const newCellValue = "A new cell value";
@@ -26,48 +29,50 @@ describe("Cell", () => {
         package: "sharedCellTestPackage",
         config: {},
     };
+    const factory = new TestFluidObjectFactory([[cellId, SharedCell.getFactory()]]);
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
+    let urlResolver: IUrlResolver;
     let opProcessingController: OpProcessingController;
-    let dataStore1: ITestFluidObject;
+    let dataObject1: ITestFluidObject;
     let sharedCell1: ISharedCell;
     let sharedCell2: ISharedCell;
     let sharedCell3: ISharedCell;
 
-    async function createContainer(): Promise<Container> {
-        const factory = new TestFluidObjectFactory([[cellId, SharedCell.getFactory()]]);
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
-        return initializeLocalContainer(id, loader, codeDetails);
+    async function createContainer(): Promise<IContainer> {
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        return createAndAttachContainer(documentId, codeDetails, loader, urlResolver);
     }
 
-    async function requestFluidObject(dataStoreId: string, container: Container): Promise<ITestFluidObject> {
-        const response = await container.request({ url: dataStoreId });
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            throw new Error(`Data Store with id: ${dataStoreId} not found`);
-        }
-        return response.value as ITestFluidObject;
+    async function loadContainer(): Promise<IContainer> {
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+        return loader.resolve({ url: documentLoadUrl });
     }
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
+        urlResolver = new LocalResolver();
 
+        // Create a Container for the first client.
         const container1 = await createContainer();
-        dataStore1 = await requestFluidObject("default", container1);
-        sharedCell1 = await dataStore1.getSharedObject<SharedCell>(cellId);
+        dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        sharedCell1 = await dataObject1.getSharedObject<SharedCell>(cellId);
 
-        const container2 = await createContainer();
-        const dataStore2 = await requestFluidObject("default", container2);
-        sharedCell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
+        // Load the Container that was created by the first client.
+        const container2 = await loadContainer();
+        const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        sharedCell2 = await dataObject2.getSharedObject<SharedCell>(cellId);
 
-        const container3 = await createContainer();
-        const dataStore3 = await requestFluidObject("default", container3);
-        sharedCell3 = await dataStore3.getSharedObject<SharedCell>(cellId);
+        // Load the Container that was created by the first client.
+        const container3 = await loadContainer();
+        const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+        sharedCell3 = await dataObject3.getSharedObject<SharedCell>(cellId);
 
         opProcessingController = new OpProcessingController(deltaConnectionServer);
         opProcessingController.addDeltaManagers(
-            dataStore1.runtime.deltaManager,
-            dataStore2.runtime.deltaManager,
-            dataStore3.runtime.deltaManager);
+            dataObject1.runtime.deltaManager,
+            dataObject2.runtime.deltaManager,
+            dataObject3.runtime.deltaManager);
 
         // Set a starting value in the cell
         sharedCell1.set(initialCellValue);
@@ -213,8 +218,8 @@ describe("Cell", () => {
     });
 
     it("registers data if data is a shared object", async () => {
-        const detachedCell1: ISharedCell = SharedCell.create(dataStore1.runtime);
-        const detachedCell2: ISharedCell = SharedCell.create(dataStore1.runtime);
+        const detachedCell1: ISharedCell = SharedCell.create(dataObject1.runtime);
+        const detachedCell2: ISharedCell = SharedCell.create(dataObject1.runtime);
         const cellValue = "cell cell cell cell";
         detachedCell2.set(cellValue);
         detachedCell1.set(detachedCell2.handle);
