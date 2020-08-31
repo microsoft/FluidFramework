@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-example/data-object-interfaces",
+  "name": "@fluid-example/fluid-object-interfaces",
   "version": "0.26.0",
   "description": "Framework interfaces used by examples.",
   "repository": "microsoft/FluidFramework",

@@ -13,7 +13,7 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, FluidDataStoreRuntime } from "@fluidframework/datastore";
-import { IFluidObjectCollection } from "@fluid-example/data-object-interfaces";
+import { IFluidObjectCollection } from "@fluid-example/fluid-object-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";

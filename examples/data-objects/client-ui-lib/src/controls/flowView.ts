@@ -12,7 +12,7 @@ import {
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { IGenericBlob } from "@fluidframework/container-definitions";
-import { IFluidObjectCollection } from "@fluid-example/data-object-interfaces";
+import { IFluidObjectCollection } from "@fluid-example/fluid-object-interfaces";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";

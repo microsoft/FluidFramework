@@ -36,7 +36,7 @@
   "dependencies": {
     "@fluid-example/clicker": "^0.26.0",
     "@fluid-example/codemirror": "^0.26.0",
-    "@fluid-example/data-object-interfaces": "^0.26.0",
+    "@fluid-example/fluid-object-interfaces": "^0.26.0",
     "@fluid-example/prosemirror": "^0.26.0",
     "@fluid-example/spaces": "^0.26.0",
     "@fluidframework/aqueduct": "^0.26.0",

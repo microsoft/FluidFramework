@@ -32,7 +32,7 @@ fluid-doc-stats _api-extractor-temp/doc-models
                               file-driver.api.json:   19/  59  32.20%
                                 base-host.api.json:    8/  25  32.00%
                             view-adapters.api.json:    6/  19  31.58%
-                   data-object-interfaces.api.json:    9/  29  31.03%
+                   fluid-object-interfaces.api.json:    9/  29  31.03%
                          container-loader.api.json:   36/ 118  30.51%
                             runtime-utils.api.json:    8/  27  29.63%
                           view-interfaces.api.json:    8/  28  28.57%

@@ -27,7 +27,7 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "@fluid-example/data-object-interfaces": "^0.26.0",
+    "@fluid-example/fluid-object-interfaces": "^0.26.0",
     "@fluidframework/core-interfaces": "^0.26.0",
     "@fluidframework/datastore": "^0.26.0",
     "@fluidframework/datastore-definitions": "^0.26.0",

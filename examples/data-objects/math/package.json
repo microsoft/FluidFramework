@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@fluid-example/client-ui-lib": "^0.26.0",
-    "@fluid-example/data-object-interfaces": "^0.26.0",
+    "@fluid-example/fluid-object-interfaces": "^0.26.0",
     "@fluid-example/flow-util-lib": "^0.26.0",
     "@fluid-example/search-menu": "^0.26.0",
     "@fluidframework/core-interfaces": "^0.26.0",
