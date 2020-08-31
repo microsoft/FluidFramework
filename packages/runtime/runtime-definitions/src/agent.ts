@@ -61,7 +61,7 @@ export interface IProvideAgentScheduler {
 /**
  * Agent scheduler distributes a set of tasks/variables across connected clients.
  */
-export interface IAgentScheduler extends IProvideAgentScheduler, IFluidRouter, IFluidLoadable {
+export interface IAgentScheduler extends IProvideAgentScheduler {
     /**
      * Registers a set of new tasks to distribute amongst connected clients. Only use this if a client wants
      * a new agent to run but does not have the capability to run the agent inside the host.

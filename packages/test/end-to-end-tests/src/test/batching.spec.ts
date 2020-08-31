@@ -7,7 +7,7 @@ import assert from "assert";
 import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalResolver } from "@fluidframework/local-driver";
-import { ContainerMessageType, schedulerId } from "@fluidframework/container-runtime";
+import { ContainerMessageType, taskSchedulerId } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -62,7 +62,7 @@ describe("Batching", () => {
         dataStore.context.containerRuntime.on("op", (message: ISequencedDocumentMessage) => {
             if (message.type === ContainerMessageType.FluidDataStoreOp) {
                 const envelope = message.contents as IEnvelope;
-                if (envelope.address !== schedulerId) {
+                if (envelope.address !== taskSchedulerId) {
                     receivedMessages.push(message);
                 }
             }

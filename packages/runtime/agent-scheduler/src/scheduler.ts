@@ -8,7 +8,6 @@ import { EventEmitter } from "events";
 import {
     IFluidObject,
     IFluidHandle,
-    IFluidRouter,
     IFluidRunnable,
     IRequest,
     IResponse,
@@ -32,7 +31,7 @@ import { v4 as uuid } from "uuid";
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
 
-class AgentScheduler extends EventEmitter implements IAgentScheduler, IFluidRouter {
+class AgentScheduler extends EventEmitter implements IAgentScheduler {
     public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
         let root: ISharedMap;
         let scheduler: ConsensusRegisterCollection<string | null>;
@@ -53,14 +52,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IFluidRout
         return agentScheduler;
     }
 
-    private readonly innerHandle: IFluidHandle<this>;
-
-    public get handle(): IFluidHandle<this> { return this.innerHandle; }
-    public get IFluidHandle() { return this.innerHandle; }
-    public get IFluidLoadable() { return this; }
-
     public get IAgentScheduler() { return this; }
-    public get IFluidRouter() { return this; }
 
     private get clientId(): string {
         if (!this.runtime.IFluidHandleContext.isAttached) {
@@ -70,8 +62,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IFluidRout
         assert(clientId);
         return clientId;
     }
-
-    public url = "_tasks";
 
     // Set of tasks registered by this client.
     // Has no relationship with lists below.
@@ -93,15 +83,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IFluidRout
         private readonly context: IFluidDataStoreContext,
         private readonly scheduler: ConsensusRegisterCollection<string | null>) {
         super();
-        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
-    }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        return {
-            mimeType: "fluid/object",
-            status: 200,
-            value: this,
-        };
     }
 
     public async register(...taskUrls: string[]): Promise<void> {
@@ -397,23 +378,27 @@ export class TaskManager implements ITaskManager {
     public get IFluidRouter() { return this; }
     public get ITaskManager() { return this; }
 
-    public get url() { return this.scheduler.url; }
+    public get url() {
+        return this.innerHandle.absolutePath;
+    }
+
+    protected readonly taskUrl = "_tasks";
 
     private readonly taskMap = new Map<string, IFluidRunnable>();
     constructor(
         private readonly scheduler: IAgentScheduler,
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly context: IFluidDataStoreContext) {
-        this.innerHandle = new FluidObjectHandle(this, this.url, this.runtime.IFluidHandleContext);
+        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.IFluidHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url === "" || request.url === "/") {
             return { status: 200, mimeType: "fluid/object", value: this };
-        } else if (!request.url.startsWith(this.url)) {
+        } else if (!request.url.startsWith(this.taskUrl)) {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         } else {
-            const trimmedUrl = request.url.substr(this.url.length);
+            const trimmedUrl = request.url.substr(this.taskUrl.length);
             const taskUrl = trimmedUrl.length > 0 && trimmedUrl.startsWith("/")
                 ? trimmedUrl.substr(1)
                 : "";
@@ -443,7 +428,7 @@ export class TaskManager implements ITaskManager {
         } else if (this.runtime.attachState !== AttachState.Attached) {
             return Promise.reject("Picking not allowed in detached container in task manager");
         } else {
-            const fullUrl = `/${this.runtime.id}/${this.url}/${taskId}`;
+            const fullUrl = `/${this.runtime.id}/${this.taskUrl}/${taskId}`;
             return this.scheduler.pick(
                 fullUrl,
                 async () => this.runTask(fullUrl, worker !== undefined ? worker : false));
@@ -479,14 +464,14 @@ export class TaskManager implements ITaskManager {
     }
 }
 
-export class AgentSchedulerFactory implements IFluidDataStoreFactory {
+export class TaskManagerFactory implements IFluidDataStoreFactory {
     public static readonly type = "_scheduler";
-    public readonly type = AgentSchedulerFactory.type;
+    public readonly type = TaskManagerFactory.type;
 
     public get IFluidDataStoreFactory() { return this; }
 
     public static get registryEntry(): NamedFluidDataStoreRegistryEntry {
-        return [this.type, Promise.resolve(new AgentSchedulerFactory())];
+        return [this.type, Promise.resolve(new TaskManagerFactory())];
     }
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
