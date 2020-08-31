@@ -175,7 +175,7 @@ class ProseMirrorFactory implements IFluidDataStoreFactory {
 
     public get IFluidDataStoreFactory() { return this; }
 
-    public instantiateDataStore(context: IFluidDataStoreContext): void {
+    public async instantiateDataStore(context: IFluidDataStoreContext) {
         const dataTypes = new Map<string, IChannelFactory>();
         const mapFactory = SharedMap.getFactory();
         const sequenceFactory = SharedString.getFactory();
@@ -193,6 +193,8 @@ class ProseMirrorFactory implements IFluidDataStoreFactory {
             const proseMirror = await proseMirrorP;
             return proseMirror.request(request);
         });
+
+        return runtime;
     }
 }
 
