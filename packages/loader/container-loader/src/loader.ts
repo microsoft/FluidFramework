@@ -10,6 +10,7 @@ import {
     IFluidObject,
     IRequest,
     IResponse,
+    IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import {
     ICodeLoader,
@@ -64,6 +65,8 @@ export class RelativeLoader extends EventEmitter implements ILoader {
     ) {
         super();
     }
+
+    public get IFluidRouter(): IFluidRouter { return this; }
 
     public async resolve(request: IRequest): Promise<IContainer> {
         if (request.url.startsWith("/")) {
@@ -155,6 +158,8 @@ export class Loader extends EventEmitter implements ILoader {
         this.resolver = createCachedResolver(MultiUrlResolver.create(resolver));
         this.documentServiceFactory = MultiDocumentServiceFactory.create(documentServiceFactory);
     }
+
+    public get IFluidRouter(): IFluidRouter { return this; }
 
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
         debug(`Container creating in detached state: ${performanceNow()} `);

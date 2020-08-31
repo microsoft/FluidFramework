@@ -128,12 +128,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     request(request: IRequest): Promise<IResponse>;
 }
 
-export interface ILoader {
-
-    /**
-     * Loads the resource specified by the URL + headers contained in the request object.
-     */
-    request(request: IRequest): Promise<IResponse>;
+export interface ILoader extends IFluidRouter{
 
     /**
      * Resolves the resource specified by the URL + headers contained in the request object
