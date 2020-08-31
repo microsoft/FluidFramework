@@ -1,5 +1,7 @@
 ---
 title: Handles
+menuPosition: 1
+draft: false
 ---
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/draft-doc.md) -->
@@ -11,12 +13,12 @@ This documentation is a **Draft**. It is technically accurate but has not yet be
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-A [Fluid Handle](../../packages/loader/core-interfaces/src/handles.ts) is a handle to a _Fluid object_. It is
+A [Fluid handle](../../packages/loader/core-interfaces/src/handles.ts) is a handle to a _Fluid object_. It is
 used to represent the object and has a function `get()` that returns the underlying object. Handles move the ownership
 of retrieving a Fluid object from the user of the object to the object itself. The handle can be passed around in the
 system and anyone who has the handle can easily get the underlying object by simply calling `get()`.
 
-### Why use Fluid Handles?
+### Why use Fluid handles?
 
 - You should **always** use handles to represent Fluid objects and you should store the handles in a distributed data
   structure (DDS). This tells the runtime and the storage service that the object is referenced. The runtime / storage

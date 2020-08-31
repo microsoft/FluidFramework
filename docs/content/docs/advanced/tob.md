@@ -1,6 +1,6 @@
 ---
 title: Total Order Broadcast & Eventual Consistency
-draft: false
+draft: true
 menuPosition: 2
 ---
 
