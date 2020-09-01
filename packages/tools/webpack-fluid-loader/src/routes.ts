@@ -69,15 +69,12 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
 
     if (options.mode === "docker" || options.mode === "tinylicious") {
         options.bearerSecret = options.bearerSecret || config.get("fluid:webpack:bearerSecret");
-        if (options.mode !== "tinylicious") {
+        if (options.mode === "docker") {
             options.tenantId = options.tenantId || config.get("fluid:webpack:tenantId") || "fluid";
-            if (options.mode === "docker") {
-                options.tenantSecret = options.tenantSecret
-                    || config.get("fluid:webpack:docker:tenantSecret")
-                    || "create-new-tenants-if-going-to-production";
-            } else {
-                options.tenantSecret = options.tenantSecret || config.get("fluid:webpack:tenantSecret");
-            }
+
+            options.tenantSecret = options.tenantSecret
+                || config.get("fluid:webpack:docker:tenantSecret")
+                || "create-new-tenants-if-going-to-production";
         }
     }
 

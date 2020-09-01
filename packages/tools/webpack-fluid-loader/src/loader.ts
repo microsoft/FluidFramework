@@ -48,6 +48,11 @@ export interface IDockerRouteOptions extends IBaseRouteOptions {
     bearerSecret?: string;
 }
 
+/** @deprecated */
+export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
+    mode: "r11s";
+}
+
 export interface ITinyliciousRouteOptions extends IBaseRouteOptions {
     mode: "tinylicious";
     bearerSecret?: string;
