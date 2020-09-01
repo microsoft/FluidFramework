@@ -1,6 +1,7 @@
 ---
 title: Total Order Broadcast & Eventual Consistency
-uid: total-order-broadcast
+draft: false
+menuPosition: 2
 ---
 
 ## Fluid Data: Operations all the way down

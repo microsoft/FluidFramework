@@ -17,6 +17,14 @@ import {
 const licenseId = 'MIT';
 const author = 'Microsoft';
 const repository = 'microsoft/FluidFramework';
+const homepage = 'https://fluidframework.com';
+const trademark = `
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+`;
 
 function packageShouldBePrivate(name: string): boolean {
     // See https://github.com/microsoft/FluidFramework/issues/2625
@@ -42,6 +50,8 @@ type IReadmeInfo = {
     exists: true;
     filePath: string;
     title: string;
+    trademark: boolean;
+    readme: string;
 }
 
 function getReadmeInfo(dir: string): IReadmeInfo {
@@ -58,6 +68,8 @@ function getReadmeInfo(dir: string): IReadmeInfo {
         exists: true,
         filePath,
         title,
+        trademark: readme.includes(trademark),
+        readme,
     };
 }
 
@@ -86,6 +98,14 @@ export const handlers: Handler[] = [
 
             if (json.repository !== repository) {
                 missing.push(`${repository} repository entry`);
+            }
+
+            if (!json.private && !json.description) {
+                missing.push("description entry");
+            }
+            
+            if (json.homepage !== homepage) {
+                missing.push(`${homepage} homepage entry`);
             }
 
             const ret = [];
@@ -126,6 +146,12 @@ export const handlers: Handler[] = [
             if (!json.repository) {
                 json.repository = repository;
             } else if (json.repository !== repository) {
+                resolved = false;
+            }
+
+            if (!json.homepage) {
+                json.homepage = homepage;
+            } else if (json.homepage !== homepage) {
                 resolved = false;
             }
 
@@ -191,6 +217,12 @@ export const handlers: Handler[] = [
                     return (`Readme in package directory ${packageDir} should begin with heading "${json.name}"`);
                 }
             }
+
+            if (fs.existsSync(path.join(packageDir, "Dockerfile"))) {
+                if (!readmeInfo.trademark) {
+                    return `Readme in package directory ${packageDir} with Dockerfile should contain with trademark verbiage`;
+                }
+            }
         },
         resolver: file => {
             let json;
@@ -204,11 +236,22 @@ export const handlers: Handler[] = [
             const packageDir = path.dirname(file);
             const readmeInfo: IReadmeInfo = getReadmeInfo(packageDir);
             const expectedTitle = `# ${json.name}`;
-
+            const expectTrademark = fs.existsSync(path.join(packageDir, "Dockerfile"));
             if (!readmeInfo.exists) {
-                writeFile(readmeInfo.filePath, `${expectedTitle}${newline}`);
+                if (expectTrademark) {
+                    writeFile(readmeInfo.filePath, `${expectedTitle}${newline}${newline}${trademark}`);
+                } else {
+                    writeFile(readmeInfo.filePath, `${expectedTitle}${newline}`);
+                }
+                return { resolved: true };
             }
-            else if (readmeInfo.title !== packageName) {
+
+            const fixTrademark = !readmeInfo.trademark && !readmeInfo.readme.includes("## Trademark");
+            if (fixTrademark) {
+                const existingNewLine = readmeInfo.readme[readmeInfo.readme.length - 1] === "\n";
+                writeFile(readmeInfo.filePath, `${readmeInfo.readme}${existingNewLine? "" : newline}${trademark}`);
+            }
+            if (readmeInfo.title !== packageName) {
                 replace.sync({
                     files: readmeInfo.filePath,
                     from: /^(.*)/,
@@ -216,7 +259,7 @@ export const handlers: Handler[] = [
                 });
             }
 
-            return { resolved: true };
+            return { resolved: readmeInfo.trademark || fixTrademark };
         },
     },
     {

@@ -5,7 +5,7 @@
 
 import assert from "assert";
 
-import { getRandomName, choose } from "../dockerNames";
+import { getRandomName, choose } from "../generateNames";
 
 describe("DockerNames", () => {
     describe("getRandomName", () => {

@@ -7,7 +7,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedMap } from "@fluidframework/map";
 
 /**
- * The respective handles for the fluid schema params listed above
+ * The respective handles for the Fluid schema params listed above
  */
 export interface IFluidSchemaHandles {
     viewMatchingMapHandle: IFluidHandle<ISharedMap>;

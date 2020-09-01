@@ -38,4 +38,5 @@ extends:
     buildDirectory: server/historian
     containerName: historian
     test: true
+    authnpmrc: false
 

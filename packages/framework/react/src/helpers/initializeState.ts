@@ -79,7 +79,7 @@ export async function initializeState<
         fluidToView,
     );
     if (currentFluidState === undefined) {
-        throw Error("Synced state update triggered before fluid state was initialized");
+        throw Error("Synced state update triggered before Fluid state was initialized");
     }
 
     for (const fluidStateKey of fluidToView.keys()) {

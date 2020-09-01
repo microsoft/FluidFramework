@@ -10,7 +10,7 @@ parameters:
 
 - name: releaseBuildOverride
   type: string
-  default: default
+  default: none
 
 variables:
 - name: skipComponentGovernanceDetection
@@ -36,13 +36,13 @@ variables:
       eq(variables['Build.SourceBranch'], 'refs/heads/main')
     )}}
 # compute the release variable
-- ${{ if eq(parameters.releaseBuildOverride, 'default') }}:
+- ${{ if eq(parameters.releaseBuildOverride, 'none') }}:
   - ${{ if eq(variables.shouldPublish, true) }}:
     - name: release
       value: $[variables.releaseBuild]
-  - ${{ if not(variables.shouldPublish) }}:
+  - ${{ if ne(variables.shouldPublish, true) }}:
     - name: release
-      value: false
-- ${{ if ne(parameters.releaseBuildOverride, 'default') }}:
+      value: none
+- ${{ if ne(parameters.releaseBuildOverride, 'none') }}:
   - name: release
     value: ${{ parameters.releaseBuildOverride }}

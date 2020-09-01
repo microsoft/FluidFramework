@@ -93,7 +93,7 @@ export abstract class DataObject<P extends IFluidObject = object, S = undefined,
      * Initializes internal objects and calls initialization overrides.
      * Caller is responsible for ensuring this is only invoked once.
      */
-    protected async initializeInternal(props?: S): Promise<void> {
+    public async initializeInternal(props?: S): Promise<void> {
         // Initialize task manager.
         this.internalTaskManager = await this.context.containerRuntime.getTaskManager();
 
@@ -101,7 +101,6 @@ export abstract class DataObject<P extends IFluidObject = object, S = undefined,
             // Create a root directory and register it before calling initializingFirstTime
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
             this.internalRoot.bindToContext();
-            await this.initializingFirstTime(props);
         } else {
             // data store has a root directory so we just need to set it before calling initializingFromExisting
             this.internalRoot = await this.runtime.getChannel(this.rootDirectoryId) as ISharedDirectory;
@@ -116,12 +115,9 @@ export abstract class DataObject<P extends IFluidObject = object, S = undefined,
                     message: "Legacy document, SharedMap is masquerading as SharedDirectory in DataObject",
                 });
             }
-
-            await this.initializingFromExisting();
         }
 
-        // This always gets called at the end of initialize on FirstTime or from existing.
-        await this.hasInitialized();
+        await super.initializeInternal(props);
     }
 
     protected getUninitializedErrorString(item: string) {

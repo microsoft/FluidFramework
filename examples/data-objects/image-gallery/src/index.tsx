@@ -20,7 +20,7 @@ import { ISharedMap } from "@fluidframework/map";
 
 const imageGalleryName = "@fluid-example/image-gallery";
 
-export class ImageGalleryComponent extends DataObject implements IFluidHTMLView {
+export class ImageGalleryObject extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
     imageList = [
@@ -100,7 +100,7 @@ export class ImageGalleryComponent extends DataObject implements IFluidHTMLView 
 
 export const ImageGalleryInstantiationFactory = new DataObjectFactory(
     imageGalleryName,
-    ImageGalleryComponent,
+    ImageGalleryObject,
     [],
     {},
 );

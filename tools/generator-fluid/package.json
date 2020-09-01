@@ -5,6 +5,7 @@
   "keywords": [
     "yeoman-generator"
   ],
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

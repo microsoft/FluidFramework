@@ -7,12 +7,15 @@
 // eslint-disable-next-line import/no-unassigned-import
 import "./publicpath";
 
+import assert from "assert";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
+    IProvideFluidDataStoreFactory,
+    IProvideFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -64,7 +67,7 @@ class MyRegistry implements IFluidDataStoreRegistry {
 
     public get IFluidDataStoreRegistry() { return this; }
 
-    public async get(name: string): Promise<IFluidDataStoreFactory> {
+    public async get(name: string): Promise<IProvideFluidDataStoreFactory | IProvideFluidDataStoreRegistry> {
         const scope = `${name.split("/")[0]}:cdn`;
         const config = {};
         config[scope] = this.defaultRegistry;
@@ -74,7 +77,10 @@ class MyRegistry implements IFluidDataStoreRegistry {
             config,
         };
         const fluidModule = await this.context.codeLoader.load(codeDetails);
-        return fluidModule.fluidExport.IFluidDataStoreFactory;
+        const moduleExport = fluidModule.fluidExport;
+        assert(moduleExport.IFluidDataStoreFactory !== undefined ||
+            moduleExport.IFluidDataStoreRegistry  !== undefined);
+        return moduleExport as IProvideFluidDataStoreFactory | IProvideFluidDataStoreRegistry;
     }
 }
 
@@ -85,7 +91,7 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
     public get IFluidDataStoreFactory() { return this; }
     public get IRuntimeFactory() { return this; }
 
-    public instantiateDataStore(context: IFluidDataStoreContext): void {
+    public async instantiateDataStore(context: IFluidDataStoreContext) {
         return sharedTextComponent.instantiateDataStore(context);
     }
 
