@@ -16,7 +16,7 @@ It's expected that host will listen to various events described in other section
 Please see specific sections for more details on these states and events - this section only serves as a summary and does not go into details
 1. ["disconnected" and "connected"](#Connectivity-events) event: Host can either notify user about no connectivity (and potential data loss if container is closed) or disallow edits via `Container.forceReadonly(true)`
 2. ["closed"](#Closure) event: If raised with error, host is responsible for conveying error in some form to the user. Container is left in disconnected & readonly state when it is closed (because of error or not).
-3. ["readonly"](#Readonly-states) event: Host should have some indication to user that container is not editable. User permissions can change over lifetime of Container, but they can't change per conneciton session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
+3. ["readonly"](#Readonly-states) event: Host should have some indication to user that container is not editable. User permissions can change over lifetime of Container, but they can't change per connection session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
 
 ## Expectations from container runtime and data store implementers
 1. Respect ["readonly" state](#Readonly-states). In this state container runtime (and data stores) should not allow changes to local state, as these changes will be lost on container being closed.

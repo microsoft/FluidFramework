@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import {
+    DataObject,
+    DataObjectFactory,
+    getFluidObjectFactoryFromInstance,
+} from "@fluidframework/aqueduct";
 import { IFluidObject } from "@fluidframework/core-interfaces";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
@@ -40,14 +44,14 @@ export class TabsFluidObject extends DataObject implements IFluidHTMLView {
     }
 
     protected async hasInitialized() {
-        const registry = await this.context.containerRuntime.IFluidDataStoreRegistry.get("");
+        const registry = await this.context.containerRuntime.IFluidDataStoreRegistry.get("internalRegistry");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const registryDetails = (registry as IFluidObject).IFluidObjectInternalRegistry!;
         this.dataModelInternal =
             new TabsDataModel(
                 this.root,
                 registryDetails,
-                this.createFluidObject.bind(this),
+                getFluidObjectFactoryFromInstance(this.context),
                 this.getFluidObjectFromDirectory.bind(this),
             );
     }

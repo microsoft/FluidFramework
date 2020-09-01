@@ -17,7 +17,7 @@ export interface IProvideFluidObjectCollection {
 }
 
 /**
- * A data store that implements a collection of fluid objects.  Typically, the
+ * A data store that implements a collection of Fluid objects.  Typically, the
  * fluid objects in the collection would be like-typed.
  */
 export interface IFluidObjectCollection extends IProvideFluidObjectCollection {

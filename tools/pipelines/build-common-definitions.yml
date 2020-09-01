@@ -16,11 +16,11 @@ parameters:
 - name: releaseBuildOverride
   displayName: Release Build Override
   type: string
-  default: default
+  default: none
   values:
-    - default
-    - false
-    - true
+    - none
+    - prerelease
+    - release
 
 trigger:
   branches:
@@ -60,3 +60,4 @@ extends:
     buildDirectory: common/lib/common-definitions
     tagName: common-definitions
     taskTest: false
+    taskAuth: false

@@ -1,7 +1,9 @@
 {
-  "name": "@fluidframework/server-routerlicious",
+  "name": "@fluid-internal/server-routerlicious",
   "version": "0.1012.0",
-  "description": "Server to assign sequence numbers and route deltas between connected clients",
+  "private": true,
+  "description": "Fluid reference server implementation",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -60,7 +62,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.22.1",
+    "@fluidframework/common-utils": "^0.23.0-0",
     "@fluidframework/gitresources": "^0.1012.0",
     "@fluidframework/protocol-definitions": "^0.1012.0",
     "@fluidframework/server-kafka-orderer": "^0.1012.0",
@@ -92,8 +94,8 @@
     "ws": "^6.1.2"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.18.0",
-    "@fluidframework/eslint-config-fluid": "^0.18.0",
+    "@fluidframework/build-common": "^0.19.2-0",
+    "@fluidframework/eslint-config-fluid": "^0.19.1-0",
     "@fluidframework/server-local-server": "^0.1012.0",
     "@fluidframework/server-test-utils": "^0.1012.0",
     "@types/bytes": "^3.0.0",
