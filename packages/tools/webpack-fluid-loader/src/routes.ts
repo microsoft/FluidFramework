@@ -58,7 +58,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             break;
         }
         case "r11s": {
-            return new Error(`
+            throw new Error(`
             Deprecated. Please use another server.
             `);
         }
