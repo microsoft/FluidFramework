@@ -360,10 +360,14 @@ describe("SharedString", () => {
 
             // Verify that both the shared strings have the properties.
             for (let i = 0; i < text.length; i++) {
-                legacyAssert.deepEqual(
-                    sharedString.getPropertiesAtPosition(i), styleProps, "Could not add props");
-                legacyAssert.deepEqual(
-                    sharedString2.getPropertiesAtPosition(i), styleProps, "Could not add props to remote string");
+                assert.deepEqual(
+                    { ...sharedString.getPropertiesAtPosition(i) },
+                    { ...styleProps },
+                    "Could not add props");
+                assert.deepEqual(
+                    { ...sharedString2.getPropertiesAtPosition(i) },
+                    { ...styleProps },
+                    "Could not add props to remote string");
             }
 
             // Annote the properties.
