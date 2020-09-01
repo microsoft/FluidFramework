@@ -3,9 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IProvideDocumentFactory,
-} from "@fluid-example/host-service-interfaces";
+/* TODO: @fluid-example packages are not published. Duplicate the interface here for now */
+// import { IProvideDocumentFactory } from "@fluid-example/host-service-interfaces";
+
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+
+export const IDocumentFactory: keyof IProvideDocumentFactory = "IDocumentFactory";
+
+export interface IProvideDocumentFactory {
+    readonly IDocumentFactory: IDocumentFactory;
+}
+
+export interface IDocumentFactory extends IProvideDocumentFactory {
+    create(fluidCodeDetails: IFluidCodeDetails): Promise<string>;
+}
 
 /**
  * Host services provides a collection of interfaces exposed by a gateway host

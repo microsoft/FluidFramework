@@ -40,3 +40,4 @@ extends:
     test: true
     lint: true
     containerBaseDir: /usr/src/server
+    authnpmrc: false
