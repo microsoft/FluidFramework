@@ -82,10 +82,12 @@ describe("loader/runtime compatibility", () => {
                     args.urlResolver),
                 loadContainerWithOldLoader( // old loader, new container/data store runtimes
                     { fluidExport: createRuntimeFactory(TestDataObject.type, createPrimedDataStoreFactory()) },
-                    args.deltaConnectionServer),
+                    args.deltaConnectionServer,
+                    args.urlResolver),
                 loadContainerWithOldLoader( // old everything
                     { fluidExport: createOldRuntimeFactory(TestDataObject.type, createOldPrimedDataStoreFactory()) },
-                    args.deltaConnectionServer),
+                    args.deltaConnectionServer,
+                    args.urlResolver),
                 loadContainer( // new loader, old container/data store runtimes
                     { fluidExport: createOldRuntimeFactory(TestDataObject.type, createOldPrimedDataStoreFactory()) },
                     args.deltaConnectionServer,
