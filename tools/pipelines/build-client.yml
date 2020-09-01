@@ -75,7 +75,6 @@ extends:
     cgSubDirectory: packages
     checkoutSubmodules: true
     runBundleAnalysis: true
-    taskAuth: false
     preCG:
     - task: UseNode@1
       displayName: Use Node 12.x

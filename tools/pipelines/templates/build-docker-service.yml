@@ -13,10 +13,6 @@ parameters:
 - name: test
   type: boolean
 
-- name: authnpmrc
-  type: boolean
-  default: true
-
 - name: lint
   type: boolean
   default: false
@@ -67,22 +63,6 @@ jobs:
       - template: include-generate-notice-steps.yml
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
-
-    # Setup
-    - ${{ if eq(parameters.authnpmrc, true) }}:
-      - task: Bash@3
-        displayName: Strip npmrc auth token preamble
-        inputs:
-          targetType: 'inline'
-          script: |
-            # In order to simplify the build and use the npm authenticate task we strip the auth token preamble from the npmrc
-            sed -i '/^; begin auth token/,/^\; end auth token/d;' ${{ parameters.buildDirectory }}/.npmrc
-
-      - task: npmAuthenticate@0
-        displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/.npmrc'
-        inputs:
-          workingFile: ${{ parameters.buildDirectory }}/.npmrc
-          customEndpoint: Offnet Packages
 
     # Set version
     - ${{ if eq(parameters.setVersion, true) }}:
