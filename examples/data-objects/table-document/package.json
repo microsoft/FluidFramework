@@ -2,6 +2,7 @@
   "name": "@fluid-example/table-document",
   "version": "0.26.0",
   "description": "Chaincode component containing a table's data",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

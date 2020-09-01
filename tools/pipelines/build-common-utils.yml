@@ -59,3 +59,4 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: common/lib/common-utils
     tagName: common-utils
+    taskAuth: false

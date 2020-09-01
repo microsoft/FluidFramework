@@ -53,7 +53,7 @@ Please switch to using one of the following APIs:
 ### createDataStoreWithRealizationFn() APIs are removed
 Removed from IFluidDataStoreContext  & IContainerRuntime.
 Consider using (Pure)DataObject(Factory) for your objects - they support passing initial args.
-Otherwise consider implementing similar flow of exposing interface from your fluid object that is used to initialize object after creation.
+Otherwise consider implementing similar flow of exposing interface from your Fluid object that is used to initialize object after creation.
 
 ## getDataStore() APIs is removed
 IContainerRuntime.getDataStore() is removed. Only IContainerRuntime.getRootDataStore() is available to retrieve root data stores.

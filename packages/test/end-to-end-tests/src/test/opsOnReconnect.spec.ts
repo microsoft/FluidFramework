@@ -11,7 +11,7 @@ import {
     ContainerMessageType,
     isRuntimeMessage,
     unpackRuntimeMessage,
-    schedulerId,
+    taskSchedulerId,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
@@ -107,7 +107,7 @@ describe("Ops on Reconnect", () => {
             const message = unpackRuntimeMessage(containerMessage);
             if (message.type === ContainerMessageType.FluidDataStoreOp) {
                 const envelope = message.contents as IEnvelope;
-                if (envelope.address !== schedulerId) {
+                if (envelope.address !== taskSchedulerId) {
                     const address = envelope.contents.content.address;
                     const content = envelope.contents.content.contents;
                     const batch = message.metadata?.batch;

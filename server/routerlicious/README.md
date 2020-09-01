@@ -180,7 +180,7 @@ Storage providers that implement this interface are then able to plug into the s
 support for [GitHub](https://developer.github.com/v3/git/), [Git](../gitrest), and
 [Cobalt](https://offnet.visualstudio.com/officenet/_git/cobalt-netcore).
 
-More details on content-adressable file systems and Git can be found at 
+More details on content-addressable file systems and Git can be found at 
 * https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain
 * http://stefan.saasen.me/articles/git-clone-in-haskell-from-the-bottom-up/
 
@@ -310,7 +310,6 @@ Coming Soon...
 
 ## Trademark
 
-This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these
-trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/
-intellectualproperty/trademarks/usage/general). Use of Microsoft trademarks or logos in modified versions of this
-project must not cause confusion or imply Microsoft sponsorship.
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

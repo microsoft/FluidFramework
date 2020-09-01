@@ -17,12 +17,9 @@ parameters:
 jobs:
   - ${{ each feed in parameters.feeds }}:
     - deployment: publish_${{ replace(feed.environment, '-', '_') }}
-      variables:
-        enabled: ${{ feed.enabled }} 
       displayName: Publish ${{ feed.environment }}
       pool: ${{ parameters.pool }}
       environment: ${{ feed.environment }}
-      condition: and(succeeded(), or(eq(variables['enabled'], 'release'), eq(variables['enabled'], 'prerelease')))
       workspace:
         clean: all
       strategy:

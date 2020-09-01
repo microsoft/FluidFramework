@@ -2,6 +2,7 @@
   "name": "@fluid-example/simple-fluidobject-embed",
   "version": "0.26.0",
   "description": "Simple Fluid object embed container",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

@@ -146,7 +146,7 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
     }
 
     /**
-     * Retreive fluid object using the handle get or the older requestFluidObject_UNSAFE call to fetch by ID
+     * Retreive Fluid object using the handle get or the older requestFluidObject_UNSAFE call to fetch by ID
      *
      * @param key - key that object (handle/id) is stored with in the directory
      * @param directory - directory containing the object

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Unpkg like implementation that works with historian",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

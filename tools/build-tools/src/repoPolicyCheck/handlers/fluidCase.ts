@@ -16,11 +16,11 @@ export const handler: Handler = {
         const content = readFile(file);
         // search for Fluid Framework
         if (content.search(/[Ff]luid framework/) !== -1) {
-            return `'framework' need to be capitalized`;
+            return `'framework' need to be capitalized in prose`;
         }
         // search for the work 'fluid' surround by other words
         if (content.search(/[a-z] fluid [a-z]/) !== -1) {
-            return `'fluid' needs to be capitalized`;
+            return `'fluid' needs to be capitalized in prose`;
         }
     },
     resolver: file => {

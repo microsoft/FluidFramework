@@ -2,6 +2,7 @@
   "name": "@fluid-example/image-gallery",
   "version": "0.26.0",
   "description": "Image Gallery with pretty layout",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

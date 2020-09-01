@@ -60,3 +60,4 @@ extends:
     buildDirectory: common/lib/common-definitions
     tagName: common-definitions
     taskTest: false
+    taskAuth: false

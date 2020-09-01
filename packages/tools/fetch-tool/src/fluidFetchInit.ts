@@ -7,7 +7,7 @@ import { URL } from "url";
 import child_process from "child_process";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { configurableUrlResolver } from "@fluidframework/driver-utils";
-import { FluidAppOdspUrlResolver } from "@fluidframework/fluidapp-odsp-urlresolver";
+import { FluidAppOdspUrlResolver } from "@fluid-internal/fluidapp-odsp-urlresolver";
 import * as odsp from "@fluidframework/odsp-driver";
 import { OdspUrlResolver } from "@fluidframework/odsp-urlresolver";
 import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-utils";

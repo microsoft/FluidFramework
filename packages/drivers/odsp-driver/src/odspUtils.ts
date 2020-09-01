@@ -4,7 +4,7 @@
  */
 
 import {
-    OnlineStatus,
+    OnlineStatus, isOnline,
 } from "@fluidframework/driver-utils";
 import {
     DriverErrorType,
@@ -40,7 +40,7 @@ export function getHashedDocumentId(driveId: string, itemId: string): string {
 /**
  * This API should be used with pretty much all network calls (fetch, webSocket connection) in order
  * to correctly handle expired tokens. It relies on callback fetching token, and be able to refetch
- * token on failure. Only specific cases get retry call with refresh = true, all other / unknonw errors
+ * token on failure. Only specific cases get retry call with refresh = true, all other / unknown errors
  * simply propagate to caller
  */
 export async function getWithRetryForTokenRefresh<T>(get: (options: TokenFetchOptions) => Promise<T>) {
@@ -108,8 +108,8 @@ export async function fetchHelper<T>(
         // While we do not know for sure whether computer is offline, this error is not actionable and
         // is pretty good indicator we are offline. Treating it as offline scenario will make it
         // easier to see other errors in telemetry.
-        let online = OnlineStatus.Unknown;
-        if (error && typeof error === "object" && error.message === "TypeError: Failed to fetch") {
+        let online = isOnline();
+        if (`${error}` === "TypeError: Failed to fetch") {
             online = OnlineStatus.Offline;
         }
         throwOdspNetworkError(
