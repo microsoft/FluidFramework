@@ -37,7 +37,7 @@
     "@fluidframework/view-interfaces": "^0.26.0"
   },
   "devDependencies": {
-    "@fluidframework/eslint-config-fluid": "^0.18.0",
+    "@fluidframework/eslint-config-fluid": "^0.19.1-0",
     "@fluidframework/webpack-fluid-loader": "^0.26.0",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

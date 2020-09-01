@@ -3,12 +3,21 @@ title: Introducing distributed data structures
 menuPosition: 2
 ---
 
+<<<<<<< HEAD
 Fluid Framework provides developers with _distributed data structures_ (DDSes) that automatically ensure that each
 client has access to the same state. We call them _distributed data structures_ because they are similar to data structures used commonly when
 programming, like strings, maps/dictionaries, and sequences/lists. The APIs provided by DDSes are
 designed to be familiar to programmers who've used these types of data structures before. For example, the [SharedMap][]
 DDS is used to store key/value pairs, like a typical map or dictionary data structure, and provides `get` and `set`
 methods to store and retrieve data in the map.
+=======
+Fluid Framework provides developers with distributed data structures (DDSes) that automatically ensure that each client has access to the same state.
+We call them this because they are similar to data structures used commonly when programming, like
+strings, maps/dictionaries, and sequences/lists. The APIs provided by distributed data structures are designed to be
+familiar to programmers who've used these types of data structures before. For example, the `SharedMap` DDS is used to
+store key/value pairs, like a typical map or dictionary data structure, and provides `get` and `set` methods to store
+and retrieve data in the map.
+>>>>>>> main
 
 When using a DDS, you can largely treat it as a local object. You can add data to it, remove data, update it, etc.
 However, a DDS is not _just_ a local object. A DDS can also be changed by other users that are editing.
