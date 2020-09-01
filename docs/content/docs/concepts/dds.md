@@ -42,14 +42,21 @@ each DDS for more details about the merge strategy it uses.
 Fluid DDSes exhibit different performance characteristics based on how they interact with the Fluid service. The DDSes
 generally fall into two broad categories: _optimistic_ and _consensus-based_.
 
+{{% callout tip "See also" %}}
+
+* [Fluid Framework architecture](./architecture.md)
+* [Fluid service](./server.md)
+
+{{% /callout %}}
+
 ### Optimistic data structures
 
-Optimistic DDSes are capable of applying Fluid operations before they are ordered by the Fluid service. The local
+Optimistic DDSes are capable of applying Fluid operations before they are sequenced by the Fluid service. The local
 changes are said to be applied _optimistically_, hence the name _optimistic DDSes_. The DDSes also apply remote
 operations as they are made in a consistent way.
 
-Many of the most commonly used DDSes are optimistic, including SharedMap, SharedSequence, SharedMatrix, and
-SharedString.
+Many of the most commonly used DDSes are optimistic, including [SharedMap][], [SharedSequence][], [SharedMatrix][], and
+[SharedString][].
 
 ### Consensus-based data structures
 
