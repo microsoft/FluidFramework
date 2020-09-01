@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-<<<<<<< HEAD
-import assert from "assert";
-import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
-=======
 import { strict as assert } from "assert";
->>>>>>> a9dcff4d6... convert all the asserts to strict assert
+import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalResolver } from "@fluidframework/local-driver";
