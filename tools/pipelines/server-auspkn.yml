@@ -38,4 +38,3 @@ extends:
     buildDirectory: server/auspkn
     containerName: auspkn
     test: true
-    authnpmrc: false
