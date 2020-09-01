@@ -22,7 +22,7 @@ In our DiceRoller app we'll show users a dice with a button to roll it.  When th
 
 ### The view
 
-In this app we're just going to render our view using plain Typescript and DOM methods.  Fluid is impartial to how you write your view, so you could use your favorite view framework instead if you'd like.
+In this app we're just going to render our view without any UI libraries such as React, Vue or Angular. We'll be using [Typescript](https://www.typescriptlang.org/) and HTML/DOM methods.  Fluid is impartial to how you write your view, so you could use your favorite view framework instead if you'd like.
 
 Since we haven't created our model yet, we'll just hardcode a "1" and log to the console when the button is clicked.
 
@@ -154,17 +154,16 @@ const container = await getTinyliciousContainer(documentId, DiceRollerConta
 
 This will look a little different when moving to a production service, but you'll still ultimately be getting a reference to a Container object running your code and connected to a service. 
 
-After we have the connected Container object, our container code will have already run to create an instance of our model.  Since we built our container code using a ContainerRuntimeFactoryWithDefaultDataStore, the model can be requested from the Container object using a URL of "/".:
+After we have the connected Container object, our container code will have already run to create an instance of our model.  We used a ContainerRuntimeFactoryWithDefaultDataStore to build our container code, which adds the ability to request the model from the Container object using a URL of "/".:
 
 ```ts
-const url = "/";
-const response = await container.request({ url });
+const response = await container.request({ url: "/" });
 
 // Verify the response to make sure we got what we expected.
 if (response.status !== 200 || response.mimeType !== "fluid/object") {
-    throw new Error(`Unable to retrieve data object at URL: "${url}"`);
+    throw new Error("Unable to retrieve data object");
 } else if (response.value === undefined) {
-    throw new Error(`Empty response from URL: "${url}"`);
+    throw new Error("Empty response");
 }
 const diceRoller: IDiceRoller = response.value;
 ```
