@@ -1,6 +1,6 @@
 # @fluid-example/likes-and-comments
 
-**Like and Comments** is a Fluid Component that displays how to use a combination of Fluid DDS hooks and local React hooks together.
+**Like and Comments** is a Fluid Object that displays how to use a combination of Fluid DDS hooks and local React hooks together.
 It uses a SharedString, SharedCounter, and a SharedObjectSequence as part of its synced state. This shows how multiple DDSes can be accessed using the respective synced hooks, useSyncedString, useSyncedCounter, and useSyncedArray, and used to power React views without using any handles or event listeners.
 
 ## Getting Started
