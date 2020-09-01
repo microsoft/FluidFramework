@@ -108,9 +108,9 @@ describe("context reload", function() {
         return loader.resolve({ url: documentLoadUrl });
     }
 
-    async function createContainerWithOldLoader(packageEntries, server): Promise<old.IContainer> {
-        const loader = old.createLocalLoader(packageEntries, server);
-        return old.initializeLocalContainer(documentLoadUrl, loader, defaultCodeDetails);
+    async function createContainerWithOldLoader(packageEntries, server, urlResolver): Promise<old.IContainer> {
+        const loader = old.createLocalLoader(packageEntries, server, urlResolver);
+        return old.createAndAttachContainer(documentId, defaultCodeDetails, loader, urlResolver);
     }
 
     const createRuntimeFactory = (dataStore): IRuntimeFactory => {
@@ -281,10 +281,11 @@ describe("context reload", function() {
         describe("old loader, new runtime", () => {
             beforeEach(async function() {
                 this.deltaConnectionServer = LocalDeltaConnectionServer.create();
+                this.urlResolver = new LocalResolver();
                 this.container = await createContainerWithOldLoader([
                     [codeDetails(V1), createOldRuntimeFactory(OldTestDataStoreV1)],
                     [codeDetails(V2), createRuntimeFactory(TestDataStoreV2)],
-                ], this.deltaConnectionServer);
+                ], this.deltaConnectionServer, this.urlResolver);
                 this.dataStoreV1 = await requestFluidObject<OldTestDataStore>(this.container, "default");
                 assert.strictEqual(this.dataStoreV1.version, TestDataStoreV1.version);
 
