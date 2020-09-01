@@ -18,6 +18,11 @@ export interface IDocumentFactory extends IProvideDocumentFactory {
     create(fluidCodeDetails: IFluidCodeDetails): Promise<string>;
 }
 
+declare module "@fluidframework/core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IFluidObject extends Readonly<Partial<IProvideDocumentFactory>> { }
+}
+
 /**
  * Host services provides a collection of interfaces exposed by a gateway host
  */
