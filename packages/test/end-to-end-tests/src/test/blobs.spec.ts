@@ -78,22 +78,15 @@ describe("blobs", () => {
         const testKey = "a blob";
         const container1 = await createContainer();
 
-        const summaryP = new Promise((res) => container1.on("op", (op) => {
-            if (op.type === "summaryAck") {
-                res();
-            }
-        }));
-
         const component1 = await requestFluidObject<TestComponent>(container1, "default");
 
         const blob = await component1._runtime.uploadBlob(Buffer.from(testString));
         component1._root.set(testKey, blob);
 
-        await summaryP;
-
         const container2 = await createContainer();
         const component2 = await requestFluidObject<TestComponent>(container2, "default");
 
-        assert.strictEqual(fromBase64ToUtf8(await component2._root.get(testKey).get()), testString);
+        const blobHandle = await component2._root.wait(testKey);
+        assert.strictEqual(fromBase64ToUtf8(await blobHandle.get()), testString);
     });
 });
