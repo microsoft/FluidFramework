@@ -154,7 +154,7 @@ const container = await getTinyliciousContainer(documentId, DiceRollerConta
 
 This will look a little different when moving to a production service, but you'll still ultimately be getting a reference to a Container object running your code and connected to a service. 
 
-After we have the connected Container object, our container code will have already run to create an instance of our model.  We used a ContainerRuntimeFactoryWithDefaultDataStore to build our container code, which adds the ability to request the model from the Container object using a URL of "/".:
+After we have the connected Container object, our container code will have already run to create an instance of our model.  We used a ContainerRuntimeFactoryWithDefaultDataStore to build our container code, which adds the ability to request the model from the Container object using a URL of "/":
 
 ```ts
 const response = await container.request({ url: "/" });
@@ -170,7 +170,7 @@ const diceRoller: IDiceRoller = response.value;
 
 ### Connect model instance to view for rendering
 
-Now that we have the model instance, we can revisit our view to integrate it.  We'll update the function to take an IDiceRoller, connect our button to the `roll()` method, listen to the `"diceRolled"` event to detect value changes, and read that value from the model.
+That's it, now that we have a model instance, we can wire it to our view!  We'll update the function to take an `IDiceRoller`, connect our button to the `roll()` method, listen to the `"diceRolled"` event to detect value changes, and read that value from the model.
 
 ```ts
 export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
