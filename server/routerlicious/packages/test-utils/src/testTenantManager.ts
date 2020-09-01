@@ -4,7 +4,14 @@
  */
 
 import { GitManager } from "@fluidframework/server-services-client";
-import { ITenant, ITenantManager, ITenantOrderer, ITenantStorage, IDb } from "@fluidframework/server-services-core";
+import {
+    ITenant,
+    ITenantManager,
+    ITenantOrderer,
+    ITenantStorage,
+    IDb,
+    ITenantConfig,
+} from "@fluidframework/server-services-core";
 import { TestHistorian } from "./testHistorian";
 import { TestDb } from "./testCollection";
 
@@ -46,6 +53,16 @@ export class TestTenantManager implements ITenantManager {
 
     constructor(url = "http://test", historian = "http://historian", testDb: IDb = new TestDb({})) {
         this.tenant = new TestTenant(url, historian, testDb);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public createTenant(id?: string): Promise<ITenantConfig & { key: string }> {
+        return Promise.resolve({
+            id: "test-tenant",
+            storage: this.tenant.storage,
+            orderer: this.tenant.orderer,
+            key: "test-tenant-key",
+        });
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import {
     IFluidObject,
     IFluidHandle,
@@ -19,7 +20,7 @@ import { FluidObjectHandle } from "@fluidframework/datastore";
 import { IDirectory } from "@fluidframework/map";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
-import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
+import { RequestParser } from "@fluidframework/runtime-utils";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { serviceRoutePathRoot } from "../container-services";
 
@@ -42,7 +43,6 @@ export interface IDataObjectProps<P extends IFluidObject = object> {
 export abstract class PureDataObject<P extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
     extends EventForwarder<E>
     implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
-    private initializeP: Promise<void> | undefined;
     private readonly innerHandle: IFluidHandle<this>;
     private _disposed = false;
 
@@ -95,19 +95,6 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
         });
     }
 
-    /**
-     * Allow inheritors to plugin to an initialize flow
-     * We guarantee that this part of the code will only happen once
-     */
-    public async initialize(initialState?: S): Promise<void> {
-        // We want to ensure if this gets called more than once it only executes the initialize code once.
-        if (!this.initializeP) {
-            this.initializeP = this.initializeInternal(initialState);
-        }
-
-        await this.initializeP;
-    }
-
     // #region IFluidRouter
 
     /**
@@ -148,35 +135,18 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * Calls initializingFirstTime, initializingFromExisting, and hasInitialized. Caller is
      * responsible for ensuring this is only invoked once.
      */
-    protected async initializeInternal(props?: S): Promise<void> {
-        if (!this.runtime.existing) {
-            // If it's the first time through
-            await this.initializingFirstTime(props);
-        } else {
-            // Else we are loading from existing
+    public async initializeInternal(props?: S): Promise<void> {
+        if (this.runtime.existing) {
+            assert(props === undefined);
             await this.initializingFromExisting();
+        } else {
+            await this.initializingFirstTime(props);
         }
-
-        // This always gets called at the end of initialize on FirstTime or from existing.
         await this.hasInitialized();
     }
 
     /**
-     * Calls create, initialize, and attach on a new data store with random generated ID
-     *
-     * @param pkg - package name for the new data store
-     * @param props - optional props to be passed in
-     */
-    protected async createFluidObject<T extends IFluidObject & IFluidLoadable>(
-        pkg: string,
-    ): Promise<T> {
-        const packagePath = await this.context.composeSubpackagePath(pkg);
-        const router = await this.context.containerRuntime.createDataStore(packagePath);
-        return requestFluidObject<T>(router, "/");
-    }
-
-    /**
-     * Retreive data store using the handle get or the older requestFluidObject_UNSAFE call to fetch by ID
+     * Retreive Fluid object using the handle get or the older requestFluidObject_UNSAFE call to fetch by ID
      *
      * @param key - key that object (handle/id) is stored with in the directory
      * @param directory - directory containing the object
@@ -225,7 +195,6 @@ export abstract class PureDataObject<P extends IFluidObject = object, S = undefi
      * data store runtime)
      *
      * @param props - Optional props to be passed in on create
-     * @deprecated 0.16 Issue #1635 Initial props should be provided through a factory override
      */
     protected async initializingFirstTime(props?: S): Promise<void> { }
 

@@ -1,7 +1,8 @@
 {
   "name": "@fluid-example/pond",
   "version": "0.26.0",
-  "description": "Grab bag of fluid scenarios in one Fluid Container.",
+  "description": "Grab bag of Fluid scenarios in one Fluid Container.",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -40,7 +41,7 @@
     "@fluidframework/core-interfaces": "^0.26.0",
     "@fluidframework/counter": "^0.26.0",
     "@fluidframework/map": "^0.26.0",
-    "@fluidframework/protocol-definitions": "^0.1011.1",
+    "@fluidframework/protocol-definitions": "^0.1012.0-0",
     "@fluidframework/runtime-definitions": "^0.26.0",
     "@fluidframework/synthesize": "^0.26.0",
     "@fluidframework/view-adapters": "^0.26.0",
@@ -49,9 +50,9 @@
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.18.0",
-    "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/test-tools": "^0.1.0",
+    "@fluidframework/build-common": "^0.19.2-0",
+    "@fluidframework/eslint-config-fluid": "^0.19.1-0",
+    "@fluidframework/test-tools": "^0.2.3074",
     "@fluidframework/webpack-fluid-loader": "^0.26.0",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",

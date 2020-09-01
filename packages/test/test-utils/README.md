@@ -1,17 +1,17 @@
 # @fluidframework/test-utils
 
-This package contains utilities for writing end-to-end tests in Fluid Framework. It helps in the creation of a simple hosting application to test fluid objects and other functionalities of the system.
+This package contains utilities for writing end-to-end tests in Fluid Framework. It helps in the creation of a simple hosting application to test Fluid objects and other functionalities of the system.
 
 ## Local Code Loader
 
-`LocalCodeLoader` in `localCodeLoader.ts` is a simple code loader that can load a fluid package with a given entry point. It can be used to load multiple different fluid packages with different sources (`IFluidCodeDetails`).
+`LocalCodeLoader` in `localCodeLoader.ts` is a simple code loader that can load a Fluid package with a given entry point. It can be used to load multiple different Fluid packages with different sources (`IFluidCodeDetails`).
 
 It should be created by passing in a list of source to entry point mapping. Then entry point can be an `IFluidDataStoreFactory`, `IRuntimeFactory` or a `fluidExport`:
 ```typeScript
 // The fluidEntryPoint type.
 export type fluidEntryPoint = Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IFluidModule>;
 
-// Constructior for LocalCodeLoader.
+// Constructor for LocalCodeLoader.
 constructor(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>);
 ```
 On load, it retrieves the `fluidEntryPoint` matching the package in the `IFluidCodeDetails` and loads it.
@@ -21,7 +21,7 @@ On load, it retrieves the `fluidEntryPoint` matching the package in the `IFluidC
 
 ### `createLocalLoader`
 
-This method creates a simple `Loader` that can be used to resolve a Container or request a fluid object.
+This method creates a simple `Loader` that can be used to resolve a Container or request a Fluid object.
 
 It should be created with a list of source to entry point mappings (of type `fluidEntryPoint` as explained in [LocalCodeLoader](#Local-Code-Loader) section above), an `ILocalDeltaConnectionServer` and an `IUrlResolver`:
 ```typeScript
@@ -55,9 +55,9 @@ The usual flow is to create a `LocalLoader` by calling `createLocalLoader` and t
 ## Test Fluid Object
 
 `testFluidObject.ts` provides `TestFluidObject` and `TestFluidObjectFactory` that help in the testing of Distributed Data Structures (DDS).
-It can be used to create a fluid object (TestFluidObject) with a given set of DDSes which can then be retrieved later as required.
+It can be used to create a Fluid object (TestFluidObject) with a given set of DDSes which can then be retrieved later as required.
 
-For example, if you need a fluid object with couple of SharedStrings, a SharedDirectory and a SparseMatrix, create a `TestFluidObjectFactory` as follows and use this factory to create the fluid object:
+For example, if you need a Fluid object with couple of SharedStrings, a SharedDirectory and a SparseMatrix, create a `TestFluidObjectFactory` as follows and use this factory to create the Fluid object:
 ```typeScript
 new TestFluidObjectFactory([
     [ "sharedString1" /* id */, SharedString.getFactory() ],
@@ -80,7 +80,7 @@ const matrix = testFluidObject.getSharedObject<SparseMatrix>("matrix");
 ## Op Processing Controller
 `OpProcessingController` provides control over op processing in the tests. It lets you pause and resume the op processing in the containers / fluid objects. It also lets you wait until the ops have been processed by them and the server.
 
-`OpProcessingController` should be created by passing in the `ILocalDeltaConnectionServer` that is used in the test. You can then register the fluid objects / containers whose ops you want to control with it.
+`OpProcessingController` should be created by passing in the `ILocalDeltaConnectionServer` that is used in the test. You can then register the Fluid objects / containers whose ops you want to control with it.
 
 For example, consider the scenario where you perform some operations on a DDS and want to verify that the remote client's DDS have applied the operations. You have to wait until the op is sent to the server, the server processes the op, sends it to the remote client and the remote client processes the op.
 
@@ -88,7 +88,7 @@ You can use the `OpProcessingController` to wait for all that to happen by calli
 
 ## Usage
 
-The typical usage for testing a fluid object is as follows:
+The typical usage for testing a Fluid object is as follows:
 1. Create a `LocalDeltaConnectionServer`:
     ```typescript
     const deltaConnectionServer: ILocalDeltaConnectionServer = LocalDeltaConnectionServer.create();
@@ -99,7 +99,7 @@ The typical usage for testing a fluid object is as follows:
     const urlResolver: IUrlResolver = new LocalResolver();
     ```
 
-3. Create an `IFluidCodeDetails` and a `TestFluidObjectFactory` which will serve as the fluid entry point (code details to factory mapping):
+3. Create an `IFluidCodeDetails` and a `TestFluidObjectFactory` which will serve as the Fluid entry point (code details to factory mapping):
     ```typescript
     const codeDetails: IFluidCodeDetails = {
         package: "sharedStringTestPackage",
@@ -123,7 +123,7 @@ The typical usage for testing a fluid object is as follows:
 
 6. Get the `Fluid object (TestFluidObject)` by using `requestFluidObject` API in `@fluidframework/runtime-utils`. Then get the `DDS` to test:
     ```typescript
-    const fluidObject = await requestFluidObject<ITestFluidObject>(container, "default"); // "default" represent the default fluid object.
+    const fluidObject = await requestFluidObject<ITestFluidObject>(container, "default"); // "default" represent the default Fluid object.
     const sharedString = await fluidObject.getSharedObject<SharedString>("sharedString");
     ```
     > The `ITestFluidObject` would have already created a `SharedString` based off the parameters we provided when creating the `TestFluidObjectFactory` in step 2.

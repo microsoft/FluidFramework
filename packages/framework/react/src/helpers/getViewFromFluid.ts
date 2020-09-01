@@ -14,7 +14,7 @@ import {
 import { getFluidState } from "./getFluidState";
 
 /**
- * Return a partial view state containing the fluid state key identified converted into its
+ * Return a partial view state containing the Fluid state key identified converted into its
  * corresponding view state value in the partial view state returned
  * @param syncedStateId - Unique ID for the synced state of this view
  * @param syncedState - The shared map this shared state is stored on
@@ -44,7 +44,7 @@ export function getViewFromFluid<
     );
     if (fluidObjectState === undefined) {
         throw Error(
-            "Attempted to fetch view from fluid state before it was initialized",
+            "Attempted to fetch view from Fluid state before it was initialized",
         );
     }
     let value = fluidObjectState[fluidKey];
