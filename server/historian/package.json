@@ -22,7 +22,7 @@
     "tslint": "tslint 'src/**/*.ts'"
   },
   "dependencies": {
-    "@fluidframework/gitresources": "^0.1011.1",
+    "@fluidframework/gitresources": "^0.1012.0-0",
     "body-parser": "^1.17.2",
     "compression": "^1.7.3",
     "cors": "^2.8.5",
@@ -38,7 +38,7 @@
     "winston": "^2.4.4"
   },
   "devDependencies": {
-    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.19.1-0",
     "@types/compression": "0.0.36",
     "@types/cors": "^2.8.4",
     "@types/debug": "^4.1.5",
