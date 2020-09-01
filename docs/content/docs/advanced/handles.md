@@ -34,7 +34,7 @@ system and anyone who has the handle can easily get the underlying object by sim
   different scenarios. It is the responsibility of the handle to retrieve the object and return it.
 
   For example, the handle for a `PureDataObject` simply returns the underlying object. But when this handle is stored in
-  a DDS so that it is serialized and then de-serialized in a remote client, it is represented by a [remote handle][].
+  a DDS so that it is serialized and then de-serialized in a remote client, it is represented by a _remote handle_.
   The remote handle only has the absolute url to the object, requests the object from the root, and then returns it.
 
 ### How to create a handle
@@ -82,15 +82,11 @@ For more information about root.get and HTMLViewAdapter, see SharedDirectory.get
 
 #### A more complex scenario
 
-Consider a scenario where there are multiple Containers and a Fluid object wants to load another Fluid object.
+Consider a scenario where there are multiple containers and a Fluid object wants to load another Fluid object.
 
 If the request/response model is used to achieve this, to request the object using its URL, the object loading it
 has to know which Container has the object so that it doesn't end up requesting it from the wrong one. It can become
-complicated quickly as the number of DataObjects and Containers grow.
+complicated quickly as the number of DFluid objects and containers grow.
 
 This is where handles become really powerful and make this scenario much simpler. You can pass around the handle to
-the DataObject across Containers and to load it from anywhere, you just have to call `get()` on it.
-
-
-[remote handle]:
-https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/runtime-utils/src/remoteFluidObjectHandle.ts
+the DataObject across containers and to load it from anywhere, you just have to call `get()` on it.
