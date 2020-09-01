@@ -57,12 +57,17 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             });
             break;
         }
+        case "r11s": {
+            return new Error(`
+            Deprecated. Please use another server.
+            `);
+        }
         default: {
             break;
         }
     }
 
-    if (options.mode === "docker" || options.mode === "r11s" || options.mode === "tinylicious") {
+    if (options.mode === "docker" || options.mode === "tinylicious") {
         options.bearerSecret = options.bearerSecret || config.get("fluid:webpack:bearerSecret");
         if (options.mode !== "tinylicious") {
             options.tenantId = options.tenantId || config.get("fluid:webpack:tenantId") || "fluid";
@@ -73,19 +78,12 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             } else {
                 options.tenantSecret = options.tenantSecret || config.get("fluid:webpack:tenantSecret");
             }
-            if (options.mode === "r11s") {
-                options.fluidHost = options.fluidHost || config.get("fluid:webpack:fluidHost");
-            }
         }
     }
 
     options.npm = options.npm || config.get("fluid:webpack:npm");
 
     console.log(options);
-
-    if (options.mode === "r11s" && !(options.tenantId && options.tenantSecret)) {
-        throw new Error("You must provide a tenantId and tenantSecret to connect to a live routerlicious server");
-    }
 
     let readyP: ((req: express.Request, res: express.Response) => Promise<boolean>) | undefined;
     if (options.mode === "spo-df" || options.mode === "spo") {

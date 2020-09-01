@@ -37,15 +37,6 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
                 getUser(),
                 options.bearerSecret);
 
-        case "r11s":
-            return new InsecureUrlResolver(
-                options.fluidHost,
-                options.fluidHost.replace("www", "alfred"),
-                options.fluidHost.replace("www", "historian"),
-                options.tenantId,
-                options.tenantSecret,
-                getUser(),
-                options.bearerSecret);
         case "tinylicious":
             return new InsecureUrlResolver(
                 tinyliciousUrls.hostUrl,
@@ -97,7 +88,6 @@ export class MultiUrlResolver implements IUrlResolver {
         fileName: string,
     ): Promise<IRequest> {
         switch (this.options.mode) {
-            case "r11s":
             case "docker":
             case "tinylicious":
                 return (this.urlResolver as InsecureUrlResolver).createCreateNewRequest(fileName);

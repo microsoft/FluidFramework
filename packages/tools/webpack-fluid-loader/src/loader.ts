@@ -48,14 +48,6 @@ export interface IDockerRouteOptions extends IBaseRouteOptions {
     bearerSecret?: string;
 }
 
-export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
-    mode: "r11s";
-    fluidHost?: string;
-    tenantId?: string;
-    tenantSecret?: string;
-    bearerSecret?: string;
-}
-
 export interface ITinyliciousRouteOptions extends IBaseRouteOptions {
     mode: "tinylicious";
     bearerSecret?: string;

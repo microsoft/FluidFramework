@@ -19,7 +19,6 @@ The following environment variables can be defined when running webpack-dev-serv
 | modes | description |
 | ---------| ----------- |
 | `docker` | Use docker running routerlicious server for ordering, etc. You'll need to start this service locally |
-| `r11s`   | Use remote routerlicious server for ordering, etc. |
 | `local`  | Load Fluid object in two side-by-side divs using test-driver (default option) |
 | `tinylicious` | Run against a local instance of tinylicious. You'll need to start this service locally |
 | `spo-df` | Use SharePoint DogFood server with your personal OneDrive for storage |
