@@ -110,10 +110,6 @@ attach to the running tests with VS Code or any other node debugger.
 
 If you want to build API documentation locally, see [Building Documentation](https://praguedocs.azurewebsites.net/contributing/building-documentation.html).
 
-## CI/CD
-
-Coming Soon... a public facing CI/CD loop
-
 ## Design principals
 
 * Leverage the Client
