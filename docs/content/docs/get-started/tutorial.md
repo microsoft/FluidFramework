@@ -3,14 +3,14 @@ title: Tutorial
 menuPosition: 3
 ---
 
-In this walkthrough, we'll learn about using the Fluid Framework by building a simple
+In this walkthrough, we'll learn about using Fluid Framework by building a simple
 [DiceRoller](https://github.com/microsoft/FluidHelloWorld) application together. To get started, and follow along, go
 through our [Quick Start](./quick-start.md) guide.
 
 {{< fluid_bundle_loader idPrefix="dice-roller"
 bundleName="dice-roller.9af6bdd702e6cd4ad6cf.js" >}}
 
-In our DiceRoller app we'll show users a dice with a button to roll it.  When the dice is rolled, we'll use the Fluid Framework to sync the data across clients so everyone sees the same result.  We'll do this in 6 parts:
+In our DiceRoller app we'll show users a dice with a button to roll it.  When the dice is rolled, we'll use Fluid Framework to sync the data across clients so everyone sees the same result.  We'll do this in 6 parts:
 
 1. Write the view
 1. Define the interface our model will expose
@@ -108,7 +108,7 @@ Since the models you create will be persisted over time as users load and close 
 
 DataObject also provides a "root" **Distributed Data Structure (DDS)**.  DDSes are collaborative data structures that you'll use like local data structures, but as each client modifies the data, all other clients will see the changes.  This "root" DDS is a [SharedDirectory][] which stores key/value pairs and works very similarly to a [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map), providing methods like `set()` and `get()`.  However, it also fires a `"valueChanged"` event so we can observe changes to the data coming in from other users.
 
-To instantiate the DataObject, the Fluid Framework needs a corresponding factory. Since we're using the DataObject
+To instantiate the DataObject, Fluid Framework needs a corresponding factory. Since we're using the DataObject
 class, we'll also use the [DataObjectFactory][] which pairs with it. In this case we just need to provide it with a unique
 name ("dice-roller" in this case) and the class constructor. The third and fourth parameters are not used:
 
