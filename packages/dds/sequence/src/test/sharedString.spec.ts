@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import legacyAssert, { strict as assert } from "assert";
+import { strict as assert } from "assert";
 import { ITree } from "@fluidframework/protocol-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
@@ -94,8 +94,8 @@ describe("SharedString", () => {
             sharedString.insertText(0, text, styleProps);
 
             for (let i = 0; i < text.length; i++) {
-                legacyAssert.deepEqual(
-                    sharedString.getPropertiesAtPosition(i), styleProps, "Could not add props");
+                assert.deepEqual(
+                    { ...sharedString.getPropertiesAtPosition(i) }, { ...styleProps }, "Could not add props");
             }
 
             const colorProps = { color: "green" };

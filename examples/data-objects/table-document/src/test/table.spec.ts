@@ -119,7 +119,7 @@ describe("TableDocument", () => {
             tableDocument.insertRows(0, 2);
             tableDocument.insertCols(0, 1);
             tableDocument.annotateRows(0, 1, { id: "row0" });
-            assert.equal(tableDocument.getRowProperties(0).id, "row0");
+            assert.equal({ ...tableDocument.getRowProperties(0) }, { id: "row0" });
             assert.strictEqual(tableDocument.getRowProperties(1), undefined);
         });
 
@@ -127,7 +127,7 @@ describe("TableDocument", () => {
             tableDocument.insertRows(0, 1);
             tableDocument.insertCols(0, 2);
             tableDocument.annotateCols(0, 1, { id: "col0" });
-            assert.equal(tableDocument.getColProperties(0).id, "col0");
+            assert.equal({ ...tableDocument.getColProperties(0) }, { id: "col0" });
             assert.strictEqual(tableDocument.getColProperties(1), undefined);
         });
     });
@@ -170,11 +170,11 @@ describe("TableDocument", () => {
 
             const slice = await tableDocument.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
             slice.annotateRows(0, 1, { id: "row0" });
-            assert.deepEqual(slice.getRowProperties(0).id, "row0");
+            assert.deepEqual({ ...slice.getRowProperties(0) }, { id: "row0" });
             assert.strictEqual(slice.getRowProperties(1), undefined);
 
             slice.annotateRows(2, 3, { id: "row1" });
-            assert.deepEqual(slice.getRowProperties(2).id, "row1");
+            assert.deepEqual({ ...slice.getRowProperties(2) }, { id: "row1" });
         });
 
         it("Insert rows and columns work when proxied through table slice", async () => {
