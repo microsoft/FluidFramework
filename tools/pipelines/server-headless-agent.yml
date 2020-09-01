@@ -38,3 +38,4 @@ extends:
     buildDirectory: server/headless-agent
     containerName: headless-agent
     test: false
+    authnpmrc: false

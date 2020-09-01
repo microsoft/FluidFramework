@@ -38,3 +38,4 @@ extends:
     buildDirectory: server/admin
     containerName: admin
     test: false
+    authnpmrc: false
