@@ -110,7 +110,7 @@ DataObject also provides a "root" **Distributed Data Structure (DDS)**.  DDSes a
 
 To instantiate the DataObject, Fluid Framework needs a corresponding factory. Since we're using the DataObject
 class, we'll also use the [DataObjectFactory][] which pairs with it. In this case we just need to provide it with a unique
-name ("dice-roller" in this case) and the class constructor. The third and fourth parameters are not used:
+name ("dice-roller" in this case) and the class constructor. The third and fourth parameters provide additional options that we will not be using in this example:
 
 ```ts
 export const DiceRollerInstantiationFactory = new DataObjectFactory(
