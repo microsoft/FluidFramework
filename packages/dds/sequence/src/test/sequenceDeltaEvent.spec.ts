@@ -3053,7 +3053,7 @@ describe("SequenceDeltaEvent", () => {
             for (let i = 0; i < segmentCount; i = i + 1) {
                 assert.equal(event.ranges[i].position, (i + 1) * insertText.length);
                 assert.equal(event.ranges[i].segment.cachedLength, insertText.length);
-                assert.equal(event.ranges[i].propertyDeltas.foo, undefined);
+                assert.equal(event.ranges[i].propertyDeltas.foo, null);
             }
             assert.equal(event.last.position + event.last.segment.cachedLength, client.getLength() - insertText.length);
         });
