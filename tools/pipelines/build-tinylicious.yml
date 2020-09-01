@@ -16,18 +16,17 @@ parameters:
 - name: releaseBuildOverride
   displayName: Release Build Override
   type: string
-  default: default
+  default: none
   values:
-    - default
-    - false
-    - true
+    - none
+    - prerelease
+    - release
 
 trigger:
   branches:
     include:
     - main
     - release/*
-    - refs/tags/tinylicious_v*
   paths:
     include:
     - server/tinylicious
@@ -64,5 +63,6 @@ extends:
     taskBuildDocs: false
     taskLint: true
     taskTest: false
+    taskAuth: false
     namespace: false
     buildNumberInPatch: true

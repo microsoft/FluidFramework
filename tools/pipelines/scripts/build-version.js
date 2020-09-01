@@ -123,7 +123,7 @@ function main() {
     }
 
     if (!arg_release) {
-        arg_release = (process.env["VERSION_RELEASE"] === "true");
+        arg_release = (process.env["VERSION_RELEASE"] === "release");
     }
 
     if (!file_version) {

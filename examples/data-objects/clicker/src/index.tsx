@@ -62,7 +62,7 @@ export class Clicker extends DataObject implements IFluidHTMLView {
             instance: new ClickerAgent(this.counter),
         };
         this.taskManager.register(agentTask);
-        this.taskManager.pick(this.url, "agent", true).then(() => {
+        this.taskManager.pick(agentTask.id, true).then(() => {
             console.log(`Picked`);
         }, (err) => {
             console.log(err);

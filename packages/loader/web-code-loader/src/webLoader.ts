@@ -78,14 +78,14 @@ export class WebCodeLoader implements ICodeLoader {
             const maybeFluidModule = script.entryPoint as IFluidModule;
             if (maybeFluidModule.fluidExport !== undefined) {
                 if (fluidModule !== undefined) {
-                    throw new Error("Multiple fluid modules loaded");
+                    throw new Error("Multiple Fluid modules loaded");
                 }
                 fluidModule = maybeFluidModule;
             }
         }
 
         if (fluidModule?.fluidExport === undefined) {
-            throw new Error("Entry point of loaded code package not a fluid module");
+            throw new Error("Entry point of loaded code package not a Fluid module");
         }
         return fluidModule;
     }

@@ -43,14 +43,14 @@ export class DefinitionGuide extends EventEmitter {
             }
         }
 
-        dts += "declare interface IComponents {\n";
+        dts += "declare interface IFluids {\n";
         for (const component of this.components) {
             const type = component[1].root ? component[1].root.type : "any";
             dts += `    ${component[0]}: ${type}\n`;
             value[component[0]] = component[1].root ? component[1].root.entry : null;
         }
         dts += "}\n";
-        dts += "declare var host: IComponents\n";
+        dts += "declare var host: IFluids\n";
 
         this.dts = dts;
         this.value = value;

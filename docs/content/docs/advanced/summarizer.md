@@ -1,5 +1,7 @@
 ---
 title: Summarizer
+menuPosition: 1
+draft: false
 ---
 
 Summaries are client-generated snapshots of the state of the document at a given sequence number. It consolidates the op
@@ -15,12 +17,12 @@ processed chunk op data.
 graph LR
   A(["(root)"]) --> B([.protocol])
   A --> S([_scheduler])
-  A --> C1([Component_1])
-  A --> C2([Component_2])
+  A --> C1([DataStore_1])
+  A --> C2([DataStore_2])
   A --> CH([.chunks])
-  C1 --> .C([.component])
-  C1 --> D1([DDS_1])
-  C1 --> D2([DDS_2])
+  DS1 --> .DS([.component])
+  DS1 --> D1([DDS_1])
+  DS1 --> D2([DDS_2])
   D1 --> .D([.attributes])
   D1 --> SB(["(more blobs)"])
   D1 --> ST(["(subtrees)"])
@@ -39,8 +41,8 @@ attributes: document ID, sequence number, and minimum sequence number at that po
 graph LR
   A(["(root)"]) --> B([.protocol])
   A --> S([_scheduler])
-  A --> C1([Component_1])
-  A --> C2([Component_2])
+  A --> C1([DataStore_1])
+  A --> C2([DataStore_2])
   A --> CH([.chunks])
   B --> QM([quorumMembers])
   B --> QP([quorumProposals])
@@ -54,7 +56,7 @@ graph LR
 
 The second layer consists of a subtree for each Fluid Data Store which has been attached and bound to the container.
 They must have a unique ID, which is generally decided by the runtime to prevent collisions. This will be a flattened
-list of all bound data stores. Nested components referenced by handles are irrelevant to the structure of this graph.
+list of all bound data stores. Nested data stores referenced by handles are irrelevant to the structure of this graph.
 
 Each Fluid Data Store subtree will have a single metadata blob containing information about how to load its code.
 

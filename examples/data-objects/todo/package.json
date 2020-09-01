@@ -2,6 +2,7 @@
   "name": "@fluid-example/todo",
   "version": "0.26.0",
   "description": "Simple todo canvas.",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -50,9 +51,9 @@
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.18.0",
-    "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/test-tools": "^0.1.0",
+    "@fluidframework/build-common": "^0.19.2-0",
+    "@fluidframework/eslint-config-fluid": "^0.19.1-0",
+    "@fluidframework/test-tools": "^0.2.3074",
     "@fluidframework/webpack-fluid-loader": "^0.26.0",
     "@types/node": "^10.17.24",
     "@types/react": "^16.9.15",

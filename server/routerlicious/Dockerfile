@@ -3,9 +3,6 @@
 
 FROM node:12.16.3-slim AS base
 
-# To auth against private VSTS
-ARG NPM_TOKEN
-
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
         python \
@@ -26,7 +23,6 @@ WORKDIR /usr/src/server
 COPY package*.json ./
 COPY lerna.json .
 COPY lerna-package-lock.json .
-COPY .npmrc .
 
 COPY packages/gitresources/package*.json packages/gitresources/
 COPY packages/protocol-definitions/package*.json packages/protocol-definitions/

@@ -18,8 +18,8 @@ import {
  * The view and Fluid matching map identify if the value in the respective states
  * needs a converter or not
  * @param runtime - The data store runtime used to create the SharedMap objects
- * @param fluidToView - The fluid to view state conversion mapping
- * @param viewToFluid - The view to fluid conversion state mapping
+ * @param fluidToView - The Fluid to view state conversion mapping
+ * @param viewToFluid - The view to Fluid conversion state mapping
  * */
 export function generateFluidObjectSchema<
     SV extends IViewState,
@@ -52,7 +52,7 @@ export function generateFluidObjectSchema<
                 && typeof (defaultViewState[viewKey]) !== type
                 && type !== "any"
             ) {
-                throw Error(`Failed to find fluid converter for key ${viewKey}`);
+                throw Error(`Failed to find Fluid converter for key ${viewKey}`);
             } else {
                 continue;
             }
@@ -62,7 +62,7 @@ export function generateFluidObjectSchema<
         } else if (viewConverter !== undefined) {
             fluidMatchingMap.set(fluidStateKey as string, true);
         } else {
-            throw Error(`Failed to find view converter for fluid key ${fluidStateKey}`);
+            throw Error(`Failed to find view converter for Fluid key ${fluidStateKey}`);
         }
     }
 
@@ -86,7 +86,7 @@ export function generateFluidObjectSchema<
             } else if (fluidConverter !== undefined) {
                 viewMatchingMap.set(viewStateKey as string, true);
             } else {
-                throw Error(`Failed to find fluid converter for view key ${viewStateKey}`);
+                throw Error(`Failed to find Fluid converter for view key ${viewStateKey}`);
             }
         }
     }

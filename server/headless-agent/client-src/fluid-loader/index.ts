@@ -6,7 +6,7 @@
 import { BaseHost, IBaseHostConfig } from "@fluidframework/base-host";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidResolvedUrl, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 
@@ -16,11 +16,7 @@ interface IWindow extends Window {
 }
 
 export async function startLoading(resolvedUrl: IResolvedUrl) {
-    const serviceFactory = new RouterliciousDocumentServiceFactory(
-        false,
-        new DefaultErrorTracking(),
-        false,
-        true);
+    const serviceFactory = new RouterliciousDocumentServiceFactory();
     const baseHostConfig: IBaseHostConfig = {
         documentServiceFactory: serviceFactory,
         urlResolver: {

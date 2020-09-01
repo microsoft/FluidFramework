@@ -16,18 +16,17 @@ parameters:
 - name: releaseBuildOverride
   displayName: Release Build Override
   type: string
-  default: default
+  default: none
   values:
-    - default
-    - false
-    - true
+    - none
+    - prerelease
+    - release
 
 trigger:
   branches:
     include:
     - main
     - release/*
-    - refs/tags/common-utils_v*
   paths:
     include:
     - common/lib/common-utils
@@ -60,3 +59,4 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: common/lib/common-utils
     tagName: common-utils
+    taskAuth: false

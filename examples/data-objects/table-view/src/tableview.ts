@@ -92,7 +92,7 @@ export class TableView extends DataObject implements IFluidHTMLView {
 
     protected async initializingFirstTime() {
         // Set up internal table doc
-        const doc = await TableDocument.getFactory().createInstance(this.context) as TableDocument;
+        const doc = await TableDocument.getFactory().createChildInstance(this.context);
         this.root.set(innerDocKey, doc.handle);
         doc.insertRows(0, 5);
         doc.insertCols(0, 8);

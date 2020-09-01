@@ -1,7 +1,8 @@
 {
   "name": "@fluidframework/server-services-core",
   "version": "0.1012.0",
-  "description": "Fluid services core definitions",
+  "description": "Fluid server services core definitions",
+  "homepage": "https://fluidframework.com",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -23,7 +24,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.22.1-0",
+    "@fluidframework/common-utils": "^0.23.0-0",
     "@fluidframework/gitresources": "^0.1012.0",
     "@fluidframework/protocol-definitions": "^0.1012.0",
     "@fluidframework/server-services-client": "^0.1012.0",
@@ -33,8 +34,8 @@
     "nconf": "^0.10.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.18.0",
-    "@fluidframework/eslint-config-fluid": "^0.18.0",
+    "@fluidframework/build-common": "^0.19.2-0",
+    "@fluidframework/eslint-config-fluid": "^0.19.1-0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^5.2.0",
